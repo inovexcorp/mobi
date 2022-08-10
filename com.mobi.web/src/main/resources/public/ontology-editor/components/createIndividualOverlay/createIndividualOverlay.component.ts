@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./createIndividualOverlay.component.html');
 
 /**
@@ -28,7 +30,6 @@ const template = require('./createIndividualOverlay.component.html');
  * @name ontology-editor.component:createIndividualOverlay
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `createIndividualOverlay` is a component that creates content for a modal that creates an individual in the
@@ -50,12 +51,11 @@ const createIndividualOverlayComponent = {
     controller: createIndividualOverlayComponentCtrl
 };
 
-createIndividualOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+createIndividualOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes'];
 
-function createIndividualOverlayComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+function createIndividualOverlayComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes) {
     var dvm = this;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
     dvm.duplicateCheck = true;
     dvm.individual = {
@@ -78,17 +78,17 @@ function createIndividualOverlayComponentCtrl($filter, ontologyStateService, pre
         // add the entity to the ontology
         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
         dvm.os.addEntity(dvm.individual);
-        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.individual);
+        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.individual);
         // update relevant lists
-        dvm.ontoUtils.addIndividual(dvm.individual);
+        dvm.os.addIndividual(dvm.individual);
         // add to concept hierarchy if an instance of a derived concept
-        if (dvm.ontoUtils.containsDerivedConcept(dvm.individual['@type'])) {
-            dvm.ontoUtils.addConcept(dvm.individual);
-        } else if (dvm.ontoUtils.containsDerivedConceptScheme(dvm.individual['@type'])) {
-            dvm.ontoUtils.addConceptScheme(dvm.individual);
+        if (dvm.os.containsDerivedConcept(dvm.individual['@type'])) {
+            dvm.os.addConcept(dvm.individual);
+        } else if (dvm.os.containsDerivedConceptScheme(dvm.individual['@type'])) {
+            dvm.os.addConceptScheme(dvm.individual);
         }
         // Save the changes to the ontology
-        dvm.ontoUtils.saveCurrentChanges();
+        dvm.os.saveCurrentChanges().subscribe();
         // Open snackbar
         dvm.os.listItem.goTo.entityIRI = dvm.individual['@id'];
         dvm.os.listItem.goTo.active = true;

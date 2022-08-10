@@ -47,7 +47,7 @@ export class ProgressSpinnerService {
         this.renderer = rendererFactory.createRenderer(null, null);
     }
 
-    public track(observable: Observable<any>) : Observable<any> {
+    public track<T>(observable: Observable<T>) : Observable<T> {
         this.startSpinner();
         this.pendingRequests++;
         return observable.pipe(

@@ -1,3 +1,5 @@
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 /*-
  * #%L
  * com.mobi.web
@@ -44,7 +46,7 @@ const projectTabComponent = {
 
 projectTabComponentCtrl.$inject = ['ontologyStateService'];
 
-function projectTabComponentCtrl(ontologyStateService) {
+function projectTabComponentCtrl(ontologyStateService: OntologyStateService) {
     var dvm = this;
     dvm.os = ontologyStateService;
 }

@@ -22,6 +22,9 @@
  */
 import { forEach } from 'lodash';
 
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./createConceptOverlay.component.html');
 
 /**
@@ -31,7 +34,6 @@ const template = require('./createConceptOverlay.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:propertyManagerService
  *
  * @description
@@ -54,12 +56,11 @@ const createConceptOverlayComponent = {
     controller: createConceptOverlayComponentCtrl
 };
 
-createConceptOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService', 'propertyManagerService'];
+createConceptOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService'];
 
-function createConceptOverlayComponentCtrl($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService, propertyManagerService) {
+function createConceptOverlayComponentCtrl($filter, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, prefixes, utilService, propertyManagerService) {
     var dvm = this;
     var pm = propertyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefixes = prefixes;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
@@ -90,25 +91,25 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
     }
     dvm.create = function() {
         dvm.duplicateCheck = false;
-        dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
+        dvm.os.addLanguageToNewEntity(dvm.concept, dvm.language);
         // add the entity to the ontology
         dvm.os.addEntity(dvm.concept);
         // update relevant lists
         dvm.os.listItem.concepts.iris[dvm.concept['@id']] = dvm.os.listItem.ontologyId;
-        dvm.ontoUtils.addConcept(dvm.concept);
-        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
-        dvm.ontoUtils.addIndividual(dvm.concept);
+        dvm.os.addConcept(dvm.concept);
+        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.concept);
+        dvm.os.addIndividual(dvm.concept);
         if (dvm.selectedSchemes.length) {
             forEach(dvm.selectedSchemes, scheme => {
-                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, scheme['@id']);
+                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.versionedRdfRecord.recordId, scheme['@id']);
                 pm.addId(entity, prefixes.skos + 'hasTopConcept', dvm.concept['@id']);
-                dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
+                dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
                 dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes, dvm.concept['@id'], scheme['@id']);
             });
             dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
         }
         // Save the changes to the ontology
-        dvm.ontoUtils.saveCurrentChanges();
+        dvm.os.saveCurrentChanges().subscribe();
         // Open snackbar
         dvm.os.listItem.goTo.entityIRI = dvm.concept['@id'];
         dvm.os.listItem.goTo.active = true;
@@ -116,7 +117,7 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
         dvm.close();
     }
     dvm.getSchemes = function(searchText) {
-        dvm.schemes = dvm.ontoUtils.getSelectList(dvm.schemeIRIs, searchText);
+        dvm.schemes = dvm.os.getSelectList(dvm.schemeIRIs, searchText);
     }
     dvm.cancel = function() {
         dvm.dismiss();

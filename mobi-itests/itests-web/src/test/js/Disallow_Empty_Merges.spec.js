@@ -81,10 +81,9 @@ module.exports = {
         browser
             .useCss()  
             .click('static-iri i.fa.fa-pencil')
-            .waitForElementVisible('edit-iri-overlay')
-            .setValue('edit-iri-overlay div.form-group.ends-container input', 'myOntology2')
-            .click('xpath', '//edit-iri-overlay//button[text()="Submit"]')
-            .waitForElementNotPresent('.spinner')
+            .waitForElementVisible('edit-iri-overlay-ajs')
+            .setValue('edit-iri-overlay-ajs div.form-group.ends-container input', 'myOntology2')
+            .click('xpath', '//edit-iri-overlay-ajs//button[text()="Submit"]')
     },
 
     'Step 8: Open Commit overlay' : function(browser) {
@@ -105,7 +104,6 @@ module.exports = {
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('.spinner')
             .waitForElementNotPresent('commit-overlay')
             .waitForElementPresent('ontology-editor-page ontology-tab')
     },
@@ -117,7 +115,7 @@ module.exports = {
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .waitForElementPresent('ontology-sidebar button.btn.btn-primary')
             .click('ontology-sidebar button.btn.btn-primary')
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
     },
 
@@ -128,7 +126,7 @@ module.exports = {
             .click('ontology-editor-page open-ontology-tab search-bar')
             .keys('myTitle')
             .keys(browser.Keys.ENTER)
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .waitForElementVisible('ontology-editor-page open-ontology-tab')
     },
 
@@ -140,7 +138,7 @@ module.exports = {
         // wait for loading to finish
         browser
             .useCss()
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
     },
@@ -200,12 +198,12 @@ module.exports = {
     'Step 17: Verify again in merge requests tab': function(browser) {
         browser
         .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
-        .waitForElementVisible("//button[text()[contains(.,'Create Request')]]")
-        .click("//button[text()[contains(.,'Create Request')]]")
-        .waitForElementVisible('//create-request//request-record-select//md-card//md-card-title//span[contains(text(),"myTitle2")]')
-        .click('//create-request//request-record-select//md-card//md-card-title//span[contains(text(),"myTitle2")]')
-        .waitForElementVisible('//button[text()="Next"]')
-        .click('//button[text()="Next"]')
+        .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
+        .click("//button//span[text()[contains(.,'New Request')]]")
+        .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
+        .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
+        .waitForElementVisible('//button//span[text()="Next"]')
+        .click('//button//span[text()="Next"]')
         .waitForElementVisible('(//div[@class=\'mat-form-field-infix\'])[1]')
         .click('(//div[@class=\'mat-form-field-infix\'])[1]')
         .waitForElementVisible('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
@@ -214,7 +212,7 @@ module.exports = {
         .click('(//div[@class=\'mat-form-field-infix\'])[2]')
         .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
         .click('//mat-option//span[text()[contains(.,"MASTER")]]')
-        .assert.not.enabled('//button[text()="Next"]')
+        .assert.not.enabled('//button//span[contains(text(), "Next")]/parent::button')
     }
 
 }

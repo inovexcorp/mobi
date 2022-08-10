@@ -37,10 +37,10 @@
             <custom-label [muted-text]="'(Optional)'">Top Concept of Scheme(s)</custom-label>
             <ui-select multiple ng-model="dvm.selectedSchemes">
                 <ui-select-match placeholder="Select Concept Scheme(s)">
-                    <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
+                    <span title="{{$item}}">{{dvm.os.getEntityNameByListItem($item)}}</span>
                 </ui-select-match>
                 <ui-select-choices refresh="dvm.getSchemes($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.schemes">
-                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
+                    <div title="{{iri}}" ng-bind-html="dvm.os.getEntityNameByListItem(iri) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>
@@ -49,5 +49,5 @@
 </div>
 <div class="modal-footer">
     <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || dvm.ontoUtils.checkIri(dvm.concept['@id'])" ng-click="dvm.create()">Submit</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || dvm.os.checkIri(dvm.concept['@id'])" ng-click="dvm.create()">Submit</button>
 </div>

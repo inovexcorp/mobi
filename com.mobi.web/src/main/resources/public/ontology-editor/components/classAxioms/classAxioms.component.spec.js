@@ -51,7 +51,7 @@ describe('Class Axioms component', function() {
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             prefixes = _prefixes_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             ontologyManagerSvc = _ontologyManagerService_;
             modalSvc = _modalService_;
         });

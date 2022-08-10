@@ -23,6 +23,9 @@
 import * as angular from 'angular';
 
 import { filter, has, findIndex, some, get, every } from 'lodash';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { noop } from 'rxjs';
 
 const template = require('./everythingTree.component.html');
 
@@ -55,7 +58,7 @@ const everythingTreeComponent = {
 
 everythingTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'INDENT'];
 
-function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateService, utilService, INDENT) {
+function everythingTreeComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, utilService, INDENT) {
     var dvm = this;
     var util = utilService
     dvm.indent = INDENT;
@@ -113,17 +116,17 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.filterText = '';
     }
     dvm.clickItem = function(entityIRI) {
-        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.overview.targetedSpinnerId);
+        ontologyStateService.selectItem(entityIRI).toPromise();
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag')
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
         update();
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
         if (node.title) {
-            node.set(dvm.os.listItem.ontologyRecord.recordId, node.isOpened);
+            node.set(dvm.os.listItem.versionedRdfRecord.recordId, node.isOpened);
         }
         node.isOpened ? dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath] = true : delete dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath];
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
@@ -156,9 +159,9 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         delete node.displayNode;
         if (node.title) {
             if (dvm.filterText || dvm.dropdownFilterActive) {
-                node.set(dvm.os.listItem.ontologyRecord.recordId, true);
+                node.set(dvm.os.listItem.versionedRdfRecord.recordId, true);
             }
-            node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
+            node.isOpened = node.get(dvm.os.listItem.versionedRdfRecord.recordId);
         } else {
             if (dvm.filterText || dvm.dropdownFilterActive) {
                 delete node.isOpened;
@@ -201,11 +204,11 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         return true;
     }
     dvm.isShown = function(node) {
-        var displayNode = !has(node, 'entityIRI') || (has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node, dvm.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
+        var displayNode = !has(node, 'entityIRI') || (has(node, 'get') && node.get(dvm.os.listItem.versionedRdfRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node, dvm.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
         if ((dvm.dropdownFilterActive || dvm.filterText) && node['title']) {
             var position = findIndex(dvm.preFilteredHierarchy, 'title');
             if (position === dvm.preFilteredHierarchy.length - 1) {
-                node.set(dvm.os.listItem.ontologyRecord.recordId, false);
+                node.set(dvm.os.listItem.versionedRdfRecord.recordId, false);
                 return false;
             }
         }

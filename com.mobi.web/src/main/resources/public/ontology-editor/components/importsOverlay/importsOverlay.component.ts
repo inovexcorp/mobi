@@ -137,13 +137,13 @@ function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStat
         }
         if (addedUrls.length) {
             var urlObjs = map(addedUrls, url => ({'@id': url}));
-            os.addToAdditions(os.listItem.ontologyRecord.recordId, {'@id': os.listItem.selected['@id'], [importsIRI]: urlObjs});
-            os.saveChanges(os.listItem.ontologyRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
-                .then(() => os.afterSave(), $q.reject)
-                .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
+            os.addToAdditions(os.listItem.versionedRdfRecord.recordId, {'@id': os.listItem.selected['@id'], [importsIRI]: urlObjs});
+            os.saveChanges(os.listItem.versionedRdfRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions}).pipe(first()).toPromise()
+                .then(() => os.afterSave().pipe(first()).toPromise(), $q.reject)
+                .then(() => os.updateOntology(os.listItem.versionedRdfRecord.recordId, os.listItem.versionedRdfRecord.branchId, os.listItem.versionedRdfRecord.commitId, os.listItem.upToDate, os.listItem.inProgressCommit).pipe(first()).toPromise(), $q.reject)
                 .then(() => {
                     os.listItem.isSaved = os.isCommittable(os.listItem);
-                    dvm.close()
+                    dvm.close();
                 }, errorMessage => onError(errorMessage, tabKey));
         } else {
             dvm.dismiss();
@@ -170,7 +170,7 @@ function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStat
         dvm.serverError = '';
     }
     function isOntologyUnused(ontologyRecord) {
-        return ontologyRecord['@id'] !== os.listItem.ontologyRecord.recordId && !includes(os.listItem.importedOntologyIds, dvm.getOntologyIRI(ontologyRecord));
+        return ontologyRecord['@id'] !== os.listItem.versionedRdfRecord.recordId && !includes(os.listItem.importedOntologyIds, dvm.getOntologyIRI(ontologyRecord));
     }
     function onError(errorMessage, tabKey) {
         if (tabKey === 'url') {

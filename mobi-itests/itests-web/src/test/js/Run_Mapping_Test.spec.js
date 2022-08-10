@@ -106,7 +106,7 @@ module.exports = {
             .waitForElementNotPresent('div.modal.fade')
             .click('div.file-input button')
             .uploadFile('input[type=file]', OntoCSV)
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .click('div.block-footer button.continue-btn')
     },
 

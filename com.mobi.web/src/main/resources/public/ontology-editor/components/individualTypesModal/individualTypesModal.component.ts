@@ -23,6 +23,8 @@
 import * as angular from 'angular';
 import { difference, forEach, get, remove, set, pull, unset, some } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./individualTypesModal.component.html');
 
 /**
@@ -30,7 +32,6 @@ const template = require('./individualTypesModal.component.html');
  * @name ontology-editor.component:individualTypesModal
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `individualTypesModal` is a component that creates content for a modal that edits the types of the selected
@@ -51,13 +52,12 @@ const individualTypesModalComponent = {
     controller: individualTypesModalComponentCtrl
 };
 
-individualTypesModalComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes'];
+individualTypesModalComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-function individualTypesModalComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes) {
+function individualTypesModalComponentCtrl(ontologyManagerService, ontologyStateService: OntologyStateService, prefixes) {
     const dvm = this;
     dvm.os = ontologyStateService;
     dvm.om = ontologyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefixes = prefixes;
     dvm.types = [];
 
@@ -73,10 +73,10 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
         const originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
         
         // Handle vocabulary stuff
-        let wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
-        let isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
-        let wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
-        let isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
+        let wasConcept = dvm.os.containsDerivedConcept(originalTypes);
+        let isConcept = dvm.os.containsDerivedConcept(dvm.types);
+        let wasConceptScheme = dvm.os.containsDerivedConceptScheme(originalTypes);
+        let isConceptScheme = dvm.os.containsDerivedConceptScheme(dvm.types);
 
         if (isConcept && isConceptScheme) {
             dvm.error = 'Individual cannot be both a Concept and Concept Scheme';
@@ -92,10 +92,10 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
             let unselect = false;
 
             // Handle vocabulary stuff
-            wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
-            isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
-            wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
-            isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
+            wasConcept = dvm.os.containsDerivedConcept(originalTypes);
+            isConcept = dvm.os.containsDerivedConcept(dvm.types);
+            wasConceptScheme = dvm.os.containsDerivedConceptScheme(originalTypes);
+            isConceptScheme = dvm.os.containsDerivedConceptScheme(dvm.types);
 
             // Handle added types
             forEach(addedTypes, (type:any) => {
@@ -121,9 +121,9 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
 
             // Made into a Concept
             if (!wasConcept && isConcept) {
-                dvm.ontoUtils.addConcept(dvm.os.listItem.selected);
+                dvm.os.addConcept(dvm.os.listItem.selected);
                 forEach(pull(Object.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
-                    dvm.ontoUtils.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
+                    dvm.os.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
                 });
             }
             // No longer a Concept
@@ -150,9 +150,9 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
             }
             // Made into a Concept Scheme
             if (!wasConceptScheme && isConceptScheme) {
-                dvm.ontoUtils.addConceptScheme(dvm.os.listItem.selected);
+                dvm.os.addConceptScheme(dvm.os.listItem.selected);
                 forEach(pull(Object.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
-                    dvm.ontoUtils.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
+                    dvm.os.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
                 });
             }
             // No longer a Concept Scheme
@@ -169,15 +169,15 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
                 }
             }
             if (addedTypes.length) {
-                dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': addedTypes});
+                dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': addedTypes});
             }
             if (removedTypes.length) {
-                dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': removedTypes});
+                dvm.os.addToDeletions(dvm.os.listItem.versionedRdfRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': removedTypes});
             }
             if (unselect) {
                 dvm.os.unSelectItem();
             }
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.saveCurrentChanges().subscribe();
             dvm.close();
         } else {
             dvm.close();

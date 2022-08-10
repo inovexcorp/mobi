@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { get } from 'lodash';
 
 import { CATALOG } from '../../../prefixes';
@@ -29,8 +29,10 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { Commit } from '../../../shared/models/commit.interface';
 
 import './requestBranchSelect.component.scss';
+
 
 /**
  * @class merge-requests.RequestBranchSelectComponent
@@ -52,6 +54,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
     branchTitle = '';
     recordTitle = '';
     commits = [];
+    @Output() emitCommits = new EventEmitter<{commits: Commit[]}>();
 
     @ViewChild('commitDifferenceTabset') commitDifferenceTabset: ElementRef;
 
@@ -121,7 +124,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
 
     receiveCommits(value):void {
         this.commits = value;
-        this.updateCommits({commits: this.commits});
+        this.emitCommits.emit({commits: this.commits});
     }
     
     private _updateDifference(clearBranches: boolean): void {

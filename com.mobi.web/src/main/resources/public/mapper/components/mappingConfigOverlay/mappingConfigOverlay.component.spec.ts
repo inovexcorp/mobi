@@ -52,6 +52,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { MappingConfigOverlayComponent } from './mappingConfigOverlay.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 describe('Mapping Config Overlay component', function() {
     let component: MappingConfigOverlayComponent;
@@ -124,7 +125,7 @@ describe('Mapping Config Overlay component', function() {
                 MockProvider(MappingManagerService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -143,7 +144,7 @@ describe('Mapping Config Overlay component', function() {
         mappingManagerStub = TestBed.get(MappingManagerService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         utilStub = TestBed.get('utilService');
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
 
         mappingStub = jasmine.createSpyObj('Mapping', [

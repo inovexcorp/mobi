@@ -28,7 +28,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { of, throwError, noop } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
@@ -41,6 +41,8 @@ import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { CommitChangesDisplayComponent } from '../commitChangesDisplay/commitChangesDisplay.component';
 import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 describe('Commit Info Overlay component', function() {
     let component: CommitInfoOverlayComponent;
@@ -49,11 +51,12 @@ describe('Commit Info Overlay component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyManagerStub;
     let utilStub;
-    let difference;
+    let difference: CommitDifference;
     let headers;
     
     const commitId = 'commitId';
     const ontRecordId = 'ontRecordId';
+    const emptyObj: JSONLDObject = {'@id': '', '@type': []};
     const data = {
         commit: {
             id: commitId,
@@ -73,7 +76,7 @@ describe('Commit Info Overlay component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
@@ -86,10 +89,10 @@ describe('Commit Info Overlay component', function() {
         fixture = TestBed.createComponent(CommitInfoOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        difference = {};
+        difference = new CommitDifference();
         headers = {'has-more-results': 'false'};
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get('utilService');
 
         catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
@@ -121,10 +124,10 @@ describe('Commit Info Overlay component', function() {
             expect(element.queryAll(By.css('.changes-container p')).length).toEqual(1);
             expect(element.queryAll(By.css('.changes-container commit-changes-display')).length).toEqual(0);
 
-            difference.additions = [{}];
+            difference.additions = [emptyObj];
             difference.deletions = [];
             catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
-            await component.retrieveMoreResults(100, 0);
+            await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -132,9 +135,9 @@ describe('Commit Info Overlay component', function() {
             expect(element.queryAll(By.css('.changes-container commit-changes-display')).length).toEqual(1);
 
             difference.additions = [];
-            difference.deletions = [{}];
+            difference.deletions = [emptyObj];
             catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: difference, headers: new HttpHeaders(headers)})));
-            await component.retrieveMoreResults(100, 0);
+            await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -174,8 +177,8 @@ describe('Commit Info Overlay component', function() {
                     });
                     describe('and getOntologyEntityNames', function() {
                         it('resolves', async function() {
-                            ontologyManagerStub.getOntologyEntityNames.and.returnValue({'iri1': {label: 'label'}});
-                            await component.retrieveMoreResults(100, 0);
+                            ontologyManagerStub.getOntologyEntityNames.and.returnValue(of({'iri1': {label: 'label'}}));
+                            await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                             expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
@@ -185,8 +188,8 @@ describe('Commit Info Overlay component', function() {
                             expect(component.entityNames).toEqual({'iri1': {label: 'label'}});
                         });
                         it('rejects', async function() {
-                            ontologyManagerStub.getOntologyEntityNames.and.returnValue(Promise.reject('Error Message'));
-                            await component.retrieveMoreResults(100, 0);
+                            ontologyManagerStub.getOntologyEntityNames.and.returnValue(throwError('Error Message'));
+                            await component.retrieveMoreResults(100, 0).subscribe(() => fail('Observable should have errored'), noop);
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                             expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
@@ -201,7 +204,7 @@ describe('Commit Info Overlay component', function() {
                     fixture.detectChanges();
                     await fixture.whenStable();
 
-                    await component.retrieveMoreResults(100, 0);
+                    await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
                     expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                     expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}]);
                     expect(component.deletions).toEqual([]);
@@ -217,7 +220,7 @@ describe('Commit Info Overlay component', function() {
                 await fixture.whenStable();
 
                 catalogManagerStub.getDifference.and.returnValue(throwError('Error Message'));
-                await component.retrieveMoreResults(100, 0);
+                await component.retrieveMoreResults(100, 0).subscribe(() => fail('Observable should have errored'), noop);
                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
             });

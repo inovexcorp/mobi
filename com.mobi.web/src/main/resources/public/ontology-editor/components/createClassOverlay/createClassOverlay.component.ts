@@ -22,6 +22,8 @@
  */
 import { unset, isEqual, map } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./createClassOverlay.component.html');
 
 /**
@@ -29,7 +31,6 @@ const template = require('./createClassOverlay.component.html');
  * @name ontology-editor.component:createClassOverlay
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `createClassOverlay` is a component that creates content for a modal that creates a class in the current
@@ -53,13 +54,12 @@ const createClassOverlayComponent = {
     controller: createClassOverlayComponentCtrl
 };
 
-createClassOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+createClassOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes'];
 
-function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+function createClassOverlayComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes) {
     var dvm = this;
     dvm.prefixes = prefixes;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
     dvm.values = [];
     dvm.duplicateCheck = true;
@@ -90,7 +90,7 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
         if (isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
             unset(dvm.clazz, prefixes.dcterms + 'description');
         }
-        dvm.ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
+        dvm.os.addLanguageToNewEntity(dvm.clazz, dvm.language);
         // add the entity to the ontology
         dvm.os.addEntity(dvm.clazz);
         // update relevant lists
@@ -98,26 +98,26 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
         if (dvm.values.length) {
             dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
             var superClassIds = map(dvm.values, '@id');
-            if (dvm.ontoUtils.containsDerivedConcept(superClassIds)) {
+            if (dvm.os.containsDerivedConcept(superClassIds)) {
                 dvm.os.listItem.derivedConcepts.push(dvm.clazz['@id']);
             }
-            else if (dvm.ontoUtils.containsDerivedConceptScheme(superClassIds)) {
+            else if (dvm.os.containsDerivedConceptScheme(superClassIds)) {
                 dvm.os.listItem.derivedConceptSchemes.push(dvm.clazz['@id']);
             }
-            dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], superClassIds);
+            dvm.os.setSuperClasses(dvm.clazz['@id'], superClassIds);
         } else {
             dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes);
         }
         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
         // Update InProgressCommit
-        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
+        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.clazz);
         // Save the changes to the ontology
-        dvm.ontoUtils.saveCurrentChanges();
+        dvm.os.saveCurrentChanges().subscribe();
         // Open snackbar
         dvm.os.listItem.goTo.entityIRI = dvm.clazz['@id'];
         dvm.os.listItem.goTo.active = true;
         // hide the overlay
-        dvm.close()
+        dvm.close();
     }
     dvm.cancel = function() {
         dvm.dismiss();

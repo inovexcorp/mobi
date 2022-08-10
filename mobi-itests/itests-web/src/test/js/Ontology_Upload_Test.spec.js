@@ -91,7 +91,6 @@ module.exports = {
         browser
             .setValue('open-ontology-tab search-bar input', '')
             .globals.open_ontology(browser, Onto1)
-
     },
 
     'Step 7: Click classes tab' : function (browser) {

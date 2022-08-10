@@ -22,6 +22,8 @@
  */
 import { get } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./datatypePropertyBlock.component.html');
 
 /**
@@ -29,7 +31,6 @@ const template = require('./datatypePropertyBlock.component.html');
  * @name ontology-editor.component:datatypePropertyBlock
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -49,12 +50,11 @@ const datatypePropertyBlockComponent = {
     controller: datatypePropertyBlockComponentCtrl
 };
 
-datatypePropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'modalService'];
+datatypePropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'modalService'];
 
-function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService, modalService) {
+function datatypePropertyBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes, modalService) {
     var dvm = this;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.dataProperties = [];
     dvm.dataPropertiesFiltered = [];
 
@@ -63,7 +63,7 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
     }
     dvm.updatePropertiesFiltered = function(){
         dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
-        dvm.dataPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
+        dvm.dataPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.dataProperties), iri => dvm.os.getEntityNameByListItem(iri));
     }
     dvm.openAddDataPropOverlay = function() {
         dvm.os.editingProperty = false;
@@ -85,8 +85,8 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
         modalService.openModal('datatypePropertyOverlay', {}, dvm.updatePropertiesFiltered);
     }
     dvm.showRemovePropertyOverlay = function(key, index) {
-        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
-            dvm.ontoUtils.removeProperty(key, index);
+        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
+            dvm.os.removeProperty(key, index).subscribe();
             dvm.updatePropertiesFiltered();
         });
     }

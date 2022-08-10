@@ -22,6 +22,9 @@
  */
 import { forEach, pull, includes, get, unset, find, isEqual, remove, filter } from 'lodash';
 
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './characteristicsBlock.component.scss';
 
 const template = require('./characteristicsBlock.component.html');
@@ -32,7 +35,6 @@ const template = require('./characteristicsBlock.component.html');
  * @requires shared.service:prefixes
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `characteristicsBlock` is a component that creates a section that displays the appropriate characteristics
@@ -56,11 +58,10 @@ const characteristicsBlockComponent = {
     controller: characteristicsBlockComponentCtrl
 };
 
-characteristicsBlockComponentCtrl.$inject = ['prefixes', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+characteristicsBlockComponentCtrl.$inject = ['prefixes', 'ontologyStateService', 'ontologyManagerService'];
 
-function characteristicsBlockComponentCtrl(prefixes, ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+function characteristicsBlockComponentCtrl(prefixes, ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService) {
     var dvm = this;
-    var ontoUtils = ontologyUtilsManagerService;
     var om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.characteristics = [
@@ -110,7 +111,7 @@ function characteristicsBlockComponentCtrl(prefixes, ontologyStateService, ontol
         setVariables();
     }
     dvm.filter = function(obj) {
-        return !obj.objectOnly || om.isObjectProperty({'@type': dvm.types || []});
+        return !obj.objectOnly || om.isObjectProperty({'@id': '', '@type': dvm.types || []});
     }
     dvm.onChange = function(characteristicObj, value) {
         characteristicObj.checked = value;
@@ -123,7 +124,7 @@ function characteristicsBlockComponentCtrl(prefixes, ontologyStateService, ontol
             handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions, characteristicObj.typeIRI);
         }
         dvm.updateTypes({value: types});
-        ontoUtils.saveCurrentChanges();
+        dvm.os.saveCurrentChanges().subscribe();
     }
 
     function handleCase(array, method, typeIRI) {
@@ -137,10 +138,10 @@ function characteristicsBlockComponentCtrl(prefixes, ontologyStateService, ontol
                 remove(array, match);
             }
         } else {
-            method(dvm.os.listItem.ontologyRecord.recordId, {
+            method(dvm.os.listItem.versionedRdfRecord.recordId, {
                 '@id': dvm.iri,
                 '@type': [typeIRI]
-            });
+            }).bind(dvm.os);
         }
     }
 

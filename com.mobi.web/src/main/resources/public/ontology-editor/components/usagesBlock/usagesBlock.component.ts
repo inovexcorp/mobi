@@ -22,6 +22,8 @@
  */
 import { forEach, get, chunk, union } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './usagesBlock.component.scss';
 
 const template = require('./usagesBlock.component.html');
@@ -31,7 +33,6 @@ const template = require('./usagesBlock.component.html');
  * @name ontology-editor.component:usagesBlock
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `usagesBlock` is a component that creates a section that displays the provided usages of the
@@ -50,21 +51,20 @@ const usagesBlockComponent = {
     controller: usagesBlockComponentCtrl
 };
 
-usagesBlockComponentCtrl.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+usagesBlockComponentCtrl.$inject = ['ontologyStateService'];
 
-function usagesBlockComponentCtrl(ontologyStateService, ontologyUtilsManagerService) {
+function usagesBlockComponentCtrl(ontologyStateService: OntologyStateService) {
     var dvm = this;
     dvm.size = 100;
     dvm.index = 0;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.id = '';
     dvm.results = {};
     dvm.total = 0;
     dvm.shown = 0;
 
     dvm.$onInit = function() {
-        dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.ontologyRecord.recordId;
+        dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.versionedRdfRecord.recordId;
     }
     dvm.$onChanges = function() {
         dvm.size = 100;

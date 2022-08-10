@@ -31,8 +31,4 @@
         flex: 1;
         min-height: 0;
     }
-    // TODO: Remove after upgrading these components
-    .explore-tab, .discover-search-tab {
-        background-color: var(--light);
-    }
 }

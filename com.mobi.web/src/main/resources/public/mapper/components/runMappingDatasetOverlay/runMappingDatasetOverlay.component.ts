@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialogRef } from '@angular/material';
 import { Observable } from 'rxjs';
 import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
-
 import { DCTERMS } from '../../../prefixes';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
@@ -48,6 +48,7 @@ interface DatasetPreview {
     selector: 'run-mapping-dataset-overlay',
     templateUrl: './runMappingDatasetOverlay.component.html'
 })
+
 export class RunMappingDatasetOverlayComponent implements OnInit {
     errorMessage = '';
     datasetRecordIRI = '';

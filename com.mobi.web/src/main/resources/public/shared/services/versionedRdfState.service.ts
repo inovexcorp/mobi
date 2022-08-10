@@ -21,8 +21,9 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { cloneDeep, concat, find, forEach, get, head, includes, isEmpty, remove } from 'lodash';
-import { first } from 'rxjs/operators';
+import { cloneDeep, concat, find, get, head, includes, isEmpty, remove } from 'lodash';
+import { from, Observable, of, throwError } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { v4 } from 'uuid';
 import { CATALOG } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
@@ -37,7 +38,7 @@ import { CatalogManagerService } from './catalogManager.service';
 /**
  * Service for common VersionedRdfState methods to be used in the ontology-editor or shapes-graph-editor.
  */
-export abstract class VersionedRdfState {
+export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     protected sm: any;
     protected cm: CatalogManagerService;
     protected util: any;
@@ -48,8 +49,8 @@ export abstract class VersionedRdfState {
     protected application: string;
     protected catalogId: string;
 
-    public list: VersionedRdfListItem[];
-    public listItem: VersionedRdfListItem;
+    public list: T[];
+    public listItem: T;
 
     protected constructor(statePrefix: string, branchStateNamespace: string, tagStateNamespace: string, commitStateNamespace: string, application: string) {
         this.statePrefix = statePrefix;
@@ -71,9 +72,9 @@ export abstract class VersionedRdfState {
      * Creates a new state for the application type for the current user.
      *
      * @param versionedRdfStateBase {VersionedRdfStateBase} the state base containing VersionedRDFRecord information.
-     * @return {Promise} A Promise that resolves if the state creation was successful or not.
+     * @return {Observable} An Observable that resolves if the state creation was successful or not.
      */
-    createState(versionedRdfStateBase: VersionedRdfStateBase): Promise<unknown> {
+    createState(versionedRdfStateBase: VersionedRdfStateBase): Observable<unknown> {
         let stateIri;
         const recordState: JSONLDObject = {
             '@id': this.statePrefix + v4(),
@@ -105,7 +106,7 @@ export abstract class VersionedRdfState {
             ...commitStatePartial
         } as JSONLDObject;
 
-        return this.sm.createState([recordState, commitState], this.application);
+        return from(this.sm.createState([recordState, commitState], this.application));
     }
     /**
      * Retrieves the current state for the provided recordId.
@@ -124,9 +125,9 @@ export abstract class VersionedRdfState {
      * Updates the State for the associated VersionedRdfStateBase.recordId with the provided VersionedRdfStateBase.
      *
      * @param versionedRdfStateBase {VersionedRdfStateBase} the new state to update to.
-     * @return {Promise} A Promise that resolves if the state update was successful or not.
+     * @return {Observable} An Observable that resolves if the state update was successful or not.
      */
-    updateState(versionedRdfStateBase: VersionedRdfStateBase): Promise<unknown> {
+    updateState(versionedRdfStateBase: VersionedRdfStateBase): Observable<unknown> {
         const stateObj: State = cloneDeep(this.getStateByRecordId(versionedRdfStateBase.recordId));
         const stateId: string = stateObj.id;
         const model: JSONLDObject[] = stateObj.model;
@@ -170,16 +171,16 @@ export abstract class VersionedRdfState {
             });
         }
         recordState[this.statePrefix + 'currentState'] = [{'@id': currentStateId}];
-        return this.sm.updateState(stateId, model);
+        return from(this.sm.updateState(stateId, model));
     }
     /**
      * Deletes the state for the provided branchId.
      *
      * @param recordId {string} the IRI of the VersionedRdfRecord that contains the branch.
      * @param branchId {string} the IRI of the branch state to delete.
-     * @return {Promise} A Promise that resolves if the state deletion and update was successful or not.
+     * @return {Observable} An Observable that resolves if the state deletion and update was successful or not.
      */
-    deleteBranchState(recordId: string, branchId:string): Promise<unknown> {
+    deleteBranchState(recordId: string, branchId:string): Observable<unknown> {
         const stateObj: State = cloneDeep(this.getStateByRecordId(recordId));
         const record: JSONLDObject = find(stateObj.model, {'@type': [this.statePrefix + 'StateRecord']});
         const branchState: JSONLDObject = head(remove(stateObj.model, {[this.statePrefix + 'branch']: [{'@id': branchId}]}));
@@ -187,20 +188,20 @@ export abstract class VersionedRdfState {
         if (!record[this.statePrefix + 'branchStates'].length) {
             delete record[this.statePrefix + 'branchStates'];
         }
-        return this.sm.updateState(stateObj.id, stateObj.model);
+        return from(this.sm.updateState(stateObj.id, stateObj.model));
     }
     /**
      * Deletes the state for the provided recordId.
      *
      * @param recordId {string} the IRI of the VersionedRdfRecord state to delete.
-     * @return {Promise} A Promise that resolves if the state deletion was successful and rejects if not.
+     * @return {Observable} An Observable that resolves if the state deletion was successful and rejects if not.
      */
-    deleteState(recordId: string): Promise<unknown> {
+    deleteState(recordId: string): Observable<unknown> {
         const state = this.getStateByRecordId(recordId);
         if (state === undefined) {
-            return Promise.resolve();
+            return of();
         }
-        return this.sm.deleteState(state.id);
+        return from(this.sm.deleteState(state.id));
     }
     /**
      * Retrieves the ID of the current State object for the provided recordId.
@@ -215,7 +216,7 @@ export abstract class VersionedRdfState {
      * Retrieves the current State object for the provided recordId.
      *
      * @param recordId {string} the IRI of the VersionedRDFRecord whose state to retrieve.
-     * @return {State} the State object associated with the recordId.
+     * @return {JSONLDObject} the State object associated with the recordId.
      */
     getCurrentStateByRecordId(recordId: string): JSONLDObject {
         const state = this.getStateByRecordId(recordId);
@@ -261,14 +262,14 @@ export abstract class VersionedRdfState {
     }
 
     /**
-     * Retrieves the catalog information for the specific commit of the record that should be opened for the current user. If
-     * the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,
+     * Retrieves the catalog information for the specific commit of the record that should be opened for the current 
+     * user. If the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,
      * retrieves the latest state of the ontology.
      *
      * @param recordId {string} the IRI of the VersionedRDFRecord.
-     * @return {Promise} A promise containing the record id, branch id, commit id, and inProgressCommit.
+     * @return {Observable} An Observable containing the record id, branch id, commit id, and inProgressCommit.
      */
-    getCatalogDetails(recordId:string): Promise<any> {
+    getCatalogDetails(recordId:string): Observable<{recordId: string, branchId: string, commitId: string, tagId?: string, upToDate: boolean, inProgressCommit: Difference}> {
         const state: State = this.getStateByRecordId(recordId);
         if (!isEmpty(state)) {
             let inProgressCommit = new Difference();
@@ -277,75 +278,78 @@ export abstract class VersionedRdfState {
             const tagId = this.util.getPropertyId(currentState, this.statePrefix + 'tag');
             const branchId = this.util.getPropertyId(currentState, this.statePrefix + 'branch');
             let upToDate = false;
-            let promise;
+            let ob;
             let branchToastShown = false;
             if (branchId) {
-                promise = this.cm.getRecordBranch(branchId, recordId, this.catalogId).pipe(first()).toPromise()
-                    .then(branch => {
-                        upToDate = this.util.getPropertyId(branch, CATALOG + 'head') === commitId;
-                        return this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise();
-                    }, error => {
-                        this.util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
-                        branchToastShown = true;
-                        return Promise.reject(error);
-                    });
+                ob = this.cm.getRecordBranch(branchId, recordId, this.catalogId)
+                    .pipe(
+                        catchError(error => {
+                            this.util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                            branchToastShown = true;
+                            return throwError(error);
+                        }),
+                        switchMap(branch => {
+                            upToDate = this.util.getPropertyId(branch, CATALOG + 'head') === commitId;
+                            return this.cm.getInProgressCommit(recordId, this.catalogId);
+                        })
+                    );
             } else if (tagId) {
                 upToDate = true;
-                promise = this.cm.getRecordVersion(tagId, recordId, this.catalogId).pipe(first()).toPromise()
-                    .then(() => {
-                        return this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise();
-                    }, () => {
-                        this.util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + this.util.condenseCommitId(commitId), {timeout: 5000});
-                        return this.updateState({recordId, commitId});
-                    })
-                    .then(() => this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise(), error => {
-                        return Promise.reject(error);
-                    });
+                ob = this.cm.getRecordVersion(tagId, recordId, this.catalogId)
+                    .pipe(
+                        catchError(() => {
+                            this.util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + this.util.condenseCommitId(commitId), {timeout: 5000});
+                            return this.updateState({recordId, commitId});
+                        }),
+                        switchMap(() => this.cm.getInProgressCommit(recordId, this.catalogId))
+                    );
             } else {
                 upToDate = true;
-                promise = this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise();
+                ob = this.cm.getInProgressCommit(recordId, this.catalogId);
             }
-            return promise
-                .then(response => {
-                    inProgressCommit = response;
-                    return this.cm.getCommit(commitId).pipe(first()).toPromise();
-                }, response => {
-                    if (get(response, 'status') === 404) {
-                        return this.cm.getCommit(commitId).pipe(first()).toPromise();
-                    }
-                    return Promise.reject(response);
-                })
-                .then(() => ({recordId, branchId, commitId, tagId, upToDate, inProgressCommit}), () => {
-                    if (!branchToastShown) {
-                        this.util.createWarningToast('Commit ' + this.util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
-                    }
-                    return this.deleteState(recordId)
-                        .then(() => this.getLatestMaster(recordId), error => {
-                            return Promise.reject(error);
-                        });
-                });
+            
+            return ob
+                .pipe(
+                    catchError(response => {
+                        if (get(response, 'status') === 404) {
+                            return of(inProgressCommit);
+                        }
+                        return throwError(response);
+                    }),
+                    switchMap((response: Difference) => {
+                        inProgressCommit = response;
+                        return this.cm.getCommit(commitId).pipe(map(() => ({recordId, branchId, commitId, tagId, upToDate, inProgressCommit})));
+                    }),
+                    catchError(() => {
+                        if (!branchToastShown) {
+                            this.util.createWarningToast('Commit ' + this.util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                        }
+                        return this.deleteState(recordId).pipe(switchMap(() => this.getLatestMaster(recordId)));
+                    })
+                );
         }
         return this.getLatestMaster(recordId);
     }
     /**
      * Retrieves the latest state a VersionedRDFRecord, being the head commit of the master branch, and returns
-     * a promise containing the recordId, branchId, commitId, and inProgressCommit.
+     * an Observable containing the recordId, branchId, commitId, and inProgressCommit.
      *
      * @param recordId {string} the IRI of the VersionedRDFRecord.
-     * @return A promise containing the record id, branch id, commit id, and inProgressCommit.
+     * @return {Observable} An Observable containing the record id, branch id, commit id, and inProgressCommit.
      */
-    getLatestMaster(recordId: string): Promise<any> {
+    getLatestMaster(recordId: string): Observable<{recordId: string, branchId: string, commitId: string, upToDate: boolean, inProgressCommit: Difference}> {
         let branchId, commitId: string;
-        // TODO: switch to observables
-        return this.cm.getRecordMasterBranch(recordId, this.catalogId).pipe(first()).toPromise()
-            .then(masterBranch => {
-                branchId = get(masterBranch, '@id', '');
-                commitId = get(masterBranch, '[\'' + CATALOG + 'head\'][0][\'@id\']', '');
-                return this.createState({recordId, commitId, branchId});
-            }, error => Promise.reject(error))
-            .then(() => {
-                return {recordId, branchId, commitId, upToDate: true, inProgressCommit: new Difference()};
-            }, error => Promise.reject(error));
+        return this.cm.getRecordMasterBranch(recordId, this.catalogId)
+            .pipe(
+                switchMap(masterBranch => {
+                    branchId = get(masterBranch, '@id', '');
+                    commitId = get(masterBranch, '[\'' + CATALOG + 'head\'][0][\'@id\']', '');
+                    return this.createState({recordId, commitId, branchId});
+                }),
+                map(() => {
+                    return {recordId, branchId, commitId, upToDate: true, inProgressCommit: new Difference()};
+                })
+            );
     }
     /**
      * Updates self.listItem.merge with the updated additions and deletions for the provided commit information.
@@ -354,13 +358,12 @@ export abstract class VersionedRdfState {
      * @param targetCommitId {string} The string IRI of the target commit to get the difference.
      * @param limit {number} The limit for the paged difference.
      * @param offset {number} The offset for the paged difference.
-     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     * @returns {Observable} Observable that resolves if the action was successful; rejects otherwise
      */
-    getMergeDifferences(sourceCommitId: string, targetCommitId: string, limit: number, offset: number): Promise<any> {
+    getMergeDifferences(sourceCommitId: string, targetCommitId: string, limit: number, offset: number): Observable<null> {
         this.listItem.merge.startIndex = offset;
-        // TODO: switch to observables
-        return this.cm.getDifference(sourceCommitId, targetCommitId, limit, offset).pipe(first()).toPromise()
-            .then((response: HttpResponse<CommitDifference>) => {
+        return this.cm.getDifference(sourceCommitId, targetCommitId, limit, offset)
+            .pipe(map((response: HttpResponse<CommitDifference>) => {
                 if (!this.listItem.merge.difference) {
                     this.listItem.merge.difference = new Difference();
                 }
@@ -368,42 +371,39 @@ export abstract class VersionedRdfState {
                 this.listItem.merge.difference.deletions = concat(this.listItem.merge.difference.deletions, response.body.deletions);
                 const headers = response.headers;
                 this.listItem.merge.difference.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
-                return Promise.resolve();
-            }, error => Promise.reject(error));
+                return null;
+            }));
     }
     /**
      * Attempts the merge, first checking for conflicts.
      *
-     * @return {Promise} Promise that resolves if the merge was successful.
+     * @return {Observable} Observable that resolves if the merge was successful.
      */
-    attemptMerge(): Promise<any> {
-        return this.checkConflicts()
-            .then(() => this.merge(), error => Promise.reject(error));
+    attemptMerge(): Observable<null> {
+        return this.checkConflicts().pipe(switchMap(() => this.merge()));
     }
     /**
      * Checks for merge conflicts.
      *
-     * @return {Promise} Promise that resolves if there are no conflicts.
+     * @return {Observable} Observable that resolves if there are no conflicts.
      */
-    checkConflicts(): Promise<any> {
-        // TODO: switch to observables
-        return this.cm.getBranchConflicts(this.listItem.versionedRdfRecord.branchId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise()
-            .then(conflicts => {
-                if (isEmpty(conflicts)) {
-                    return Promise.resolve();
-                } else {
-                    forEach(conflicts, conflict => {
+    checkConflicts(): Observable<null> {
+        return this.cm.getBranchConflicts(this.listItem.versionedRdfRecord.branchId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId)
+            .pipe(map(conflicts => {
+                if (!isEmpty(conflicts)) {
+                    conflicts.forEach(conflict => {
                         conflict.resolved = false;
                         this.listItem.merge.conflicts.push(conflict as Conflict);
                     });
-                    return Promise.reject();
+                    throw new Error('');
                 }
-            }, error => Promise.reject(error));
+                return null;
+            }));
     }
     /**
      * Merges VersionedRDFRecord branches.
      */
-    protected abstract merge(): Promise<any>;
+    protected abstract merge(): Observable<null>;
     /**
      * Resets the merge state.
      */
@@ -421,7 +421,7 @@ export abstract class VersionedRdfState {
      *
      * @param recordId the IRI of the VersionedRDFRecord.
      */
-    getListItemByRecordId(recordId: string): VersionedRdfListItem {
-        return find(this.list, {versionedRdfRecord: {recordId}});
+    getListItemByRecordId(recordId: string): T {
+        return this.list.find(item => item.versionedRdfRecord.recordId === recordId);
     }
 }

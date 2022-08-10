@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import { DebugElement, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -41,6 +42,7 @@ import { ColumnSelectComponent } from '../columnSelect/columnSelect.component';
 import { PropPreviewComponent } from '../propPreview/propPreview.component';
 import { PropSelectComponent } from '../propSelect/propSelect.component';
 import { PropMappingOverlayComponent } from './propMappingOverlay.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 describe('Prop Mapping Overlay component', function() {
     let component: PropMappingOverlayComponent;
@@ -102,7 +104,7 @@ describe('Prop Mapping Overlay component', function() {
             providers: [
                 MockProvider(MappingManagerService),
                 MockProvider(MapperStateService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'propertyManagerService', useClass: mockPropertyManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
@@ -119,7 +121,7 @@ describe('Prop Mapping Overlay component', function() {
         mapperStateStub = TestBed.get(MapperStateService);
         mappingManagerStub = TestBed.get(MappingManagerService);
         utilStub = TestBed.get('utilService');
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         propertyManagerStub = TestBed.get('propertyManagerService');
         matDialogRef = TestBed.get(MatDialogRef);
 

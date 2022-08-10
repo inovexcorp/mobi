@@ -29,7 +29,8 @@ import { of, throwError } from 'rxjs';
 import {
     cleanStylesFromDOM,
     mockUtil,
-    mockOntologyManager
+    mockOntologyManager,
+    mockOntologyState
 } from '../../../../../test/ts/Shared';
 import { CATALOG, MERGEREQ, ONTOLOGYEDITOR, OWL } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
@@ -41,6 +42,7 @@ import { CatalogManagerService } from './catalogManager.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 import { UserManagerService } from './userManager.service';
+import { OntologyManagerService } from './ontologyManager.service';
 
 describe('Merge Requests State service', function() {
     let service: MergeRequestsStateService;
@@ -86,7 +88,7 @@ describe('Merge Requests State service', function() {
                 MockProvider(MergeRequestManagerService),
                 MockProvider(CatalogManagerService),
                 MockProvider(UserManagerService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
             ]
         });
@@ -97,7 +99,7 @@ describe('Merge Requests State service', function() {
         mergeRequestManagerStub = TestBed.get(MergeRequestManagerService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
         userManagerStub = TestBed.get(UserManagerService);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get('utilService');
 
         difference = new CommitDifference();

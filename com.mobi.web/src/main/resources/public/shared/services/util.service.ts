@@ -510,7 +510,10 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         }
         if (has(paginatedConfig, 'limit')) {
             params.limit = paginatedConfig.limit;
-            if (has(paginatedConfig, 'pageIndex')) {
+            if (has(paginatedConfig, 'offset')) {
+                params.offset = paginatedConfig.offset;
+            }
+            else if (has(paginatedConfig, 'pageIndex') && !has(paginatedConfig, 'offset')) {
                 params.offset = paginatedConfig.pageIndex * paginatedConfig.limit;
             }
         }

@@ -21,11 +21,13 @@
  * #L%
  */
 import { join, orderBy, map, get } from 'lodash';
+import { Component } from '@angular/core';
 
-import './shapesGraphDetails.component.scss';
-import { Component, Inject } from '@angular/core';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+
+import './shapesGraphDetails.component.scss';
 
 /**
  * @ngdoc component
@@ -47,7 +49,7 @@ import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 })
 export class ShapesGraphDetailsComponent {
 
-    constructor(public state: ShapesGraphStateService, @Inject('ontologyManagerService') public om, private prefixation: PrefixationPipe) {}
+    constructor(public state: ShapesGraphStateService, public om: OntologyManagerService, private prefixation: PrefixationPipe) {}
 
     getTypes(): string {
         return join(orderBy(

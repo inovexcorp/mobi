@@ -22,8 +22,13 @@
  */
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import './classBlockHeader.component.scss';
-
-const template = require('./classBlockHeader.component.html');
+import { Component, Inject } from '@angular/core';
+import { ExploreService } from '../../../services/explore.service';
+import { ExploreUtilsService } from '../../services/exploreUtils.service';
+import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/newInstanceClassOverlay.component';
+import { MatDialog } from '@angular/material/dialog';
+import policyEnforcementService from '../../../../shared/services/policyEnforcement.service';
+import prefixes from '../../../../shared/services/prefixes.service';
 
 /**
  * @ngdoc component
@@ -40,76 +45,70 @@ const template = require('./classBlockHeader.component.html');
  * `classBlockHeader` is a component that creates a {@link discover.component:datasetSelect} to select a dataset to explore.
  * It also provides buttons to refresh the view of the dataset and to create an instance.
  */
-const classBlockHeaderComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: classBlockHeaderComponentCtrl
-};
 
-classBlockHeaderComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService', 'prefixes', 'policyEnforcementService'];
+@Component({
+    selector: 'class-block-header',
+    templateUrl: './classBlockHeader.component.html'
+})
+export class ClassBlockHeaderComponent {
+    constructor(private es: ExploreService, @Inject('utilService') private util,
+                @Inject('policyEnforcementService') private pep, public ds: DiscoverStateService,
+                private eu: ExploreUtilsService, @Inject('prefixes') private prefixes, private dialog: MatDialog) {}
 
-function classBlockHeaderComponentCtrl(discoverStateService: DiscoverStateService, exploreService, exploreUtilsService, utilService, modalService, prefixes, policyEnforcementService) {
-    const dvm = this;
-    const es = exploreService;
-    const util = utilService;
-    const pep = policyEnforcementService;
-    dvm.ds = discoverStateService;
-    dvm.eu = exploreUtilsService;
-    
-    dvm.showCreate = function() {
+    showCreate(): void {
         const pepRequest = {
-            resourceId: dvm.ds.explore.recordId,
-            actionId: prefixes.catalog + 'Modify'
+            resourceId: this.ds.explore.recordId,
+            actionId: this.prefixes.catalog + 'Modify'
         };
-        pep.evaluateRequest(pepRequest)
+        this.pep.evaluateRequest(pepRequest)
             .then(response => {
-                const canEdit = response !== pep.deny;
+                const canEdit = response !== this.pep.deny;
                 if (canEdit) {
-                    dvm.eu.getClasses(dvm.ds.explore.recordId)
-                        .then(classes => {
-                            modalService.openModal('newInstanceClassOverlay', {classes});
-                        }, util.createErrorToast);
+                    this.eu.getClasses(this.ds.explore.recordId)
+                        .subscribe(classes => {
+                            this.dialog.open(NewInstanceClassOverlayComponent, {
+                                data: {
+                                    content: classes
+                                }});
+                        }, this.util.createErrorToast);
                 } else {
-                    util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.util.createErrorToast('You don\'t have permission to modify dataset');
                 }
             }, () => {
-                util.createWarningToast('Could not retrieve record permissions');
+                this.util.createWarningToast('Could not retrieve record permissions');
             });
     }
-    dvm.onSelect = function(value) {
-        dvm.ds.explore.recordId = value;
-        if (dvm.ds.explore.recordId !== '') {
-            dvm.refresh();
+    onSelect(value): void {
+        this.ds.explore.recordId = value;
+        if (this.ds.explore.recordId !== '') {
+            this.refresh();
         }
     }
-    dvm.refresh = function() {
+    refresh(): void {
         const pepRequest = {
-            resourceId: dvm.ds.explore.recordId,
-            actionId: prefixes.policy + 'Read'
+            resourceId: this.ds.explore.recordId,
+            actionId: this.prefixes.policy + 'Read'
         };
-        pep.evaluateRequest(pepRequest)
+        this.pep.evaluateRequest(pepRequest)
             .then(response => {
-                const canRead = response !== pep.deny;
+                const canRead = response !== this.pep.deny;
                 if (canRead) {
-                    dvm.ds.explore.hasPermissionError = false;
-                    es.getClassDetails(dvm.ds.explore.recordId)
-                        .then(details => {
-                            dvm.ds.explore.classDetails = details;
+                    this.ds.explore.hasPermissionError = false;
+                    this.es.getClassDetails(this.ds.explore.recordId)
+                        .subscribe(details => {
+                            this.ds.explore.classDetails = details;
                         }, errorMessage => {
-                            dvm.ds.explore.classDetails = [];
-                            util.createErrorToast(errorMessage);
+                            this.ds.explore.classDetails = [];
+                            this.util.createErrorToast(errorMessage);
                         });
                 } else {
-                    util.createErrorToast('You don\'t have permission to read dataset');
-                    dvm.ds.explore.recordId = '';
-                    dvm.ds.explore.breadcrumbs = ['Classes'];
-                    dvm.ds.explore.hasPermissionError = true;
+                    this.util.createErrorToast('You don\'t have permission to read dataset');
+                    this.ds.explore.recordId = '';
+                    this.ds.explore.breadcrumbs = ['Classes'];
+                    this.ds.explore.hasPermissionError = true;
                 }
             }, () => {
-                util.createWarningToast('Could not retrieve record permissions');
+                this.util.createWarningToast('Could not retrieve record permissions');
             });
     }
 }
-
-export default classBlockHeaderComponent;

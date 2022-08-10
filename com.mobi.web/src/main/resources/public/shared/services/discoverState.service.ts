@@ -23,6 +23,8 @@
 import { Injectable } from '@angular/core';
 import { take, includes, get, find } from 'lodash';
 
+import { ExploreState } from '../models/exploreState.interface';
+
 /**
  * @class shared.DiscoverStateService
  *
@@ -31,56 +33,49 @@ import { take, includes, get, find } from 'lodash';
  */
 @Injectable()
 export class DiscoverStateService {
-
-    constructor() {
-        this._setStates();
-    }
-    
     /**
      * Determines which tab of the {@link discover.DiscoverPageComponent} should be displayed.
      * @type {number}
      */
     tabIndex = 0;
+
+    constructor() {
+        this._setStates();
+    }
     
-    /**
-     * 'explore' is an object which holds properties associated with the {@link explore.ExploreTabDirective}.
-     * The structure is as follows:
-     * ```
-     * {
-     *     recordId: '', // Selected DatasetRecord ID
-     *     breadcrumbs: [],
-     *     editing: false,
-     *     creating: false,
-     *     classDetails: [], // Information about the classes with instances within the selected dataset
-     *     classId: '',
-     *     classDeprecated: false,
-     *     instance: {
-     *         entity: {},
-     *         metadata: {
-     *             instanceIRI: ''
-     *         }
-     *     },
-     *     instanceDetails: {
-     *         data: [],
-     *         limit: 10, // The limit for the number of instances shown
-     *         links: {
-     *             next: '',
-     *             prev: ''
-     *         },
-     *         total: 10,
-     *         currentPage: 1
-     *     },
-     * }
-     * ```
-     * @type {Object}
-     */
-    explore: any = {};
 
     /**
-     * 'search' is an object which holds properties associated with the {@link search.DiscoverSearchTabDirective}
+     * 'explore' is an object which holds properties associated with the {@link explore.ExploreTabDirective}.
      * @type {Object}
      */
-    search: any = {};
+    explore: ExploreState = {
+        breadcrumbs: ['Classes'],
+        classDeprecated: false,
+        classDetails: [],
+        classId: '',
+        creating: false,
+        editing: false,
+        instance: {
+            // changed: [],
+            entity: [],
+            metadata: undefined,
+            objectMap: {},
+            original: []
+        },
+        instanceDetails: {
+            currentPage: 0,
+            data: [],
+            limit: 99,
+            total: 0,
+            links: {
+                next: '',
+                prev: ''
+            },
+        },
+        recordId: '',
+        recordTitle: '',
+        hasPermissionError: false
+    };
 
     /**
      * 'query' is an object which holds properties associated with the {@link query.QueryTabComponent}.
@@ -88,6 +83,7 @@ export class DiscoverStateService {
      */
     query = {
         datasetRecordId: '',
+        datasetRecordTitle: '',
         submitDisabled: false,
         queryString: '',
         response: {},
@@ -99,6 +95,7 @@ export class DiscoverStateService {
      * Resets all state variables.
      */
     reset(): void {
+        this.tabIndex = 0;
         this._setStates();
     }
 
@@ -107,14 +104,14 @@ export class DiscoverStateService {
      */
     resetPagedInstanceDetails(): void {
         this.explore.instanceDetails = {
-            currentPage: 1,
+            currentPage: 0,
             data: [],
             limit: 99,
+            total: 0,
             links: {
                 next: '',
                 prev: ''
             },
-            total: 0
         };
     }
 
@@ -164,21 +161,6 @@ export class DiscoverStateService {
         return find(this.explore.instance.entity, obj => includes(get(obj, '@type'), this.explore.classId));
     }
 
-    /**
-     * Resets the search query config to be the default values in the {@link search.DiscoverSearchTabDirective}.
-     */
-    resetSearchQueryConfig(): void {
-        const variables = Object.assign({}, this.search.queryConfig.variables);
-        this.search.queryConfig = {
-            isOrKeywords: false,
-            isOrTypes: false,
-            keywords: [],
-            types: [],
-            filters: [],
-            variables
-        };
-    }
-
     private _setStates() {
         this.explore = {
             breadcrumbs: ['Classes'],
@@ -188,43 +170,28 @@ export class DiscoverStateService {
             creating: false,
             editing: false,
             instance: {
-                changed: [],
-                entity: [{}],
-                metadata: {},
+                entity: [],
+                metadata: undefined,
                 objectMap: {},
                 original: []
             },
             instanceDetails: {
-                currentPage: 1,
+                currentPage: 0,
                 data: [],
                 limit: 99,
+                total: 0,
                 links: {
                     next: '',
                     prev: ''
                 },
-                total: 0
             },
             recordId: '',
+            recordTitle: '',
             hasPermissionError: false
-        };
-        this.search = {
-            datasetRecordId: '',
-            noDomains: undefined,
-            properties: undefined,
-            queryConfig: {
-                isOrKeywords: false,
-                isOrTypes: false,
-                keywords: [],
-                types: [],
-                filters: [],
-                variables: {}
-            },
-            results: undefined,
-            targetedId: 'discover-search-results',
-            typeObject: undefined
         };
         this.query = {
             datasetRecordId: '',
+            datasetRecordTitle: '',
             submitDisabled: false,
             queryString: '',
             response: {},
@@ -238,11 +205,13 @@ export class DiscoverStateService {
         this.explore.classDetails = [];
         this.explore.classId = '';
         this.explore.instance = {
-            changed: [],
-            entity: {},
-            metadata: {}
+            entity: [],
+            metadata: undefined,
+            objectMap: {},
+            original: []
         };
         this.query.datasetRecordId = '',
+        this.query.datasetRecordTitle = '',
         this.query.submitDisabled = false;
         this.query.queryString =  '';
         this.query.response = {};

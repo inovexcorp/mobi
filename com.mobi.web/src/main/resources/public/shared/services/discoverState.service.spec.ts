@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -25,6 +25,7 @@ import { TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 
 import { DiscoverStateService } from './discoverState.service';
+import {InstanceDetails} from "../../discover/models/instanceDetails.interface";
 
 describe('Discover State Service', function() {
     let service: DiscoverStateService;
@@ -55,7 +56,7 @@ describe('Discover State Service', function() {
     it('resetPagedInstanceDetails should reset the proper variables', function() {
         service.explore.instanceDetails = {
             currentPage: 1,
-            data: [{prop: 'stuff'}],
+            data: [{instanceIRI: 'stuff', title: 'stuff', description: ''}],
             limit: 100,
             links: {
                 next: 'next',
@@ -65,7 +66,7 @@ describe('Discover State Service', function() {
         };
         service.resetPagedInstanceDetails();
         expect(service.explore.instanceDetails).toEqual({
-            currentPage: 1,
+            currentPage: 0,
             data: [],
             limit: 99,
             links: {
@@ -80,14 +81,31 @@ describe('Discover State Service', function() {
             spyOn(service, 'resetPagedInstanceDetails');
             service.explore = {
                 breadcrumbs: ['Classes', 'instance'],
-                classDetails: [{}],
+                classDeprecated: false,
+                classDetails: [],
                 classId: 'classId',
+                creating: false,
+                editing: false,
                 instance: {
-                    changed: ['prop'],
-                    entity: {'@id': 'instanceId'},
-                    metadata: {prop: 'prop'}
+                    // changed: ['prop'],
+                    entity: [{'@id': 'instanceId', '@type': ['instance']}],
+                    metadata: {instanceIRI: 'instanceIRI', title: 'prop', description: 'prop description'},
+                    objectMap: {},
+                    original: []
                 },
-                recordId: 'recordId'
+                instanceDetails: {
+                    currentPage: 0,
+                    data: [],
+                    limit: 99,
+                    total: 0,
+                    links: {
+                        next: '',
+                        prev: ''
+                    },
+                },
+                recordId: 'recordId',
+                recordTitle: 'recordTitle',
+                hasPermissionError: false
             };
         });
         it('matches the recordId', function() {
@@ -95,16 +113,20 @@ describe('Discover State Service', function() {
             expect(service.explore.breadcrumbs).toEqual(['Classes']);
             expect(service.explore.classDetails).toEqual([]);
             expect(service.explore.classId).toEqual('');
-            expect(service.explore.instance).toEqual({changed: [], entity: {}, metadata: {}});
+            expect(service.explore.instance).toEqual({entity: [], metadata: undefined, objectMap: {}, original: []});
             expect(service.explore.recordId).toEqual('');
             expect(service.resetPagedInstanceDetails).toHaveBeenCalledWith();
         });
         it('does not match the recordId', function() {
             service.cleanUpOnDatasetDelete('other');
             expect(service.explore.breadcrumbs).toEqual(['Classes', 'instance']);
-            expect(service.explore.classDetails).toEqual([{}]);
+            expect(service.explore.classDetails).toEqual([]);
             expect(service.explore.classId).toEqual('classId');
-            expect(service.explore.instance).toEqual({changed: ['prop'], entity: {'@id': 'instanceId'}, metadata: {prop: 'prop'}});
+            expect(service.explore.instance).toEqual({
+                entity: [{'@id': 'instanceId', '@type': ['instance']}],
+                metadata: {instanceIRI: 'instanceIRI', title: 'prop', description: 'prop description'},
+                objectMap: {},
+                original: []});
             expect(service.explore.recordId).toEqual('recordId');
             expect(service.resetPagedInstanceDetails).not.toHaveBeenCalled();
         });
@@ -114,14 +136,31 @@ describe('Discover State Service', function() {
             spyOn(service, 'resetPagedInstanceDetails');
             service.explore = {
                 breadcrumbs: ['Classes', 'instance'],
-                classDetails: [{}],
+                classDeprecated: false,
+                classDetails: [],
                 classId: 'classId',
+                creating: false,
+                editing: false,
                 instance: {
-                    changed: ['prop'],
-                    entity: {'@id': 'instanceId'},
-                    metadata: {prop: 'prop'}
+                    // changed: ['prop'],
+                    entity: [{'@id': 'instanceId', '@type': ['instance']}],
+                    metadata: {instanceIRI: 'instanceIRI', title: 'prop', description: 'prop description'},
+                    objectMap: {},
+                    original: []
                 },
-                recordId: 'recordId'
+                instanceDetails: {
+                    currentPage: 0,
+                    data: [],
+                    limit: 99,
+                    total: 0,
+                    links: {
+                        next: '',
+                        prev: ''
+                    },
+                },
+                recordId: 'recordId',
+                recordTitle: 'recordTitle',
+                hasPermissionError: false
             };
         });
         it('matches the recordId', function() {
@@ -129,15 +168,19 @@ describe('Discover State Service', function() {
             expect(service.explore.breadcrumbs).toEqual(['Classes']);
             expect(service.explore.classDetails).toEqual([]);
             expect(service.explore.classId).toEqual('');
-            expect(service.explore.instance).toEqual({changed: [], entity: {}, metadata: {}});
+            expect(service.explore.instance).toEqual({entity: [], metadata: undefined, objectMap: {}, original: []});
             expect(service.resetPagedInstanceDetails).toHaveBeenCalledWith();
         });
         it('does not match the recordId', function() {
             service.cleanUpOnDatasetClear('other');
             expect(service.explore.breadcrumbs).toEqual(['Classes', 'instance']);
-            expect(service.explore.classDetails).toEqual([{}]);
+            expect(service.explore.classDetails).toEqual([]);
             expect(service.explore.classId).toEqual('classId');
-            expect(service.explore.instance).toEqual({changed: ['prop'], entity: {'@id': 'instanceId'}, metadata: {prop: 'prop'}});
+            expect(service.explore.instance).toEqual({
+                entity: [{'@id': 'instanceId', '@type': ['instance']}],
+                metadata: {instanceIRI: 'instanceIRI', title: 'prop', description: 'prop description'},
+                objectMap: {},
+                original: []});
             expect(service.resetPagedInstanceDetails).not.toHaveBeenCalled();
         });
     });
@@ -153,36 +196,10 @@ describe('Discover State Service', function() {
     it('getInstance should return the correct object in the entity', function() {
         service.explore.classId = 'https://mobi.com#classId';
         service.explore.instance.entity = [{
+            '@id': '_:x1',
             '@type': ['https://mobi.com#classId']
-        }, {
-            '@id': '_:x1'
         }];
-        expect(service.getInstance()).toEqual({'@type': ['https://mobi.com#classId']});
-    });
-    it('resetSearchQueryConfig should reset the query config variables', function() {
-        service.search.queryConfig = {
-            isOrKeywords: true,
-            isOrTypes: true,
-            keywords: ['keyword'],
-            types: ['type'],
-            filters: [{
-                prop: 'filter'
-            }],
-            variables: {
-                var0: 'var0'
-            }
-        };
-        service.resetSearchQueryConfig();
-        expect(service.search.queryConfig).toEqual({
-            isOrKeywords: false,
-            isOrTypes: false,
-            keywords: [],
-            types: [],
-            filters: [],
-            variables: {
-                var0: 'var0'
-            }
-        });
+        expect(service.getInstance()).toEqual({'@id': '_:x1', '@type': ['https://mobi.com#classId']});
     });
 
     function expectInitialState() {
@@ -194,14 +211,14 @@ describe('Discover State Service', function() {
             creating: false,
             editing: false,
             instance: {
-                changed: [],
-                entity: [{}],
-                metadata: {},
+                // changed: undefined,
+                entity: [],
+                metadata: undefined,
                 objectMap: {},
                 original: []
             },
             instanceDetails: {
-                currentPage: 1,
+                currentPage: 0,
                 data: [],
                 limit: 99,
                 links: {
@@ -211,26 +228,12 @@ describe('Discover State Service', function() {
                 total: 0
             },
             recordId: '',
+            recordTitle: '',
             hasPermissionError: false
-        });
-        expect(service.search).toEqual({
-            datasetRecordId: '',
-            noDomains: undefined,
-            properties: undefined,
-            queryConfig: {
-                isOrKeywords: false,
-                isOrTypes: false,
-                keywords: [],
-                types: [],
-                filters: [],
-                variables: {}
-            },
-            results: undefined,
-            targetedId: 'discover-search-results',
-            typeObject: undefined
         });
         expect(service.query).toEqual({
             datasetRecordId: '',
+            datasetRecordTitle: '',
             submitDisabled: false,
             queryString: '',
             response: {},

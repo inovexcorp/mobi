@@ -28,7 +28,7 @@ module.exports = {
         browser.globals.login(browser, user, password);
         browser
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .waitForElementVisible('div.btn-container button')
     },
 
@@ -55,7 +55,6 @@ module.exports = {
     'return_to_ontology_editor_search': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, \'ontology-sidebar\')]//button[@class=\'btn btn-primary\']')
-            .waitForElementNotPresent('div.spinner')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, \'open-ontology-tab\')]//div[contains(@class, \'search-bar\')]/input'})
     },
 
@@ -78,7 +77,10 @@ module.exports = {
             .clearValue('open-ontology-tab search-bar input')
             .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
             .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-          browser.globals.wait_for_no_spinners(browser)
+              .waitForElementNotVisible('mat-spinner')
+              .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+              .waitForElementNotPresent('div.fade')
+
           browser
             .waitForElementVisible('open-ontology-tab search-bar input')
             .useXpath()
@@ -90,24 +92,30 @@ module.exports = {
           .setValue('open-ontology-tab search-bar input', '')
           .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
           .waitForElementNotVisible('.spinner')
-      browser.globals.wait_for_no_spinners(browser)
-    },
-
-    'open_ontology': function (browser, ontology) {
-      browser.globals.wait_for_no_spinners(browser)
-      browser
-          .useCss()
-          .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
-          .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-          .waitForElementNotPresent('div.spinner')
-          .waitForElementNotPresent('mat-spinner')
+          .waitForElementNotVisible('mat-spinner')
           .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
           .waitForElementNotPresent('div.fade')
-          .useXpath()
-          .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+
+    },
+
+    'search_for_ontology': function (browser, ontology) {
+          browser
+              .useCss()
+              .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
+              .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
+              .waitForElementNotVisible('div.spinner')
+              .waitForElementNotVisible('mat-spinner')
+              .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+              .waitForElementNotPresent('div.fade')
+              .useXpath()
+              .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+        },
+
+    'open_ontology': function (browser, ontology) {
+        browser.globals.search_for_ontology(browser, ontology);
+        browser
           .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
           .useCss()
-          .waitForElementNotVisible('.spinner')
           .waitForElementVisible('div.material-tabset li.nav-item') // ensures that project tab is showing
     },
 
@@ -203,8 +211,7 @@ module.exports = {
         const t = timeout || 15000;
         browser
             .useCss()
-            .waitForElementNotVisible('div.spinner', t)
-            .waitForElementNotVisible('mat-spinner', t)
+            .waitForElementNotPresent('#spinner-full', 45000)
             .waitForElementNotPresent('xpath', '//div[@id="toast-container"]', t)
             .waitForElementNotPresent('div.fade', t)
     },
@@ -212,8 +219,8 @@ module.exports = {
     'switchToPage': function(browser, page, waitForElement){
         browser
             .click('sidebar div ul a[class=nav-link][href="#/' + page + '"]')
-            .waitForElementNotPresent('div.spinner');
-
+            .waitForElementVisible('#spinner-full')
+            .waitForElementNotPresent('#spinner-full', 30000);
         if (waitForElement) {
             browser.waitForElementVisible(waitForElement);
         }

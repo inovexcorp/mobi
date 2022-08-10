@@ -22,6 +22,8 @@
  */
 import { union, get } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./ontologyPropertiesBlock.component.html');
 
 /**
@@ -29,7 +31,6 @@ const template = require('./ontologyPropertiesBlock.component.html');
  * @name ontology-editor.component:ontologyPropertiesBlock
  * @requires shared.service:ontologyStateService
  * @requires shared.service:propertyManagerService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -49,13 +50,12 @@ const ontologyPropertiesBlockComponent = {
     controller: ontologyPropertiesBlockComponentCtrl
 };
 
-ontologyPropertiesBlockComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService', 'modalService'];
+ontologyPropertiesBlockComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'modalService'];
 
-function ontologyPropertiesBlockComponentCtrl(ontologyStateService, propertyManagerService, ontologyUtilsManagerService, modalService) {
+function ontologyPropertiesBlockComponentCtrl(ontologyStateService: OntologyStateService, propertyManagerService, modalService) {
     var dvm = this;
     var pm = propertyManagerService;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.properties = [];
     
     dvm.$onChanges = function() {
@@ -71,8 +71,8 @@ function ontologyPropertiesBlockComponentCtrl(ontologyStateService, propertyMana
         modalService.openModal('ontologyPropertyOverlay');
     }
     dvm.openRemoveOverlay = function(key, index) {
-        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
-            dvm.ontoUtils.removeProperty(key, index);
+        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
+            dvm.os.removeProperty(key, index).subscribe();
         });
     }
     dvm.editClicked = function(property, index) {
@@ -85,6 +85,9 @@ function ontologyPropertiesBlockComponentCtrl(ontologyStateService, propertyMana
         dvm.os.ontologyPropertyIndex = index;
         dvm.os.ontologyPropertyLanguage = get(propertyObj, '@language');
         modalService.openModal('ontologyPropertyOverlay');
+    }
+    dvm.orderByEntityName = function(iri) {
+        return dvm.os.getEntityNameByListItem(iri);
     }
 }
 

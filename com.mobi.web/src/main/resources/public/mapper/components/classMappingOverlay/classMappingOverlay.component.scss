@@ -23,8 +23,13 @@
 /* Core variables */
 @import "../../../css/variables";
 
+.virtual-scroll {
+  height: 95%;
+  overflow-y: auto;
+}
+
 class-mapping-overlay {
-    .class-select {
-        min-width: 400px;
-    }
+  .class-select {
+    min-width: 400px;
+  }
 }

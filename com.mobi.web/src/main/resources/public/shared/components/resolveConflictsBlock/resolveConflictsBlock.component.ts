@@ -54,8 +54,8 @@ export class ResolveConflictsBlock implements OnInit {
 
     ngOnInit(): void {
         let branchId;
-        if (this.state.listItem?.ontologyRecord?.branchId) { // Should be removed when ontologyState is updated to new service
-            branchId = this.state.listItem.ontologyRecord.branchId;
+        if (this.state.listItem?.versionedRdfRecord?.branchId) { // Should be removed when ontologyState is updated to new service
+            branchId = this.state.listItem.versionedRdfRecord.branchId;
         }
         if (this.state.listItem?.versionedRdfRecord?.branchId) {
             branchId = this.state.listItem.versionedRdfRecord.branchId;
@@ -80,7 +80,7 @@ export class ResolveConflictsBlock implements OnInit {
             }
         });
         this.state.merge()
-            .then(() => {
+            .subscribe(() => {
                 if (!(this.state instanceof ShapesGraphStateService)) {
                     this.state.resetStateTabs();
                 }

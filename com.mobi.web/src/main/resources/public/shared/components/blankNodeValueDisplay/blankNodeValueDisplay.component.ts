@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { OntologyStateService } from '../../services/ontologyState.service';
+
 import './blankNodeValueDisplay.component.scss';
 
 const template = require('./blankNodeValueDisplay.component.html');
@@ -27,7 +29,6 @@ const template = require('./blankNodeValueDisplay.component.html');
 /**
  * @ngdoc component
  * @name ontology-editor.component:blankNodeValueDisplay
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `blankNodeValueDisplay` is a component that creates a ui-codemirror container for displaying a blank node with
@@ -44,11 +45,11 @@ const blankNodeValueDisplayComponent = {
     controller: blankNodeValueDisplayComponentCtrl
 };
 
-blankNodeValueDisplayComponentCtrl.$inject = ['ontologyUtilsManagerService'];
+blankNodeValueDisplayComponentCtrl.$inject = ['ontologyStateService'];
 
-function blankNodeValueDisplayComponentCtrl(ontologyUtilsManagerService) {
+function blankNodeValueDisplayComponentCtrl(ontologyStateService: OntologyStateService) {
     var dvm = this;
-    dvm.ontoUtils = ontologyUtilsManagerService;
+    dvm.os = ontologyStateService;
     dvm.editorOptions = {
         mode: 'text/omn',
         indentUnit: 4,
@@ -62,7 +63,7 @@ function blankNodeValueDisplayComponentCtrl(ontologyUtilsManagerService) {
     dvm.value = '';
 
     dvm.$onChanges = function(changesObj) {
-        dvm.value = dvm.ontoUtils.getBlankNodeValue(changesObj.nodeId.currentValue);
+        dvm.value = dvm.os.getBlankNodeValue(changesObj.nodeId.currentValue);
     }
 }
 

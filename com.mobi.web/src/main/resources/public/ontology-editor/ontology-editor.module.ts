@@ -22,8 +22,6 @@
  */
 import * as angular from 'angular';
 
-import ontologyUtilsManagerService from './services/ontologyUtilsManager.service';
-
 import advancedLanguageSelectComponent from './components/advancedLanguageSelect/advancedLanguageSelect.component';
 import annotationBlockComponent from './components/annotationBlock/annotationBlock.component';
 import annotationOverlayComponent from './components/annotationOverlay/annotationOverlay.component';
@@ -115,7 +113,6 @@ import visualizationTabComponent from './components/visualizationTab/visualizati
  * creating, editing, and managing ontologies/vocabularies.
  */
 angular.module('ontology-editor', [])
-    .service('ontologyUtilsManagerService', ontologyUtilsManagerService)
     .component('advancedLanguageSelect', advancedLanguageSelectComponent)
     .component('annotationBlock', annotationBlockComponent)
     .component('annotationOverlay', annotationOverlayComponent)

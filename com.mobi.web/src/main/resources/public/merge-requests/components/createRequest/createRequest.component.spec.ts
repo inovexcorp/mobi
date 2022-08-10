@@ -39,6 +39,7 @@ import { RequestBranchSelectComponent } from '../requestBranchSelect/requestBran
 import { RequestDetailsFormComponent } from '../requestDetailsForm/requestDetailsForm.component';
 import { RequestRecordSelectComponent } from '../requestRecordSelect/requestRecordSelect.component';
 import { CreateRequestComponent } from './createRequest.component';
+import { Commit } from '../../../shared/models/commit.interface';
 
 describe('Create Request component', function() {
     let component: CreateRequestComponent;
@@ -47,6 +48,8 @@ describe('Create Request component', function() {
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let utilStub;
+    let commit : Commit;
+    let nativeElement: HTMLElement;
 
     const id = 'entityId';
     const emptyObj: JSONLDObject = {'@id': id};
@@ -74,6 +77,7 @@ describe('Create Request component', function() {
         fixture = TestBed.createComponent(CreateRequestComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        nativeElement = element.nativeElement as HTMLElement;
         mergeRequestManagerStub = TestBed.get(MergeRequestManagerService);
         mergeRequestsStateStub = TestBed.get(MergeRequestsStateService);
         utilStub = TestBed.get('utilService');
@@ -86,6 +90,18 @@ describe('Create Request component', function() {
             sourceBranchId: '',
             targetBranchId: '',
             removeSource: false
+        };
+        commit = {
+            id: 'commit1',
+            creator: {
+                firstName: 'batman',
+                lastName: '',
+                username: 'string'
+            },
+            date: 'string',
+            message: 'string',
+            base: 'string',
+            auxiliary: 'string'
         };
     });
 
@@ -156,6 +172,50 @@ describe('Create Request component', function() {
             expect(mergeRequestsStateStub.requestConfig.description).toEqual('');
             expect(mergeRequestsStateStub.requestConfig.assignees).toEqual([]);
             expect(mergeRequestsStateStub.requestConfig.removeSource).toBeFalse();
+        });
+        describe('should determine whether the next button should be disabled if the step is', function() {
+            it('0',  function() {
+                mergeRequestsStateStub.createRequestStep = 0;
+                fixture.detectChanges();
+                const button = element.nativeElement.querySelector('.button-step-1');
+                expect(button.disabled).toBeTruthy();
+                mergeRequestsStateStub.requestConfig.recordId = 'record';
+                fixture.detectChanges();
+                expect(button.disabled).toBeFalsy();
+            });
+            describe('1',  function() {
+                it('and both of the branches are the same',  function() {
+                    mergeRequestsStateStub.createRequestStep = 1;
+                    mergeRequestsStateStub.sameBranch = true;
+                    fixture.detectChanges();
+                    const button = element.nativeElement.querySelector('.button-step-2');
+                    expect(button.disabled).toBeTruthy();
+                    mergeRequestsStateStub.requestConfig.sourceBranchId = 'branch';
+                    mergeRequestsStateStub.requestConfig.targetBranchId = 'branch';
+                    expect(button.disabled).toBeTruthy();
+                });
+                it('and the two branches are different',  function() {
+                    mergeRequestsStateStub.createRequestStep = 1;
+                    mergeRequestsStateStub.sameBranch = false;
+                    fixture.detectChanges();
+                    const button = element.nativeElement.querySelector('.button-step-2');
+                    expect(button.disabled).toBeTruthy();
+                    mergeRequestsStateStub.requestConfig.sourceBranchId = 'branch';
+                    mergeRequestsStateStub.requestConfig.targetBranchId = 'branch';
+                    component.updateCommits({commits:[commit]});
+                    fixture.detectChanges();
+                    expect(button.disabled).toBeFalsy();
+                })
+            });
+            it('2', function() {
+                mergeRequestsStateStub.createRequestStep = 2;
+                fixture.detectChanges();
+                expect(component.isDisabled).toEqual(true);
+                mergeRequestsStateStub.requestConfig.title = 'title';
+                component.updateCommits({ commits:[commit] });
+                fixture.detectChanges();
+                expect(component.isDisabled).toEqual(false);
+            });
         });
     });
     describe('contains the the correct html', function() {

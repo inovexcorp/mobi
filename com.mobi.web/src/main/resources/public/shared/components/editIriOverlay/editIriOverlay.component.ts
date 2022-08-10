@@ -21,7 +21,10 @@
  * #L%
  */
 
-const template = require('./editIriOverlay.component.html');
+import {Component, Inject, Input, OnInit} from "@angular/core";
+import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
+import { REGEX } from '../../../constants';
+import {FormBuilder, FormControl, Validators} from "@angular/forms";
 
 /**
  * @ngdoc component
@@ -47,57 +50,52 @@ const template = require('./editIriOverlay.component.html');
  * @param {Function} close A function that closes the modal
  * @param {Function} dismiss A function that dismisses the modal
  */
-const editIriOverlayComponent = {
-    template,
-    bindings: {
-        resolve: '<',
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: editIriOverlayComponentCtrl
-};
 
-editIriOverlayComponentCtrl.$inject = ['REGEX'];
+@Component({
+    selector: 'edit-iri-overlay',
+    templateUrl: './editIriOverlay.component.html'
+})
+export class editIriOverlayComponent implements OnInit {
 
-function editIriOverlayComponentCtrl(REGEX) {
-    var dvm = this;
-    dvm.namespacePattern = undefined;
-    dvm.localNamePattern = undefined;
-    dvm.endsWithPattern = undefined;
-    
-    dvm.iriBegin = '';
-    dvm.iriThen = '';
-    dvm.iriEnd = '';
+    constructor(private dialogRef: MatDialogRef<editIriOverlayComponent>, @Inject(MAT_DIALOG_DATA) public data,
+                private fb: FormBuilder) {
+    }
 
-    dvm.$onInit = function() {
-        dvm.namespacePattern = REGEX.IRI;
-        dvm.localNamePattern = REGEX.LOCALNAME;
-        dvm.endsWithPattern = /^[\w\-\._~:/?[\]@!\$&'\(\)\*\+,;=.]+$/;
-        
-        dvm.iriBegin = dvm.resolve.iriBegin;
-        dvm.iriThen = dvm.resolve.iriThen;
-        dvm.iriEnd = dvm.resolve.iriEnd;
+
+    iriBegin = '';
+    iriThen = '';
+    iriEnd = '';
+
+    namespacePattern = REGEX.IRI;
+    localNamePattern = REGEX.LOCALNAME;
+    endsWithPattern = /^[\w\-\._~:/?[\]@!\$&'\(\)\*\+,;=.]+$/;
+
+    iriFormControl = this.fb.group({
+        beginsWith: ['', [Validators.required, Validators.pattern(this.namespacePattern)]],
+        then: ['', Validators.required],
+        endsWith: ['', [Validators.required, Validators.pattern(this.localNamePattern)]]
+    });
+
+    ngOnInit() {
+        this.iriFormControl.controls.beginsWith.setValue(this.data.iriBegin);
+        this.iriFormControl.controls.then.setValue(this.data.iriThen);
+        this.iriFormControl.controls.endsWith.setValue(this.data.iriEnd);
     }
-    dvm.submit = function() {
-        dvm.close({$value: {iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}})
+    submit() {
+        this.dialogRef.close({value: {
+            iriBegin: this.iriFormControl.controls.beginsWith.value,
+            iriThen: this.iriFormControl.controls.then.value,
+            iriEnd: this.iriFormControl.controls.endsWith.value}
+        });
     }
-    dvm.resetVariables = function() {
-        dvm.iriBegin = dvm.resolve.iriBegin;
-        dvm.iriThen = dvm.resolve.iriThen;
-        dvm.iriEnd = dvm.resolve.iriEnd;
+    resetVariables() {
+        this.iriFormControl.controls.beginsWith.setValue(this.data.iriBegin);
+        this.iriFormControl.controls.then.setValue(this.data.iriThen);
+        this.iriFormControl.controls.endsWith.setValue(this.data.iriEnd);
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    cancel() {
+        this.dialogRef.close(false);
     }
-    dvm.validateNamespace = (function() {
-        const noPoundSigns = /^[^#]+$/;
-        return {
-            test: function(value) {
-                return noPoundSigns.test(value) && dvm.namespacePattern.test(value);
-            }
-        };
-    })();
 }
 
 export default editIriOverlayComponent;

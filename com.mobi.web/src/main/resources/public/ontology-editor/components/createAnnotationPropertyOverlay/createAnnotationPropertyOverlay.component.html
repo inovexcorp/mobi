@@ -41,5 +41,5 @@
 </div>
 <div class="modal-footer">
     <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.createPropertyForm.$invalid || dvm.ontoUtils.checkIri(dvm.property['@id'])" ng-click="dvm.create()">Submit</button>
+    <button class="btn btn-primary" ng-disabled="dvm.createPropertyForm.$invalid || dvm.os.checkIri(dvm.property['@id'])" ng-click="dvm.create()">Submit</button>
 </div>

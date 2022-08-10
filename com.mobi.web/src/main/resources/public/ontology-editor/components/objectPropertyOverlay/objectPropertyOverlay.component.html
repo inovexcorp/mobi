@@ -32,7 +32,7 @@
             <ui-select ng-model="dvm.os.propertySelect" autofocus>
                 <ui-select-match placeholder="Select an object property">{{$select.selected}}</ui-select-match>
                 <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="property in dvm.values">
-                    <div title="property" ng-bind-html="dvm.ontoUtils.getDropDownText(property) | highlight: $select.search | trusted"></div>
+                    <div title="property" ng-bind-html="dvm.os.getEntityNameByListItem(property) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>

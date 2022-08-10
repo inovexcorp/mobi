@@ -27,15 +27,23 @@
     .breadcrumbs {
         float: left;
     }
-    .block-header {
+    .instances-display-header {
         .edit-button {
             display: inline-block;
             line-height: 33px;
             margin-right: 15px;
         }
     }
-    .block-content {
+    .instance-Container {
         padding: 10px 10px 15px 10px;
+        height: 100%;
+        overflow-y: scroll;
+        overflow-x: hidden;
+
+        .instance-properties-Container {
+            height: 95%;
+            overflow-y: auto;
+        }
 
         .lead {
             display: -webkit-box;

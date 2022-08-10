@@ -20,12 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="explore-tab container-fluid h-100 py-2">
-    <div class="row h-100">
-        <class-block ng-if="dvm.ds.explore.breadcrumbs.length === 1" class="col"></class-block>
-        <instance-block ng-if="dvm.ds.explore.breadcrumbs.length === 2" class="col"></instance-block>
-        <instance-view ng-if="dvm.ds.explore.breadcrumbs.length === 3 && !dvm.ds.explore.editing && !dvm.ds.explore.creating" class="col h-100" entity="dvm.ds.explore.instance.entity"></instance-view>
-        <instance-editor ng-if="dvm.ds.explore.breadcrumbs.length === 3 && dvm.ds.explore.editing" class="col h-100"></instance-editor>
-        <instance-creator ng-if="dvm.ds.explore.breadcrumbs.length === 3 && dvm.ds.explore.creating" class="col h-100"></instance-creator>
-    </div>
+<div class="explore-tab h-100 py-2">
+    <classes-display *ngIf="state.explore.breadcrumbs.length === 1"></classes-display>
+    <instances-display *ngIf="state.explore.breadcrumbs.length === 2"></instances-display>
+    <instance-view *ngIf="state.explore.breadcrumbs.length === 3 && !state.explore.editing && !state.explore.creating" entity="state.explore.instance.entity"></instance-view>
+    <instance-editor *ngIf="state.explore.breadcrumbs.length === 3 && state.explore.editing"></instance-editor>
+    <instance-creator *ngIf="state.explore.breadcrumbs.length === 3 && state.explore.creating"></instance-creator>
 </div>

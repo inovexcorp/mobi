@@ -22,9 +22,12 @@
  */
 import * as angular from 'angular';
 
-import {filter, some, every} from 'lodash';
+import { filter, some, every } from 'lodash';
 
 import './hierarchyTree.component.scss';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { first } from 'rxjs/operators';
 
 const template = require('./hierarchyTree.component.html');
 
@@ -33,7 +36,6 @@ const template = require('./hierarchyTree.component.html');
  * @name ontology-editor.component:hierarchyTree
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:utilService
  * @requires shared.service:prefixes
  *
@@ -61,7 +63,7 @@ const hierarchyTreeComponent = {
 
 hierarchyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'INDENT'];
 
-function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService, utilService, INDENT) {
+function hierarchyTreeComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, utilService, INDENT) {
     var dvm = this;
     var om = ontologyManagerService;
     var util = utilService;
@@ -121,12 +123,12 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         }
     }
     dvm.$onDestroy = function() {
-        if (dvm.os.listItem.editorTabStates) {
+        if (dvm.os.listItem?.editorTabStates) {
             dvm.resetIndex();
         }
     }
     dvm.clickItem = function(entityIRI) {
-        dvm.os.selectItem(entityIRI, undefined, dvm.os.getActivePage().targetedSpinnerId);
+        dvm.os.selectItem(entityIRI).pipe(first()).toPromise();
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;

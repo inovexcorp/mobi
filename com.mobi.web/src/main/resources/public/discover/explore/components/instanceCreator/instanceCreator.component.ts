@@ -24,8 +24,13 @@ import { initial, find, get } from 'lodash';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './instanceCreator.component.scss';
-
-const template = require('./instanceCreator.component.html');
+import { Component, Inject } from '@angular/core';
+import { ExploreService } from '../../../services/explore.service';
+import { ExploreUtilsService } from '../../services/exploreUtils.service';
+import { DCTERMS, OWL, RDFS, RDF, CATALOG } from '../../../../prefixes';
+import { HttpResponse } from '@angular/common/http';
+import { InstanceDetails } from '../../../models/instanceDetails.interface';
+import { switchMap } from 'rxjs/operators';
 
 /**
  * @ngdoc component
@@ -42,74 +47,68 @@ const template = require('./instanceCreator.component.html');
  * It also provides an {@link explore.component:instanceForm} to show the complete list of properties
  * available for the new instance in an editable format along with save and cancel buttons for the editing.
  */
-const instanceCreatorComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: instanceCreatorComponentCtrl
-};
 
-instanceCreatorComponentCtrl.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService', 'prefixes', 'policyEnforcementService'];
+@Component({
+    selector: 'instance-creator',
+    templateUrl: './instanceCreator.component.html'
+})
 
-function instanceCreatorComponentCtrl($q, discoverStateService: DiscoverStateService, utilService, exploreService, exploreUtilsService, prefixes, policyEnforcementService) {
-    const dvm = this;
-    const es = exploreService;
-    const eu = exploreUtilsService;
-    const pep = policyEnforcementService;
-    dvm.ds = discoverStateService;
-    dvm.util = utilService;
-    dvm.isValid = true;
+export class InstanceCreatorComponent {
+    isValid = true;
 
-    dvm.save = function() {
+    constructor(private es: ExploreService, private eu: ExploreUtilsService, public ds: DiscoverStateService,
+                @Inject('utilService') private util, @Inject('policyEnforcementService') private pep) {
+    }
+
+    save() {
         const pepRequest = {
-            resourceId: dvm.ds.explore.recordId,
-            actionId: prefixes.catalog + 'Modify'
+            resourceId: this.ds.explore.recordId,
+            actionId: CATALOG + 'Modify'
         };
-        pep.evaluateRequest(pepRequest)
+        this.pep.evaluateRequest(pepRequest)
             .then(response => {
-                const canModify = response !== pep.deny;
+                const canModify = response !== this.pep.deny;
                 if (canModify) {
-                    dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
-                    var instance = dvm.ds.getInstance();
-                    es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
-                        .then(() => {
-                            dvm.ds.explore.instanceDetails.total++;
-                            var offset = (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit;
-                            return es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset, limit: dvm.ds.explore.instanceDetails.limit});
-                        }, $q.reject)
-                        .then(response => {
-                            var resultsObject = es.createPagedResultsObject(response);
-                            dvm.ds.explore.instanceDetails.data = resultsObject.data;
-                            dvm.ds.explore.instanceDetails.links = resultsObject.links;
-                            var metadata: any = {instanceIRI: instance['@id']};
-                            metadata.title = getPreferredValue(instance, [prefixes.dcterms + 'title', prefixes.rdfs + 'label'], dvm.util.getBeautifulIRI(instance['@id']));
-                            metadata.description = getPreferredValue(instance, [prefixes.dcterms + 'description', prefixes.rdfs + 'comment'], '');
-                            dvm.ds.explore.instance.metadata = metadata;
-                            dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
-                            dvm.ds.explore.creating = false;
-                            return es.getClassDetails(dvm.ds.explore.recordId);
-                        }, $q.reject)
-                        .then(response => {
-                            dvm.ds.explore.classDetails = response;
-                        }, dvm.util.createErrorToast);
+                    this.ds.explore.instance.entity = this.eu.removeEmptyPropertiesFromArray(this.ds.explore.instance.entity);
+                    const instance = this.ds.getInstance();
+                    this.es.createInstance(this.ds.explore.recordId, this.ds.explore.instance.entity)
+                        .pipe(switchMap(() => {
+                            this.ds.explore.instanceDetails.total++;
+                            const offset = (this.ds.explore.instanceDetails.currentPage - 1) * this.ds.explore.instanceDetails.limit;
+                            return this.es.getClassInstanceDetails(this.ds.explore.recordId, this.ds.explore.classId, {offset, limit: this.ds.explore.instanceDetails.limit});
+                        }), switchMap(response => {
+                            const resultsObject = this.es.createPagedResultsObject(response as HttpResponse<InstanceDetails[]>);
+                            this.ds.explore.instanceDetails.data = resultsObject.data;
+                            let metadata: any = {instanceIRI: instance['@id']};
+                            metadata.title = this.getPreferredValue(instance, [DCTERMS + 'title', RDFS + 'label'], this.util.getBeautifulIRI(instance['@id']));
+                            metadata.description = this.getPreferredValue(instance, [DCTERMS + 'description', RDFS + 'comment'], '');
+                            this.ds.explore.instance.metadata = metadata;
+                            this.ds.explore.breadcrumbs[this.ds.explore.breadcrumbs.length - 1] = this.ds.explore.instance.metadata.title;
+                            this.ds.explore.creating = false;
+                            return this.es.getClassDetails(this.ds.explore.recordId);
+                        }))
+                        .subscribe((response) => {
+                            this.ds.explore.classDetails = response;
+                        }, (error) => this.util.createErrorToast(error));
                 } else {
-                    utilService.createErrorToast('You don\'t have permission to modify dataset');
-                    dvm.cancel();
+                    this.util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.cancel();
                 }
             }, () => {
-                utilService.createWarningToast('Could not retrieve record permissions');
+                this.util.createWarningToast('Could not retrieve record permissions');
             });
     }
-    dvm.cancel = function() {
-        dvm.ds.explore.instance.entity = {};
-        dvm.ds.explore.creating = false;
-        dvm.ds.explore.breadcrumbs = initial(dvm.ds.explore.breadcrumbs);
+    cancel() {
+        this.ds.explore.instance.entity = [];
+        this.ds.explore.creating = false;
+        this.ds.explore.breadcrumbs = initial(this.ds.explore.breadcrumbs);
+    }
+    checkValidation(event): void {
+        this.isValid = event.value;
     }
 
-    function getPreferredValue(entity, props, defaultValue) {
-        var prop = find(props, prop => entity[prop]);
+    private getPreferredValue(entity, props, defaultValue) {
+        const prop = find(props, prop => entity[prop]);
         return prop ? get(find(entity[prop], obj => !obj['@lang'] || obj['@lang'] === 'en'), '@value') : defaultValue;
     }
 }
-
-export default instanceCreatorComponent;

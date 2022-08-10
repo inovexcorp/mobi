@@ -22,7 +22,7 @@
  */
 import { Inject, Injectable } from '@angular/core';
 import { find, get, remove } from 'lodash';
-import { first } from 'rxjs/operators';
+import { first, switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
@@ -34,6 +34,7 @@ import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { from, Observable, of } from 'rxjs';
 import { BRANCHID, COMMITID, SHAPESGRAPHSTATE, TAGID, GRAPHEDITOR, DCTERMS, CATALOG } from '../../prefixes';
 import { PolicyManagerService } from './policyManager.service';
 import { HttpResponse } from '@angular/common/http';
@@ -44,14 +45,12 @@ import { HttpResponse } from '@angular/common/http';
  * A service which contains various variables to hold the state of the Shapes Graph editor
  */
 @Injectable()
-export class ShapesGraphStateService extends VersionedRdfState {
-    listItem: ShapesGraphListItem;
-    list: ShapesGraphListItem[];
+export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
 
     constructor(@Inject('stateManagerService') protected sm,
-                protected cm:CatalogManagerService, 
+                protected cm:CatalogManagerService,
                 @Inject('utilService') protected util,
-                @Inject('policyEnforcementService') protected pep, 
+                @Inject('policyEnforcementService') protected pep,
                 private pm: PolicyManagerService, private sgm: ShapesGraphManagerService) {
         super(SHAPESGRAPHSTATE,
             BRANCHID,
@@ -147,7 +146,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
             this.listItem = item;
             return Promise.resolve();
         }
-        return this.getCatalogDetails(record.recordId)
+        return this.getCatalogDetails(record.recordId).pipe(first()).toPromise()
             .then(response => {
                 const listItem = new ShapesGraphListItem();
                 listItem.versionedRdfRecord = {
@@ -234,7 +233,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
      * @return {Promise} A Promise that resolves if the delete was successful or not.
      */
     deleteShapesGraph(recordId: string): Promise<any> {
-        return this.deleteState(recordId)
+        return this.deleteState(recordId).toPromise()
             .then(() => {
                 return this.sgm.deleteShapesGraphRecord(recordId);
             }, error => Promise.reject(error));
@@ -260,7 +259,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
             commitId,
             tagId
         } as VersionedRdfStateBase;
-        return this.updateState(state).then(() => {
+        return this.updateState(state).pipe(first()).toPromise().then(() => {
             const title = this.listItem.versionedRdfRecord.title;
             remove(this.list, this.listItem);
             const item = new ShapesGraphListItem();
@@ -297,24 +296,26 @@ export class ShapesGraphStateService extends VersionedRdfState {
     /**
      * Performs a merge of a branch into another and updates the state.
      *
-     * @return {Promise} A Promise that resolves if the merge was successful or not.
+     * @return {Observable<null>} An Observable that resolves if the merge was successful or not.
      */
-    merge(): Promise<any> {
+    merge(): Observable<null> {
         const sourceId = this.listItem.versionedRdfRecord.branchId;
         const checkbox = this.listItem.merge.checkbox;
         let commitId;
-        return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId, this.listItem.merge.resolutions).pipe(first()).toPromise()
-            .then(commit => {
-                commitId = commit;
-                if (checkbox) {
-                    return this.deleteShapesGraphBranch(this.listItem.versionedRdfRecord.recordId, sourceId);
-                } else {
-                    return Promise.resolve();
-                }
-            }, error => Promise.reject(error))
-            .then(() => {
-                return this.changeShapesGraphVersion(this.listItem.versionedRdfRecord.recordId, this.listItem.merge.target['@id'], commitId, undefined, this.util.getDctermsValue(this.listItem.merge.target, 'title'));
-            }, error => Promise.reject(error));
+        return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId, this.listItem.merge.resolutions)
+            .pipe(
+                switchMap(commit => {
+                    commitId = commit;
+                    if (checkbox) {
+                        return from(this.deleteShapesGraphBranch(this.listItem.versionedRdfRecord.recordId, sourceId));
+                    } else {
+                        return of(1);
+                    }
+                }),
+                switchMap(() => {
+                    return from(this.changeShapesGraphVersion(this.listItem.versionedRdfRecord.recordId, this.listItem.merge.target['@id'], commitId, undefined, this.util.getDctermsValue(this.listItem.merge.target, 'title')));
+                })
+            );
     }
 
     canModify(): boolean {

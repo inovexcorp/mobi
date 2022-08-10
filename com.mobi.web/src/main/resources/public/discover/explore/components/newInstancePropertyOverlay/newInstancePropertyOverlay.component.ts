@@ -21,7 +21,14 @@
  * #L%
  */
 
-const template = require('./newInstancePropertyOverlay.component.html');
+import { Component, Inject, OnInit } from '@angular/core';
+import { ExploreUtilsService } from '../../services/exploreUtils.service';
+import { FormControl } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { debounceTime, map, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { PropertyDetails } from "../../../models/propertyDetails.interface";
 
 /**
  * @ngdoc component
@@ -41,43 +48,50 @@ const template = require('./newInstancePropertyOverlay.component.html');
  * @param {Object[]} resolve.properties The list of properties to select from
  * @param {Object} resolve.instance The instance to add the property to.
  */
-const newInstancePropertyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&',
-        resolve: '<'
-    },
-    controllerAs: 'dvm',
-    controller: newInstancePropertyOverlayComponentCtrl
-};
 
-newInstancePropertyOverlayComponentCtrl.$inject = ['$timeout', 'utilService', 'exploreUtilsService'];
+@Component({
+    selector: 'new-instance-property-overlay',
+    templateUrl: './newInstancePropertyOverlay.component.html'
+})
 
-function newInstancePropertyOverlayComponentCtrl($timeout, utilService, exploreUtilsService) {
-    var dvm = this;
-    var eu = exploreUtilsService;
-    dvm.util = utilService;
-    dvm.propertyIRI = '';
+export class NewInstancePropertyOverlayComponent implements OnInit {
+    searchText = '';
+    selectedProperty: PropertyDetails = undefined;
+    propertyControl = new FormControl();
+    filteredProperties: Observable<PropertyDetails[]>;
 
-    dvm.$onInit = function() {
-        $timeout(function() {
-            var el = document.querySelector('#auto-complete');
-            if (el instanceof HTMLElement) {
-                el.focus();
-            }
-        }, 200);
+    constructor(private dialogRef: MatDialogRef<NewInstancePropertyOverlayComponent>,
+                @Inject(MAT_DIALOG_DATA) public data,
+                private eu: ExploreUtilsService, @Inject('utilService') private util) {
     }
-    dvm.getProperties = function() {
-        return eu.getNewProperties(dvm.resolve.properties, dvm.resolve.instance, dvm.propertyIRI);
+
+    ngOnInit() {
+        this.filteredProperties = this.propertyControl.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string | PropertyDetails>(''),
+                map(val => {
+                    if (!this.data.properties) {
+                        return [];
+                    }
+                    const searchText = typeof val === 'string' ? val : val ? val.propertyIRI : '';
+                    const list = this.eu.getNewProperties(this.data.properties, this.data.instance, searchText);
+                    return list.slice(0, 101);
+                })
+            );
     }
-    dvm.submit = function() {
-        dvm.resolve.instance[dvm.propertyIRI] = [];
-        dvm.close({'$value': dvm.propertyIRI});
+    getDisplayText(value: PropertyDetails): string {
+        return value ? value.propertyIRI : '';
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    selectProperty(event: MatAutocompleteSelectedEvent): void {
+        if (event.option.value) {
+            this.selectedProperty = event.option.value;
+        }
+    }
+    submit = function() {
+        this.data.instance[this.selectedProperty.propertyIRI] = [];
+        this.dialogRef.close(this.selectedProperty);
     }
 }
 
-export default newInstancePropertyOverlayComponent;
+export default NewInstancePropertyOverlayComponent;

@@ -62,7 +62,7 @@ module.exports = {
         browser
             .useCss()
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]//parent::a')
-            .waitForElementNotVisible('.spinner')
+//            .waitForElementNotVisible('.spinner')
             .waitForElementVisible('selected-details .entity-name')
             .assert.textContains('selected-details .entity-name', 'Other Class')
     },

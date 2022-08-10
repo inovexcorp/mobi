@@ -46,7 +46,7 @@ describe('Merge Block component', function() {
             catalogManagerSvc = _catalogManagerService_;
         });
 
-        ontologyStateSvc.listItem.ontologyRecord.branchId = 'branchId';
+        ontologyStateSvc.listItem.versionedRdfRecord.branchId = 'branchId';
         ontologyStateSvc.listItem.branches = [{'@id': 'branchId'}];
         ontologyStateSvc.listItem.merge.checkbox = false;
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};

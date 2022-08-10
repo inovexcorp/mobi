@@ -22,7 +22,9 @@
  */
 import * as angular from 'angular';
 
-import { every, filter, some, get, has } from 'lodash';
+import { every, filter, some, get } from 'lodash';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./individualTree.component.html');
 
@@ -32,7 +34,6 @@ const template = require('./individualTree.component.html');
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `individualTree` is a component that creates a `div` containing a {@link shared.component:searchBar}
@@ -55,14 +56,13 @@ const individualTreeComponent = {
     controller: individualTreeComponentCtrl
 };
 
-individualTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'INDENT'];
+individualTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'INDENT'];
 
-function individualTreeComponentCtrl(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, INDENT) {
+function individualTreeComponentCtrl(ontologyManagerService, ontologyStateService: OntologyStateService, utilService, INDENT) {
     var dvm = this;
     dvm.indent = INDENT;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.util = utilService;
     dvm.searchText = '';
     dvm.filterText = '';
@@ -110,7 +110,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
     }
     dvm.$onDestroy = function() {
-        if (dvm.os.listItem.editorTabStates) {
+        if (dvm.os.listItem?.editorTabStates) {
             dvm.os.listItem.editorTabStates.individuals.index = 0;
         }
     }
@@ -121,7 +121,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
     }
     dvm.clickItem = function(entityIRI) {
-        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.individuals.targetedSpinnerId);
+        dvm.os.selectItem(entityIRI).toPromise();
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;

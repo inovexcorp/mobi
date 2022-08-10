@@ -45,7 +45,8 @@ export class QueryTabComponent implements OnInit {
     tab: any = {};
     error = '';
     queryForm = this.fb.group({
-        dataset: ['']
+        datasetSelect: [''],
+        formName: 'queryTab'
     });
 
     @ViewChild('discoverQuery') discoverQuery: ElementRef;
@@ -67,10 +68,11 @@ export class QueryTabComponent implements OnInit {
             this.error = 'Something went wrong, try again in a few seconds or refresh the page';
         }
     }
-    onSelect($event): void { // $event until datasetFormGroup is upgraded
+    onSelect(recordObject): void {
         this.state.query.submitDisabled = false;
-        this.state.query.datasetRecordId = $event.value;
-        this.permissionCheck($event.value);
+        this.state.query.datasetRecordId = recordObject.recordId;
+        this.state.query.datasetRecordTitle = recordObject.recordTitle;
+        this.permissionCheck(recordObject.recordId);
     }
     submitQuery(): void {
         if (this.state.query.datasetRecordId) {

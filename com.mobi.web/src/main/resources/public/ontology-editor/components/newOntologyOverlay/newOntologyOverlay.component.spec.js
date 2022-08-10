@@ -52,7 +52,7 @@ describe('New Ontology Overlay component', function() {
             ontologyStateSvc = _ontologyStateService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             splitIRI = _splitIRIFilter_;
         });
 

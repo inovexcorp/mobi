@@ -23,6 +23,8 @@
 import * as angular from 'angular';
 import { includes, some, union, get } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./ontologyPropertyOverlay.component.html');
 
 /**
@@ -31,7 +33,6 @@ const template = require('./ontologyPropertyOverlay.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:propertyManagerService
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:prefixes
  *
  * @description
@@ -57,13 +58,12 @@ const ontologyPropertyOverlayComponent = {
     controller: ontologyPropertyOverlayComponentCtrl
 };
 
-ontologyPropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'REGEX', 'propertyManagerService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
+ontologyPropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'REGEX', 'propertyManagerService', 'utilService', 'prefixes'];
 
-function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, propertyManagerService, utilService, ontologyUtilsManagerService, prefixes) {
+function ontologyPropertyOverlayComponentCtrl(ontologyStateService: OntologyStateService, REGEX, propertyManagerService, utilService, prefixes) {
     var dvm = this;
     var pm = propertyManagerService;
     dvm.prefixes = prefixes;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.os = ontologyStateService;
     dvm.iriPattern = REGEX.IRI;
     dvm.util = utilService;
@@ -108,8 +108,8 @@ function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, prope
             added = pm.addValue(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyValue, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage);
         }
         if (added) {
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage));
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage));
+            dvm.os.saveCurrentChanges().subscribe();
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
@@ -127,9 +127,9 @@ function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, prope
             edited = pm.editValue(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage);
         }
         if (edited) {
-            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage));
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.addToDeletions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage));
+            dvm.os.saveCurrentChanges().subscribe();
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
@@ -137,6 +137,9 @@ function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, prope
     }
     dvm.cancel = function() {
         dvm.dismiss();
+    }
+    dvm.orderByEntityName = function(iri) {
+        return dvm.os.getEntityNameByListItem(iri);
     }
 
     function createJson(value, type, language) {

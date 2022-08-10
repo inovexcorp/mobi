@@ -42,7 +42,7 @@ describe('Characteristics Block component', function() {
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
@@ -127,7 +127,7 @@ describe('Characteristics Block component', function() {
                 expect(this.characteristicObj.checked).toEqual(true);
                 expect(this.controller.types).toContain(this.functionalProperty);
                 expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.statement);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is checked and the statement is in deletions', function() {
@@ -158,7 +158,7 @@ describe('Characteristics Block component', function() {
                 expect(this.characteristicObj.checked).toEqual(false);
                 expect(this.controller.types).not.toContain(false);
                 expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.statement);
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is not checked and the statement is in additions', function() {

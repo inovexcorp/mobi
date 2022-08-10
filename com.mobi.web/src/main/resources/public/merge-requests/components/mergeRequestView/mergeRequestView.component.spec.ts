@@ -33,8 +33,8 @@ import { of, throwError } from 'rxjs';
 import {
     cleanStylesFromDOM,
     mockUtil,
-    mockOntologyState,
-    mockOntologyManager
+    mockOntologyManager,
+    mockOntologyState
 } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -46,6 +46,8 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
 import { MergeRequestTabsetComponent } from '../mergeRequestTabset/mergeRequestTabset.component';
 import { MergeRequestViewComponent } from './mergeRequestView.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 describe('Merge Request View component', function() {
     let component: MergeRequestViewComponent;
@@ -83,8 +85,8 @@ describe('Merge Request View component', function() {
             providers: [
                 MockProvider(MergeRequestManagerService),
                 MockProvider(MergeRequestsStateService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
-                { provide: 'ontologyStateService', useClass: mockOntologyState },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
+                { provide: OntologyStateService, useClass: mockOntologyState },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
@@ -99,8 +101,8 @@ describe('Merge Request View component', function() {
         element = fixture.debugElement;
         mergeRequestManagerStub = TestBed.get(MergeRequestManagerService);
         mergeRequestsStateStub = TestBed.get(MergeRequestsStateService);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
-        ontologyStateStub = TestBed.get('ontologyStateService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
+        ontologyStateStub = TestBed.get(OntologyStateService);
         utilStub = TestBed.get('utilService');
         matDialog = TestBed.get(MatDialog);
 
@@ -198,7 +200,7 @@ describe('Merge Request View component', function() {
                         describe('if removeSource is set to true', function() {
                             describe('if deleteOntologyBranch resolves', function() {
                                 beforeEach(function() {
-                                    ontologyManagerStub.deleteOntologyBranch.and.returnValue(Promise.resolve());
+                                    ontologyManagerStub.deleteOntologyBranch.and.returnValue(of(null));
                                 });
                                 it('and the ontology editor is not open on an ontology', fakeAsync(function() {
                                     ontologyStateStub.listItem = {};
@@ -217,8 +219,8 @@ describe('Merge Request View component', function() {
                                 }));
                                 describe('and the ontology editor is on the target branch', function() {
                                     beforeEach(function() {
-                                        ontologyStateStub.listItem.ontologyRecord.recordId = recordId;
-                                        ontologyStateStub.listItem.ontologyRecord.branchId = branchId;
+                                        ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
+                                        ontologyStateStub.listItem.versionedRdfRecord.branchId = branchId;
                                         ontologyStateStub.listItem.upToDate = true;
                                         ontologyStateStub.list = [ontologyStateStub.listItem];
                                     });
@@ -255,7 +257,7 @@ describe('Merge Request View component', function() {
                                     }));
                                 });
                                 it('and the ontology editor is in the middle of merging into the target', fakeAsync(function() {
-                                    ontologyStateStub.listItem.ontologyRecord.recordId = recordId;
+                                    ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
                                     ontologyStateStub.listItem.merge.active = true;
                                     ontologyStateStub.listItem.merge.target = {'@id': branchId};
                                     ontologyStateStub.listItem.upToDate = true;
@@ -276,7 +278,7 @@ describe('Merge Request View component', function() {
                                 }));
                             });
                             it('unless deleteOntologyBranch rejects', fakeAsync(function() {
-                                ontologyManagerStub.deleteOntologyBranch.and.returnValue(Promise.reject(error));
+                                ontologyManagerStub.deleteOntologyBranch.and.returnValue(throwError(error));
                                 component.acceptRequest();
                                 tick();
                                 expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
@@ -310,8 +312,8 @@ describe('Merge Request View component', function() {
                             }));
                             describe('and the ontology editor is on the target branch', function() {
                                 beforeEach(function() {
-                                    ontologyStateStub.listItem.ontologyRecord.recordId = recordId;
-                                    ontologyStateStub.listItem.ontologyRecord.branchId = branchId;
+                                    ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
+                                    ontologyStateStub.listItem.versionedRdfRecord.branchId = branchId;
                                     ontologyStateStub.listItem.upToDate = true;
                                     ontologyStateStub.list = [ontologyStateStub.listItem];
                                 });
@@ -346,7 +348,7 @@ describe('Merge Request View component', function() {
                                 }));
                             });
                             it('and the ontology editor is in the middle of merging into the target', fakeAsync(function() {
-                                ontologyStateStub.listItem.ontologyRecord.recordId = recordId;
+                                ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
                                 ontologyStateStub.listItem.merge.active = true;
                                 ontologyStateStub.listItem.merge.target = {'@id': branchId};
                                 ontologyStateStub.listItem.upToDate = true;

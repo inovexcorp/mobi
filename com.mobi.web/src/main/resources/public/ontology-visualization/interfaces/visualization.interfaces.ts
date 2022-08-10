@@ -42,15 +42,15 @@ export interface ChildIrisI {
 }
 
 export interface CommitItemI {
-    '@id': string[]
-    '@type': Array<string>,
-    [key: string]:  Array<string>
+    '@id': string,
+    '@type'?: string[],
+    [key: string]: any
 
 }
 
 export interface inProgressCommitI {
-    additions: Array<CommitItemI>
-    deletions: Array<CommitItemI> 
+    additions: CommitItemI[];
+    deletions: CommitItemI[]
 }
 
 export interface EntityItemI {
@@ -74,7 +74,7 @@ export enum SidePanelAction {
 
 export interface SidePanelPayloadI {
     action: SidePanelAction, 
-    controlRecord: ControlRecordI 
+    controlRecord: ControlRecordI
 }
 
 export interface positionI {

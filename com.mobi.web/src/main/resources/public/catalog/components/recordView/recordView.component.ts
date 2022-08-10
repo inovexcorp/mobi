@@ -29,6 +29,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 
 import './recordView.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
  * @class catalog.RecordViewComponent
@@ -56,7 +57,7 @@ export class RecordViewComponent implements OnInit {
     canEdit = false;
 
     constructor(public state: CatalogStateService, public cm: CatalogManagerService, 
-        @Inject('ontologyStateService') public os, @Inject('policyEnforcementService') public pep, 
+        public os: OntologyStateService, @Inject('policyEnforcementService') public pep, 
         @Inject('utilService') public util) {}
 
     ngOnInit(): void {
@@ -90,9 +91,9 @@ export class RecordViewComponent implements OnInit {
             });
     }
     updateTitle(newTitle: string): void {
-        const openRecord = find(this.os.list, item => item.ontologyRecord.title === this.title);
+        const openRecord = find(this.os.list, item => item.versionedRdfRecord.title === this.title);
         if (openRecord) {
-            openRecord.ontologyRecord.title = newTitle;
+            openRecord.versionedRdfRecord.title = newTitle;
         }
         this.util.updateDctermsValue(this.record, 'title', newTitle);
         this.updateRecord(this.record);

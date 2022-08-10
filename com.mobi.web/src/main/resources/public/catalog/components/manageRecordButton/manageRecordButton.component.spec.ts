@@ -21,9 +21,9 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
@@ -32,8 +32,8 @@ import {
 
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { ManageRecordButtonComponent } from './manageRecordButton.component';
-import {cloneDeep} from "lodash";
-import {By} from "@angular/platform-browser";
+import { cloneDeep } from 'lodash';
+import { By } from '@angular/platform-browser';
 
 describe('Manage Record Button component', function() {
     let policyEnforcementStub;

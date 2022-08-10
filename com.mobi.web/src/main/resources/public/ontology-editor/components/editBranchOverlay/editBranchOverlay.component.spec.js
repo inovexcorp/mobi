@@ -139,7 +139,7 @@ describe('Edit Branch Overlay component', function() {
                 catalogManagerSvc.updateRecordBranch.and.returnValue($q.when('id'));
                 this.controller.edit();
                 scope.$apply();
-                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(scope.resolve.branch['@id'], ontologyStateSvc.listItem.ontologyRecord.recordId, '', scope.resolve.branch);
+                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(scope.resolve.branch['@id'], ontologyStateSvc.listItem.versionedRdfRecord.recordId, '', scope.resolve.branch);
                 expect(scope.close).toHaveBeenCalled();
             });
             it('when rejected', function() {
@@ -147,7 +147,7 @@ describe('Edit Branch Overlay component', function() {
                 catalogManagerSvc.updateRecordBranch.and.returnValue($q.reject(errorMessage));
                 this.controller.edit();
                 scope.$apply();
-                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(scope.resolve.branch['@id'], ontologyStateSvc.listItem.ontologyRecord.recordId, '', scope.resolve.branch);
+                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(scope.resolve.branch['@id'], ontologyStateSvc.listItem.versionedRdfRecord.recordId, '', scope.resolve.branch);
                 expect(this.controller.error).toEqual(errorMessage);
                 expect(scope.close).not.toHaveBeenCalled();
             });

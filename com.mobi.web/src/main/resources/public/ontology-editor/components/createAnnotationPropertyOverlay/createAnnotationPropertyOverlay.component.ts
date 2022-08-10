@@ -22,6 +22,8 @@
  */
 import { unset } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./createAnnotationPropertyOverlay.component.html');
 
 /**
@@ -29,7 +31,6 @@ const template = require('./createAnnotationPropertyOverlay.component.html');
  * @name ontology-editor.component:createAnnotationPropertyOverlay
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `createAnnotationPropertyOverlay` is a component that creates content for a modal that creates an annotation
@@ -52,13 +53,12 @@ const createAnnotationPropertyOverlayComponent = {
     controller: createAnnotationPropertyOverlayComponentCtrl
 };
 
-createAnnotationPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+createAnnotationPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes'];
 
-function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes) {
     var dvm = this;
     dvm.prefixes = prefixes;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
     dvm.duplicateCheck = true;
     dvm.property = {
@@ -87,7 +87,7 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
             unset(dvm.property, prefixes.dcterms + 'description');
         }
-        dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
+        dvm.os.addLanguageToNewEntity(dvm.property, dvm.language);
         dvm.os.updatePropertyIcon(dvm.property);
         // add the entity to the ontology
         dvm.os.addEntity(dvm.property);
@@ -95,9 +95,9 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
         dvm.os.listItem.annotations.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
         dvm.os.listItem.annotations.flat = dvm.os.flattenHierarchy(dvm.os.listItem.annotations);
         // Update InProgressCommit
-        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
+        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.property);
         // Save the changes to the ontology
-        dvm.ontoUtils.saveCurrentChanges();
+        dvm.os.saveCurrentChanges().subscribe();
         // Open snackbar
         dvm.os.listItem.goTo.entityIRI = dvm.property['@id'];
         dvm.os.listItem.goTo.active = true;

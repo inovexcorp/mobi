@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './ontologyClassSelect.component.scss';
 
 const template = require('./ontologyClassSelect.component.html');
@@ -29,7 +31,6 @@ const template = require('./ontologyClassSelect.component.html');
  * @name ontology-editor.component:ontologyClassSelect
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `ontologyClassSelect` is a component that creates a Bootstrap `form-group` with a `ui-select` of the IRIs of
@@ -56,21 +57,20 @@ const ontologyClassSelectComponent = {
     controller: ontologyClassSelectComponentCtrl
 };
 
-ontologyClassSelectComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+ontologyClassSelectComponentCtrl.$inject = ['ontologyStateService', 'utilService'];
 
-function ontologyClassSelectComponentCtrl(ontologyStateService, utilService, ontologyUtilsManagerService) {
+function ontologyClassSelectComponentCtrl(ontologyStateService: OntologyStateService, utilService) {
     const dvm = this;
-    const os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
+    dvm.os = ontologyStateService;
     dvm.util = utilService;
     dvm.array = [];
 
     dvm.getValues = function(searchText) {
-        let iris = Object.keys(os.listItem.classes.iris);
+        let iris = Object.keys(dvm.os.listItem.classes.iris);
         if (dvm.extraOptions && dvm.extraOptions.length) {
             iris = iris.concat(dvm.extraOptions);
         }
-        dvm.array =  dvm.ontoUtils.getSelectList(iris, searchText, dvm.ontoUtils.getDropDownText);
+        dvm.array = dvm.os.getSelectList(iris, searchText, iri => dvm.os.getEntityNameByListItem(iri));
     };
     dvm.onChange = function() {
         dvm.changeEvent({values: dvm.bindModel});

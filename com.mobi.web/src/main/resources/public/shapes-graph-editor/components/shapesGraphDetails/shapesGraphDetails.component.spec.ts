@@ -32,6 +32,7 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { ShapesGraphDetailsComponent } from './shapesGraphDetails.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 describe('Shapes Graph Details component', function() {
     let component: ShapesGraphDetailsComponent;
@@ -50,7 +51,7 @@ describe('Shapes Graph Details component', function() {
             providers: [
                 PrefixationPipe,
                 MockProvider(ShapesGraphStateService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager }
+                { provide: OntologyManagerService, useClass: mockOntologyManager }
             ]
         });
     });

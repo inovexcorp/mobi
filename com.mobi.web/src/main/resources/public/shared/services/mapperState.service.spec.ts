@@ -44,6 +44,7 @@ import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { MapperStateService } from './mapperState.service';
 import { MappingManagerService } from './mappingManager.service';
+import { OntologyManagerService } from './ontologyManager.service';
 
 describe('Mapper State service', function() {
     let service: MapperStateService;
@@ -98,7 +99,7 @@ describe('Mapper State service', function() {
                 MockProvider(MappingManagerService),
                 MockProvider(DelimitedManagerService),
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
             ]
         });
@@ -109,7 +110,7 @@ describe('Mapper State service', function() {
         catalogManagerStub = TestBed.get(CatalogManagerService);
         mappingManagerStub = TestBed.get(MappingManagerService);
         delimitedManagerStub = TestBed.get(DelimitedManagerService);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get('utilService');
         splitIRIStub = TestBed.get(SplitIRIPipe);
 

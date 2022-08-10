@@ -24,7 +24,7 @@
     <div class="padding h-100 row">
         <div class="col-lg-8 offset-lg-2 h-100">
             <merge-request-list *ngIf="!state.selected && !state.createRequest" class="h-100"></merge-request-list>
-            <create-request *ngIf="state.createRequest" class="h-100"></create-request>
+            <create-request *ngIf="state.createRequest" updateCommits="updateCommits(commits)" class="h-100" ></create-request>
             <merge-request-view *ngIf="state.selected" class="h-100"></merge-request-view>
         </div>
     </div>

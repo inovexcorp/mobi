@@ -56,7 +56,7 @@ describe('Search Tab component', function() {
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             ontologyManagerSvc = _ontologyManagerService_;
             httpSvc = _httpService_;
         });
@@ -73,7 +73,7 @@ describe('Search Tab component', function() {
                 '@value': 'value'
             }]
         };
-        ontologyStateSvc.listItem.ontologyRecord = {
+        ontologyStateSvc.listItem.versionedRdfRecord = {
             recordId: this.recordId,
             branchId: this.branchId,
             commitId: this.commitId

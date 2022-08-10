@@ -21,6 +21,9 @@
  * #L%
  */
 import { trim, map } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./newOntologyOverlay.component.html');
 
@@ -30,7 +33,6 @@ const template = require('./newOntologyOverlay.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `newOntologyOverlay` is a component that creates content for a modal that creates a new ontology. The form
@@ -50,12 +52,11 @@ const newOntologyOverlayComponent = {
     controller: newOntologyOverlayComponentCtrl
 };
 
-newOntologyOverlayComponentCtrl.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];
+newOntologyOverlayComponentCtrl.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'utilService'];
 
-function newOntologyOverlayComponentCtrl($q, $filter, REGEX, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
+function newOntologyOverlayComponentCtrl($q, $filter, REGEX, ontologyStateService: OntologyStateService, prefixes, utilService) {
     var dvm = this;
     var util = utilService;
-    var ontoUtils = ontologyUtilsManagerService;
 
     dvm.prefixes = prefixes;
     dvm.iriPattern = REGEX.IRI;
@@ -73,9 +74,9 @@ function newOntologyOverlayComponentCtrl($q, $filter, REGEX, ontologyStateServic
         if (!description) {
             delete dvm.os.newOntology[prefixes.dcterms + 'description'];
         }
-        ontoUtils.addLanguageToNewEntity(dvm.os.newOntology, dvm.os.newLanguage);
+        dvm.os.addLanguageToNewEntity(dvm.os.newOntology, dvm.os.newLanguage);
         dvm.os.createOntology(dvm.os.newOntology, title, description, map(dvm.os.newKeywords, trim))
-            .then(response => dvm.os.createOntologyState({recordId: response.recordId, commitId: response.commitId, branchId: response.branchId}), $q.reject)
+        .toPromise().then(response => dvm.os.createState({recordId: response.recordId, commitId: response.commitId, branchId: response.branchId}).pipe(first()).toPromise(), $q.reject)
             .then(() => dvm.close(), onError);
     }
     dvm.cancel = function() {

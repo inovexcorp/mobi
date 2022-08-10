@@ -23,6 +23,7 @@
 import { isEmpty } from 'lodash';
 
 import './ontologySidebar.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./ontologySidebar.component.html');
 
@@ -52,16 +53,16 @@ const ontologySidebarComponent = {
 
 ontologySidebarComponentCtrl.$inject = ['ontologyStateService', 'modalService'];
 
-function ontologySidebarComponentCtrl(ontologyStateService, modalService, ontologyVisualizationService) {
+function ontologySidebarComponentCtrl(ontologyStateService: OntologyStateService, modalService, ontologyVisualizationService) {
     var dvm = this;
     dvm.os = ontologyStateService;
 
     dvm.onClose = function(listItem) {
         if (dvm.os.hasChanges(listItem)) {
-            dvm.os.recordIdToClose = listItem.ontologyRecord.recordId;
+            dvm.os.recordIdToClose = listItem.versionedRdfRecord.recordId;
             modalService.openModal('ontologyCloseOverlay');
         } else {
-            dvm.os.closeOntology(listItem.ontologyRecord.recordId);
+            dvm.os.closeOntology(listItem.versionedRdfRecord.recordId);
         }
     }
     dvm.onClick = function(listItem) {

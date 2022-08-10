@@ -90,26 +90,6 @@ export const ontologyStateServiceProvider = {
     deps: ['$injector']
 };
 
-export function ontologyManagerServiceFactory(i: any) {
-    return i.get('ontologyManagerService');
-}
-
-export const ontologyManagerServiceProvider = {
-    provide: 'ontologyManagerService',
-    useFactory: ontologyManagerServiceFactory,
-    deps: ['$injector']
-};
-
-export function ontologyUtilsManagerServiceFactory(i: any) {
-    return i.get('ontologyUtilsManagerService');
-}
-
-export const ontologyUtilsManagerServiceProvider = {
-    provide: 'ontologyUtilsManagerService',
-    useFactory: ontologyUtilsManagerServiceFactory,
-    deps: ['$injector']
-};
-
 export function propertyManagerServiceFactory(i: any) {
     return i.get('propertyManagerService');
 }
@@ -167,5 +147,25 @@ export function recordPermissionsServiceFactory(i: any) {
 export const recordPermissionsManagerServiceProvider = {
     provide: 'recordPermissionsManagerService',
     useFactory: recordPermissionsServiceFactory,
+    deps: ['$injector']
+};
+
+export function manchesterConverterServiceFactory(i: any) {
+    return i.get('manchesterConverterService');
+}
+
+export const manchesterConverterServiceProvider = {
+    provide: 'manchesterConverterService',
+    useFactory: manchesterConverterServiceFactory,
+    deps: ['$injector']
+};
+
+export function updateRefsServiceFactory(i: any) {
+    return i.get('updateRefsService');
+}
+
+export const updateRefsServiceProvider = {
+    provide: 'updateRefsService',
+    useFactory: updateRefsServiceFactory,
     deps: ['$injector']
 };

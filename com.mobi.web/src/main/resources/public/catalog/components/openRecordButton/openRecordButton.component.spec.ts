@@ -26,6 +26,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 import { StateService } from '@uirouter/core';
 import { By } from '@angular/platform-browser';
+import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
@@ -40,6 +41,7 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { CATALOG, DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { OpenRecordButtonComponent } from './openRecordButton.component';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 // Mocks
 class mockState {
@@ -71,7 +73,7 @@ describe('Open Record Button component', function() {
                 MockProvider(CatalogStateService),
                 MockProvider(ShapesGraphStateService),
                 MockProvider(MapperStateService),
-                { provide: 'ontologyStateService', useClass: mockOntologyState },
+                { provide: OntologyStateService, useClass: mockOntologyState },
                 { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 { provide: 'policyManagerService', useClass: mockPolicyManager },
                 { provide: 'utilService', useClass: mockUtil },
@@ -85,7 +87,7 @@ describe('Open Record Button component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogStateStub = TestBed.get(CatalogStateService);
-        ontologyStateStub = TestBed.get('ontologyStateService');
+        ontologyStateStub = TestBed.get(OntologyStateService);
         mapperStateStub = TestBed.get(MapperStateService);
         policyEnforcementStub = TestBed.get('policyEnforcementService');
         policyManagerStub = TestBed.get('policyManagerService');
@@ -155,17 +157,17 @@ describe('Open Record Button component', function() {
                 component.record = this.record;
             });
             it('if it is already open', function() {
-                ontologyStateStub.list = [{ontologyRecord: {recordId: recordId}}];
+                ontologyStateStub.list = [{versionedRdfRecord: {recordId: recordId}}];
                 component.openOntology();
                 expect(ontologyStateStub.openOntology).not.toHaveBeenCalled();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(ontologyStateStub.listItem).toEqual({ontologyRecord: {recordId: recordId}, active: true});
+                expect(ontologyStateStub.listItem).toEqual({versionedRdfRecord: {recordId: recordId}, active: true});
                 expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, { reload: true });
             });
             describe('if it is not already open', function() {
                 it('successfully', fakeAsync(function() {
                     const ontologyId = 'ontologyId';
-                    ontologyStateStub.openOntology.and.resolveTo(ontologyId);
+                    ontologyStateStub.openOntology.and.returnValue(of(ontologyId));
                     component.openOntology();
                     tick();
                     expect(utilStub.getDctermsValue).toHaveBeenCalledWith(this.record, 'title');
@@ -174,7 +176,7 @@ describe('Open Record Button component', function() {
                     expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, { reload: true });
                 }));
                 it('unless an error occurs', fakeAsync(function() {
-                    ontologyStateStub.openOntology.and.rejectWith('Error message');
+                    ontologyStateStub.openOntology.and.returnValue(throwError('Error message'));
                     component.openOntology();
                     tick();
                     expect(utilStub.getDctermsValue).toHaveBeenCalledWith(this.record, 'title');

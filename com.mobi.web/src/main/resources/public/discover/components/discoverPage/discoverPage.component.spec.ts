@@ -31,9 +31,8 @@ import {
  } from '../../../../../../test/ts/Shared';
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../shared/shared.module';
-import { ExploreTabDirective } from '../../explore/components/exploreTab/exploreTab.component';
+import { ExploreTabComponent } from '../../explore/components/exploreTab/exploreTab.component';
 import { QueryTabComponent } from '../../query/components/queryTab/queryTab.component';
-import { DiscoverSearchTabDirective } from '../../search/components/discoverSearchTab/discoverSearchTab.component';
 import { DiscoverPageComponent } from './discoverPage.component';
 
 describe('Discover Page component', function() {
@@ -47,8 +46,7 @@ describe('Discover Page component', function() {
             imports: [ SharedModule ],
             declarations: [
                 DiscoverPageComponent,
-                MockDirective(ExploreTabDirective),
-                MockDirective(DiscoverSearchTabDirective),
+                MockDirective(ExploreTabComponent),
                 MockComponent(QueryTabComponent)
             ],
             providers: [
@@ -84,11 +82,6 @@ describe('Discover Page component', function() {
             });
             it('1', function() {
                 discoverStateStub.tabIndex = 1;
-                fixture.detectChanges();
-                expect(element.queryAll(By.css('discover-search-tab')).length).toEqual(1);
-            });
-            it('2', function() {
-                discoverStateStub.tabIndex = 2;
                 fixture.detectChanges();
                 expect(element.queryAll(By.css('query-tab')).length).toEqual(1);
             });

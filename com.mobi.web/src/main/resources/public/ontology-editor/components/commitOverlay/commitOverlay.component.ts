@@ -24,6 +24,7 @@ import { get, find } from 'lodash';
 import { first } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./commitOverlay.component.html');
 
@@ -55,7 +56,7 @@ const commitOverlayComponent = {
 
 commitOverlayComponentCtrl.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService'];
 
-function commitOverlayComponentCtrl($q, ontologyStateService, catalogManagerService: CatalogManagerService, utilService) {
+function commitOverlayComponentCtrl($q, ontologyStateService: OntologyStateService, catalogManagerService: CatalogManagerService, utilService) {
     var dvm = this;
     var cm = catalogManagerService;
     var catalogId = get(cm.localCatalog, '@id', '');
@@ -66,23 +67,23 @@ function commitOverlayComponentCtrl($q, ontologyStateService, catalogManagerServ
 
     dvm.commit = function() {
         if (dvm.os.listItem.upToDate) {
-            createCommit(dvm.os.listItem.ontologyRecord.branchId);
+            createCommit(dvm.os.listItem.versionedRdfRecord.branchId);
         } else {
-            var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
+            var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
             var branchConfig: any = {title: util.getDctermsValue(branch, 'title')};
             var description = util.getDctermsValue(branch, 'description');
             if (description) {
                 branchConfig.description = description;
             }
             var branchId;
-            cm.createRecordUserBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.branchId).pipe(first()).toPromise()
+            cm.createRecordUserBranch(dvm.os.listItem.versionedRdfRecord.recordId, catalogId, branchConfig, dvm.os.listItem.versionedRdfRecord.commitId, dvm.os.listItem.versionedRdfRecord.branchId).pipe(first()).toPromise()
                 .then((branchIri: string) => {
                     branchId = branchIri;
-                    return cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise();
+                    return cm.getRecordBranch(branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise();
                 }, $q.reject)
                 .then(branch => {
                     dvm.os.listItem.branches.push(branch);
-                    dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
+                    dvm.os.listItem.versionedRdfRecord.branchId = branch['@id'];
                     dvm.os.listItem.upToDate = true;
                     dvm.os.listItem.userBranch = true;
                     createCommit(branch['@id']);
@@ -99,14 +100,14 @@ function commitOverlayComponentCtrl($q, ontologyStateService, catalogManagerServ
 
     function createCommit(branchId) {
         var commitId;
-        cm.createBranchCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.comment).pipe(first()).toPromise()
+        cm.createBranchCommit(branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId, dvm.comment).pipe(first()).toPromise()
             .then((commitIri: string) => {
                 commitId = commitIri;
-                return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId});
+                return dvm.os.updateState({recordId: dvm.os.listItem.versionedRdfRecord.recordId, commitId, branchId}).pipe(first()).toPromise();
             }, $q.reject)
             .then(() => {
-                dvm.os.listItem.ontologyRecord.branchId = branchId;
-                dvm.os.listItem.ontologyRecord.commitId = commitId;
+                dvm.os.listItem.versionedRdfRecord.branchId = branchId;
+                dvm.os.listItem.versionedRdfRecord.commitId = commitId;
                 dvm.os.clearInProgressCommit();
                 dvm.close();
             }, onError);

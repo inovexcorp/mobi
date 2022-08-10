@@ -35,6 +35,7 @@ import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { PropPreviewComponent } from './propPreview.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 describe('Prop Preview component', function() {
     let component: PropPreviewComponent;
@@ -67,7 +68,7 @@ describe('Prop Preview component', function() {
                 MockProvider(MapperStateService),
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager }
             ]
         });
     });
@@ -78,7 +79,7 @@ describe('Prop Preview component', function() {
         element = fixture.debugElement;
         mapperStateStub = TestBed.get(MapperStateService);
         splitIRIStub = TestBed.get(SplitIRIPipe);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get('utilService');
 
         mapperStateStub.availableClasses = [mappingClass];

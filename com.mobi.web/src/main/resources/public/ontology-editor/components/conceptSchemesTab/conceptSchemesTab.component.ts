@@ -20,7 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { filter, concat, includes } from 'lodash';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./conceptSchemesTab.component.html');
 
@@ -29,7 +30,6 @@ const template = require('./conceptSchemesTab.component.html');
  * @name ontology-editor.component:conceptSchemesTab
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -49,11 +49,10 @@ const conceptSchemesTabComponent = {
     controller: conceptSchemesTabComponentCtrl
 };
 
-conceptSchemesTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
+conceptSchemesTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'modalService'];
 
-function conceptSchemesTabComponentCtrl(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
+function conceptSchemesTabComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, modalService) {
     var dvm = this;
-    var ontoUtils = ontologyUtilsManagerService;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
 
@@ -62,9 +61,9 @@ function conceptSchemesTabComponentCtrl(ontologyStateService, ontologyManagerSer
     }
     dvm.deleteEntity = function() {
         if (dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
-            ontoUtils.deleteConcept();
+            dvm.os.deleteConcept();
         } else if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
-            ontoUtils.deleteConceptScheme();
+            dvm.os.deleteConceptScheme();
         }
     }
     dvm.seeHistory = function() {

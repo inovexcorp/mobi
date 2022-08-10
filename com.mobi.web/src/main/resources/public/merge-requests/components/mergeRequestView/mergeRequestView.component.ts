@@ -24,7 +24,7 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { forEach, concat, some, isEmpty, get } from 'lodash';
 import { from, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Conflict } from '../../../shared/models/conflict.interface';
@@ -32,9 +32,11 @@ import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
 
 import './mergeRequestView.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
  * @class merge-requests.MergeRequestViewComponent
@@ -57,8 +59,8 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     isAccepted = false;
 
     constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, private dialog: MatDialog,
-        @Inject('utilService') public util, @Inject('ontologyStateService') public os,
-        @Inject('ontologyManagerService') public om) {}
+        @Inject('utilService') public util, public os: OntologyStateService,
+        public om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.mm.getRequest(this.state.selected.jsonld['@id'])
@@ -118,19 +120,19 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }),
                 switchMap(() => {
                     if (removeSource) {
-                        return from(this.om.deleteOntologyBranch(requestToAccept.recordIri, sourceBranchId)
-                            .then(() => {
-                                if (some(this.os.list, {ontologyRecord: {recordId: requestToAccept.recordIri}})) {
+                        return this.om.deleteOntologyBranch(requestToAccept.recordIri, sourceBranchId)
+                            .pipe(map(() => {
+                                if (some(this.os.list, {versionedRdfRecord: {recordId: requestToAccept.recordIri}})) {
                                     this.os.removeBranch(requestToAccept.recordIri, sourceBranchId);
                                 }
-                            }, error => Promise.reject(error)));
+                            }));
                     }
                     return of(null);
                 }))
             .subscribe(() => {
                 this.state.selected = requestToAccept;
                 if (!isEmpty(this.os.listItem)) {
-                    if (get(this.os.listItem, 'ontologyRecord.branchId') === targetBranchId) {
+                    if (get(this.os.listItem, 'versionedRdfRecord.branchId') === targetBranchId) {
                         this.os.listItem.upToDate = false;
                         if (this.os.listItem.merge.active) {
                             this.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});

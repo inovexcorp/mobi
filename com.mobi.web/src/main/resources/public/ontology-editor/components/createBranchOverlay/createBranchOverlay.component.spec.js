@@ -126,10 +126,10 @@ describe('Create Branch Overlay component', function() {
                         this.controller.create();
                         scope.$digest();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
-                            .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                            .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
-                            ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId,
+                            ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.versionedRdfRecord.recordId,
                             commitId: this.commitId, branchId: this.branchId});
                         expect(scope.close).toHaveBeenCalled();
                     });
@@ -138,10 +138,10 @@ describe('Create Branch Overlay component', function() {
                         this.controller.create();
                         scope.$digest();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
-                            .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                            .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
-                            ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.branchId});
+                            ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.versionedRdfRecord.recordId, commitId: this.commitId, branchId: this.branchId});
                         expect(this.controller.error).toEqual(this.error);
                         expect(scope.close).not.toHaveBeenCalled();
                     });
@@ -151,9 +151,9 @@ describe('Create Branch Overlay component', function() {
                     this.controller.create();
                     scope.$digest();
                     expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
-                        .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                        .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
-                        ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                        ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
                     expect(this.controller.error).toEqual(this.error);
                     expect(scope.close).not.toHaveBeenCalled();
                 });
@@ -162,8 +162,8 @@ describe('Create Branch Overlay component', function() {
                 catalogManagerSvc.createRecordBranch.and.returnValue($q.reject(this.error));
                 this.controller.create();
                 scope.$digest();
-                expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                    this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId,
+                    this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
                 expect(this.controller.error).toEqual(this.error);
                 expect(scope.close).not.toHaveBeenCalled();
             });

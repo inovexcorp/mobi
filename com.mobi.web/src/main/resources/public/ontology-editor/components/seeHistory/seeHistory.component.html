@@ -48,7 +48,7 @@
                 </div>
             </div>
             <div class="col remove-min-width h-100 vertical-scroll">
-                <commit-history-table [commit-id]="dvm.os.listItem.ontologyRecord.commitId" [entity-id]="dvm.os.listItem.selected['@id']" [head-title]="dvm.getHeadTitle()" (receive-commits)="dvm.receiveCommits($event)" [record-id]="dvm.os.listItem.ontologyRecord.recordId"></commit-history-table>
+                <commit-history-table [commit-id]="dvm.os.listItem.versionedRdfRecord.commitId" [entity-id]="dvm.os.listItem.selected['@id']" [head-title]="dvm.getHeadTitle()" (receive-commits)="dvm.receiveCommits($event)" [record-id]="dvm.os.listItem.versionedRdfRecord.recordId"></commit-history-table>
             </div>
         </div>
     </div>

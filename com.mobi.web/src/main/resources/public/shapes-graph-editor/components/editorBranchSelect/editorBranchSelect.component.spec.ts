@@ -477,7 +477,7 @@ describe('Editor Branch Select component', function() {
                                 shapesGraphStateStub.listItem.currentVersionTitle = 'Not Exists';
                             });
                             it('successfully', async function() {
-                                shapesGraphStateStub.deleteState.and.resolveTo();
+                                shapesGraphStateStub.deleteState.and.returnValue(of(null));
                                 shapesGraphStateStub.openShapesGraph.and.resolveTo();
                                 spyOn<any>(component, 'setFilteredOptions');
                                 spyOn(component.autocompleteTrigger, 'closePanel');
@@ -493,7 +493,7 @@ describe('Editor Branch Select component', function() {
                             });
                             describe('unless an error occurs', function() {
                                 it('when deleting state', async function() {
-                                    shapesGraphStateStub.deleteState.and.rejectWith('Error');
+                                    shapesGraphStateStub.deleteState.and.returnValue(throwError('Error'));
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');
                                     await component.retrieveBranchesAndTags();
@@ -507,7 +507,7 @@ describe('Editor Branch Select component', function() {
                                     expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                                 });
                                 it('when opening a shapes graph', async function() {
-                                    shapesGraphStateStub.deleteState.and.resolveTo();
+                                    shapesGraphStateStub.deleteState.and.returnValue(of(null));
                                     shapesGraphStateStub.openShapesGraph.and.rejectWith('Error');
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');
@@ -551,7 +551,7 @@ describe('Editor Branch Select component', function() {
                                 shapesGraphStateStub.listItem.currentVersionTitle = 'Not Exists';
                             });
                             it('successfully', async function() {
-                                shapesGraphStateStub.deleteState.and.resolveTo();
+                                shapesGraphStateStub.deleteState.and.returnValue(of(null));
                                 shapesGraphStateStub.openShapesGraph.and.resolveTo();
                                 spyOn<any>(component, 'setFilteredOptions');
                                 spyOn(component.autocompleteTrigger, 'closePanel');
@@ -567,7 +567,7 @@ describe('Editor Branch Select component', function() {
                             });
                             describe('unless an error occurs', function() {
                                 it('when deleting state', async function() {
-                                    shapesGraphStateStub.deleteState.and.rejectWith('Error');
+                                    shapesGraphStateStub.deleteState.and.returnValue(throwError('Error'));
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');
                                     await component.retrieveBranchesAndTags();
@@ -581,7 +581,7 @@ describe('Editor Branch Select component', function() {
                                     expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                                 });
                                 it('when opening a shapes graph', async function() {
-                                    shapesGraphStateStub.deleteState.and.resolveTo();
+                                    shapesGraphStateStub.deleteState.and.returnValue(of(null));
                                     shapesGraphStateStub.openShapesGraph.and.rejectWith('Error');
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');

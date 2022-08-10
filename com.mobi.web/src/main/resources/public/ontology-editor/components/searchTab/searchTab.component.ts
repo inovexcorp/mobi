@@ -22,6 +22,10 @@
  */
 import * as angular from 'angular';
 import { forEach, isEmpty, omit } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './searchTab.component.scss';
 
@@ -46,23 +50,22 @@ const searchTabComponent = {
     controller: searchTabComponentCtrl
 };
 
-searchTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'ontologyManagerService', 'httpService'];
+searchTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'httpService'];
 
-function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerService, ontologyManagerService, httpService) {
+function searchTabComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, httpService) {
     var dvm = this;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.om = ontologyManagerService;
 
     dvm.$onInit = function() {
-        dvm.os.listItem.editorTabStates.search.id = 'search-' + dvm.os.listItem.ontologyRecord.recordId;
+        dvm.os.listItem.editorTabStates.search.id = 'search-' + dvm.os.listItem.versionedRdfRecord.recordId;
     }
     dvm.onKeyup = function() {
         if (dvm.os.listItem.editorTabStates.search.searchText) {
             httpService.cancel(dvm.os.listItem.editorTabStates.search.id);
             dvm.unselectItem();
             var state = dvm.os.listItem.editorTabStates;
-            dvm.om.getSearchResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.editorTabStates.search.searchText, dvm.os.listItem.editorTabStates.search.id)
+            dvm.om.getSearchResults(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, dvm.os.listItem.editorTabStates.search.searchText, dvm.os.listItem.editorTabStates.search.id).pipe(first()).toPromise()
                 .then(results => {
                     state.search.errorMessage = '';
                     forEach(results, arr => {
@@ -90,7 +93,7 @@ function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerServic
         }
     }
     dvm.selectItem = function(item) {
-        dvm.os.selectItem(item, false)
+        dvm.os.selectItem(item, false).toPromise()
             .then(() => {
                 dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
             });

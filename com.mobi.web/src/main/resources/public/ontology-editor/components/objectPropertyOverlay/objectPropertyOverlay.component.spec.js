@@ -47,7 +47,7 @@ describe('Object Property Overlay component', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             propertyManagerSvc = _propertyManagerService_;
             util = _utilService_;
         });
@@ -127,7 +127,7 @@ describe('Object Property Overlay component', function() {
                     ontoUtils.containsDerivedConcept.and.returnValue(true);
                     this.controller.addProperty(this.prop, this.value);
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe('Object Property Overlay component', function() {
                     ontoUtils.containsDerivedConceptScheme.and.returnValue(true);
                     this.controller.addProperty(this.prop, this.value);
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('Object Property Overlay component', function() {
                 it('not a derived Concept or ConceptScheme', function() {
                     this.controller.addProperty(this.prop, this.value);
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();

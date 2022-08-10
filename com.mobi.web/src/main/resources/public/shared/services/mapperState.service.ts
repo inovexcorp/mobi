@@ -56,6 +56,7 @@ import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { MappingManagerService } from './mappingManager.service';
+import { OntologyManagerService } from './ontologyManager.service';
 
 /**
  * @class shared.MapperStateService
@@ -66,7 +67,7 @@ import { MappingManagerService } from './mappingManager.service';
 @Injectable()
 export class MapperStateService {
     constructor(private mm: MappingManagerService, private cm: CatalogManagerService, private dm: DelimitedManagerService,
-        private split: SplitIRIPipe, @Inject('ontologyManagerService') private om, @Inject('utilService') private util) {}
+        private split: SplitIRIPipe, private om: OntologyManagerService, @Inject('utilService') private util) {}
 
     // Static step indexes
     selectMappingStep = 0;

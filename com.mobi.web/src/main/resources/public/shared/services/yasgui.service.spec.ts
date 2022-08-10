@@ -71,6 +71,7 @@ describe('YASGUI service', function() {
             selectedPlugin: '',
             submitDisabled: false,
             datasetRecordId: '',
+            datasetRecordTitle: '',
             executionTime: 0
         };
 

@@ -35,6 +35,8 @@ import { DelimitedManagerService } from '../../../shared/services/delimitedManag
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 
 import './runMappingOntologyOverlay.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 interface OntologyPreview {
     id: string,
@@ -70,7 +72,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<RunMappingOntologyOverlayComponent>, private state: MapperStateService,
         private dm: DelimitedManagerService, private cm: CatalogManagerService,
-        @Inject('ontologyStateService') private os, @Inject('utilService') private util) {}
+        private os: OntologyStateService, @Inject('utilService') private util) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -146,10 +148,10 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
         this.dialogRef.close();
     }
     private _testOntology(ontology: OntologyPreview): void {
-        const item = find(this.os.list, {ontologyRecord: {recordId: ontology.id}});
+        const item: OntologyListItem = find(this.os.list, {versionedRdfRecord: {recordId: ontology.id}});
         let toast = false;
         if (item) {
-            if (get(item, 'ontologyRecord.branchId') === this.branch['@id']) {
+            if (get(item, 'versionedRdfRecord.branchId') === this.branch['@id']) {
                 item.upToDate = false;
                 if (item.merge.active) {
                     this.util.createWarningToast(`You have a merge in progress in the Ontology Editor for ${ontology.title} that is out of date. Please reopen the merge form.`, {timeOut: 5000});

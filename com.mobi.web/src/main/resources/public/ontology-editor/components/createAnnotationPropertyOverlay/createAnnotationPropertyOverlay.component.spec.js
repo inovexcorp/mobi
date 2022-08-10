@@ -45,7 +45,7 @@ describe('Create Annotation Overlay component', function() {
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
         });
 
         this.iri = 'iri#';
@@ -171,7 +171,7 @@ describe('Create Annotation Overlay component', function() {
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(this.controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.property);
                 expect(ontologyStateSvc.listItem.annotations.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.controller.property);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();

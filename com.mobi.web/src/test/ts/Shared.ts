@@ -22,11 +22,12 @@
  */
 
 import { identity, get, has } from 'lodash';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import 'hammerjs';
 
 import { ControlRecordI } from '../../main/resources/public/ontology-visualization/interfaces/visualization.interfaces';
 import { GraphState, StateNode, StateEdge } from  '../../main/resources/public/ontology-visualization/classes';
+import { OntologyListItem } from '../../main/resources/public/shared/models/ontologyListItem.class';
 
 export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
@@ -174,193 +175,37 @@ export class mockOntologyState {
     key = 'key';
     index = 0;
     annotationIndex = 0;
-    listItem = {
-        selected: {
-            '@id': 'id'
-        },
-        selectedBlankNodes: [],
-        active: true,
-        upToDate: true,
-        isVocabulary: false,
-        editorTabStates: {
-           project: {
-               active: true,
-               entityIRI: '',
-               targetedSpinnerId: 'project'
-           },
-           overview: {
-               active: false,
-               searchText: '',
-               open: {},
-               targetedSpinnerId: 'overview'
-           },
-           classes: {
-               active: false,
-               searchText: '',
-               index: 0,
-               open: {},
-               targetedSpinnerId: 'classes'
-           },
-           properties: {
-               active: false,
-               searchText: '',
-               index: 0,
-               open: {},
-               targetedSpinnerId: 'properties'
-           },
-           individuals: {
-               active: false,
-               searchText: '',
-               index: 0,
-               open: {},
-               targetedSpinnerId: 'individuals'
-           },
-           concepts: {
-               active: false,
-               searchText: '',
-               index: 0,
-               open: {},
-               targetedSpinnerId: 'concepts'
-           },
-           schemes: {
-               active: false,
-               searchText: '',
-               index: 0,
-               open: {},
-               targetedSpinnerId: 'schemes'
-           },
-           search: {
-               active: false
-           },
-           savedChanges: {
-               active: false
-           },
-           commits: {
-               active: false
-           }
-        },
-        userBranch: false,
-        createdFromExists: true,
-        userCanModify: false,
-        userCanModifyMaster: false,
-        masterBranchIRI: '',
-        ontologyRecord: {
-            title: '',
-            recordId: '',
-            branchId: '',
-            commitId: ''
-        },
-        merge: {
-            active: false,
-            target: undefined,
-            checkbox: false,
-            difference: undefined,
-            conflicts: [],
-            resolutions: {
-                additions: [],
-                deletions: []
-            }
-        },
-        dataPropertyRange: {},
-        derivedConcepts: [],
-        derivedConceptSchemes: [],
-        derivedSemanticRelations: [],
-        classes: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            flat: []
-        },
-        objectProperties: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            flat: []
-        },
-        dataProperties: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            flat: []
-        },
-        annotations: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            flat: []
-        },
-        individuals: {
-            iris: {},
-            flat: []
-        },
-        concepts: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            flat: []
-        },
-        conceptSchemes: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            flat: []
-        },
-        blankNodes: {},
-        index: {},
-        ontologyId: 'ontologyId',
-        additions: [],
-        deletions: [],
-        inProgressCommit: {
-            additions: [],
-            deletions: []
-        },
-        branches: [],
-        tags: [],
-        ontology: [{
-            '@id': 'id'
-        }],
-        individualsParentPath: [],
-        classesAndIndividuals: {},
-        classesWithIndividuals: [],
-        importedOntologies: [],
-        importedOntologyIds: [],
-        iriList: [],
-        failedImports: [],
-        goTo: {
-            entityIRI: '',
-            active: false
-        }
-    };
+    listItem = new OntologyListItem();
     states = [];
     list = [];
     uploadList = [];
     initialize = jasmine.createSpy('initialize');
     reset = jasmine.createSpy('reset');
     getOntologyCatalogDetails = jasmine.createSpy('getOntologyCatalogDetails').and.returnValue({});
-    createOntology = jasmine.createSpy('createOntology').and.returnValue(Promise.resolve({}));
-    uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue(Promise.resolve(''));
-    uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue(Promise.resolve(''));
+    createOntology = jasmine.createSpy('createOntology').and.returnValue(of({}));
+    uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue(of(''));
+    uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue(of(''));
     updateOntology = jasmine.createSpy('updateOntology');
     updateOntologyWithCommit = jasmine.createSpy('updateOntologyWithCommit');
-    addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue(Promise.resolve([]));
-    createOntologyListItem = jasmine.createSpy('createOntologyListItem').and.returnValue(Promise.resolve([]));
+    addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue(of([]));
+    createOntologyListItem = jasmine.createSpy('createOntologyListItem').and.returnValue(of([]));
     addEntity = jasmine.createSpy('addEntity');
     removeEntity = jasmine.createSpy('removeEntity');
     getListItemByRecordId = jasmine.createSpy('getListItemByRecordId').and.returnValue({});
     getEntityByRecordId = jasmine.createSpy('getEntityByRecordId');
-    getEntity = jasmine.createSpy('getEntity').and.returnValue(Promise.resolve([]));
-    getEntityNoBlankNodes = jasmine.createSpy('getEntityNoBlankNodes').and.returnValue(Promise.resolve({}));
+    getEntity = jasmine.createSpy('getEntity').and.returnValue(of([]));
+    getEntityNoBlankNodes = jasmine.createSpy('getEntityNoBlankNodes').and.returnValue(of({}));
     existsInListItem = jasmine.createSpy('existsInListItem').and.returnValue(true);
     getFromListItem = jasmine.createSpy('getFromListItem').and.returnValue({});
     getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
     getEntityNameByListItem = jasmine.createSpy('getEntityNameByListItem');
-    saveChanges = jasmine.createSpy('saveChanges').and.returnValue(Promise.resolve({}));
+    saveChanges = jasmine.createSpy('saveChanges').and.returnValue(of({}));
     addToAdditions = jasmine.createSpy('addToAdditions');
     addToDeletions = jasmine.createSpy('addToDeletions');
-    openOntology = jasmine.createSpy('openOntology').and.returnValue(Promise.resolve({}));
+    openOntology = jasmine.createSpy('openOntology').and.returnValue(of({}));
     closeOntology = jasmine.createSpy('closeOntology');
     removeBranch = jasmine.createSpy('removeBranch');
-    afterSave = jasmine.createSpy('afterSave').and.returnValue(Promise.resolve([]));
+    afterSave = jasmine.createSpy('afterSave').and.returnValue(of([]));
     clearInProgressCommit = jasmine.createSpy('clearInProgressCommit');
     setNoDomainsOpened = jasmine.createSpy('setNoDomainsOpened');
     getNoDomainsOpened = jasmine.createSpy('getNoDomainsOpened').and.returnValue(true);
@@ -379,7 +224,7 @@ export class mockOntologyState {
     getActiveKey = jasmine.createSpy('getActiveKey').and.returnValue('');
     getActivePage = jasmine.createSpy('getActivePage').and.returnValue({});
     getActiveEntityIRI = jasmine.createSpy('getActiveEntityIRI');
-    selectItem = jasmine.createSpy('selectItem').and.returnValue(Promise.resolve());
+    selectItem = jasmine.createSpy('selectItem').and.returnValue(of(null));
     unSelectItem = jasmine.createSpy('unSelectItem');
     hasChanges = jasmine.createSpy('hasChanges').and.returnValue(true);
     isCommittable = jasmine.createSpy('isCommittable');
@@ -406,16 +251,16 @@ export class mockOntologyState {
     addToClassIRIs = jasmine.createSpy('addToClassIRIs');
     removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
     addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
-    attemptMerge = jasmine.createSpy('attemptMerge').and.returnValue(Promise.resolve());
-    checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue(Promise.resolve());
-    merge = jasmine.createSpy('merge').and.returnValue(Promise.resolve());
+    attemptMerge = jasmine.createSpy('attemptMerge').and.returnValue(of(null));
+    checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue(of(null));
+    merge = jasmine.createSpy('merge').and.returnValue(of(null));
     cancelMerge = jasmine.createSpy('cancelMerge');
     canModify = jasmine.createSpy('canModify');
-    createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue(Promise.resolve());
+    createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue(of(null));
     getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
-    updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue(Promise.resolve());
-    deleteOntologyBranchState = jasmine.createSpy('deleteOntologyBranchState').and.returnValue(Promise.resolve());
-    deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue(Promise.resolve());
+    updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue(of(null));
+    deleteOntologyBranchState = jasmine.createSpy('deleteOntologyBranchState').and.returnValue(of(null));
+    deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue(of(null));
     getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId').and.returnValue({});
     getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId').and.returnValue('');
     getCurrentStateId = jasmine.createSpy('getCurrentStateId').and.returnValue('');
@@ -440,24 +285,24 @@ export class mockOntologyManager {
     reset = jasmine.createSpy('reset');
     initialize = jasmine.createSpy('initialize');
     uploadOntology = jasmine.createSpy('uploadOntology');
-    getOntology = jasmine.createSpy('getOntology').and.returnValue(Promise.resolve());
-    getVocabularyStuff = jasmine.createSpy('getVocabularyStuff').and.returnValue(Promise.resolve());
-    getOntologyStuff = jasmine.createSpy('getOntologyStuff').and.returnValue(Promise.resolve());
-    getIris = jasmine.createSpy('getIris').and.returnValue(Promise.resolve());
-    getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(Promise.resolve());
-    getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(Promise.resolve());
-    getClassesWithIndividuals = jasmine.createSpy('getClassesWithIndividuals').and.returnValue(Promise.resolve());
-    getDataPropertyHierarchies = jasmine.createSpy('getDataPropertyHierarchies').and.returnValue(Promise.resolve());
-    getObjectPropertyHierarchies = jasmine.createSpy('getObjectPropertyHierarchies').and.returnValue(Promise.resolve());
-    getConceptHierarchies = jasmine.createSpy('getConceptHierarchies').and.returnValue(Promise.resolve());
-    getConceptSchemeHierarchies = jasmine.createSpy('getConceptSchemeHierarchies').and.returnValue(Promise.resolve());
-    getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue(Promise.resolve());
-    getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue(Promise.resolve());
-    getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve());
-    getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.returnValue(Promise.resolve());
+    getOntology = jasmine.createSpy('getOntology').and.returnValue(of(null));
+    getVocabularyStuff = jasmine.createSpy('getVocabularyStuff').and.returnValue(of(null));
+    getOntologyStuff = jasmine.createSpy('getOntologyStuff').and.returnValue(of(null));
+    getIris = jasmine.createSpy('getIris').and.returnValue(of(null));
+    getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(of(null));
+    getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(of(null));
+    getClassesWithIndividuals = jasmine.createSpy('getClassesWithIndividuals').and.returnValue(of(null));
+    getDataPropertyHierarchies = jasmine.createSpy('getDataPropertyHierarchies').and.returnValue(of(null));
+    getObjectPropertyHierarchies = jasmine.createSpy('getObjectPropertyHierarchies').and.returnValue(of(null));
+    getConceptHierarchies = jasmine.createSpy('getConceptHierarchies').and.returnValue(of(null));
+    getConceptSchemeHierarchies = jasmine.createSpy('getConceptSchemeHierarchies').and.returnValue(of(null));
+    getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue(of(null));
+    getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue(of(null));
+    getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(of(null));
+    getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.returnValue(of(null));
     getSearchResults = jasmine.createSpy('getSearchResults');
-    getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue(Promise.resolve());
-    getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue(Promise.resolve());
+    getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue(of(null));
+    getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue(of(null));
     isDeprecated = jasmine.createSpy('isDeprecated');
     isOntology = jasmine.createSpy('isOntology');
     isOntologyRecord = jasmine.createSpy('isOntologyRecord');
@@ -472,9 +317,8 @@ export class mockOntologyManager {
     getClassProperties = jasmine.createSpy('getClassProperties').and.returnValue([]);
     getClassPropertyIRIs = jasmine.createSpy('getClassPropertyIRIs').and.returnValue([]);
     getClassProperty = jasmine.createSpy('getClassProperty').and.returnValue({});
-    getOntologyClasses = jasmine.createSpy('getOntologyClasses').and.returnValue(Promise.resolve());
-    retrieveClasses = jasmine.createSpy('retrieveClasses').and.returnValue(Promise.resolve());
-
+    getOntologyClasses = jasmine.createSpy('getOntologyClasses').and.returnValue(of(null));
+    retrieveClasses = jasmine.createSpy('retrieveClasses').and.returnValue(of(null));
     getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
     isObjectProperty = jasmine.createSpy('isObjectProperty');
     hasObjectProperties = jasmine.createSpy('hasObjectProperties').and.returnValue(true);
@@ -517,13 +361,13 @@ export class mockOntologyManager {
     getConceptSchemes = jasmine.createSpy('getConceptSchemes').and.returnValue([]);
     getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs').and.returnValue([]);
     downloadOntology = jasmine.createSpy('downloadOntology');
-    deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue(Promise.resolve());
-    deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue(Promise.resolve());
+    deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue(of(null));
+    deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue(of(null));
     getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
-    uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue(Promise.resolve());
-    getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue(Promise.resolve());
-    getDataProperties = jasmine.createSpy('getDataProperties').and.returnValue(Promise.resolve());
-    getObjProperties = jasmine.createSpy('getObjProperties').and.returnValue(Promise.resolve());
+    uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue(of(null));
+    getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue(of(null));
+    getDataProperties = jasmine.createSpy('getDataProperties').and.returnValue(of(null));
+    getObjProperties = jasmine.createSpy('getObjProperties').and.returnValue(of(null));
 }
 
 export class mockPolicyEnforcement {
@@ -699,4 +543,15 @@ export class mockShapesGraphManager {
     getShapesGraphMetadata = jasmine.createSpy('getShapesGraphMetadata').and.returnValue(Promise.resolve());
     getShapesGraphIRI = jasmine.createSpy('getShapesGraphIRI').and.returnValue(Promise.resolve());
     getShapesGraphContent = jasmine.createSpy('getShapesGraphContent').and.returnValue(Promise.resolve());
+}
+
+export class mockUpdateRefs {
+    update = jasmine.createSpy('update');
+    remove = jasmine.createSpy('remove');
+}
+
+export class mockManchesterConverter {
+    getKeywords = jasmine.createSpy('getKeywords').and.returnValue([]);
+    jsonldToManchester = jasmine.createSpy('jsonldToManchester').and.returnValue('');
+    manchesterToJsonld = jasmine.createSpy('jsonldToManchester').and.returnValue({errorMessage: '', jsonld: []});
 }

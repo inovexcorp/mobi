@@ -22,6 +22,8 @@
  */
 import * as angular from 'angular';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './datatypePropertyOverlay.component.scss';
 
 const template = require('./datatypePropertyOverlay.component.html');
@@ -32,7 +34,6 @@ const template = require('./datatypePropertyOverlay.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:propertyManagerService
  *
  * @description
@@ -56,12 +57,11 @@ const datatypePropertyOverlayComponent = {
     controller: datatypePropertyOverlayComponentCtrl
 };
 
-datatypePropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService', 'propertyManagerService'];
+datatypePropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'propertyManagerService'];
 
-function datatypePropertyOverlayComponentCtrl(ontologyStateService, utilService, prefixes, ontologyUtilsManagerService, propertyManagerService) {
+function datatypePropertyOverlayComponentCtrl(ontologyStateService: OntologyStateService, utilService, prefixes, propertyManagerService) {
     var dvm = this;
     var pm = propertyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
     dvm.dataProperties = [];
@@ -88,8 +88,8 @@ function datatypePropertyOverlayComponentCtrl(ontologyStateService, utilService,
         var realType = getType(lang, type);
         var added = pm.addValue(dvm.os.listItem.selected, select, value, realType, lang);
         if (added) {
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
+            dvm.os.saveCurrentChanges().subscribe();
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
@@ -101,9 +101,9 @@ function datatypePropertyOverlayComponentCtrl(ontologyStateService, utilService,
         var realType = getType(lang, type);
         var edited = pm.editValue(dvm.os.listItem.selected, select, dvm.os.propertyIndex, value, realType, lang);
         if (edited) {
-            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, oldObj));
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.addToDeletions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, oldObj));
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
+            dvm.os.saveCurrentChanges().subscribe();
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
@@ -114,6 +114,9 @@ function datatypePropertyOverlayComponentCtrl(ontologyStateService, utilService,
     }
     dvm.cancel = function() {
         dvm.dismiss();
+    }
+    dvm.orderByEntityName = function(iri) {
+        return dvm.os.getEntityNameByListItem(iri);
     }
 
     function getType(language, type) {

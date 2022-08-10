@@ -108,8 +108,7 @@ export class MappingSelectPageComponent implements OnInit {
                         state: mappingState
                     }
                 });
-            },
-            error => this.util.createErrorToast(error));
+            }, error => this.util.createErrorToast(error));
     }
     run(mappingRecord: MappingRecord): void {
         this.setStateIfCompatible(mappingRecord)

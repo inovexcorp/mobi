@@ -25,13 +25,13 @@
                 <div id="mobi-graph" class="chartContent">
                     <ontology-visualization
                         [ontology]="dvm.os.listItem.active"
-                        [commit-id]="dvm.os.listItem.ontologyRecord.commitId"
-                        [branch-id]="dvm.os.listItem.ontologyRecord.branchId"
+                        [commit-id]="dvm.os.listItem.versionedRdfRecord.commitId"
+                        [branch-id]="dvm.os.listItem.versionedRdfRecord.branchId"
                         [in-progress]="dvm.os.listItem.inProgressCommit">
                     </ontology-visualization>
                 </div>
             </div>
-            <visualization-sidebar [commit-id]="dvm.os.listItem.ontologyRecord.commitId"></visualization-sidebar>
+            <visualization-sidebar [commit-id]="dvm.os.listItem.versionedRdfRecord.commitId"></visualization-sidebar>
         </section>
     </div>
 </div>

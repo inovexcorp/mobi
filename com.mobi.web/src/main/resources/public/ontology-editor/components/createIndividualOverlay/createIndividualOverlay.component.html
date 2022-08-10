@@ -37,5 +37,5 @@
 </div>
 <div class="modal-footer">
     <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || !dvm.individual['@type'].length || dvm.ontoUtils.checkIri(dvm.individual['@id'])" ng-click="dvm.create()">Submit</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || !dvm.individual['@type'].length || dvm.os.checkIri(dvm.individual['@id'])" ng-click="dvm.create()">Submit</button>
 </div>

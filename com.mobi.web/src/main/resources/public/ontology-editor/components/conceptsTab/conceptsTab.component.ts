@@ -22,6 +22,9 @@
  */
 import { filter, concat, includes } from 'lodash';
 
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./conceptsTab.component.html');
 
 /**
@@ -29,7 +32,6 @@ const template = require('./conceptsTab.component.html');
  * @name ontology-editor.component:conceptsTab
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:propertyManagerService
  * @requires shared.service:modalService
  *
@@ -49,12 +51,11 @@ const conceptsTabComponent = {
     controller: conceptsTabComponentCtrl
 };
 
-conceptsTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
+conceptsTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'propertyManagerService', 'modalService'];
 
-function conceptsTabComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, propertyManagerService, modalService) {
+function conceptsTabComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, propertyManagerService, modalService) {
     var dvm = this;
     var pm = propertyManagerService;
-    var ontoUtils = ontologyUtilsManagerService;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.relationshipList = [];
@@ -64,7 +65,7 @@ function conceptsTabComponentCtrl(ontologyManagerService, ontologyStateService, 
         dvm.relationshipList = concat(dvm.os.listItem.derivedSemanticRelations, schemeRelationships);
     }
     dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', ontoUtils.deleteConcept);
+        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.os.deleteConcept);
     }
     dvm.seeHistory = function() {
         dvm.os.listItem.seeHistory = true;

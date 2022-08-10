@@ -21,6 +21,10 @@
  * #L%
  */
 import { join, orderBy, map, get } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 import './selectedDetails.component.scss';
 
@@ -31,7 +35,6 @@ const template = require('./selectedDetails.component.html');
  * @name ontology-editor.component:selectedDetails
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:manchesterConverterService
  * @requires shared.service:modalService
  *
@@ -55,12 +58,11 @@ const selectedDetailsComponent = {
     controller: selectedDetailsComponentCtrl
 };
 
-selectedDetailsComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'manchesterConverterService', 'modalService'];
+selectedDetailsComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'manchesterConverterService', 'modalService'];
 
-function selectedDetailsComponentCtrl($filter, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, manchesterConverterService, modalService) {
+function selectedDetailsComponentCtrl($filter, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, manchesterConverterService, modalService) {
     var dvm = this;
     var mc = manchesterConverterService;
-    var ontoUtils = ontologyUtilsManagerService;
     dvm.os = ontologyStateService;
     dvm.om = ontologyManagerService;
 
@@ -84,10 +86,10 @@ function selectedDetailsComponentCtrl($filter, ontologyManagerService, ontologyS
         ), ', ');
     }
     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
-        dvm.os.onEdit(iriBegin, iriThen, iriEnd)
+        dvm.os.onEdit(iriBegin, iriThen, iriEnd).pipe(first()).toPromise()
             .then(() => {
-                ontoUtils.saveCurrentChanges();
-                ontoUtils.updateLabel();
+                dvm.os.saveCurrentChanges().subscribe();
+                dvm.os.updateLabel();
             });
     }
     dvm.showTypesOverlay = function() {

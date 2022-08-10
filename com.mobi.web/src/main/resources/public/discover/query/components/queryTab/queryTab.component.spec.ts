@@ -39,7 +39,7 @@ import { ErrorDisplayComponent } from '../../../../shared/components/errorDispla
 import { ProgressSpinnerService } from '../../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { YasguiService } from '../../../../shared/services/yasgui.service';
-import { DatasetFormGroupDirective } from '../../../components/datasetFormGroup/datasetFormGroup.component';
+import { DiscoverDatasetSelectComponent} from "../../../components/discoverDatasetSelect/discoverDatasetSelect.component";
 import { QueryTabComponent } from './queryTab.component';
 
 describe('Query Tab component', function() {
@@ -74,7 +74,7 @@ describe('Query Tab component', function() {
             ],
             declarations: [
                 QueryTabComponent,
-                MockDirective(DatasetFormGroupDirective),
+                MockComponent(DiscoverDatasetSelectComponent),
                 MockComponent(ErrorDisplayComponent)
             ],
             providers: [
@@ -101,6 +101,7 @@ describe('Query Tab component', function() {
             response: {},
             queryString: '',
             datasetRecordId: '',
+            datasetRecordTitle: '',
             submitDisabled: false,
             selectedPlugin: '',
             executionTime: 0
@@ -178,9 +179,10 @@ describe('Query Tab component', function() {
             spyOn(component, 'permissionCheck');
             discoverStateStub.query.submitDisabled = true;
             discoverStateStub.query.datasetRecordId = '';
-            component.onSelect({value: datasetRecordIRI});
+            component.onSelect({'recordId': datasetRecordIRI, recordTitle: 'title'});
             expect(discoverStateStub.query.submitDisabled).toEqual(false);
             expect(discoverStateStub.query.datasetRecordId).toEqual(datasetRecordIRI);
+            expect(discoverStateStub.query.datasetRecordTitle).toEqual('title');
             expect(component.permissionCheck).toHaveBeenCalledWith(datasetRecordIRI);
         });
         describe('submitQuery should handle submitting a query', function() {
@@ -348,7 +350,7 @@ describe('Query Tab component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.query-tab')).length).toBe(1);
         });
-        ['.discover-query', 'form.sparql-form', 'button', '.btn-container', 'dataset-form-group'].forEach(test => {
+        ['.discover-query', 'form.sparql-form', 'button', '.btn-container', 'discover-dataset-select'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toBe(1);
             });

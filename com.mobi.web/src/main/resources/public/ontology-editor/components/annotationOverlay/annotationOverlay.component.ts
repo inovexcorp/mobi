@@ -23,6 +23,9 @@
 import * as angular from 'angular';
 import { union, has, get } from 'lodash';
 
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './annotationOverlay.component.scss';
 
 const template = require('./annotationOverlay.component.html');
@@ -33,7 +36,6 @@ const template = require('./annotationOverlay.component.html');
  * @requires shared.service:propertyManagerService
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:prefixes
  *
  * @description
@@ -57,12 +59,11 @@ const annotationOverlayComponent = {
     controller: annotationOverlayComponentCtrl
 };
 
-annotationOverlayComponentCtrl.$inject = ['ontologyManagerService', 'propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
+annotationOverlayComponentCtrl.$inject = ['ontologyManagerService', 'propertyManagerService', 'ontologyStateService', 'utilService', 'prefixes'];
 
-function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
+function annotationOverlayComponentCtrl(ontologyManagerService: OntologyManagerService, propertyManagerService, ontologyStateService: OntologyStateService, utilService, prefixes) {
     var dvm = this;
     var om = ontologyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.pm = propertyManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
@@ -107,10 +108,10 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
         var added = dvm.pm.addValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
         
         if (added) {
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
+            dvm.os.saveCurrentChanges().subscribe();
             if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
-                dvm.ontoUtils.updateLabel();
+                dvm.os.updateLabel();
             }
             dvm.os.annotationModified(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, dvm.os.annotationValue);
         } else {
@@ -126,11 +127,11 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
             if (dvm.os.annotationLanguage) {
                 dvm.changeLanguage(dvm.os.annotationLanguage);
             }
-            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(get(oldObj, '@value'), get(oldObj, '@type'), get(oldObj, '@language')));
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.addToDeletions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(get(oldObj, '@value'), get(oldObj, '@type'), get(oldObj, '@language')));
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
+            dvm.os.saveCurrentChanges().subscribe();
             if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
-                dvm.ontoUtils.updateLabel();
+                dvm.os.updateLabel();
             }
             dvm.os.annotationModified(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, dvm.os.annotationValue);
         } else {
@@ -140,6 +141,9 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
     }
     dvm.cancel = function() {
         dvm.dismiss();
+    }
+    dvm.orderByEntityName = function(iri) {
+        return dvm.os.getEntityNameByListItem(iri);
     }
 
     function createJson(value, type, language) {

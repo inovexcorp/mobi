@@ -50,7 +50,7 @@ describe('Datatype Property Overlay component', function() {
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             propertyManagerSvc = _propertyManagerService_;
             util = _utilService_;
         });
@@ -214,7 +214,7 @@ describe('Datatype Property Overlay component', function() {
                 this.controller.addProperty(this.prop, this.value);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, prefixes.xsd + 'string', '');
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
@@ -222,7 +222,7 @@ describe('Datatype Property Overlay component', function() {
                 this.controller.addProperty(this.prop, this.value, this.type, this.language);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, '', this.language);
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -232,7 +232,7 @@ describe('Datatype Property Overlay component', function() {
                 this.controller.addProperty(this.prop, this.value, this.type, this.language);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, this.type, '');
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -241,7 +241,7 @@ describe('Datatype Property Overlay component', function() {
                 this.controller.addProperty(this.prop, this.value, this.type);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, this.type, '');
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -275,8 +275,8 @@ describe('Datatype Property Overlay component', function() {
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -286,8 +286,8 @@ describe('Datatype Property Overlay component', function() {
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, prefixes.xsd + 'string', '');
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -297,8 +297,8 @@ describe('Datatype Property Overlay component', function() {
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, '', this.language);
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -309,8 +309,8 @@ describe('Datatype Property Overlay component', function() {
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -320,8 +320,8 @@ describe('Datatype Property Overlay component', function() {
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(util.createWarningToast).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();

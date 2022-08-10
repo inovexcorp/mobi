@@ -24,9 +24,8 @@
 @import "../../../../css/variables";
 
 .class-cards {
-    .rows-container {
-        overflow-y: auto;
-
+    height: 100%;
+    overflow-y: auto;
         .row {
             margin: 0;
             padding-left: 7.5px;
@@ -36,20 +35,15 @@
                 height: auto;
                 padding: 15px 7.5px;
 
-                .card {
+                .mat-card {
                     height: auto;
                     margin: 0;
 
                     .card-header {
-                        display: flex;
-
                         .text {
                             flex: 1;
                             @include textOverflow;
                             width: 0;
-                        }
-                        .badge {
-                            font-size: 16px;
                         }
                     }
                     .overview {
@@ -82,5 +76,4 @@
                 }
             }
         }
-    }
 }

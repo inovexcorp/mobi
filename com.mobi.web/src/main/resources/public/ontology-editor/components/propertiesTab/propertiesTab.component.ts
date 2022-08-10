@@ -1,25 +1,26 @@
 /*-
- * #%L
- * com.mobi.web
- * $Id:$
- * $HeadURL:$
- * %%
- * Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * #L%
- */
+* #%L
+* com.mobi.web
+* $Id:$
+* $HeadURL:$
+* %%
+* Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+* %%
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* #L%
+*/
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./propertiesTab.component.html');
 
@@ -28,7 +29,6 @@ const template = require('./propertiesTab.component.html');
  * @name ontology-editor.component:propertiesTab
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -48,11 +48,10 @@ const propertiesTabComponent = {
     controller: propertiesTabComponentCtrl
 };
 
-propertiesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
+propertiesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'modalService'];
 
-function propertiesTabComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, modalService) {
+function propertiesTabComponentCtrl(ontologyManagerService, ontologyStateService: OntologyStateService, modalService) {
     var dvm = this;
-    var ontoUtils = ontologyUtilsManagerService;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
 
@@ -61,11 +60,11 @@ function propertiesTabComponentCtrl(ontologyManagerService, ontologyStateService
     }
     dvm.deleteProperty = function() {
         if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
-            ontoUtils.deleteObjectProperty();
+            dvm.os.deleteObjectProperty();
         } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
-            ontoUtils.deleteDataTypeProperty();
+            dvm.os.deleteDataTypeProperty();
         } else if (dvm.om.isAnnotation(dvm.os.listItem.selected)) {
-            ontoUtils.deleteAnnotationProperty();
+            dvm.os.deleteAnnotationProperty();
         }
     }
     dvm.seeHistory = function() {

@@ -22,6 +22,8 @@
  */
 import { unset, forEach, map } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./createDataPropertyOverlay.component.html');
 
 /**
@@ -30,7 +32,6 @@ const template = require('./createDataPropertyOverlay.component.html');
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `createDataPropertyOverlay` is a component that creates content for a modal that creates a data property in the
@@ -57,9 +58,9 @@ const createDataPropertyOverlayComponent = {
     controller: createDataPropertyOverlayComponentCtrl
 }
 
-createDataPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+createDataPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes'];
 
-function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes) {
     var dvm = this;
     dvm.characteristics = [
         {
@@ -70,7 +71,6 @@ function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, p
     ];
     dvm.prefixes = prefixes;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
     dvm.values = [];
     dvm.duplicateCheck = true;
@@ -113,18 +113,18 @@ function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, p
         if (dvm.ranges.length) {
             dvm.property[prefixes.rdfs + 'range'] = map(dvm.ranges, iri => ({'@id': iri}));
         }
-        dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
+        dvm.os.addLanguageToNewEntity(dvm.property, dvm.language);
         dvm.os.updatePropertyIcon(dvm.property);
-        dvm.os.handleNewProperty(dvm.property);
+        ontologyStateService.handleNewProperty(dvm.property);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.property);
+        ontologyStateService.addEntity(dvm.property);
         // update lists
         updateLists();
         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
         // Update InProgressCommit
-        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
+        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.property);
         // Save the changes to the ontology
-        dvm.ontoUtils.saveCurrentChanges();
+        dvm.os.saveCurrentChanges().subscribe();
         // Open snackbar
         dvm.os.listItem.goTo.entityIRI = dvm.property['@id'];
         dvm.os.listItem.goTo.active = true;
@@ -139,7 +139,7 @@ function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, p
         dvm.os.listItem.dataProperties.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
         if (dvm.values.length) {
             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
-            dvm.ontoUtils.setSuperProperties(dvm.property['@id'], map(dvm.values, '@id'), 'dataProperties');
+            dvm.os.setSuperProperties(dvm.property['@id'], map(dvm.values, '@id'), 'dataProperties');
         } else {
             dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties);
         }

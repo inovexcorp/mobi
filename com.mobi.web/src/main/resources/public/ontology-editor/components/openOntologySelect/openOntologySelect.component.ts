@@ -27,6 +27,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './openOntologySelect.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 const template = require('./openOntologySelect.component.html');
 
@@ -64,7 +66,7 @@ const openOntologySelectComponent = {
 
 openOntologySelectComponentCtrl.$inject = ['$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes', 'ontologyManagerService', 'utilService', 'modalService'];
 
-function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: CatalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, modalService) {
+function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: CatalogManagerService, ontologyStateService: OntologyStateService, prefixes, ontologyManagerService: OntologyManagerService, utilService, modalService) {
     var dvm = this;
     var om = ontologyManagerService;
 
@@ -82,7 +84,7 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: Ca
 
     dvm.canDelete = function(entity) {
         if (dvm.cm.isBranch(entity)) {
-            return get(entity, '@id') !== dvm.listItem.ontologyRecord.branchId && dvm.listItem.userCanModify;
+            return get(entity, '@id') !== dvm.listItem.versionedRdfRecord.branchId && dvm.listItem.userCanModify;
         } else if (dvm.cm.isTag(entity)) {
             return dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'tag') !== get(entity, '@id') && dvm.listItem.userCanModify;
         } else {
@@ -115,13 +117,13 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: Ca
         if (dvm.cm.isBranch(item)) {
             var branchId = item['@id'];
             var commitId = dvm.util.getPropertyId(find(dvm.state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}), prefixes.ontologyState + 'commit');
-            dvm.cm.getRecordBranch(branchId, dvm.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+            dvm.cm.getRecordBranch(branchId, dvm.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
                 .then((branch: JSONLDObject) => {
                     var headCommitId = get(branch, ["http://mobi.com/ontologies/catalog#head", 0, "@id"], '');
                     if (!commitId) {
                         commitId = headCommitId;
                     }
-                    return dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId);
+                    return dvm.os.updateOntology(dvm.listItem.versionedRdfRecord.recordId, branchId, commitId, commitId === headCommitId).pipe(first()).toPromise();
                 }, $q.reject)
                 .then(() => {
                     setSelectList();
@@ -131,7 +133,7 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: Ca
             var tagId = item['@id'];
             var commitId = dvm.util.getPropertyId(item, prefixes.catalog + 'commit');
             dvm.cm.getCommit(commitId).pipe(first()).toPromise()
-                .then(() => dvm.os.updateOntologyWithCommit(dvm.listItem.ontologyRecord.recordId, commitId, tagId), $q.reject)
+                .then(() => dvm.os.updateOntologyWithCommit(dvm.listItem.versionedRdfRecord.recordId, commitId, tagId).pipe(first()).toPromise(), $q.reject)
                 .then(() => {
                     setSelectList();
                     dvm.os.resetStateTabs(dvm.listItem);
@@ -156,9 +158,9 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: Ca
         modalService.openModal('editBranchOverlay', {branch}, () => dvm.submit(branch));
     }
     dvm.deleteBranch = function(branch) {
-        om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, branch['@id'])
-            .then(() => dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
-            .then(() => dvm.os.deleteOntologyBranchState(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
+        om.deleteOntologyBranch(dvm.listItem.versionedRdfRecord.recordId, branch['@id']).toPromise()
+            .then(() => dvm.os.removeBranch(dvm.listItem.versionedRdfRecord.recordId, branch['@id']).pipe(first()).toPromise(), $q.reject)
+            .then(() => dvm.os.deleteBranchState(dvm.listItem.versionedRdfRecord.recordId, branch['@id']).pipe(first()).toPromise(), $q.reject)
             .then(() => {
                 if (!dvm.os.isStateBranch(dvm.currentState)) {
                     dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit')).pipe(first()).toPromise()
@@ -172,7 +174,7 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: Ca
             }, dvm.util.createErrorToast);
     }
     dvm.deleteTag = function(tag) {
-        dvm.cm.deleteRecordVersion(tag['@id'], dvm.listItem.ontologyRecord.recordId, catalogId)
+        dvm.cm.deleteRecordVersion(tag['@id'], dvm.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
             .then(() => {
                 remove(dvm.listItem.tags, {'@id': tag['@id']});
                 if (!dvm.os.isStateTag(dvm.currentState)) {
@@ -187,10 +189,10 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: Ca
             }, dvm.util.createErrorToast)
     }
     dvm.submit = function(branch) {
-        if (branch['@id'] === dvm.listItem.ontologyRecord.branchId) {
-            dvm.listItem.ontologyRecord.branchId = '';
+        if (branch['@id'] === dvm.listItem.versionedRdfRecord.branchId) {
+            dvm.listItem.versionedRdfRecord.branchId = '';
             $timeout(function() {
-                dvm.listItem.ontologyRecord.branchId = branch['@id'];
+                dvm.listItem.versionedRdfRecord.branchId = branch['@id'];
             });
         }
     }

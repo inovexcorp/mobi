@@ -33,9 +33,11 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
+import { OntologyDocument } from '../../../shared/models/ontologyDocument.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 import './mappingConfigOverlay.component.scss';
 
@@ -98,7 +100,7 @@ export class MappingConfigOverlayComponent implements OnInit {
 
     constructor(private dialog: MatDialogRef<MappingConfigOverlayComponent>, private spinnerSvc: ProgressSpinnerService,
         public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
-        @Inject('utilService') public util, @Inject('ontologyManagerService') private om) {}
+        @Inject('utilService') public util, private om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
@@ -194,9 +196,9 @@ export class MappingConfigOverlayComponent implements OnInit {
                     }),
                     switchMap(ontology => {
                         versionObj.ontologies = [ontology];
-                        return from(this.om.getImportedOntologies(ontologyState.recordId, ontologyState.branchId, versionObj.commitId));
+                        return this.om.getImportedOntologies(ontologyState.recordId, ontologyState.branchId, versionObj.commitId);
                     })
-                ).subscribe((imported: any[]) => {
+                ).subscribe((imported: OntologyDocument[]) => {
                     this._setVersionOntologies(versionObj, imported);
                     this._setClasses(versionObj);
                     ontologyState.latest = versionObj;
@@ -228,9 +230,9 @@ export class MappingConfigOverlayComponent implements OnInit {
                             }),
                             switchMap(ontology => {
                                 versionObj.ontologies = [ontology];
-                                return from(this.om.getImportedOntologies(this.selectedOntologyState.recordId, this.selectedOntologyState.branchId, versionObj.commitId));
+                                return this.om.getImportedOntologies(this.selectedOntologyState.recordId, this.selectedOntologyState.branchId, versionObj.commitId);
                             })
-                        ).subscribe((imported: any[]) => {
+                        ).subscribe((imported: OntologyDocument[]) => {
                             this._setVersionOntologies(versionObj, imported);
                             this._setClasses(versionObj);
                             this.selectedOntologyState.latest = versionObj;
@@ -243,9 +245,9 @@ export class MappingConfigOverlayComponent implements OnInit {
                         .pipe(
                             switchMap(ontology => {
                                 versionObj.ontologies = [ontology];
-                                return from(this.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId));
+                                return this.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
                             })
-                        ).subscribe((imported: any[]) => {
+                        ).subscribe((imported: OntologyDocument[]) => {
                             this._setVersionOntologies(versionObj, imported);
                             this._setClasses(versionObj);
                             this.selectedOntologyState.saved = versionObj;

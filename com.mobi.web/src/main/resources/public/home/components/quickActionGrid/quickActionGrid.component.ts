@@ -28,6 +28,8 @@ import { WindowRef } from '../../../shared/services/windowRef.service';
 
 import './quickActionGrid.component.scss';
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 /**
  * @class home.QuickActionGridComponent
@@ -43,7 +45,7 @@ import { DiscoverStateService } from '../../../shared/services/discoverState.ser
 export class QuickActionGridComponent implements OnInit {
     actions = [];
 
-    constructor(private windowRef: WindowRef, private $state: StateService, @Inject('ontologyStateService') private os,
+    constructor(private windowRef: WindowRef, private $state: StateService, private os: OntologyStateService,
                 private ds: DiscoverStateService) {}
     
     ngOnInit(): void {
@@ -88,7 +90,7 @@ export class QuickActionGridComponent implements OnInit {
         if (!isEmpty(this.os.listItem)) {
             this.os.listItem.active = false;
         }
-        this.os.listItem = {};
+        this.os.listItem = undefined;
         this.$state.go('root.ontology-editor', null, { reload: true });
     }
     readTheDocumentation(): void {

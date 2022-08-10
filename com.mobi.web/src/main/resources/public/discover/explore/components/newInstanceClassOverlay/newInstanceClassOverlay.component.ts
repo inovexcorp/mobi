@@ -20,95 +20,98 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { merge, head, filter, includes } from 'lodash';
-import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { merge, head, filter, set } from 'lodash';
+import { Observable } from 'rxjs';
+import { debounceTime, map, startWith } from 'rxjs/operators';
+import { v4 } from 'uuid';
 
-const template = require('./newInstanceClassOverlay.component.html');
+import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { InstanceDetails } from '../../../models/instanceDetails.interface';
+import { ExploreService } from '../../../services/explore.service';
 
 /**
- * @ngdoc component
- * @name explore.component:newInstanceClassOverlay
- * @requires shared.filter:splitIRIFilter
- * @requires uuid
- * @requires shared.service:discoverStateService
- * @requires discover.service:exploreService
- * @requires explore.service:exploreUtilsService
- * @requires shared.service:utilService
+ * @class explore.component:newInstanceClassOverlay
  *
- * @description
- * `newInstanceClassOverlay` is a component that creates contents for a modal that adds an instance of a class
- * selected from the provided list to the currently
- * {@link shared.service:discoverStateService selected dataset}. The modal contains a dropdown list of
- * the classes that is searchable. For creation, an IRI is generated with a random UUID and the new instance is
- * added to the breadcrumbs to be edited.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
- * @param {Object} resolve An object with data provided to the modal
- * @param {Object[]} resolve.classes The list of classes to select from
+ * A component that creates contents for a modal that adds an instance of a class
+ * selected from the provided list to the currently {@link shared.DiscoverStateService selected dataset}. The modal
+ * contains a dropdown list of the classes that is searchable. For creation, an IRI is generated with a random UUID and
+ * the new instance is added to the breadcrumbs to be edited.
  */
-const newInstanceClassOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&',
-        resolve: '<'
-    },
-    controllerAs: 'dvm',
-    controller: newInstanceClassOverlayComponentCtrl
-};
+@Component({
+    selector: 'new-instance-class-overlay',
+    templateUrl: './newInstanceClassOverlay.component.html'
+})
+export class NewInstanceClassOverlayComponent implements OnInit {
+    searchText = '';
+    selectedClass: {id: string, title: string, deprecated: boolean} = undefined;
+    classControl = new FormControl();
+    filteredClasses: Observable<{id: string, title: string, deprecated: boolean}[]>;
 
-newInstanceClassOverlayComponentCtrl.$inject = ['$timeout', '$filter', 'uuid', 'discoverStateService', 'exploreService', 'utilService'];
+    constructor(private dialogRef: MatDialogRef<NewInstanceClassOverlayComponent>, 
+        @Inject(MAT_DIALOG_DATA) public data: {classes: {id: string, title: string, deprecated: boolean}[]},
+        private state: DiscoverStateService, private es: ExploreService, 
+        private splitIRI: SplitIRIPipe, @Inject('utilService') public util) {}
 
-function newInstanceClassOverlayComponentCtrl($timeout, $filter, uuid, discoverStateService: DiscoverStateService, exploreService, utilService) {
-    var dvm = this;
-    var es = exploreService;
-    var util = utilService;
-    dvm.ds = discoverStateService;
-    dvm.searchText = '';
-    dvm.selectedClass = undefined;
-
-    dvm.$onInit = function() {
-        $timeout(function() {
-            var el = document.querySelector('#auto-complete');
-            if ( el instanceof HTMLElement) {
-                el.focus();
-            }
-        }, 200);
+    ngOnInit(): void {
+        this.filteredClasses = this.classControl.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string | {id: string, title: string, deprecated: boolean}>(''),
+                map(val => {
+                    if (!this.data.classes) {
+                        return [];
+                    }
+                    const searchText = typeof val === 'string' ?
+                        val :
+                        val ?
+                            val.id :
+                            '';
+                    const list = searchText ? filter(this.data.classes, clazz => {
+                        const matchesId = clazz.id.toLowerCase().includes(searchText.toLowerCase());
+                        const matchesTitle = clazz.title.toLowerCase().includes(searchText.toLowerCase());
+                        return matchesId || matchesTitle;
+                    }) : this.data.classes;
+                    return list.slice(0, 101);
+                })
+            );
     }
-    dvm.getClasses = function(searchText) {
-        return searchText ? filter(dvm.resolve.classes, clazz => includes(clazz.id.toLowerCase(), searchText.toLowerCase())) : dvm.resolve.classes;
+    getDisplayText(value: {id: string, title: string, deprecated: boolean}): string {
+        return value ? value.id : '';
     }
-    dvm.submit = function() {
-        es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.selectedClass.id, {offset: 0, limit: dvm.ds.explore.instanceDetails.limit})
-            .then(response => {
-                dvm.ds.explore.creating = true;
-                dvm.ds.explore.classId = dvm.selectedClass.id;
-                dvm.ds.explore.classDeprecated = dvm.selectedClass.deprecated;
-                dvm.ds.resetPagedInstanceDetails();
-                merge(dvm.ds.explore.instanceDetails, es.createPagedResultsObject(response));
-                var iri;
-                if (dvm.ds.explore.instanceDetails.data.length) {
-                    let instanceDetails : any = head(dvm.ds.explore.instanceDetails.data);
-                    var split = $filter('splitIRI')(instanceDetails.instanceIRI);
-                    iri = split.begin + split.then + uuid.v4();
+    selectClass(event: MatAutocompleteSelectedEvent): void {
+        if (event.option.value) {
+            this.selectedClass = event.option.value;
+        }
+    }
+    submit(): void {
+        this.es.getClassInstanceDetails(this.state.explore.recordId, this.selectedClass.id, {pageIndex: 0, limit: this.state.explore.instanceDetails.limit})
+            .subscribe(response => {
+                this.state.explore.creating = true;
+                this.state.explore.classId = this.selectedClass.id;
+                this.state.explore.classDeprecated = this.selectedClass.deprecated;
+                this.state.resetPagedInstanceDetails();
+                merge(this.state.explore.instanceDetails, this.es.createPagedResultsObject(response));
+                let iri;
+                if (this.state.explore.instanceDetails.data.length) {
+                    const instanceDetails: InstanceDetails = head(this.state.explore.instanceDetails.data);
+                    const split = this.splitIRI.transform(instanceDetails.instanceIRI);
+                    iri = split.begin + split.then + v4();
                 } else {
-                    var split = $filter('splitIRI')(dvm.selectedClass.id);
-                    iri = 'http://mobi.com/data/' + split.end.toLowerCase() + '/' + uuid.v4();
+                    const split = this.splitIRI.transform(this.selectedClass.id);
+                    iri = 'http://mobi.com/data/' + split.end.toLowerCase() + '/' + v4();
                 }
-                dvm.ds.explore.instance.entity = [{
+                this.state.explore.instance.entity = [{
                     '@id': iri,
-                    '@type': [dvm.selectedClass.id]
+                    '@type': [this.selectedClass.id]
                 }];
-                dvm.ds.explore.instance.metadata.instanceIRI = iri;
-                dvm.ds.explore.breadcrumbs.push(dvm.selectedClass.title);
-                dvm.ds.explore.breadcrumbs.push('New Instance');
-                dvm.close();
-            }, util.createErrorToast);
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+                set(this.state.explore.instance, 'metadata.instanceIRI', iri);
+                this.state.explore.breadcrumbs.push(this.selectedClass.title);
+                this.state.explore.breadcrumbs.push('New Instance');
+                this.dialogRef.close();
+            }, error => this.util.createErrorToast(error));
     }
 }
-
-export default newInstanceClassOverlayComponent;

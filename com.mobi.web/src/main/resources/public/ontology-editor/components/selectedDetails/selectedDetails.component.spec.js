@@ -50,7 +50,7 @@ describe('Selected Details component', function() {
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             manchesterConverterSvc = _manchesterConverterService_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             modalSvc = _modalService_;
         });
 

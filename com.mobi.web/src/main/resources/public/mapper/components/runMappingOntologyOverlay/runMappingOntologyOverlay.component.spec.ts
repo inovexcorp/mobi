@@ -46,6 +46,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { RunMappingOntologyOverlayComponent } from './runMappingOntologyOverlay.component';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 describe('Run Mapping Ontology Overlay component', function() {
     let component: RunMappingOntologyOverlayComponent;
@@ -100,7 +101,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
                 MockProvider(CatalogManagerService),
-                { provide: 'ontologyStateService', useClass: mockOntologyState },
+                { provide: OntologyStateService, useClass: mockOntologyState },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -115,7 +116,7 @@ describe('Run Mapping Ontology Overlay component', function() {
         mapperStateStub = TestBed.get(MapperStateService);
         delimitedManagerStub = TestBed.get(DelimitedManagerService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        ontologyStateStub = TestBed.get('ontologyStateService');
+        ontologyStateStub = TestBed.get(OntologyStateService);
         utilStub = TestBed.get('utilService');
 
         catalogManagerStub.localCatalog = { '@id': catalogId };
@@ -285,7 +286,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                             mapperStateStub.saveMapping.and.returnValue(of(mappingRecordId));
                         });
                         it('committing the data with no active merge', fakeAsync(function() {
-                            ontologyStateStub.list = [{ ontologyRecord: { recordId, branchId }, merge: { active: false } }];
+                            ontologyStateStub.list = [{ versionedRdfRecord: { recordId, branchId }, merge: { active: false } }];
                             component.run();
                             tick();
                             expect(mapperStateStub.saveMapping).toHaveBeenCalledWith();
@@ -300,7 +301,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                             expect(component.errorMessage).toEqual('');
                         }));
                         it('committing the data with an active merge', fakeAsync(function() {
-                            ontologyStateStub.list = [{ ontologyRecord: { recordId, branchId }, merge: { active: true } }];
+                            ontologyStateStub.list = [{ versionedRdfRecord: { recordId, branchId }, merge: { active: true } }];
                             component.run();
                             tick();
                             expect(mapperStateStub.saveMapping).toHaveBeenCalledWith();
@@ -320,7 +321,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                         mapperStateStub.isMappingChanged.and.returnValue(false);
                     });
                     it('and commits the data with no active merge', fakeAsync(function() {
-                        ontologyStateStub.list = [{ ontologyRecord: { recordId, branchId }, merge: { active: false } }];
+                        ontologyStateStub.list = [{ versionedRdfRecord: { recordId, branchId }, merge: { active: false } }];
                         component.run();
                         tick();
                         expect(mapperStateStub.saveMapping).not.toHaveBeenCalled();
@@ -335,7 +336,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                         expect(component.errorMessage).toEqual('');
                     }));
                     it('and commits the data with an active merge', fakeAsync(function() {
-                        ontologyStateStub.list = [{ ontologyRecord: { recordId, branchId }, merge: { active: true } }];
+                        ontologyStateStub.list = [{ versionedRdfRecord: { recordId, branchId }, merge: { active: true } }];
                         component.run();
                         tick();
                         expect(mapperStateStub.saveMapping).not.toHaveBeenCalled();

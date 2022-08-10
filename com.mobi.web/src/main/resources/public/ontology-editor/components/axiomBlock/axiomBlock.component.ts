@@ -22,6 +22,9 @@
  */
 import { includes } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+
 const template = require('./axiomBlock.component.html');
 
 /**
@@ -29,7 +32,6 @@ const template = require('./axiomBlock.component.html');
  * @name ontology-editor.component:axiomBlock
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:propertyManagerService
  * @requires shared.service:modalService
  * @requires shared.service:prefixes
@@ -49,12 +51,11 @@ const axiomBlockComponent = {
     controller: axiomBlockComponentCtrl        
 };
 
-axiomBlockComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService', 'prefixes'];
+axiomBlockComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'propertyManagerService', 'modalService', 'prefixes'];
 
-function axiomBlockComponentCtrl(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, propertyManagerService, modalService, prefixes) {
+function axiomBlockComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, propertyManagerService, modalService, prefixes) {
     var dvm = this;
     var pm = propertyManagerService;
-    var ontoUtils = ontologyUtilsManagerService;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
 
@@ -69,16 +70,16 @@ function axiomBlockComponentCtrl(ontologyStateService, ontologyManagerService, o
     }
     dvm.updateClassHierarchy = function(updatedAxiomObj) {
         if (updatedAxiomObj.axiom === prefixes.rdfs + 'subClassOf' && updatedAxiomObj.values.length) {
-            ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], updatedAxiomObj.values);
+            dvm.os.setSuperClasses(dvm.os.listItem.selected['@id'], updatedAxiomObj.values);
             if (includes(dvm.os.listItem.individualsParentPath, dvm.os.listItem.selected['@id'])) {
-                ontoUtils.updateflatIndividualsHierarchy(updatedAxiomObj.values);
+                dvm.os.updateFlatIndividualsHierarchy(updatedAxiomObj.values);
             }
             dvm.os.setVocabularyStuff();
         }
     }
     dvm.updateDataPropHierarchy = function(updatedAxiomObj) {
         if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
-            ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
+            dvm.os.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
         } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
             dvm.os.addPropertyToClasses(dvm.os.listItem.selected['@id'], updatedAxiomObj.values);
             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
@@ -86,8 +87,8 @@ function axiomBlockComponentCtrl(ontologyStateService, ontologyManagerService, o
     }
     dvm.updateObjectPropHierarchy = function(updatedAxiomObj) {
         if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
-            ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'objectProperties');
-            if (ontoUtils.containsDerivedSemanticRelation(updatedAxiomObj.values)) {
+            dvm.os.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'objectProperties');
+            if (dvm.os.containsDerivedSemanticRelation(updatedAxiomObj.values)) {
                 dvm.os.setVocabularyStuff();
             }
         } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
