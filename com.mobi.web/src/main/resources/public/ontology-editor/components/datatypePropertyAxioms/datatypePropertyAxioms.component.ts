@@ -21,6 +21,9 @@
  * #L%
  */
 import { map } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./datatypePropertyAxioms.component.html');
 
@@ -30,7 +33,6 @@ const template = require('./datatypePropertyAxioms.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:propertyManagerService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:modalService
  *
@@ -46,31 +48,31 @@ const datatypePropertyAxiomsComponent = {
     controller: datatypePropertyAxiomsComponentCtrl
 };
 
-datatypePropertyAxiomsComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService', 'modalService'];
+datatypePropertyAxiomsComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyManagerService', 'modalService'];
 
-function datatypePropertyAxiomsComponentCtrl(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService, modalService) {
+function datatypePropertyAxiomsComponentCtrl(ontologyStateService: OntologyStateService, propertyManagerService, prefixes, ontologyManagerService, modalService) {
     var dvm = this;
     var om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.pm = propertyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
 
     dvm.getAxioms = function() {
         return map(dvm.pm.datatypeAxiomList, 'iri');
     }
     dvm.openRemoveOverlay = function(key, index) {
         dvm.key = key;
-        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
-            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeFromHierarchy);
+        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
+            dvm.os.removeProperty(key, index).pipe(first()).toPromise().then(dvm.removeFromHierarchy);
         });
     }
     dvm.removeFromHierarchy = function(axiomObject) {
         if (prefixes.rdfs + 'subPropertyOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
-            // dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataProperties.hierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.dataProperties.index);
-            // dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
             dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataProperties, dvm.os.listItem.selected['@id'], axiomObject['@id']);
             dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties);
         }
+    }
+    dvm.orderByEntityName = function(iri) {
+        return dvm.os.getEntityNameByListItem(iri);
     }
 }
 

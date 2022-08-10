@@ -87,7 +87,7 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
             this.cm.getRecordBranch(this.state.listItem.merge.target['@id'], this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise()
                 .then((target: JSONLDObject) => {
                     this.targetHeadCommitId = this.util.getPropertyId(target, CATALOG + 'head');
-                    return this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0);
+                    return this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0).pipe(first()).toPromise();
                 }, error => Promise.reject(error))
                 .then(noop, errorMessage => {
                     this.util.createErrorToast(errorMessage);
@@ -99,11 +99,11 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
     }
     retrieveMoreResults(limit: number, offset: number): void {
         this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, limit, offset)
-            .then(noop, this.util.createErrorToast);
+            .subscribe(noop, this.util.createErrorToast);
     }
     submit(): void {
         this.state.attemptMerge()
-            .then(() => {
+            .subscribe(() => {
                 this.util.createSuccessToast('Your merge was successful.');
                 this.state.cancelMerge();
             }, error => this.error = error);

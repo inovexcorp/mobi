@@ -21,6 +21,10 @@
  * #L%
  */
 import { pullAt, map, trim } from 'lodash';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { finalize, first } from 'rxjs/operators';
+import { noop } from 'rxjs';
 
 const template = require('./uploadOntologyOverlay.component.html');
 
@@ -55,7 +59,7 @@ const uploadOntologyOverlayComponent = {
 
 uploadOntologyOverlayComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStateService) {
+function uploadOntologyOverlayComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService) {
     var dvm = this;
     var om = ontologyManagerService;
     var os = ontologyStateService;
@@ -84,7 +88,20 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
         dvm.resolve.startUpload();
         os.uploadList
             .push({title: dvm.title, id, promise: emtyPromise, error: undefined, isProcessing: true});
-        om.uploadOntology(file, undefined, dvm.title, dvm.description, map(dvm.keywords, trim), id, this.finishLoading);
+        const request = om.uploadOntology({file: file, title: dvm.title, description: dvm.description, keywords: map(dvm.keywords, trim)});
+        request.pipe(finalize(() => {
+            const fileInfo = os.uploadList.find(item => item.id === id);
+            fileInfo.isProcessing = false;
+        })).subscribe(() => {
+            const fileInfo = os.uploadList.find(item => item.id === id);
+            fileInfo.status = 'complete';
+            dvm.resolve.finishUpload();
+        }, error => {
+            const fileInfo = os.uploadList.find(item => item.id === id);
+            fileInfo.status = 'error';
+            os.addErrorToUploadItem(id, error);
+            dvm.resolve.finishUpload();
+        });
         if ((dvm.index + 1) < dvm.total) {
             dvm.index++;
             setFormValues();

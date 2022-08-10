@@ -57,7 +57,7 @@ describe('Create Tag Modal component', function() {
         this.branchId = 'branchId'
         this.commitId = 'commitId';
         this.error = 'error';
-        ontologyStateSvc.listItem.ontologyRecord = {recordId: this.recordId, commitId: this.commitId, branchId: this.branchId};
+        ontologyStateSvc.listItem.versionedRdfRecord = {recordId: this.recordId, commitId: this.commitId, branchId: this.branchId};
 
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');

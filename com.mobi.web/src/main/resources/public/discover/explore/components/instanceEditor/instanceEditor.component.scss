@@ -32,4 +32,9 @@
         line-height: 33px;
         margin-right: 15px;
     }
+    .instance-edit-Container {
+        height: 100%;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
 }

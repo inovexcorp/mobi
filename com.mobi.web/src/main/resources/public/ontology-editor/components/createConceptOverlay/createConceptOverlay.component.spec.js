@@ -58,7 +58,7 @@ describe('Create Concept Overlay component', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             propertyManagerSvc = _propertyManagerService_;
         });
 
@@ -192,13 +192,13 @@ describe('Create Concept Overlay component', function() {
             this.controller.create();
             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(this.scheme, prefixes.skos + 'hasTopConcept', this.controller.concept['@id']);
             expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, 'concept', this.scheme['@id']);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, json);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.listItem.concepts.iris).toEqual({[this.controller.concept['@id']]: ontologyStateSvc.listItem.ontologyId});
             expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.controller.concept);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.concept);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             expect(scope.close).toHaveBeenCalled();

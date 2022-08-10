@@ -31,7 +31,7 @@ import {
     findIndex,
     find} from 'lodash';
 import { from, Observable, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import { REST_PREFIX } from '../../constants';
@@ -45,6 +45,7 @@ import { Mapping } from '../models/mapping.class';
 import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
 import { MappingOntology } from '../models/mappingOntology.interface';
 import { RecordConfig } from '../models/recordConfig.interface';
+import { OntologyManagerService } from './ontologyManager.service';
 
 /**
  * @class shared:MappingManagerService
@@ -68,7 +69,7 @@ export class MappingManagerService {
     ];
 
     constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util,
-        @Inject('ontologyManagerService') private om, private spinnerSvc: ProgressSpinnerService, 
+        private om: OntologyManagerService, private spinnerSvc: ProgressSpinnerService, 
         private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
 
     // REST calls
@@ -271,16 +272,16 @@ export class MappingManagerService {
      * successful; rejects otherwise
      */
     getOntology(ontologyInfo: MappingOntologyInfo): Observable<MappingOntology> {
-        const promise: Promise<MappingOntology> = this.om.getOntology(ontologyInfo.recordId, ontologyInfo.branchId, 
-            ontologyInfo.commitId, undefined, undefined, undefined, false)
-            .then(ontology => {
+        return this.om.getOntology(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId, undefined, 
+            undefined, undefined, false)
+            .pipe(map((ontology: JSONLDObject[]|string) => {
+                const jsonld = ontology as JSONLDObject[];
                 return {
-                    id: this.om.getOntologyIRI(ontology),
+                    id: this.om.getOntologyIRI(jsonld),
                     recordId: ontologyInfo.recordId,
-                    entities: ontology
+                    entities: jsonld
                 };
-            }, error => Promise.reject(error));
-        return from(promise);
+            }));
     }
     /**
      * Gets the list of source ontologies from the imports closure of the ontology with the passed id. If no id is
@@ -296,19 +297,10 @@ export class MappingManagerService {
      */
     getSourceOntologies(ontologyInfo: MappingOntologyInfo): Observable<MappingOntology[]> {
         let sourceOntology: MappingOntology;
-        const ontologyObj = find(this.om.list, {
-            recordId: ontologyInfo.recordId,
-            branchId: ontologyInfo.branchId,
-            commitId: ontologyInfo.commitId}
-        );
-        const ob: Observable<MappingOntology> = ontologyObj ? of({
-            id: ontologyObj.ontologyId,
-            entities: ontologyObj.ontology,
-            recordId: ontologyInfo.recordId}) : this.getOntology(ontologyInfo);
-        return ob.pipe(
+        return this.getOntology(ontologyInfo).pipe(
             switchMap((ontology: MappingOntology) => {
                 sourceOntology = ontology;
-                return from(this.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId));
+                return this.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
             }),
             switchMap((imported: any[]) => {
                 const importedOntologies: MappingOntology[] = imported.map(obj => ({

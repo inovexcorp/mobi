@@ -21,6 +21,9 @@
  * #L%
  */
 import { map } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./objectPropertyAxioms.component.html');
 
@@ -30,7 +33,6 @@ const template = require('./objectPropertyAxioms.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:propertyManagerService
  * @requires shared.service:prefixes
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:modalService
  *
@@ -46,22 +48,21 @@ const objectPropertyAxiomsComponent = {
     controller: objectPropertyAxiomsComponentCtrl
 };
 
-objectPropertyAxiomsComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService', 'modalService'];
+objectPropertyAxiomsComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyManagerService', 'modalService'];
 
-function objectPropertyAxiomsComponentCtrl(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService, modalService) {
+function objectPropertyAxiomsComponentCtrl(ontologyStateService: OntologyStateService, propertyManagerService, prefixes, ontologyManagerService, modalService) {
     var dvm = this;
     var om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.pm = propertyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
 
     dvm.getAxioms = function() {
         return map(dvm.pm.objectAxiomList, 'iri');
     }
     dvm.openRemoveOverlay = function(key, index) {
         dvm.key = key;
-        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
-            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeFromHierarchy);
+        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
+            dvm.os.removeProperty(key, index).pipe(first()).toPromise().then(dvm.removeFromHierarchy);
         });
     }
     dvm.removeFromHierarchy = function(axiomObject) {
@@ -70,6 +71,9 @@ function objectPropertyAxiomsComponentCtrl(ontologyStateService, propertyManager
             dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties);
             dvm.os.setVocabularyStuff();
         }
+    }
+    dvm.orderByEntityName = function(iri) {
+        return dvm.os.getEntityNameByListItem(iri);
     }
 }
 

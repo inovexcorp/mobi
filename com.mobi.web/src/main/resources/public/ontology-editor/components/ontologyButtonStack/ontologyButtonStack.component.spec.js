@@ -70,7 +70,7 @@ describe('Ontology Button Stack component', function() {
             expect(this.element.querySelectorAll('button.btn-float').length).toEqual(6);
         });
         it('depending on whether the ontology is committable', function() {
-            ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
+            ontologyStateSvc.listItem.versionedRdfRecord.branchId = 'branch';
             scope.$digest();
             var uploadButton = angular.element(this.element.querySelectorAll('button.upload-circle-button')[0]);
             var tagButton = angular.element(this.element.querySelectorAll('button.btn-dark')[0]);
@@ -139,7 +139,7 @@ describe('Ontology Button Stack component', function() {
             var commitButton = angular.element(this.element.querySelectorAll('button.btn-info')[0]);
             expect(commitButton.attr('disabled')).toBeTruthy();
 
-            ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
+            ontologyStateSvc.listItem.versionedRdfRecord.branchId = 'branch';
             scope.$digest();
             expect(commitButton.attr('disabled')).toBeFalsy();
         });

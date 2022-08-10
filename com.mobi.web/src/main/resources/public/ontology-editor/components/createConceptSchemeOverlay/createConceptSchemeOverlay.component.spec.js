@@ -56,7 +56,7 @@ describe('Create Concept Scheme Overlay component', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
         });
 
         this.iri = 'iri#';

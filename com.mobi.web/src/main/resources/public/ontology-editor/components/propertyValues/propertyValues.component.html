@@ -26,8 +26,8 @@
         <small class="ml-1 text-muted text-truncate flex-1">&lt;{{dvm.property}}&gt;</small>
     </div>
     <div class="prop-value-container d-flex p-1 ml-3 mt-1" ng-repeat="value in dvm.entity[dvm.property]" disable-animate>
-        <span ng-if="::dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">{{dvm.ontoUtils.getLabelForIRI(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
-        <span ng-if="::!dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">
+        <span ng-if="::dvm.os.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">{{dvm.os.getEntityNameByListItem(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
+        <span ng-if="::!dvm.os.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">
             <blank-node-value-display ng-if="::dvm.om.isBlankNodeId(value['@id'])" node-id="value['@id']"></blank-node-value-display>
             <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && dvm.valueInList()" [value]="value" [highlight-text]="dvm.highlightText"></value-display>
             <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && !dvm.valueInList()" [value]="value"></value-display>

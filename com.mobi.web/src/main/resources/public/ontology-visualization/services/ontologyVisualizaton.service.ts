@@ -36,6 +36,14 @@ import {
     EntityInfoI, 
     inProgressCommitI 
 } from '../interfaces/visualization.interfaces';
+import { OntologyManagerService } from '../../shared/services/ontologyManager.service';
+import { HierarchyResponse } from '../../shared/models/hierarchyResponse.interface';
+import { EntityNames } from '../../shared/models/entityNames.interface';
+import { IriList } from '../../shared/models/iriList.interface';
+import { OntologyAction } from '../../shared/models/ontologyAction';
+import { OntologyStateService } from '../../shared/services/ontologyState.service';
+import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
+import { Hierarchy } from '../../shared/models/hierarchy.interface';
 
 
 /**
@@ -66,11 +74,11 @@ export class OntologyVisualizationService {
     readonly spinnerId = 'ontology-visualization';
     readonly DEFAULT_NODE_LIMIT = 500; // GLOBAL Node Limit for graph, each graphState will has it own
 
-    constructor(@Inject('ontologyStateService') private os,
-        @Inject('ontologyManagerService') private om,
+    constructor(private os: OntologyStateService,
+        private om: OntologyManagerService,
         @Inject('utilService') private utilService) {
-        if (this.os.ontologyAction$) {
-            this.os.ontologyAction$.subscribe( record => this.removeOntologyCache(record));
+        if (this.os.ontologyRecordAction$) {
+            this.os.ontologyRecordAction$.subscribe(record => this.removeOntologyCache(record));
         }
     }
 
@@ -90,7 +98,7 @@ export class OntologyVisualizationService {
     }
 
     /**
-     * Emit SidePanel evetns or actions
+     * Emit SidePanel events or actions
      * @param action
      */
     public emitSidePanelAction(action:SidePanelPayloadI) {
@@ -105,12 +113,17 @@ export class OntologyVisualizationService {
      * @name init
      * 
      * @param commitId commitId 
-     * @param hasInProgress If there are any inProgressCommits
+     * @param inProgressCommit If there are any inProgressCommits
      * @returns {Observable} A Observable that resolves to a Map (data structure) that contains the graph state.
      */
-    init(commitId: string, hasInProgress: inProgressCommitI): Observable<GraphState> {
+    init(commitId: string, inProgressCommit: inProgressCommitI): Observable<GraphState> {
         const self = this;
-        const inProgressCommit = hasInProgress ? this.os.hasInProgressCommit({inProgressCommit: hasInProgress}) : null;
+        const ontologyListItem = new OntologyListItem();
+        if (inProgressCommit) {
+            ontologyListItem.inProgressCommit.additions = inProgressCommit?.additions;
+            ontologyListItem.inProgressCommit.deletions = inProgressCommit?.deletions;
+        }
+        const hasInProgressCommit: boolean = inProgressCommit ? this.os.hasInProgressCommit(ontologyListItem) : null;
         return of(commitId).pipe(
             tap((commitId: string): void => {
                 if (this.os.listItem.hasPendingRefresh) {
@@ -126,7 +139,7 @@ export class OntologyVisualizationService {
                     const commitGraphState: GraphState = new GraphState({
                         commitId: commitId,
                         ontologyId: this.os.listItem.ontologyId,
-                        recordId: this.os.listItem.ontologyRecord.recordId,
+                        recordId: this.os.listItem.versionedRdfRecord.recordId,
                         importedOntologies: this.os.listItem.importedOntologies || [],
                         positioned: false,
                         isOverLimit: false,
@@ -142,7 +155,7 @@ export class OntologyVisualizationService {
             }),
 
             switchMap( (commitGraphState: GraphState): Observable<GraphState> => 
-                from(this.buildGraphData(commitGraphState, inProgressCommit))),
+                from(this.buildGraphData(commitGraphState, hasInProgressCommit))),
             tap((commitGraphState: GraphState): void => {
                 const styleObject = buildColorScale(commitGraphState.importedOntologies, commitGraphState.ontologyId);
                 commitGraphState.style = styleObject.style,
@@ -166,7 +179,7 @@ export class OntologyVisualizationService {
         if (this._sidebarCache.has(commitId)) {
           state = this._sidebarCache.get(commitId);
         } else {
-            state = new SidebarState({commitId, recordId: this.os.listItem.ontologyRecord.recordId});
+            state = new SidebarState({commitId, recordId: this.os.listItem.versionedRdfRecord.recordId});
             this._sidebarCache.set(commitId, state);
         }
         return  state;
@@ -191,48 +204,39 @@ export class OntologyVisualizationService {
      *   importData[] = annotationProperties, 
      * @returns Observable of with map of data
      */
+    // TODO figure out targeted spinnner
     getOntologyNetworkObservable(): Observable<any>{
-        return forkJoin([this.om.getClassHierarchies(this.os.listItem.ontologyRecord.recordId,
-            this.os.listItem.ontologyRecord.branchId,
-            this.os.listItem.ontologyRecord.commitId,
+        return forkJoin([this.om.getClassHierarchies(this.os.listItem.versionedRdfRecord.recordId,
+            this.os.listItem.versionedRdfRecord.branchId,
+            this.os.listItem.versionedRdfRecord.commitId,
             false),
-            this.om.getPropertyToRange(this.os.listItem.ontologyRecord.recordId,
-                this.os.listItem.ontologyRecord.branchId,
-                this.os.listItem.ontologyRecord.commitId,
-                false,
-                this.spinnerId),
-            this.om.getOntologyEntityNames(this.os.listItem.ontologyRecord.recordId,
-                this.os.listItem.ontologyRecord.branchId,
-                this.os.listItem.ontologyRecord.commitId,
+            this.om.getPropertyToRange(this.os.listItem.versionedRdfRecord.recordId,
+                this.os.listItem.versionedRdfRecord.branchId,
+                this.os.listItem.versionedRdfRecord.commitId,
+                false),
+            this.om.getOntologyEntityNames(this.os.listItem.versionedRdfRecord.recordId,
+                this.os.listItem.versionedRdfRecord.branchId,
+                this.os.listItem.versionedRdfRecord.commitId,
                 true,
-                false,
-                this.spinnerId + '2'),
-            this.om.getImportedIris(this.os.listItem.ontologyRecord.recordId,
-                this.os.listItem.ontologyRecord.branchId,
-                this.os.listItem.ontologyRecord.commitId,
-                false,
-                this.spinnerId + '3')]
+                false),
+            this.om.getImportedIris(this.os.listItem.versionedRdfRecord.recordId,
+                this.os.listItem.versionedRdfRecord.branchId,
+                this.os.listItem.versionedRdfRecord.commitId,
+                false)]
         ).pipe(
             catchError(error => { throw 'Network Issue in Source. Details: ' + error } ),
-            map((networkData: any[]):any =>{
-                const classHierarchy: any = networkData[0];
-                const propertyRanges: any = networkData[1].propertyToRanges;
-                const entityNames: any = networkData[2];
-                const importedIris: any = networkData[3];
+            map((networkData): any =>{
+                const classHierarchy: HierarchyResponse = networkData[0];
+                const propertyRanges: {[key: string]: string[]} = networkData[1].propertyToRanges;
+                const entityNames: EntityNames = networkData[2];
+                const importedIris: IriList[] = networkData[3];
 
-                const listItem = {
-                    importedOntologyIds: [],
-                    importedOntologies: [],
-                    classes: {
-                        parentMap: classHierarchy.parentMap,
-                        childMap: classHierarchy.childMap,
-                        flat: {},
-                        iris: {}
-                    },
-                    ontologyRecord: this.os.listItem.ontologyRecord,
-                    ontologyId: this.os.listItem.ontologyId,
-                    entityInfo: entityNames
-                };
+                const listItem: OntologyListItem = new OntologyListItem();
+                listItem.classes.parentMap = classHierarchy.parentMap;
+                listItem.classes.childMap = classHierarchy.childMap;
+                listItem.versionedRdfRecord = this.os.listItem.versionedRdfRecord;
+                listItem.ontologyId = this.os.listItem.ontologyId;
+                listItem.entityInfo = entityNames;
     
                 if (importedIris && importedIris.length > 0) {
                     importedIris.forEach(info => {
@@ -267,18 +271,24 @@ export class OntologyVisualizationService {
      * Get ontology data from os.listitem
      * @returns Observable
      */
+    // TODO figure out targeted spinner
     getOntologyLocalObservable(): Observable<any>{
         return forkJoin(
-            [this.om.getPropertyToRange(this.os.listItem.ontologyRecord.recordId,
-                this.os.listItem.ontologyRecord.branchId,
-                this.os.listItem.ontologyRecord.commitId,
-                false,
-                this.spinnerId)]
+            [this.om.getPropertyToRange(this.os.listItem.versionedRdfRecord.recordId,
+                this.os.listItem.versionedRdfRecord.branchId,
+                this.os.listItem.versionedRdfRecord.commitId,
+                false)]
             ).pipe(
                 catchError(error => of(error)),
-                map((networkData:any[]):any =>{
-                    const propertyRanges: any = networkData[0].propertyToRanges;
-                    const classesObject = this.os.listItem && this.os.listItem.classes ? this.os.listItem.classes : { flat: [] };
+                map((networkData):any =>{
+                    const propertyRanges: {[key: string]: string[]} = networkData[0].propertyToRanges;
+                    const classesObject: Hierarchy = this.os.listItem && this.os.listItem.classes ? this.os.listItem.classes : {
+                        iris: {},
+                        parentMap: {},
+                        childMap: {},
+                        circularMap: {},
+                        flat: []
+                    };
                     const classParentMap = classesObject.parentMap;
                     const classIris = classesObject.iris;
                     const entityInfo = this.os.listItem.entityInfo;
@@ -303,10 +313,10 @@ export class OntologyVisualizationService {
      * If an object property has more than one range, it should be shown ending at each class
      * 
      * @param commitGraphState commit graph state
-     * @param hasInProgress { @link inProgressCommitI } inprogress data
+     * @param hasInProgressCommit boolean whether there is an in progress commit
      * @return Promise
      */
-     buildGraphData(commitGraphState: GraphState, hasInProgress: inProgressCommitI): Observable<GraphState>{
+     buildGraphData(commitGraphState: GraphState, hasInProgressCommit: boolean): Observable<GraphState>{
         return new Observable((observer: Subscriber<GraphState>) => {
             // Data has already been initialized previously
             if (commitGraphState.allGraphNodes.length > 0) {
@@ -316,7 +326,7 @@ export class OntologyVisualizationService {
             // TODO https://www.learnrxjs.io/learn-rxjs/operators/conditional/iif
             // If hasInProgress then use getOntologyNetworkObservable, 
             // else use getOntologyLocalObservable
-            if (hasInProgress) {
+            if (hasInProgressCommit) {
                 this.getOntologyNetworkObservable().subscribe( ontologyData => { // todo add typescript interface for ontologyData 
                     return this.graphDataFormat(ontologyData, commitGraphState, observer);
                 });
@@ -604,12 +614,12 @@ export class OntologyVisualizationService {
      * @param recordInfo
      */
     public removeOntologyCache(recordInfo:any) : void {
-        if (recordInfo && recordInfo.action && recordInfo.action === 'close') {
+        if (recordInfo && recordInfo.action && recordInfo.action === OntologyAction.ONTOLOGY_CLOSE) {
             this._graphStateCache.forEach(item => {
                 if (item.recordId === recordInfo.recordId) {
                     this._graphStateCache.delete(item.commitId);
                 }
-            })
+            });
         }
     }
 }

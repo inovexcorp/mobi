@@ -31,7 +31,6 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { skip } from 'rxjs/operators';
-
 import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 import { DCTERMS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';

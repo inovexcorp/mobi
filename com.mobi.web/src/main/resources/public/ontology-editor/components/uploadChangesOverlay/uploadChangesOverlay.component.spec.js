@@ -129,7 +129,7 @@ describe('Upload Changes Overlay component', function() {
                 ontologyStateSvc.uploadChanges.and.returnValue($q.reject('Error message'));
                 this.controller.submit();
                 scope.$apply();
-                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
+                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.versionedRdfRecord.recordId, this.controller.os.listItem.versionedRdfRecord.branchId, this.controller.os.listItem.versionedRdfRecord.commitId);
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toEqual(false);
                 expect(this.controller.error).toEqual('Error message');
                 expect(scope.close).not.toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe('Upload Changes Overlay component', function() {
             it('successfully', function() {
                 this.controller.submit();
                 scope.$apply();
-                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
+                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.versionedRdfRecord.recordId, this.controller.os.listItem.versionedRdfRecord.branchId, this.controller.os.listItem.versionedRdfRecord.commitId);
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toEqual(true);
                 expect(this.controller.error).toBeFalsy();
                 expect(scope.close).toHaveBeenCalled();

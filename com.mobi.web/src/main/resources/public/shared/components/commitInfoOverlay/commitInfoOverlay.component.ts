@@ -24,8 +24,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { get, map, merge, union } from 'lodash';
-import { first } from 'rxjs/operators';
+import { get, merge, union } from 'lodash';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { CommitDifference } from '../../models/commitDifference.interface';
 import { UserManagerService } from '../../services/userManager.service';
@@ -33,6 +33,8 @@ import { CatalogManagerService } from '../../services/catalogManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 import './commitInfoOverlay.component.scss';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { Observable, of, throwError, noop } from 'rxjs';
 
 /**
  * @class shared.CommitInfoOverlayComponent
@@ -60,45 +62,48 @@ export class CommitInfoOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, @Inject(MAT_DIALOG_DATA) public data: any,
                 @Inject('utilService') public util, public um: UserManagerService,
-                private cm: CatalogManagerService, @Inject('ontologyManagerService') private om) {
+                private cm: CatalogManagerService, private om: OntologyManagerService) {
     }
 
     ngOnInit(): void {
-        this.retrieveMoreResults(100, 0);
+        this.retrieveMoreResults(100, 0).subscribe(noop, this.util.createErrorToast);
     }
     cancel(): void {
         this.dialogRef.close(false);
     }
-    retrieveMoreResults(limit: number, offset: number): Promise<any> {
-        return this.cm.getDifference(this.data.commit.id, null, limit, offset).pipe(first()).toPromise()
-            .then((response: HttpResponse<CommitDifference>) => {
-                this.tempAdditions = response.body.additions as JSONLDObject[];
-                this.tempDeletions = response.body.deletions as JSONLDObject[];
-                const headers = response.headers;
-                this.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
+    retrieveMoreResults(limit: number, offset: number): Observable<null> {
+        return this.cm.getDifference(this.data.commit.id, null, limit, offset)
+            .pipe(
+                switchMap((response: HttpResponse<CommitDifference>) => {
+                    this.tempAdditions = response.body.additions as JSONLDObject[];
+                    this.tempDeletions = response.body.deletions as JSONLDObject[];
+                    const headers = response.headers;
+                    this.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
 
-                if (this.data.ontRecordId) {
-                    const diffIris = union(map(this.tempAdditions, '@id'), map(this.tempDeletions, '@id'));
-                    const filterIris = union(diffIris, this.util.getObjIrisFromDifference(this.tempAdditions), this.util.getObjIrisFromDifference(this.tempDeletions));
-                    return this.om.getOntologyEntityNames(this.data.ontRecordId, '', this.data.commit.id, false, false, filterIris);
-                }
-                return Promise.resolve();
-            }, errorMessage => {
-                return Promise.reject(errorMessage);
-            })
-            .then(data => {
-                if (data) {
-                    merge(this.entityNames, data);
-                }
-                this.additions = this.tempAdditions;
-                this.deletions = this.tempDeletions;
-                this.tempAdditions = [];
-                this.tempDeletions = [];
-            }, errorMessage => {
-                if (errorMessage) {
-                    this.util.createErrorToast(errorMessage);
-                }
-            });
+                    if (this.data.ontRecordId) {
+                        const diffIris = union(this.tempAdditions.map(obj => obj['@id']), this.tempDeletions.map(obj => obj['@id']));
+                        const filterIris = union(diffIris, this.util.getObjIrisFromDifference(this.tempAdditions), this.util.getObjIrisFromDifference(this.tempDeletions));
+                        return this.om.getOntologyEntityNames(this.data.ontRecordId, '', this.data.commit.id, false, false, filterIris);
+                    }
+                    return of(null);
+                }),
+                map(data => {
+                    if (data) {
+                        merge(this.entityNames, data);
+                    }
+                    this.additions = this.tempAdditions;
+                    this.deletions = this.tempDeletions;
+                    this.tempAdditions = [];
+                    this.tempDeletions = [];
+                    return null;
+                }),
+                catchError(errorMessage => {
+                    if (errorMessage) {
+                        this.util.createErrorToast(errorMessage);
+                    }
+                    return throwError(errorMessage);
+                })
+            );
     }
     getEntityName(iri: string): string {
         if (get(this.entityNames, [iri, 'label'])) {

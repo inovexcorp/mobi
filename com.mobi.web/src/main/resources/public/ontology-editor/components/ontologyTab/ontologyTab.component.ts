@@ -26,6 +26,8 @@ import { first } from 'rxjs/operators';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './ontologyTab.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { noop } from 'rxjs';
 
 const template = require('./ontologyTab.component.html');
 
@@ -57,7 +59,7 @@ const ontologyTabComponent = {
 
 ontologyTabComponentCtrl.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-function ontologyTabComponentCtrl($q, ontologyStateService, catalogManagerService: CatalogManagerService, utilService, prefixes) {
+function ontologyTabComponentCtrl($q, ontologyStateService: OntologyStateService, catalogManagerService: CatalogManagerService, utilService, prefixes) {
     var dvm = this;
     var cm = catalogManagerService;
     var util = utilService;
@@ -69,19 +71,23 @@ function ontologyTabComponentCtrl($q, ontologyStateService, catalogManagerServic
         checkBranchExists();
     }
 
+    dvm.setSelected = function(entityIRI, getUsages = true) { // TODO: Remove this and call the os.setSelected method directly in html using async pipe once component gets upgraded
+        dvm.os.setSelected(entityIRI, getUsages).toPromise();
+    }
+
     function checkBranchExists() {
-        if (dvm.os.listItem.ontologyRecord.branchId && !find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId})) {
+        if (dvm.os.listItem.versionedRdfRecord.branchId && !find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId})) {
             var catalogId = get(cm.localCatalog, '@id', '');
             var masterBranch = find(dvm.os.listItem.branches, branch => util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
-            var state = dvm.os.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
+            var state = dvm.os.getStateByRecordId(dvm.os.listItem.versionedRdfRecord.recordId);
             var commitId = util.getPropertyId(find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': masterBranch}]}), prefixes.ontologyState + 'commit');
-            cm.getBranchHeadCommit(masterBranch, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+            cm.getBranchHeadCommit(masterBranch, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
                 .then(headCommit => {
                     var headCommitId = get(headCommit, "commit['@id']", '');
                     if (!commitId) {
                         commitId = headCommitId;
                     }
-                    return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId, commitId === headCommitId);
+                    return dvm.os.updateOntology(dvm.os.listItem.versionedRdfRecord.recordId, masterBranch, commitId, commitId === headCommitId).pipe(first()).toPromise();
                 }, $q.reject)
                 .then(() => dvm.os.resetStateTabs(), util.createErrorToast);
         }

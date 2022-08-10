@@ -23,6 +23,8 @@
 import { findIndex } from 'lodash';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./seeHistory.component.html');
 
@@ -32,7 +34,6 @@ const template = require('./seeHistory.component.html');
  * @requires shared.service:catalogManagerService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyUtilsManagerService
  * @requires shared.service:utilService
  *
  * @description
@@ -46,11 +47,10 @@ const seeHistoryComponent = {
     controller: seeHistoryComponentCtrl
 };
 
-seeHistoryComponentCtrl.$inject = ['catalogManagerService', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService'];
+seeHistoryComponentCtrl.$inject = ['catalogManagerService', 'ontologyManagerService', 'ontologyStateService', 'utilService'];
 
-function seeHistoryComponentCtrl(catalogManagerService: CatalogManagerService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
+function seeHistoryComponentCtrl(catalogManagerService: CatalogManagerService, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, utilService) {
     var dvm = this;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.cm = catalogManagerService;
     dvm.os = ontologyStateService;
     dvm.om = ontologyManagerService;
@@ -70,7 +70,7 @@ function seeHistoryComponentCtrl(catalogManagerService: CatalogManagerService, o
         dvm.os.listItem.selectedCommit = dvm.commits[index - 1];
     }
     dvm.getEntityNameDisplay = function(iri) {
-        return dvm.om.isBlankNodeId(iri) ? dvm.ontoUtils.getBlankNodeValue(iri) : dvm.ontoUtils.getLabelForIRI(iri);
+        return dvm.om.isBlankNodeId(iri) ? dvm.os.getBlankNodeValue(iri) : dvm.os.getEntityNameByListItem(iri);
     }
     dvm.receiveCommits = function(commits) {
         dvm.commits = commits;

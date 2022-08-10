@@ -28,10 +28,10 @@
             <custom-label>Properties</custom-label>
             <ui-select multiple ng-model="dvm.bindModel" ng-change="dvm.onChange()">
                 <ui-select-match placeholder="Select properties">
-                    <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
+                    <span title="{{$item}}">{{dvm.os.getEntityNameByListItem($item)}}</span>
                 </ui-select-match>
                 <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.array">
-                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight: $select.search | trusted"></div>
+                    <div title="{{iri}}" ng-bind-html="dvm.os.getEntityNameByListItem(iri) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>

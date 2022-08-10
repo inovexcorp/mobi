@@ -1,25 +1,27 @@
 /*-
- * #%L
- * com.mobi.web
- * $Id:$
- * $HeadURL:$
- * %%
- * Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * #L%
- */
+* #%L
+* com.mobi.web
+* $Id:$
+* $HeadURL:$
+* %%
+* Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+* %%
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* #L%
+*/
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./classesTab.component.html');
 
@@ -28,7 +30,6 @@ const template = require('./classesTab.component.html');
  * @name ontology-editor.component:classesTab
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -48,16 +49,15 @@ const classesTabComponent = {
     controller: classesTabComponentCtrl
 };
 
-classesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService']
+classesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'modalService']
 
-function classesTabComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, modalService) {
+function classesTabComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, modalService) {
     var dvm = this;
-    var ontoUtils = ontologyUtilsManagerService
     dvm.os = ontologyStateService;
     dvm.om = ontologyManagerService;
 
     dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', ontoUtils.deleteClass);
+        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.os.deleteClass);
     }
     dvm.seeHistory = function() {
         dvm.os.listItem.seeHistory = true;

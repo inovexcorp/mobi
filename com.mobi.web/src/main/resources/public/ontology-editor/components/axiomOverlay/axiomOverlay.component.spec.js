@@ -57,7 +57,7 @@ describe('Axiom Overlay component', function() {
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             util = _utilService_,
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             prefixes = _prefixes_;
             manchesterSvc = _manchesterConverterService_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -249,7 +249,7 @@ describe('Axiom Overlay component', function() {
                         this.controller.values.forEach(value => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
                         });
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                         expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: this.controller.values});
@@ -276,7 +276,7 @@ describe('Axiom Overlay component', function() {
                         this.controller.values.forEach(value => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
                         });
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                         expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: this.controller.values});
@@ -328,7 +328,7 @@ describe('Axiom Overlay component', function() {
                         expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
                         expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, this.blankNodes[0]['@id']);
                         _.forEach(this.blankNodes, node => {
-                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
+                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -340,7 +340,7 @@ describe('Axiom Overlay component', function() {
                         expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
                         expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, this.blankNodes[0]['@id']);
                         _.forEach(this.blankNodes, function(node) {
-                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
+                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

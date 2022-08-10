@@ -34,7 +34,7 @@ describe('Blank Node Value Display component', function() {
         inject(function(_$compile_, _$rootScope_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
         });
 
         ontoUtils.getBlankNodeValue.and.returnValue('bnode');

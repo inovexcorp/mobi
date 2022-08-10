@@ -82,10 +82,10 @@ module.exports = {
         browser
             .useCss()  
             .click('static-iri i.fa.fa-pencil')
-            .waitForElementVisible('edit-iri-overlay')
-            .setValue('edit-iri-overlay div.form-group.ends-container input', 'myOntology')
-            .click('xpath', '//edit-iri-overlay//button[text()="Submit"]')
-            .waitForElementNotVisible('.spinner')
+            .waitForElementVisible('edit-iri-overlay-ajs')
+            .setValue('edit-iri-overlay-ajs div.form-group.ends-container input', 'myOntology')
+            .click('xpath', '//edit-iri-overlay-ajs//button[text()="Submit"]')
+//            .waitForElementNotVisible('.spinner')
     },
 
     'Step 6: Open Commit overlay' : function(browser) { 
@@ -106,7 +106,7 @@ module.exports = {
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotVisible('.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .waitForElementNotPresent('commit-overlay')
             .waitForElementPresent('ontology-editor-page ontology-tab')
     },
@@ -116,7 +116,7 @@ module.exports = {
             .useCss()  
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .click('ontology-sidebar button.btn.btn-primary')
-            .waitForElementNotVisible('.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
     },
 
@@ -142,7 +142,7 @@ module.exports = {
         // wait for loading to finish
         browser
             .useCss()
-            .waitForElementNotVisible('.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
     },
@@ -349,7 +349,7 @@ module.exports = {
             })
             .useCss()
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"]')
-            .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"]', 'firstClass')
+            .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"]', 'First Class')
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"] ~ small')
             .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"] ~ small', 'myOntology#FirstClass')
             .assert.textContains('merge-block .additions h5', 'Added Statements')
@@ -366,7 +366,7 @@ module.exports = {
 
     'Step 24: Validate Merged Commits': function(browser) {
         browser
-            .waitForElementNotVisible('.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()

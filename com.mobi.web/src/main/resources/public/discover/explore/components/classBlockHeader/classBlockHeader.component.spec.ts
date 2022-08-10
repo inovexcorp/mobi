@@ -1,0 +1,277 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+import { DebugElement } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialog } from '@angular/material';
+import { By } from '@angular/platform-browser';
+import { configureTestSuite } from 'ng-bullet';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+
+import { 
+    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+ } from '../../../../../../../test/ts/Shared';
+import { CustomLabelComponent } from '../../../../shared/components/customLabel/customLabel.component';
+import { DatasetSelectComponent } from '../../../../shared/components/datasetSelect/datasetSelect.component';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/newInstanceClassOverlay.component';
+import { ExploreService } from '../../../services/explore.service';
+import { ExploreUtilsService } from '../../services/exploreUtils.service';
+import { ClassBlockHeaderComponent } from './classBlockHeader.component';
+import { of, throwError} from 'rxjs';
+
+describe('Class Block Header component', function() {
+    let component: ClassBlockHeaderComponent;
+    let element: DebugElement;
+    let fixture: ComponentFixture<ClassBlockHeaderComponent>;
+    let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
+    let exploreServiceStub: jasmine.SpyObj<ExploreService>;
+    let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
+    let policyEnforcementStub;
+    let matDialog: jasmine.SpyObj<MatDialog>;
+    let utilStub;
+
+    configureTestSuite(function() {
+        TestBed.configureTestingModule({
+            imports: [],
+            declarations: [
+                ClassBlockHeaderComponent,
+                MockComponent(DatasetSelectComponent),
+                MockComponent(CustomLabelComponent)
+            ],
+            providers: [
+                MockProvider(ExploreService),
+                MockProvider(DiscoverStateService),
+                MockProvider(ExploreUtilsService),
+                MockProvider('prefixes', 'prefixes'),
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
+                        open: { afterClosed: () => of(true)}
+                    }) }
+            ]
+        });
+    });
+
+    beforeEach(function() {
+        fixture = TestBed.createComponent(ClassBlockHeaderComponent);
+        component = fixture.componentInstance;
+        element = fixture.debugElement;
+        discoverStateStub = TestBed.get(DiscoverStateService);
+        exploreServiceStub = TestBed.get(ExploreService);
+        exploreUtilsServiceStub = TestBed.get(ExploreUtilsService);
+        utilStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get('policyEnforcementService');
+        matDialog = TestBed.get(MatDialog);
+
+        discoverStateStub.explore = {
+            breadcrumbs: ['Classes'],
+            classDeprecated: false,
+            classDetails: [],
+            classId: '',
+            creating: false,
+            editing: false,
+            instance: {
+                entity: [],
+                metadata: undefined,
+                objectMap: {},
+                original: []
+            },
+            instanceDetails: {
+                currentPage: 0,
+                data: [],
+                limit: 99,
+                total: 0,
+                links: {
+                    next: '',
+                    prev: ''
+                },
+            },
+            recordId: '',
+            recordTitle: '',
+            hasPermissionError: false
+        }
+    });
+
+    afterEach(function() {
+        cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
+        discoverStateStub = null;
+        exploreServiceStub = null;
+        exploreUtilsServiceStub = null;
+        utilStub = null;
+        matDialog = null;
+    });
+
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(element.queryAll(By.css('form.class-block-header')).length).toEqual(1);
+        });
+        it('with a .form-group', function() {
+            expect(element.queryAll(By.css('.form-group')).length).toBe(1);
+        });
+        it('with a custom-label', function() {
+            expect(element.queryAll(By.css('custom-label')).length).toBe(1);
+        });
+        it('with a dataset-select', function() {
+            expect(element.queryAll(By.css('dataset-select')).length).toBe(1);
+        });
+        it('with a .btn.btn-primary', function() {
+            expect(element.queryAll(By.css('.btn.btn-primary')).length).toBe(1);
+        });
+        it('with a .fa.fa-refresh', function() {
+            expect(element.queryAll(By.css('.fa.fa-refresh')).length).toBe(1);
+        });
+        it('with a .btn.btn-link', function() {
+            expect(element.queryAll(By.css('.btn.btn-link')).length).toBe(1);
+        });
+        it('with a .fa.fa-plus', function() {
+            expect(element.queryAll(By.css('.fa.fa-plus')).length).toBe(1);
+        });
+        it('depending on whether a dataset is selected', function() {
+            fixture.detectChanges();
+            let refreshButton = element.queryAll(By.css('.btn.btn-primary'))[0];
+            let createButton = element.queryAll(By.css('.btn.btn-link'))[0];
+
+            expect(refreshButton.nativeElement.disabled).withContext('refreshButton toBeTruthy').toBeTruthy();
+            expect(createButton.nativeElement.disabled).withContext('createButton toBeTruthy').toBeTruthy();
+
+            discoverStateStub.explore.recordId = 'dataset';
+            
+            fixture.detectChanges();
+            expect(refreshButton.nativeElement.disabled).withContext('createButton toBeFalsy').toBeFalsy();
+            expect(createButton.nativeElement.disabled).withContext('createButton toBeFalsy').toBeFalsy();
+        });
+    });
+    describe('controller methods', function() {
+        describe('showCreate calls the proper methods when getClasses', function() {
+            beforeEach(function() {
+                discoverStateStub.explore.recordId = 'recordId';
+            });
+            it('resolves', fakeAsync (function() {
+                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                exploreUtilsServiceStub.getClasses.and.returnValue(of([{id: '', title: '', deprecated: false}]));
+                component.showCreate();
+                fixture.detectChanges();
+                tick();
+                exploreUtilsServiceStub.getClasses(discoverStateStub.explore.recordId).subscribe(result => {
+                    expect(matDialog.open).toHaveBeenCalledWith(NewInstanceClassOverlayComponent,
+                {data: { content: [{id: '', title: '', deprecated: false}]}
+                    });
+                })
+            }));
+            it('rejects', fakeAsync(function() {
+                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                exploreUtilsServiceStub.getClasses.and.returnValue(throwError('Error message'));
+                component.showCreate();
+                fixture.detectChanges();
+                tick()
+                expect(utilStub.createErrorToast).toHaveBeenCalled();
+                expect(matDialog.open).not.toHaveBeenCalled();
+            }));
+            it('no modify permission', fakeAsync(function() {
+                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                // policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+                component.showCreate();
+                fixture.detectChanges();
+                tick();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to modify dataset');
+                expect(matDialog.open).not.toHaveBeenCalled();
+            }));
+        });
+        describe('onSelect calls the proper methods', function() {
+            it('when value parameter is not an empty string', function() {
+                spyOn(component, 'refresh');
+                component.onSelect('recordId');
+                fixture.detectChanges();
+                expect(discoverStateStub.explore.recordId).toEqual('recordId');
+                expect(component.refresh).toHaveBeenCalled();
+            });
+            it('when value parameter is an empty string', function() {
+                spyOn(component, 'refresh');
+                component.onSelect('');
+                fixture.detectChanges();
+                expect(discoverStateStub.explore.recordId).toEqual('');
+                expect(component.refresh).not.toHaveBeenCalled();
+            });
+        });
+        describe('refresh calls the proper methods when getClassDetails', function() {
+            beforeEach(function() {
+                discoverStateStub.explore.classDetails = []; // [{}]
+                discoverStateStub.explore.recordId = 'recordId';
+            });
+            it('resolves and user have permissions to read', fakeAsync(function() {
+                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                exploreServiceStub.getClassDetails.and.returnValue(of([{
+                    classIRI: 'www.test.com',
+                    classTitle: 'test',
+                    classDescription: 'description',
+                    instancesCount: 0,
+                    classExamples: ['example'],
+                    ontologyRecordTitle: 'testOntology',
+                    deprecated: false
+                }]));
+                component.refresh();
+                fixture.detectChanges();
+                tick();
+                exploreServiceStub.getClassDetails(discoverStateStub.explore.recordId).subscribe(result => {
+                    expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith('recordId');
+                    expect(discoverStateStub.explore.classDetails).toEqual([{
+                        classIRI: 'www.test.com',
+                        classTitle: 'test',
+                        classDescription: 'description',
+                        instancesCount: 0,
+                        classExamples: ['example'],
+                        ontologyRecordTitle: 'testOntology',
+                        deprecated: false
+                    }]);
+                    expect(discoverStateStub.explore.hasPermissionError).toEqual(false);
+                });
+            }));
+            it('rejects and user have permissions to read', fakeAsync(function() {
+                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
+                component.refresh();
+                fixture.detectChanges();
+                tick();
+                expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith('recordId');
+                expect(discoverStateStub.explore.classDetails).toEqual([]);
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(discoverStateStub.explore.hasPermissionError).toEqual(false);
+            }));
+            it('rejects and user does not have permission to read', fakeAsync(function() {
+                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
+                component.refresh();
+                fixture.detectChanges();
+                tick();
+                expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+                expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
+                expect(discoverStateStub.explore.recordId).toEqual('');
+                expect(discoverStateStub.explore.breadcrumbs).toEqual(['Classes']);
+            }));
+        });
+    });
+});

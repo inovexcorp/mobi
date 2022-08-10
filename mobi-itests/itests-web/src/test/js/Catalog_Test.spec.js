@@ -105,7 +105,7 @@ CatalogPage.prototype.changeRecordFields = function(browser, titleOfRecord, chan
         browser
             .click('css selector', this.recordBodyDescriptionSelector, function(result) { this.assert.strictEqual(result.status, 0) })
             .setValue(this.recordBodyDescriptionSelector + ' textarea', [description, browser.Keys.ENTER])
-            .waitForElementNotVisible('div.spinner');
+            .waitForElementNotPresent('#spinner-full');
         browser.expect.element(this.recordBodyDescriptionSelector).text.to.contain(description);
     }
 
@@ -114,7 +114,7 @@ CatalogPage.prototype.changeRecordFields = function(browser, titleOfRecord, chan
         browser.expect.element(this.recordBodyTitleSelector).text.to.contain(titleOfRecord);
         browser
             .click('css selector', 'catalog-page record-view catalog-record-keywords', function(result) { this.assert.strictEqual(result.status, 0) })
-            .waitForElementNotVisible('div.spinner');
+            .waitForElementNotPresent('#spinner-full');
 
         for(var keyword in keywords){ // keyword acts like index number instead of value
             browser.setValue('catalog-page record-view catalog-record-keywords input', [keywords[keyword], browser.Keys.ENTER]);
@@ -122,14 +122,14 @@ CatalogPage.prototype.changeRecordFields = function(browser, titleOfRecord, chan
 
         browser
             .click('css selector', 'catalog-page record-view catalog-record-keywords a', function(result) { this.assert.strictEqual(result.status, 0) })
-            .waitForElementNotVisible('div.spinner');
+            .waitForElementNotPresent('#spinner-full');
     }
 }
 
 CatalogPage.prototype.leaveCatalogRecord = function(browser) {
     browser
         .click('css selector', 'catalog-page record-view div button', function(result) { this.assert.strictEqual(result.status, 0) })
-        .waitForElementNotVisible('div.spinner')
+        .waitForElementNotPresent('#spinner-full')
         .waitForElementVisible(this.recordsViewSearchBarCssSelector);
 };
 
@@ -146,7 +146,7 @@ CatalogPage.prototype.verifyRecordFilters = function(browser, noKeywords) {
             browser.assert.equal(values.sort(), cp.recordTypeFilters.join(','))
         });
 
-    CatalogPage.prototype.getAllElementsTextValues(browser, 'css selector', this.recordFiltersCssSelector + ' div.filter-container span.ng-binding')
+    CatalogPage.prototype.getAllElementsTextValues(browser, 'css selector', this.recordFiltersCssSelector + ' mat-panel-title')
         .then(function(values) {
             browser.assert.equal(values, 'Record Type,Keywords')
         });
@@ -166,7 +166,7 @@ CatalogPage.prototype.verifyRecordList = function(browser) {
 CatalogPage.prototype.clearCatalogSearchBar = function(browser, searchObj) {
     browser
         .sendKeys(this.recordsViewSearchBarCssSelector,['', browser.Keys.ENTER], function(result) { this.assert.strictEqual(result.status, 0) })
-        .waitForElementNotVisible('div.spinner')
+        .waitForElementNotPresent('#spinner-full')
         .waitForElementVisible(this.recordsViewSearchBarCssSelector)
         .clearValue(this.recordsViewSearchBarCssSelector);
     browser.expect.element(this.recordsViewSearchBarCssSelector).text.to.contain('');
@@ -180,9 +180,12 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
         browser
             .waitForElementVisible(this.recordsViewSearchBarCssSelector)
             .sendKeys(this.recordsViewSearchBarCssSelector,[searchObj.searchText, browser.Keys.ENTER])
-            .waitForElementNotVisible('div.spinner');
-        browser.expect.element(this.recordsViewSearchBarCssSelector).value.to.contain(searchObj.searchText);
-        browser.waitForElementNotVisible('div.spinner');
+            .waitForElementNotPresent('#spinner-full');
+        browser.getValue(this.recordsViewSearchBarCssSelector, function(result) {
+            this.assert.equal(typeof result, "object");
+            this.assert.equal(result.status, 0);
+            this.assert.equal(result.value, searchObj.searchText);
+          });
     } else {
         this.clearCatalogSearchBar(browser);
     }
@@ -194,7 +197,7 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
             .waitForElementVisible('div.mat-select-panel')
             .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
             .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "' + searchObj.order + '")]]')
-            .waitForElementNotVisible('div.spinner');
+            .waitForElementNotPresent('#spinner-full');
     }
 
     if('keywords' in searchObj) {
@@ -204,20 +207,20 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
         for(var keyword in keywords){ // keyword acts like index number instead of value
             var keywordFilterXPathSelector = this.createRecordFiltersXPathSelector('Keywords', keywords[keyword]);
             browser.assert.elementPresent({ selector: keywordFilterXPathSelector, locateStrategy: 'xpath' });
-            browser.click('xpath', keywordFilterXPathSelector, clickFunc).waitForElementNotVisible('div.spinner');
-            browser.waitForElementNotVisible('div.spinner');
+            browser.click('xpath', keywordFilterXPathSelector, clickFunc).waitForElementNotPresent('#spinner-full');
+            browser.waitForElementNotPresent('#spinner-full');
         }
     }
 
     var recordTypeFilterXPathSelector = this.createRecordFiltersXPathSelector('Record Type', 'Versioned Record');
     browser.assert.elementPresent({ selector: recordTypeFilterXPathSelector, locateStrategy: 'xpath' });
     browser.click('xpath', recordTypeFilterXPathSelector, function(result) { this.assert.strictEqual(result.status, 0) })
-        .waitForElementNotVisible('div.spinner');
+        .waitForElementNotPresent('#spinner-full');
 };
 
 CatalogPage.prototype.assertRecordList = function(browser, recordList) {
     if (recordList) {
-      CatalogPage.prototype.getAllElementsTextValues(browser, 'css selector', this.recordsViewCssSelector + ' record-card h5 span')
+      CatalogPage.prototype.getAllElementsTextValues(browser, 'css selector', 'catalog-page record-card mat-card-title span')
             .then(function(values) {
                 browser.assert.equal(values, recordList)
             });
@@ -299,7 +302,7 @@ module.exports = {
             .useXpath()
             .click('//record-view-tabset//mat-tab-header//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Branches")]]')
             .useCss()
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .useXpath()
             .waitForElementVisible('//record-view//entity-publisher//span[text()[contains(.,"admin")]]')
             .useCss();
@@ -362,7 +365,8 @@ module.exports = {
     'Step 16: Switch to catalog page' : function(browser) {
         browser
             .click('sidebar div ul a[class=nav-link][href="#/catalog"]')
-            .waitForElementNotPresent('div.spinner');
+            .waitForElementNotPresent('#spinner-full')
+
 
         catalogPage.openRecordItem(browser, 'z-catalog-ontology-1.ttl');
 

@@ -21,6 +21,8 @@
  * #L%
  */
 import './ontologyCloseOverlay.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { first } from 'rxjs/operators';
 
 const template = require('./ontologyCloseOverlay.component.html');
 
@@ -50,14 +52,14 @@ const ontologyCloseOverlayComponent = {
 
 ontologyCloseOverlayComponentCtrl.$inject = ['$q', 'ontologyStateService'];
 
-function ontologyCloseOverlayComponentCtrl($q, ontologyStateService): void {
+function ontologyCloseOverlayComponentCtrl($q, ontologyStateService: OntologyStateService): void {
     const dvm = this;
     dvm.os = ontologyStateService;
     dvm.error = '';
 
     dvm.saveThenClose = function() {
-        dvm.os.saveChanges(dvm.os.listItem.ontologyRecord.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
-            .then(() => dvm.os.afterSave(), $q.reject)
+        dvm.os.saveChanges(dvm.os.listItem.versionedRdfRecord.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions}).pipe(first()).toPromise()
+            .then(() => dvm.os.afterSave().pipe(first()).toPromise(), $q.reject)
             .then(() => dvm.closeModal(), errorMessage => dvm.error = errorMessage);
     };
     dvm.closeModal = function() {

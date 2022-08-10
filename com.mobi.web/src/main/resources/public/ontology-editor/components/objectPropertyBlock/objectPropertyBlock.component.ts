@@ -21,13 +21,16 @@
  * #L%
  */
 
+import { first } from 'rxjs/operators';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./objectPropertyBlock.component.html');
 
 /**
  * @ngdoc component
  * @name ontology-editor.component:objectPropertyBlock
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -46,21 +49,20 @@ const objectPropertyBlockComponent = {
     controller: objectPropertyBlockComponentCtrl
 };
 
-objectPropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
+objectPropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'modalService'];
 
-function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontologyUtilsManagerService, modalService) {
+function objectPropertyBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, modalService) {
     var dvm = this;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.objectProperties = [];
     dvm.objectPropertiesFiltered = [];
 
-    dvm.$onChanges = function (changes) { 
+    dvm.$onChanges = function(changes) { 
         dvm.updatePropertiesFiltered();
     }
     dvm.updatePropertiesFiltered = function(){
         dvm.objectProperties = Object.keys(dvm.os.listItem.objectProperties.iris);
-        dvm.objectPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.objectProperties), dvm.ontoUtils.getLabelForIRI);
+        dvm.objectPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.objectProperties), iri => dvm.os.getEntityNameByListItem(iri));
     }
     dvm.openAddObjectPropOverlay = function() {
         dvm.os.editingProperty = false;
@@ -71,15 +73,15 @@ function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontolog
     }
     dvm.showRemovePropertyOverlay = function(key, index) {
         dvm.key = key;
-        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
-            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeObjectProperty);
+        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
+            dvm.os.removeProperty(key, index).pipe(first()).toPromise().then(dvm.removeObjectProperty);
             dvm.updatePropertiesFiltered();
         });
     }
     dvm.removeObjectProperty = function(axiomObject) {
         var types = dvm.os.listItem.selected['@type'];
-        if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
-            dvm.ontoUtils.removeFromVocabularyHierarchies(dvm.key, axiomObject);
+        if (dvm.os.containsDerivedConcept(types) || dvm.os.containsDerivedConceptScheme(types)) {
+            dvm.os.removeFromVocabularyHierarchies(dvm.key, axiomObject);
             dvm.updatePropertiesFiltered();
         }
     }

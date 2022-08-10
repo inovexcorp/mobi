@@ -21,8 +21,8 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import * as angular from 'angular';
-import { Subject } from 'rxjs';
+import { forkJoin, throwError, from, Observable, of, Subject, noop } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 import {
     assign,
     concat,
@@ -32,6 +32,7 @@ import {
     findIndex,
     findKey,
     flatten,
+    flattenDeep,
     forEach,
     forOwn,
     get,
@@ -40,13 +41,13 @@ import {
     identity,
     includes,
     initial,
+    intersection,
     isEmpty,
     isEqual,
     isObject,
     join,
     keys,
     lowerCase,
-    map,
     mapValues,
     merge,
     mergeWith,
@@ -58,266 +59,95 @@ import {
     some,
     sortBy,
     tail,
+    trim,
+    truncate,
     union,
     uniq,
     unset,
-    values
+    values,
+    without
 } from 'lodash';
-import { first } from 'rxjs/operators';
-import { CommitDifference } from '../models/commitDifference.interface';
-import { Conflict } from '../models/conflict.interface';
+import { switchMap, map, catchError, tap } from 'rxjs/operators';
+import { Inject, Injectable } from '@angular/core';
+
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { CatalogManagerService } from './catalogManager.service';
-import { SidePanelPayloadI } from '../../ontology-visualization/interfaces/visualization.interfaces';
-
-ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
+import { VersionedRdfState } from './versionedRdfState.service';
+import { CATALOG, DCTERMS, ONTOLOGYSTATE, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
+import { OntologyManagerService } from './ontologyManager.service';
+import { OntologyListItem } from '../models/ontologyListItem.class';
+import { OntologyRecordConfig } from '../models/ontologyRecordConfig.interface';
+import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
+import { Hierarchy } from '../models/hierarchy.interface';
+import { VocabularyStuff } from '../models/vocabularyStuff.interface';
+import { OntologyStuff } from '../models/ontologyStuff.interface';
+import { HierarchyNode } from '../models/hierarchyNode.interface';
+import { EntityNamesItem } from '../models/entityNamesItem.interface';
+import { OntologyRecordActionI } from './ontologyRecordAction.interface';
+import { OntologyAction } from '../models/ontologyAction';
+import { JSONLDId } from '../models/JSONLDId.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
+import { ParentNode } from '../models/parentNode.interface';
 
 /**
- * @ngdoc service
- * @name shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:updateRefsService
- * @requires shared.service:stateManagerService
- * @requires shared.service:utilService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:prefixes
- * @requires shared.service:manchesterConverterService
- * @requires shared.service:policyEnforcementService
- * @requires shared.service:policyManagerService
- * @requires shared.service:httpService
+ * @class shared.OntologyStateService
+ * 
+ * A service which contains various variables to hold the state of the Ontology Editor page and utility functions to
+ * update those variables.
  */
-function ontologyStateService($q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService: CatalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
-    var self = this;
-    var om = ontologyManagerService;
-    var pm = propertyManagerService;
-    var sm = stateManagerService;
-    var cm = catalogManagerService;
-    var util = utilService;
-    var mc = manchesterConverterService;
-    var pe = policyEnforcementService;
-    var polm = policyManagerService;
-    var catalogId = '';
-    var tagStateNamespace = 'http://mobi.com/states/ontology-editor/tag-id/';
-    var branchStateNamespace = 'http://mobi.com/states/ontology-editor/branch-id/';
-    var commitStateNamespace = 'http://mobi.com/states/ontology-editor/commit-id/';
+@Injectable()
+export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
+    catalogId = '';
+    
     // Only the service has access to the subject
-    const _ontologyActionSubject = new Subject<SidePanelPayloadI>();
+    _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
 
-    var ontologyEditorTabStates = {
-        project: {
-            entityIRI: '',
-            active: true,
-            targetedSpinnerId: 'project-entity-spinner'
-        },
-        overview: {
-            active: false,
-            searchText: '',
-            open: {},
-            targetedSpinnerId: 'overview-entity-spinner'
-        },
-        classes: {
-            active: false,
-            searchText: '',
-            index: 0,
-            open: {},
-            targetedSpinnerId: 'classes-entity-spinner'
-        },
-        properties: {
-            active: false,
-            searchText: '',
-            index: 0,
-            open: {},
-            targetedSpinnerId: 'properties-entity-spinner'
-        },
-        individuals: {
-            active: false,
-            searchText: '',
-            index: 0,
-            open: {},
-            targetedSpinnerId: 'individuals-entity-spinner'
-        },
-        concepts: {
-            active: false,
-            searchText: '',
-            index: 0,
-            open: {},
-            targetedSpinnerId: 'concepts-entity-spinner'
-        },
-        schemes: {
-            active: false,
-            searchText: '',
-            index: 0,
-            open: {},
-            targetedSpinnerId: 'schemes-entity-spinner'
-        },
-        search: {
-            active: false
-        },
-        savedChanges: {
-            active: false
-        },
-        commits: {
-            active: false
-        },
-        visualization: {
-            active: false,
-            targetedSpinnerId: 'visualization-spinner'
+    broaderRelations = [
+        SKOS + 'broaderTransitive',
+        SKOS + 'broader',
+        SKOS + 'broadMatch'
+    ];
+    narrowerRelations = [
+        SKOS + 'narrowerTransitive',
+        SKOS + 'narrower',
+        SKOS + 'narrowMatch'
+    ];
+    conceptToScheme = [
+        SKOS + 'inScheme',
+        SKOS + 'topConceptOf'
+    ];
+    schemeToConcept = [
+        SKOS + 'hasTopConcept'
+    ];
+
+    constructor(@Inject('stateManagerService') protected sm, protected cm: CatalogManagerService,
+        @Inject('utilService') protected util, protected om: OntologyManagerService, @Inject('updateRefsService') protected updateRefs, 
+        @Inject('propertyManagerService') protected pm, @Inject('manchesterConverterService') protected mc, 
+        @Inject('policyEnforcementService') protected pe, @Inject('policyManagerService') protected polm,
+        protected splitIRI: SplitIRIPipe) {
+            super(ONTOLOGYSTATE,
+                'http://mobi.com/states/ontology-editor/branch-id/',
+                'http://mobi.com/states/ontology-editor/tag-id/',
+                'http://mobi.com/states/ontology-editor/commit-id/',
+                'ontology-editor'
+            );
         }
-    };
 
-    var ontologyListItemTemplate = {
-        active: true, // TODO: Moved to shared versionedRdfListItem interface
-        upToDate: true, // TODO: Moved to shared versionedRdfListItem interface
-        isVocabulary: false,
-        editorTabStates: angular.copy(ontologyEditorTabStates),
-        ontologyRecord: { // TODO: Moved to shared versionedRdfListItem interface. Renamed to versionedRdfRecord
-            title: '',
-            recordId: '',
-            branchId: '',
-            commitId: ''
-        },
-        ontologyId: '', // TODO: Should be in own listItem class.
-        ontology: [],
-        importedOntologies: [],
-        importedOntologyIds: [],
-        userBranch: false, // TODO: Moved to shared versionedRdfListItem interface
-        createdFromExists: true,
-        userCanModify: false,
-        userCanModifyMaster: false,
-        masterBranchIRI: '', // TODO: Moved to shared versionedRdfListItem interface
-        merge: { // TODO: Moved to shared versionedRdfListItem interface
-            active: false,
-            target: undefined,
-            checkbox: false,
-            difference: undefined,
-            conflicts: [],
-            resolutions: {
-                additions: [],
-                deletions: []
-            },
-            startIndex: 0
-        },
-        dataPropertyRange: {},
-        derivedConcepts: [],
-        derivedConceptSchemes: [],
-        derivedSemanticRelations: [],
-        deprecatedIris: {},
-        classes: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            circularMap: {},
-            flat: []
-        },
-        dataProperties: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            circularMap: {},
-            flat: []
-        },
-        objectProperties: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            circularMap: {},
-            flat: []
-        },
-        annotations: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            circularMap: {},
-            flat: []
-        },
-        individuals: {
-            iris: {},
-            flat: []
-        },
-        concepts: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            circularMap: {},
-            flat: []
-        },
-        conceptSchemes: {
-            iris: {},
-            parentMap: {},
-            childMap: {},
-            circularMap: {},
-            flat: []
-        },
-        blankNodes: {},
-        entityInfo: {},
-        additions: [], // TODO: Moved to shared versionedRdfListItem interface
-        deletions: [], // TODO: Moved to shared versionedRdfListItem interface
-        inProgressCommit: { // TODO: Moved to shared versionedRdfListItem interface
-            additions: [],
-            deletions: []
-        },
-        branches: [],
-        tags: [],
-        classesAndIndividuals: {},
-        classesWithIndividuals: [],
-        individualsParentPath: [],
-        propertyIcons: {},
-        noDomainProperties: [],
-        classToChildProperties: {},
-        iriList: [],
-        selected: {},
-        selectedBlankNodes: [],
-        failedImports: [],
-        hasPendingRefresh: false,
-        goTo: {
-            entityIRI: '',
-            active: false
-        }
-    };
-    forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate, 'dataPropertyRange', iri));
+    vocabularySpinnerId = 'concepts-spinner';
 
-    var emptyInProgressCommit: Difference = new Difference();
-
+    ontologyRecordAction$ = this._ontologyRecordActionSubject.asObservable();
+    
     /**
-     * @ngdoc property
-     * @name list
-     * @propertyOf shared.service:ontologyStateService
-     * @type {Object[]}
-     *
-     * @description
-     * `list` holds an array of ontology objects which contain properties associated with the ontology.
-     * The structure of the ontology object is based on the templates.
-     */
-    self.list = [];
-
-    self.listItem = {};
-
-    self.vocabularySpinnerId = 'concepts-spinner';
-
-    self.ontologyAction$ = _ontologyActionSubject.asObservable();
-    /**
-     * @ngdoc property
-     * @name uploadFiles
-     * @propertyOf shared.service:ontologyStateService
-     * @type {Object[]}
-     *
-     * @description
      * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
      * {@link uploadOntologyTab.directive:uploadOntologyTab} and
      * {@link ontology-editor.component:uploadOntologyOverlay}.
+     * @type {File[]}
      */
-    self.uploadFiles = [];
-    self.fileStatus = [];
+    uploadFiles: File[] = [];
+    fileStatus = [];
 
     /**
-     * @ngdoc property
-     * @name uploadList
-     * @propertyOf shared.service:ontologyStateService
-     * @type {Object[]}
-     *
-     * @description
      * `uploadList` holds an array of upload objects which contain properties about the uploaded files.
      * The structure of the upload object is:
      * {
@@ -326,670 +156,314 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *     promise: {},
      *     title: ''
      * }
+     * @type {Object[]}
      */
-    self.uploadList = [];
+    uploadList = [];
 
     /**
-     * @ngdoc property
-     * @name uploadPending
-     * @propertyOf shared.service:ontologyStateService
-     * @type {number}
-     *
-     * @description
      * `uploadFiles` holds the number of pending uploads.
+     * @type {number}
      */
-    self.uploadPending = 0;
+    uploadPending = 0;
 
     /**
-     * @ngdoc method
-     * @name initialize
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Initializes the `catalogId` variable.
      */
-    self.initialize = function() {
-        catalogId = get(cm.localCatalog, '@id', '');
+    initialize(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
     }
 
-    // TODO: When migrating service to Angular, remove all state methods below through `makeOntologyState` and extend
-    // TODO: `versionedRdfState.service.ts`. Will require changing `ontologyState` calls to these methods to calls to
-    // TODO: the newer more generic methods without `ontology` in the method name.
-
-    /**
-     * @ngdoc method
-     * @name createOntologyState
-     * @methodOf shared.service:stateManagerService
-     *
-     * @description
-     * Creates a new state for the ontology editor for the user using the IRIs. The Record IRI and Commit IRI
-     * are required. The id object can optionally have a Branch IRI or a Tag IRI or neither. The state holds the
-     * last thing the user had checked out for that Record and keeps track of the last commit a User was viewing
-     * on a Branch. Returns a Promise indicating the success.
-     *
-     * @param {Object} idObj An object of IRI ids
-     * @param {string} idObj.recordId A string identifying the Record to keep state for
-     * @param {string} idObj.commitId A string identifying the Commit the user is currently viewing
-     * @param {string} [idObj.branchId = ''] An optional string identifying the Branch the user is currently
-     * viewing
-     * @param {string} [idObj.tagId = ''] An optional string identifying the Tag the user is currently viewing
-     * @returns {Promise} A promise that resolves if the creation was successful or rejects with an error message
-     */
-    self.createOntologyState = function(idObj) {
-        return sm.createState(makeOntologyState(idObj), 'ontology-editor');
-    }
-    /**
-     * @ngdoc method
-     * @name getOntologyStateByRecordId
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Retrieves an ontology editor state from the {@link shared.service:stateManagerService} by the id
-     * of the Record it is about.
-     *
-     * @param {string} recordId A string identifying the Record of a state
-     * @returns {Object} A state object from the stateManagerService
-     */
-    self.getOntologyStateByRecordId = function(recordId) {
-        return find(sm.states, {
-            model: [{
-                [prefixes.ontologyState + 'record']: [{'@id': recordId}]
-            }]
-        });
-    }
-    /**
-     * @ngdoc method
-     * @name updateOntologyState
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Updates an ontology editor state for the identified Record using the provided objects of IRIs and updates
-     * the current state. The Record IRI and Commit IRI are required. The id object can optionally have a Branch
-     * IRI or a Tag IRI or neither. If the current state was originally not a Branch state, it is removed. If a
-     * Branch IRI is provided and there is already a Branch state for it, updates the Commit on the state to the
-     * provided IRI. Uses the {@link shared.service:stateManagerService} to do the update. Returns a
-     * Promise indicating the success.
-     *
-     * @param {Object} idObj An object of IRI ids
-     * @param {string} idObj.recordId A string identifying the Record of a state
-     * @param {string} idObj.commitId A string identifying the Commit the user is now viewing
-     * @param {string} [idObj.branchId = ''] An optional string identifying the Branch the user is now viewing
-     * @param {string} [idObj.tagId = ''] An optional string identifying the Tag the user is now viewing
-     * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
-     */
-    self.updateOntologyState = function(idObj) {
-        var ontologyState = angular.copy(self.getOntologyStateByRecordId(idObj.recordId));
-        var stateId = get(ontologyState, 'id', '');
-        var model = get(ontologyState, 'model', '');
-        var recordState = find(model, {'@type': [prefixes.ontologyState + 'StateRecord']});
-        var currentStateId = get(recordState, "['" + prefixes.ontologyState + 'currentState' + "'][0]['@id']");
-        var currentState = find(model, {'@id': currentStateId});
-
-        if (currentState && !includes(get(currentState, '@type', []), prefixes.ontologyState + 'StateBranch')) {
-            remove(model, currentState);
-        }
-
-        if (idObj.branchId) {
-            var branchState = find(model, {[prefixes.ontologyState + 'branch']: [{'@id': idObj.branchId}]});
-            if (branchState) {
-                currentStateId = branchState['@id'];
-                branchState[prefixes.ontologyState + 'commit'] = [{'@id': idObj.commitId}];
-            } else {
-                currentStateId = branchStateNamespace + uuid.v4();
-                recordState[prefixes.ontologyState + 'branchStates'] = concat(get(recordState, "['" + prefixes.ontologyState + "branchStates']", []), [{'@id': currentStateId}]);
-                model.push({
-                    '@id': currentStateId,
-                    '@type': [prefixes.ontologyState + 'StateCommit', prefixes.ontologyState + 'StateBranch'],
-                    [prefixes.ontologyState + 'branch']: [{'@id': idObj.branchId}],
-                    [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
-                });
-            }
-        } else if (idObj.tagId) {
-            currentStateId = tagStateNamespace + uuid.v4();
-            model.push({
-                '@id': currentStateId,
-                '@type': [prefixes.ontologyState + 'StateCommit', prefixes.ontologyState + 'StateTag'],
-                [prefixes.ontologyState + 'tag']: [{'@id': idObj.tagId}],
-                [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
-            });
-        } else {
-            currentStateId = commitStateNamespace + uuid.v4();
-            model.push({
-                '@id': currentStateId,
-                '@type': [prefixes.ontologyState + 'StateCommit'],
-                [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
-            });
-        }
-        recordState[prefixes.ontologyState + 'currentState'] = [{'@id': currentStateId}];
-        return sm.updateState(stateId, model);
-    }
-    /**
-     * @ngdoc method
-     * @name deleteOntologyBranchState
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Updates an ontology editor state for the identified Record when the identified Branch is deleted. The
-     * Branch state for the Branch is removed from the state array and the Record state object. Calls the
-     * {@link shared.service:stateManagerService} to do the update. Returns a Promise indicating the
-     * success.
-     *
-     * @param {string} recordId A string identifying the Record of a state
-     * @param {string} branchId A string identifying the Branch that was removed
-     * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
-     */
-    self.deleteOntologyBranchState = function(recordId, branchId) {
-        var ontologyState = angular.copy(self.getOntologyStateByRecordId(recordId));
-        var record = find(ontologyState.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
-        var branchState = head(remove(ontologyState.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}));
-        remove(record[prefixes.ontologyState + 'branchStates'], {'@id': get(branchState, '@id')});
-        if (!record[prefixes.ontologyState + 'branchStates'].length) {
-            delete record[prefixes.ontologyState + 'branchStates'];
-        }
-        return sm.updateState(ontologyState.id, ontologyState.model);
-
-    }
-    /**
-     * @ngdoc method
-     * @name deleteOntologyState
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Deletes the ontology editor state for the identified Record using the
-     * {@link shared.service:stateManagerService}. Returns a Promise indicating the success.
-     *
-     * @param {string} recordId A string identifying the Record of a state
-     * @returns {Promise} A promise that resolves if the deletion was successful or rejects with an error message
-     */
-    self.deleteOntologyState = function(recordId) {
-        var stateId = get(self.getOntologyStateByRecordId(recordId), 'id', '');
-        return sm.deleteState(stateId);
-    }
-    /**
-     * @ngdoc method
-     * @name getCurrentStateIdByRecordId
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Finds the ID of the current state of the ontology with the provided Record ID. The state refers to the
-     * object detailing what the user has currently "checked out".
-     *
-     * @param {string} recordId A string identifying the Record of a state
-     * @returns {string} The string ID of the current state object
-     */
-    self.getCurrentStateIdByRecordId = function(recordId) {
-        return self.getCurrentStateId(self.getOntologyStateByRecordId(recordId));
-    }
-    /**
-     * @ngdoc method
-     * @name getCurrentStateByRecordId
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Finds the current state of the ontology with the provided Record ID. The state refers to the object
-     * detailing what the user has currently "checked out".
-     *
-     * @param {string} recordId A string identifying the Record of a state
-     * @returns {Object} The JSON-LD object representing the current state
-     */
-    self.getCurrentStateByRecordId = function(recordId) {
-        var state = self.getOntologyStateByRecordId(recordId);
-        var currentStateId = self.getCurrentStateId(state);
-        return find(get(state, 'model', []), {'@id': currentStateId});
-    }
-    /**
-     * @ngdoc method
-     * @name getCurrentStateId
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Finds the ID of the current state from the provided JSON-LD of an ontology state. The state refers to the
-     * object detailing what the user has currently "checked out".
-     *
-     * @param {Object} state A JSON-LD array of an ontology state from the
-     * {@link shared.service:stateManagerService}
-     * @returns {string} The string ID of the current state object
-     */
-    self.getCurrentStateId = function(state) {
-        var recordState = find(get(state, 'model', []), {'@type': [prefixes.ontologyState + 'StateRecord']});
-        return get(recordState, "['" + prefixes.ontologyState + "currentState'][0]['@id']", '');
-    }
-    /**
-     * @ngdoc method
-     * @name getCurrentState
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Finds the current state from the provided JSON-LD of an ontology state. The state refers to the object
-     * detailing what the user has currently "checked out".
-     *
-     * @param {Object} state A JSON-LD array of an ontology state from the
-     * {@link shared.service:stateManagerService}
-     * @returns {Object} The JSON-LD object representing the current state
-     */
-    self.getCurrentState = function(state) {
-        return find(get(state, 'model', []), {'@id': self.getCurrentStateId(state)});
-    }
-    /**
-     * @ngdoc method
-     * @name isStateTag
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Determines whether the provided JSON-LD is a StateTag or not.
-     *
-     * @param {Object} obj A JSON-LD object
-     * @returns {boolean} True if the object is a StateTag; false otherwise
-     */
-    self.isStateTag = function(obj) {
-        return includes(get(obj, '@type', []), prefixes.ontologyState + 'StateTag');
-    }
-    /**
-     * @ngdoc method
-     * @name isStateBranch
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Determines whether the provided JSON-LD is a StateBranch or not.
-     *
-     * @param {Object} obj A JSON-LD object
-     * @returns {boolean} True if the object is a StateBranch; false otherwise
-     */
-    self.isStateBranch = function(obj) {
-        return includes(get(obj, '@type', []), prefixes.ontologyState + 'StateBranch');
-    }
-
-    function makeOntologyState(idObj) {
-        var stateIri;
-        var recordState = {
-            '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
-            '@type': [prefixes.ontologyState + 'StateRecord'],
-            [prefixes.ontologyState + 'record']: [{'@id': idObj.recordId}],
-        };
-        var commitState = {
-            '@type': [prefixes.ontologyState + 'StateCommit'],
-            [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
-        };
-        if (idObj.branchId) {
-            stateIri = branchStateNamespace + uuid.v4();
-            recordState[prefixes.ontologyState + 'branchStates'] = [{'@id': stateIri}];
-            commitState['@id'] = stateIri;
-            commitState['@type'].push(prefixes.ontologyState + 'StateBranch');
-            commitState[prefixes.ontologyState + 'branch'] = [{'@id': idObj.branchId}];
-        } else if (idObj.tagId) {
-            stateIri = tagStateNamespace + uuid.v4();
-            commitState['@id'] = stateIri;
-            commitState['@type'].push(prefixes.ontologyState + 'StateTag');
-            commitState[prefixes.ontologyState + 'tag'] = [{'@id': idObj.tagId}];
-        } else {
-            stateIri = commitStateNamespace + uuid.v4();
-            commitState['@id'] = stateIri;
-        }
-        recordState[prefixes.ontologyState + 'currentState'] = [{'@id': stateIri}];
-        return [recordState, commitState];
+    getId(): Promise<string> {
+        return Promise.resolve(this.listItem?.ontologyId || '');
     }
 
     /**
-     * @ngdoc method
-     * @name addErrorToUploadItem
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Adds the error message to the list item with the identified id.
      *
      * @param {string} id The id of the upload item.
      * @param {object} error The error message for the upload item.
      */
-    self.addErrorToUploadItem = function(id, errorObject) {
-        set(find(self.uploadList, {id}), 'error', errorObject);
+    addErrorToUploadItem(id: string, errorObject): void {
+        set(find(this.uploadList, {id}), 'error', errorObject);
     }
     /**
-     * @ngdoc method
-     * @name reset
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Resets all state variables.
      */
-    self.reset = function() {
-        self.list = [];
-        self.listItem = {};
-        self.showUploadTab = false;
-        self.uploadList = [];
+    reset(): void {
+        this.list = [];
+        this.listItem = undefined;
+        // TODO: is this required?
+        // showUploadTab = false;
+        this.uploadList = [];
     }
     /**
-     * @ngdoc method
-     * @name getOntologyCatalogDetails
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Retrieves the catalog information for the specific commit of the ontology that should be opened for the current user. If
-     * the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,
-     * retrieves the latest state of the ontology.
-     *
-     * @param {string} recordId The record ID of the ontology you want to get from the repository.
-     * @returns {Promise} A promise containing the record id, branch id, commit id, and inProgressCommit.
-     */
-    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
-    self.getOntologyCatalogDetails = function(recordId) {
-        let state = self.getOntologyStateByRecordId(recordId);
-        if (!isEmpty(state)) {
-            let inProgressCommit = emptyInProgressCommit;
-            let currentState = self.getCurrentState(state);
-            let commitId = util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
-            let tagId = util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
-            let branchId = util.getPropertyId(currentState, prefixes.ontologyState + 'branch');
-            let upToDate = false;
-            let promise;
-            let branchToastShown = false;
-            if (branchId) {
-                promise = cm.getRecordBranch(branchId, recordId, catalogId).pipe(first()).toPromise()
-                    .then((branch: JSONLDObject) => {
-                        upToDate = util.getPropertyId(branch, prefixes.catalog + 'head') === commitId;
-                        return cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise();
-                    }, error => {
-                        util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
-                        branchToastShown = true;
-                        return $q.reject(error);
-                    });
-            } else if (tagId) {
-                upToDate = true;
-                promise = cm.getRecordVersion(tagId, recordId, catalogId).pipe(first()).toPromise()
-                    .then(() => {
-                        return cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise();
-                    }, () => {
-                        util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + util.condenseCommitId(commitId), {timeout: 5000});
-                        return self.updateOntologyState({recordId, commitId});
-                    })
-                    .then(() => cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise(), $q.reject);
-            } else {
-                upToDate = true;
-                promise = cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise();
-            }
-            return promise
-                .then((response: Difference) => {
-                    inProgressCommit = response;
-                    return cm.getCommit(commitId).pipe(first()).toPromise();
-                }, response => {
-                    if (get(response, 'status') === 404) {
-                        return cm.getCommit(commitId).pipe(first()).toPromise();
-                    }
-                    return $q.reject(response);
-                })
-                .then(() => ({recordId, branchId, commitId, upToDate, inProgressCommit}), () => {
-                    if (!branchToastShown) {
-                        util.createWarningToast('Commit ' + util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
-                    }
-                    return self.deleteOntologyState(recordId)
-                        .then(() => self.getLatestOntology(recordId), $q.reject);
-                });
-        }
-        return self.getLatestOntology(recordId);
-    }
-    /**
-     * @ngdoc method
-     * @name getLatestOntology
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Retrieves the latest state of an ontology, being the head commit of the master branch, and returns
-     * a promise containing the ontology id, record id, branch id, commit id, and inProgressCommit
-     *
-     * @param {string} recordId The record ID of the ontology you want to get from the repository.
-     * @return {Promise} A promise containing the ontology id, record id, branch id, commit id, and
-     *                    inProgressCommit.
-     */
-    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
-    self.getLatestOntology = function(recordId) {
-        var branchId, commitId;
-        return cm.getRecordMasterBranch(recordId, catalogId).pipe(first()).toPromise()
-            .then((masterBranch: JSONLDObject) => {
-                branchId = get(masterBranch, '@id', '');
-                commitId = get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
-                return self.createOntologyState({recordId, commitId, branchId});
-            }, $q.reject)
-            .then(() => {return {recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
-    }
-    /**
-     * @ngdoc method
-     * @name createOntology
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Uploads the provided JSON-LD as a new ontology and creates a new list item for the new ontology.
-     * Returns a promise with the entityIRI, recordId, branchId, and commitId for the state of the newly
+     * Returns an Observable with the entityIRI, recordId, branchId, and commitId for the state of the newly
      * created ontology.
      *
-     * @param {string} ontologyJson The JSON-LD object representing the ontology definition.
+     * @param {JSONLDObject[]} ontologyJson The JSON-LD object representing the ontology definition.
      * @param {string} title The title for the OntologyRecord.
      * @param {string} description The description for the OntologyRecord.
-     * @param {string} keywords The array of keywords for the OntologyRecord.
-     * @returns {Promise} A promise with the entityIRI, recordId, branchId, and commitId for the state of the newly created
-     * ontology.
+     * @param {string[]} keywords The array of keywords for the OntologyRecord.
+     * @returns {Observable} An Observable with the entityIRI, recordId, branchId, and commitId for the state of the 
+     * newly created ontology.
      */
-    self.createOntology = function(ontologyJson, title, description, keywords) {
-        var listItem;
-        return om.uploadOntology(undefined, ontologyJson, title, description, keywords)
-            .then(data => {
-                listItem = setupListItem(data.recordId, data.branchId, data.commitId, emptyInProgressCommit, true, title);
-                return cm.getRecordBranch(data.branchId, data.recordId, catalogId).pipe(first()).toPromise();
-            }, $q.reject)
-            .then((branch: JSONLDObject) => {
-                listItem.ontologyId = ontologyJson['@id'];
-                listItem.editorTabStates.project.entityIRI = ontologyJson['@id'];
-                listItem.branches = [branch];
-                listItem.masterBranchIRI = listItem.ontologyRecord.branchId;
-                listItem.userCanModify = true;
-                listItem.userCanModifyMaster = true;
-                self.list.push(listItem);
-                self.listItem = listItem;
-                self.setSelected(self.getActiveEntityIRI(), false);
-                return {
-                    entityIRI: ontologyJson['@id'],
-                    recordId: listItem.ontologyRecord.recordId,
-                    branchId: listItem.ontologyRecord.branchId,
-                    commitId: listItem.ontologyRecord.commitId
-                };
-            }, $q.reject);
+    createOntology(ontologyJson: JSONLDObject[], title: string, description: string, keywords: string[]): Observable<{entityIRI: string, recordId: string, branchId: string, commitId: string}> {
+        let listItem: OntologyListItem;
+        const recordConfig: OntologyRecordConfig = {
+            title,
+            description,
+            keywords,
+            jsonld: ontologyJson
+        };
+        return this.om.uploadOntology(recordConfig)
+            .pipe(
+                switchMap((data: {ontologyId: string, recordId: string, branchId: string, commitId: string}) => {
+                    listItem = this._setupListItem(data.recordId, data.branchId, data.commitId, new Difference(), true, title);
+                    listItem.ontologyId = data.ontologyId;
+                    listItem.editorTabStates.project.entityIRI = data.ontologyId;
+                    return this.cm.getRecordBranch(data.branchId, data.recordId, this.catalogId);
+                }),
+                switchMap((branch: JSONLDObject) => {
+                    listItem.branches = [branch];
+                    listItem.masterBranchIri = listItem.versionedRdfRecord.branchId;
+                    listItem.userCanModify = true;
+                    listItem.userCanModifyMaster = true;
+                    this.list.push(listItem);
+                    this.listItem = listItem;
+                    return this.setSelected(this.getActiveEntityIRI(), false, this.listItem);
+                }),
+                map(() => {
+                    return {
+                        entityIRI: listItem.ontologyId,
+                        recordId: listItem.versionedRdfRecord.recordId,
+                        branchId: listItem.versionedRdfRecord.branchId,
+                        commitId: listItem.versionedRdfRecord.commitId
+                    };
+                })
+            );
     }
     /**
-     * @ngdoc method
-     * @name uploadChanges
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Uploads the provided file as an ontology and uses it as a basis for updating the existing ontology .
      *
      * @param {File} file The updated ontology file.
-     * @param {string} the ontology record ID.
-     * @param {string} the ontology branch ID.
-     * @param {string} the ontology commit ID.
+     * @param {string} recordId the ontology record ID.
+     * @param {string} branchId the ontology branch ID.
+     * @param {string} commitId the ontology commit ID.
+     * @returns {Observable} An observable indicating the success of the process
      */
-    self.uploadChanges = function(file, recordId, branchId, commitId) {
-        return om.uploadChangesFile(file, recordId, branchId, commitId)
-            .then(() => cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise(), $q.reject)
-            .then((commit: Difference) => {
-                var listItem = self.getListItemByRecordId(recordId);
-                return self.updateOntology(recordId, branchId, commitId, listItem.upToDate, commit);
-            }, $q.reject);
+    uploadChanges(file: File, recordId: string, branchId: string, commitId: string): Observable<null> {
+        return this.om.uploadChangesFile(file, recordId, branchId, commitId)
+            .pipe(
+                switchMap(() => this.cm.getInProgressCommit(recordId, this.catalogId)),
+                switchMap((commit: Difference) => {
+                    const listItem = this.getListItemByRecordId(recordId);
+                    return this.updateOntology(recordId, branchId, commitId, listItem.upToDate, commit);
+                })
+            );
     }
     /**
-     * @ngdoc method
-     * @name updateOntology
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Used to update an ontology that is already open within the Ontology Editor. It will replace the existing
      * listItem with a new listItem consisting of the data associated with the record ID, branch ID, and commit
-     * ID provided. Returns a promise.
+     * ID provided. Returns an Observable.
      *
      * @param {string} recordId The record ID associated with the requested ontology.
      * @param {string} branchId The branch ID associated with the requested ontology.
      * @param {string} commitId The commit ID associated with the requested ontology.
      * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
-     * @param {boolean} [inProgressCommit=emptyInProgressCommit] The Object containing the saved changes to apply.
+     * @param {Difference} inProgressCommit The Object containing the saved changes to apply.
      * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache.
-     * @returns {Promise} A promise indicating the success or failure of the update.
+     * @returns {Observable} An Observable indicating the success or failure of the update.
      */
-    self.updateOntology = function(recordId, branchId, commitId, upToDate = true, inProgressCommit = emptyInProgressCommit, clearCache = false) {
-        var listItem;
-        var oldListItem = self.getListItemByRecordId(recordId);
+    updateOntology(recordId: string, branchId: string, commitId: string, upToDate = true, 
+        inProgressCommit = new Difference(), clearCache = false): Observable<null> {
+        let listItem: OntologyListItem;
+        const oldListItem: OntologyListItem = this.getListItemByRecordId(recordId);
 
-        return self.createOntologyListItem(recordId, branchId, commitId, inProgressCommit, upToDate, oldListItem.ontologyRecord.title, clearCache)
-            .then(response => {
-                listItem = response;
-                listItem.editorTabStates = oldListItem.editorTabStates;
-                if (listItem.ontologyId !== oldListItem.ontologyId) {
-                    self.resetStateTabs(listItem);
-                } else {
-                    listItem.selected = oldListItem.selected;
-                    listItem.selectedBlankNodes = oldListItem.selectedBlankNodes;
-                    listItem.blankNodes = oldListItem.blankNodes;
-                }
-                return self.updateOntologyState({recordId, commitId, branchId});
-            }, $q.reject)
-            .then(() => {
-                var activeKey = self.getActiveKey(oldListItem);
-                assign(oldListItem, listItem);
-                self.setActivePage(activeKey, oldListItem);
-            }, $q.reject);
+        return this.createOntologyListItem(recordId, branchId, commitId, inProgressCommit, upToDate, oldListItem.versionedRdfRecord.title, clearCache)
+            .pipe(
+                switchMap(response => {
+                    listItem = response;
+                    listItem.editorTabStates = oldListItem.editorTabStates;
+                    if (listItem.ontologyId !== oldListItem.ontologyId) {
+                        this.resetStateTabs(listItem);
+                    } else {
+                        listItem.selected = oldListItem.selected;
+                        listItem.selectedBlankNodes = oldListItem.selectedBlankNodes;
+                        listItem.blankNodes = oldListItem.blankNodes;
+                    }
+                    return this.updateState({recordId, commitId, branchId});
+                }),
+                map(() => {
+                    const activeKey = this.getActiveKey(oldListItem);
+                    assign(oldListItem, listItem);
+                    this.setActivePage(activeKey, oldListItem);
+                    return null;
+                })
+            );
     }
     /**
-     * @ngdoc method
-     * @name updateOntologyWithCommit
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Used to update an ontology that is already open within the Ontology Editor to the specified commit. It
      * will replace the existing listItem with a new listItem consisting of the data associated with the record
-     * ID, commit ID, and optional tag ID provided. Returns a promise.
+     * ID, commit ID, and optional tag ID provided. Returns an Observable.
      *
      * @param {string} recordId The record ID associated with the requested ontology.
      * @param {string} commitId The commit ID associated with the requested ontology.
      * @param {string} [tagId=''] A tag ID associated with the requested ontology.
-     * @returns {Promise} A promise indicating the success or failure of the update.
+     * @returns {Observable} An Observable indicating the success or failure of the update.
      */
-    self.updateOntologyWithCommit = function(recordId, commitId, tagId = '') {
-        var listItem;
-        var oldListItem = self.getListItemByRecordId(recordId);
+    updateOntologyWithCommit(recordId: string, commitId: string, tagId = ''): Observable<null> {
+        let listItem: OntologyListItem;
+        const oldListItem: OntologyListItem = this.getListItemByRecordId(recordId);
 
-        return self.createOntologyListItem(recordId, '', commitId, emptyInProgressCommit, true, oldListItem.ontologyRecord.title, false)
-            .then(response => {
-                listItem = response;
-                listItem.editorTabStates = oldListItem.editorTabStates;
-                if (listItem.ontologyId !== oldListItem.ontologyId) {
-                    self.resetStateTabs(listItem);
-                } else {
-                    listItem.selected = oldListItem.selected;
-                    listItem.selectedBlankNodes = oldListItem.selectedBlankNodes;
-                    listItem.blankNodes = oldListItem.blankNodes;
-                }
-                return tagId ? self.updateOntologyState({recordId, commitId, tagId}) : self.updateOntologyState({recordId, commitId});
-            }, $q.reject)
-            .then(() => {
-                var activeKey = self.getActiveKey(oldListItem);
-                assign(oldListItem, listItem);
-                self.setActivePage(activeKey, oldListItem);
-            }, $q.reject);
+        return this.createOntologyListItem(recordId, '', commitId, new Difference(), true, oldListItem.versionedRdfRecord.title, false)
+            .pipe(
+                switchMap(response => {
+                    listItem = response;
+                    listItem.editorTabStates = oldListItem.editorTabStates;
+                    if (listItem.ontologyId !== oldListItem.ontologyId) {
+                        this.resetStateTabs(listItem);
+                    } else {
+                        listItem.selected = oldListItem.selected;
+                        listItem.selectedBlankNodes = oldListItem.selectedBlankNodes;
+                        listItem.blankNodes = oldListItem.blankNodes;
+                    }
+                    return tagId ? this.updateState({recordId, commitId, tagId}) : this.updateState({recordId, commitId});
+                }),
+                map(() => {
+                    const activeKey = this.getActiveKey(oldListItem);
+                    assign(oldListItem, listItem);
+                    this.setActivePage(activeKey, oldListItem);
+                    return null;
+                })
+            );
     }
-    self.addOntologyToList = function(recordId, branchId, commitId, inProgressCommit, title, upToDate = true) {
-        return self.createOntologyListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title, false)
-            .then(listItem => {
-                self.list.push(listItem);
+    /**
+     * Adds an OntologyListItem for the ontology identified by the provided ids to the `list`.
+     * 
+     * @param {string} recordId The Record IRI for the ontology
+     * @param {string} branchId The Branch IRI of the intended version of the ontology
+     * @param {string} commitId The Commit IRI of the intended version of the ontology
+     * @param {Difference} inProgressCommit The Difference to save as the inProgressCommit of the ontology
+     * @param {string} title The title of the ontology
+     * @param {boolean} [upToDate=true] Whether the ontology is up to date in the frontend state
+     * @returns {Observable<OntologyListItem>} An Observable with the newly created `listItem` for the ontology
+     */
+    addOntologyToList(recordId: string, branchId: string, commitId: string, inProgressCommit: Difference, title: string, upToDate = true): Observable<OntologyListItem> {
+        return this.createOntologyListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title, false)
+            .pipe(map(listItem => {
+                this.list.push(listItem);
                 return listItem;
-            }, $q.reject);
+            }));
     }
-    self.createOntologyListItem = function(recordId, branchId, commitId, inProgressCommit, upToDate = true, title, clearCache) {
-        var modifyRequest: any = {
+    /**
+     * Creates an OntologyListItem given the provided input parameters. Fetches the "ontology stuff", branches, and
+     * versions of the identified ontology and setups all the various state variables on the listItem. Does not add to
+     * the `list` in this method.
+     * 
+     * @param {string} recordId The Record IRI for the ontology
+     * @param {string} branchId The Branch IRI of the intended version of the ontology
+     * @param {string} commitId The Commit IRI of the intended version of the ontology
+     * @param {Difference} inProgressCommit The Difference to save as the InProgressCommit of the ontology
+     * @param {boolean} [upToDate=true] Whether the ontology should be considered as up to date in the frontend state.
+     * Defaults to true
+     * @param {string} title The title of the ontology
+     * @param {boolean} clearCache Whether to clear the ontology cache when fetching the "ontology stuff"
+     * @returns {Observable<OntologyListItem>} An Observable with the newly created `listItem` for the ontology
+     */
+    createOntologyListItem(recordId: string, branchId: string, commitId: string, inProgressCommit: Difference, upToDate = true, title: string, clearCache: boolean): Observable<OntologyListItem> {
+        const modifyRequest: any = {
             resourceId: recordId,
-            actionId: polm.actionModify
+            actionId: this.polm.actionModify
         };
-        var listItem = setupListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title);
-        return $q.all([
-            om.getOntologyStuff(recordId, branchId, commitId, clearCache),
-            cm.getRecordBranches(recordId, catalogId).pipe(first()).toPromise(),
-            cm.getRecordVersions(recordId, catalogId).pipe(first()).toPromise()
-        ]).then(response => {
-            listItem.ontologyId = response[0].ontologyIRI;
-            listItem.editorTabStates.project.entityIRI = response[0].ontologyIRI;    
-            forEach(response[0].propertyToRanges, (ranges, propertyIRI) => {
-                listItem.propertyIcons[propertyIRI] = getIcon(ranges);
-            });
-            listItem.noDomainProperties = response[0].noDomainProperties;
-            listItem.classToChildProperties = response[0].classToAssociatedProperties;
-            listItem.iriList.push(listItem.ontologyId);
-            listItem.entityInfo = get(response[0], 'entityNames', {});
-            var responseIriList = get(response[0], 'iriList', {});
-            listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
-            get(responseIriList, 'annotationProperties', []).forEach(iri => addIri(listItem, 'annotations.iris', iri, listItem.ontologyId));
-            forEach(get(responseIriList, 'classes', []), iri => self.addToClassIRIs(listItem, iri));
-            get(responseIriList, 'dataProperties', []).forEach(iri => addIri(listItem, 'dataProperties.iris', iri, listItem.ontologyId));
-            get(responseIriList, 'objectProperties', []).forEach(iri => addIri(listItem, 'objectProperties.iris', iri, listItem.ontologyId));
-            get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem, 'individuals.iris', iri, listItem.ontologyId));
-            get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
-            get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
-            get(responseIriList, 'deprecatedIris', []).forEach(iri => self.annotationModified(iri, prefixes.owl + 'deprecated', 'true', listItem));
-            listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
-            listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
-            listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
-            get(responseIriList, 'datatypes', []).forEach(iri => addIri(listItem, 'dataPropertyRange', iri, listItem.ontologyId));
-            forEach(get(response[0], 'importedOntologies'), importedOntObj => {
-                addImportedOntologyToListItem(listItem, importedOntObj);
-            });
-            forEach(get(response[0], 'importedIRIs'), iriList => {
-                iriList.annotationProperties.forEach(iri => addIri(listItem, 'annotations.iris', iri, iriList.id));
-                iriList.classes.forEach(iri => self.addToClassIRIs(listItem, iri, iriList.id));
-                iriList.dataProperties.forEach(iri => addIri(listItem, 'dataProperties.iris', iri, iriList.id));
-                iriList.objectProperties.forEach(iri => addIri(listItem, 'objectProperties.iris', iri, iriList.id));
-                iriList.namedIndividuals.forEach(iri => addIri(listItem, 'individuals.iris', iri, iriList.id));
-                iriList.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, iriList.id));
-                iriList.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, iriList.id));
-                iriList.datatypes.forEach(iri => addIri(listItem, 'dataPropertyRange', iri, iriList.id));
-                listItem.iriList.push(iriList['id']);
-                listItem.iriList = union(listItem.iriList, flatten(values(iriList)));
-            });
-            setHierarchyInfo(listItem.classes, response[0], 'classHierarchy');
-            listItem.classes.flat = self.flattenHierarchy(listItem.classes, listItem);
-            setHierarchyInfo(listItem.dataProperties, response[0], 'dataPropertyHierarchy');
-            listItem.dataProperties.flat = self.flattenHierarchy(listItem.dataProperties, listItem);
-            setHierarchyInfo(listItem.objectProperties, response[0], 'objectPropertyHierarchy');
-            listItem.objectProperties.flat = self.flattenHierarchy(listItem.objectProperties, listItem);
-            setHierarchyInfo(listItem.annotations, response[0], 'annotationHierarchy');
-            listItem.annotations.flat = self.flattenHierarchy(listItem.annotations, listItem);
-            setHierarchyInfo(listItem.concepts, response[0], 'conceptHierarchy');
-            listItem.concepts.flat = self.flattenHierarchy(listItem.concepts, listItem);
-            setHierarchyInfo(listItem.conceptSchemes, response[0], 'conceptSchemeHierarchy');
-            listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes, listItem);
-            listItem.classesAndIndividuals = response[0].individuals;
-            listItem.classesWithIndividuals = keys(listItem.classesAndIndividuals);
-            listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
-            listItem.individuals.flat = self.createFlatIndividualTree(listItem);
-            listItem.flatEverythingTree = self.createFlatEverythingTree(listItem);
-            concat(pm.ontologyProperties, keys(listItem.dataProperties.iris), keys(listItem.objectProperties.iris), listItem.derivedSemanticRelations, pm.conceptSchemeRelationshipList, pm.schemeRelationshipList).forEach(iri => delete listItem.annotations.iris[iri]);
-            listItem.failedImports = get(response[0], 'failedImports', []);
-            listItem.branches = response[1].body;
-            var branch = find(listItem.branches, { '@id': listItem.ontologyRecord.branchId })
-            listItem.userBranch = cm.isUserBranch(branch);
-            if (listItem.userBranch) {
-                listItem.createdFromExists = some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
-            }
-            listItem.masterBranchIRI = find(listItem.branches, {[prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]})['@id'];
-            listItem.tags = filter(response[2].body, version => includes(get(version, '@type'), prefixes.catalog + 'Tag'));
-            return pe.evaluateRequest(modifyRequest);
-        },  $q.reject)
-        .then(decision => {
-            listItem.userCanModify = decision == pe.permit;
-            modifyRequest.actionAttrs = {[prefixes.catalog + 'branch']: listItem.masterBranchIRI};
-            return pe.evaluateRequest(modifyRequest);
-        }, $q.reject)
-        .then(decision => {
-            listItem.userCanModifyMaster = decision == pe.permit;
-            return listItem;
-        }, $q.reject);
+        const listItem: OntologyListItem = this._setupListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title);
+        return forkJoin([
+            this.om.getOntologyStuff(recordId, branchId, commitId, clearCache),
+            this.cm.getRecordBranches(recordId, this.catalogId),
+            this.cm.getRecordVersions(recordId, this.catalogId)
+        ]).pipe(
+            switchMap(response => {
+                listItem.ontologyId = response[0].ontologyIRI;
+                listItem.editorTabStates.project.entityIRI = response[0].ontologyIRI;    
+                forEach(response[0].propertyToRanges, (ranges, propertyIRI) => {
+                    listItem.propertyIcons[propertyIRI] = this._getIcon(ranges);
+                });
+                listItem.noDomainProperties = response[0].noDomainProperties;
+                listItem.classToChildProperties = response[0].classToAssociatedProperties;
+                listItem.iriList.push(listItem.ontologyId);
+                listItem.entityInfo = get(response[0], 'entityNames', {});
+                const responseIriList = get(response[0], 'iriList', {});
+                listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
+                get(responseIriList, 'annotationProperties', []).forEach(iri => this._addIri(listItem, 'annotations.iris', iri, listItem.ontologyId));
+                get(responseIriList, 'classes', []).forEach(iri => this.addToClassIRIs(listItem, iri));
+                get(responseIriList, 'dataProperties', []).forEach(iri => this._addIri(listItem, 'dataProperties.iris', iri, listItem.ontologyId));
+                get(responseIriList, 'objectProperties', []).forEach(iri => this._addIri(listItem, 'objectProperties.iris', iri, listItem.ontologyId));
+                get(responseIriList, 'namedIndividuals', []).forEach(iri => this._addIri(listItem, 'individuals.iris', iri, listItem.ontologyId));
+                get(responseIriList, 'concepts', []).forEach(iri => this._addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
+                get(responseIriList, 'conceptSchemes', []).forEach(iri => this._addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
+                get(responseIriList, 'deprecatedIris', []).forEach(iri => this.annotationModified(iri, OWL + 'deprecated', 'true', listItem));
+                listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
+                listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
+                listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
+                get(responseIriList, 'datatypes', []).forEach(iri => this._addIri(listItem, 'dataPropertyRange', iri, listItem.ontologyId));
+                get(response[0], 'importedOntologies').forEach(importedOntObj => {
+                    this._addImportedOntologyToListItem(listItem, importedOntObj);
+                });
+                forEach(get(response[0], 'importedIRIs'), iriList => {
+                    iriList.annotationProperties.forEach(iri => this._addIri(listItem, 'annotations.iris', iri, iriList.id));
+                    iriList.classes.forEach(iri => this.addToClassIRIs(listItem, iri, iriList.id));
+                    iriList.dataProperties.forEach(iri => this._addIri(listItem, 'dataProperties.iris', iri, iriList.id));
+                    iriList.objectProperties.forEach(iri => this._addIri(listItem, 'objectProperties.iris', iri, iriList.id));
+                    iriList.namedIndividuals.forEach(iri => this._addIri(listItem, 'individuals.iris', iri, iriList.id));
+                    iriList.concepts.forEach(iri => this._addIri(listItem, 'concepts.iris', iri, iriList.id));
+                    iriList.conceptSchemes.forEach(iri => this._addIri(listItem, 'conceptSchemes.iris', iri, iriList.id));
+                    iriList.datatypes.forEach(iri => this._addIri(listItem, 'dataPropertyRange', iri, iriList.id));
+                    listItem.iriList.push(iriList['id']);
+                    listItem.iriList = union(listItem.iriList, flatten(values(iriList)));
+                });
+                this._setHierarchyInfo(listItem.classes, response[0], 'classHierarchy');
+                listItem.classes.flat = this.flattenHierarchy(listItem.classes, listItem);
+                this._setHierarchyInfo(listItem.dataProperties, response[0], 'dataPropertyHierarchy');
+                listItem.dataProperties.flat = this.flattenHierarchy(listItem.dataProperties, listItem);
+                this._setHierarchyInfo(listItem.objectProperties, response[0], 'objectPropertyHierarchy');
+                listItem.objectProperties.flat = this.flattenHierarchy(listItem.objectProperties, listItem);
+                this._setHierarchyInfo(listItem.annotations, response[0], 'annotationHierarchy');
+                listItem.annotations.flat = this.flattenHierarchy(listItem.annotations, listItem);
+                this._setHierarchyInfo(listItem.concepts, response[0], 'conceptHierarchy');
+                listItem.concepts.flat = this.flattenHierarchy(listItem.concepts, listItem);
+                this._setHierarchyInfo(listItem.conceptSchemes, response[0], 'conceptSchemeHierarchy');
+                listItem.conceptSchemes.flat = this.flattenHierarchy(listItem.conceptSchemes, listItem);
+                listItem.classesAndIndividuals = response[0].individuals;
+                listItem.classesWithIndividuals = keys(listItem.classesAndIndividuals);
+                listItem.individualsParentPath = this.getIndividualsParentPath(listItem);
+                listItem.individuals.flat = this.createFlatIndividualTree(listItem);
+                listItem.flatEverythingTree = this.createFlatEverythingTree(listItem);
+                concat(this.pm.ontologyProperties, keys(listItem.dataProperties.iris), keys(listItem.objectProperties.iris), listItem.derivedSemanticRelations, this.pm.conceptSchemeRelationshipList, this.pm.schemeRelationshipList).forEach(iri => delete listItem.annotations.iris[iri]);
+                listItem.failedImports = get(response[0], 'failedImports', []);
+                listItem.branches = response[1].body;
+                const branch = find(listItem.branches, { '@id': listItem.versionedRdfRecord.branchId });
+                listItem.userBranch = this.cm.isUserBranch(branch);
+                if (listItem.userBranch) {
+                    listItem.createdFromExists = some(listItem.branches, {'@id': this.util.getPropertyId(branch, CATALOG + 'createdFrom')});
+                }
+                listItem.masterBranchIri = find(listItem.branches, {[DCTERMS + 'title']: [{'@value': 'MASTER'}]})['@id'];
+                listItem.tags = filter(response[2].body, version => includes(get(version, '@type'), CATALOG + 'Tag'));
+                return from(this.pe.evaluateRequest(modifyRequest));
+            }),
+            switchMap(decision => {
+                listItem.userCanModify = decision === this.pe.permit;
+                modifyRequest.actionAttrs = {[CATALOG + 'branch']: listItem.masterBranchIri};
+                return this.pe.evaluateRequest(modifyRequest);
+            }),
+            map(decision => {
+                listItem.userCanModifyMaster = decision === this.pe.permit;
+                return listItem;
+            })
+        );
     }
 
-    function addInfo(listItem, iri, ontologyId) {
-        var info = merge((listItem.entityInfo[iri] || {}), {
+    private _addInfo(listItem: OntologyListItem, iri: string, ontologyId: string): void {
+        const info = merge((listItem.entityInfo[iri] || {names: undefined, label: ''}), {
             imported: listItem.ontologyId !== ontologyId,
             ontologyId
         });
@@ -997,33 +471,38 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             info.names = [];
         }
         if (!info.label) {
-            info.label = utilService.getBeautifulIRI(iri);
+            info.label = this.util.getBeautifulIRI(iri);
         }
         listItem.entityInfo[iri] = info;
     }
 
-    function addIri(listItem, path, iri, ontologyId = undefined) {
-        var iriObj = get(listItem, path, {});
-        if (!has(iriObj, "['" + iri + "']")) {
-            iriObj[iri] = ontologyId || $filter('splitIRI')(iri).begin;
+    private _addIri(listItem: OntologyListItem, path: string, iri: string, ontologyId: string = undefined): void {
+        const iriObj = get(listItem, path, {});
+        if (!has(iriObj, '[\'' + iri + '\']')) {
+            iriObj[iri] = ontologyId || this.splitIRI.transform(iri).begin;
         }
-        addInfo(listItem, iri, ontologyId);
+        this._addInfo(listItem, iri, ontologyId);
     }
-
-    self.getIndividualsParentPath = function(listItem) {
-        var result = [];
-        forEach(Object.keys(listItem.classesAndIndividuals), classIRI => {
-            result = result.concat(getParents(listItem.classes.childMap, classIRI));
+    /**
+     * Gets the unique list of parents that should be displayed in the individuals hierarchy for the provided `listItem`
+     * 
+     * @param {OntologyListItem} listItem THe listItem to investigate
+     * @returns {string[]} An array of the IRIs of all the classes involved in the parent paths to the individuals
+     */
+    getIndividualsParentPath(listItem: OntologyListItem): string[] {
+        let result = [];
+        Object.keys(listItem.classesAndIndividuals).forEach(classIRI => {
+            result = result.concat(this._getParents(listItem.classes.childMap, classIRI));
         });
         return uniq(result);
     }
-    function getParents(childMap, classIRI) {
-        var result = [classIRI];
+    private _getParents(childMap: {[key: string]: string[]}, classIRI: string): string[] {
+        const result = [classIRI];
         if (has(childMap, classIRI)) {
-            var toFind = [classIRI];
+            const toFind = [classIRI];
             while (toFind.length) {
-                var temp = toFind.pop();
-                forEach(childMap[temp], parent => {
+                const temp = toFind.pop();
+                childMap[temp].forEach(parent => {
                     result.push(parent);
                     if (has(childMap, parent)) {
                         toFind.push(parent);
@@ -1033,163 +512,152 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return result;
     }
-    self.setVocabularyStuff = function(listItem = self.listItem) {
-        httpService.cancel(self.vocabularySpinnerId);
-        om.getVocabularyStuff(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, self.vocabularySpinnerId)
-            .then(response => {
+    /**
+     * 
+     * @param listItem 
+     */
+    setVocabularyStuff(listItem: OntologyListItem = this.listItem): void {
+        // httpService.cancel(this.vocabularySpinnerId); TODO
+        this.om.getVocabularyStuff(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId)
+            .subscribe(response => {
                 listItem.derivedConcepts = get(response, 'derivedConcepts', []);
                 listItem.derivedConceptSchemes = get(response, 'derivedConceptSchemes', []);
                 listItem.derivedSemanticRelations = get(response, 'derivedSemanticRelations', []);
                 listItem.concepts.iris = {};
                 listItem.conceptSchemes.iris = {};
-                response.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
-                response.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
+                response.concepts.forEach(iri => this._addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
+                response.conceptSchemes.forEach(iri => this._addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
                 forEach(get(response, 'importedIRIs'), iriList => {
-                    iriList.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, iriList.id));
-                    iriList.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, iriList.id));
+                    iriList.concepts.forEach(iri => this._addIri(listItem, 'concepts.iris', iri, iriList.id));
+                    iriList.conceptSchemes.forEach(iri => this._addIri(listItem, 'conceptSchemes.iris', iri, iriList.id));
                 });
-                setHierarchyInfo(listItem.concepts, response, 'conceptHierarchy');
-                listItem.concepts.flat = self.flattenHierarchy(listItem.concepts, listItem);
-                setHierarchyInfo(listItem.conceptSchemes, response, 'conceptSchemeHierarchy');
-                listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes, listItem);
+                this._setHierarchyInfo(listItem.concepts, response, 'conceptHierarchy');
+                listItem.concepts.flat = this.flattenHierarchy(listItem.concepts, listItem);
+                this._setHierarchyInfo(listItem.conceptSchemes, response, 'conceptSchemeHierarchy');
+                listItem.conceptSchemes.flat = this.flattenHierarchy(listItem.conceptSchemes, listItem);
                 unset(listItem.editorTabStates.concepts, 'entityIRI');
                 unset(listItem.editorTabStates.concepts, 'usages');
-            }, util.createErrorToast);
+            }, error => this.util.createErrorToast(error));
     }
     /**
-     * @ngdoc method
-     * @name flattenHierarchy
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Flattens the provided hierarchy information into an array that represents the hierarchical structure to be
      * used with a virtual scrolling solution.
      *
-     * @param {Object} hierarchyInfo An Object with hierarchical information. Expects it to have a `iris` key with
+     * @param {Hierarchy} hierarchyInfo An Object with hierarchical information. Expects it to have a `iris` key with
      * an object of iris in the hierarchy, a `parentMap` key with a map of parent IRIs to arrays of children IRIs,
      * and a `childMap` key with a map of child IRIs to arrays of parent IRIs.
-     * @param {Object} [listItem=self.listItem] The listItem associated with the provided hierarchy.
-     * @returns {Object[]} An array which represents the provided hierarchy.
+     * @param {OntologyListItem} [listItem=this.listItem] The listItem associated with the provided hierarchy.
+     * @returns {HierarchyNode[]} An array which represents the provided hierarchy.
      */
-    self.flattenHierarchy = function(hierarchyInfo, listItem = self.listItem) {
-        var topLevel = difference(Object.keys(hierarchyInfo.iris), Object.keys(hierarchyInfo.childMap)).sort((s1, s2) => compareEntityName(s1, s2, listItem));
-        var sortedParentMap = mapValues(hierarchyInfo.parentMap, arr => arr.sort((s1, s2) => compareEntityName(s1, s2, listItem)));
-        var result = [];
+    flattenHierarchy(hierarchyInfo: Hierarchy, listItem: OntologyListItem = this.listItem): HierarchyNode[] {
+        const topLevel = difference(Object.keys(hierarchyInfo.iris), Object.keys(hierarchyInfo.childMap)).sort((s1, s2) => this._compareEntityName(s1, s2, listItem));
+        const sortedParentMap = mapValues(hierarchyInfo.parentMap, arr => arr.sort((s1, s2) => this._compareEntityName(s1, s2, listItem)));
+        const result = [];
         forEach(topLevel, iri => {
-            addNodeToFlatHierarchy(iri, result, 0, [listItem.ontologyRecord.recordId], sortedParentMap, listItem, listItem.ontologyRecord.recordId);
+            this._addNodeToFlatHierarchy(iri, result, 0, [listItem.versionedRdfRecord.recordId], sortedParentMap, listItem, listItem.versionedRdfRecord.recordId);
         });
         return result;
     }
-    function compareEntityName(s1, s2, listItem) {
-        return lowerCase(self.getEntityNameByListItem(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByListItem(s2, listItem)));
+    private _compareEntityName(s1: string, s2: string, listItem: OntologyListItem) {
+        return lowerCase(this.getEntityNameByListItem(s1, listItem)).localeCompare(lowerCase(this.getEntityNameByListItem(s2, listItem)));
     }
-    function addNodeToFlatHierarchy(iri, result, indent, path, parentMap, listItem, joinedPath) {
-        var newPath = path.concat(iri);
-        var newJoinedPath = joinedPath + '.' + iri;
-        var item = {
+    private _addNodeToFlatHierarchy(iri: string, result: HierarchyNode[], indent: number, path: string[], parentMap, listItem: OntologyListItem, joinedPath: string) {
+        const newPath = path.concat(iri);
+        const newJoinedPath = joinedPath + '.' + iri;
+        const item = {
             entityIRI: iri,
             hasChildren: iri in parentMap,
             indent,
             path: newPath,
-            entityInfo: getEntityInfoFromListItem(listItem, iri),
+            entityInfo: this._getEntityInfoFromListItem(listItem, iri),
             joinedPath: newJoinedPath
         };
         result.push(item);
-        forEach(get(parentMap, iri, []), child => {
-            addNodeToFlatHierarchy(child, result, indent + 1, newPath, parentMap, listItem, newJoinedPath);
+        get(parentMap, iri, []).forEach(child => {
+            this._addNodeToFlatHierarchy(child, result, indent + 1, newPath, parentMap, listItem, newJoinedPath);
         });
     }
     /**
-     * @ngdoc method
-     * @name createFlatEverythingTree
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Creates an array which represents the hierarchical structure of the relationship between classes
      * and properties of the ontology represented by the provided `listItem` to be used with a virtual
      * scrolling solution.
      *
-     * @param {Object} listItem The listItem representing the ontology to create the structure for
-     * @returns {Object[]} An array which contains the class-property relationships.
+     * @param {OntologyListItem} listItem The listItem representing the ontology to create the structure for
+     * @returns {(HierarchyNode|ParentNode)[]} An array which contains the class-property relationships.
      */
-    self.createFlatEverythingTree = function(listItem = self.listItem) {
-        var result = [];
-        var classes = map(listItem.classes.iris, (val, entityIRI) => ({
+    createFlatEverythingTree(listItem: OntologyListItem = this.listItem): (HierarchyNode|ParentNode)[] {
+        const result = [];
+        const classes = Object.keys(listItem.classes.iris).map(entityIRI => ({
             entityIRI,
             entityInfo: listItem.entityInfo[entityIRI]
         }));
-        var orderedClasses = sortBy(classes, item => lowerCase(item.entityInfo.label));
-        var orderedProperties = [];
-        var path = [];
+        const orderedClasses = sortBy(classes, item => lowerCase(item.entityInfo.label));
+        let orderedProperties = [];
+        let path = [];
 
-        forEach(orderedClasses, item => {
-            var classProps = get(listItem.classToChildProperties, item.entityIRI, []);
+        orderedClasses.forEach(item => {
+            const classProps = get(listItem.classToChildProperties, item.entityIRI, []);
 
-            orderedProperties = classProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
-            path = [listItem.ontologyRecord.recordId, item.entityIRI];
+            orderedProperties = classProps.sort((s1, s2) => this._compareEntityName(s1, s2, listItem));
+            path = [listItem.versionedRdfRecord.recordId, item.entityIRI];
             result.push(merge({}, item, {
                 indent: 0,
                 hasChildren: !!orderedProperties.length,
                 path,
-                joinedPath: self.joinPath(path)
+                joinedPath: this.joinPath(path)
             }));
-            forEach(orderedProperties, property => {
+            orderedProperties.forEach(property => {
                 result.push({
                     entityIRI: property,
                     indent: 1,
                     hasChildren: false,
                     path: concat(path, property),
-                    joinedPath: self.joinPath(concat(path, property)),
-                    entityInfo: getEntityInfoFromListItem(listItem, property)
+                    joinedPath: this.joinPath(concat(path, property)),
+                    entityInfo: this._getEntityInfoFromListItem(listItem, property)
                 });
             });
         });
-        var noDomainProps = listItem.noDomainProperties;
+        const noDomainProps = listItem.noDomainProperties;
 
-        var orderedNoDomainProperties = noDomainProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
+        const orderedNoDomainProperties = noDomainProps.sort((s1, s2) => this._compareEntityName(s1, s2, listItem));
         if (orderedNoDomainProperties.length) {
             result.push({
                 title: 'Properties',
-                get: self.getNoDomainsOpened,
-                set: self.setNoDomainsOpened
+                get: this.getNoDomainsOpened.bind(this),
+                set: this.setNoDomainsOpened.bind(this)
             });
-            forEach(orderedNoDomainProperties, property => {
+            orderedNoDomainProperties.forEach(property => {
                 result.push({
                     entityIRI: property,
                     indent: 1,
                     hasChildren: false,
-                    get: self.getNoDomainsOpened,
-                    path: [listItem.ontologyRecord.recordId, property],
-                    joinedPath: self.joinPath([listItem.ontologyRecord.recordId, property]),
-                    entityInfo: getEntityInfoFromListItem(listItem, property)
+                    get: this.getNoDomainsOpened.bind(this),
+                    path: [listItem.versionedRdfRecord.recordId, property],
+                    joinedPath: this.joinPath([listItem.versionedRdfRecord.recordId, property]),
+                    entityInfo: this._getEntityInfoFromListItem(listItem, property)
                 });
             });
         }
         return result;
     }
     /**
-     * @ngdoc method
-     * @name createFlatIndividualTree
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Creates an array which represents the hierarchical structure of the relationship between classes
      * and individuals to be used with a virtual scrolling solution.
      *
-     * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
-     * @returns {Object[]} An array which contains the class-individuals relationships.
+     * @param {OntologyListItem} listItem The listItem linked to the ontology you want to add the entity to.
+     * @returns {HierarchyNode[]} An array which contains the class-individuals relationships.
      */
-    self.createFlatIndividualTree = function(listItem) {
-        var result = [];
-        var neededClasses = get(listItem, 'individualsParentPath', []);
-        var classesWithIndividuals = get(listItem, 'classesAndIndividuals', {});
+    createFlatIndividualTree(listItem: OntologyListItem): HierarchyNode[] {
+        const result = [];
+        const neededClasses = get(listItem, 'individualsParentPath', []);
+        const classesWithIndividuals = get(listItem, 'classesAndIndividuals', {});
         if (neededClasses.length && !isEmpty(classesWithIndividuals)) {
-            forEach(get(listItem, 'classes.flat', []), node => {
+            get(listItem, 'classes.flat', []).forEach(node => {
                 if (includes(neededClasses, node.entityIRI)) {
                     result.push(merge({}, node, {isClass: true}));
-                    var sortedIndividuals = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(self.getEntityNameByListItem(entityIRI, listItem)));
-                    forEach(sortedIndividuals, entityIRI => {
-                        addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {}, listItem, self.joinPath(node.path));
+                    const sortedIndividuals: string[] = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(this.getEntityNameByListItem(entityIRI, listItem)));
+                    sortedIndividuals.forEach(entityIRI => {
+                        this._addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {}, listItem, this.joinPath(node.path));
                     });
                 }
             });
@@ -1197,40 +665,30 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         return result;
     }
     /**
-     * @ngdoc method
-     * @name addEntity
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
      * Mobi repository. Adds the new entity to the index.
      *
-     * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
-     * @param {Object} [listItem=self.listItem] The listItem linked to the ontology you want to add the entity to.
+     * @param {JSONLDObject} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
+     * @param {OntologyListItem} [listItem=listItem] The listItem linked to the ontology you want to add the entity to.
      */
-    self.addEntity = function(entityJSON, listItem = self.listItem) {
+    addEntity(entityJSON: JSONLDObject, listItem: OntologyListItem = this.listItem): void {
         listItem.iriList.push(entityJSON['@id']);
         get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
-            label: om.getEntityName(entityJSON),
-            names: om.getEntityNames(entityJSON),
+            label: this.om.getEntityName(entityJSON),
+            names: this.om.getEntityNames(entityJSON),
             ontologyId: listItem.ontologyId,
             imported: false
-        }
+        };
     }
     /**
-     * @ngdoc method
-     * @name removeEntity
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the Mobi
      * repository along with any referenced blank nodes. Removes the entityIRI and any reference blank nodes
      * from the index.
      *
      * @param {string} entityIRI The IRI of the entity to remove.
-     * @param {Object} [listItem=self.listItem] The listItem linked to the ontology you want to remove the entity from.
+     * @param {OntologyListItem} [listItem=listItem] The listItem linked to the ontology you want to remove the entity from.
      */
-    self.removeEntity = function(entityIRI, listItem = self.listItem) {
+    removeEntity(entityIRI: string, listItem: OntologyListItem = this.listItem): void {
         pull(listItem.iriList, entityIRI);
         unset(listItem.entityInfo, entityIRI);
     }
@@ -1247,160 +705,133 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Object} The associated Object from the
      * {@link shared.service:ontologyStateService#list list}.
      */
-    self.getListItemByRecordId = function(recordId) {
-        return find(self.list, {ontologyRecord: {recordId}});
-    }
+    // getListItemByRecordId(recordId) {
+    //     return find(this.list, {ontologyRecord: {recordId}});
+    // }
     /**
-     * @ngdoc method
-     * @name getEntityByRecordId
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Gets entity with the provided IRI from the ontology linked to the provided recordId in the Mobi
      * repository. Returns the entity Object.
      *
      * @param {string} recordId The recordId linked to the ontology you want to check.
      * @param {string} entityIRI The IRI of the entity that you want.
-     * @returns {Object} An Object which represents the requested entity.
+     * @returns {EntityNamesItem} An Object which represents the requested entity.
      */
-    self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
+    getEntityByRecordId(recordId: string, entityIRI: string, listItem?: OntologyListItem): EntityNamesItem {
         if (!isEmpty(listItem)) {
-            return getEntityInfoFromListItem(listItem, entityIRI);
+            return this._getEntityInfoFromListItem(listItem, entityIRI);
         }
-        return getEntityInfoFromListItem(self.getListItemByRecordId(recordId), entityIRI);
+        return this._getEntityInfoFromListItem(this.getListItemByRecordId(recordId), entityIRI);
     }
     /**
-     * @ngdoc method
-     * @name getEntity
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Gets entity with the provided IRI from the ontology in the provided `listItem` using
-     * {@link shared.service:ontologyManagerService getEntityAndBlankNodes}. Returns the resulting promise with a
+     * {@link shared.OntologyManagerService#getEntityAndBlankNodes}. Returns the resulting Observable with a
      * JSON-LD array with the entity and its blank nodes.
      *
      * @param {string} entityIRI The IRI of the entity that you want
-     * @param {Object} listItem The `listItem` to perform this action against
-     * @returns {Promise} A Promise that resolves with a JSON-LD array containing the entity and its blank nodes;
-     * rejects otherwise.
+     * @param {OntologyListItem} listItem The `listItem` to perform this action against
+     * @returns {Observable<JSONLDObject[]>} An Observable that resolves with a JSON-LD array containing the entity and
+     * its blank nodes; rejects otherwise.
      */
-    self.getEntity = function(entityIRI, listItem = self.listItem) {
-        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI)
-            .then(arr => {
-                var entity = find(arr, {'@id': entityIRI});
-                if (om.isIndividual(entity)) {
-                    findValuesMissingDatatypes(entity);
+    getEntity(entityIRI: string, listItem: OntologyListItem = this.listItem): Observable<JSONLDObject[]> {
+        return this.om.getEntityAndBlankNodes(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, entityIRI)
+            .pipe(map(arr => {
+                const entity = find(arr, {'@id': entityIRI});
+                if (this.om.isIndividual(entity)) {
+                    this._findValuesMissingDatatypes(entity);
                 }
                 return arr;
-            });
+            }));
     }
     /**
-     * @ngdoc method
-     * @name getEntityNoBlankNodes
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Gets entity with the provided IRI from the ontology in the provided `listItem` using
-     * {@link shared.service:ontologyManagerService getEntityAndBlankNodes}. Returns the resulting promise with a
+     * {@link shared.OntologyManagerService#getEntityAndBlankNodes}. Returns the resulting Observable with a
      * JSON-LD object for the entity.
      *
      * @param {string} entityIRI The IRI of the entity that you want
-     * @param {Object} listItem The `listItem` to perform this action against
-     * @returns {Promise} A Promise that resolves with a JSON-LD object for the entity; rejects otherwise.
+     * @param {OntologyListItem} listItem The `listItem` to perform this action against
+     * @returns {Observable<JSONLDObject>} An Observable that resolves with a JSON-LD object for the entity; rejects
+     * otherwise.
      */
-    self.getEntityNoBlankNodes = function(entityIRI, listItem = self.listItem) {
-        return self.getEntity(entityIRI, listItem).then(arr => find(arr, {'@id': entityIRI}), $q.reject);
+    getEntityNoBlankNodes(entityIRI: string, listItem: OntologyListItem = this.listItem): Observable<JSONLDObject> {
+        return this.getEntity(entityIRI, listItem).pipe(map(arr => find(arr, {'@id': entityIRI})));
     }
     /**
-     * @ngdoc method
-     * @name getEntityNameByListItem
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Gets the entity's name using the provided entityIRI and listItem to find the entity's label in the index.
      * If that entityIRI is not in the index, retrieves the beautiful IRI of the entity IRI.
      *
-     * @param {Object} entity The entity you want the name of.
+     * @param {string} entityIRI The entity you want the name of.
+     * @param {OntologyListItem} [listItem=this.listItem] The listItem to retrieve the entity's name from
      * @returns {string} The beautified IRI string.
      */
-    self.getEntityNameByListItem = function(entityIRI, listItem = self.listItem) {
-        return get(listItem.entityInfo, "['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
+    getEntityNameByListItem(entityIRI: string, listItem: OntologyListItem = this.listItem): string {
+        return get(listItem.entityInfo, '[\'' + entityIRI + '\'].label', this.util.getBeautifulIRI(entityIRI));
     }
     /**
-     * @ngdoc method
-     * @name saveChanges
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Saves all changes to the ontology with the specified record id by updating the in progress commit.
      *
      * @param {string} recordId The record ID of the requested ontology.
-     * @param {Object} differenceObj The object containing statements that represent changes made.
-     * @param {Object[]} differenceObj.additions The statements that were added.
-     * @param {Object[]} differenceObj.deletions The statements that were deleted.
-     * @returns {Promise} A promise with the ontology ID.
+     * @param {Difference} differenceObj The object containing statements that represent changes made.
+     * @returns {Observable<null>} An Observable with the ontology ID.
      */
-    self.saveChanges = function(recordId, differenceObj) {
-        return cm.updateInProgressCommit(recordId, catalogId, differenceObj).pipe(first()).toPromise();
-    }
-    self.addToAdditions = function(recordId, json) {
-        addToInProgress(recordId, json, 'additions');
-    }
-    self.addToDeletions = function(recordId, json) {
-        addToInProgress(recordId, json, 'deletions');
+    saveChanges(recordId: string, differenceObj: Difference): Observable<null> {
+        return this.cm.updateInProgressCommit(recordId, this.catalogId, differenceObj);
     }
     /**
-     * @ngdoc method
-     * @name openOntology
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
+     * 
+     * @param recordId 
+     * @param json 
+     */
+    addToAdditions(recordId: string, json: JSONLDObject): void {
+        this._addToInProgress(recordId, json, 'additions');
+    }
+    /**
+     * 
+     * @param recordId 
+     * @param json 
+     */
+    addToDeletions(recordId: string, json: JSONLDObject): void {
+        this._addToInProgress(recordId, json, 'deletions');
+    }
+    /**
      * Used to open an ontology from the Mobi repository. It calls
-     * {@link shared.service:ontologyStateService#getOntologyCatalogDetails getOntologyCatalogDetails} to get the specified
-     * ontology catalog information from the Mobi repository. Returns a promise.
+     * {@link shared.OntologyStateService#getOntologyCatalogDetails} to get the specified
+     * ontology catalog information from the Mobi repository. Returns an Observable.
      *
      * @param {string} recordId The record ID of the requested ontology.
      * @param {string} recordTitle The title of the requested ontology.
-     * @returns {Promise} A promise resolves if the action was successful and rejects if not.
+     * @returns {Observable} An observable that resolves if the action was successful and rejects if not.
      */
-    self.openOntology = function(recordId, recordTitle) {
+    openOntology(recordId: string, recordTitle: string): Observable<null> {
         let listItem;
-        return self.getOntologyCatalogDetails(recordId)
-            .then(response => {
-                return self.addOntologyToList(recordId, response.branchId, response.commitId, response.inProgressCommit, recordTitle, response.upToDate);
-            }, $q.reject)
-            .then(response => {
-                listItem = response;
-                return self.setSelected(self.getActiveEntityIRI(listItem), false, listItem);
-            }, $q.reject)
-            .then(() => {
-                self.listItem = listItem;
-            }, $q.reject);
+        return this.getCatalogDetails(recordId)
+            .pipe(
+                switchMap((response: {recordId: string, branchId: string, commitId: string, upToDate: boolean, inProgressCommit: Difference}) => 
+                    this.addOntologyToList(recordId, response.branchId, response.commitId, response.inProgressCommit, recordTitle, response.upToDate)),
+                switchMap(response => {
+                    listItem = response;
+                    return this.setSelected(this.getActiveEntityIRI(listItem), false, listItem);
+                }),
+                map(() => {
+                    this.listItem = listItem;
+                    return null;
+                })
+            );
     }
     /**
-     * @ngdoc method
-     * @name closeOntology
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Used to close an ontology from the Mobi application. It removes the ontology list item from the
-     * {@link shared.service:ontologyStateService#list list}.
+     * {@link shared.OntologyStateService#list}.
      *
      * @param {string} recordId The record ID of the requested ontology.
      */
-    self.closeOntology = function(recordId) {
-        if (get(self.listItem, 'ontologyRecord.recordId') == recordId) {
-            self.listItem = {};
+    closeOntology(recordId: string): void {
+        if (get(this.listItem, 'versionedRdfRecord.recordId') === recordId) {
+            this.listItem = undefined;
         }
-        remove(self.list, { ontologyRecord: { recordId }});
-        self.emitOntologyAction({action: 'close', recordId: recordId});
-    };
+        remove(this.list, { versionedRdfRecord: { recordId }});
+        // TODO Figure this out
+        this.emitOntologyAction({ action: OntologyAction.ONTOLOGY_CLOSE, recordId });
+    }
     /**
-     * @ngdoc method
-     * @name removeBranch
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Removes the specified branch from the `listItem` for the specified record. Meant to be called after the
      * Branch has already been deleted. Also updates the `tags` list on the `listItem` to account for any tags
      * that were removed as a result of the branch removal.
@@ -1408,206 +839,267 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} recordId The IRI of the Record whose Branch was deleted
      * @param {string} branchId The IRI of the Branch that was deleted
      */
-    self.removeBranch = function(recordId, branchId) {
-        var listItem = self.getListItemByRecordId(recordId);
+    removeBranch(recordId: string, branchId: string): Observable<null> {
+        const listItem = this.getListItemByRecordId(recordId);
         remove(listItem.branches, {'@id': branchId});
-        return cm.getRecordVersions(recordId, catalogId).pipe(first()).toPromise()
-            .then((response: HttpResponse<JSONLDObject[]>) => {
-                listItem.tags = filter(response.body, version => includes(get(version, '@type'), prefixes.catalog + 'Tag'));
-            }, $q.reject);
-    }
-    self.afterSave = function() {
-        return cm.getInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
-            .then((inProgressCommit: Difference) => {
-                self.listItem.inProgressCommit = inProgressCommit;
-
-                self.listItem.additions = [];
-                self.listItem.deletions = [];
-
-                return isEqual(inProgressCommit, emptyInProgressCommit) ? cm.deleteInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise() : $q.when();
-            }, $q.reject)
-            .then(() => {
-                forOwn(self.listItem.editorTabStates, (value, key) => {
-                    unset(value, 'usages');
-                });
-
-                if (isEmpty(self.getOntologyStateByRecordId(self.listItem.ontologyRecord.recordId))) {
-                    return self.createOntologyState({recordId: self.listItem.ontologyRecord.recordId, commitId: self.listItem.ontologyRecord.commitId, branchId: self.listItem.ontologyRecord.branchId});
-                } else {
-                    return self.updateOntologyState({recordId: self.listItem.ontologyRecord.recordId, commitId: self.listItem.ontologyRecord.commitId, branchId: self.listItem.ontologyRecord.branchId});
-                }
-            }, $q.reject);
-    }
-    self.clearInProgressCommit = function() {
-        self.listItem.inProgressCommit = {'additions': [], 'deletions': []}
-    }
-    self.setNoDomainsOpened = function(recordId, isOpened) {
-        set(self.listItem.editorTabStates, getOpenPath(recordId, 'noDomainsOpened'), isOpened);
-    }
-    self.getNoDomainsOpened = function(recordId) {
-        return get(self.listItem.editorTabStates, getOpenPath(recordId, 'noDomainsOpened'), false);
-    }
-    self.setDataPropertiesOpened = function(recordId, isOpened) {
-        set(self.listItem.editorTabStates, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
-    }
-    self.getDataPropertiesOpened = function(recordId) {
-        return get(self.listItem.editorTabStates, getOpenPath(recordId, 'dataPropertiesOpened'), false);
-    }
-    self.setObjectPropertiesOpened = function(recordId, isOpened) {
-        set(self.listItem.editorTabStates, getOpenPath(recordId, 'objectPropertiesOpened'), isOpened);
-    }
-    self.getObjectPropertiesOpened = function(recordId) {
-        return get(self.listItem.editorTabStates, getOpenPath(recordId, 'objectPropertiesOpened'), false);
-    }
-    self.setAnnotationPropertiesOpened = function(recordId, isOpened) {
-        set(self.listItem.editorTabStates, getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
-    }
-    self.getAnnotationPropertiesOpened = function(recordId) {
-        return get(self.listItem.editorTabStates, getOpenPath(recordId, 'annotationPropertiesOpened'), false);
-    }
-    // TODO: Keep an eye on this
-    self.onEdit = function(iriBegin, iriThen, iriEnd) {
-        var newIRI = iriBegin + iriThen + iriEnd;
-        var oldEntity = omit(angular.copy(self.listItem.selected), 'mobi');
-        self.getActivePage().entityIRI = newIRI;
-        if (some(self.listItem.additions, oldEntity)) {
-            remove(self.listItem.additions, oldEntity);
-            updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
-            self.recalculateJoinedPaths(self.listItem);
-        } else {
-            updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
-            self.recalculateJoinedPaths(self.listItem);
-            self.addToDeletions(self.listItem.ontologyRecord.recordId, oldEntity);
-        }
-        if (self.getActiveKey() !== 'project') {
-            self.setCommonIriParts(iriBegin, iriThen);
-        }
-        self.addToAdditions(self.listItem.ontologyRecord.recordId, omit(angular.copy(self.listItem.selected), 'mobi'));
-        return om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, oldEntity['@id'], 'construct')
-            .then(statements => {
-                forEach(statements, statement => self.addToDeletions(self.listItem.ontologyRecord.recordId, statement));
-                updateRefsService.update(statements, oldEntity['@id'], newIRI);
-                forEach(statements, statement => self.addToAdditions(self.listItem.ontologyRecord.recordId, statement));
-            }, errorMessage => util.createErrorToast('Associated entities were not updated due to an internal error.'));
-    }
-    self.setCommonIriParts = function(iriBegin, iriThen) {
-        set(self.listItem, 'iriBegin', iriBegin);
-        set(self.listItem, 'iriThen', iriThen);
+        return this.cm.getRecordVersions(recordId, this.catalogId)
+            .pipe(map((response: HttpResponse<JSONLDObject[]>) => {
+                listItem.tags = filter(response.body, version => includes(get(version, '@type'), CATALOG + 'Tag'));
+                return null;
+            }));
     }
     /**
-     * @ngdoc method
-     * @name setSelected
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
+     * 
+     * @returns 
+     */
+    afterSave(): Observable<unknown> {
+        return this.cm.getInProgressCommit(this.listItem.versionedRdfRecord.recordId, this.catalogId)
+            .pipe(
+                switchMap((inProgressCommit: Difference) => {
+                    this.listItem.inProgressCommit = inProgressCommit;
+
+                    this.listItem.additions = [];
+                    this.listItem.deletions = [];
+
+                    return isEqual(inProgressCommit, new Difference()) ? this.cm.deleteInProgressCommit(this.listItem.versionedRdfRecord.recordId, this.catalogId) : of(null);
+                }),
+                switchMap(() => {
+                    forOwn(this.listItem.editorTabStates, value => {
+                        unset(value, 'usages');
+                    });
+
+                    if (isEmpty(this.getStateByRecordId(this.listItem.versionedRdfRecord.recordId))) {
+                        return this.createState({recordId: this.listItem.versionedRdfRecord.recordId, commitId: this.listItem.versionedRdfRecord.commitId, branchId: this.listItem.versionedRdfRecord.branchId});
+                    } else {
+                        return this.updateState({recordId: this.listItem.versionedRdfRecord.recordId, commitId: this.listItem.versionedRdfRecord.commitId, branchId: this.listItem.versionedRdfRecord.branchId});
+                    }
+                })
+            );
+    }
+    /**
+     * Clears the the InProgressCommit on the current `listItem`
+     */
+    clearInProgressCommit(): void {
+        this.listItem.inProgressCommit = new Difference();
+    }
+    /**
+     * Sets the opened the status
+     * @param recordId 
+     * @param isOpened 
+     */
+    setNoDomainsOpened(recordId: string, isOpened: boolean): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'noDomainsOpened'), isOpened);
+    }
+    /**
+     * 
+     * @param recordId 
+     * @returns 
+     */
+    getNoDomainsOpened(recordId: string): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'noDomainsOpened'), false);
+    }
+    /**
+     * 
+     * @param recordId 
+     * @param isOpened 
+     */
+    setDataPropertiesOpened(recordId: string, isOpened: boolean): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
+    }
+    /**
+     * 
+     * @param recordId 
+     * @returns 
+     */
+    getDataPropertiesOpened(recordId: string): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'dataPropertiesOpened'), false);
+    }
+    /**
+     * 
+     * @param recordId 
+     * @param isOpened 
+     */
+    setObjectPropertiesOpened(recordId: string, isOpened: boolean): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'objectPropertiesOpened'), isOpened);
+    }
+    /**
+     * 
+     * @param recordId 
+     * @returns 
+     */
+    getObjectPropertiesOpened(recordId: string): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'objectPropertiesOpened'), false);
+    }
+    /**
+     * 
+     * @param recordId 
+     * @param isOpened 
+     */
+    setAnnotationPropertiesOpened(recordId: string, isOpened: boolean): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
+    }
+    /**
+     * 
+     * @param recordId 
+     * @returns 
+     */
+    getAnnotationPropertiesOpened(recordId: string): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'annotationPropertiesOpened'), false);
+    }
+    // TODO: Keep an eye on this
+    /**
+     * 
+     * @param iriBegin 
+     * @param iriThen 
+     * @param iriEnd 
+     */
+    onEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<unknown> {
+        const newIRI = iriBegin + iriThen + iriEnd;
+        const oldEntity = Object.assign({}, this.listItem.selected);
+        this.getActivePage().entityIRI = newIRI;
+        if (some(this.listItem.additions, oldEntity)) {
+            remove(this.listItem.additions, oldEntity);
+            this.updateRefs.update(this.listItem, this.listItem.selected['@id'], newIRI);
+            this.recalculateJoinedPaths(this.listItem);
+        } else {
+            this.updateRefs.update(this.listItem, this.listItem.selected['@id'], newIRI);
+            this.recalculateJoinedPaths(this.listItem);
+            this.addToDeletions(this.listItem.versionedRdfRecord.recordId, oldEntity);
+        }
+        if (this.getActiveKey() !== 'project') {
+            this.setCommonIriParts(iriBegin, iriThen);
+        }
+        this.addToAdditions(this.listItem.versionedRdfRecord.recordId, Object.assign({}, this.listItem.selected));
+        return this.om.getEntityUsages(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, oldEntity['@id'], 'construct')
+            .pipe(
+                map(statements => {
+                    statements.forEach(statement => this.addToDeletions(this.listItem.versionedRdfRecord.recordId, statement));
+                    this.updateRefs.update(statements, oldEntity['@id'], newIRI);
+                    statements.forEach(statement => this.addToAdditions(this.listItem.versionedRdfRecord.recordId, statement));
+                }),
+                catchError(() => {
+                    this.util.createErrorToast('Associated entities were not updated due to an internal error.');
+                    return throwError(null);
+                })
+            );
+    }
+    /**
+     * 
+     * @param iriBegin 
+     * @param iriThen 
+     */
+    setCommonIriParts(iriBegin: string, iriThen: string): void {
+        set(this.listItem, 'iriBegin', iriBegin);
+        set(this.listItem, 'iriThen', iriThen);
+    }
+    /**
      * Sets the `selected`, `selectedBlankNodes`, and `blankNodes` properties on the provided `listItem` based on the
-     * response from {@link shared.service:ontologyManagerService getEntityAndBlankNodes}. Returns a Promise indicating
-     * the success of the action. If the provided `entityIRI` or `listItem` are not valid, returns a Promise that
+     * response from {@link shared.OntologyManagerService#getEntityAndBlankNodes}. Returns an Observable indicating
+     * the success of the action. If the provided `entityIRI` or `listItem` are not valid, returns an Observable that
      * resolves. Sets the entity usages if the provided `getUsages` parameter is true. Also accepts a spinner id to use
      * in the call to fetch the entity.
      *
      * @param {string} entityIRI The IRI of the entity to retrieve
-     * @param {string} [getUsages=true] Whether to set the usages of the entity after fetching
-     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
-     * @param {string} [spinnerId=''] A spinner id to attach to the call to fetch the entity
-     * @return {Promise} A promise indicating the success of the action
+     * @param {boolean} [getUsages=true] Whether to set the usages of the entity after fetching
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
+     * @return {Observable} An Observable indicating the success of the action
      */
-    self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem, spinnerId = '') {
+    setSelected(entityIRI: string, getUsages = true, listItem: OntologyListItem = this.listItem/* , spinnerId = '' */): Observable<null> {
         listItem.selected = undefined;
-        if  (!entityIRI || !listItem) {
+        if (!entityIRI || !listItem) {
             if (listItem) {
                 listItem.selectedBlankNodes = [];
                 listItem.blankNodes = {};
             }
-            return $q.when();
+            return of(null);
         }
-        if (spinnerId) {
-            httpService.cancel(spinnerId);
-        }
-        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI, undefined, undefined, undefined, spinnerId)
-            .then(arr => {
+        // TODO figure this out
+        // if (spinnerId) {
+        //     httpService.cancel(spinnerId);
+        // }
+        return this.om.getEntityAndBlankNodes(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, entityIRI, undefined, undefined, undefined)
+            .pipe(map(arr => {
                 listItem.selected = find(arr, {'@id': entityIRI});
-                listItem.selectedBlankNodes = getArrWithoutEntity(entityIRI, arr);
-                var bnodeIndex = self.getBnodeIndex(listItem.selectedBlankNodes);
+                listItem.selectedBlankNodes = this._getArrWithoutEntity(entityIRI, arr);
+                const bnodeIndex = this.getBnodeIndex(listItem.selectedBlankNodes);
                 listItem.selectedBlankNodes.forEach(bnode => {
-                    listItem.blankNodes[bnode['@id']] = mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex);
+                    listItem.blankNodes[bnode['@id']] = this.mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex);
                 });
-                if (om.isIndividual(listItem.selected)) {
-                    findValuesMissingDatatypes(listItem.selected);
+                if (this.om.isIndividual(listItem.selected)) {
+                    this._findValuesMissingDatatypes(listItem.selected);
                 }
-                if (getUsages && !has(self.getActivePage(), 'usages') && listItem.selected) {
-                    self.setEntityUsages(entityIRI);
+                if (getUsages && !has(this.getActivePage(), 'usages') && listItem.selected) {
+                    this.setEntityUsages(entityIRI);
                 }
-            });
-    }
-    self.setEntityUsages = function(entityIRI) {
-        var page = self.getActivePage();
-        var id = 'usages-' + self.getActiveKey() + '-' + self.listItem.ontologyRecord.recordId;
-        httpService.cancel(id);
-        om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, entityIRI, 'select', id)
-            .then(bindings => set(page, 'usages', bindings),
-                response => set(page, 'usages', []));
+                return null;
+            }));
     }
     /**
-     * @ngdoc method
-     * @name getBnodeIndex
      * 
-     * @description
-     * Creates a index for the blank nodes so that the manchester syntax logic will work correctly.
-     * 
-     * @param {Object[]} [selectedBlankNodes=self.listItem.selectedBlankNodes] The JSON-LD array of blank nodes to index
-     * @returns {Object} The index of blank nodes
+     * @param entityIRI 
      */
-    self.getBnodeIndex = function(selectedBlankNodes = self.listItem.selectedBlankNodes) {
-        var bnodeIndex = {};
+    setEntityUsages(entityIRI: string): void {
+        const page = this.getActivePage();
+        // TODO figure this out
+        // const id = 'usages-' + this.getActiveKey() + '-' + this.listItem.versionedRdfRecord.recordId;
+        // httpService.cancel(id);
+        this.om.getEntityUsages(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, entityIRI, 'select')
+            .subscribe(bindings => set(page, 'usages', bindings), () => set(page, 'usages', []));
+    }
+    /**
+     * Creates an index for the blank nodes so that the manchester syntax logic will work correctly.
+     * 
+     * @param {JSONLDObject[]} [selectedBlankNodes=listItem.selectedBlankNodes] The JSON-LD array of blank nodes to index
+     * @returns {{[key: string]: {position: number}}} The index of blank nodes
+     */
+    getBnodeIndex(selectedBlankNodes = this.listItem.selectedBlankNodes): {[key: string]: {position: number}} {
+        const bnodeIndex = {};
         selectedBlankNodes.forEach((bnode, idx) => {
             bnodeIndex[bnode['@id']] = {position: idx};
         });
         return bnodeIndex;
     }
     /**
-     * @ngdoc method
-     * @name resetStateTabs
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Resets the state of each of the tabs in the provided `listItem`. If the active tab is the project tab, sets the
      * selected entity back to the Ontology object. If the active tab is not the project tab, unsets the selected entity
      * and its blank nodes.
      *
-     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      */
-    self.resetStateTabs = function(listItem = self.listItem) {
+    resetStateTabs(listItem: OntologyListItem = this.listItem): void {
         forOwn(listItem.editorTabStates, (value, key) => {
-            if (key == 'search') {
+            if (key === 'search') {
                 unset(value, 'entityIRI');
-                unset(value, encodeURIComponent(listItem.ontologyRecord.recordId));
+                unset(value, encodeURIComponent(listItem.versionedRdfRecord.recordId));
                 value.open = {};
-            }
-            else if (key !== 'project' && key !== 'search') {
+            } else if (key !== 'project' && key !== 'search') {
                 unset(value, 'entityIRI');
-                unset(value, encodeURIComponent(listItem.ontologyRecord.recordId));
+                unset(value, encodeURIComponent(listItem.versionedRdfRecord.recordId));
                 value.open = {};
                 value.searchText = '';
-            }
-            else {
+            } else {
                 value.entityIRI = listItem.ontologyId;
                 value.preview = '';
             }
             unset(value, 'usages');
         });
-        self.resetSearchTab(listItem);
-        if (self.getActiveKey() !== 'project') {
+        this.resetSearchTab(listItem);
+        if (this.getActiveKey() !== 'project') {
             listItem.selected = undefined;
             listItem.selectedBlankNodes = [];
             listItem.blankNodes = {};
         } else {
-            self.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem, 'project');
+            this.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem/* , 'project' */).subscribe(noop, this.util.createErrorToast);
         }
         listItem.seeHistory = false;
     }
-    self.resetSearchTab = function(listItem = self.listItem) {
-        httpService.cancel(listItem.editorTabStates.search.id);
+    /**
+     * 
+     * @param listItem 
+     */
+    resetSearchTab(listItem: OntologyListItem = this.listItem): void {
+        // TODO figure this out
+        // httpService.cancel(listItem.editorTabStates.search.id);
         listItem.editorTabStates.search.errorMessage = '';
         listItem.editorTabStates.search.highlightText = '';
         listItem.editorTabStates.search.infoMessage = '';
@@ -1617,84 +1109,121 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         listItem.editorTabStates.search.selected = {};
         listItem.editorTabStates.search.entityIRI = '';
     }
-    self.getActiveKey = function(listItem = self.listItem) {
+    /**
+     * 
+     * @param listItem 
+     * @returns 
+     */
+    getActiveKey(listItem: OntologyListItem = this.listItem): string {
         return findKey(listItem.editorTabStates, 'active') || 'project';
     }
-    self.getActivePage = function(listItem = self.listItem) {
-        return listItem.editorTabStates[self.getActiveKey(listItem)];
+    /**
+     * 
+     * @param listItem 
+     * @returns 
+     */
+    getActivePage(listItem: OntologyListItem = this.listItem): any {
+        return listItem.editorTabStates[this.getActiveKey(listItem)];
     }
-    self.setActivePage = function(key, listItem = self.listItem) {
+    /**
+     * 
+     * @param key 
+     * @param listItem 
+     */
+    setActivePage(key: string, listItem: OntologyListItem = this.listItem): void {
         if (has(listItem.editorTabStates, key)) {
-            self.getActivePage(listItem).active = false;
+            this.getActivePage(listItem).active = false;
             listItem.editorTabStates[key].active = true;
         }
     }
-    self.getActiveEntityIRI = function(listItem = self.listItem) {
-        return get(self.getActivePage(listItem), 'entityIRI');
+    /**
+     * 
+     * @param listItem 
+     * @returns 
+     */
+    getActiveEntityIRI(listItem: OntologyListItem = this.listItem): string {
+        return get(this.getActivePage(listItem), 'entityIRI');
     }
     /**
-     * @ngdoc method
-     * @name selectItem
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Selects the entity with the specified IRI in the current `listItem`. Optionally can set the usages of the entity.
-     * Also accepts a spinner id to use in the call to fetch the entity. Returns a Promise indicating the success of the
-     * action.
+     * Also accepts a spinner id to use in the call to fetch the entity. Returns an Observable indicating the success 
+     * of the action.
      * 
      * @param {string} entityIRI The IRI of an entity in the current `listItem`
      * @param {boolean} [getUsages=true] Whether to set the usages of the specified entity
-     * @param {string} [spinnerId=''] A spinner id to attach to the call to fetch the entity
-     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     * @returns {Observable<null>} An Observable that resolves if the action was successful; rejects otherwise
      */
-    self.selectItem = function(entityIRI, getUsages = true, spinnerId = '') {
-        if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
-            set(self.getActivePage(), 'entityIRI', entityIRI);
+    selectItem(entityIRI: string, getUsages = true/* , spinnerId = '' */): Observable<null> {
+        if (entityIRI && entityIRI !== this.getActiveEntityIRI()) {
+            set(this.getActivePage(), 'entityIRI', entityIRI);
             if (getUsages) {
-                self.setEntityUsages(entityIRI);
+                this.setEntityUsages(entityIRI);
             }
         }
-        return self.setSelected(entityIRI, false, self.listItem, spinnerId);
+        return this.setSelected(entityIRI, false, this.listItem/* , spinnerId */);
     }
     /**
-     * @ngdoc method
-     * @name unSelectItem
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Unselects the currently selected entity. This includes wiping the usages, stored RDF, and the related blank
      * nodes.
      */
-    self.unSelectItem = function() {
-        var activePage = self.getActivePage();
+    unSelectItem(): void {
+        const activePage = this.getActivePage();
         unset(activePage, 'entityIRI');
         unset(activePage, 'usages');
-        self.listItem.selected = undefined;
-        self.listItem.selectedBlankNodes = [];
-        self.listItem.blankNodes = {};
+        this.listItem.selected = undefined;
+        this.listItem.selectedBlankNodes = [];
+        this.listItem.blankNodes = {};
     }
-    self.hasChanges = function(listItem) {
+    /**
+     * Tests whether the provided `listItem` has any unsaved changes that should be saved to the InProgressCommit.
+     * 
+     * @param {OntologyListItem} listItem The OntologyListItem to test
+     * @returns {boolean} True if there are unsaved changes on the provided `listItem`
+     */
+    hasChanges(listItem: OntologyListItem): boolean {
         return !!get(listItem, 'additions', []).length || !!get(listItem, 'deletions', []).length;
     }
-    self.isCommittable = function(listItem) {
+    /**
+     * Tests whether the provided `listItem` can be committed based on whether the InProgressCommit has any data saved.
+     * 
+     * @param {OntologyListItem} listItem The OntologyListItem to test
+     * @returns {boolean} True if there are changes saved in the InProgressCommit on the provided `listItem`; false
+     * otherwise
+     */
+    isCommittable(listItem: OntologyListItem): boolean {
         return !!get(listItem, 'inProgressCommit.additions', []).length || !!get(listItem, 'inProgressCommit.deletions', []).length;
     }
-    self.updateIsSaved = function() {
-        self.listItem.isSaved = self.isCommittable(self.listItem);
+    /**
+     * Updates the `isSaved` variable on the current `listItem` depending on whether it is committable or not.
+     */
+    updateIsSaved(): void {
+        this.listItem.isSaved = this.isCommittable(this.listItem);
     }
-    self.addEntityToHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
-        let result = checkChildren(hierarchyInfo, entityIRI, parentIRI);
+    /**
+     * 
+     * @param hierarchyInfo 
+     * @param entityIRI 
+     * @param parentIRI 
+     */
+    addEntityToHierarchy(hierarchyInfo: Hierarchy, entityIRI: string, parentIRI: string): void {
+        const result = this._checkChildren(hierarchyInfo, entityIRI, parentIRI);
         if (!result.circular) {
             if (parentIRI && has(hierarchyInfo.iris, parentIRI)) {
                 hierarchyInfo.parentMap[parentIRI] = union(get(hierarchyInfo.parentMap, parentIRI), [entityIRI]);
                 hierarchyInfo.childMap[entityIRI] = union(get(hierarchyInfo.childMap, entityIRI), [parentIRI]);
             }
         } else {
-            let value = {[entityIRI]: result.path}
-            hierarchyInfo.circularMap[parentIRI] = assign(value,get(hierarchyInfo.circularMap, parentIRI))
+            const value = {[entityIRI]: result.path};
+            hierarchyInfo.circularMap[parentIRI] = assign(value,get(hierarchyInfo.circularMap, parentIRI));
         }
     }
-    self.deleteEntityFromParentInHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
+    /**
+     * 
+     * @param hierarchyInfo 
+     * @param entityIRI 
+     * @param parentIRI 
+     */
+    deleteEntityFromParentInHierarchy(hierarchyInfo: Hierarchy, entityIRI: string, parentIRI: string): void {
         forEach(hierarchyInfo.circularMap, (values, parent) => {
             forEach(values, (path, child) => {
                 if (includes(path, entityIRI) && includes(path, parentIRI)) {
@@ -1717,8 +1246,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             delete hierarchyInfo.childMap[entityIRI];
         }
     }
-    self.deleteEntityFromHierarchy = function(hierarchyInfo, entityIRI) {
-        var children = get(hierarchyInfo.parentMap, entityIRI, []);
+    /**
+     * 
+     * @param hierarchyInfo 
+     * @param entityIRI 
+     */
+    deleteEntityFromHierarchy(hierarchyInfo: Hierarchy, entityIRI: string): void {
+        const children = get(hierarchyInfo.parentMap, entityIRI, []);
         delete hierarchyInfo.parentMap[entityIRI];
         forEach(children, child => {
             pull(hierarchyInfo.childMap[child], entityIRI); 
@@ -1726,7 +1260,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 delete hierarchyInfo.childMap[child];
             }
         });
-        var parents = get(hierarchyInfo.childMap, entityIRI, []);
+        const parents = get(hierarchyInfo.childMap, entityIRI, []);
         delete hierarchyInfo.childMap[entityIRI];
         forEach(parents, parent => {
             pull(hierarchyInfo.parentMap[parent], entityIRI);
@@ -1735,15 +1269,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
         });
     }
-    self.getPathsTo = function(hierarchyInfo, entityIRI) {
-        var result = [];
+    /**
+     * 
+     * @param hierarchyInfo 
+     * @param entityIRI 
+     * @returns 
+     */
+    getPathsTo(hierarchyInfo: Hierarchy, entityIRI: string): string[][] {
+        const result = [];
         if (has(hierarchyInfo.iris, entityIRI)) {
             if (has(hierarchyInfo.childMap, entityIRI)) {
-                var toFind = [[entityIRI]];
+                const toFind = [[entityIRI]];
                 while (toFind.length) {
-                    var temp = toFind.pop();
-                    forEach(hierarchyInfo.childMap[temp[0]], parent => {
-                        var temp2 = [parent].concat(temp);
+                    const temp = toFind.pop();
+                    hierarchyInfo.childMap[temp[0]].forEach(parent => {
+                        const temp2 = [parent].concat(temp);
                         if (has(hierarchyInfo.childMap, parent)) {
                             toFind.push(temp2);
                         } else {
@@ -1757,374 +1297,342 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return result;
     }
-    self.areParentsOpen = function(node, tab) {
-        var allOpen = true;
-        for (var i = node.path.length - 1; i > 1; i--) {
-            var fullPath = self.joinPath(node.path.slice(0, i));
+    /**
+     * Tests whether all the parent nodes of the provided HierarchyNode are open within the hierarchy of the provided
+     * tab in the current `listItem`.
+     * 
+     * @param {HierarchyNode} node The HierarchyNode of interest
+     * @param {string} tab The name of the tab to test the hierarchy within
+     * @returns True if all parent of the node are open in the tab's hierarchy; false otherwise
+     */
+    areParentsOpen(node: HierarchyNode, tab: string): boolean {
+        let allOpen = true;
+        for (let i = node.path.length - 1; i > 1; i--) {
+            const fullPath = this.joinPath(node.path.slice(0, i));
 
-            if (!self.listItem.editorTabStates[tab].open[fullPath]) {
+            if (!this.listItem.editorTabStates[tab].open[fullPath]) {
                 allOpen = false;
                 break;
-            };
+            }
         }
         return allOpen;
     }
-    self.joinPath = function(path) {
+    /**
+     * Joins the provided path to an entity in a hierarchy represented by the array of strings into a single string,
+     * joined with `.`.
+     * 
+     * @param {string[]} path The path of entities to join
+     * @returns A single string with the joined path
+     */
+    joinPath(path: string[]): string {
         return join(path, '.');
     }
-    self.goTo = function(iri) {
-        if (get(self.listItem, 'ontologyId') === iri) {
-            commonGoTo('project', iri);
-        } else if (isInIris('classes', iri)) {
-            commonGoTo('classes', iri, self.listItem.classes.flat);
-            self.listItem.editorTabStates.classes.index = getScrollIndex(iri, self.listItem.classes.flat);
-        } else if (isInIris('dataProperties', iri)) {
-            commonGoTo('properties', iri, self.listItem.dataProperties.flat);
-            self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+    /**
+     * Updates the current `listItem` to view the entity identified by the provided IRI. Updates the selected tab in the
+     * editor and all required variables in order to view the details of the entity.
+     * 
+     * @param {string} iri The IRI of the entity to open the editor at
+     */
+    goTo(iri: string): void {
+        if (get(this.listItem, 'ontologyId') === iri) {
+            this._commonGoTo('project', iri);
+        } else if (this._isInIris('classes', iri)) {
+            this._commonGoTo('classes', iri, this.listItem.classes.flat);
+            this.listItem.editorTabStates.classes.index = this._getScrollIndex(iri, this.listItem.classes.flat);
+        } else if (this._isInIris('dataProperties', iri)) {
+            this._commonGoTo('properties', iri, this.listItem.dataProperties.flat);
+            this.setDataPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true);
             // Index is incremented by 1 to account for Data Property folder
-            self.listItem.editorTabStates.properties.index = getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
-        } else if (isInIris('objectProperties', iri)) {
-            commonGoTo('properties', iri, self.listItem.objectProperties.flat);
-            self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+            this.listItem.editorTabStates.properties.index = this._getScrollIndex(iri, this.listItem.dataProperties.flat, true, iri => this.getDataPropertiesOpened(iri)) + 1;
+        } else if (this._isInIris('objectProperties', iri)) {
+            this._commonGoTo('properties', iri, this.listItem.objectProperties.flat);
+            this.setObjectPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true);
 
-            var index = 0;
+            let index = 0;
             // If Data Properties are present, count the number of shown properties and increment by 1 for the Data Property folder
-            if (self.listItem.dataProperties.flat.length > 0) {
-                index += getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
+            if (this.listItem.dataProperties.flat.length > 0) {
+                index += this._getScrollIndex(iri, this.listItem.dataProperties.flat, true, iri => this.getDataPropertiesOpened(iri)) + 1;
             }
             // Index is incremented by 1 to account for Object Property folder
-            self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
-        } else if (isInIris('annotations', iri)) {
-            commonGoTo('properties', iri, self.listItem.annotations.flat);
-            self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+            this.listItem.editorTabStates.properties.index = index + this._getScrollIndex(iri, this.listItem.objectProperties.flat, true, iri => this.getObjectPropertiesOpened(iri)) + 1;
+        } else if (this._isInIris('annotations', iri)) {
+            this._commonGoTo('properties', iri, this.listItem.annotations.flat);
+            this.setAnnotationPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true);
 
-            var index = 0;
+            let index = 0;
             // If Data Properties are present, count the number of shown properties and increment by 1 for the Data Property folder
-            if (self.listItem.dataProperties.flat.length > 0) {
-                index += getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
+            if (this.listItem.dataProperties.flat.length > 0) {
+                index += this._getScrollIndex(iri, this.listItem.dataProperties.flat, true, iri => this.getDataPropertiesOpened(iri)) + 1;
             }
             // If Object Properties are present, count the number of shown properties and increment by 1 for the Object Property folder
-            if (self.listItem.objectProperties.flat.length > 0) {
-                index += getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
+            if (this.listItem.objectProperties.flat.length > 0) {
+                index += this._getScrollIndex(iri, this.listItem.objectProperties.flat, true, iri => this.getObjectPropertiesOpened(iri)) + 1;
             }
             // Index is incremented by 1 to account for Annotation Property folder
-            self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.annotations.flat, true, self.getAnnotationPropertiesOpened) + 1;
-        } else if (isInIris('concepts', iri)) {
-            commonGoTo('concepts', iri, self.listItem.concepts.flat);
-            self.listItem.editorTabStates.concepts.index = getScrollIndex(iri, self.listItem.concepts.flat);
-        } else if (isInIris('conceptSchemes', iri)) {
-            commonGoTo('schemes', iri, self.listItem.conceptSchemes.flat);
-            self.listItem.editorTabStates.schemes.index = getScrollIndex(iri, self.listItem.conceptSchemes.flat);
-        } else if (isInIris('individuals', iri)) {
-            commonGoTo('individuals', iri, self.listItem.individuals.flat);
-            self.listItem.editorTabStates.individuals.index = getScrollIndex(iri, self.listItem.individuals.flat);
+            this.listItem.editorTabStates.properties.index = index + this._getScrollIndex(iri, this.listItem.annotations.flat, true, iri => this.getAnnotationPropertiesOpened(iri)) + 1;
+        } else if (this._isInIris('concepts', iri)) {
+            this._commonGoTo('concepts', iri, this.listItem.concepts.flat);
+            this.listItem.editorTabStates.concepts.index = this._getScrollIndex(iri, this.listItem.concepts.flat);
+        } else if (this._isInIris('conceptSchemes', iri)) {
+            this._commonGoTo('schemes', iri, this.listItem.conceptSchemes.flat);
+            this.listItem.editorTabStates.schemes.index = this._getScrollIndex(iri, this.listItem.conceptSchemes.flat);
+        } else if (this._isInIris('individuals', iri)) {
+            this._commonGoTo('individuals', iri, this.listItem.individuals.flat);
+            this.listItem.editorTabStates.individuals.index = this._getScrollIndex(iri, this.listItem.individuals.flat);
         }
     }
-    self.openAt = function(flatHierarchy, entityIRI) {
-        var path = get(find(flatHierarchy, {entityIRI}), 'path', []);
+    /**
+     * Opens the hierarchy represented by the provided list of nodes at the entity identified byt he provided IRI.
+     * 
+     * @param {HierarchyNode[]} flatHierarchy The flattened hierarchy to open the entity within
+     * @param {string} entityIRI The IRI of the entity to open at
+     */
+    openAt(flatHierarchy: HierarchyNode[], entityIRI: string): void {
+        const path = get(find(flatHierarchy, {entityIRI}), 'path', []);
         if (path.length) {
-            var pathString : any = head(path);
+            let pathString : string = head(path);
             forEach(tail(initial(path)), pathPart => {
                 pathString += '.' + pathPart;
-                self.listItem.editorTabStates[self.getActiveKey()].open[pathString] = true;
+                this.listItem.editorTabStates[this.getActiveKey()].open[pathString] = true;
             });
         }
     }
-    self.getDefaultPrefix = function() {
-        var prefixIri = replace(get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + get(self.listItem, 'iriThen', '#');
-        if (om.isBlankNodeId(prefixIri)) {
-            var nonBlankNodeId = head(keys(self.listItem.entityInfo));
+    /**
+     * Generates the default prefix to be used for all new entities in the current `listItem`. Uses the ontology IRI as
+     * a basis unless overridden. If the prefix is found to be a blank node, tries the first IRI it can find within the
+     * ontology. If an IRI isn't found, creates a blank node prefix.
+     * 
+     * @returns {string} The prefix for new IRIs created within the current `listItem`
+     */
+    getDefaultPrefix(): string {
+        let prefixIri = replace(this.listItem.iriBegin || this.listItem.ontologyId, '#', '/') + (this.listItem.iriThen || '#');
+        if (this.om.isBlankNodeId(prefixIri)) {
+            const nonBlankNodeId = head(keys(this.listItem.entityInfo));
             if (nonBlankNodeId) {
-                var split = $filter('splitIRI')(nonBlankNodeId);
+                const split = this.splitIRI.transform(nonBlankNodeId);
                 prefixIri = split.begin + split.then;
             } else {
-                prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
+                prefixIri = 'https://mobi.com/blank-node-namespace/' + uuidv4() + '#';
             }
         }
         return prefixIri;
     }
-    self.updatePropertyIcon = function(entity) {
-        if (om.isProperty(entity)) {
-            setPropertyIcon(entity);
+    /**
+     * Updates the icon for the property represented by the provided JSON-LD Object.
+     * 
+     * @param {JSONLDObject} entity The JSON-LD object for a property
+     */
+    updatePropertyIcon(entity: JSONLDObject): void {
+        if (this.om.isProperty(entity)) {
+            this._setPropertyIcon(entity);
         }
     }
-    self.hasInProgressCommit = function(listItem = self.listItem) {
+    /**
+     * Determines whether the provided OntologyListItem has the InProgressCommit set and whether it has any contents.
+     * 
+     * @param {OntologyListItem} listItem The OntologyListItem to inspect
+     * @returns {boolean} True if there is an InProgressCommit with contents; false otherwise
+     */
+    hasInProgressCommit(listItem: OntologyListItem = this.listItem): boolean {
         return listItem.inProgressCommit !== undefined
                 && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0)
                 || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
     }
-    self.addToClassIRIs = function(listItem, iri, ontologyId) {
-        if (!existenceCheck(listItem.classes.iris, iri)) {
-            if (iri === prefixes.skos + 'Concept' || iri === prefixes.skos + 'ConceptScheme') {
+    /**
+     * Adds the provided class IRI to the provided `listItem`. Updates the isVocabulary variable if the added class is
+     * skos:Concept or skos:ConceptScheme. Also optionally takes the ID of the ontology that contains the class
+     * definition if not the current ontology.
+     * 
+     * @param {OntologyListItem} listItem The OntologyListItem to update
+     * @param {string} iri The class IRI to add
+     * @param {string} ontologyId The ID of the ontology that contains the class definition
+     */
+    addToClassIRIs(listItem: OntologyListItem, iri: string, ontologyId = ''): void {
+        if (!this._existenceCheck(listItem.classes.iris, iri)) {
+            if (iri === SKOS + 'Concept' || iri === SKOS + 'ConceptScheme') {
                 listItem.isVocabulary = true;
             }
             listItem.classes.iris[iri] = ontologyId || listItem.ontologyId;
-            addInfo(listItem, iri, ontologyId || listItem.ontologyId);
+            this._addInfo(listItem, iri, ontologyId || listItem.ontologyId);
         }
     }
-    self.removeFromClassIRIs = function(listItem, iri) {
-        var conceptCheck = iri === prefixes.skos + 'Concept' && !existenceCheck(listItem.classes.iris, prefixes.skos + 'ConceptScheme');
-        var schemeCheck = iri === prefixes.skos + 'ConceptScheme' && !existenceCheck(listItem.classes.iris, prefixes.skos + 'Concept');
+    /**
+     * Removes the provided class IRI from the provided `listItem`. Updates the isVocabulary variable if the class IRI
+     * is skos:Concept or skos:ConceptScheme and the other doesn't exist (this should only happen if the SKOS constructs
+     * happen to be redefined in the ontology).
+     * 
+     * @param {OntologyListItem} listItem The OntologyListItem to update
+     * @param {string} iri The class IRI to remove
+     */
+    removeFromClassIRIs(listItem: OntologyListItem, iri: string): void {
+        const conceptCheck = iri === SKOS + 'Concept' && !this._existenceCheck(listItem.classes.iris, SKOS + 'ConceptScheme');
+        const schemeCheck = iri === SKOS + 'ConceptScheme' && !this._existenceCheck(listItem.classes.iris, SKOS + 'Concept');
         if (conceptCheck || schemeCheck) {
             listItem.isVocabulary = false;
         }
         delete listItem.classes.iris[iri];
     }
-    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
-    self.attemptMerge = function() {
-        return self.checkConflicts()
-            .then(() => self.merge(), $q.reject);
-    }
-    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
-    self.checkConflicts = function() {
-        return cm.getBranchConflicts(self.listItem.ontologyRecord.branchId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
-            .then((conflicts: Conflict[]) => {
-                if (isEmpty(conflicts)) {
-                    return $q.when();
-                } else {
-                    forEach(conflicts, conflict => {
-                        conflict.resolved = false;
-                        self.listItem.merge.conflicts.push(conflict);
-                    });
-                    return $q.reject();
-                }
-            }, $q.reject);
+    /**
+     * Implements the `merge` method from the `VersionedRdfState` abstract class. Performs a merge of the source/current
+     * branch into the selected target with any chosen resolutions and performs the appropriate clean up activities.
+     * 
+     * @returns {Observable<null>} An Observable that indicates the success of the operation
+     */
+    merge(): Observable<null> {
+        const sourceId = this.listItem.versionedRdfRecord.branchId;
+        const checkbox = this.listItem.merge.checkbox;
+        let commitId;
+        return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId, this.listItem.merge.resolutions)
+            .pipe(
+                switchMap((commit: string) => {
+                    commitId = commit;
+                    if (checkbox) {
+                        return this.om.deleteOntologyBranch(this.listItem.versionedRdfRecord.recordId, sourceId)
+                            .pipe(
+                                switchMap(() => this.removeBranch(this.listItem.versionedRdfRecord.recordId, sourceId)),
+                                switchMap(() => this.deleteBranchState(this.listItem.versionedRdfRecord.recordId, sourceId))
+                            );
+                    } else {
+                        return of(1);
+                    }
+                }),
+                switchMap(() => this.updateOntology(this.listItem.versionedRdfRecord.recordId, this.listItem.merge.target['@id'], commitId))
+            );
     }
     /**
-     * @ngdoc method
-     * @name getMergeDifferences
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Updates self.listItem.merge with the updated additions and deletions for the provided commit information
-     *
-     * @param sourceCommitId {string} The string IRI of the source commit to get the difference
-     * @param targetCommitId {string} The string IRI of the target commit to get the difference
-     * @param limit {int} The limit for the paged difference
-     * @param offset {int} The offset for the paged difference
-     *
-     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     * Determines whether the current `listItem` can be edited. Depends on whether a branch is selected, the master
+     * branch is selected, and the ontology's policy.
+     * 
+     * @returns {boolean} True if the current `listItem` can be edited; false otherwise
      */
-    self.getMergeDifferences = function(sourceCommitId, targetCommitId, limit, offset) {
-        self.listItem.merge.startIndex = offset;
-        return cm.getDifference(sourceCommitId, targetCommitId, limit, offset).pipe(first()).toPromise()
-        .then((response: HttpResponse<CommitDifference>) => {
-            if (!self.listItem.merge.difference) {
-                self.listItem.merge.difference = {
-                    additions: [],
-                    deletions: []
-                };
-            }
-            self.listItem.merge.difference.additions = concat(self.listItem.merge.difference.additions, response.body.additions);
-            self.listItem.merge.difference.deletions = concat(self.listItem.merge.difference.deletions, response.body.deletions);
-            var headers = response.headers;
-            self.listItem.merge.difference.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
-            return $q.when();
-        }, $q.reject);
-    }
-    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module. Add this implementation to the new ontologyState
-    self.merge = function() {
-        var sourceId = self.listItem.ontologyRecord.branchId;
-        var checkbox = self.listItem.merge.checkbox;
-        var commitId;
-        return cm.mergeBranches(sourceId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId, self.listItem.merge.resolutions).pipe(first()).toPromise()
-            .then((commit: string) => {
-                commitId = commit;
-                if (checkbox) {
-                    return om.deleteOntologyBranch(self.listItem.ontologyRecord.recordId, sourceId)
-                        .then(() => self.removeBranch(self.listItem.ontologyRecord.recordId, sourceId), $q.reject)
-                        .then(() => self.deleteOntologyBranchState(self.listItem.ontologyRecord.recordId, sourceId), $q.reject);
-                } else {
-                    return $q.when();
-                }
-            }, $q.reject)
-            .then(() => self.updateOntology(self.listItem.ontologyRecord.recordId, self.listItem.merge.target['@id'], commitId), $q.reject);
-    }
-    self.cancelMerge = function() {
-        self.listItem.merge.active = false;
-        self.listItem.merge.target = undefined;
-        self.listItem.merge.checkbox = false;
-        self.listItem.merge.difference = undefined;
-        self.listItem.merge.conflicts = [];
-        self.listItem.merge.resolutions = {
-            additions: [],
-            deletions: []
-        };
-        self.listItem.merge.startIndex = 0;
-    }
-    self.canModify = function() {
-        if (!self.listItem.ontologyRecord.branchId) {
+    canModify(): boolean {
+        if (!this.listItem.versionedRdfRecord.branchId) {
             return false;
         }
-        if (self.listItem.masterBranchIRI === self.listItem.ontologyRecord.branchId) {
-            return self.listItem.userCanModifyMaster;
+        if (this.listItem.masterBranchIri === this.listItem.versionedRdfRecord.branchId) {
+            return this.listItem.userCanModifyMaster;
         } else {
-            return self.listItem.userCanModify;
+            return this.listItem.userCanModify;
         }
     }
     /**
-     * @ngdoc method
-     * @name getFromListItem
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Retrieves the entityInfo for the provided IRI from the provided `listItem`.
      *
-     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
-     * @returns {Object} The entityInfo for the provided IRI
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
+     * @returns {EntityNamesItem} The entityInfo for the provided IRI
      */
-    self.getFromListItem = function(iri, listItem = self.listItem) {
+    getFromListItem(iri: string, listItem: OntologyListItem = this.listItem): EntityNamesItem {
         return get(listItem, 'entityInfo[' + iri + ']', {});
     }
     /**
-     * @ngdoc method
-     * @name existsInListItem
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Determines whether the provided IRI exists in the entityInfo for the provided `listItem`. Returns a boolean.
      *
-     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      * @returns {boolean} True if the IRI exists in the entityInfo object; false otherwise
      */
-    self.existsInListItem = function(iri, listItem = self.listItem) {
+    existsInListItem(iri: string, listItem: OntologyListItem = this.listItem): boolean {
         return iri in get(listItem, 'entityInfo', {});
     }
     /**
-     * @ngdoc method
-     * @name isImported
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Determines whether the provided IRI is imported or not. Defaults to true.
      *
      * @param {string} iri The IRI to search for
-     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      * @returns {boolean} True if the IRI is imported; false otherwise
      */
-    self.isImported = function(iri, listItem = self.listItem) {
+    isImported(iri: string, listItem: OntologyListItem = this.listItem): boolean {
         if (iri === listItem.ontologyId) {
             return false;
         }
-        return get(listItem, "entityInfo['" + iri + "'].imported", true);
+        return get(listItem, 'entityInfo[\'' + iri + '\'].imported', true);
     }
 
    /**
-     * @ngdoc method
-     * @name isIriDeprecated
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Determines whether the provided IRI is deprecated or not. Defaults to false.
      *
      * @param {string} iri The IRI to search for
-     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      * @returns {boolean} True if the IRI is deprecated; false otherwise
      */
-    self.isIriDeprecated = function(iri, listItem = self.listItem) {
-        var isDep = has(listItem, "deprecatedIris['" + iri + "']");
+    isIriDeprecated(iri: string, listItem: OntologyListItem = this.listItem): boolean {
+        const isDep = has(listItem, 'deprecatedIris[\'' + iri + '\']');
         return isDep;
     }
    /**
-     * @ngdoc method
-     * @name annotationModified
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Modify annotation state, it is being used to ensure deprecated is correct
      *
      * @param {string} iri The IRI to search for
      * @param {annotationIri} annotation iri
      * @param {annotationValue} annotation value
-     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      */
-    self.annotationModified = function(iri, annotationIri, annotationValue, listItem = self.listItem){
-        if (annotationIri === prefixes.owl + 'deprecated') {
-            if (annotationValue === "true") {
-                set(listItem, "deprecatedIris['" + iri + "']", listItem.ontologyId);
-            } else if (annotationValue === "false" || annotationValue === null) {
-                unset(listItem, "deprecatedIris['" + iri + "']");
+    annotationModified(iri: string, annotationIri: string, annotationValue: string, listItem: OntologyListItem = this.listItem): void {
+        if (annotationIri === OWL + 'deprecated') {
+            if (annotationValue === 'true') {
+                set(listItem, 'deprecatedIris[\'' + iri + '\']', listItem.ontologyId);
+            } else if (annotationValue === 'false' || annotationValue === null) {
+                unset(listItem, 'deprecatedIris[\'' + iri + '\']');
             }
-            self.alterTreeHierarchy(identity, listItem);
+            this.alterTreeHierarchy(identity, listItem);
         }
     }
     /**
-     * @ngdoc method
-     * @name isSelectedImported
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Determines whether the selected IRI is imported or not. Defaults to true.
      *
-     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      * @returns {boolean} True if the selected IRI is imported; false otherwise
      */
-    self.isSelectedImported = function(listItem = self.listItem) {
-        return self.isImported(get(self.listItem.selected, '@id', ''), listItem);
+    isSelectedImported(listItem: OntologyListItem = this.listItem): boolean {
+        return this.isImported(get(listItem.selected, '@id', ''), listItem);
     }
     /**
-     * @ngdoc method
-     * @name collapseFlatLists
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Method to collapse all of the nodes in hierarchy flat list under following tabs: 'classes', 'dataProperties',
      * 'objectProperties', 'annotations', 'concepts', 'conceptSchemes', 'dataProperties', 'individuals', 'flatEverythingTree'
      * The mapper function checks to see if the hierarchy node is open, if it is open, then it will close node.
      *
-     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      */
-    self.collapseFlatLists = function(listItem = self.listItem) {
-        self.alterTreeHierarchy(closeNodeMapper, listItem);
+    collapseFlatLists(listItem: OntologyListItem = this.listItem): void {
+        this.alterTreeHierarchy(this._closeNodeMapper, listItem);
     }
-    function closeNodeMapper(item) {
+    private _closeNodeMapper(item: HierarchyNode): HierarchyNode {
         if ('isOpened' in item) {
             item.isOpened = false;
         }
         return item;
     }
     /**
-     * @ngdoc method
-     * @name recalculateJoinedPaths
-     * @methodOf shared.service:ontologyStateService
-     * 
-     * @description
      * Method to recalculate the 'joinedPath' field on each of the nodes of the flatlists. If the recalculated 
      * value differs from the previous value, the editorTabStates on the listItem are adjusted accordingly for
      * that joinedPath.
      *
-     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
     */
-    self.recalculateJoinedPaths = function(listItem = self.listItem) {
-        self.alterTreeHierarchy(recalculateJoinedPath, listItem);
+    recalculateJoinedPaths(listItem: OntologyListItem = this.listItem): void {
+        this.alterTreeHierarchy(a => this._recalculateJoinedPath(a, listItem), listItem);
     }
-    function recalculateJoinedPath(item) {
+    private _recalculateJoinedPath(item: HierarchyNode, listItem: OntologyListItem) {
         if ('joinedPath' in item) {
-            const newJoinedPath = self.joinPath(item.path);
-            if (newJoinedPath != item.joinedPath) {
-                updateRefsService.update(self.listItem.editorTabStates, item.joinedPath, newJoinedPath);
+            const newJoinedPath = this.joinPath(item.path);
+            if (newJoinedPath !== item.joinedPath) {
+                this.updateRefs.update(listItem.editorTabStates, item.joinedPath, newJoinedPath);
                 item.joinedPath = newJoinedPath;
             }
         }
         return item;
     }
     /**
-     * @ngdoc method
-     * @name alterTreeHierarchy
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Method to alter tree hierarchy flat lists give a mapper function under following tabs: 'classes', 'dataProperties',
      * 'objectProperties', 'annotations', 'concepts', 'conceptSchemes', 'dataProperties', 'individuals', 'flatEverythingTree'
      *
-     * @param {function} mapper function - use to alter the node state
-     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {Function} mapper function - use to alter the node state
+     * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
      */
-    self.alterTreeHierarchy = function(mapperFunction, listItem = self.listItem) {
-        var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
+    alterTreeHierarchy(mapperFunction: (node: HierarchyNode) => HierarchyNode, listItem: OntologyListItem = this.listItem): void {
+        const flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
             'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
 
-        forEach(flatLists, listKey => {
+        flatLists.forEach(listKey => {
             if (listKey in listItem && 'flat' in listItem[listKey]) {
                 listItem[listKey].flat = listItem[listKey].flat.map(mapperFunction);
             }
@@ -2135,140 +1643,598 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     /**
-     * @ngdoc method
-     * @name handleDeletedClass
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Updates property maps on the current listItem based on the provided deleted class IRI
      *
      * @param {string} ClassIRI The iri of the entity to be deleted
      */
-    self.handleDeletedClass = function(classIRI) {
-        var classProperties = get(self.listItem.classToChildProperties, classIRI, []);
-        delete self.listItem.classToChildProperties[classIRI];
+    handleDeletedClass(classIRI: string): void {
+        const classProperties = get(this.listItem.classToChildProperties, classIRI, []);
+        delete this.listItem.classToChildProperties[classIRI];
         classProperties.forEach(propertyIRI => {
             let hasDomain = false;
-            forEach(self.listItem.classToChildProperties, classArrayItem => {
+            forEach(this.listItem.classToChildProperties, classArrayItem => {
                if (classArrayItem.includes(propertyIRI)) {
                    hasDomain = true;
                    return false;
                }
             });
             if (!hasDomain){
-                self.listItem.noDomainProperties.push(propertyIRI);
+                this.listItem.noDomainProperties.push(propertyIRI);
             }
         });
     }
     /**
-     * @ngdoc method
-     * @name handleDeletedProperty
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Deletes traces of a removed property from the classToChild map and noDomainProperties array
      *
-     * @param {Object} property The full JSON-LD of a Property entity
+     * @param {JSONLDObject} property The full JSON-LD of a Property entity
      */
-    self.handleDeletedProperty = function(property) {
-        var propDomains = property[prefixes.rdfs + 'domain'];
+    handleDeletedProperty(property: JSONLDObject): void {
+        const propDomains = property[RDFS + 'domain'];
         if (propDomains) {
             propDomains.forEach(domainObj => {
-                removePropertyClassRelationships(property['@id'], domainObj['@id']);
+                this._removePropertyClassRelationships(property['@id'], domainObj['@id']);
             });
         } else {
-            pull(self.listItem.noDomainProperties, property['@id']);
+            pull(this.listItem.noDomainProperties, property['@id']);
         }
     }
     /**
-     * @ngdoc method
-     * @name handleNewProperty
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * adds property iri to the correct map; either noDomainProperties or classToChildProperties
      *
-     * @param {Object} property The full JSON-LD of a Property entity
+     * @param {JSONLDObject} property The full JSON-LD of a Property entity
      */
-    self.handleNewProperty = function(property) {
-        var domainPath = prefixes.rdfs + 'domain';
-        if (property[domainPath] == [] || property[domainPath] == undefined) {
-            self.listItem.noDomainProperties.push(property['@id']);
+    handleNewProperty(property: JSONLDObject): void {
+        const domainPath = RDFS + 'domain';
+        if (property[domainPath] === [] || property[domainPath] === undefined) {
+            this.listItem.noDomainProperties.push(property['@id']);
         } else {
             property[domainPath].forEach(domain => {
-                var classIRI = domain['@id'];
-                var path =  self.listItem.classToChildProperties[classIRI];
+                const classIRI = domain['@id'];
+                const path =  this.listItem.classToChildProperties[classIRI];
                 if (!path){
-                    self.listItem.classToChildProperties[classIRI] = [];
+                    this.listItem.classToChildProperties[classIRI] = [];
                 }
-                self.listItem.classToChildProperties[classIRI].push(property['@id']);
+                this.listItem.classToChildProperties[classIRI].push(property['@id']);
             });
         }
     }
     /**
-     * @ngdoc method
-     * @name addPropertyToClasses
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     *Updates map appropriately if domains are added to a property
+     * Updates map appropriately if domains are added to a property
      *
      * @param {string} propertyIRI The iri of the property being altered in the hierarchy
      * @param {string[]} classIris An array of classes that are being added to the property as domains
      */
-    self.addPropertyToClasses = function(propertyIRI, classIris) {
+    addPropertyToClasses(propertyIRI: string, classIris: string[]): void {
         let hasBlankNodeParents = true;
         classIris.forEach(parentclass => {
-            if (!om.isBlankNodeId(parentclass)) {
-                if (!self.listItem.classToChildProperties[parentclass]) {
-                    self.listItem.classToChildProperties[parentclass] = [];
+            if (!this.om.isBlankNodeId(parentclass)) {
+                if (!this.listItem.classToChildProperties[parentclass]) {
+                    this.listItem.classToChildProperties[parentclass] = [];
                 }
-                self.listItem.classToChildProperties[parentclass].push(propertyIRI);
+                this.listItem.classToChildProperties[parentclass].push(propertyIRI);
                 hasBlankNodeParents = false;
             }
         });
         if (!hasBlankNodeParents) {
-            pull(self.listItem.noDomainProperties, propertyIRI);
+            pull(this.listItem.noDomainProperties, propertyIRI);
         }
     }
     /**
-     * @ngdoc method
-     * @name removePropertyFromClass
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
      * Handles the removal of the provided class IRI as a domain of the provided property JSON-LD by updating `classToChildProperties` and `noDomainProperties`
      *
-     * @param {Object} property The full JSON-LD of a Property entity
+     * @param {JSONLDObject} property The full JSON-LD of a Property entity
      * @param {string} classIri The iri of the class the property is being removed from
      */
-    self.removePropertyFromClass = function(property, classIri) {
-        removePropertyClassRelationships(property['@id'], classIri);
-        checkForPropertyDomains(property);
+    removePropertyFromClass(property: JSONLDObject, classIri: string): void {
+        this._removePropertyClassRelationships(property['@id'], classIri);
+        this._checkForPropertyDomains(property);
     }
 
-
     /**
-     * Emit ontology evetns or actions
-     * @param { Object } - The action Object
-     * { string } action.action  - The action name eg. Selected, closed....
-     * { string } action.recordId - Ontology RecordId
+     * Emit ontology events or actions
+     * @param { OntologyRecordActionI } - The action Object
      */
-    self.emitOntologyAction = function(action: SidePanelPayloadI)  {
-        _ontologyActionSubject.next(action);
-    };
+    emitOntologyAction(action: OntologyRecordActionI): void {
+        this._ontologyRecordActionSubject.next(action);
+    }
+    /**
+     * Determines whether the provided array of IRI strings contains a derived skos:Concept or skos:Concept.
+     *
+     * @param {string[]} arr An array of IRI strings
+     * @return {boolean} True if the array contains a derived skos:Concept or skos:Concept
+     */
+    containsDerivedConcept(arr: string[]): boolean {
+        return !!intersection(arr, concat(this.listItem.derivedConcepts, [SKOS + 'Concept'])).length;
+    }
+    /**
+     * Determines whether the provided array of IRI objects contains a derived skos:semanticRelation or skos:semanticRelation.
+     *
+     * @param {string[]} arr An array of IRI objects
+     * @return {boolean} True if the array contains a dervied skos:semanticRelation or skos:semanticRelation
+     */
+    containsDerivedSemanticRelation(arr: string[]): boolean {
+        return !!intersection(arr, concat(this.listItem.derivedSemanticRelations, [SKOS + 'semanticRelation'])).length;
+    }
+    /**
+     * Determines whether the provided array of IRI objects contains a derived skos:ConceptScheme or skos:ConceptScheme.
+     *
+     * @param {string[]} arr An array of IRI objects
+     * @return {boolean} True if the array contains a dervied skos:ConceptScheme or skos:ConceptScheme
+     */
+    containsDerivedConceptScheme(arr: string[]): boolean {
+        return !!intersection(arr, concat(this.listItem.derivedConceptSchemes, [SKOS + 'ConceptScheme'])).length;
+    }
+    /**
+     * Updates the appropriate vocabulary hierarchies when a relationship is added to a skos:Concept or
+     * skos:ConceptScheme and the entity is not already in the appropriate location.
+     *
+     * @param {string} relationshipIRI The IRI of the property added to the selected entity
+     * @param {JSONLDObject[]} values The JSON-LD of the values of the property that were added
+     */
+    updateVocabularyHierarchies(relationshipIRI: string, values: JSONLDObject[]): void {
+        if (this._isVocabPropAndEntity(relationshipIRI, this.broaderRelations, a => this.containsDerivedConcept(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, this.listItem.selected['@id'], undefined, this.broaderRelations, this.narrowerRelations, 'concepts', a => this.containsDerivedConcept(a));
+        } else if (this._isVocabPropAndEntity(relationshipIRI, this.narrowerRelations, a => this.containsDerivedConcept(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, undefined, this.listItem.selected['@id'], this.narrowerRelations, this.broaderRelations, 'concepts', a => this.containsDerivedConcept(a));
+        } else if (this._isVocabPropAndEntity(relationshipIRI, this.conceptToScheme, a => this.containsDerivedConcept(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, this.listItem.selected['@id'], undefined, this.conceptToScheme, this.schemeToConcept, 'conceptSchemes', a => this.containsDerivedConceptScheme(a));
+        } else if (this._isVocabPropAndEntity(relationshipIRI, this.schemeToConcept, a => this.containsDerivedConceptScheme(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, undefined, this.listItem.selected['@id'], this.schemeToConcept, this.conceptToScheme, 'conceptSchemes', a => this.containsDerivedConcept(a));
+        }
+    }
+    /**
+     * Updates the appropriate vocabulary hierarchies when a relationship is removed from a skos:Concept or
+     * skos:ConceptScheme and the entity is not already in the appropriate location.
+     *
+     * @param {string} relationshipIRI The IRI of the property removed from the selected entity
+     * @param {JSONLDObject} axiomObject The JSON-LD of the value that was removed
+     */
+    removeFromVocabularyHierarchies(relationshipIRI: string, axiomObject: JSONLDObject): void {
+        this.getEntityNoBlankNodes(axiomObject['@id'], this.listItem)
+            .subscribe(targetEntity => {
+                if (this._isVocabPropAndEntity(relationshipIRI, this.broaderRelations, a => this.containsDerivedConcept(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, this.broaderRelations, this.narrowerRelations, relationshipIRI, a => this.containsDerivedConcept(a))) {
+                    this._deleteFromConceptHierarchy(this.listItem.selected['@id'], targetEntity['@id']);
+                } else if (this._isVocabPropAndEntity(relationshipIRI, this.narrowerRelations, a => this.containsDerivedConcept(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, this.narrowerRelations, this.broaderRelations, relationshipIRI, a => this.containsDerivedConcept(a))) {
+                    this._deleteFromConceptHierarchy(targetEntity['@id'], this.listItem.selected['@id']);
+                } else if (this._isVocabPropAndEntity(relationshipIRI, this.conceptToScheme, a => this.containsDerivedConcept(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, this.conceptToScheme, this.schemeToConcept, relationshipIRI, a => this.containsDerivedConceptScheme(a))) {
+                    this._deleteFromSchemeHierarchy(this.listItem.selected['@id'], targetEntity['@id']);
+                } else if (this._isVocabPropAndEntity(relationshipIRI, this.schemeToConcept, a => this.containsDerivedConceptScheme(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, this.schemeToConcept, this.conceptToScheme, relationshipIRI, a => this.containsDerivedConcept(a))) {
+                    this._deleteFromSchemeHierarchy(targetEntity['@id'], this.listItem.selected['@id']);
+                }
+            }, error => {
+                console.error(error);
+            });
+    }
+    /**
+     * Adds the provided Concept JSON-LD to the current `listItem`. Only updates state variables, does not hit the backend.
+     * 
+     * @param {JSONLDObject} concept The JSON-LD object of a Concept
+     */
+    addConcept(concept: JSONLDObject): void {
+        this.listItem.concepts.iris[concept['@id']] = this.listItem.ontologyId;
+        this.listItem.concepts.flat = this.flattenHierarchy(this.listItem.concepts);
+    }
+    /**
+     * Adds the provided Concept Scheme JSON-LD to the current `listItem`. Only updates state variables, does not hit the 
+     * backend.
+     * 
+     * @param {JSONLDObject} scheme The JSON-LD object of a Concept Scheme
+     */
+    addConceptScheme(scheme: JSONLDObject): void {
+        this.listItem.conceptSchemes.iris[scheme['@id']] = this.listItem.ontologyId;
+        this.listItem.conceptSchemes.flat = this.flattenHierarchy(this.listItem.conceptSchemes);
+    }
+    /**
+     * Adds the provided JSON-LD of an Individual to the current `listItem`. Only updates state variables, does not hit 
+     * the backend.
+     * 
+     * @param {JSONLDObject} individual The JSON-LD object of an Individual
+     */
+    addIndividual(individual: JSONLDObject): void {
+        // update relevant lists
+        get(this.listItem, 'individuals.iris')[individual['@id']] = this.listItem.ontologyId;
+        const classesWithIndividuals = get(this.listItem, 'classesWithIndividuals', []);
+        const individualsParentPath = get(this.listItem, 'individualsParentPath', []);
+        const paths = [];
+        const individuals = [];
+
+        individual['@type'].forEach((type) => {
+            const indivArr = [];
+            const existingInds = get(this.listItem.classesAndIndividuals, type);
+            const path = this.getPathsTo(this.listItem.classes, type);
+
+            indivArr.push(individual['@id']);
+            this.listItem.classesAndIndividuals[type] = existingInds ? concat(indivArr, existingInds) : indivArr;
+            individuals.push(type);
+            paths.push(path);
+        });
+
+        const uniqueUris =  uniq(flattenDeep(paths));
+        set(this.listItem, 'classesWithIndividuals', concat(classesWithIndividuals, individuals));
+        set(this.listItem, 'individualsParentPath', concat(individualsParentPath, uniqueUris));
+        this.listItem.individuals.flat = this.createFlatIndividualTree(this.listItem);
+    }
+    /**
+     * Deletes the entity identified by the provided IRI along with all references from the current `listItem`. Updates 
+     * the InProgressCommit as well.
+     * 
+     * @param {string} entityIRI The IRI of the entity to delete
+     * @param {boolean} updateEverythingTree Whether to update the everything tree after deletion
+     * @returns {Observable} An Observable indicating the success of the deletion
+     */
+    commonDelete(entityIRI: string, updateEverythingTree = false): Observable<unknown> {
+        return this.om.getEntityUsages(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, entityIRI, 'construct')
+            .pipe(
+                catchError(errorMessage => {
+                    this.util.createErrorToast(errorMessage);
+                    return throwError(errorMessage);
+                }),
+                switchMap(statements => {
+                    this.removeEntity(entityIRI);
+                    this.addToDeletions(this.listItem.versionedRdfRecord.recordId, this.listItem.selected);
+                    statements.forEach(statement => this.addToDeletions(this.listItem.versionedRdfRecord.recordId, statement));
+                    this.unSelectItem();
+                    if (updateEverythingTree) {
+                        this.listItem.flatEverythingTree = this.createFlatEverythingTree(this.listItem);
+                    }
+                    return this.saveCurrentChanges();
+                })
+            );
+    }
+    /**
+     * Deletes the currently selected Class from the current `listItem`. Updates the InProgressCommit as well.
+     */
+    deleteClass(): void {
+        const entityIRI = this.getActiveEntityIRI();
+        this.removeFromClassIRIs(this.listItem, entityIRI);
+        this.handleDeletedClass(entityIRI);
+        pull(this.listItem.classesWithIndividuals, entityIRI);
+        this.deleteEntityFromHierarchy(this.listItem.classes, entityIRI);
+        this.listItem.classes.flat = this.flattenHierarchy(this.listItem.classes);
+        delete this.listItem.classesAndIndividuals[entityIRI];
+        this.listItem.classesWithIndividuals = Object.keys(this.listItem.classesAndIndividuals);
+        this.listItem.individualsParentPath = this.getIndividualsParentPath(this.listItem);
+        this.listItem.individuals.flat = this.createFlatIndividualTree(this.listItem);
+        this.commonDelete(entityIRI, true)
+            .subscribe(() => {
+                this.setVocabularyStuff();
+            });
+    }
+    /**
+     * Deletes the currently selected Object Property from the current `listItem`. Updates the InProgressCommit as well.
+     */
+    deleteObjectProperty(): void {
+        const entityIRI = this.getActiveEntityIRI();
+        delete this.listItem.objectProperties.iris[entityIRI];
+        delete this.listItem.propertyIcons[entityIRI];
+        this.handleDeletedProperty(this.listItem.selected);
+        this.deleteEntityFromHierarchy(this.listItem.objectProperties, entityIRI);
+        this.listItem.objectProperties.flat = this.flattenHierarchy(this.listItem.objectProperties);
+        this.commonDelete(entityIRI, true)
+            .subscribe(() => {
+                this.setVocabularyStuff();
+            });
+    }
+    /**
+     * Deletes the currently selected Datatype Property from the current `listItem`. Updates the InProgressCommit as well.
+     */
+    deleteDataTypeProperty(): void {
+        const entityIRI = this.getActiveEntityIRI();
+        delete this.listItem.dataProperties.iris[entityIRI];
+        delete this.listItem.propertyIcons[entityIRI];
+        this.handleDeletedProperty(this.listItem.selected);
+        this.deleteEntityFromHierarchy(this.listItem.dataProperties, entityIRI);
+        this.listItem.dataProperties.flat = this.flattenHierarchy(this.listItem.dataProperties);
+        this.commonDelete(entityIRI, true);
+    }
+    /**
+     * Deletes the currently selected Annotation Property from the current `listItem`. Updates the InProgressCommit as 
+     * well.
+     */
+    deleteAnnotationProperty(): void {
+        const entityIRI = this.getActiveEntityIRI();
+        delete get(this.listItem, 'annotations.iris')[entityIRI];
+        this.deleteEntityFromHierarchy(this.listItem.annotations, entityIRI);
+        this.listItem.annotations.flat = this.flattenHierarchy(this.listItem.annotations);
+        this.commonDelete(entityIRI);
+    }
+    /**
+     * Deletes the currently selected Individual from the current `listItem`. Updates the InProgressCommit as well.
+     */
+    deleteIndividual(): void {
+        const entityIRI = this.getActiveEntityIRI();
+        this._removeIndividual(entityIRI);
+        if (this.containsDerivedConcept(this.listItem.selected['@type'])) {
+            this._removeConcept(entityIRI);
+        } else if (this.containsDerivedConceptScheme(this.listItem.selected['@type'])) {
+            this._removeConceptScheme(entityIRI);
+        }
+        this.commonDelete(entityIRI);
+    }
+    /**
+     * Deletes the currently selected Concept from the current `listItem`. Updates the InProgressCommit as well.
+     */
+    deleteConcept(): void {
+        const entityIRI = this.getActiveEntityIRI();
+        this._removeConcept(entityIRI);
+        this._removeIndividual(entityIRI);
+        this.commonDelete(entityIRI);
+    }
+    /**
+     * Deletes the currently selected Concept Scheme from the current `listItem`. Updates the InProgressCommit as well.
+     */
+    deleteConceptScheme(): void {
+        const entityIRI = this.getActiveEntityIRI();
+        this._removeConceptScheme(entityIRI);
+        this._removeIndividual(entityIRI);
+        this.commonDelete(entityIRI);
+    }
+    /**
+     * Retrieves the Manchester Syntax value for the provided blank node id if it exists in the blankNodes map of the
+     * current `listItem`. If the value is not a blank node id, returns undefined. If the Manchester Syntax string is 
+     * not set, returns the blank node id back.
+     *
+     * @param {string} id A blank node id
+     * @returns {string} The Manchester Syntax string for the provided id if it is a blank node id and exists in the
+     * blankNodes map; undefined otherwise 
+     */
+    getBlankNodeValue(id: string): string {
+        if (this.om.isBlankNodeId(id)) {
+            return get(this.listItem.blankNodes, id, id);
+        }
+        return;
+    }
+    /**
+     * Determines whether the provided id is "linkable", i.e. that a link could be made to take a user to that entity.
+     * Id must be present in the indices of the current `listItem` and not be a blank node id.
+     *
+     * @param {string} id An id from the current ontology
+     * @returns {boolean} True if the id exists as an entity and not a blank node; false otherwise
+     */
+    isLinkable(id: string): boolean {
+        return !!this.existsInListItem(id, this.listItem) && !this.om.isBlankNodeId(id);
+    }
+    /**
+     * Adds a language specification on the dct:title, dct:description, and skos:prefLabel properties on the
+     * provided JSON-LD object.
+     * 
+     * @param {JSONLDObject} entity A JSON-LD Object
+     * @param {string} language The language tag to add
+     */
+    addLanguageToNewEntity(entity: JSONLDObject, language: string): void {
+        if (language) {
+            forEach([DCTERMS + 'title', DCTERMS + 'description', SKOS + 'prefLabel'], item => {
+                if (get(entity, `['${item}'][0]`)) {
+                    set(entity[item][0], '@language', language);
+                }
+            });
+        }
+    }
+    /**
+     * Saves the additions and deletions on the current `listItem` to the current user's InProgressCommit
+     * 
+     * @returns {Observable<null>} An Observable indicating the success of the save
+     */
+    saveCurrentChanges(): Observable<unknown> {
+        const difference = new Difference();
+        difference.additions = this.listItem.additions;
+        difference.deletions = this.listItem.deletions;
+        return this.saveChanges(this.listItem.versionedRdfRecord.recordId, difference).pipe(
+            switchMap(() => this.afterSave()),
+            // catchError(error => of(error)),
+            tap(() => {
+                const entityIRI = this.getActiveEntityIRI();
+                const activeKey = this.getActiveKey();
+                if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
+                    this.setEntityUsages(entityIRI);
+                }
+                this.listItem.isSaved = this.isCommittable(this.listItem);
+            }, errorMessage => {
+                this.util.createErrorToast(errorMessage);
+                this.listItem.isSaved = false;
+            }));
+            
+    }
+    /**
+     * Calculates the new label for the current selected entity in the current `listItem` and updates all references to
+     * the entity throughout the hierarchies.
+     */
+    updateLabel(): void {
+        const newLabel = this.om.getEntityName(this.listItem.selected);
+        const iri = this.listItem.selected['@id'];
+        if (has(this.listItem.entityInfo, `['${iri}'].label`) && this.listItem.entityInfo[iri].label !== newLabel) {
+            this.listItem.entityInfo[iri].label = newLabel;
+            this.listItem.entityInfo[iri].names = this.om.getEntityNames(this.listItem.selected);
+        }
+        if (this.om.isClass(this.listItem.selected)) {
+            this.listItem.classes.flat = this.flattenHierarchy(this.listItem.classes);
+            this.listItem.flatEverythingTree = this.createFlatEverythingTree(this.listItem);
+        } else if (this.om.isDataTypeProperty(this.listItem.selected)) {
+            this.listItem.dataProperties.flat = this.flattenHierarchy(this.listItem.dataProperties);
+            this.listItem.flatEverythingTree = this.createFlatEverythingTree(this.listItem);
+        } else if (this.om.isObjectProperty(this.listItem.selected)) {
+            this.listItem.objectProperties.flat = this.flattenHierarchy(this.listItem.objectProperties);
+            this.listItem.flatEverythingTree = this.createFlatEverythingTree(this.listItem);
+        } else if (this.om.isAnnotation(this.listItem.selected)) {
+            this.listItem.annotations.flat = this.flattenHierarchy(this.listItem.annotations);
+        } else if (this.om.isConcept(this.listItem.selected, this.listItem.derivedConcepts)) {
+            this.listItem.concepts.flat = this.flattenHierarchy(this.listItem.concepts);
+        } else if (this.om.isConceptScheme(this.listItem.selected, this.listItem.derivedConceptSchemes)) {
+            this.listItem.conceptSchemes.flat = this.flattenHierarchy(this.listItem.conceptSchemes);
+        }
+    }
+    /**
+     * Checks whether an IRI exists in the current `listItem` and it not the current selected entity
+     * 
+     * @param {string} iri The entity IRI to check
+     * @returns {boolean} True if the entity exists in the `listItem` but is not selected
+     */
+    checkIri(iri: string): boolean {
+        return includes(this.listItem.iriList, iri) && iri !== get(this.listItem.selected, '@id');
+    }
+    /**
+     * Sets the super classes of the provided class iri to the provided set of class IRIs on the current `listItem`
+     * 
+     * @param {string} iri A class IRI
+     * @param {string[]} classIRIs A list of super class IRIs
+     */
+    setSuperClasses(iri: string, classIRIs: string[]): void {
+        classIRIs.forEach(classIRI => {
+            this.addEntityToHierarchy(this.listItem.classes, iri, classIRI);
+        });
+        this.listItem.classes.flat = this.flattenHierarchy(this.listItem.classes);
+    }
+    /**
+     * Updates the flattened individual hierarchy based on the provided list of IRIs identifying classes that have been 
+     * updated.
+     * 
+     * @param {string[]} classIRIs List of updated class IRIs
+     */
+    updateFlatIndividualsHierarchy(classIRIs: string[]): void {
+        const paths = [];
+        classIRIs.forEach(classIRI => {
+            paths.push(this.getPathsTo(this.listItem.classes, classIRI));
+        });
+        const flattenedPaths = uniq(flattenDeep(paths));
+        if (flattenedPaths.length) {
+            this.listItem.individualsParentPath = concat(this.listItem.individualsParentPath, flattenedPaths);
+            this.listItem.individuals.flat = this.createFlatIndividualTree(this.listItem);
+        }
+    }
+    /**
+     * Sets the super properties of the provided property iri to the provided set of properties IRIs on the current 
+     * `listItem` based on the type key provided ("dataProperties" or "objectProperties")
+     * 
+     * @param {string} iri The property IRI
+     * @param {string} propertyIRIs A list of super property IRIs
+     * @param {string} key The key in the `listItem` to update ("dataProperties" or "objectProperties")
+     */
+    setSuperProperties(iri: string, propertyIRIs: string[], key: string): void {
+        propertyIRIs.forEach(propertyIRI => {
+            this.addEntityToHierarchy(this.listItem[key], iri, propertyIRI);
+        });
+        this.listItem[key].flat = this.flattenHierarchy(this.listItem[key]);
+    }
+    /**
+     * Returns a limited list of matching IRIs from the provided list based on the provided search text. The 
+     * text comparison is performed based on the provided getName function (defaults to the entity name from the current
+     * `listItem`). No fuzzy matching is performed. Returns the first 100 values.
+     * 
+     * @param {string[]} list List of IRIs to search through
+     * @param {string} searchText Text to search the list with
+     * @param {Function} getName A function that takes an IRI and return the name to search by
+     * @returns {string[]} The limited filtered list of IRIs
+     */
+    getSelectList(list: string[], searchText: string, getName = this.getEntityNameByListItem): string[] {
+        const array = [];
+        const mapped = list.map(item => ({
+            item,
+            name: getName(item)
+        }));
+        const sorted = sortBy(mapped, item => trim(item.name.toUpperCase()));
+        sorted.forEach(item => {
+            if (array.length === 100) {
+                return;
+            } else if (includes(item.name.toUpperCase(), searchText.toUpperCase())) {
+                array.push(item.item);
+            }
+        });
+        return array;
+    }
+    /**
+     * Creates an HTML string of the body of a {@link shared.component:confirmModal} for confirming the
+     * deletion of the specified property value on the selected entity of the current `listItem`
+     *
+     * @param {string} key The IRI of a property on the current entity
+     * @param {number} index The index of the specific property value being deleted
+     * @return {string} A string with HTML for the body of a `confirmModal`
+     */
+    getRemovePropOverlayMessage(key: string, index: number): string {
+        return '<p>Are you sure you want to remove:<br><strong>' + key + '</strong></p><p>with value:<br><strong>' 
+            + this.getPropValueDisplay(key, index) + '</strong></p><p>from:<br><strong>' 
+            + this.listItem.selected['@id'] + '</strong>?</p>';
+    }
+    /**
+     * Creates a display of the specified property value on the selected entity on the current `listItem` 
+     * based on whether it is a data property value, object property value, or blank node.
+     *
+     * @param {string} key The IRI of a property on the current entity
+     * @param {number} index The index of a specific property value
+     * @return {string} A string a display of the property value
+     */
+    getPropValueDisplay(key: string, index: number): string {
+        return get(this.listItem.selected[key], '[' + index + ']["@value"]')
+            || truncate(this.getBlankNodeValue(get(this.listItem.selected[key], '[' + index + ']["@id"]')), {length: 150})
+            || get(this.listItem.selected[key], '[' + index + ']["@id"]');
+    }
+    /**
+     * Removes the specified property value on the selected entity on the current `listItem`, updating the
+     * InProgressCommit, everything hierarchy, and property hierarchy.
+     *
+     * @param {string} key The IRI of a property on the current entity
+     * @param {number} index The index of a specific property value
+     * @return {Observable} An Observable that resolves with the JSON-LD value object that was removed
+     */
+    removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue> {
+        const remove = (bnodeId) => {
+            const entity = this.listItem.selectedBlankNodes.splice(this.listItem.selectedBlankNodes
+                .findIndex(obj => obj['@id'] === bnodeId), 1)[0];
+            this.addToDeletions(this.listItem.versionedRdfRecord.recordId, entity);
+            forOwn(omit(entity, ['@id', '@type']), (value, key) => {
+                if (this.om.isBlankNodeId(key)) {
+                    remove(key);
+                }
+                forEach(value, valueObj => {
+                    const id = get(valueObj, '@id');
+                    if (this.om.isBlankNodeId(id)) {
+                        remove(id);
+                    }
+                });
+            });
+        };
+        const axiomObject: JSONLDId|JSONLDValue = this.listItem.selected[key][index];
+        const json: JSONLDObject = {
+            '@id': this.listItem.selected['@id'],
+            [key]: [Object.assign({}, axiomObject)]
+        };
+        this.addToDeletions(this.listItem.versionedRdfRecord.recordId, json);
+        if (this.om.isBlankNodeId(axiomObject['@id'])) {
+            remove(axiomObject['@id']);
+        }
+        this.pm.remove(this.listItem.selected, key, index);
+
+        if (RDFS + 'domain' === key && !this.om.isBlankNodeId(axiomObject['@id'])) {
+            this.removePropertyFromClass(this.listItem.selected, axiomObject['@id']);
+            this.listItem.flatEverythingTree = this.createFlatEverythingTree(this.listItem);
+        } else if (RDFS + 'range' === key) {
+            this.updatePropertyIcon(this.listItem.selected);
+        }
+        return this.saveCurrentChanges()
+            .pipe(map(() => {
+                if (this.om.entityNameProps.includes(key)) {
+                    this.updateLabel();
+                }
+                return axiomObject;
+            }));
+    }
     /* Private helper functions */
-    function removePropertyClassRelationships(propertyIRI, classIRI) {
-        if (self.listItem.classToChildProperties[classIRI] && self.listItem.classToChildProperties[classIRI].includes(propertyIRI)) {
-            pull(self.listItem.classToChildProperties[classIRI], propertyIRI);
-            if (!self.listItem.classToChildProperties[classIRI].length) {
-                delete self.listItem.classToChildProperties[classIRI];
+    private _removePropertyClassRelationships(propertyIRI, classIRI) {
+        if (this.listItem.classToChildProperties[classIRI] && this.listItem.classToChildProperties[classIRI].includes(propertyIRI)) {
+            pull(this.listItem.classToChildProperties[classIRI], propertyIRI);
+            if (!this.listItem.classToChildProperties[classIRI].length) {
+                delete this.listItem.classToChildProperties[classIRI];
             }
         }
     }
-    function checkChildren(hierarchyInfo, childIRI, parentIRI, root = '', path = []) {
-        let parentMap = hierarchyInfo.parentMap;
-        if (!root) { root = childIRI }
+    private _checkChildren(hierarchyInfo, childIRI, parentIRI, root = '', path = []) {
+        const parentMap = hierarchyInfo.parentMap;
+        if (!root) {
+            root = childIRI; 
+        }
         let result = {
             circular: false,
             path: []
@@ -2276,13 +2242,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
 
         forEach(parentMap[childIRI], child => {
             if (!result.circular) {
-                if (includes(parentMap[root], child)) { path = [] }
-                if (path.length === 0) { path.push(childIRI) }
+                if (includes(parentMap[root], child)) {
+                    path = []; 
+                }
+                if (path.length === 0) {
+                    path.push(childIRI); 
+                }
                 path.push(child);
                 if (child === parentIRI) {
                     result.circular = true;
                 } else {
-                    result = checkChildren(hierarchyInfo, child, parentIRI, root, path);
+                    result = this._checkChildren(hierarchyInfo, child, parentIRI, root, path);
                 }
             }
             result.path = path;
@@ -2290,98 +2260,101 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
 
         return result;
     }
-    function checkForPropertyDomains(property) {
-        if (!property[prefixes.rdfs + 'domain']) {
-            self.listItem.noDomainProperties.push(property['@id']);
+    private _checkForPropertyDomains(property: JSONLDObject): void {
+        if (!property[RDFS + 'domain']) {
+            this.listItem.noDomainProperties.push(property['@id']);
         }
     }
-    function existenceCheck(iriObj, iri) {
-        return has(iriObj, "['" + iri + "']");
+    private _existenceCheck(iriObj: {[key: string]: string}, iri: string): boolean {
+        return has(iriObj, '[\'' + iri + '\']');
     }
-    function commonGoTo(key, iri, flatHierarchy = undefined) {
-        self.setActivePage(key);
-        self.selectItem(iri, undefined, self.getActivePage().vocabularySpinnerId);
-        if (flatHierarchy) {
-            self.openAt(flatHierarchy, iri);
-        }
+    private _commonGoTo(key, iri, flatHierarchy = undefined): void {
+        this.setActivePage(key);
+        this.selectItem(iri, undefined/* , this.getActivePage().vocabularySpinnerId */).subscribe(() => {
+            if (flatHierarchy) {
+                this.openAt(flatHierarchy, iri);
+            }
+        }, this.util.createErrorToast);  
     }
-    function getScrollIndex(iri, flatHierarchy, property = false, checkPropertyOpened = identity) {
-        var scrollIndex = 0;
-        var index = findIndex(flatHierarchy, {entityIRI: iri});
+    private _getScrollIndex(iri: string, flatHierarchy, property = false, checkPropertyOpened: (a: string) => boolean = () => false): number {
+        let scrollIndex = 0;
+        let index = findIndex(flatHierarchy, {entityIRI: iri});
         if (index < 0) {
             index = flatHierarchy.length;
         }
-        for (var i = 0; i < index; i++) {
-            var node = flatHierarchy[i];
-            if (!property && ((node.indent > 0 && self.areParentsOpen(node, self.getActiveKey())) || node.indent === 0)) {
+        for (let i = 0; i < index; i++) {
+            const node = flatHierarchy[i];
+            if (!property && ((node.indent > 0 && this.areParentsOpen(node, this.getActiveKey())) || node.indent === 0)) {
                 scrollIndex++;
-            } else if (property && self.areParentsOpen(node, self.getActiveKey()) && checkPropertyOpened(self.listItem.ontologyRecord.recordId)) {
+            } else if (property && this.areParentsOpen(node, this.getActiveKey()) && checkPropertyOpened(this.listItem.versionedRdfRecord.recordId)) {
                 scrollIndex++;
             }
         }
         return scrollIndex;
     }
-    function getOpenPath(...args) {
-        return self.getActiveKey() + '.' + join(map(args, encodeURIComponent), '.');
+    private _getOpenPath(...args): string {
+        return this.getActiveKey() + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
     }
-    function setupListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title) {
-        var listItem = angular.copy(ontologyListItemTemplate);
-        listItem.ontologyRecord.title = title;
-        listItem.ontologyRecord.recordId = recordId;
-        listItem.ontologyRecord.branchId = branchId;
-        listItem.ontologyRecord.commitId = commitId;
+    private _setupListItem(recordId: string, branchId: string, commitId: string, inProgressCommit: Difference, upToDate: boolean, title: string): OntologyListItem {
+        const listItem = new OntologyListItem();
+        listItem.versionedRdfRecord.title = title;
+        listItem.versionedRdfRecord.recordId = recordId;
+        listItem.versionedRdfRecord.branchId = branchId;
+        listItem.versionedRdfRecord.commitId = commitId;
         listItem.inProgressCommit = inProgressCommit;
         listItem.upToDate = upToDate;
+        this.pm.defaultDatatypes.forEach(iri => this._addIri(listItem, 'dataPropertyRange', iri));
         return listItem;
     }
-    function findValuesMissingDatatypes(object) {
+    // Not a great method, should come back to and refactor
+    private _findValuesMissingDatatypes(object: any): void {
         if (has(object, '@value')) {
             if (!has(object, '@type') && !has(object, '@language')) {
-                object['@type'] = prefixes.xsd + 'string';
+                object['@type'] = XSD + 'string';
             }
         } else if (isObject(object)) {
-            forEach(keys(object), key => {
-                findValuesMissingDatatypes(object[key]);
+            Object.keys(object).forEach(key => {
+                this._findValuesMissingDatatypes(object[key]);
             });
         }
     }
-    function setPropertyIcon(entity) {
-        var ranges = map((entity[prefixes.rdfs + 'range'] || []), '@id');
-        self.listItem.propertyIcons[entity["@id"]] = getIcon(ranges);
+    private _setPropertyIcon(entity: JSONLDObject): void {
+        const ranges = (entity[RDFS + 'range'] || []).map(obj => obj['@id']);
+        this.listItem.propertyIcons[entity['@id']] = this._getIcon(ranges);
     }
-    function getIcon(ranges) {
+    private _getIcon(ranges: string[]): string {
         let icon = 'fa-square-o';
         if (ranges.length) {
             if (ranges.length === 1) {
-                let value = ranges[0];
-                switch(value) {
-                    case prefixes.xsd + 'string':
-                    case prefixes.rdf + 'langString':
+                const value = ranges[0];
+                switch (value) {
+                    case XSD + 'string':
+                    case RDF + 'langString':
                         icon = 'fa-font';
                         break;
-                    case prefixes.xsd + 'decimal':
-                    case prefixes.xsd + 'double':
-                    case prefixes.xsd + 'float':
-                    case prefixes.xsd + 'int':
-                    case prefixes.xsd + 'integer':
-                    case prefixes.xsd + 'long':
-                    case prefixes.xsd + 'nonNegativeInteger':
+                    case XSD + 'decimal':
+                    case XSD + 'double':
+                    case XSD + 'float':
+                    case XSD + 'int':
+                    case XSD + 'integer':
+                    case XSD + 'long':
+                    case XSD + 'nonNegativeInteger':
                         icon = 'fa-calculator';
                         break;
-                    case prefixes.xsd + 'language':
+                    case XSD + 'language':
                         icon = 'fa-language';
                         break;
-                    case prefixes.xsd + 'anyURI':
+                    case XSD + 'anyURI':
                         icon = 'fa-external-link';
                         break;
-                    case prefixes.xsd + 'dateTime':
+                    case XSD + 'dateTime':
                         icon = 'fa-clock-o';
                         break;
-                    case prefixes.xsd + 'boolean':
-                    case prefixes.xsd + 'byte':
+                    case XSD + 'boolean':
+                    case XSD + 'byte':
                         icon = 'fa-signal';
                         break;
-                    case prefixes.rdfs + 'Literal':
+                    case RDFS + 'Literal':
                         icon = 'fa-cube';
                         break;
                     default:
@@ -2394,46 +2367,119 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return icon;
     }
-    function getEntityInfoFromListItem(listItem, entityIRI) {
+    private _getEntityInfoFromListItem(listItem: OntologyListItem, entityIRI: string): EntityNamesItem {
         if  (!entityIRI || !listItem) {
             return;
         }
         return get(listItem.entityInfo, entityIRI, undefined);
     }
-    function addToInProgress(recordId, json, prop) {
-        var listItem = self.getListItemByRecordId(recordId);
-        var entity = find(listItem[prop], {'@id': json['@id']});
-        var filteredJson = omit(angular.copy(json), 'mobi');
+    private _addToInProgress(recordId: string, json: JSONLDObject, prop: string): void {
+        const listItem = this.getListItemByRecordId(recordId);
+        const entity = find(listItem[prop], {'@id': json['@id']});
+        const filteredJson = Object.assign({}, json);
         if (entity) {
-            mergeWith(entity, filteredJson, util.mergingArrays);
+            mergeWith(entity, filteredJson, this.util.mergingArrays);
         } else  {
             listItem[prop].push(filteredJson);
         }
     }
-    function addImportedOntologyToListItem(listItem, importedOntObj) {
-        var importedOntologyListItem = {
+    private _addImportedOntologyToListItem(listItem: OntologyListItem, importedOntObj: {id: string, ontologyId: string}): void {
+        const importedOntologyListItem = {
             id: importedOntObj.id,
             ontologyId: importedOntObj.ontologyId
         };
         listItem.importedOntologyIds.push(importedOntObj.id);
         listItem.importedOntologies.push(importedOntologyListItem);
     }
-    function setHierarchyInfo(obj, response, key) {
-        var hierarchyInfo = get(response, key, {parentMap: {}, childMap: {}, circularMap: {}});
+    private _setHierarchyInfo(obj: Hierarchy, response: VocabularyStuff | OntologyStuff, key: string): void {
+        const hierarchyInfo = get(response, key, {parentMap: {}, childMap: {}, circularMap: {}});
         obj.parentMap = hierarchyInfo.parentMap;
         obj.childMap = hierarchyInfo.childMap;
         obj.circularMap = hierarchyInfo.circularMap;
     }
-    function getArrWithoutEntity(iri, arr) {
+    private _getArrWithoutEntity(iri: string, arr: JSONLDObject[]): JSONLDObject[] {
         if (!arr || !arr.length) {
             return [];
         }
         arr.splice(arr.findIndex(entity => entity['@id'] === iri), 1);
         return arr;
     }
-    function isInIris(property, iri) {
-        return has(get(self.listItem, property + '.iris'), iri);
+    private _isInIris(property: string, iri: string): boolean {
+        return has(get(this.listItem, property + '.iris'), iri);
+    }
+    private _containsProperty(entity: JSONLDObject, properties: string[], value: string): boolean {
+        return some(properties, property => some(get(entity, property), {'@id': value}));
+    }
+    private _isVocabPropAndEntity(relationshipIRI: string, relationshipArray: string[], 
+        validateSubjectType: (a: string[]) => boolean): boolean {
+        return includes(relationshipArray, relationshipIRI) && validateSubjectType(this.listItem.selected['@type']);
+    }
+    private _shouldUpdateVocabHierarchy(targetEntity: JSONLDObject, targetArray: string[], otherArray: string[], 
+        relationshipIRI: string, validateTargetType: (a: string[]) => boolean): boolean {
+        return !this._containsProperty(this.listItem.selected, without(targetArray, relationshipIRI), targetEntity['@id'])
+            && !this._containsProperty(targetEntity, otherArray, this.listItem.selected['@id'])
+            && validateTargetType(targetEntity['@type']);
+    }
+    private _commonAddToVocabHierarchy(relationshipIRI: string, values: JSONLDObject[], entityIRI: string, 
+        parentIRI: string, targetArray: string[], otherArray: string[], key: string, 
+        validateTargetType: (a: string[]) => boolean): void {
+        forkJoin(values.map(value => this.getEntityNoBlankNodes(value['@id'], this.listItem)))
+            .subscribe(entities => {
+                let update = false;
+                entities.forEach(targetEntity => {
+                    if (this._shouldUpdateVocabHierarchy(targetEntity, targetArray, otherArray, relationshipIRI, a => validateTargetType(a))) {
+                        this.addEntityToHierarchy(this.listItem[key], entityIRI || targetEntity['@id'], parentIRI || targetEntity['@id']);
+                        update = true;
+                    }
+                });
+                if (update) {
+                    this.listItem[key].flat = this.flattenHierarchy(this.listItem[key]);
+                }
+            }, error => {
+                console.error(error);
+            });
+    }
+    private _deleteFromConceptHierarchy(entityIRI: string, parentIRI: string): void {
+        this.deleteEntityFromParentInHierarchy(this.listItem.concepts, entityIRI, parentIRI);
+        this.listItem.concepts.flat = this.flattenHierarchy(this.listItem.concepts);
+    }
+    private _deleteFromSchemeHierarchy(entityIRI: string, parentIRI: string): void {
+        this.deleteEntityFromParentInHierarchy(this.listItem.conceptSchemes, entityIRI, parentIRI);
+        if (get(this.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
+            unset(this.listItem, 'editorTabStates.schemes.entityIRI');
+        }
+        this.listItem.conceptSchemes.flat = this.flattenHierarchy(this.listItem.conceptSchemes);
+    }
+    private _removeConcept(entityIRI: string): void {
+        delete get(this.listItem, 'concepts.iris')[entityIRI];
+        this.deleteEntityFromHierarchy(this.listItem.concepts, entityIRI);
+        this.listItem.concepts.flat = this.flattenHierarchy(this.listItem.concepts);
+        this._removeConceptScheme(entityIRI);
+    }
+    private _removeConceptScheme(entityIRI: string): void {
+        delete get(this.listItem, 'conceptSchemes.iris')[entityIRI];
+        this.deleteEntityFromHierarchy(this.listItem.conceptSchemes, entityIRI);
+        this.listItem.conceptSchemes.flat = this.flattenHierarchy(this.listItem.conceptSchemes);
+    }
+    private _removeIndividual(entityIRI: string): void {
+        delete get(this.listItem, 'individuals.iris')[entityIRI];
+        const indivTypes = this.listItem.selected['@type'];
+        const indivAndClasses = get(this.listItem, 'classesAndIndividuals', {});
+
+        indivTypes.forEach(type => {
+            if (type !== OWL + 'NamedIndividual') {
+                const parentAndIndivs = get(indivAndClasses, `['${type}']`, []);
+                if (parentAndIndivs.length) {
+                    pull(parentAndIndivs, entityIRI);
+                    if (!parentAndIndivs.length) {
+                        delete this.listItem.classesAndIndividuals[type];
+                    }
+                }
+            }
+        });
+
+        this.listItem.classesWithIndividuals = Object.keys(this.listItem.classesAndIndividuals);
+        this.listItem.individualsParentPath = this.getIndividualsParentPath(this.listItem);
+        this.listItem.individuals.flat = this.createFlatIndividualTree(this.listItem);
     }
 }
-
-export default ontologyStateService;

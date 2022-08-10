@@ -22,26 +22,16 @@
  */
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
-import { downgradeComponent } from '@angular/upgrade/static';
+import { downgradeComponent, downgradeInjectable } from '@angular/upgrade/static';
 
 import { QueryModule } from './query/query.module';
 import { DiscoverSharedModule } from './discoverShared.module';
 import { SharedModule } from '../shared/shared.module';
-
-import { datasetFormGroupComponent } from './components/datasetFormGroup/datasetFormGroup.component';
-import datasetSelectComponent from './components/datasetSelect/datasetSelect.component';
-import sparqlResultTableComponent from './components/sparqlResultTable/sparqlResultTable.component';
-
-import exploreService from './services/explore.service';
-
-import './explore/explore.module';
-import './search/search.module';
-
+import { ExploreModule } from './explore/explore.module';
+import { ExploreService } from './services/explore.service';
 import { DiscoverPageComponent } from './components/discoverPage/discoverPage.component';
 
-// TODO: Move to submodules once upgraded
-import { ExploreTabDirective } from './explore/components/exploreTab/exploreTab.component';
-import { DiscoverSearchTabDirective } from './search/components/discoverSearchTab/discoverSearchTab.component';
+import sparqlResultTableComponent from './components/sparqlResultTable/sparqlResultTable.component';
 
 /**
  * @namespace discover
@@ -52,12 +42,11 @@ import { DiscoverSearchTabDirective } from './search/components/discoverSearchTa
     imports: [ 
         SharedModule,
         DiscoverSharedModule,
+        ExploreModule,
         QueryModule
     ],
     declarations: [
         DiscoverPageComponent,
-        ExploreTabDirective,
-        DiscoverSearchTabDirective
     ],
     entryComponents: [
         DiscoverPageComponent
@@ -68,10 +57,7 @@ export class DiscoverModule {}
 angular.module('discover', [
         'explore',
         'query',
-        'search'
     ])
-    .component('datasetFormGroup', datasetFormGroupComponent)
-    .component('datasetSelect', datasetSelectComponent)
     .component('sparqlResultTable', sparqlResultTableComponent)
-    .service('exploreService', exploreService)
+    .factory('exploreService', downgradeInjectable(ExploreService))
     .directive('discoverPage', downgradeComponent({component: DiscoverPageComponent}) as angular.IDirectiveFactory);

@@ -39,6 +39,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { CATALOG, DCTERMS } from '../../../prefixes';
 import { BranchListComponent } from './branchList.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 describe('Branch List component', function() {
     let component: BranchListComponent;
@@ -64,7 +65,7 @@ describe('Branch List component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
             ],
         });
@@ -75,7 +76,7 @@ describe('Branch List component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get('utilService');
 
         utilStub.getPropertyId.and.callFake((obj, propId) => {

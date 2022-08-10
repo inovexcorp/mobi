@@ -1,5 +1,3 @@
-import { get } from "lodash";
-
 /*-
  * #%L
  * com.mobi.web
@@ -24,6 +22,7 @@ import { get } from "lodash";
  */
 
 import { first } from 'rxjs/operators';
+import { get } from 'lodash';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { CatalogStateService } from './catalogState.service';
@@ -33,6 +32,7 @@ import { DelimitedManagerService } from './delimitedManager.service';
 import { DiscoverStateService } from './discoverState.service';
 import { MapperStateService } from './mapperState.service';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
+import { OntologyManagerService } from './ontologyManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 import { UserManagerService } from './userManager.service';
 import { UserStateService } from './userState.service';
@@ -88,7 +88,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX,
                              catalogStateService: CatalogStateService, datasetManagerService: DatasetManagerService,
                              datasetStateService: DatasetStateService, delimitedManagerService: DelimitedManagerService,
                              discoverStateService: DiscoverStateService, mapperStateService: MapperStateService,
-                             mergeRequestsStateService: MergeRequestsStateService, ontologyManagerService,
+                             mergeRequestsStateService: MergeRequestsStateService, ontologyManagerService: OntologyManagerService,
                              ontologyStateService, shapesGraphStateService: ShapesGraphStateService,
                              stateManagerService, userManagerService: UserManagerService,
                              userStateService: UserStateService, utilService, yasguiService: YasguiService) {
@@ -175,7 +175,6 @@ function loginManagerService($q, $http, $state, REST_PREFIX,
         mapperStateService.initialize();
         mapperStateService.resetEdit();
         mergeRequestsStateService.reset();
-        ontologyManagerService.reset();
         ontologyStateService.reset();
         shapesGraphStateService.reset();
         catalogStateService.reset();

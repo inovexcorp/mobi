@@ -22,6 +22,8 @@
  */
 import { forEach } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./createConceptSchemeOverlay.component.html');
 
 /**
@@ -31,7 +33,6 @@ const template = require('./createConceptSchemeOverlay.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `createConceptSchemeOverlay` is a component that creates content for a modal that creates a concept scheme
@@ -54,11 +55,10 @@ const createConceptSchemeOverlayComponent = {
     controller: createConceptSchemeOverlayComponentCtrl
 };
 
-createConceptSchemeOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];
+createConceptSchemeOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService'];
 
-function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
+function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService, ontologyStateService: OntologyStateService, prefixes, utilService) {
     var dvm = this;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefixes = prefixes;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
@@ -92,7 +92,7 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
         if (dvm.selectedConcepts.length) {
             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
         }
-        dvm.ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
+        dvm.os.addLanguageToNewEntity(dvm.scheme, dvm.language);
         // add the entity to the ontology
         dvm.os.addEntity(dvm.scheme);
         // update relevant lists
@@ -103,11 +103,11 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
         });
         dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
         // Update additions
-        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
+        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.scheme);
         // Update individual hierarchy
-        dvm.ontoUtils.addIndividual(dvm.scheme);
+        dvm.os.addIndividual(dvm.scheme);
         // Save the changes to the ontology
-        dvm.ontoUtils.saveCurrentChanges();
+        dvm.os.saveCurrentChanges().subscribe();
         // Open snackbar
         dvm.os.listItem.goTo.entityIRI = dvm.scheme['@id'];
         dvm.os.listItem.goTo.active = true;
@@ -115,7 +115,7 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
         dvm.close();
     }
     dvm.getConcepts = function(searchText) {
-        dvm.concepts = dvm.ontoUtils.getSelectList(dvm.conceptIRIs, searchText);
+        dvm.concepts = dvm.os.getSelectList(dvm.conceptIRIs, searchText);
     }
     dvm.cancel = function() {
         dvm.dismiss();

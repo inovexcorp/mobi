@@ -30,8 +30,8 @@
             <label class="control-label">Annotation</label>
             <ui-select ng-model="dvm.os.annotationSelect" ng-disabled="dvm.os.editingAnnotation" autofocus on-select="dvm.selectProp()">
                 <ui-select-match placeholder="Select an annotation">{{$select.selected}}</ui-select-match>
-                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="annotation in dvm.annotations | filter: $select.search | orderBy:dvm.ontoUtils.getDropDownText" ui-disable-choice="dvm.disableProp(annotation)">
-                    <div ng-bind-html="dvm.ontoUtils.getDropDownText(annotation) | highlight: $select.search | trusted"></div>
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="annotation in dvm.annotations | filter: $select.search | orderBy:dvm.orderByEntityName" ui-disable-choice="dvm.disableProp(annotation)">
+                    <div ng-bind-html="dvm.os.getEntityNameByListItem(annotation) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>

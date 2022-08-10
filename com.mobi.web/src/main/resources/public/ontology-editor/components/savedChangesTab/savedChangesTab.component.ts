@@ -28,6 +28,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './savedChangesTab.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 const template = require('./savedChangesTab.component.html');
 
@@ -65,7 +67,7 @@ const savedChangesTabComponent = {
 
 savedChangesTabComponentCtrl.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
 
-function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerService, utilService, catalogManagerService: CatalogManagerService, prefixes) {
+function savedChangesTabComponentCtrl($q, ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, utilService, catalogManagerService: CatalogManagerService, prefixes) {
     var dvm = this;
     var cm = catalogManagerService;
     var om = ontologyManagerService;
@@ -115,15 +117,15 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
         dvm.os.goTo(id);
     }
     dvm.update = function() {
-        return cm.getBranchHeadCommit(dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+        return cm.getBranchHeadCommit(dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
             .then((headCommit: CommitDifference) => {
                 var commitId = get(headCommit, "commit['@id']", '');
-                return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId);
+                return dvm.os.updateOntology(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, commitId).pipe(first()).toPromise();
             }, $q.reject)
             .then(() => dvm.util.createSuccessToast('Your ontology has been updated.'), dvm.util.createErrorToast);
     }
     dvm.restoreBranchWithUserBranch = function() {
-        var userBranchId = dvm.os.listItem.ontologyRecord.branchId;
+        var userBranchId = dvm.os.listItem.versionedRdfRecord.branchId;
         var userBranch = find(dvm.os.listItem.branches, {'@id': userBranchId})
         var createdFromId = dvm.util.getPropertyId(userBranch, prefixes.catalog + 'createdFrom');
         var branchConfig = {
@@ -132,32 +134,32 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
         };
 
         var createdBranchId;
-        return cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig, dvm.os.listItem.ontologyRecord.commitId).pipe(first()).toPromise()
+        return cm.createRecordBranch(dvm.os.listItem.versionedRdfRecord.recordId, catalogId, branchConfig, dvm.os.listItem.versionedRdfRecord.commitId).pipe(first()).toPromise()
             .then((branchId: string) => {
                 createdBranchId = branchId;
-                return cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise();
+                return cm.getRecordBranch(branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise();
             }, $q.reject)
             .then((branch: JSONLDObject) => {
                 dvm.os.listItem.branches.push(branch);
-                dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
+                dvm.os.listItem.versionedRdfRecord.branchId = branch['@id'];
                 var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: createdBranchId});
+                return dvm.os.updateState({recordId: dvm.os.listItem.versionedRdfRecord.recordId, commitId, branchId: createdBranchId}).pipe(first()).toPromise();
             }, $q.reject)
-            .then(() => om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId), $q.reject)
-            .then(() => dvm.os.deleteOntologyBranchState(dvm.os.listItem.ontologyRecord.recordId, userBranchId), $q.reject)
+            .then(() => om.deleteOntologyBranch(dvm.os.listItem.versionedRdfRecord.recordId, userBranchId).pipe(first()).toPromise(), $q.reject)
+            .then(() => dvm.os.deleteBranchState(dvm.os.listItem.versionedRdfRecord.recordId, userBranchId).pipe(first()).toPromise(), $q.reject)
             .then(() => {
-                dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
+                dvm.os.removeBranch(dvm.os.listItem.versionedRdfRecord.recordId, userBranchId).pipe(first()).toPromise();
                 changeUserBranchesCreatedFrom(createdFromId, createdBranchId);
                 dvm.util.createSuccessToast('Branch has been restored with changes.');
             }, dvm.util.createErrorToast);
     }
     dvm.mergeUserBranch = function() {
-        var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
+        var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
         dvm.os.listItem.merge.target = find(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
         dvm.os.listItem.merge.checkbox = true;
-        dvm.os.checkConflicts()
+        dvm.os.checkConflicts().pipe(first()).toPromise()
             .then(() => {
-                dvm.os.merge()
+                dvm.os.merge().pipe(first()).toPromise()
                     .then(() => {
                         dvm.os.resetStateTabs();
                         dvm.util.createSuccessToast('Changes have been pulled successfully');
@@ -169,10 +171,10 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
             }, () => dvm.os.listItem.merge.active = true);
     }
     dvm.removeChanges = function() {
-        return cm.deleteInProgressCommit(dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+        return cm.deleteInProgressCommit(dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
             .then(() => {
                 dvm.os.resetStateTabs();
-                return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate);
+                return dvm.os.updateOntology(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, dvm.os.listItem.upToDate).pipe(first()).toPromise();
             }, $q.reject)
             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
     }
@@ -184,6 +186,9 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
         var currChunk = get(dvm.chunks, dvm.index, []);
         dvm.showList = concat(dvm.showList, currChunk);
     }
+    dvm.getEntityName = function(entityIRI) {
+        return dvm.os.getEntityNameByListItem(entityIRI).bind(dvm.os);
+    };
 
     function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
         forEach(dvm.os.listItem.branches, branch => {
@@ -191,7 +196,7 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
                 var currentCreatedFromId = dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom');
                 if (currentCreatedFromId === oldCreatedFromId) {
                     dvm.util.replacePropertyId(branch, prefixes.catalog + 'createdFrom', dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom'), newCreatedFromId);
-                    cm.updateRecordBranch(branch['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId, branch).pipe(first()).toPromise()
+                    cm.updateRecordBranch(branch['@id'], dvm.os.listItem.versionedRdfRecord.recordId, catalogId, branch).pipe(first()).toPromise()
                         .then(() => dvm.util.createSuccessToast('Updated referenced branch.'), dvm.util.createErrorToast);
                 }
             }

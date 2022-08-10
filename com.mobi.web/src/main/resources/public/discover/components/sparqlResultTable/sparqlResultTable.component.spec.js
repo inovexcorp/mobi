@@ -49,7 +49,7 @@ describe('SPARQL Result Table component', function() {
         scope.bindings = ['var1', 'var2'];
         scope.headers = {var1: 'var1', var2: 'var2'};
         this.element = $compile(angular.element('<sparql-result-table bindings="bindings" data="data" headers="headers"></sparql-result-table>'))(scope);
-        scope.$digest();
+        // fixture.detectChanges(); // scope.$digest();
         this.controller = this.element.controller('sparqlResultTable');
     });
 
@@ -61,21 +61,21 @@ describe('SPARQL Result Table component', function() {
 
     describe('controller bound variable', function() {
         it('data is one way bound', function() {
-            var copy = angular.copy(this.controller.data);
-            this.controller.data = [];
-            scope.$digest();
+            var copy = angular.copy(component.data);
+            component.data = [];
+            // fixture.detectChanges(); // scope.$digest();
             expect(scope.data).toEqual(copy);
         });
         it('bindings is one way bound', function() {
-            var copy = angular.copy(this.controller.bindings);
-            this.controller.bindings = [];
-            scope.$digest();
+            var copy = angular.copy(component.bindings);
+            component.bindings = [];
+            // fixture.detectChanges(); // scope.$digest();
             expect(scope.bindings).toEqual(copy);
         });
         it('headers is one way bound', function() {
-            var copy = angular.copy(this.controller.headers);
-            this.controller.headers = [];
-            scope.$digest();
+            var copy = angular.copy(component.headers);
+            component.headers = [];
+            // fixture.detectChanges(); // scope.$digest();
             expect(scope.headers).toEqual(copy);
         });
     });
@@ -84,18 +84,18 @@ describe('SPARQL Result Table component', function() {
             expect(this.element.prop('tagName')).toBe('SPARQL-RESULT-TABLE');
         });
         it('depending on how many binding names there are', function() {
-            var theadList = this.element.querySelectorAll('thead');
+            var theadList = element.queryAll(By.css('thead'));
             expect(this.element.html()).not.toContain('None');
             expect(theadList.length).toBe(1);
             var thead = theadList[0];
-            expect(thead.querySelectorAll('th').length).toBe(this.controller.bindings.length);
+            expect(thead.querySelectorAll('th').length).toBe(component.bindings.length);
         });
         it('depending on how many results there are', function() {
-            var tbodyList = this.element.querySelectorAll('tbody');
+            var tbodyList = element.queryAll(By.css('tbody'));
             expect(this.element.html()).not.toContain('None');
             expect(tbodyList.length).toBe(1);
             var tbody = tbodyList[0];
-            expect(tbody.querySelectorAll('tr').length).toBe(this.controller.data.length);
+            expect(tbody.querySelectorAll('tr').length).toBe(component.data.length);
         });
     });
 });

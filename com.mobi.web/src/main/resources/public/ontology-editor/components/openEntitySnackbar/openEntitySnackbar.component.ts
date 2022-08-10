@@ -1,3 +1,5 @@
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 /*-
  * #%L
  * com.mobi.web
@@ -44,7 +46,7 @@ const openEntitySnackbarComponent = {
 
 openEntitySnackbarComponentCtrl.$inject = ['$timeout', 'ontologyStateService'];
 
-function openEntitySnackbarComponentCtrl($timeout, ontologyStateService) {
+function openEntitySnackbarComponentCtrl($timeout, ontologyStateService: OntologyStateService) {
     var dvm = this;
     dvm.os = ontologyStateService;
     dvm.show = false;
@@ -70,7 +72,7 @@ function openEntitySnackbarComponentCtrl($timeout, ontologyStateService) {
     dvm.$onDestroy = function() {
         $timeout.cancel(dvm.closeTimeout);
         $timeout.cancel(dvm.resetStateTimeout);
-        if (dvm.os.listItem.goTo) {
+        if (dvm.os.listItem?.goTo) {
             dvm.os.listItem.goTo.active = false;
             dvm.os.listItem.goTo.entityIRI = '';
         }

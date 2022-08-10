@@ -28,16 +28,19 @@
                 <request-record-select class="flex-1 remove-min-height"></request-record-select>
                 <div class="step-buttons">
                     <button mat-raised-button (click)="state.createRequest = false">Cancel</button>
-                    <button class="float-right" mat-raised-button color="primary" matStepperNext [disabled]="!state.requestConfig.recordId">Next</button>
+                    <button class="float-right button-step-1" mat-raised-button color="primary" matStepperNext [disabled]="!state.requestConfig.recordId">Next</button>
                 </div>
             </div>
         </mat-step>
         <mat-step #secondStep label="Select Branches" [completed]="!!state.requestConfig.sourceBranchId && !!state.requestConfig.targetBranchId">
             <div *ngIf="requestStepper.selectedIndex === 1" class="d-flex flex-column h-100">
-                <request-branch-select class="flex-1 remove-min-height"></request-branch-select>
+                <request-branch-select (emitCommits)="updateCommits($event)" class="flex-1 remove-min-height"></request-branch-select>
                 <div class="step-buttons mt-2">
                     <button mat-raised-button matStepperPrevious (click)="resetBranchSelect()">Back</button>
-                    <button mat-raised-button class="float-right" color="primary" matStepperNext [disabled]="!state.requestConfig.sourceBranchId || !state.requestConfig.targetBranchId || state.sameBranch">Next</button>
+                    <button mat-raised-button class="float-right button-step-2" color="primary" matStepperNext
+                            [disabled]="!state.requestConfig.sourceBranchId || !state.requestConfig.targetBranchId || state.sameBranch || isDisabled">
+                        Next
+                    </button>
                 </div>
             </div>
         </mat-step>
@@ -46,7 +49,7 @@
                 <request-details-form class="flex-1 remove-min-height"></request-details-form>
                 <div class="step-buttons mt-2">
                     <button mat-raised-button matStepperPrevious (click)="resetDetailsForm()">Back</button>
-                    <button mat-raised-button class="float-right" color="primary" (click)="submit()" [disabled]="!state.requestConfig.title">Submit</button>
+                    <button mat-raised-button class="float-right button-step-3" color="primary" (click)="submit()" [disabled]="!state.requestConfig.title">Submit</button>
                 </div>
             </div>
         </mat-step>

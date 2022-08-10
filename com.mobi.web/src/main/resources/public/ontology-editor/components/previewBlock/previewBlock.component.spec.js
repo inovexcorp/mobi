@@ -117,7 +117,7 @@ describe('Preview Block component', function() {
                 ontologyManagerSvc.getQueryResults.and.returnValue($q.reject('Error'));
                 this.controller.getPreview();
                 scope.$apply();
-                expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'test', '', false, true);
+                expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'test', '', false, true);
                 expect(this.controller.activePage.preview).toEqual('Error');
                 expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.activePage);
             });
@@ -130,7 +130,7 @@ describe('Preview Block component', function() {
                     this.controller.getPreview();
                     scope.$apply();
                     expect(this.controller.activePage.mode).toEqual('application/ld+json');
-                    expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'jsonld', '', false, true);
+                    expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'jsonld', '', false, true);
                     expect(this.controller.activePage.preview).toEqual('json');
                     expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.activePage);
                 });
@@ -149,7 +149,7 @@ describe('Preview Block component', function() {
                         this.controller.getPreview();
                         scope.$apply();
                         expect(this.controller.activePage.mode).toEqual(test.mode);
-                        expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', test.serialization, '', false, true);
+                        expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', test.serialization, '', false, true);
                         expect(this.controller.activePage.preview).toEqual('Test');
                         expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.activePage);
                     });
@@ -162,7 +162,7 @@ describe('Preview Block component', function() {
             this.controller.download();
             scope.$apply();
             expect(splitIRIFilter).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId);
-            expect(ontologyManagerSvc.downloadOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'jsonld', 'test');
+            expect(ontologyManagerSvc.downloadOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, 'jsonld', 'test');
         });
         it('should update the serialization', function() {
             this.controller.changeSerialization('test');

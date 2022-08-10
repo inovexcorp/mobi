@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./individualsTab.component.html');
 
 /**
@@ -28,7 +30,6 @@ const template = require('./individualsTab.component.html');
  * @name ontology-editor.component:individualsTab
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -48,16 +49,15 @@ const individualsTabComponent = {
     controller: individualsTabComponentCtrl
 };
 
-individualsTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService']
+individualsTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'modalService']
 
-function individualsTabComponentCtrl(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
+function individualsTabComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService, modalService) {
     var dvm = this;
-    var ontoUtils = ontologyUtilsManagerService;
     dvm.os = ontologyStateService;
     dvm.om = ontologyManagerService;
 
     dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', ontoUtils.deleteIndividual);
+        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.os.deleteIndividual);
     }
     dvm.seeHistory = function() {
         dvm.os.listItem.seeHistory = true;

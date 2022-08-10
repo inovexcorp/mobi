@@ -22,34 +22,65 @@
   -->
 <div class="instance-form row">
     <div class="col-8 offset-2">
-        <h2>{{dvm.header}}</h2>
-        <div ng-repeat="missing in dvm.missingProperties track by $index">
-            <error-display>{{missing}}</error-display>
-        </div>
+        <h2>{{header}}</h2>
+        <div *ngFor="let missing of missingProperties"> <error-display>{{missing}}</error-display> </div>
         <div class="instance-iri">
-            <strong class="text-muted" click-to-copy="dvm.instance['@id']">{{dvm.instance['@id']}}</strong>
-            <a ng-click="dvm.showIriConfirm()"><i class="fa fa-pencil"></i></a>
+            <strong class="text-muted" click-to-copy="instance['@id']">{{instance['@id']}}</strong>
+            <a (click)="showIriConfirm()"><i class="fa fa-pencil"></i></a>
         </div>
-        <form name="dvm.form" autocomplete="off">
-            <div class="form-group" ng-repeat="(key, value) in dvm.instance track by $index" ng-if="key !== '@id' && key !== '@type'">
-                <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
-                <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
-                    <md-checkbox ng-model="dvm.instance[key][0]" ng-true-value="{{dvm.eu.createValueObj('1', key, dvm.properties)}}" ng-false-value="{{dvm.eu.createValueObj('0', key, dvm.properties)}}" ng-change="dvm.addToChanged(key)" aria-label="{{dvm.util.getBeautifulIRI(key)}}"></md-checkbox>
-                </div>
-                <md-chips class="data-property" ng-if="dvm.eu.isPropertyOfType(key, 'Data', dvm.properties) && !dvm.eu.isBoolean(key, dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.eu.createValueObj($chip, key, dvm.properties)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)" md-add-on-blur>
-                    <input type="{{dvm.eu.getInputType(key, dvm.properties)}}" ng-pattern="dvm.eu.getPattern(key, dvm.properties)" placeholder="Enter value...">
-                    <md-chip-template ng-click="dvm.onSelect($chip['@value'], key, $index)">{{$chip['@value']}}</md-chip-template>
-                </md-chips>
-                <md-chips class="object-property" ng-if="dvm.eu.isPropertyOfType(key, 'Object', dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.transformChip($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)">
-                    <md-autocomplete md-items="item in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0" md-item-text="item.title" md-match-case-insensitive>
-                        <span md-highlight-text="dvm.searchText[key]" md-highlight-flags="ig">{{item.title}} :: {{item.instanceIRI}}</span>
-                    </md-autocomplete>
-                    <md-chip-template ng-click="dvm.onSelect($chip['@id'], key, $index)">{{dvm.ds.explore.instance.objectMap[$chip['@id']] || $chip['@id']}}</md-chip-template>
-                </md-chips>
+        <form name="form" autocomplete="off">
+            <div class="form-group" *ngFor="let instanceProperty of instance | keyvalue">
+                <ng-container *ngIf="instanceProperty.key !== '@id' && instanceProperty.key !== '@type'">
+                    <custom-label [ngClass]="{'changed': isChanged(instanceProperty.key)}">
+                        {{util.getBeautifulIRI(instanceProperty.key)}}
+                        {{getRestrictionText(instanceProperty.key)}}
+                    </custom-label>
+                    <br/>
+                    <div class="boolean-property" *ngIf="eu.isBoolean(instanceProperty.key, properties)">
+                        <mat-checkbox [checked]="checkValue(instanceProperty.value[0]['@value'])"
+                                      (change)="handleCheckBoxClick($event.checked, instanceProperty.key); addToChanged(instanceProperty.key)"
+                                      aria-label="{{util.getBeautifulIRI(instanceProperty.key)}}">
+                        </mat-checkbox>
+                    </div>
+                    <mat-form-field class="w-100" *ngIf="eu.isPropertyOfType(instanceProperty.key, 'Data', properties) && !eu.isBoolean(instanceProperty.key, properties)">
+                        <mat-chip-list class="data-property" #dataPropertySelect >
+                            <mat-chip *ngFor="let item of instanceProperty.value"
+                                      (removed)="removeDataProperty(item, instanceProperty.key); addToChanged(instanceProperty.key)">
+                                <span>{{item['@value']}}</span>
+                                <mat-icon matChipRemove>cancel</mat-icon>
+                            </mat-chip>
+                            <input type="{{eu.getInputType(instanceProperty.key, properties)}}" placeholder="Enter value..."
+                                   pattern="eu.getPattern(instanceProperty.key, properties)"
+                                   [matChipInputFor]="dataPropertySelect"
+                                   [matChipInputAddOnBlur]="false"
+                                   (matChipInputTokenEnd)=" addDataProperty($event, instanceProperty.key); addToChanged(instanceProperty.key);">
+                        </mat-chip-list>
+                    </mat-form-field>
+                    <mat-form-field class="w-100" *ngIf="eu.isPropertyOfType(instanceProperty.key, 'Object', properties)">
+                        <mat-chip-list class="object-property" #objectPropertySelect>
+                            <mat-chip *ngFor="let item of instanceProperty.value"
+                                      (removed)="removeObjectProperty(item, instanceProperty.key); addToChanged(instanceProperty.key)">
+                                <span>{{item['@value'] || item['@id']}}</span>
+                                <mat-icon matChipRemove>cancel</mat-icon>
+                            </mat-chip>
+                            <input type="{{eu.getInputType(instanceProperty.key, properties)}}" placeholder="Enter IRI..."
+                                   (click)="getOptions(instanceProperty.key)"
+                                   [matAutocomplete]="objectAuto"
+                                   [matChipInputFor]="objectPropertySelect"
+                                   [matChipInputAddOnBlur]="false"
+                                   (matChipInputTokenEnd)="addToChanged(instanceProperty.key)">
+                        </mat-chip-list>
+                        <mat-autocomplete #objectAuto>
+                            <mat-option *ngFor="let item of options" (click)="addObjectProperty(item, instanceProperty.key)">
+                                {{item.title}}
+                            </mat-option>
+                        </mat-autocomplete>
+                    </mat-form-field>
+                </ng-container>
             </div>
         </form>
         <div class="btn-container clearfix">
-            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.newInstanceProperty()" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+            <button type="button" [disabled]="isInstancePropertyDisabled" (click)="newInstanceProperty()" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
         </div>
     </div>
 </div>

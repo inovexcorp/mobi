@@ -31,7 +31,7 @@
             <div class="item-indicator pr-2">
                 <md-progress-circular ng-if="dvm.isPending(item)" md-diameter="18"></md-progress-circular>
                 <div ng-if="!dvm.isPending(item)" class="item-completed">
-                    <i ng-class="{'fa-check text-success': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times text-danger': (item.error && item.error.errorMessage) }" class="fa fa-fw"></i>
+                    <i ng-class="{'fa-check text-success': (item.status === 'complete') && !item.error, 'fa-times text-danger': (item.error && item.error.errorMessage) }" class="fa fa-fw"></i>
                 </div>
             </div>
             <div class="item-details flex-1 remove-min-width">

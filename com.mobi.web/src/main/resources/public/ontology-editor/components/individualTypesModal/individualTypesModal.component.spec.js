@@ -44,7 +44,7 @@ describe('Individual Types Modal component', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             prefixes = _prefixes_;
         });
 
@@ -125,7 +125,7 @@ describe('Individual Types Modal component', function() {
                 expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['type1']);
                 expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.individuals.flat).toEqual(['type1']);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': this.iri, '@type': ['new']});
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {'@id': this.iri, '@type': ['new']});
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -141,7 +141,7 @@ describe('Individual Types Modal component', function() {
                 expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.individuals.flat).toEqual(['type1']);
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': this.iri, '@type': ['type2']});
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {'@id': this.iri, '@type': ['type2']});
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });

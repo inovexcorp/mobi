@@ -20,29 +20,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="class-cards h-100">
-    <md-virtual-repeat-container class="rows-container h-100">
-        <div md-virtual-repeat="chunk in dvm.chunks" class="row" md-item-size="267">
-            <div ng-repeat="item in chunk" class="card-container col-4">
-                <md-card class="card">
-                    <md-card-title>
-                        <md-card-title-text>
-                            <span class="card-header">
-                                <span class="md-headline text">{{item.classTitle}}</span>
-                                <span class="badge badge-primary badge-pill rounded-circle">{{item.instancesCount | number}}</span>
-                            </span>
-                        </md-card-title-text>
-                    </md-card-title>
-                    <md-card-content>
-                        <p class="overview">{{item.classDescription}}</p>
-                        <p class="text-muted">Defined in {{item.ontologyRecordTitle}}</p>
-                        <em class="text-muted">Examples: <span class="example" ng-repeat="example in item.classExamples track by $index">{{example}}</span></em>
-                    </md-card-content>
-                    <md-card-actions layout="row" layout-align="end center">
-                        <md-button ng-click="dvm.exploreData(item)">Explore Data</md-button>
-                    </md-card-actions>
-                </md-card>
-            </div>
+<div class="class-cards vertical-scroll h-100">
+    <div *uiScroll="let chunk of datasource" class="row">
+        <div *ngFor="let item of chunk" class="card-container col-4">
+            <mat-card>
+                <mat-card-title class="text-truncate">
+                    <span>{{item.classTitle}}</span>
+                    <span class="float-right badge badge-primary badge-pill rounded-circle">{{item.instancesCount | number}}</span>
+                </mat-card-title>
+                <mat-card-content>
+                    <p class="overview">{{item.classDescription}}</p>
+                    <p class="text-muted">Defined in {{item.ontologyRecordTitle}}</p>
+                    <em class="text-muted">Examples: <span class="example" *ngFor="let example of item.classExamples">{{example}}</span></em>
+                </mat-card-content>
+                <mat-card-actions>
+                    <button mat-button color="primary" (click)="exploreData(item)">Explore Data</button>
+                </mat-card-actions>
+            </mat-card>
         </div>
-    </md-virtual-repeat-container>
+    </div>
 </div>

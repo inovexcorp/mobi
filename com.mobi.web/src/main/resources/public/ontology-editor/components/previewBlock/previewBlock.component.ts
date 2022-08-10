@@ -23,6 +23,8 @@
 import * as angular from 'angular';
 
 import './previewBlock.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 const template = require('./previewBlock.component.html');
 
@@ -51,7 +53,7 @@ const previewBlockComponent = {
 
 previewBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService'];
 
-function previewBlockComponentCtrl($filter, ontologyStateService, ontologyManagerService) {
+function previewBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService) {
     var dvm = this;
     var om = ontologyManagerService;
     var previewQuery = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000"
@@ -68,9 +70,9 @@ function previewBlockComponentCtrl($filter, ontologyStateService, ontologyManage
     }
     dvm.getPreview = function() {
         setMode(dvm.activePage.serialization);
-        om.getQueryResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, previewQuery, dvm.activePage.serialization, '', false, true)
-            .then(ontology => {
-                dvm.activePage.preview = (dvm.activePage.serialization === 'jsonld' ? $filter('json')(ontology) : ontology);
+        om.getQueryResults(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, previewQuery, dvm.activePage.serialization, false, true)
+            .subscribe(ontology => {
+                dvm.activePage.preview = ontology;
                 dvm.changeEvent({value: dvm.activePage});
             }, response => {
                 dvm.activePage.preview = response;
@@ -79,7 +81,7 @@ function previewBlockComponentCtrl($filter, ontologyStateService, ontologyManage
     }
     dvm.download = function() {
         var fileName = $filter('splitIRI')(dvm.os.listItem.ontologyId).end;
-        om.downloadOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.activePage.serialization, fileName);
+        om.downloadOntology(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, dvm.activePage.serialization, fileName);
     }
     dvm.changeSerialization = function(value) {
         dvm.activePage.serialization = value;

@@ -25,8 +25,10 @@ import { MatStepper } from '@angular/material';
 
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { Commit } from '../../../shared/models/commit.interface';
 
 import './createRequest.component.scss';
+
 
 /**
  * @class merge-requests.CreateRequestComponent
@@ -40,7 +42,9 @@ import './createRequest.component.scss';
     templateUrl: './createRequest.component.html'
 })
 export class CreateRequestComponent implements OnInit, OnDestroy {
-    @Input() commits:[any];
+    commits:Commit[];
+    isDisabled:boolean;
+
     @ViewChild('requestStepper') requestStepper: MatStepper;
 
     constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, @Inject('utilService') public util) {}
@@ -48,6 +52,7 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
     // TODO: Come Angular 7, replace with binding on stepper in template 
     ngOnInit(): void {
         this.requestStepper.selectedIndex = this.state.createRequestStep;
+        this.updateIsDisableValue();
     }
     ngOnDestroy(): void {
         this.state.createRequestStep = this.requestStepper.selectedIndex;
@@ -72,10 +77,14 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
         this.state.requestConfig.description = '';
         this.state.requestConfig.assignees = [];
         this.state.requestConfig.removeSource = false;
-       
     }
     
-    updateCommits(commits):void{
-        this.commits = commits;
+    updateCommits(value: {commits: Commit[]} ):void{
+        this.commits = value.commits;
+        this.updateIsDisableValue();
+    }
+
+    private updateIsDisableValue() {
+        this.isDisabled = this.requestStepper.selectedIndex > 0 && !(this.commits?.length > 0) ? true: false;
     }
 }

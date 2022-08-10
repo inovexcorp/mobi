@@ -28,6 +28,7 @@ import { CATALOG, DCTERMS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 import './branchList.component.scss';
 
@@ -66,7 +67,7 @@ export class BranchListComponent {
     get record(): JSONLDObject {
         return this._record;
     }
-    constructor(public cm: CatalogManagerService, @Inject('ontologyManagerService') public om, 
+    constructor(public cm: CatalogManagerService, public om: OntologyManagerService, 
         @Inject('utilService') public util) {}
 
     loadMore(): void {

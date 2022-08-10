@@ -20,15 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="instance-editor h-100">
-    <block class="h-100">
-        <block-header>
-            <breadcrumbs items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
-            <a class="float-right link" ng-click="dvm.cancel()">Cancel</a>
-            <button type="button" ng-disabled="!dvm.isValid" class="float-right link btn btn-link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</button>
-        </block-header>
-        <block-content>
-            <instance-form header="'Instance Editor'" is-valid="dvm.isValid" change-event="dvm.isValid = value"></instance-form>
-        </block-content>
-    </block>
+<div class="instance-editor h-100 d-flex flex-column">
+    <div class="instances-editor-header px-2">
+        <breadcrumbs [items]="ds.explore.breadcrumbs" (onClick)="ds.clickCrumb($event)"></breadcrumbs>
+        <button mat-button class="float-right link" (click)="cancel()">Cancel</button>
+        <button mat-button [disabled]="!isValid" class="float-right link btn btn-link" (click)="save()"><i class="fa fa-floppy-o"></i>Save</button>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="remove-min-height instance-edit-Container">
+        <instance-form [header]="'Instance Editor'" [isValid]="isValid" (changeEvent)="checkValidation($event)"></instance-form>
+    </div>
 </div>

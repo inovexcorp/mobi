@@ -102,7 +102,7 @@ describe('Ontology Close Overlay component', function() {
                     ontologyStateSvc.afterSave.and.returnValue($q.when());
                     this.controller.saveThenClose();
                     scope.$apply();
-                    expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {
+                    expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {
                         additions: ontologyStateSvc.listItem.additions,
                         deletions: ontologyStateSvc.listItem.deletions
                     });

@@ -49,7 +49,9 @@ import {
     MatStepperModule,
     MatGridListModule,
     MatRadioModule,
-    MatButtonToggleModule} from '@angular/material';
+    MatButtonToggleModule,
+    MatProgressBarModule} from '@angular/material';
+
 import { MatTableModule } from '@angular/material/table';
 import { CdkTableModule } from '@angular/cdk/table';
 import { HttpClientModule } from '@angular/common/http';
@@ -57,6 +59,7 @@ import { ShowdownModule } from 'ngx-showdown';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatMarkdownEditorModule } from 'mat-markdown-editor';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+import { UiScrollModule } from 'ngx-ui-scroll';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blankNodeValueDisplayComponent from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
@@ -65,11 +68,10 @@ import blockContentComponent from './components/blockContent/blockContent.compon
 import blockFooterComponent from './components/blockFooter/blockFooter.component';
 import blockHeaderComponent from './components/blockHeader/blockHeader.component';
 import blockSearchComponent from './components/blockSearch/blockSearch.component';
-import breadcrumbsComponent from './components/breadcrumbs/breadcrumbs.component';
 import circleButtonStackComponent from './components/circleButtonStack/circleButtonStack.component';
 import commitCompiledResourceComponent from './components/commitCompiledResource/commitCompiledResource.component';
 import confirmModalComponent from './components/confirmModal/confirmModal.component.ajs';
-import editIriOverlayComponent from './components/editIriOverlay/editIriOverlay.component';
+import editIriOverlayComponentAjs from './components/editIriOverlay/editIriOverlay.component.ajs';
 import emailInputComponent from './components/emailInput/emailInput.component';
 import entityDatesComponent from './components/entityDates/entityDates.component';
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
@@ -124,8 +126,6 @@ import httpService from './services/http.service';
 import loginManagerService from './services/loginManager.service';
 import manchesterConverterService from './services/manchesterConverter.service';
 import modalService from './services/modal.service';
-import ontologyManagerService from './services/ontologyManager.service';
-import ontologyStateService from './services/ontologyState.service';
 import policyEnforcementService from './services/policyEnforcement.service';
 import settingManagerService from './services/settingManager.service';
 import prefixes from './services/prefixes.service';
@@ -143,10 +143,8 @@ import { ProgressSpinnerService } from '../shared/components/progress-spinner/se
 import {
     httpServiceProvider,
     loginManagerServiceProvider,
+    manchesterConverterServiceProvider,
     modalServiceProvider,
-    ontologyManagerServiceProvider,
-    ontologyStateServiceProvider,
-    ontologyUtilsManagerServiceProvider,
     policyManagerServiceProvider,
     policyEnforcementServiceProvider,
     recordPermissionsManagerServiceProvider,
@@ -155,7 +153,8 @@ import {
     settingManagerServiceProvider,
     stateManagerServiceProvider,
     toastrProvider,
-    utilServiceProvider
+    utilServiceProvider,
+    updateRefsServiceProvider,
 } from '../ajs.upgradedProviders';
 
 import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
@@ -176,6 +175,8 @@ import { MapperStateService } from './services/mapperState.service';
 import { MappingManagerService } from './services/mappingManager.service';
 import { MergeRequestManagerService } from './services/mergeRequestManager.service';
 import { MergeRequestsStateService } from './services/mergeRequestsState.service';
+import { OntologyManagerService } from './services/ontologyManager.service';
+import { OntologyStateService } from './services/ontologyState.service';
 import { PolicyManagerService } from './services/policyManager.service';
 import { UserManagerService } from './services/userManager.service';
 import { UserStateService } from './services/userState.service';
@@ -205,7 +206,8 @@ import { PrefixationPipe } from './pipes/prefixation.pipe';
 import { SplitIRIPipe } from './pipes/splitIRI.pipe';
 import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
 import { FocusDirective } from './directives/focus/focus.directive';
-
+import { DatasetSelectComponent } from './components/datasetSelect/datasetSelect.component';
+import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { LimitDescriptionComponent } from '../shared/components/limitDescription/limitDescription.component';
 import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
@@ -213,6 +215,7 @@ import { SettingFormComponent } from './components/settingForm/settingForm.compo
 import { SettingFormFieldComponent } from './components/settingFormField/settingFormField.component';
 import { ShowPropertiesPipe } from './pipes/showProperties.pipe';
 import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.component';
+import { editIriOverlayComponent } from './components/editIriOverlay/editIriOverlay.component';
 
 /**
  * @namespace shared
@@ -246,6 +249,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         MatListModule,
         MatMenuModule,
         MatPaginatorModule,
+        MatProgressBarModule,
         MatProgressSpinnerModule,
         MatRadioModule,
         MatSelectModule,
@@ -254,9 +258,11 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         MatTableModule,
         MatTabsModule,
         MatTooltipModule,
-        ShowdownModule.forRoot({flavor: 'github'})
+        ShowdownModule.forRoot({flavor: 'github'}),
+        UiScrollModule
     ],
     declarations: [
+        BreadcrumbsComponent,
         ConfirmModalComponent,
         ErrorDisplayComponent,
         InfoMessageComponent,
@@ -290,7 +296,9 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         CopyClipboardDirective,
         FocusDirective,
         ValueDisplayComponent,
-        MarkdownEditorComponent
+        MarkdownEditorComponent,
+        DatasetSelectComponent,
+        editIriOverlayComponent
     ],
     entryComponents: [
         ConfirmModalComponent,
@@ -311,7 +319,8 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         CheckboxComponent,
         BranchSelectComponent,
         ResolveConflictsBlock,
-        ValueDisplayComponent
+        ValueDisplayComponent,
+        editIriOverlayComponent
     ],
     exports: [
         CommonModule,
@@ -337,6 +346,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         MatListModule,
         MatMenuModule,
         MatPaginatorModule,
+        MatProgressBarModule,
         MatProgressSpinnerModule,
         MatRadioModule,
         MatSelectModule,
@@ -346,6 +356,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         MatTabsModule,
         MatTooltipModule,
         ShowdownModule,
+        UiScrollModule,
         ConfirmModalComponent,
         ErrorDisplayComponent,
         InfoMessageComponent,
@@ -359,6 +370,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         SplitIRIPipe,
         ShowPropertiesPipe,
         CamelCasePipe,
+        BreadcrumbsComponent,
         FileInputComponent,
         CustomLabelComponent,
         SettingEditPageComponent,
@@ -376,24 +388,25 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         CopyClipboardDirective,
         FocusDirective,
         ValueDisplayComponent,
-        MarkdownEditorComponent
+        MarkdownEditorComponent,
+        DatasetSelectComponent
     ],
     providers: [
         httpServiceProvider,
         loginManagerServiceProvider,
+        manchesterConverterServiceProvider,
         modalServiceProvider,
-        ontologyManagerServiceProvider,
-        ontologyStateServiceProvider,
+        policyEnforcementServiceProvider,
         propertyManagerServiceProvider,
         recordPermissionsManagerServiceProvider,
         policyEnforcementServiceProvider,
-        ontologyUtilsManagerServiceProvider,
         policyManagerServiceProvider,
         propertyManagerServiceProvider,
         provManagerServiceProvider,
         settingManagerServiceProvider,
         stateManagerServiceProvider,
         toastrProvider,
+        updateRefsServiceProvider,
         utilServiceProvider,
         CatalogManagerService,
         CatalogStateService,
@@ -406,6 +419,8 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         MappingManagerService,
         MergeRequestManagerService,
         MergeRequestsStateService,
+        OntologyManagerService,
+        OntologyStateService,
         PolicyManagerService,
         UserManagerService,
         UserStateService,
@@ -435,11 +450,10 @@ angular.module('shared', [])
     .component('blockFooter', blockFooterComponent)
     .component('blockHeader', blockHeaderComponent)
     .component('blockSearch', blockSearchComponent)
-    .component('breadcrumbs', breadcrumbsComponent)
     .component('circleButtonStack', circleButtonStackComponent)
     .component('commitCompiledResource', commitCompiledResourceComponent)
     .component('confirmModalAjs', confirmModalComponent)
-    .component('editIriOverlay', editIriOverlayComponent)
+    .component('editIriOverlayAjs', editIriOverlayComponentAjs)
     .component('emailInput', emailInputComponent)
     .component('entityDates', entityDatesComponent)
     .component('entityDescription', entityDescriptionComponent)
@@ -489,8 +503,6 @@ angular.module('shared', [])
     .service('loginManagerService', loginManagerService)
     .service('manchesterConverterService', manchesterConverterService)
     .service('modalService', modalService)
-    .service('ontologyManagerService', ontologyManagerService)
-    .service('ontologyStateService', ontologyStateService)
     .service('policyEnforcementService', policyEnforcementService)
     .service('settingManagerService', settingManagerService)
     .service('prefixes', prefixes)
@@ -511,6 +523,8 @@ angular.module('shared', [])
     .factory('mappingManagerService', downgradeInjectable(MappingManagerService))
     .factory('mergeRequestManagerService', downgradeInjectable(MergeRequestManagerService))
     .factory('mergeRequestsStateService', downgradeInjectable(MergeRequestsStateService))
+    .factory('ontologyManagerService', downgradeInjectable(OntologyManagerService))
+    .factory('ontologyStateService', downgradeInjectable(OntologyStateService))
     .factory('policyManagerService', downgradeInjectable(PolicyManagerService))
     .factory('userManagerService', downgradeInjectable(UserManagerService))
     .factory('userStateService', downgradeInjectable(UserStateService))
@@ -520,7 +534,9 @@ angular.module('shared', [])
     .factory('yasguiService', downgradeInjectable(YasguiService))
     .factory('ontologyVisualizationService', downgradeInjectable(OntologyVisualizationService))
     .factory('progressSpinnerService', downgradeInjectable(ProgressSpinnerService)) 
+    .directive('breadcrumbs', downgradeComponent({component: BreadcrumbsComponent}) as angular.IDirectiveFactory)
     .directive('confirmModal', downgradeComponent({component: ConfirmModalComponent}) as angular.IDirectiveFactory)
+    .directive('datasetSelect', downgradeComponent({component: DatasetSelectComponent}) as angular.IDirectiveFactory)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
     .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
     .directive('inlineEdit', downgradeComponent({component: InlineEditComponent}) as angular.IDirectiveFactory)
@@ -546,4 +562,6 @@ angular.module('shared', [])
     .directive('resolveConflictsBlock', downgradeComponent({component: ResolveConflictsBlock}) as angular.IDirectiveFactory)
     .directive('markdownEditor', downgradeComponent({component: MarkdownEditorComponent}) as angular.IDirectiveFactory)
     .directive('valueDisplay', downgradeComponent({component: ValueDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('copyClipboard', downgradeComponent({component: CopyClipboardDirective}) as angular.IDirectiveFactory);
+    .directive('copyClipboard', downgradeComponent({component: CopyClipboardDirective}) as angular.IDirectiveFactory)
+    .directive('editIriOverlay', downgradeComponent({component: editIriOverlayComponent}) as angular.IDirectiveFactory)
+

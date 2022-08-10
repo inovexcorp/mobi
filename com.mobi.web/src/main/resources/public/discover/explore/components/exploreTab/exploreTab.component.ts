@@ -21,44 +21,23 @@
  * #L%
  */
 
-import { Directive, ElementRef, Injector } from '@angular/core';
-import { UpgradeComponent } from '@angular/upgrade/static';
-
+import { Component } from '@angular/core';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
-const template = require('./exploreTab.component.html');
-
 /**
- * @ngdoc component
- * @name explore.component:exploreTab
- * @requires shared.service:discoverStateService
+ * @class explore.ExploreTabComponent
  *
- * @description
- * `exploreTab` is a component that creates a {@link explore.component:classBlock} to explore data within a dataset.
- * It also provides an {@link explore.component:instanceBlock}, an {@link explore.component:instanceView},
- * an {@link explore.component:instanceEditor}, and an {@link explore.component:instanceCreator} for viewing and
+ * `exploreTab` is a component that creates a {@link explore.ClassBlockComponent} to explore data within a dataset.
+ * It also provides an {@link explore.InstanceBlockComponent}, an {@link explore.InstanceViewComponent},
+ * an {@link explore.InstanceEditorComponent}, and an {@link explore.InstanceCreatorComponent} for viewing and
  * managing instance data.
  *
  */
-export const exploreTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: exploreTabComponentCtrl
-};
-
-exploreTabComponentCtrl.$inject = ['discoverStateService'];
-
-function exploreTabComponentCtrl(discoverStateService: DiscoverStateService) {
-    var dvm = this;
-    dvm.ds = discoverStateService;
-}
-
-@Directive({
-    selector: 'explore-tab'
+@Component({
+    selector: 'explore-tab',
+    templateUrl: './exploreTab.component.html'
 })
-export class ExploreTabDirective extends UpgradeComponent {
-    constructor(elementRef: ElementRef, injector: Injector) {
-        super('exploreTab', elementRef, injector);
-    }
+
+export class ExploreTabComponent {
+    constructor(public state: DiscoverStateService) {}
 }

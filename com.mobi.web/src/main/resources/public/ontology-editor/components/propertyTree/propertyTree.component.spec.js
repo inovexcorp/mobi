@@ -365,19 +365,19 @@ describe('Property Tree component', function() {
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
                         expect(this.controller.isShown(this.node)).toEqual(true);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node, this.controller.activeTab);
                     });
                     it('and does not have a child with a text match', function() {
                         expect(this.controller.isShown(this.node)).toEqual(false);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node, this.controller.activeTab);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
                     expect(this.controller.isShown(this.node)).toEqual(true);
-                    expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node, this.controller.activeTab);
                 });
             });
@@ -417,21 +417,21 @@ describe('Property Tree component', function() {
                             this.controller.filterText = 'text';
                             this.node.parentNoMatch = true;
                             expect(this.controller.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                         });
                         it('and has a child that has a text match', function() {
                             this.node.displayNode = true;
                             expect(this.controller.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                         });
                         it('and does not have a child with a text match', function() {
                             expect(this.controller.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                         });
                     });
                     it('and filterText is not set and is not a parent node without a text match', function() {
                         expect(this.controller.isShown(this.node)).toEqual(false);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                     });
                 });
             });
@@ -451,7 +451,7 @@ describe('Property Tree component', function() {
                     expect(this.controller.openEntities(this.node)).toEqual(true);
                     expect(this.node.isOpened).toEqual(true);
                     expect(this.node.displayNode).toEqual(true);
-                    expect(this.node.set).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
+                    expect(this.node.set).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, true);
                 });
                 it('and it is not open', function() {
                     ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.node.title] = false;

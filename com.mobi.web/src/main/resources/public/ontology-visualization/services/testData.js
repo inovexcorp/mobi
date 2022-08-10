@@ -3298,7 +3298,7 @@ const listItem = {
         "label": "Germany"
       }
     },
-    "ontologyRecord": {
+    "versionedRdfRecord": {
       "title": "pizza.owl.jsonld",
       "recordId": "https://mobi.com/records#f913940d-67c8-43eb-9b25-ec662bf1af21",
       "branchId": "https://mobi.com/branches#639dee09-c465-4c93-b708-f3c6a47b644d",

@@ -20,153 +20,104 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { endsWith, identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
+import { endsWith, get, indexOf, forEach, some, includes, find, isMatch, has, filter, map as lodashMap, reduce, intersection, isString, concat, uniq } from 'lodash';
+import { Inject, Injectable } from '@angular/core';
 import * as jszip from 'jszip';
-import { from } from 'rxjs';
+import { from, Observable, throwError, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../constants';
+import { DC, DCTERMS, ONTOLOGYEDITOR, OWL, RDFS, SKOS, SKOSXL } from '../../prefixes';
+import { OntologyRecordConfig } from '../models/ontologyRecordConfig.interface';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HelperService } from './helper.service';
+import { VocabularyStuff } from '../models/vocabularyStuff.interface';
+import { OntologyStuff } from '../models/ontologyStuff.interface';
+import { PropertyToRanges } from '../models/propertyToRanges.interface';
+import { IriList } from '../models/iriList.interface';
+import { HierarchyResponse } from '../models/hierarchyResponse.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { OntologyDocument } from '../models/ontologyDocument.interface';
+import { EntityNames } from '../models/entityNames.interface';
+import { ErrorResponse } from '../models/errorResponse.interface';
+import { GroupQueryResults } from '../models/groupQueryResults.interface';
 
-ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX', 'progressSpinnerService'];
 /**
- * @ngdoc service
- * @name shared.service:ontologyManagerService
- * @requires shared.service:prefixes
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:httpService
+ * @class shared.OntologyManagerService
  *
- * @description
  * `ontologyManagerService` is a service that provides access to the Mobi ontology REST
  * endpoints and utility functions for editing/creating ontologies and accessing
  * various entities within the ontology.
  */
-function ontologyManagerService($http, $q, prefixes, catalogManagerService: CatalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX, progressSpinnerService: ProgressSpinnerService) : void {
-    const self = this;
-    const prefix = REST_PREFIX + 'ontologies';
-    const cm = catalogManagerService;
-    const util = utilService;
-    let catalogId = '';
-    const spinnerSrv = progressSpinnerService;
+@Injectable()
+export class OntologyManagerService {
+    catalogId = '';
+    prefix = REST_PREFIX + 'ontologies';
+
+    constructor(private http: HttpClient, private helper: HelperService, private cm: CatalogManagerService,
+        @Inject('utilService') private util, private spinnerSrv: ProgressSpinnerService) {}
 
     /**
-     * @ngdoc property
-     * @name ontologyRecords
-     * @propertyOf shared.service:ontologyManagerService
-     * @type {Object[]}
-     *
-     * @description
-     * 'ontologyRecords' holds an array of ontology record objects which contain properties for the metadata
-     * associated with that record.
-     */
-    self.ontologyRecords = [];
-    /**
-     * @ngdoc property
-     * @name entityNameProps
-     * @propertyOf shared.service:ontologyManagerService
-     * @type {Object[]}
-     *
-     * @description
      * 'entityNameProps' holds an array of properties used to determine an entity name.
+     * @type {string[]}
      */
-    self.entityNameProps = [prefixes.rdfs + 'label', prefixes.dcterms + 'title', prefixes.dc + 'title', prefixes.skos + 'prefLabel', prefixes.skos + 'altLabel', prefixes.skosxl + 'literalForm'];
+    entityNameProps = [RDFS + 'label', DCTERMS + 'title', DC + 'title', SKOS + 'prefLabel', SKOS + 'altLabel', SKOSXL + 'literalForm'];
 
     /**
-     * @ngdoc method
-     * @name reset
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Resets all state variables.
-     */
-    self.reset = function() {
-        self.ontologyRecords = [];
-    };
-    /**
-     * @ngdoc method
-     * @name initialize
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Initializes the `catalogId` variable.
      */
-    self.initialize = function() {
-        catalogId = get(cm.localCatalog, '@id', '');
-    };
+    initialize(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+    }
     /**
-     * @ngdoc method
-     * @name uploadOntology
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
-     * with the file/JSON-LD provided. This creates a new OntologyRecord associated with this ontology. Returns a
-     * promise indicating whether the ontology was persisted. Provide either a file or JSON-LD, but not both.
+     * with the file/JSON-LD provided. This creates a new OntologyRecord associated with this ontology. Returns an
+     * observable indicating whether the ontology was persisted. Provide either a file or JSON-LD, but not both.
      *
-     * @param {File} file The ontology file.
-     * @param {Object} ontologyJson The ontology json.
-     * @param {string} title The record title.
-     * @param {string} description The record description.
-     * @param {string} keywords The array of keywords for the record.
-     * @param {string} id The identifier for this request.
-     * @returns {Promise} A promise indicating whether the ontology was persisted.
+     * @param {OntologyRecordConfig} config A configuration object containing metadata for the new Record as well as
+     * the actual data itself
+     * @returns {Observable} An Observable that resolves with the ontology record metadata if successfully persisted or
+     * rejects with an error message
      */
-    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '', callback = null) {
+    uploadOntology(config: OntologyRecordConfig): Observable<{ontologyId: string, recordId: string, branchId: string, commitId: string} | ErrorResponse> {
         const fd = new FormData();
-        const config = {
-            transformRequest: identity,
-            headers: {
-                'Content-Type': undefined
-            }
-        };
-        let prepPromise;
-        if (file !== undefined) {
-            const titleInfo = getFileTitleInfo(title);
-            if (endsWith(titleInfo.title, ".trig") || endsWith(titleInfo.title, ".trig.zip") || endsWith(titleInfo.title, ".trig.gzip")) {
-                prepPromise = Promise.reject('TriG data is not supported for ontology upload.');
-            } else if (titleInfo.ext !== 'zip' && file.size) {
-                prepPromise = self.compressFile(file).then(file => {
+        let prepObservable: Observable<null>;
+        if (config.file !== undefined) {
+            const titleInfo = this._getFileTitleInfo(config.title);
+            if (endsWith(titleInfo.title, '.trig') || endsWith(titleInfo.title, '.trig.zip') || endsWith(titleInfo.title, '.trig.gzip')) {
+                prepObservable = throwError('TriG data is not supported for ontology upload.');
+            } else if (titleInfo.ext !== 'zip' && config.file.size) {
+                prepObservable = this.compressFile(config.file).pipe(map((file: File) => {
                     fd.append('file',file);
-                });
+                    return null;
+                }));
             } else {
-                prepPromise = Promise.resolve(fd.append('file', file));
+                fd.append('file', config.file);
+                prepObservable = of(null);
             }
         } else {
-            prepPromise = Promise.resolve();
+            prepObservable = of(null);
         }
-       return prepPromise.then(() => {
-            if (ontologyJson !== undefined) {
-                fd.append('json', JSON.stringify(ontologyJson));
-            }
-            fd.append('title', title);
-            if (description) {
-                fd.append('description', description);
-            }
-            forEach(keywords, word => fd.append('keywords', word));
-            const promise =  id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-           
-            if (typeof(callback) == 'function') {
-                let resolver = promise.then(response => response.data, util.rejectErrorObject);
-                callback(id, resolver, title);
-            } else {
-                return promise.then(response => response.data, util.rejectErrorObject);
-            }    
-        }, errorString => {
-            const resolver = Promise.reject({'errorMessage': errorString, 'errorDetails': []});
-            if (typeof(callback) == 'function') {
-                callback(id, resolver, title);
-            } else {
-                return resolver;
-            }
-        }).then(response => { return response }, $q.reject);
-    };
-
+        return prepObservable.pipe(
+            catchError(error => {
+                return throwError({errorMessage: error, errorDetails: []});
+            }),
+            switchMap(() => {
+                if (config.jsonld !== undefined) {
+                    fd.append('json', JSON.stringify(config.jsonld));
+                }
+                fd.append('title', config.title);
+                if (config.description) {
+                    fd.append('description', config.description);
+                }
+                forEach(config.keywords, word => fd.append('keywords', word));
+                return this.http.post<{ontologyId: string, recordId: string, branchId: string, commitId: string}>(this.prefix, fd).pipe(catchError(this.helper.handleErrorObject.bind(this.helper)));
+            })
+        );
+    }
     /**
-     * @ngdoc method
-     * @name uploadChangesFile
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the PUT /mobirest/ontologies/{recordId} endpoint which will return a new in-progress commit
      * object to be applied to the ontology.
      *
@@ -174,38 +125,35 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} recordId the ontology record ID.
      * @param {string} branchId the ontology branch ID.
      * @param {string} commitId the ontology commit ID.
-     * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
+     * @returns {Observable} An observable with the new in-progress commit to be applied or error message.
      */
-    self.uploadChangesFile = function(file, recordId, branchId, commitId) {
+    // TODO: Better typing DO THIS NOW. Look at response from the endpoint
+    uploadChangesFile(file: File, recordId: string, branchId: string, commitId: string): Observable<any> {
         const fd = new FormData();
-        const config = {
-            transformRequest: identity,
-            headers: {
-                'Content-Type': undefined,
-                'Accept': 'application/json'
-            },
-            params: {
-                branchId,
-                commitId
-            }
-        };
         fd.append('file', file);
+        let headers = new HttpHeaders;
+        headers = headers.append('Accept', 'application/json');
+        const params = {
+            branchId,
+            commitId
+        };
 
-        return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
-            .then(response => {
+        return this.spinnerSrv.track(this.http.put(this.prefix + '/' + encodeURIComponent(recordId), fd, {
+            observe: 'response',
+            headers,
+            params: this.helper.createHttpParams(params)
+        })).pipe(
+            catchError(this.helper.handleErrorObject.bind(this.helper)),
+            map((response: HttpResponse<null>) => {
                 if (get(response, 'status') === 204) {
-                    return $q.reject({warningMessage: 'Uploaded file is identical to current branch.'});
+                    return throwError({warningMessage: 'Uploaded file is identical to current branch.'});
                 } else {
-                    return response.data;
+                    return response.body;
                 }
-            }, util.rejectErrorObject);
-    };
+            })
+        );
+    }
     /**
-     * @ngdoc method
-     * @name getOntology
-     * @methodOf shared.service:catalogManagerService
-     *
-     * @description
      * Calls the GET /mobirest/ontologies/{recordId} endpoint which retrieves an ontology in the provided
      * RDF format.
      *
@@ -218,47 +166,48 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * previewed, not edited
      * @param {boolean} [applyInProgressCommit=true]  Boolean indicating whether or not any in progress commits by user
      * should be applied to the return value
-     * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format
+     * @return {Observable} An observable with the ontology at the specified commit in the specified RDF format
      */
-    self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false, preview = false, applyInProgressCommit = true) {
-        const config = {
-            headers: {
-                'Accept': 'text/plain'
-            },
-            params: {
-                branchId,
-                commitId,
-                rdfFormat,
-                clearCache,
-                skolemize: !preview,
-                applyInProgressCommit
-            }
+    getOntology(recordId: string, branchId: string, commitId: string, rdfFormat = 'jsonld', clearCache = false, preview = false, applyInProgressCommit = true): Observable<JSONLDObject[]|string> {
+        const params = {
+            branchId,
+            commitId,
+            rdfFormat,
+            clearCache,
+            skolemize: !preview,
+            applyInProgressCommit
         };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
-            .then(response => response.data, util.rejectError);
-    };
+        let headers = new HttpHeaders();
+        headers = headers.append('Accept', rdfFormat === 'jsonld' ? 'application/json' : 'text/plain');
+        return this.spinnerSrv.track(this.http.get(this.prefix + '/' + encodeURIComponent(recordId), {
+            responseType: 'text',
+            observe: 'response',
+            headers,
+            params: this.helper.createHttpParams(params)
+        })).pipe(
+            catchError(this.helper.handleError),
+            map((response: HttpResponse<string>) => {
+                const contentType = response.headers.get('Content-Type');
+                if (contentType === 'application/json') {
+                    return (JSON.parse(response.body)) as JSONLDObject[];
+                } else {
+                    return response.body;
+                }
+            })
+        );
+    }
     /**
-     * @ngdoc method
-     * @name deleteOntology
-     * @methodOf shared.service:catalogManagerService
-     *
-     * @description
      * Calls the DELETE /mobirest/ontologies/{recordId} endpoint which deletes the ontology.
      *
      * @param {string} recordId The id of the Record to be deleted.
-     * @return {Promise} HTTP OK unless there was an error.
+     * @return {Observable} HTTP OK unless there was an error.
      */
-    self.deleteOntology = function(recordId) {
-        return $http.delete(prefix + '/' + encodeURIComponent(recordId))
-            .then(noop, util.rejectError);
-    };
+    deleteOntology(recordId: string): Observable<null> {
+        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(recordId)))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name downloadOntology
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId} endpoint using the `window.location` variable which will
+     * Calls the GET /mobirest/ontologies/{recordId} endpoint using the `window.open` method which will
      * start a download of the ontology starting at the identified Commit.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
@@ -267,170 +216,127 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
      * @param {string} [fileName='ontology'] The name given to the downloaded file
      */
-    self.downloadOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', fileName = 'ontology') {
-        const params = $httpParamSerializer({
+    downloadOntology(recordId: string, branchId: string, commitId: string, rdfFormat = 'jsonld', fileName = 'ontology'): void {
+        const params = this.helper.createHttpParams({
             branchId,
             commitId,
             rdfFormat: rdfFormat || 'jsonld',
             fileName: fileName || 'ontology'
         });
-        util.startDownload(prefix + '/' + encodeURIComponent(recordId) + '?' + params);
-    };
+        window.open(this.prefix + '/' + encodeURIComponent(recordId) + '?' + params.toString());
+    }
     /**
-     * @ngdoc method
-     * @name deleteOntologyBranch
-     * @methodOf shared.service:catalogManagerService
-     *
-     * @description
      * Calls the DELETE /mobirest/ontologies/{recordId}/branches/{branchId} endpoint which deletes the provided
      * branch from the OntologyRecord
      *
      * @param {string} recordId The id of the Record.
      * @param {string} branchId The id of the Branch that should be removed.
-     * @return {Promise} HTTP OK unless there was an error.
+     * @return {Observable} HTTP OK unless there was an error.
      */
-    self.deleteOntologyBranch = function(recordId, branchId) {
-        return $http.delete(prefix + '/' + encodeURIComponent(recordId) + '/branches/'
-            + encodeURIComponent(branchId))
-            .then(noop, util.rejectError);
-    };
+    deleteOntologyBranch(recordId: string, branchId: string): Observable<null> {
+        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(recordId) + '/branches/'
+            + encodeURIComponent(branchId)))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getVocabularyStuff
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/vocabulary-stuff endpoint and retrieves an object with keys
-     * for the lists of derived skos:Concept and skos:ConceptScheme, concept hierarchy, and concept scheme
-     * hierarchy.
+     * Calls the GET /mobirest/ontologies/{recordId}/vocabulary-stuff endpoint and retrieves a VocabularyStuff object.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @param {string} id The identifier for this request
-     * @return {Promise} A Promise with an object containing keys "derivedConcepts", "derivedConceptSchemes",
-     * "concepts.hierarchy", "concepts.index", "conceptSchemes.hierarchy", and "conceptSchemes.index".
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable<VocabularyStuff>} An Observable with a VocabularyStuff object
      */
-    self.getVocabularyStuff = function(recordId, branchId, commitId, id = '') {
-        const config = { params: { branchId, commitId } };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/vocabulary-stuff';
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => response.data, util.rejectError);
-    };
+    getVocabularyStuff(recordId: string, branchId: string, commitId: string, isTracked = false): Observable<VocabularyStuff> {
+        const params = { branchId, commitId };
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/vocabulary-stuff';
+        const request = this.http.get<VocabularyStuff>(url, {params: this.helper.createHttpParams(params)});
+        return this._trackedRequest(request, isTracked).pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getOntologyStuff
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an object with keys
-     * corresponding to the listItem structure.
+     * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an OntologyStuff object 
+     * containing keys corresponding to the listItem structure.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
      * @param {boolean} clearCache Whether or not to clear the cache
-     * @param {string} id The identifier for this request
-     * @return {Promise} A Promise with an object containing listItem keys.
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable<OntologyStuff>} An Observable with an OntologyStuff object containing listItem keys.
      */
-    self.getOntologyStuff = function(recordId, branchId, commitId, clearCache, id = '') {
-        const config = { params: { branchId, commitId, clearCache } };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => response.data, util.rejectError);
-    };
+    getOntologyStuff(recordId: string, branchId: string, commitId: string, clearCache: boolean, isTracked = false): Observable<OntologyStuff> {
+        const params = { branchId, commitId, clearCache };
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
+        const request = this.http.get<OntologyStuff>(url, {params: this.helper.createHttpParams(params)});
+        return this._trackedRequest(request, isTracked).pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getPropertyToRange
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/property-range endpoint and retrieves an object with keys
-     * corresponding to Ontology Object Properties and ranges.
+     * Calls the GET /mobirest/ontologies/{recordId}/property-range endpoint and retrieves a PropertyToRanges object 
+     * containing keys corresponding to Ontology Object Properties and ranges.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
-     * @param {string} id The identifier for this request
-     * @return {Promise} A Promise with an object containing listItem keys.
+     * @param {boolean} [applyInProgressCommit=false] Whether to apply the in progress commit changes.
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable<PropertyToRanges>} An Observable containing a PropertyToRanges object.
      */
-     self.getPropertyToRange = function(recordId, branchId, commitId, applyInProgressCommit = false, id = '') {
-        const config = { params: { branchId, commitId, applyInProgressCommit } };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/property-ranges';
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => response.data, util.rejectError);
-    };
+     getPropertyToRange(recordId: string, branchId: string, commitId: string, applyInProgressCommit = false, isTracked = false): Observable<PropertyToRanges> {
+        const params = { branchId, commitId, applyInProgressCommit };
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/property-ranges';
+        const request = this.http.get<PropertyToRanges>(url, {params: this.helper.createHttpParams(params)});
+        return this._trackedRequest(request, isTracked).pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getIris
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/iris endpoint and retrieves an object with all the IRIs
+     * Calls the GET /mobirest/ontologies/{recordId}/iris endpoint and retrieves an IriList object with all the IRIs
      * defined in the ontology for various entity types.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an object containing keys for various entities in the ontology and values
-     * of arrays of IRI strings
+     * @return {Observable<IriList>} An Observable with an IriList object with all the IRIs defined in the ontology for 
+     * various entity types. 
      */
-    self.getIris = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getIris(recordId: string, branchId: string, commitId: string): Observable<IriList> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<IriList>(this.prefix + '/' + encodeURIComponent(recordId) + '/iris', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getImportedIris
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/imported-iris endpoint and retrieves an array of objects
+     * Calls the GET /mobirest/ontologies/{recordId}/imported-iris endpoint and retrieves an array of IriList objects
      * with IRIs for various entity types for each imported ontology of the identified ontology.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an array of objects containing keys for various entities in an imported
-     * @param {string} id The identifier for this request
      * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
      * ontology and values of arrays of IRI strings
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable<IriList[]>} An Observable with an array of IriList object containing keys for various entity types for
+     * each imported ontology of the identified ontology
      */
-     self.getImportedIris = function(recordId, branchId, commitId, applyInProgressCommit = true, id = '') {
-        const config = { params: { branchId, commitId, applyInProgressCommit } };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/imported-iris';
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => get(response, 'status') === 200 ? response.data : [], util.rejectError);
-    };
+     getImportedIris(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true, isTracked = false): Observable<IriList[]> {
+        const params = { branchId, commitId, applyInProgressCommit };
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/imported-iris';
+        const request = this.http.get<IriList[]>(url, {params: this.helper.createHttpParams(params)});
+        return this._trackedRequest(request, isTracked).pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getClassHierarchies
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/class-hierarchies endpoint and retrieves an object with the
-     * hierarchy of classes in the ontology organized by the subClassOf property and with an index of each IRI and
-     * its parent IRIs.
+     * Calls the GET /mobirest/ontologies/{recordId}/class-hierarchies endpoint and retrieves a HierarchyResponse 
+     * object corresponding to the class hierarchy.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.                                              should be applied to the return value
-     * @return {Promise} A promise with an object containing the class hierarchy and an index of IRIs to parent IRIs
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
+     * @return {Observable<HierarchyResponse>} An Observable with a HierarchyResponse object corresponding to the class hierarchy
      */
-    self.getClassHierarchies = function(recordId, branchId, commitId, applyInProgressCommit = true) {
-        var config = { params: { branchId, commitId, applyInProgressCommit } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getClassHierarchies(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true): Observable<HierarchyResponse> {
+        const params = { branchId, commitId, applyInProgressCommit };
+        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(this.prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getOntologyClasses
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/ontologies/{recordId}/classes endpoint and retrieves an array of the classes
      * within the ontology.
      *
@@ -439,57 +345,42 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} commitId The id of the Commit to retrieve the ontology from
      * @param {boolean} [applyInProgressCommit=true]  Boolean indicating whether or not any in progress commits by user
      *                                                should be applied to the return value
-     * @return {Promise} A promise with an array containing a list of classes
+     * @return {Observable<JSONLDObject[]>} An Observable with an array containing a list of classes
      */
-    self.getOntologyClasses = function(recordId, branchId, commitId, applyInProgressCommit = true) {
-        const config = { params: { branchId, commitId, applyInProgressCommit} };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getOntologyClasses(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true): Observable<JSONLDObject[]> {
+        const params = { branchId, commitId, applyInProgressCommit};
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(recordId) + '/classes', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getDataProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/ontologies/{recordId}/data-properties endpoint and retrieves an array of data properties
      * within the ontology.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an array containing a list of data properties.
+     * @return {Observable<JSONLDObject[]>} An Observable with an array containing a list of data properties.
      */
-    self.getDataProperties = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-properties', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getDataProperties(recordId: string, branchId: string, commitId: string): Observable<JSONLDObject[]> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(recordId) + '/data-properties', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getObjProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/object-properties endpoint and retrieves an array of object properties
-     * within the ontology.
+     * Calls the GET /mobirest/ontologies/{recordId}/object-properties endpoint and retrieves an array of object 
+     * properties within the ontology.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an array containing a list of object properties.
+     * @return {Observable<JSONLDObject[]>} An Observable with an array containing a list of object properties.
      */
-    self.getObjProperties = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-properties', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getObjProperties(recordId: string, branchId: string, commitId: string): Observable<JSONLDObject[]> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(recordId) + '/object-properties', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getClassesWithIndividuals
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/ontologies/{recordId}/classes-with-individuals endpoint and retrieves an object
      * with the hierarchy of classes with individuals in the ontology organized by the subClassOf property and with
      * an index of each IRI and its parent IRIs.
@@ -497,161 +388,125 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an object containing the hierarchy of classes with individuals and an index
-     * of IRIs to parent IRIs
+     * @return {Observable<JSONLDObject>} An Observable with an object containing the hierarchy of classes with
+     * individuals and an index of IRIs to parent IRIs
      */
-    self.getClassesWithIndividuals = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getClassesWithIndividuals(recordId: string, branchId: string, commitId: string): Observable<JSONLDObject> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getDataPropertyHierarchies
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/data-property-hierarchies endpoint and retrieves an object
-     * with the hierarchy of data properties in the ontology organized by the subPropertyOf property and with an
-     * index of each IRI and its parent IRIs.
+     * Calls the GET /mobirest/ontologies/{recordId}/data-property-hierarchies endpoint and retrieves a
+     * HierarchyResponse object with the hierarchy of data properties in the ontology organized by the subPropertyOf 
+     * property and with an index of each IRI and its parent IRIs.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an object containing the data property hierarchy and an index of IRIs to
-     * parent IRIs
+     * @return {Observable<HierarchyResponse>} An Observable with a HierarchyResponse object containing the data 
+     * property hierarchy and an index of IRIs to parent IRIs
      */
-    self.getDataPropertyHierarchies = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getDataPropertyHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(this.prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getObjectPropertyHierarchies
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/object-property-hierarchies endpoint and retrieves an object
-     * with the hierarchy of object properties in the ontology organized by the subPropertyOf property and with an
-     * index of each IRI and its parent IRIs.
+     * Calls the GET /mobirest/ontologies/{recordId}/object-property-hierarchies endpoint and retrieves a Hierarchy 
+     * Response object with the hierarchy of object properties in the ontology organized by the subPropertyOf property 
+     * and with an index of each IRI and its parent IRIs.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an object containing the object property hierarchy and an index of IRIs to
-     * parent IRIs
+     * @return {Observable<HierarchyResponse>} An Observable with a HierarchyResponse object containing the object 
+     * property hierarchy and an index of IRIs to parent IRIs
      */
-    self.getObjectPropertyHierarchies = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getObjectPropertyHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(this.prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getAnnotationPropertyHierarchies
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves an object
-     * with the hierarchy of annotation properties in the ontology organized by the subPropertyOf property and
-     * with an index of each IRI and its parent IRIs.
+     * Calls the GET /mobirest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves a 
+     * HierarchyResponse object with the hierarchy of annotation properties in the ontology organized by the 
+     * subPropertyOf property and with an index of each IRI and its parent IRIs.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an object containing the annotation property hierarchy and an index of
-     * IRIs to parent IRIs
+     * @return {Observable<HierarchyResponse>} An Observable with a HierarchyResponse object containing the annotation 
+     * property hierarchy and an index of IRIs to parent IRIs
      */
-    self.getAnnotationPropertyHierarchies = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getAnnotationPropertyHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(this.prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name createAnnotation
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the POST /mobirest/ontologies/{recordId}/annotations endpoint and creates a new AnnotationProperty
      * in the ontology. If the annotation already exists in the provided list of annotation IRIs, returns a
-     * rejected promise.
+     * rejected observable.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string[]} annotationIRIs A list of annotation IRI strings
      * @param {string} iri The IRI for the new AnnotationProperty
-     * @return {Promise} A promise with the JSON-LD of the new AnnotationProperty if successful; otherwise
-     *      rejects with an error message
+     * @return {Observable<JSONLDObject>} An Observable with the JSON-LD of the new AnnotationProperty if successful; 
+     * otherwise rejects with an error message
      */
-    self.createAnnotation = function(recordId, annotationIRIs, iri) {
-        const annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
+    createAnnotation(recordId: string, annotationIRIs: string[], iri: string): Observable<JSONLDObject> {
+        const annotationJSON: JSONLDObject = {'@id': iri, '@type': [OWL + 'AnnotationProperty']};
         if (indexOf(annotationIRIs, iri) === -1) {
-            const config = {
-                params: {
-                    annotationjson: annotationJSON
-                }
-            };
-            return $http.post(prefix + '/' + encodeURIComponent(recordId) + '/annotations', null, config)
-                .then(response => {
-                    if (get(response, 'status') === 200) {
-                        return annotationJSON;
-                    } else {
-                        return util.rejectError(response);
-                    }
-                }, util.rejectError);
+            const params = { annotationjson: annotationJSON };
+            return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(recordId) + '/annotations', null, {params: this.helper.createHttpParams(params), observe: 'response'}))
+                .pipe(
+                    catchError(this.helper.handleError),
+                    map((response: HttpResponse<null>) => {
+                        if (response.status === 200) {
+                            return annotationJSON;
+                        } else {
+                            throw new Error(response.statusText || 'Something went wrong. Please try again later.');
+                        }
+                    })
+                );
         } else {
-            return $q.reject('This ontology already has an OWL Annotation declared with that IRI.');
+            return throwError('This ontology already has an OWL Annotation declared with that IRI.');
         }
-    };
+    }
     /**
-     * @ngdoc method
-     * @name getConceptHierarchies
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
-     * with the hierarchy of concepts in the ontology organized by the broader and narrower properties and with
+     * Calls the GET /mobirest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves a HierarchyResponse 
+     * object with the hierarchy of concepts in the ontology organized by the broader and narrower properties and with
      * an index of each IRI and its parent IRIs.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an object containing the concept hierarchy and an index of IRIs to
-     * parent IRIs
+     * @return {Observable<HierarchyResponse>} An Observable with a HierarchyResponse object containing the concept 
+     * hierarchy and an index of IRIs to parent IRIs
      */
-    self.getConceptHierarchies = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getConceptHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(this.prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getConceptSchemeHierarchies
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves an object
-     * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme, hasTopConcept,
-     * and topConceptOf properties and with an index of each IRI and its parent IRIs.
+     * Calls the GET /mobirest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves a 
+     * HierarchyResponse object with the hierarchy of concept schemes and concepts in the ontology organized by the 
+     * inScheme, hasTopConcept, and topConceptOf properties and with an index of each IRI and its parent IRIs.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @return {Promise} A promise with an object containing the concept hierarchy and an index of IRIs to
-     * parent IRIs
+     * @return {Observable<HierarchyResponse>} An Observable with a HierarchyResponse object containing the concept 
+     * hierarchy and an index of IRIs to parent IRIs
      */
-    self.getConceptSchemeHierarchies = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getConceptSchemeHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
+        const params = { branchId, commitId };
+        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(this.prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', {params: this.helper.createHttpParams(params)}))
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getImportedOntologies
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/ontologies/{recordId}/imported-ontologies endpoint which gets the list of
      * all ontologies imported by the ontology with the requested ontology ID.
      *
@@ -660,28 +515,25 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
      * @param {boolean} [applyInProgressCommit=false] Whether to apply the in-progress commit when getting imported ontologies
-     * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
-     * ontology.
+     * @returns {Observable<OntologyDocument[]} An Observable containing the list of ontologies that are imported by the requested ontology.
      */
-    self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld', applyInProgressCommit = false) {
-        const config = {params: {rdfFormat, branchId, commitId, applyInProgressCommit}};
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
-            .then(response => {
-                if (get(response, 'status') === 200) {
-                    return response.data;
-                } else if (get(response, 'status') === 204) {
-                    return [];
-                } else {
-                    return util.rejectError(response);
-                }
-            }, util.rejectError);
-    };
+    getImportedOntologies(recordId: string, branchId: string, commitId: string, rdfFormat = 'jsonld', applyInProgressCommit = false): Observable<OntologyDocument[]> {
+        const params = { rdfFormat, branchId, commitId, applyInProgressCommit };
+        return this.http.get<OntologyDocument[]>(this.prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', { observe: 'response', params: this.helper.createHttpParams(params)})
+            .pipe(
+                catchError(this.helper.handleError),
+                map((response: HttpResponse<OntologyDocument[]>) => {
+                    if (get(response, 'status') === 200) {
+                        return response.body;
+                    } else if (get(response, 'status') === 204) {
+                        return [];
+                    } else {
+                        throw new Error(response.statusText || 'Something went wrong. Please try again later.');
+                    }
+                })
+        );
+    }
     /**
-     * @ngdoc method
-     * @name getEntityUsages
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/ontologies/{recordId}/entity-usages/{entityIRI} endpoint which gets the
      * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
      *
@@ -690,28 +542,29 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
      * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
-     * @param {string} id The identifier for this request
-     * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @returns {Observable} An Observable containing the JSON SPARQL query results bindings.
      */
-    self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', id = '') {
-        const config = {params: {branchId, commitId, queryType}};
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI);
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => {
-            if (queryType === 'construct') {
-                return response.data;
-            } else {
-                return response.data.results.bindings;
-            }
-        }, util.rejectError);
-    };
+    // TODO: figure out typings. OK For now. Hold off til we upgrade ontology editor module (usages block).
+    getEntityUsages(recordId: string, branchId: string, commitId: string, entityIRI: string, queryType = 'select', isTracked = false): Observable<any> {
+        const params = { branchId, commitId, queryType };
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI);
+        const request = this.http.get(url, {params: this.helper.createHttpParams(params)});
+        return this._trackedRequest(request, isTracked)
+            .pipe(
+                catchError(this.helper.handleError),
+                map((response: any) => {
+                    if (queryType === 'construct') {
+                        return response;
+                    } else {
+                        return response.results.bindings;
+                    }
+                })
+            );
+    }
     /**
-     * @ngdoc method
-     * @name getOntologyEntityNames
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the POST /mobirest/ontologies/{recordId}/entity-names
+     * Calls the POST /mobirest/ontologies/{recordId}/entity-names endpoint and returns an object containing 
+     * EntityNames.
      *
      * @param {string} recordId The record ID of the ontology to query.
      * @param {string} branchId The branch ID of the ontology to query.
@@ -719,25 +572,19 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
      * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
      * @param {string[]} [filterResources = []] The list of resources to filter the entity names query by.
-     * @param {string} [id=''] The id to link this REST call to.
-     * @return {Promise} A Promise with an object containing EntityNames.
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable<EntityNames>} An Observable containing EntityNames.
      */
-    self.getOntologyEntityNames = function(recordId, branchId, commitId, includeImports = true, applyInProgressCommit= true, filterResources = [], id = '') {
-        const config = { params: { branchId, commitId, includeImports, applyInProgressCommit },
-            headers: {
-                'Content-Type': 'application/json'
-            } };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/entity-names';
-        const data = {filterResources};
-        const promise = id ? httpService.post(url, data, config, id) : $http.post(url, data, config);
-        return promise.then(response => response.data, util.rejectError);
-    };
+    getOntologyEntityNames(recordId: string, branchId: string, commitId: string, includeImports = true, applyInProgressCommit= true, filterResources = [], isTracked = false): Observable<EntityNames> {
+        const params = { branchId, commitId, includeImports, applyInProgressCommit };
+        let headers = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/json');
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/entity-names';
+        const data = { filterResources };
+        const request = this.http.post<EntityNames>(url, data, {params: this.helper.createHttpParams(params), headers});
+        return this._trackedRequest(request, isTracked).pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getSearchResults
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the search results for literals that contain the requested search text.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
@@ -745,27 +592,26 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} searchText The text that you are searching for in the ontology entity literal values.
      * @param {string} id The id to link this REST call to.
-     * @returns {Promise} A promise containing the SPARQL query results.
+     * @returns {Observable} An Observable containing the SPARQL query results.
      */
-    self.getSearchResults = function(recordId, branchId, commitId, searchText, id) {
+    getSearchResults(recordId: string, branchId: string, commitId: string, searchText: string): Observable<{[key: string]: string[]}> {
         const defaultErrorMessage = 'An error has occurred with your search.';
-        const config = { params: { searchText, branchId, commitId } };
-        return httpService.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config, id)
-            .then(response => {
-                if (get(response, 'status') === 200) {
-                    return response.data;
-                } else if (get(response, 'status') === 204) {
-                    return [];
-                } else {
-                    return $q.reject(defaultErrorMessage);
-                }
-            }, response => util.rejectError(response, defaultErrorMessage));
-    };
+        const params = { searchText, branchId, commitId };
+        return this.http.get(this.prefix + '/' + encodeURIComponent(recordId) + '/search-results', {observe: 'response', params: this.helper.createHttpParams(params)})
+            .pipe(
+                catchError(this.helper.handleError),
+                map((response: HttpResponse<{[key: string]: string[]}>) => {
+                    if (response.status === 200) {
+                        return response.body;
+                    } else if (response.status === 204) {
+                        return {};
+                    } else {
+                        throw new Error(defaultErrorMessage);
+                    }
+                })
+            );
+    }
     /**
-     * @ngdoc method
-     * @name getQueryResults
-     *
-     * @description
      * Get the results of the provided SPARQL query.
      *
      * @param {string} recordId The record ID of the ontology to query.
@@ -773,41 +619,53 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} commitId The commit ID of the ontology to query.
      * @param {string} query The SPARQL query to run against the ontology.
      * @param {string} format The return format of the query results.
-     * @param {string} [id=''] The id to link this REST call to.
      * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
-     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes
-     * @return {Promise} A promise containing the SPARQL query results
+     * @param {boolean} [applyInProgressCommit=false] Whether to apply the in progress commit changes
+     * @return {Observable} An Observable containing the SPARQL query results
      */
-    self.getQueryResults = function(recordId, branchId, commitId, query, format,  id = '', includeImports = true, applyInProgressCommit = false) {
-        const config = { params: { query, branchId, commitId, includeImports, applyInProgressCommit }, headers: {'Accept': getMimeType(format)} };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/query';
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => response.data, util.rejectError);
-    };
+    // TODO: Figure out typings. Hold off for now. Leave TODO.
+    getQueryResults(recordId: string, branchId: string, commitId: string, query: string, format: string, includeImports = true, applyInProgressCommit = false): Observable<any> {
+        const params = {
+            query,
+            branchId,
+            commitId,
+            includeImports,
+            applyInProgressCommit
+        };
+        let headers = new HttpHeaders();
+        headers = headers.append('Accept', this._getMimeType(format));
+        return this.spinnerSrv.track(this.http.get(this.prefix + '/' + encodeURIComponent(recordId) + '/query', {
+            responseType: 'text',
+            observe: 'response',
+            headers,
+            params: this.helper.createHttpParams(params)
+        })).pipe(
+            catchError(this.helper.handleError),
+            map((response: HttpResponse<string>) => {
+                const contentType = response.headers.get('Content-Type');
+                if (contentType === 'application/json') {
+                    return (JSON.parse(response.body)) as JSONLDObject[];
+                } else {
+                    return response.body;
+                }
+            })
+        );
+    }
     /**
-     * @ngdoc method
-     * @name getFailedImports
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets a list of imported ontology IRIs that failed to resolve.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
      * @param {string} branchId The branch ID of the ontology you want to get from the repository.
      * @param {string} commitId The commit ID of the ontology you want to get from the repository.
-     * @return {Promise} A promise containing the list of imported ontology IRIs that failed to resolve.
+     * @return {Observable<string[]>} An Observable containing the list of imported ontology IRIs that failed to 
+     * resolve.
      */
-    self.getFailedImports = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
-            .then(response => response.data, util.rejectError);
-    };
+    getFailedImports(recordId: string, branchId: string, commitId: string): Observable<string[]> {
+        const params = { branchId, commitId };
+        return this.http.get<string[]>(this.prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', {params: this.helper.createHttpParams(params)})
+            .pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name getEntityAndBlankNodes
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/ontologies/{recordId}/entities/{entityIRI} endpoint which gets the RDF of the entity with
      * the specified IRI along with all its linked blank nodes. Accepts the RDF format to return the RDF in, whether to
      * include imports, and whether to apply the in progress commit.
@@ -819,718 +677,506 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
      * @param {string} [format='jsonld'] The RDF format to return the results in
      * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
      * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes
-     * @param {string} [id=''] The id to link this REST call to
-     * @return {Promise} A promise containing the RDF of the specified entity and its blank nodes
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An Observable containing the RDF of the specified entity and its blank nodes
      */
-    self.getEntityAndBlankNodes = function(recordId, branchId, commitId, entityId, format = 'jsonld', includeImports = true, applyInProgressCommit = true, id = '')  {
-        const config = { params: { branchId, commitId, format, includeImports, applyInProgressCommit } };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => response.data, util.rejectError);
-    };
+    getEntityAndBlankNodes(recordId: string, branchId: string, commitId: string, entityId: string, format = 'jsonld',
+        includeImports = true, applyInProgressCommit = true, isTracked = false): Observable<JSONLDObject[]> {
+        const params = { branchId, commitId, format, includeImports, applyInProgressCommit };
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
+        const request = this.http.get<JSONLDObject[]>(url, {params: this.helper.createHttpParams(params)});
+        return this._trackedRequest(request, isTracked).pipe(catchError(this.helper.handleError));
+    }
     /**
-     * @ngdoc method
-     * @name isDeprecated
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is deprecated by looking for the owl:deprecated annotation.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @return {boolean} Returns true if the owl:deprecated value is "true" or "1", otherwise returns false.
      */
-    self.isDeprecated = function(entity) {
-        const deprecated = util.getPropertyValue(entity, prefixes.owl + 'deprecated');
+    isDeprecated(entity: JSONLDObject): boolean {
+        const deprecated = this.util.getPropertyValue(entity, OWL + 'deprecated');
         return deprecated === 'true' || deprecated === '1';
-    };
+    }
     /**
-     * @ngdoc method
-     * @name isOntology
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:Ontology entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:Ontology entity, otherwise returns false.
      */
-    self.isOntology = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.owl + 'Ontology');
-    };
+    isOntology(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), OWL + 'Ontology');
+    }
     /**
-     * @ngdoc method
-     * @name isOntologyRecord
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an ontologyEditor:OntologyRecord entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an ontologyEditor:OntologyRecord entity, otherwise returns false.
      */
-    self.isOntologyRecord = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.ontologyEditor + 'OntologyRecord');
-    };
+    isOntologyRecord(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), ONTOLOGYEDITOR + 'OntologyRecord');
+    }
     /**
-     * @ngdoc method
-     * @name hasOntologyEntity
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontology contains an ontology entity. Returns a boolean.
      *
-     * @param {Object[]} ontology The ontology to search through.
+     * @param {JSONLDObject[]} ontology The ontology to search through.
      * @returns {boolean} Returns true if it finds an entity with @type owl:Ontology entity, otherwise returns
      * false.
      */
-    self.hasOntologyEntity = function(ontology) {
-        return some(ontology, entity => self.isOntology(entity));
-    };
+    hasOntologyEntity(ontology: JSONLDObject[]): boolean {
+        return some(ontology, entity => this.isOntology(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getOntologyEntity
-     * @methodOf shared.service:ontologyManagerService
+     * Gets the ontology entity from the provided ontology. Returns a JSONLDObject.
      *
-     * @description
-     * Gets the ontology entity from the provided ontology. Returns an Object.
-     *
-     * @param {Object[]} ontology The ontology to search through.
-     * @returns {Object} Returns the ontology entity.
+     * @param {JSONLDObject[]} ontology The ontology to search through.
+     * @returns {JSONLDObject} Returns the ontology entity.
      */
-    self.getOntologyEntity = function(ontology) {
-        return find(ontology, entity => self.isOntology(entity));
-    };
+    getOntologyEntity(ontology: JSONLDObject[]): JSONLDObject {
+        return find(ontology, entity => this.isOntology(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getOntologyIRI
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the ontology entity IRI from the provided ontology. Returns a string representing the ontology IRI.
      *
-     * @param {Object[]} ontology The ontology to search through.
-     * @returns {Object} Returns the ontology entity IRI.
+     * @param {JSONLDObject[]} ontology The ontology to search through.
+     * @returns {string} Returns the ontology entity IRI.
      */
-    self.getOntologyIRI = function(ontology) {
-        const entity = self.getOntologyEntity(ontology);
+    getOntologyIRI(ontology: JSONLDObject[]): string {
+        const entity = this.getOntologyEntity(ontology);
         return get(entity, '@id', '');
-    };
+    }
     /**
-     * @ngdoc method
-     * @name isDatatype
-     * @methodOf shared.service:ontologyManagerService
+     * Checks if the provided entity is an rdfs:Datatype. Returns a booelan.
      *
-     * @description
-     *Checks if the provided entity is an rdfs:Datatype. Returns a booelan.
-        *
-        * @param {Object} entity The entity you want to check
-        * @return {boolean} Returns true if it is an rdfs:Datatype entity, otherwise returns false.
-        */
-    self.isDatatype = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.rdfs + 'Datatype');
-    };
+     * @param {JSONLDObject} entity The entity you want to check
+     * @return {boolean} Returns true if it is an rdfs:Datatype entity, otherwise returns false.
+    */
+    isDatatype(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), RDFS + 'Datatype');
+    }
     /**
-     * @ngdoc method
-     * @name isClass
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:Class entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:Class entity, otherwise returns false.
      */
-    self.isClass = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.owl + 'Class');
-    };
+    isClass(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), OWL + 'Class');
+    }
     /**
-     * @ngdoc method
-     * @name hasClasses
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontologies contain any owl:Class entities. Returns a boolean.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {boolean} Returns true if there are any owl:Class entities in the ontologies, otherwise returns
      * false.
      */
-    self.hasClasses = function(ontologies) {
-        return some(ontologies, ont => some(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
-    };
+    hasClasses(ontologies: JSONLDObject[][]): boolean {
+        return some(ontologies, ont => some(ont, entity => this.isClass(entity) && !this.isBlankNode(entity)));
+    }
     /**
-     * @ngdoc method
-     * @name getClasses
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:Class entities within the provided ontologies that are not blank nodes. Returns
-     * an Object[].
+     * a JSONLDObject[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:Class entities within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:Class entities within the ontologies.
      */
-    self.getClasses = function(ontologies) {
-        return collectThings(ontologies, entity => self.isClass(entity) && !self.isBlankNode(entity));
-    };
+    getClasses(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isClass(entity) && !this.isBlankNode(entity));
+    }
 
     /**
-     * @ngdoc method
-     * @name retrieveClasses
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * GET /mobirest/ontologies/{recordId}/group-query endpoint to retrieve the first 100 class Entities of
+     * GET /mobirest/ontologies/{recordId}/group-query endpoint to retrieve the first 500 class Entities of
      * the ontology and the corresponding imports closure. Supports a search text to filter on entity labels.
      *
-     * @param String recordId The identifier of the ontology you want to retrieve classes from
-     * @param String searchText User given search text to filter classes on
-     * @returns {Object[]} An array of the first 100 owl:Class entities within the ontologies that match the search
-     * text.
+     * @param {string} recordId The identifier of the ontology you want to retrieve classes from
+     * @param {string} branchId The id of the Branch with the specified Commit
+     * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {string} limit The limit of results that is set within the query
+     * @param {string} searchText User given search text to filter classes on
+     * @returns {Observable<GroupQueryResults>} An array of the first 100 owl:Class entities within the ontologies that match the search text.
      */
-    self.retrieveClasses = function(recordId:string, branchId:string, commitId:string, limit:String = '',
-                                    searchText:string = '', id:string = '') {
+    // TODO: Add tests for this method
+    retrieveClasses(recordId:string, branchId:string, commitId:string, limit:string,
+    searchText = '', isTracked = false): Observable<GroupQueryResults> {
+        let query = 'PREFIX dc: <http://purl.org/dc/elements/1.1/>\n' +
+            'PREFIX dcterms: <http://purl.org/dc/terms/>\n' +
+            'PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>\n' +
+            'PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n' +
+            'PREFIX owl: <http://www.w3.org/2002/07/owl#>\n' +
+            'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n' +
+            'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n' +
+            'SELECT ?id ?label ?description ?deprecated WHERE {\n' +
+            '\t?id a owl:Class ;\n' +
+            '  \tOptional { ?id rdfs:label | dcterms:title | dc:title | skos:prefLabel | skos:altlabel | skosxl:literalForm ?label. }\n' +
+            '    Optional { ?id owl:deprecated ?deprecated. }\n' +
+            '    Optional { ?id dcterms:description | dc:description ?description. }\n' +
+            '  Filter (!isBlank(?id))\n' +
+            '  Filter (contains(lcase(str(?id)), lcase("searchText")) || contains(lcase(str(?label)), lcase("searchText")))\n' +
+            '} OrderBy(?label)';
 
-        let query = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
-            "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
-            "PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>\n" +
-            "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
-            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-            "SELECT ?id ?label ?description ?deprecated WHERE {\n" +
-            "\t?id a owl:Class ;\n" +
-            "  \tOptional { ?id rdfs:label | dcterms:title | dc:title | skos:prefLabel | skos:altlabel | skosxl:literalForm ?label. }\n" +
-            "    Optional { ?id owl:deprecated ?deprecated. }\n" +
-            "    Optional { ?id dcterms:description | dc:description ?description. }\n" +
-            "  Filter (!isBlank(?id))\n" +
-            "  Filter (contains(lcase(str(?id)), lcase(\"searchText\")) || contains(lcase(str(?label)), lcase(\"searchText\")))\n" +
-            "} OrderBy(?label)"
+        if (searchText) { 
+            query = query.replace(/searchText/g, searchText);
+        } else { 
+            query = query.replace('  Filter (contains(lcase(str(?id)), lcase(\"searchText\")) || contains(lcase(str(?label)), lcase(\"searchText\")))\n', '');
+        }
 
-        if (searchText) { query = query.replace(/searchText/g, searchText) }
-        else { query = query.replace('  Filter (contains(lcase(str(?id)), lcase(\"searchText\")) || contains(lcase(str(?label)), lcase(\"searchText\")))\n', '') }
+        const params = { query, branchId, commitId, limit };
 
-        const config = { params: { query, branchId, commitId, limit } };
-        const url = prefix + '/' + encodeURIComponent(recordId) + '/group-query';
-        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-        return promise.then(response => response.data, util.rejectError);
-    };
+        const request = this.http.get(this.prefix + '/' + encodeURIComponent(recordId) + '/group-query', {params: this.helper.createHttpParams(params), responseType: 'text', observe: 'response'})
+        .pipe(
+            catchError(this.helper.handleError),
+            map((response: HttpResponse<string>) => {
+                return (JSON.parse(response.body)) as GroupQueryResults;
+                
+            })
+        );
+        return this._trackedRequest(request, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getClassIRIs
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:Class entity IRIs within the provided ontologies that are not blank nodes.
      * Returns a string[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {string[]} An array of all owl:Class entity IRI strings within the ontologies.
      */
-    self.getClassIRIs = function(ontologies) {
-        return map(self.getClasses(ontologies), '@id');
-    };
+    getClassIRIs(ontologies: JSONLDObject[][]): string[] {
+        return this.getClasses(ontologies).map(clazz => clazz['@id']);
+    }
     /**
-     * @ngdoc method
-     * @name hasClassProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks to see if the class within the provided ontologies has any properties associated it via the
      * rdfs:domain axiom. Returns a boolean indicating the existence of those properties.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string} classIRI The class IRI of the class you want to check about.
      * @returns {boolean} Returns true if it does have properties, otherwise returns false.
      */
-    self.hasClassProperties = function(ontologies, classIRI) {
-        return some(ontologies, ont => some(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
-    };
+    hasClassProperties(ontologies: JSONLDObject[][], classIRI: string): boolean {
+        return some(ontologies, ont => some(ont, {[RDFS + 'domain']: [{'@id': classIRI}]}));
+    }
     /**
-     * @ngdoc method
-     * @name getClassProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the properties associated with the class within the provided ontologies by the rdfs:domain axiom.
      * Returns an array of all the properties associated with the provided class IRI.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string} classIRI The class IRI of the class you want to check about.
-     * @returns {Object[]} Returns an array of all the properties associated with the provided class IRI.
+     * @returns {JSONLDObject[]} Returns an array of all the properties associated with the provided class IRI.
      */
-    self.getClassProperties = function(ontologies, classIRI) {
-        return collectThings(ontologies, entity => isMatch(entity, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
-    };
+    getClassProperties(ontologies: JSONLDObject[][], classIRI: string): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => isMatch(entity, {[RDFS + 'domain']: [{'@id': classIRI}]}));
+    }
     /**
-     * @ngdoc method
-     * @name getClassProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the property IRIs associated with the class within the provided ontologies by the rdfs:domain axiom.
      * Returns an array of all the property IRIs associated with the provided class IRI.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string} classIRI The class IRI of the class you want to check about.
      * @returns {string[]} Returns an array of all the property IRIs associated with the provided class IRI.
      */
-    self.getClassPropertyIRIs = function(ontologies, classIRI) {
-        return map(self.getClassProperties(ontologies, classIRI), '@id');
-    };
+    getClassPropertyIRIs(ontologies: JSONLDObject[][], classIRI: string): string[] {
+        return this.getClassProperties(ontologies, classIRI).map(prop => prop['@id']);
+    }
     /**
-     * @ngdoc method
-     * @name isObjectProperty
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:ObjectProperty entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:ObjectProperty entity, otherwise returns false.
      */
-    self.isObjectProperty = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.owl + 'ObjectProperty');
-    };
+    isObjectProperty(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), OWL + 'ObjectProperty');
+    }
     /**
-     * @ngdoc method
-     * @name hasObjectProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontologies contain any owl:ObjectProperty entities. Returns a boolean.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {boolean} Returns true if there are any owl:ObjectProperty entities in the ontologies, otherwise
      * returns false.
      */
-    self.hasObjectProperties = function(ontologies) {
-        return some(ontologies, ont => some(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
-    };
+    hasObjectProperties(ontologies: JSONLDObject[][]): boolean {
+        return some(ontologies, ont => some(ont, entity => this.isObjectProperty(entity) && !this.isBlankNode(entity)));
+    }
     /**
-     * @ngdoc method
-     * @name getObjectProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:ObjectProperty entities within the provided ontologies that are not blank nodes.
-     * Returns an Object[].
+     * Returns a JSONLDObject[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:ObjectProperty entities within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:ObjectProperty entities within the ontologies.
      */
-    self.getObjectProperties = function(ontologies) {
-        return collectThings(ontologies, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
-    };
+    getObjectProperties(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isObjectProperty(entity) && !this.isBlankNode(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getObjectPropertyIRIs
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:ObjectProperty entity IRIs within the provided ontologies that are not blank
-     * nodes. Returns an string[].
+     * nodes. Returns a string[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontologies.
      */
-    self.getObjectPropertyIRIs = function(ontologies) {
-        return map(self.getObjectProperties(ontologies), '@id');
-    };
+    getObjectPropertyIRIs(ontologies: JSONLDObject[][]): string[] {
+        return this.getObjectProperties(ontologies).map(prop => prop['@id']);
+    }
     /**
-     * @ngdoc method
-     * @name isDataTypeProperty
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:DatatypeProperty entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:DatatypeProperty entity, otherwise returns false.
      */
-    self.isDataTypeProperty = function(entity) {
+    isDataTypeProperty(entity: JSONLDObject): boolean {
         const types = get(entity, '@type', []);
-        return includes(types, prefixes.owl + 'DatatypeProperty')
-            || includes(types, prefixes.owl + 'DataTypeProperty');
-    };
+        return includes(types, OWL + 'DatatypeProperty')
+            || includes(types, OWL + 'DataTypeProperty');
+    }
     /**
-     * @ngdoc method
-     * @name hasDataTypeProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontologies contain any owl:DatatypeProperty entities. Returns a boolean.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {boolean} Returns true if there are any owl:DatatypeProperty entities in the ontologies,
      * otherwise returns false.
      */
-    self.hasDataTypeProperties = function(ontologies) {
-        return some(ontologies, ont => some(ont, entity => self.isDataTypeProperty(entity)));
-    };
+    hasDataTypeProperties(ontologies: JSONLDObject[][]): boolean {
+        return some(ontologies, ont => some(ont, entity => this.isDataTypeProperty(entity)));
+    }
     /**
-     * @ngdoc method
-     * @name getDataTypeProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:DatatypeProperty entities within the provided ontologies that are not blank
-     * nodes. Returns an Object[].
+     * nodes. Returns an JSONLDObject[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:DatatypeProperty entities within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:DatatypeProperty entities within the ontologies.
      */
-    self.getDataTypeProperties = function(ontologies) {
-        return collectThings(ontologies, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity));
-    };
+    getDataTypeProperties(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isDataTypeProperty(entity) && !this.isBlankNode(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getDataTypePropertyIRIs
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:DatatypeProperty entity IRIs within the provided ontologies that are not blank
      * nodes. Returns an string[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontologies.
      */
-    self.getDataTypePropertyIRIs = function(ontologies) {
-        return map(self.getDataTypeProperties(ontologies),'@id');
-    };
+    getDataTypePropertyIRIs(ontologies: JSONLDObject[][]): string[] {
+        return this.getDataTypeProperties(ontologies).map(prop => prop['@id']);
+    }
     /**
-     * @ngdoc method
-     * @name isProperty
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:DatatypeProperty or owl:ObjectProperty entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:DatatypeProperty or owl:ObjectProperty entity, otherwise
      * returns false.
      */
-    self.isProperty = function(entity) {
-        return self.isObjectProperty(entity) || self.isDataTypeProperty(entity);
-    };
+    isProperty(entity: JSONLDObject): boolean {
+        return this.isObjectProperty(entity) || this.isDataTypeProperty(entity);
+    }
     /**
-     * @ngdoc method
-     * @name hasNoDomainProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontologies have any properties that are not associated with a class by the
      * rdfs:domain axiom. Return a boolean indicating if any such properties exist.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {boolean} Returns true if it contains properties without an rdfs:domain set, otherwise returns
      * false.
      */
-    self.hasNoDomainProperties = function(ontologies) {
+    hasNoDomainProperties(ontologies: JSONLDObject[][]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => self.isProperty(entity) && !has(entity, prefixes.rdfs + 'domain')));
-    };
+                    some(ont, entity => this.isProperty(entity) && !has(entity, RDFS + 'domain')));
+    }
     /**
-     * @ngdoc method
-     * @name getNoDomainProperties
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of properties that are not associated with a class by the rdfs:domain axiom. Returns an
      * array of the properties not associated with a class.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} Returns an array of properties not associated with a class.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} Returns an array of properties not associated with a class.
      */
-    self.getNoDomainProperties = function(ontologies) {
-        return collectThings(ontologies, entity => self.isProperty(entity) && !has(entity, prefixes.rdfs + 'domain'));
-    };
+    getNoDomainProperties(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isProperty(entity) && !has(entity, RDFS + 'domain'));
+    }
     /**
-     * @ngdoc method
-     * @name getNoDomainPropertyIRIs
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of property IRIs that are not associated with a class by the rdfs:domain axiom. Returns an
      * array of the property IRIs not associated with a class.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {string[]} Returns an array of property IRIs not associated with a class.
      */
-    self.getNoDomainPropertyIRIs = function(ontologies) {
-        return map(self.getNoDomainProperties(ontologies), '@id');
-    };
+    getNoDomainPropertyIRIs(ontologies: JSONLDObject[][]): string[] {
+        return this.getNoDomainProperties(ontologies).map(prop => prop['@id']);
+    }
     /**
-     * @ngdoc method
-     * @name isAnnotation
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:AnnotationProperty entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:AnnotationProperty entity, otherwise returns false.
      */
-    self.isAnnotation = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.owl + 'AnnotationProperty');
-    };
+    isAnnotation(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), OWL + 'AnnotationProperty');
+    }
     /**
-     * @ngdoc method
-     * @name hasAnnotations
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontologies contain any owl:AnnotationProperty entities. Returns a boolean.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {boolean} Returns true if there are any owl:AnnotationProperty entities in the ontologies,
      * otherwise returns false.
      */
-    self.hasAnnotations = function(ontologies) {
+    hasAnnotations(ontologies: JSONLDObject[][]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
-    };
+                    some(ont, entity => this.isAnnotation(entity) && !this.isBlankNode(entity)));
+    }
     /**
-     * @ngdoc method
-     * @name getAnnotations
-     * @methodOf shared.service:ontologyManagerService
+     * Gets the list of all owl:AnnotationProperty entities within the provided ontologies. Returns a JSONLDObject[].
      *
-     * @description
-     * Gets the list of all owl:AnnotationProperty entities within the provided ontologies. Returns an Object[].
-     *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:AnnotationProperty entities within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:AnnotationProperty entities within the ontologies.
      */
-    self.getAnnotations = function(ontologies) {
-        return collectThings(ontologies, entity => self.isAnnotation(entity) && !self.isBlankNode(entity));
-    };
+    getAnnotations(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isAnnotation(entity) && !this.isBlankNode(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getAnnotationIRIs
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:AnnotationProperty entity IRIs within the provided ontologies that are not blank
      * nodes. Returns an string[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontologies.
      */
-    self.getAnnotationIRIs = function(ontologies) {
-        return map(self.getAnnotations(ontologies), '@id');
-    };
+    getAnnotationIRIs(ontologies: JSONLDObject[][]): string[] {
+        return this.getAnnotations(ontologies).map(prop => prop['@id']);
+    }
     /**
-     * @ngdoc method
-     * @name isNamedIndividual
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:NamedIndividual entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:NamedIndividual entity, otherwise returns false.
      */
-    self.isNamedIndividual = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.owl + 'NamedIndividual');
-    };
+    isNamedIndividual(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), OWL + 'NamedIndividual');
+    }
     /**
-     * @ngdoc method
-     * @name isIndividual
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an individual (i.e. not a standard owl: type). Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an individual, otherwise returns false.
      */
-    self.isIndividual = function(entity) {
+    isIndividual(entity: JSONLDObject): boolean {
         return intersection(get(entity, '@type', []), [
-            prefixes.owl + 'Class',
-            prefixes.owl + 'DatatypeProperty',
-            prefixes.owl + 'ObjectProperty',
-            prefixes.owl + 'AnnotationProperty',
-            prefixes.owl + 'Datatype',
-            prefixes.owl + 'Ontology'
+            OWL + 'Class',
+            OWL + 'DatatypeProperty',
+            OWL + 'ObjectProperty',
+            OWL + 'AnnotationProperty',
+            OWL + 'Datatype',
+            OWL + 'Ontology'
         ]).length === 0;
-    };
+    }
     /**
-     * @ngdoc method
-     * @name hasIndividuals
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks to see if the ontologies have individuals. Returns a boolean indicating the existence of those
      * individuals.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
      */
-    self.hasIndividuals = function(ontologies) {
-        return some(ontologies, ont => some(ont, entity => self.isIndividual(entity)));
-    };
+    hasIndividuals(ontologies: JSONLDObject[][]): boolean {
+        return some(ontologies, ont => some(ont, entity => this.isIndividual(entity)));
+    }
     /**
-     * @ngdoc method
-     * @name getIndividuals
-     * @methodOf shared.service:ontologyManagerService
+     * Gets the list of all owl:NamedIndividual entities within the provided ontologies. Returns a JSONLDObject[].
      *
-     * @description
-     * Gets the list of all owl:NamedIndividual entities within the provided ontologies. Returns an Object[].
-     *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:NamedIndividual entities within the ontologies.
      */
-    self.getIndividuals = function(ontologies) {
-        return collectThings(ontologies, entity => self.isIndividual(entity));
-    };
+    getIndividuals(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isIndividual(entity));
+    }
     /**
-     * @ngdoc method
-     * @name hasNoTypeIndividuals
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks to see if the ontologies have individuals with no other type. Returns a boolean indicating the
      * existence of those individuals.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {boolean} Returns true if it does have individuals with no other type, otherwise returns false.
      */
-    self.hasNoTypeIndividuals = function(ontologies) {
+    hasNoTypeIndividuals(ontologies: JSONLDObject[][]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
-    };
+                    some(ont, entity => this.isIndividual(entity) && entity['@type'].length === 1));
+    }
     /**
-     * @ngdoc method
-     * @name getNoTypeIndividuals
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all owl:NamedIndividual entities within the provided ontologies that have no other type.
-     * Returns an Object[].
+     * Returns a JSONLDObject[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:NamedIndividual entities with no other type within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:NamedIndividual entities with no other type within the ontologies.
      */
-    self.getNoTypeIndividuals = function(ontologies) {
-        return collectThings(ontologies, entity => self.isIndividual(entity) && entity['@type'].length === 1);
-    };
+    getNoTypeIndividuals(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isIndividual(entity) && entity['@type'].length === 1);
+    }
     /**
-     * @ngdoc method
-     * @name hasClassIndividuals
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks to see if the class within the provided ontologies have individuals with that type. Returns a
      * boolean indicating the existence of those individuals.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string} classIRI The class IRI of the class you want to check about.
      * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
      */
-    self.hasClassIndividuals = function(ontologies, classIRI) {
-        return some(self.getIndividuals(ontologies), {'@type': [classIRI]});
-    };
+    hasClassIndividuals(ontologies: JSONLDObject[][], classIRI: string): boolean {
+        return some(this.getIndividuals(ontologies), {'@type': [classIRI]});
+    }
     /**
-     * @ngdoc method
-     * @name getClassIndividuals
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the individuals associated with the class within the provided ontologies by the type. Returns an
      * array of all the properties associated with the provided class IRI.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string} classIRI The class IRI of the class you want to check about.
-     * @returns {Object[]} Returns an array of all the individuals associated with the provided class IRI.
+     * @returns {JSONLDObject[]} Returns an array of all the individuals associated with the provided class IRI.
      */
-    self.getClassIndividuals = function(ontologies, classIRI) {
-        return filter(self.getIndividuals(ontologies), {'@type': [classIRI]});
-    };
+    getClassIndividuals(ontologies: JSONLDObject[][], classIRI: string): JSONLDObject[] {
+        return filter(this.getIndividuals(ontologies), {'@type': [classIRI]});
+    }
     /**
-     * @ngdoc method
-     * @name isRestriction
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an owl:Restriction. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:Restriction entity, otherwise returns false.
      */
-    self.isRestriction = function(entity) {
-        return includes(get(entity, '@type', []), prefixes.owl + 'Restriction');
-    };
+    isRestriction(entity: JSONLDObject): boolean {
+        return includes(get(entity, '@type', []), OWL + 'Restriction');
+    }
     /**
-     * @ngdoc method
-     * @name getRestrictions
-     * @methodOf shared.service:ontologyManagerService
+     * Gets the list of all owl:Restriction entities within the provided ontologies. Returns a JSONLDObject[].
      *
-     * @description
-     * Gets the list of all owl:Restriction entities within the provided ontologies. Returns an Object[].
-     *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:Restriction entities within the ontologies.
      */
-    self.getRestrictions = function(ontologies) {
-        return collectThings(ontologies, entity => self.isRestriction(entity));
-    };
+    getRestrictions(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isRestriction(entity));
+    }
     /**
-     * @ngdoc method
-     * @name isBlankNode
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is blank node. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
      */
-    self.isBlankNode = function(entity) {
-        return self.isBlankNodeId(get(entity, '@id', ''));
-    };
+    isBlankNode(entity: JSONLDObject): boolean {
+        return this.isBlankNodeId(get(entity, '@id', ''));
+    }
     /**
-     * @ngdoc method
-     * @name isBlankNodeId
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity id is a blank node id. Returns a boolean.
      *
      * @param {string} id The id to check.
-     * @return {boolean} Retrurns true if the id is a blank node id, otherwise returns false.
+     * @return {boolean} Returns true if the id is a blank node id, otherwise returns false.
      */
-    self.isBlankNodeId = function(id) {
+    isBlankNodeId(id: string): boolean {
         return isString(id) && (includes(id, '/.well-known/genid/') || includes(id, '_:genid') || includes(id, '_:b'));
-    };
+    }
     /**
-     * @ngdoc method
-     * @name getBlankNodes
-     * @methodOf shared.service:ontologyManagerService
+     * Gets the list of all entities within the provided ontologies that are blank nodes. Returns a JSONLDObject[].
      *
-     * @description
-     * Gets the list of all entities within the provided ontologies that are blank nodes. Returns an Object[].
-     *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
-     * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
+     * @returns {JSONLDObject[]} An array of all owl:Restriction entities within the ontologies.
      */
-    self.getBlankNodes = function(ontologies) {
-        return collectThings(ontologies, entity => self.isBlankNode(entity));
-    };
+    getBlankNodes(ontologies: JSONLDObject[][]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isBlankNode(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getEntity
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets entity with the provided IRI from the provided ontologies in the Mobi repository. Returns the
      * entity Object.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string} entityIRI The IRI of the entity that you want.
      * @returns {Object} An Object which represents the requested entity.
      */
-    self.getEntity = function(ontologies, entityIRI) {
+    getEntity(ontologies: JSONLDObject[][], entityIRI: string): JSONLDObject {
         let retValue;
         forEach(ontologies, ont => {
             retValue = find(ont, {'@id': entityIRI});
@@ -1539,228 +1185,173 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
             }
         });
         return retValue;
-    };
+    }
     /**
-     * @ngdoc method
-     * @name getEntityName
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the provided entity's name. This name is either the `rdfs:label`, `dcterms:title`, or `dc:title`.
      * If none of those annotations exist, it returns the beautified `@id`. Prioritizes english language tagged
      * values over the others. Returns a string for the entity name.
      *
-     * @param {Object} entity The entity you want the name of.
+     * @param {JSONLDObject} entity The entity you want the name of.
      * @returns {string} The beautified IRI string.
      */
-    self.getEntityName = function(entity) {
-        let result = reduce(self.entityNameProps, (tempResult, prop) => tempResult || getPrioritizedValue(entity, prop), '');
+    getEntityName(entity: JSONLDObject): string {
+        let result = reduce(this.entityNameProps, (tempResult, prop) => tempResult || this.getPrioritizedValue(entity, prop), '');
         if (!result && has(entity, '@id')) {
-            result = utilService.getBeautifulIRI(entity['@id']);
+            result = this.util.getBeautifulIRI(entity['@id']);
         }
         return result;
-    };
-    function getPrioritizedValue(entity, prop) {
-        return get(find(get(entity, '[\'' + prop + '\']'), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
+    }
+    private getPrioritizedValue(entity, prop) {
+        return get(find(get(entity, '[\'' + prop + '\']'), {'@language': 'en'}), '@value') || this.util.getPropertyValue(entity, prop);
     }
     /**
-     * @ngdoc method
-     * @name getEntityNames
-     * @methodOf shared.service:ontologyManagerService
+     * Gets the provided entity's names. These names are an array of the '@value' values for the entityNameProps.
      *
-     * @description
-     * Gets the provided entity's names. These names are an array of the '@value' values for the self.entityNameProps.
-     *
-     * @param {Object} entity The entity you want the names of.
-     * @returns {string[]} The names for the self.entityNameProps.
+     * @param {JSONLDObject} entity The entity you want the names of.
+     * @returns {string[]} The names for the entityNameProps.
      */
-    self.getEntityNames = function(entity) {
+    getEntityNames(entity: JSONLDObject): string[] {
         let names = [];
-        forEach(self.entityNameProps, prop => {
+        forEach(this.entityNameProps, prop => {
             if (has(entity, prop)) {
-                names = concat(names, map(get(entity, prop), '@value'));
+                names = concat(names, lodashMap(get(entity, prop), '@value'));
             } 
         });
         return uniq(names);
-    };
+    }
     /**
-     * @ngdoc method
-     * @name getEntityDescription
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the provided entity's description. This description is either the `rdfs:comment`,
      * `dcterms:description`, or `dc:description`. If none of those annotations exist, it returns undefined.
      *
-     * @param {Object} entity The entity you want the description of.
+     * @param {JSONLDObject} entity The entity you want the description of.
      * @returns {string} The entity's description text.
      */
-    self.getEntityDescription = function(entity) {
-        return utilService.getPropertyValue(entity, prefixes.rdfs + 'comment')
-            || utilService.getDctermsValue(entity, 'description')
-            || utilService.getPropertyValue(entity, prefixes.dc + 'description');
-    };
+    getEntityDescription(entity: JSONLDObject): string {
+        return this.util.getPropertyValue(entity, RDFS + 'comment')
+            || this.util.getDctermsValue(entity, 'description')
+            || this.util.getPropertyValue(entity, DC + 'description');
+    }
     /**
-     * @ngdoc method
-     * @name isConcept
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an skos:Concept entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
      * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
      */
-    self.isConcept = function(entity, derivedConcepts = []) {
-            return (includes(get(entity, '@type', []), prefixes.skos + 'Concept')
+    isConcept(entity: JSONLDObject, derivedConcepts: string[] = []): boolean {
+            return (includes(get(entity, '@type', []), SKOS + 'Concept')
                 || intersection(get(entity, '@type', []), derivedConcepts).length > 0);
-    };
+    }
     /**
-     * @ngdoc method
-     * @name hasConcepts
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontologies contain any skos:Concept entities. Returns a boolean.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
      * @returns {boolean} Returns true if there are any skos:Concept entities in the ontologies, otherwise
      * returns false.
      */
-    self.hasConcepts = function(ontologies, derivedConcepts) {
+    hasConcepts(ontologies: JSONLDObject[][], derivedConcepts: string[]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
-    };
+                    some(ont, entity => this.isConcept(entity, derivedConcepts) && !this.isBlankNode(entity)));
+    }
     /**
-     * @ngdoc method
-     * @name getConcepts
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all skos:Concept entities within the provided ontologies that are not blank nodes.
-     * Returns an Object[].
+     * Returns a JSONLDObject[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
-     * @returns {Object[]} An array of all skos:Concept entities within the ontologies.
+     * @returns {JSONLDObject[]} An array of all skos:Concept entities within the ontologies.
      */
-    self.getConcepts = function(ontologies, derivedConcepts) {
-        return collectThings(ontologies, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity));
-    };
+    getConcepts(ontologies: JSONLDObject[][], derivedConcepts: string[]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isConcept(entity, derivedConcepts) && !this.isBlankNode(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getConceptIRIs
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all skos:Concept entity IRIs within the provided ontologies that are not blank nodes.
      * Returns an string[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
      * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
      */
-    self.getConceptIRIs = function(ontologies, derivedConcepts) {
-        return map(self.getConcepts(ontologies, derivedConcepts), '@id');
-    };
+    getConceptIRIs(ontologies: JSONLDObject[][], derivedConcepts: string[]): string[] {
+        return this.getConcepts(ontologies, derivedConcepts).map(obj => obj['@id']);
+    }
     /**
-     * @ngdoc method
-     * @name isConceptScheme
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided entity is an skos:ConceptScheme entity. Returns a boolean.
      *
-     * @param {Object} entity The entity you want to check.
+     * @param {JSONLDObject} entity The entity you want to check.
      * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
      * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
      */
-    self.isConceptScheme = function(entity, derivedConceptSchemes = []) {
-            return (includes(get(entity, '@type', []), prefixes.skos + 'ConceptScheme')
+    isConceptScheme(entity: JSONLDObject, derivedConceptSchemes: string[] = []): boolean {
+            return (includes(get(entity, '@type', []), SKOS + 'ConceptScheme')
                 || intersection(get(entity, '@type', []), derivedConceptSchemes).length > 0);
-    };
+    }
     /**
-     * @ngdoc method
-     * @name hasConceptSchemes
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Checks if the provided ontologies contain any skos:ConceptScheme entities. Returns a boolean.
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
      * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontologies, otherwise
      * returns false.
      */
-    self.hasConceptSchemes = function(ontologies, derivedConceptSchemes) {
+    hasConceptSchemes(ontologies: JSONLDObject[][], derivedConceptSchemes: string[]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity)));
-    };
+                    some(ont, entity => this.isConceptScheme(entity, derivedConceptSchemes) && !this.isBlankNode(entity)));
+    }
     /**
-     * @ngdoc method
-     * @name getConceptSchemes
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all skos:ConceptScheme entities within the provided ontologies that are not blank nodes.
-     * Returns an Object[].
+     * Returns a JSONLDObject[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
-     * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontologies.
+     * @returns {JSONLDObject[]} An array of all skos:ConceptScheme entities within the ontologies.
      */
-    self.getConceptSchemes = function(ontologies, derivedConceptSchemes) {
-        return collectThings(ontologies, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity));
-    };
+    getConceptSchemes(ontologies: JSONLDObject[][], derivedConceptSchemes: string[]): JSONLDObject[] {
+        return this._collectThings(ontologies, entity => this.isConceptScheme(entity, derivedConceptSchemes) && !this.isBlankNode(entity));
+    }
     /**
-     * @ngdoc method
-     * @name getConceptSchemeIRIs
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
      * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontologies that are not blank
      * nodes. Returns a string[].
      *
-     * @param {Object[]} ontologies The array of ontologies you want to check.
+     * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
      * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
      */
-    self.getConceptSchemeIRIs = function(ontologies, derivedConceptSchemes) {
-        return map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
-    };
+    getConceptSchemeIRIs(ontologies: JSONLDObject[][], derivedConceptSchemes: string[]): string[] {
+        return this.getConceptSchemes(ontologies, derivedConceptSchemes).map(obj => obj['@id']);
+    }
     /**
-     * @description
      * Compressing a file before uploading.
+     * 
      * @param {File} file The ontology file.
-     * @returns {file} compressed file
+     * @returns {Observable<File>} compressed file
      */
-    self.compressFile = function(file) {
+    compressFile(file: File): Observable<File> {
         const reader = new FileReader();
         const zip = new jszip();
         if (file && file.size) {
             reader.readAsArrayBuffer(file); 
         } else {
-            Promise.resolve(file);
+            of(file);
         }
-        return new Promise((resolve, reject) => {
+        return from(new Promise<File>((resolve, reject) => {
             reader.onload = (evt) => {
                 try {
                     zip.file(file.name, evt.target.result);
-                    zip.generateAsync({type: 'blob', compression:'DEFLATE'})
+                    zip.generateAsync({type: 'blob', compression: 'DEFLATE'})
                         .then((content) => {
-                            let fl = new File([content], file.name + '.zip')
-                            resolve(fl)
-                        })
+                            const fl = new File([content], file.name + '.zip');
+                            resolve(fl);
+                        });
                 } catch (error) {
                     reject(error);
                 }
             };
-        });
-    };
+        }));
+    }
 
-    function getFileTitleInfo(title) {
+    private _getFileTitleInfo(title) {
         const fileName = title.toLowerCase().split('.');
         return {
             title: title.toLowerCase(),
@@ -1769,7 +1360,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
         };
     }
 
-    function collectThings(ontologies, filterFunc) {
+    private _collectThings(ontologies, filterFunc) {
         const things = [];
         const iris = [];
         forEach(ontologies, ont => {
@@ -1781,7 +1372,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
         return things;
     }
 
-    function getMimeType(format: string): string {
+    private _getMimeType(format: string): string {
         if (format === 'turtle') {
             return 'text/turtle';
         } else if (format === 'jsonld') {
@@ -1795,6 +1386,12 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService: Cata
             return 'application/ld+json';
         }
     }
-}
 
-export default ontologyManagerService;
+    private _trackedRequest<T>(request: Observable<T>, tracked: boolean): Observable<T> {
+        if (tracked) {
+            return request;
+        } else {
+            return this.spinnerSrv.track(request);
+        }
+    }
+}

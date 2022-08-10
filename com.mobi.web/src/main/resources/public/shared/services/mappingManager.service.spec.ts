@@ -42,6 +42,7 @@ import { CamelCasePipe } from '../pipes/camelCase.pipe';
 import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { HelperService } from './helper.service';
 import { MappingManagerService } from './mappingManager.service';
+import { OntologyManagerService } from './ontologyManager.service';
 
 describe('Mapping Manager service', function() {
     let service: MappingManagerService;
@@ -77,7 +78,7 @@ describe('Mapping Manager service', function() {
                 MockProvider(ProgressSpinnerService),
                 {provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe)},
                 {provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe)},
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
             ]
         });
@@ -85,7 +86,7 @@ describe('Mapping Manager service', function() {
 
     beforeEach(function() {
         service = TestBed.get(MappingManagerService);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get('utilService');
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         camelCaseStub = TestBed.get(CamelCasePipe);
@@ -345,7 +346,7 @@ describe('Mapping Manager service', function() {
     });
     describe('should get an ontology in the correct structure', function() {
         it('unless an error occurs', fakeAsync(function() {
-            ontologyManagerStub.getOntology.and.rejectWith(error);
+            ontologyManagerStub.getOntology.and.returnValue(throwError(error));
             service.getOntology(ontologyInfo)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toBe(error);
@@ -353,7 +354,7 @@ describe('Mapping Manager service', function() {
             tick();
         }));
         it('successfully', fakeAsync(function() {
-            ontologyManagerStub.getOntology.and.resolveTo([]);
+            ontologyManagerStub.getOntology.and.returnValue(of([]));
             ontologyManagerStub.getOntologyIRI.and.returnValue('ontology');
             service.getOntology(ontologyInfo)
                 .subscribe((response: MappingOntology) => {
@@ -368,23 +369,21 @@ describe('Mapping Manager service', function() {
         describe('if the ontology is open', function() {
             beforeEach(function() {
                 ontologyManagerStub.list = [{ontologyId: ontologyId, recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId, ontology: []}];
-                spyOn(service, 'getOntology');
+                spyOn(service, 'getOntology').and.returnValue(of(mappingOntology));
             });
             it('unless an error occurs', fakeAsync(function() {
-                ontologyManagerStub.getImportedOntologies.and.rejectWith(error);
+                ontologyManagerStub.getImportedOntologies.and.returnValue(throwError(error));
                 service.getSourceOntologies(ontologyInfo)
-                    .subscribe(() => fail('The promise should have rejected'), response => {
-                        expect(service.getOntology).not.toHaveBeenCalled();
+                    .subscribe(() => fail('The observable should have errored'), response => {
                         expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
                         expect(response).toBe(error);
                     });
                 tick();
             }));
             it('successfully', fakeAsync(function() {
-                ontologyManagerStub.getImportedOntologies.and.resolveTo([{ontologyId: 'imported', ontology: []}]);
+                ontologyManagerStub.getImportedOntologies.and.returnValue(of([{ontologyId: 'imported', ontology: []}]));
                 service.getSourceOntologies(ontologyInfo)
                     .subscribe(response => {
-                        expect(service.getOntology).not.toHaveBeenCalled();
                         expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
                         expect(response).toContain(mappingOntology);
                         expect(response).toContain({
@@ -397,7 +396,7 @@ describe('Mapping Manager service', function() {
         });
         describe('if the ontology is not open', function() {
             beforeEach(function() {
-                ontologyManagerStub.getImportedOntologies.and.resolveTo([{ontologyId: 'imported', ontology: []}]);
+                ontologyManagerStub.getImportedOntologies.and.returnValue(of([{ontologyId: 'imported', ontology: []}]));
             });
             it('unless an error occurs', fakeAsync(function() {
                 spyOn(service, 'getOntology').and.returnValue(throwError(error));

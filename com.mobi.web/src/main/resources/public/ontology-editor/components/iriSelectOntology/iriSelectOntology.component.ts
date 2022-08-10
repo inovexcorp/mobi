@@ -22,13 +22,14 @@
  */
 import { get, isUndefined } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./iriSelectOntology.component.html');
 
 /**
  * @ngdoc component
  * @name ontology-editor.component:iriSelectOntology
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `objectPropertyOverlay` is a component that creates a `ui-select` for select a specific IRI from the provided
@@ -63,13 +64,11 @@ const iriSelectOntologyComponent = {
     controller: iriSelectOntologyComponentCtrl
 };
 
-iriSelectOntologyComponentCtrl.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+iriSelectOntologyComponentCtrl.$inject = ['ontologyStateService'];
 
-function iriSelectOntologyComponentCtrl(ontologyStateService, ontologyUtilsManagerService) {
+function iriSelectOntologyComponentCtrl(ontologyStateService: OntologyStateService) {
     var dvm = this;
-    var os = ontologyStateService;
-
-    dvm.ontoUtils = ontologyUtilsManagerService;
+    dvm.os = ontologyStateService;
     dvm.values = [];
 
     dvm.$onChanges = function() {
@@ -79,10 +78,10 @@ function iriSelectOntologyComponentCtrl(ontologyStateService, ontologyUtilsManag
         dvm.changeEvent({value: dvm.bindModel});
     }
     dvm.getOntologyIri = function(iri) {
-        return get(dvm.selectList, "['" + iri + "']", os.listItem.ontologyId);
+        return get(dvm.selectList, "['" + iri + "']", dvm.os.listItem.ontologyId);
     }
     dvm.getValues = function(searchText) {
-        dvm.values = dvm.ontoUtils.getSelectList(Object.keys(dvm.selectList), searchText, dvm.ontoUtils.getDropDownText);
+        dvm.values = dvm.os.getSelectList(Object.keys(dvm.selectList), searchText, iri => dvm.os.getEntityNameByListItem(iri));
     }
 }
 

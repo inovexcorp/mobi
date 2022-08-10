@@ -50,7 +50,7 @@ describe('Ontology Property Overlay component', function() {
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             util = _utilService_;
             prefixes = _prefixes_;
         });
@@ -261,7 +261,7 @@ describe('Ontology Property Overlay component', function() {
                     this.controller.addProperty();
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.ontologyProperty, ontologyStateSvc.ontologyPropertyIRI);
                     expect(propertyManagerSvc.addValue).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -285,7 +285,7 @@ describe('Ontology Property Overlay component', function() {
                     this.controller.addProperty();
                     expect(propertyManagerSvc.addId).not.toHaveBeenCalled();
                     expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.ontologyProperty, ontologyStateSvc.ontologyPropertyValue, ontologyStateSvc.ontologyPropertyType, ontologyStateSvc.ontologyPropertyLanguage);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -319,8 +319,8 @@ describe('Ontology Property Overlay component', function() {
                     this.controller.editProperty();
                     expect(propertyManagerSvc.editId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.ontologyProperty, ontologyStateSvc.ontologyPropertyIndex, ontologyStateSvc.ontologyPropertyIRI);
                     expect(propertyManagerSvc.editValue).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -345,8 +345,8 @@ describe('Ontology Property Overlay component', function() {
                     this.controller.editProperty();
                     expect(propertyManagerSvc.editId).not.toHaveBeenCalled();
                     expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.ontologyProperty, ontologyStateSvc.ontologyPropertyIndex, ontologyStateSvc.ontologyPropertyValue, ontologyStateSvc.ontologyPropertyType, ontologyStateSvc.ontologyPropertyLanguage);
-                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();

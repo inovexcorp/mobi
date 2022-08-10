@@ -221,8 +221,8 @@ describe('Saved Changes Tab component', function() {
             it('unless an error occurs', function(done) {
                 ontologyStateSvc.updateOntology.and.returnValue($q.reject('Error message'));
                 this.controller.update().then(() => {
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(String));
-                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(String));
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, this.commitId);
                     expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
                     done();
@@ -232,8 +232,8 @@ describe('Saved Changes Tab component', function() {
             it('successfully', function(done) {
                 ontologyStateSvc.updateOntology.and.returnValue($q.when());
                 this.controller.update().then(() => {
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(String));
-                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.recordId, jasmine.any(String));
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, this.commitId);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                     done();
@@ -253,8 +253,8 @@ describe('Saved Changes Tab component', function() {
                 it('and updateOntology resolves', function(done) {
                     ontologyStateSvc.updateOntology.and.returnValue($q.when());
                     this.controller.removeChanges().then(() => {
-                        expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate);
+                        expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, ontologyStateSvc.listItem.upToDate);
                         expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                         expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                         done();
@@ -264,9 +264,9 @@ describe('Saved Changes Tab component', function() {
                 it('and updateOntology rejects', function(done) {
                     ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
                     this.controller.removeChanges().then(() => {
-                        expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                        expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
                         expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, ontologyStateSvc.listItem.upToDate);
                         expect(this.controller.error).toEqual('error');
                         done();
                     });
@@ -276,7 +276,7 @@ describe('Saved Changes Tab component', function() {
             it('when deleteInProgressCommit rejects', function(done) {
                 catalogManagerSvc.deleteInProgressCommit.and.returnValue(throwError('error'));
                 this.controller.removeChanges().then(() => {
-                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
                     expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                     expect(this.controller.error).toEqual('error');
@@ -327,9 +327,9 @@ describe('Saved Changes Tab component', function() {
                     [prefixes.dcterms + 'description']: [{'@value': this.branchDescription}]
                 };
 
-                ontologyStateSvc.listItem.ontologyRecord.branchId = this.userBranchId;
-                ontologyStateSvc.listItem.ontologyRecord.recordId = this.recordId;
-                ontologyStateSvc.listItem.ontologyRecord.commitId = this.commitId;
+                ontologyStateSvc.listItem.versionedRdfRecord.branchId = this.userBranchId;
+                ontologyStateSvc.listItem.versionedRdfRecord.recordId = this.recordId;
+                ontologyStateSvc.listItem.versionedRdfRecord.commitId = this.commitId;
                 ontologyStateSvc.listItem.branches.push(this.userBranch);
                 ontologyStateSvc.listItem.branches.push(this.otherUserBranch);
 
@@ -373,15 +373,15 @@ describe('Saved Changes Tab component', function() {
                             });
                             it('and when deleteOntologyBranchState is resolved', function(done) {
                                 ontologyStateSvc.deleteOntologyBranchState.and.returnValue($q.when());
-                                ontologyStateSvc.listItem.ontologyRecord.branchId = this.newBranchId;
+                                ontologyStateSvc.listItem.versionedRdfRecord.branchId = this.newBranchId;
                                 _.remove(ontologyStateSvc.listItem.branches, branch => branch['@id'] === this.userBranchId);
                                 this.controller.restoreBranchWithUserBranch().then(() => {
-                                    expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                                    expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
-                                    expect(ontologyStateSvc.deleteOntologyBranchState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.newBranchId);
-                                    expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.newBranchId);
-                                    expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.otherUserBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.otherUserBranch);
+                                    expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
+                                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
+                                    expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.versionedRdfRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
+                                    expect(ontologyStateSvc.deleteOntologyBranchState).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.newBranchId);
+                                    expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.newBranchId);
+                                    expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.otherUserBranchId, ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId, this.otherUserBranch);
                                     done();
                                 });
                                 scope.$apply();
@@ -407,9 +407,9 @@ describe('Saved Changes Tab component', function() {
                     it('and when updateOntologyState is rejected', function(done) {
                         ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
                         this.controller.restoreBranchWithUserBranch().then(() => {
-                            expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                            expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
+                            expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
+                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
+                            expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.versionedRdfRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
                             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                             done();
                         });
@@ -419,8 +419,8 @@ describe('Saved Changes Tab component', function() {
                 it('and when getRecordBranch is rejected', function(done) {
                     catalogManagerSvc.getRecordBranch.and.returnValue(throwError('error'));
                     this.controller.restoreBranchWithUserBranch().then(() => {
-                        expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                        expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
+                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                         done();
                     });
@@ -430,7 +430,7 @@ describe('Saved Changes Tab component', function() {
             it('when createRecordBranch is rejected', function(done) {
                 catalogManagerSvc.createRecordBranch.and.returnValue(throwError(this.error));
                 this.controller.restoreBranchWithUserBranch().then(() => {
-                    expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                    expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.versionedRdfRecord.commitId);
                     expect(this.controller.error).toEqual(this.error);
                     done();
                 });

@@ -1,0 +1,52 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="classes-display h-100 d-flex flex-column">
+    <form class="classes-display-header d-flex px-2 align-items-center" [formGroup]="datasetSearchForm">
+        <div class="dataset-select-container">
+            <dataset-select [recordId]="state.explore.recordId" (recordIdChange)="onSelect($event)"
+                            [parentForm]="datasetSearchForm"></dataset-select>
+            <button mat-icon-button [disabled]="!state.explore.recordId" class="refresh-button" (click)="refresh()"><i class="fa fa-refresh"></i></button>
+        </div>
+        <div class="create-button-container flex-1 remove-min-width">
+            <button mat-raised-button color="primary" [disabled]="!state.explore.recordId" class="float-right create-button" (click)="showCreate()"><i class="fa fa-plus"></i> Create Instance</button>
+        </div>
+    </form>
+    <mat-divider></mat-divider>
+    <div *ngIf="!state.explore.classDetails.length || !state.explore.recordId" class="pt-2">
+        <info-message *ngIf="!state.explore.recordId && !state.explore.hasPermissionError">Please select a dataset to get started.</info-message>
+        
+        <p *ngIf="!state.explore.recordId && state.explore.hasPermissionError" class="text-warning">
+            <i class="fa fa-exclamation-circle fa-fw"></i><strong>You do not have permission to view this dataset.</strong>
+        </p>
+
+        <p *ngIf="state.explore.recordId && !state.explore.hasPermissionError" class="text-warning">
+            <i class="fa fa-exclamation-circle fa-fw"></i><strong>The selected dataset does not have any data.</strong>
+        </p>
+        <p *ngIf="state.explore.recordId && state.explore.hasPermissionError" class="text-warning">
+            <i class="fa fa-exclamation-circle fa-fw"></i><strong>You do not have permission to view this dataset.</strong>
+        </p>
+    </div>
+    <div *ngIf="state.explore.classDetails.length && state.explore.recordId" class="flex-1 remove-min-height class-cards-container">
+        <class-cards [classDetails]="state.explore.classDetails"></class-cards>
+    </div>
+</div>

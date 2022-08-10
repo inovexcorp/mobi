@@ -26,6 +26,7 @@ import { first } from 'rxjs/operators';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './mergeBlock.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./mergeBlock.component.html');
 
@@ -55,7 +56,7 @@ const mergeBlockComponent = {
 
 mergeBlockComponentCtrl.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes', '$q'];
 
-function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManagerService: CatalogManagerService, prefixes, $q) {
+function mergeBlockComponentCtrl(utilService, ontologyStateService: OntologyStateService, catalogManagerService: CatalogManagerService, prefixes, $q) {
     var dvm = this;
     var cm = catalogManagerService;
     dvm.os = ontologyStateService;
@@ -70,27 +71,30 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
 
     dvm.$onInit = function() {
         catalogId = get(cm.localCatalog, '@id', '');
-        dvm.branches = reject(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
-        var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
+        dvm.branches = reject(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
+        var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
         dvm.branchTitle = dvm.util.getDctermsValue(branch, 'title');
 
         dvm.changeTarget();
     }
     dvm.$onDestroy = function() {
-        if (dvm.os.listItem.merge) {
+        if (dvm.os.listItem?.merge) {
             dvm.os.listItem.merge.difference = undefined;
             dvm.os.listItem.merge.startIndex = 0;
         }
+    }
+    dvm.getEntityName = function(entityIRI) {
+        return dvm.os.getEntityNameByListItem(entityIRI).bind(dvm.os);
     }
     dvm.changeTarget = function(value) {
         dvm.os.listItem.merge.difference = undefined;
         dvm.os.listItem.merge.startIndex = 0;
         dvm.os.listItem.merge.target = value;
         if (dvm.os.listItem.merge.target) {
-            cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+            cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
                 .then(target => {
                     dvm.targetHeadCommitId = dvm.util.getPropertyId(target, prefixes.catalog + 'head');
-                    return dvm.os.getMergeDifferences(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId, cm.differencePageSize, 0);
+                    return dvm.os.getMergeDifferences(dvm.os.listItem.versionedRdfRecord.commitId, dvm.targetHeadCommitId, cm.differencePageSize, 0).pipe(first()).toPromise();
                     }, $q.reject)
                 .then(noop, errorMessage => {
                     dvm.util.createErrorToast(errorMessage);
@@ -101,11 +105,11 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
         }
     }
     dvm.retrieveMoreResults = function(limit, offset) {
-        dvm.os.getMergeDifferences(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId, limit, offset)
+        dvm.os.getMergeDifferences(dvm.os.listItem.versionedRdfRecord.commitId, dvm.targetHeadCommitId, limit, offset).pipe(first()).toPromise()
             .then(noop, dvm.util.createErrorToast);
     }
     dvm.submit = function() {
-        dvm.os.attemptMerge()
+        ontologyStateService.attemptMerge().toPromise()
             .then(() => {
                 dvm.os.resetStateTabs();
                 dvm.util.createSuccessToast('Your merge was successful.');

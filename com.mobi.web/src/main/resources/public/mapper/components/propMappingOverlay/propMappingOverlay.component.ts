@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import {ChangeDetectionStrategy, Component, Inject, OnInit} from '@angular/core';
 import { FormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialogRef } from '@angular/material';
 import { get, remove, find, has, invertBy, pick } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-
 import { DELIM, RDF, RDFS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
@@ -34,6 +34,7 @@ import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 import './propMappingOverlay.component.scss';
 
@@ -89,7 +90,7 @@ export class PropMappingOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<PropMappingOverlayComponent>, private fb: FormBuilder,
         public state: MapperStateService, private mm: MappingManagerService,
-        @Inject('ontologyManagerService') public om, @Inject('propertyManagerService') private pm,
+        public om: OntologyManagerService, @Inject('propertyManagerService') private pm,
         @Inject('utilService') private util) {}
 
     ngOnInit(): void {

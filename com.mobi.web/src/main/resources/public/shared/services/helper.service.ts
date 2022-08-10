@@ -22,7 +22,9 @@
  */
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { get } from 'lodash';
 import { Observable, throwError } from 'rxjs';
+import { ErrorResponse } from '../models/errorResponse.interface';
 
 /**
  * @class shared.HelperService
@@ -65,6 +67,21 @@ export class HelperService {
         } else {
             return throwError(error.statusText || 'Something went wrong. Please try again later.');
         }
+    }
+
+    handleErrorObject(error: HttpErrorResponse): Observable<ErrorResponse> {
+        if (error.status === 0) {
+            return throwError({'errorMessage': '', 'errorDetails': []});
+        } else {
+            return throwError(this.getErrorDataObject(error));
+        }
+    }
+
+    getErrorDataObject(error: HttpErrorResponse, defaultMessage = 'Something went wrong. Please try again later.'): ErrorResponse {
+        return {
+            'errorMessage': get(error, 'error.errorMessage') || error.statusText || defaultMessage,
+            'errorDetails': get(error, 'error.errorDetails') || []
+        };
     }
 
     private convertToString(param: any): string {

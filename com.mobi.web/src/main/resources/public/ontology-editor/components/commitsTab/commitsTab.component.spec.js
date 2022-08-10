@@ -129,7 +129,7 @@ describe('Commits Tab component', function() {
         });
         it('should open the ontology at a commit', function() {
             this.controller.openOntologyAtCommit({id: 'commit'});
-            expect(ontologyStateSvc.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, 'commit');
+            expect(ontologyStateSvc.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, 'commit');
         });
     });
     it('should open an ontology at a commit when its view button is clicked', function() {

@@ -196,7 +196,7 @@ describe('Imports Overlay component', function() {
                 var ontology2 = {'@id': 'ontology2'};
                 var ontology3 = {'@id': 'ontology3'};
                 this.controller.selectedOntologies = [{recordId: ontology3['@id']}];
-                ontologyStateSvc.listItem.ontologyRecord = {recordId: ontology1['@id']};
+                ontologyStateSvc.listItem.versionedRdfRecord = {recordId: ontology1['@id']};
                 catalogManagerSvc.getRecords.and.returnValue($q.when({data: [ontology1, ontology2, ontology3]}));
                 this.controller.setOntologies();
                 scope.$apply();
@@ -344,10 +344,10 @@ describe('Imports Overlay component', function() {
                             _.forEach(this.urls, url => {
                                 expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
                             });
-                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
-                            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.additionsObj);
+                            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                             expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                             expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                             expect(ontologyStateSvc.listItem.isSaved).toEqual(true);
                             expect(scope.close).toHaveBeenCalled();
@@ -360,10 +360,10 @@ describe('Imports Overlay component', function() {
                             _.forEach(this.urls, url => {
                                 expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
                             });
-                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
-                            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.additionsObj);
+                            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                             expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.versionedRdfRecord.branchId, ontologyStateSvc.listItem.versionedRdfRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                             expect(scope.close).not.toHaveBeenCalled();
                             expect(scope.dismiss).not.toHaveBeenCalled();
                             expect(this.controller.urlError).toEqual('error');
@@ -376,8 +376,8 @@ describe('Imports Overlay component', function() {
                         _.forEach(this.urls, url => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
                         });
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
-                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.additionsObj);
+                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                         expect(scope.close).not.toHaveBeenCalled();
@@ -392,8 +392,8 @@ describe('Imports Overlay component', function() {
                     _.forEach(this.urls, url => {
                         expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
                     });
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
-                    expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.additionsObj);
+                    expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                     expect(ontologyStateSvc.afterSave).not.toHaveBeenCalled();
                     expect(scope.close).not.toHaveBeenCalled();
                     expect(scope.dismiss).not.toHaveBeenCalled();

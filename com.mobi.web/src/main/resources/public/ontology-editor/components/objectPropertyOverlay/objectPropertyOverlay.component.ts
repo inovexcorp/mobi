@@ -22,6 +22,8 @@
  */
 import * as angular from 'angular';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './objectPropertyOverlay.component.scss';
 
 const template = require('./objectPropertyOverlay.component.html');
@@ -31,7 +33,6 @@ const template = require('./objectPropertyOverlay.component.html');
  * @name ontology-editor.component:objectPropertyOverlay
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:propertyManagerService
  *
  * @description
@@ -54,12 +55,11 @@ const objectPropertyOverlayComponent = {
     controller: objectPropertyOverlayComponentCtrl
 };
 
-objectPropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'propertyManagerService'];
+objectPropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'propertyManagerService'];
 
-function objectPropertyOverlayComponentCtrl(ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
+function objectPropertyOverlayComponentCtrl(ontologyStateService: OntologyStateService, utilService, propertyManagerService) {
     var dvm = this;
     var pm = propertyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
     dvm.individuals = {};
@@ -73,19 +73,19 @@ function objectPropertyOverlayComponentCtrl(ontologyStateService, utilService, o
         var added = pm.addId(dvm.os.listItem.selected, select, value);
         
         if (added) {
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
-            dvm.ontoUtils.saveCurrentChanges();
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
+            dvm.os.saveCurrentChanges().subscribe();
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
         var types = dvm.os.listItem.selected['@type'];
-        if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
-            dvm.ontoUtils.updateVocabularyHierarchies(select, [valueObj]);
+        if (dvm.os.containsDerivedConcept(types) || dvm.os.containsDerivedConceptScheme(types)) {
+            dvm.os.updateVocabularyHierarchies(select, [valueObj]);
         }
         dvm.close();
     }
     dvm.getValues = function(searchText) {
-        dvm.values = dvm.ontoUtils.getSelectList(Object.keys(dvm.os.listItem.objectProperties.iris), searchText, dvm.ontoUtils.getDropDownText);
+        dvm.values = dvm.os.getSelectList(Object.keys(dvm.os.listItem.objectProperties.iris), searchText, iri => dvm.os.getEntityNameByListItem(iri));
     }
     dvm.cancel = function() {
         dvm.dismiss();

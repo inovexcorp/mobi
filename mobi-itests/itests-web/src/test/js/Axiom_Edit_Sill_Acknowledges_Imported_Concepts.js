@@ -65,7 +65,7 @@ module.exports = {
             .waitForElementVisible('//imports-overlay//h4[text()[contains(.,"single-concept-vocab.ttl")]]//parent::div//following-sibling::md-checkbox[contains(@class, "md-checked")]')
             .click('xpath', '//button[text()[contains(.,"Submit")]]')
             .useCss()
-            .waitForElementNotVisible('div.spinner')
+//            .waitForElementNotVisible('div.spinner')
             .waitForElementNotPresent('div.modal-dialog imports-overlay')
             .waitForElementVisible('.imports-block')
             .useXpath()
@@ -85,7 +85,7 @@ module.exports = {
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotVisible('div.spinner')
+//            .waitForElementNotVisible('div.spinner')
             .waitForElementNotPresent('div.modal-dialog commit-overlay')
             .waitForElementVisible('.imports-block') // ensure that still on correct tab after committing
     },
@@ -158,7 +158,7 @@ module.exports = {
             .waitForElementVisible('//div//axiom-overlay')
             .waitForElementPresent('//axiom-overlay//div[contains(@class, "ui-select-match")]//i[contains(@class, "caret")]')
             .useCss()
-            .waitForElementNotVisible('div.spinner')
+//            .waitForElementNotVisible('div.spinner')
             .useCss()
             .pause(2000)
             .click('axiom-overlay div.modal-body form div.ui-select-match.ng-scope span')

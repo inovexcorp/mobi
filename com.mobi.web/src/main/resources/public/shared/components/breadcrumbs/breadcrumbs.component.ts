@@ -21,32 +21,27 @@
  * #L%
  */
 
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
 import './breadcrumbs.component.scss';
 
-const template = require('./breadcrumbs.component.html');
-
 /**
- * @ngdoc component
- * @name shared.component:breadcrumbs
+ * @class shared.BreadcrumbsComponent
  *
- * @description
- * `editIriOverlay` is a component that creates a breadcrumb trail based on the provided `items` array of breadcrumb
- * labels. The click behavior of the breadcrumb is determined by the provided `onClick` function which expects the
- * item index as an argument.
+ * A component that creates a breadcrumb trail based on the provided `items` array of breadcrumb labels. The click
+ * behavior of the breadcrumb is determined by the provided `onClick` function which expects the item index as an
+ * argument.
  * 
  * @param {string[]} items An array of strings for the breadcrumb labels
- * @param {Function} onClick A function to be called whena breadcrumb is clicked. Expects `index` as an argument
+ * @param {Function} onClick A function to be called when a breadcrumb is clicked. Expects a number as an argument
  */
-const breadcrumbsComponent = {
-    template,
-    bindings: {
-        items: '<',
-        onClick: '&'
-    },
-    controllerAs: 'dvm',
-    controller: breadcrumbsComponentCtrl
-};
+@Component({
+    selector: 'breadcrumbs',
+    templateUrl: './breadcrumbs.component.html'
+})
+export class BreadcrumbsComponent {
+    @Input() items: string[];
+    @Output() onClick = new EventEmitter<number>();
 
-function breadcrumbsComponentCtrl() {}
-
-export default breadcrumbsComponent;
+    constructor() {}
+}

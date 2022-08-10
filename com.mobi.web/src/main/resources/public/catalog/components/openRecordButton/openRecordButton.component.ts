@@ -30,6 +30,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -63,7 +65,7 @@ export class OpenRecordButtonComponent {
     @Input() stopProp: boolean;
 
     constructor(public $state: StateService, public cs: CatalogStateService, public ms: MapperStateService,
-        @Inject('ontologyStateService') public os, @Inject('policyEnforcementService') public pe,
+        public os: OntologyStateService, @Inject('policyEnforcementService') public pe,
         @Inject('policyManagerService') public pm, public sgs: ShapesGraphStateService,
         @Inject('utilService') public util) {}
 
@@ -93,13 +95,13 @@ export class OpenRecordButtonComponent {
         if (!isEmpty(this.os.listItem)) {
             this.os.listItem.active = false;
         }
-        const listItem = find(this.os.list, {ontologyRecord: {recordId: this.record['@id']}});
+        const listItem: OntologyListItem = find(this.os.list, {versionedRdfRecord: {recordId: this.record['@id']}});
         if (listItem) {
             this.os.listItem = listItem;
             this.os.listItem.active = true;
         } else {
             this.os.openOntology(this.record['@id'], this.util.getDctermsValue(this.record, 'title'))
-                .then(noop, this.util.createErrorToast);
+                .subscribe(noop, this.util.createErrorToast);
         }
     }
     openMapping(): void {

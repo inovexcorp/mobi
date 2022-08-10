@@ -79,7 +79,7 @@ function editBranchOverlayComponentCtrl(catalogManagerService: CatalogManagerSer
         } else {
             util.updateDctermsValue(dvm.resolve.branch, 'description', dvm.branchDescription);
         }
-        cm.updateRecordBranch(dvm.resolve.branch['@id'], os.listItem.ontologyRecord.recordId, catalogId, dvm.resolve.branch).pipe(first()).toPromise()
+        cm.updateRecordBranch(dvm.resolve.branch['@id'], os.listItem.versionedRdfRecord.recordId, catalogId, dvm.resolve.branch).pipe(first()).toPromise()
             .then(() => {
                 dvm.close();
             }, errorMessage => dvm.error = errorMessage);

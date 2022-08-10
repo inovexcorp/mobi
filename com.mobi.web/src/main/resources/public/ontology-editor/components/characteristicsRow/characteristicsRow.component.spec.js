@@ -100,7 +100,7 @@ describe('Characteristics Row component', function() {
             this.object = {};
             ontologyStateSvc.getEntityByRecordId.and.returnValue(this.object);
             this.controller.updateTypes(['test']);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
             expect(ontologyStateSvc.listItem.selected['@types']).toEqual(['test']);
             expect(this.object['@types']).toEqual(['test']);
         });

@@ -38,6 +38,8 @@ import { WindowRef } from '../../../shared/services/windowRef.service';
 import { QuickActionGridComponent } from './quickActionGrid.component';
 import { MockProvider } from 'ng-mocks';
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 // Mocks
 class mockState {
@@ -61,7 +63,7 @@ describe('Quick Action Grid component', function() {
             ],
             providers: [
                 MockProvider(DiscoverStateService),
-                { provide: 'ontologyStateService', useClass: mockOntologyState },
+                { provide: OntologyStateService, useClass: mockOntologyState },
                 { provide: WindowRef, useClass: mockWindowRef },
                 { provide: StateService, useClass: mockState },
             ]
@@ -72,7 +74,7 @@ describe('Quick Action Grid component', function() {
         fixture = TestBed.createComponent(QuickActionGridComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        ontologyStateStub = TestBed.get('ontologyStateService');
+        ontologyStateStub = TestBed.get(OntologyStateService);
         discoverStateStub = TestBed.get(DiscoverStateService);
         $stateStub = TestBed.get(StateService);
         windowRefStub = TestBed.get(WindowRef);
@@ -106,12 +108,12 @@ describe('Quick Action Grid component', function() {
                 component.openAnOntology();
                 expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, {reload: true});
                 expect(item.active).toEqual(false);
-                expect(ontologyStateStub.listItem).toEqual({});
+                expect(ontologyStateStub.listItem).toEqual(undefined);
             });
             it('if one is not selected', function() {
                 component.openAnOntology();
                 expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, {reload: true});
-                expect(ontologyStateStub.listItem).toEqual({});
+                expect(ontologyStateStub.listItem).toEqual(undefined);
             });
         });
         it('should explore data', function() {

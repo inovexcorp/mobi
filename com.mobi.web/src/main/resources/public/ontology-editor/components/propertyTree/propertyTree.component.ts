@@ -23,6 +23,8 @@
 import * as angular from 'angular';
 
 import { every, filter, some, has, concat, map, merge, includes } from 'lodash';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 const template = require('./propertyTree.component.html');
 
@@ -61,7 +63,7 @@ const propertyTreeComponent = {
 
 propertyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'prefixes', 'INDENT'];
 
-function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService, utilService, prefixes, INDENT) {
+function propertyTreeComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, utilService, prefixes, INDENT) {
     var dvm = this;
     var om = ontologyManagerService;
     var util = utilService;
@@ -116,7 +118,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         }
     }
     dvm.$onDestroy = function() {
-        if (dvm.os.listItem.editorTabStates) {
+        if (dvm.os.listItem?.editorTabStates) {
             dvm.os.listItem.editorTabStates.properties.index = 0;
         }
     }
@@ -127,7 +129,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         dvm.filterText = '';
     }
     dvm.clickItem = function(entityIRI) {
-        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.properties.targetedSpinnerId);
+        dvm.os.selectItem(entityIRI).toPromise();
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
@@ -142,7 +144,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         if (!node.title) {
             dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath] = node.isOpened;
         } else {
-            node.set(dvm.os.listItem.ontologyRecord.recordId, node.isOpened);
+            node.set(dvm.os.listItem.versionedRdfRecord.recordId, node.isOpened);
             dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.title] = node.isOpened;
         }
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
@@ -183,7 +185,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             if (toOpen) {
                 if (!node.isOpened) {
                     node.isOpened = true;
-                    node.set(dvm.os.listItem.ontologyRecord.recordId, true);
+                    node.set(dvm.os.listItem.versionedRdfRecord.recordId, true);
                 }
                 node.displayNode = true;
             }
@@ -205,7 +207,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         delete node.displayNode;
 
         if (node.title) {
-            node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
+            node.isOpened = node.get(dvm.os.listItem.versionedRdfRecord.recordId);
             if (dvm.shouldFilter()) {
                 node.parentNoMatch = true;
             } else {
@@ -245,7 +247,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.isShown = function (node) {
-        var displayNode = !has(node, 'entityIRI') || (dvm.os.areParentsOpen(node, dvm.activeTab) && node.get(dvm.os.listItem.ontologyRecord.recordId));
+        var displayNode = !has(node, 'entityIRI') || (dvm.os.areParentsOpen(node, dvm.activeTab) && node.get.call(dvm.os, dvm.os.listItem.versionedRdfRecord.recordId));
         if (dvm.shouldFilter() && node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
@@ -273,24 +275,25 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         if (dvm.datatypeProps !== undefined && dvm.datatypeProps.length) {
             result.push({
                 title: 'Data Properties',
-                get: dvm.os.getDataPropertiesOpened,
-                set: dvm.os.setDataPropertiesOpened
+                get: dvm.os.getDataPropertiesOpened.bind(dvm.os),
+                set: dvm.os.setDataPropertiesOpened.bind(dvm.os)
             });
+
             result = concat(result, addGetToArrayItems(dvm.datatypeProps, dvm.os.getDataPropertiesOpened));
         }
         if (dvm.objectProps !== undefined && dvm.objectProps.length) {
             result.push({
                 title: 'Object Properties',
-                get: dvm.os.getObjectPropertiesOpened,
-                set: dvm.os.setObjectPropertiesOpened
+                get: dvm.os.getObjectPropertiesOpened.bind(dvm.os),
+                set: dvm.os.setObjectPropertiesOpened.bind(dvm.os)
             });
             result = concat(result, addGetToArrayItems(dvm.objectProps, dvm.os.getObjectPropertiesOpened));
         }
         if (dvm.annotationProps !== undefined && dvm.annotationProps.length) {
             result.push({
                 title: 'Annotation Properties',
-                get: dvm.os.getAnnotationPropertiesOpened,
-                set: dvm.os.setAnnotationPropertiesOpened
+                get: dvm.os.getAnnotationPropertiesOpened.bind(dvm.os),
+                set: dvm.os.setAnnotationPropertiesOpened.bind(dvm.os)
             });
             result = concat(result, addGetToArrayItems(dvm.annotationProps, dvm.os.getAnnotationPropertiesOpened));
         }

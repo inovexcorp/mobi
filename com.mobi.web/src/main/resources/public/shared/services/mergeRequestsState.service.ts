@@ -30,11 +30,13 @@ import { CATALOG, MERGEREQ, OWL } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Conflict } from '../models/conflict.interface';
 import { Difference } from '../models/difference.class';
+import { EntityNames } from '../models/entityNames.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequest } from '../models/mergeRequest.interface';
 import { MergeRequestConfig } from '../models/mergeRequestConfig.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { OntologyManagerService } from './ontologyManager.service';
 import { UserManagerService } from './userManager.service';
 
 /**
@@ -47,7 +49,7 @@ export class MergeRequestsStateService {
     catalogId = '';
 
     constructor(private mm: MergeRequestManagerService, private cm: CatalogManagerService,
-        private um: UserManagerService, @Inject('ontologyManagerService') private om,
+        private um: UserManagerService, private om: OntologyManagerService,
         @Inject('utilService') private util) {}
 
     /**
@@ -100,12 +102,7 @@ export class MergeRequestsStateService {
      * The map of entity IRIs to labels and names for the difference of the currently selected Merge Request, `selected`,
      * or the Merge Request being generated, `requestConfig`
      */
-    entityNames: {
-        [any: string]: {
-            label: string,
-            names: string[]
-        }
-    } = {};
+    entityNames: EntityNames = {};
     /**
      * The index of the Difference of the currently selected Merge Request, `selected`, or the Merge Request being
      * generated, `requestConfig`

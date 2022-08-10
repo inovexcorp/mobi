@@ -20,9 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
+import { some, find, noop, remove, get, isEmpty, forEach } from 'lodash';
+import { first } from 'rxjs/operators';
 
-import { some, find, noop, remove, get, isEmpty } from 'lodash';
 import './openOntologyTab.component.scss';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 const template = require('./openOntologyTab.component.html');
 
@@ -57,7 +63,7 @@ const openOntologyTabComponent = {
 
 openOntologyTabComponentCtrl.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'settingManagerService'];
 
-function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, settingManagerService) {
+function openOntologyTabComponentCtrl(httpService, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, settingManagerService) {
     const dvm = this;
     let ontologyRecords = [];
 
@@ -98,16 +104,16 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         }
     }
     dvm.isOpened = function(record) {
-        return some(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
+        return some(dvm.os.list, {versionedRdfRecord: {recordId: record['@id']}});
     }
     dvm.open = function(record) {
-        const listItem = find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
+        const listItem: OntologyListItem = find(dvm.os.list, {versionedRdfRecord: {recordId: record['@id']}});
         if (listItem) {
             dvm.os.listItem = listItem;
             dvm.os.listItem.active = true;
         } else {
             dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
-                .then(noop, dvm.util.createErrorToast);
+                .subscribe(noop, dvm.util.createErrorToast);
         }
     }
     dvm.newOntology = function() {
@@ -139,11 +145,11 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
     }
     dvm.deleteOntology = function() {
         return dvm.om.deleteOntology(dvm.recordId)
-            .then(() => {
+            .subscribe(() => {
                 dvm.os.closeOntology(dvm.recordId);
-                const state = dvm.os.getOntologyStateByRecordId(dvm.recordId);
+                const state = dvm.os.getStateByRecordId(dvm.recordId);
                 if (!isEmpty(state)) {
-                    dvm.os.deleteOntologyState(dvm.recordId);
+                    dvm.os.deleteState(dvm.recordId);
                 }
                 return dvm.getPageOntologyRecords(1, dvm.filterText);
             }, dvm.util.createErrorToast);

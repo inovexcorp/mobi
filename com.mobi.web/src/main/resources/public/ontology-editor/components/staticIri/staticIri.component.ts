@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import './staticIri.component.scss';
 
 const template = require('./staticIri.component.html');
@@ -28,7 +29,6 @@ const template = require('./staticIri.component.html');
  * @ngdoc component
  * @name ontology-editor.component:staticIri
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -58,12 +58,11 @@ const staticIriComponent = {
     controller: staticIriComponentCtrl
 };
 
-staticIriComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
+staticIriComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'modalService'];
 
-function staticIriComponentCtrl($filter, ontologyStateService, ontologyUtilsManagerService, modalService) {
+function staticIriComponentCtrl($filter, ontologyStateService: OntologyStateService, modalService) {
     var dvm = this;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
 
     dvm.$onInit = function() {
         dvm.setVariables();
@@ -87,11 +86,11 @@ function staticIriComponentCtrl($filter, ontologyStateService, ontologyUtilsMana
         };
         if (dvm.duplicateCheck) {
             resolveObj.customValidation = {
-                func: dvm.ontoUtils.checkIri,
+                func: dvm.os.checkIri,
                 msg: 'This IRI already exists'
             };
         }
-        modalService.openModal('editIriOverlay', resolveObj, dvm.onEdit);
+        modalService.openModal('editIriOverlayAjs', resolveObj, dvm.onEdit);
     }
 }
 

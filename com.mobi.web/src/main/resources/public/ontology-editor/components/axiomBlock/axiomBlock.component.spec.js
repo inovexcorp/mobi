@@ -51,7 +51,7 @@ describe('Axiom Block component', function() {
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             propertyManagerSvc = _propertyManagerService_;
-            ontoUtils = _ontologyUtilsManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_; // TODO when upgraded to angular, code was moved into ontologyStateService
             prefixes = _prefixes_;
             modalSvc = _modalService_;
         });

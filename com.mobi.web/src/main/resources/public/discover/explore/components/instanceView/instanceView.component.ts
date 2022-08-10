@@ -25,8 +25,11 @@ import { omit } from 'lodash';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './instanceView.component.scss';
+import { Component, Inject, Input, OnChanges, OnInit } from '@angular/core';
+import { ExploreUtilsService } from '../../services/exploreUtils.service';
+import { CATALOG } from '../../../../prefixes';
 
-const template = require('./instanceView.component.html');
+import policyEnforcementService from '../../../../shared/services/policyEnforcement.service';
 
 /**
  * @ngdoc component
@@ -44,64 +47,49 @@ const template = require('./instanceView.component.html');
  *
  * @param {Object} entity The instance entity to view
  */
-const instanceViewComponent = {
-    template,
-    bindings: {
-        entity: '<'
-    },
-    controllerAs: 'dvm',
-    controller: instanceViewComponentCtrl
-};
+@Component({
+    selector: 'instance-view',
+    templateUrl: './instanceView.component.html'
+})
 
-instanceViewComponentCtrl.$inject = ['discoverStateService', 'utilService', 'exploreUtilsService', 'prefixes', 'policyEnforcementService'];
+export class InstanceViewComponent implements OnInit, OnChanges {
+    @Input() entity: any = {};
 
-function instanceViewComponentCtrl(discoverStateService: DiscoverStateService, utilService, exploreUtilsService, prefixes, policyEnforcementService) {
-    const dvm = this;
-    const pep = policyEnforcementService;
-    dvm.util = utilService;
-    dvm.ds = discoverStateService;
-    dvm.eu = exploreUtilsService;
-    dvm.entity = {};
-
-    dvm.$onInit = function() {
-        dvm.entity = getEntity();
+    constructor(public ds: DiscoverStateService, private eu: ExploreUtilsService,
+                @Inject('policyEnforcementService') private pep, @Inject('utilService') private util) {
     }
-    dvm.$onChanges = function() {
-        dvm.entity = getEntity();
+
+    ngOnInit(): void {
+        this.entity = this.getEntity();
     }
-    dvm.getLimit = function(array, limit) {
-        var len = array.length;
+    ngOnChanges() {
+        this.entity = this.getEntity();
+    }
+    getLimit = function(array, limit) {
+        let len = array.length;
         return len === limit ? 1 : len;
     }
-    dvm.getReification = function(propIRI, valueObj) {
-        var reification = dvm.eu.getReification(dvm.ds.explore.instance.entity, dvm.ds.explore.instance.metadata.instanceIRI, propIRI, valueObj);
-        if (reification) {
-            return omit(reification, ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object']);
-        }
-        return reification;
-    }
-    dvm.edit = function() {
+    edit() {
         const pepRequest = {
-            resourceId: dvm.ds.explore.recordId,
-            actionId: prefixes.catalog + 'Modify'
+            resourceId: this.ds.explore.recordId,
+            actionId: CATALOG + 'Modify'
         };
-        pep.evaluateRequest(pepRequest)
+        this.pep.evaluateRequest(pepRequest)
             .then(response => {
-                const canModify = response !== pep.deny;
+                const canModify = response !== this.pep.deny;
                 if (canModify) {
-                    dvm.ds.explore.editing = true;
-                    dvm.ds.explore.instance.original = angular.copy(dvm.ds.explore.instance.entity);
+                    this.ds.explore.editing = true;
+                    this.ds.explore.instance.original = angular.copy(this.ds.explore.instance.entity);
                 } else {
-                    dvm.util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.util.createErrorToast('You don\'t have permission to modify dataset');
                 }
             }, () => {
-                dvm.util.createWarningToast('Could not retrieve record permissions');
+                this.util.createWarningToast('Could not retrieve record permissions');
             });
     }
 
-    function getEntity() {
-        return omit(dvm.ds.getInstance(), ['@id', '@type']);
+    private getEntity() {
+        return omit(this.ds.getInstance(), ['@id', '@type']);
     }
 }
 
-export default instanceViewComponent;

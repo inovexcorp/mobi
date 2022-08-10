@@ -31,6 +31,8 @@ import { VersionedRdfState } from '../../services/versionedRdfState.service';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { ResolveConflictsFormComponent } from '../resolveConflictsForm/resolveConflictsForm.component';
 import { ResolveConflictsBlock } from './resolveConflictsBlock.component';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { of, throwError } from 'rxjs';
 
 describe('Resolve Conflicts Block component', function() {
     let component: ResolveConflictsBlock;
@@ -48,7 +50,7 @@ describe('Resolve Conflicts Block component', function() {
                 MockComponent(ResolveConflictsFormComponent)
             ],
             providers: [
-                { provide: 'ontologyStateService', useClass: mockOntologyState },
+                { provide: OntologyStateService, useClass: mockOntologyState },
                 { provide: 'utilService', useClass: mockUtil }
             ],
         });
@@ -61,7 +63,7 @@ describe('Resolve Conflicts Block component', function() {
         utilStub = TestBed.get('utilService');
         stateStub = MockProvider(VersionedRdfState).provide;
         stateStub.listItem = new VersionedRdfListItem();
-        stateStub.merge = jasmine.createSpy('merge').and.returnValue(Promise.resolve());
+        stateStub.merge = jasmine.createSpy('merge').and.returnValue(of(null));
         stateStub.resetStateTabs = jasmine.createSpy('resetStateTabs');
         stateStub.cancelMerge = jasmine.createSpy('cancelMerge');
         component.state = stateStub;
@@ -144,7 +146,7 @@ describe('Resolve Conflicts Block component', function() {
                 stateStub.listItem.merge.conflicts = [selectedLeft, selectedRight];
             });
             it('unless merge rejects', async function() {
-                stateStub.merge.and.returnValue(Promise.reject('Error message'));
+                stateStub.merge.and.returnValue(throwError('Error message'));
                 await component.submit();
                 expect(stateStub.listItem.merge.resolutions.additions).toEqual([]);
                 expect(stateStub.listItem.merge.resolutions.deletions).toEqual(['add-right', 'add-left']);

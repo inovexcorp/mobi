@@ -29,7 +29,7 @@
         <div md-virtual-repeat="node in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
             <div ng-if="node.isClass" class="tree-item" ng-class="{'imported': node.entityInfo.imported}" ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}">
                 <a ng-click="dvm.toggleOpen(node); $event.stopPropagation()">
-                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.isOpened, 'fa-folder-o': !node.isOpened}"></i><span>{{dvm.ontoUtils.getLabelForIRI(node.entityIRI)}}</span>
+                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.isOpened, 'fa-folder-o': !node.isOpened}"></i><span>{{dvm.os.getEntityNameByListItem(node.entityIRI)}}</span>
                 </a>
             </div>
             <div ng-if="!node.isClass" ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}">

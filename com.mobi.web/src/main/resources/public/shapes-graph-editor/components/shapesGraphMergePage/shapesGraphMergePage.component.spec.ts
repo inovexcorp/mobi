@@ -153,7 +153,7 @@ describe('Shapes Graph Merge Page component', function() {
         describe('should change target', function() {
             it('unless an error occurs', fakeAsync(function() {
                 catalogManagerStub.getRecordBranch.and.returnValue(of(branch2));
-                shapesGraphStateStub.getMergeDifferences.and.rejectWith('Error');
+                shapesGraphStateStub.getMergeDifferences.and.returnValue(throwError('Error'));
                 component.changeTarget(branch2);
                 tick();
 
@@ -165,6 +165,7 @@ describe('Shapes Graph Merge Page component', function() {
             }));
             it('successfully', fakeAsync(function() {
                 catalogManagerStub.getRecordBranch.and.returnValue(of(branch2));
+                shapesGraphStateStub.getMergeDifferences.and.returnValue(of(null));
                 component.changeTarget(branch2);
                 tick();
                 expect(shapesGraphStateStub.listItem.merge.target).toEqual(branch2);
@@ -175,7 +176,7 @@ describe('Shapes Graph Merge Page component', function() {
         });
         describe('should retrieve more results', function() {
             it('successfully', fakeAsync(function() {
-                shapesGraphStateStub.getMergeDifferences.and.resolveTo();
+                shapesGraphStateStub.getMergeDifferences.and.returnValue(of(null));
                 component.targetHeadCommitId = 'targetCommitId';
                 component.retrieveMoreResults(100, 100);
                 tick();
@@ -183,7 +184,7 @@ describe('Shapes Graph Merge Page component', function() {
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                shapesGraphStateStub.getMergeDifferences.and.rejectWith('Error');
+                shapesGraphStateStub.getMergeDifferences.and.returnValue(throwError('Error'));
                 component.targetHeadCommitId = 'targetCommitId';
                 component.retrieveMoreResults(100, 100);
                 tick();
@@ -193,7 +194,7 @@ describe('Shapes Graph Merge Page component', function() {
         });
         describe('should submit the merge', function() {
             it('unless attemptMerge rejects', fakeAsync(function() {
-                shapesGraphStateStub.attemptMerge.and.rejectWith('Error message');
+                shapesGraphStateStub.attemptMerge.and.returnValue(throwError('Error message'));
                 component.submit();
                 tick();
                 expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalled();
@@ -202,7 +203,7 @@ describe('Shapes Graph Merge Page component', function() {
                 expect(component.error).toEqual('Error message');
             }));
             it('if attemptMerge resolves', fakeAsync(function() {
-                shapesGraphStateStub.attemptMerge.and.resolveTo();
+                shapesGraphStateStub.attemptMerge.and.returnValue(of(null));
                 component.submit();
                 tick();
                 expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalled();

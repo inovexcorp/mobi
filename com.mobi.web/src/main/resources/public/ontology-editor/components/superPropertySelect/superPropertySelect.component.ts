@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 const template = require('./superPropertySelect.component.html');
 
 /**
@@ -28,7 +30,6 @@ const template = require('./superPropertySelect.component.html');
  * @name ontology-editor.component:superPropertySelect
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  *
  * @description
  * `superPropertySelect` is a component which provides a link to hide/show a `ui-select` of all available properties
@@ -52,12 +53,11 @@ const superPropertySelectComponent = {
     controller: superPropertySelectComponentCtrl
 };
 
-superPropertySelectComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+superPropertySelectComponentCtrl.$inject = ['ontologyStateService', 'utilService'];
 
-function superPropertySelectComponentCtrl(ontologyStateService, utilService, ontologyUtilsManagerService) {
+function superPropertySelectComponentCtrl(ontologyStateService: OntologyStateService, utilService) {
     var dvm = this;
-    var os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
+    dvm.os = ontologyStateService;
     dvm.util = utilService;
     dvm.isShown = false;
     dvm.array = [];
@@ -73,7 +73,7 @@ function superPropertySelectComponentCtrl(ontologyStateService, utilService, ont
         dvm.changeEvent({values: dvm.bindModel});
     }
     dvm.getValues = function(searchText) {
-        dvm.array =  dvm.ontoUtils.getSelectList(Object.keys(os.listItem[dvm.key].iris), searchText, dvm.ontoUtils.getDropDownText);
+        dvm.array = dvm.os.getSelectList(Object.keys(dvm.os.listItem[dvm.key].iris), searchText, iri => dvm.os.getEntityNameByListItem(iri));
     }
 }
 

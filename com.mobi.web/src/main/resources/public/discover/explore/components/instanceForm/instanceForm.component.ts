@@ -20,13 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { filter, some, forEach, concat, includes, uniq, remove, map, join, find, get, flatten } from 'lodash';
+import NewInstancePropertyOverlayComponent from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
+import editIriOverlayComponent from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
+
+import { filter, some, forEach, concat, includes, uniq, map, join, find, get, flatten, remove } from 'lodash';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { ExploreService } from '../../../services/explore.service';
+import { ExploreUtilsService } from '../../services/exploreUtils.service';
 
-import './instanceForm.component.scss';
+import { DCTERMS, OWL, RDFS, RDF } from '../../../../prefixes';
+import { MatDialog } from '@angular/material/dialog';
 
-const template = require('./instanceForm.component.html');
+import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
+import { forkJoin } from 'rxjs';
+import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
+import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
+import { MatChipInputEvent } from '@angular/material/chips';
+import { SplitIRI } from '../../../../shared/models/splitIRI.interface';
+import { PropertyDetails } from "../../../models/propertyDetails.interface";
 
 /**
  * @ngdoc component
@@ -50,148 +62,194 @@ const template = require('./instanceForm.component.html');
  * @param {Function} changeEvent A function to be called when the value of isValid changes. Expects an argument
  * called `value` and should update the value of `isValid`.
  */
-const instanceFormComponent = {
-    template,
-    bindings: {
-        header: '<',
-        isValid: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: instanceFormComponentCtrl
-};
+@Component({
+    selector: 'instance-form',
+    templateUrl: './instanceForm.component.html'
+})
+export class InstanceFormComponent implements OnInit {
+    @Input() header;
+    @Input() isValid;
+    @Output() changeEvent = new EventEmitter<any>();
+    isInstancePropertyDisabled : boolean;
 
-instanceFormComponentCtrl.$inject = ['$q', '$filter', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService', 'modalService'];
+    constructor(private es: ExploreService, public eu: ExploreUtilsService, private ds: DiscoverStateService,
+                private dialog: MatDialog, @Inject('utilService') private util, private splitIRI: SplitIRIPipe) {
+    }
 
-function instanceFormComponentCtrl($q, $filter, discoverStateService: DiscoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService, modalService) {
-    var dvm = this;
-    var es = exploreService;
-    dvm.ds = discoverStateService;
-    dvm.util = utilService;
-    dvm.properties = [{
-        propertyIRI: prefixes.dcterms + 'description',
-        type: 'Data'
+    properties: PropertyDetails[] = [{
+        propertyIRI: DCTERMS + 'description',
+        type: 'Data',
+        range: [],
+        restrictions: [{
+            cardinality: 0,
+            cardinalityType: ''
+        }]
     }, {
-        propertyIRI: prefixes.dcterms + 'title',
-        type: 'Data'
+        propertyIRI: DCTERMS + 'title',
+        type: 'Data',
+        range: [],
+        restrictions: [{
+            cardinality: 0,
+            cardinalityType: ''
+        }]
     }, {
-        propertyIRI: prefixes.rdfs + 'comment',
-        type: 'Data'
+        propertyIRI: RDFS + 'comment',
+        type: 'Data',
+        range: [],
+        restrictions: [{
+            cardinality: 0,
+            cardinalityType: ''
+        }]
     }, {
-        propertyIRI: prefixes.rdfs + 'label',
-        type: 'Data'
+        propertyIRI: RDFS + 'label',
+        type: 'Data',
+        range: [],
+        restrictions: [{
+            cardinality: 0,
+            cardinalityType: ''
+        }]
     }];
-    dvm.reificationProperties = [];
-    dvm.regex = REGEX;
-    dvm.prefixes = prefixes;
-    dvm.searchText = {};
-    dvm.showOverlay = false;
-    dvm.showPropertyValueOverlay = false;
-    dvm.changed = [];
-    dvm.missingProperties = [];
-    dvm.eu = exploreUtilsService;
-    dvm.instance = {};
+    searchText = {};
+    showOverlay = false;
+    showPropertyValueOverlay = false;
+    changed = [];
+    missingProperties: string[] = [];
+    instance: JSONLDObject = {'@id': ''};
+    options = [];
 
-    dvm.$onInit = function() {
-        dvm.instance = dvm.ds.getInstance();
-        getProperties();
-        getReificationProperties();
+    ngOnInit() {
+        this.instance = this.ds.getInstance();
+        this.getProperties();
+        this.getOptions(this.instance);
+        const newProperties = this.eu.getNewProperties(this.properties, this.instance, '');
+        this.isInstancePropertyDisabled = newProperties ? !newProperties.length : false ;
     }
-    dvm.newInstanceProperty = function() {
-        modalService.openModal('newInstancePropertyOverlay', {properties: dvm.properties, instance: dvm.instance}, dvm.addToChanged);
+    newInstanceProperty() {
+        this.dialog.open(NewInstancePropertyOverlayComponent, {
+            data: {
+                properties: this.properties,
+                instance: this.instance
+            }
+        }).afterClosed().subscribe((result: {propertyIRI: string, range: [], restrictions: [], type: string}) => {
+            if (result) {
+                this.addToChanged(result.propertyIRI);
+            }
+        });
     }
-    dvm.showIriConfirm = function() {
-        modalService.openConfirmModal('<p>Changing this IRI might break relationships within the dataset. Are you sure you want to continue?</p>', dvm.showIriOverlay);
+    showIriConfirm() {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Changing this IRI might break relationships within the dataset. Are you sure you want to continue?</p>'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.showIriOverlay();
+            }
+        });
     }
-    dvm.showIriOverlay = function() {
-        var split = $filter('splitIRI')(dvm.instance['@id']);
-        modalService.openModal('editIriOverlay', {iriBegin: split.begin, iriThen: split.then, iriEnd: split.end}, dvm.setIRI);
+    showIriOverlay() {
+        const split: SplitIRI = this.splitIRI.transform(this.instance['@id']);
+        this.dialog.open(editIriOverlayComponent, {
+            data: { iriBegin: split.begin, iriThen: split.then, iriEnd: split.end }
+        }).afterClosed().subscribe((result) => {
+            if (result) this.setIRI(result)
+        });
     }
-    dvm.getOptions = function(propertyIRI) {
-        var range = dvm.eu.getRange(propertyIRI, dvm.properties);
+    getOptions(propertyIRI): void {
+        const range = this.eu.getRange(propertyIRI, this.properties);
         if (range) {
-            return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0, infer: true}, true)
-                .then(response => {
-                    var options = filter(response.data, item => !some(dvm.instance[propertyIRI], {'@id': item.instanceIRI}));
-                    if (dvm.searchText[propertyIRI]) {
-                        return filter(options, item => dvm.eu.contains(item.title, dvm.searchText[propertyIRI]) || dvm.eu.contains(item.instanceIRI, dvm.searchText[propertyIRI]));
+            this.es.getClassInstanceDetails(this.ds.explore.recordId, range, {offset: 0, infer: true}, true)
+                .subscribe(response => {
+                    let options = filter(response.body, item => !some(this.instance[propertyIRI], {'@id': item.instanceIRI}));
+                    if (this.searchText[propertyIRI]) {
+                        this.options = filter(options, item => this.eu.contains(item.title, this.searchText[propertyIRI]) || this.eu.contains(item.instanceIRI, this.searchText[propertyIRI]));
                     }
-                    return options;
+                    this.options = options;
                 }, errorMessage => {
-                    dvm.util.createErrorToast(errorMessage);
-                    return [];
+                    this.util.createErrorToast(errorMessage);
+                    this.options = [];
                 });
         }
-        return $q.when([]);
+        this.options = [];
     }
-    dvm.addToChanged = function(propertyIRI) {
-        dvm.changed = uniq(concat(dvm.changed, [propertyIRI]));
-        dvm.missingProperties = dvm.getMissingProperties();
+    addToChanged(propertyIRI): void {
+        this.changed = uniq(concat(this.changed, [propertyIRI]));
+        this.missingProperties = this.getMissingProperties();
     }
-    dvm.isChanged = function(propertyIRI) {
-        return includes(dvm.changed, propertyIRI);
+    isChanged(propertyIRI) {
+        return includes(this.changed, propertyIRI);
     }
-    dvm.setIRI = function(iriObj) {
-        dvm.instance['@id'] = iriObj.iriBegin + iriObj.iriThen + iriObj.iriEnd;
+    setIRI(iriObj): void {
+        this.instance['@id'] = iriObj.value.iriBegin + iriObj.value.iriThen + iriObj.value.iriEnd;
     }
-    dvm.onSelect = function(text, propertyIRI, index) {
-        modalService.openModal('propertyValueOverlay', {iri: propertyIRI, index: index, text, properties: dvm.reificationProperties}, dvm.addToChanged, 'lg');
-    }
-    dvm.getMissingProperties = function() {
-        var missing = [];
-        forEach(dvm.properties, property => {
+    getMissingProperties(): string[] {
+        let missing = [];
+        forEach(this.properties, property => {
             forEach(get(property, 'restrictions', []), restriction => {
-                var length = get(dvm.instance, property.propertyIRI, []).length;
-                if (restriction.cardinalityType === prefixes.owl + 'cardinality' && length !== restriction.cardinality) {
-                    missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
-                } else if (restriction.cardinalityType === prefixes.owl + 'minCardinality' && length < restriction.cardinality) {
-                    missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
-                } else if (restriction.cardinalityType === prefixes.owl + 'maxCardinality' && length > restriction.cardinality) {
-                    missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
+                const length = get(this.instance, property.propertyIRI, []).length;
+                if (restriction.cardinalityType === OWL + 'cardinality' && length !== restriction.cardinality) {
+                    missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + this.util.getBeautifulIRI(property.propertyIRI));
+                } else if (restriction.cardinalityType === OWL + 'minCardinality' && length < restriction.cardinality) {
+                    missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + this.util.getBeautifulIRI(property.propertyIRI));
+                } else if (restriction.cardinalityType === OWL + 'maxCardinality' && length > restriction.cardinality) {
+                    missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + this.util.getBeautifulIRI(property.propertyIRI));
                 }
             });
         });
-        dvm.isValid = !missing.length;
-        dvm.changeEvent({value: dvm.isValid});
+        this.isValid = !missing.length;
+        this.changeEvent.emit({value: this.isValid});
         return missing;
     }
-    dvm.getRestrictionText = function(propertyIRI) {
-        var details = find(dvm.properties, {propertyIRI});
-        var results = [];
+    getRestrictionText(propertyIRI): string {
+        const details: PropertyDetails = find(this.properties, {propertyIRI});
+        let results = [];
         forEach(get(details, 'restrictions', []), restriction => {
-            if (restriction.cardinalityType === prefixes.owl + 'cardinality') {
+            if (restriction.cardinalityType === OWL + 'cardinality') {
                 results.push('exactly ' + restriction.cardinality);
-            } else if (restriction.cardinalityType === prefixes.owl + 'minCardinality') {
+            } else if (restriction.cardinalityType === OWL + 'minCardinality') {
                 results.push('at least ' + restriction.cardinality);
-            } else if (restriction.cardinalityType === prefixes.owl + 'maxCardinality') {
+            } else if (restriction.cardinalityType === OWL + 'maxCardinality') {
                 results.push('at most ' + restriction.cardinality);
             }
         });
         return results.length ? ('[' + join(results, ', ') + ']') : '';
     }
-    dvm.cleanUpReification = function($chip, propertyIRI) {
-        var object = angular.copy($chip);
-        remove(dvm.ds.explore.instance.entity, {
-            [prefixes.rdf + 'predicate']: [{'@id': propertyIRI}],
-            [prefixes.rdf + 'object']: [object]
-        });
-    }
-    dvm.transformChip = function(item) {
-        dvm.ds.explore.instance.objectMap[item.instanceIRI] = item.title;
-        return dvm.eu.createIdObj(item.instanceIRI)
+    private getProperties() {
+        forkJoin(map(this.instance['@type'], type => this.es.getClassPropertyDetails(this.ds.explore.recordId, type)))
+            .subscribe(responses => {
+                this.properties = concat(this.properties, uniq(flatten(responses)));
+                this.missingProperties = this.getMissingProperties();
+            }, () => this.util.createErrorToast('An error occurred retrieving the instance properties.'));
     }
 
-    function getProperties() {
-        $q.all(map(dvm.instance['@type'], type => es.getClassPropertyDetails(dvm.ds.explore.recordId, type)))
-            .then(responses => {
-                dvm.properties = concat(dvm.properties, uniq(flatten(responses)));
-                dvm.missingProperties = dvm.getMissingProperties();
-            }, () => dvm.util.createErrorToast('An error occurred retrieving the instance properties.'));
+    private addDataProperty(event: MatChipInputEvent, propertyIRI: string) {
+        if (event.value) {
+            this.instance[propertyIRI].push(this.eu.createValueObj(event.value, propertyIRI, this.properties));
+            event.input.value = '';
+        }
     }
-    function getReificationProperties() {
-        es.getClassPropertyDetails(dvm.ds.explore.recordId, prefixes.rdf + 'Statement')
-            .then(response => dvm.reificationProperties = response, () => dvm.util.createErrorToast('An error occurred retrieving the reification properties.'));
+    private addObjectProperty(item, propertyIRI: string) {
+        this.ds.explore.instance.objectMap[item.instanceIRI] = item.title;
+        this.instance[propertyIRI].push(this.eu.createIdObj(item.instanceIRI));
+    }
+    private removeDataProperty(item, propertyIRI: string) {
+        remove(this.instance[propertyIRI], item);
+    }
+    private removeObjectProperty(item, propertyIRI: string) {
+        remove(this.instance[propertyIRI], item);
+
+        if (!includes(this.instance, item['@id'])) {
+            delete this.ds.explore.instance.objectMap[item.instanceIRI]
+        }
+    }
+    private handleCheckBoxClick(checked: boolean, propertyIRI: string) {
+        if (checked) {
+             this.instance[propertyIRI][0] = (this.eu.createValueObj('true', propertyIRI, this.properties));
+        } else {
+             this.instance[propertyIRI][0] = (this.eu.createValueObj('false', propertyIRI, this.properties));
+        }
+    }
+    private checkValue(value: string) {
+       return value === 'true' ? true : false;
     }
 }
-
-export default instanceFormComponent;

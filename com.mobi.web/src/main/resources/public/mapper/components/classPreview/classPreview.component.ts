@@ -20,13 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { isEqual } from 'lodash';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 import './classPreview.component.scss';
 
@@ -69,5 +70,5 @@ export class ClassPreviewComponent {
         return this._classObj;
     }
 
-    constructor(public state: MapperStateService, @Inject('ontologyManagerService') public om) {}
+    constructor(public state: MapperStateService, public om: OntologyManagerService) {}
 }

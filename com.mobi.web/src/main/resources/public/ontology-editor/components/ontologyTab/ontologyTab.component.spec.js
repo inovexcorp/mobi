@@ -116,15 +116,15 @@ describe('Ontology Tab component', function() {
         describe('when the ontology is open on a branch', function() {
             describe('and the branch does not exist', function() {
                 beforeEach(function() {
-                    ontologyStateSvc.listItem.ontologyRecord.branchId = 'not found';
+                    ontologyStateSvc.listItem.versionedRdfRecord.branchId = 'not found';
                 });
                 describe('and getBranchHeadCommit is resolved', function() {
                     it('and updateOntology is resolved', function() {
                         ontologyStateSvc.updateOntology.and.returnValue($q.when());
                         this.controller.$onInit();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
+                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,ontologyStateSvc.listItem.versionedRdfRecord.recordId, this.catalogId);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId,
                             this.branchId, this.commitId, true);
                         expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                     });
@@ -145,7 +145,7 @@ describe('Ontology Tab component', function() {
                 });
             });
             it('and the branch exists', function() {
-                ontologyStateSvc.listItem.ontologyRecord.branchId = this.branchId;
+                ontologyStateSvc.listItem.versionedRdfRecord.branchId = this.branchId;
                 this.controller.$onInit();
                         scope.$apply();
                 expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();

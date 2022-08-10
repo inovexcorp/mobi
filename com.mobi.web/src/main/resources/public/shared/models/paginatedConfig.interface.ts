@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import { SortOption } from './sortOption.interface';
 
 /**
  * Configuration for making a request to a paginated endpoint
  */
 export interface PaginatedConfig {
+    offset?: number,
+    infer?: boolean,
     limit?: number,
     pageIndex?: number,
     sortOption?: SortOption,

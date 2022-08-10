@@ -47,7 +47,8 @@ import { RecordIconComponent } from '../recordIcon/recordIcon.component';
 import { RecordViewTabsetComponent } from '../recordViewTabset/recordViewTabset.component';
 import { CATALOG, DCTERMS, POLICY } from '../../../prefixes';
 import { RecordViewComponent } from './recordView.component';
-import { ManageRecordButtonComponent } from "../manageRecordButton/manageRecordButton.component";
+import { ManageRecordButtonComponent } from '../manageRecordButton/manageRecordButton.component';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 describe('Record View component', function() {
     let component: RecordViewComponent;
@@ -83,7 +84,7 @@ describe('Record View component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
-                { provide: 'ontologyStateService', useClass: mockOntologyState },
+                { provide: OntologyStateService, useClass: mockOntologyState },
                 { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 { provide: 'utilService', useClass: mockUtil },
             ],
@@ -96,7 +97,7 @@ describe('Record View component', function() {
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
         catalogStateStub = TestBed.get(CatalogStateService);
-        ontologyStateStub = TestBed.get('ontologyStateService');
+        ontologyStateStub = TestBed.get(OntologyStateService);
         policyEnforcementStub = TestBed.get('policyEnforcementService');
         utilStub = TestBed.get('utilService');
 
@@ -203,12 +204,12 @@ describe('Record View component', function() {
                 expect(component.updateRecord).toHaveBeenCalledWith(record);
             });
             it('and update ontology state title if open', function() {
-                ontologyStateStub.list = [{ontologyRecord: {title: 'title'}}];
+                ontologyStateStub.list = [{versionedRdfRecord: {title: 'title'}}];
                 const title = 'This is a new title';
                 component.updateTitle(title);
                 expect(component.record[DCTERMS + 'title'][0]['@value']).toEqual(title);
                 expect(component.updateRecord).toHaveBeenCalledWith(record);
-                expect(ontologyStateStub.list[0].ontologyRecord.title).toEqual(title);
+                expect(ontologyStateStub.list[0].versionedRdfRecord.title).toEqual(title);
             });
         });
         describe('should set whether the user can edit the record', function() {

@@ -27,6 +27,7 @@ import { RDFS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 /**
  * @class mapper.PropPreviewComponent
@@ -76,5 +77,5 @@ export class PropPreviewComponent {
     }
 
     constructor(private state: MapperStateService, private split: SplitIRIPipe, 
-        @Inject('ontologyManagerService') private om, @Inject('utilService') private util) {}
+        private om: OntologyManagerService, @Inject('utilService') private util) {}
 }

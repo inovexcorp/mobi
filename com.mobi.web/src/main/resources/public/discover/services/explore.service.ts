@@ -20,164 +20,143 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { get, set, has } from 'lodash';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-exploreService.$inject = ['$http', '$q', 'utilService', 'REST_PREFIX'];
+import { REST_PREFIX } from '../../constants';
+import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
+import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
+import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
+import { HelperService } from '../../shared/services/helper.service';
+import { ClassDetails } from '../models/classDetails.interface';
+import { InstanceDetails } from '../models/instanceDetails.interface';
+import { PropertyDetails } from '../models/propertyDetails.interface';
 
 /**
- * @ngdoc service
- * @name discover.service:exploreService
- * @requires $http
- * @requires $q
- * @requires shared.service:utilService
+ * @class discover.ExploreService
  *
  * @description
  * `exploreService` is a service that provides access to the Mobi explorable-datasets REST
  * endpoints.
  */
-function exploreService($http, $q, utilService, REST_PREFIX) {
-    var self = this;
-    var prefix = REST_PREFIX + 'explorable-datasets/';
-    var util = utilService;
+@Injectable()
+export class ExploreService {
+    prefix = REST_PREFIX + 'explorable-datasets/';
+    
+    constructor(private http: HttpClient, private helper: HelperService, private spinnerSvc: ProgressSpinnerService, 
+        @Inject('utilService') private util) {}
 
     /**
-     * @ngdoc method
-     * @name getClassDetails
-     * @methodOf discover.service:exploreService
+     * Calls the GET /mobirest/explorable-datasets/{recordId}/class-details endpoint and returns the array of class
+     * details.
      *
-     * @description
-     * Calls the GET /mobirest/explorable-datasets/{recordId}/class-details endpoint and returns the
-     * array of class details.
-     *
-     * @returns {Promise} A promise that resolves to an array of the class details for the identified dataset record.
+     * @returns {Observable} An observable that resolves to an array of the class details for the identified dataset
+     * record.
      */
-    self.getClassDetails = function(recordId) {
-        return $http.get(prefix + encodeURIComponent(recordId) + '/class-details')
-            .then(response => response.data, util.rejectError);
+    getClassDetails(recordId: string): Observable<ClassDetails[]> {
+        const url = this.prefix + encodeURIComponent(recordId) + '/class-details';
+        return this.spinnerSvc.track(this.http.get<ClassDetails[]>(url, {observe: 'body'}))
+            .pipe(catchError(this.helper.handleError));
     }
 
     /**
-     * @ngdoc method
-     * @name getClassInstanceDetails
-     * @methodOf discover.service:exploreService
-     *
-     * @description
-     * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns the
-     * array of instance details.
+     * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns
+     * the array of instance details.
      *
      * @param {string} recordId The id of the Record
      * @param {string} classId The id of the Class
-     * @param {Object} params The params for the REST call
-     * @param {number} params.offset The offset for the query
-     * @param {number} params.limit The limit for the query
-     * @param {boolean} noSpinner Whether or not the spinner should be shown
-     * @returns {Promise} A promise that resolves to an array of the instance details for the identified class of the
-     * identified dataset record.
+     * @param {PaginatedConfig} params The paginated configuration for the REST call. Supports just pageIndex and limit
+     * @param {boolean} isTracked Whether or not the request is tracked elsewhere
+     * @returns {Observable} An observable that resolves to an array of the instance details for the identified class of
+     * the identified dataset record.
      */
-    self.getClassInstanceDetails = function(recordId, classId, params, noSpinner = false) {
-        var config: any = {params};
-        if (noSpinner) {
-            config.timeout = undefined;
-        }
-        return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details', config)
-            .then(response => response, util.rejectError);
+    getClassInstanceDetails(recordId: string, classId: string, paginatedConfig: PaginatedConfig, 
+        isTracked = false): Observable<HttpResponse<InstanceDetails[]>>{
+        const params = this.util.paginatedConfigToParams(paginatedConfig);
+        const url = this.prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) 
+        + '/instance-details';
+        return this._trackedRequest(this.http.get<InstanceDetails[]>(url, { params, observe: 'response' }), isTracked)
+            .pipe(catchError(this.helper.handleError));
     }
 
     /**
-     * @ngdoc method
-     * @name getClassPropertyDetails
-     * @methodOf discover.service:exploreService
-     *
-     * @description
-     * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/property-details endpoint and returns the
-     * array of class property details.
+     * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/property-details endpoint and returns
+     * the array of class property details.
      *
      * @param {string} recordId The id of the Record
      * @param {string} classId The id of the Class
-     * @returns {Promise} A promise that resolves to an array of the class property details for the identified class of the
-     * identified dataset record.
+     * @returns {Observable} An observable that resolves to an array of the class property details for the identified
+     * class of the identified dataset record.
      */
-    self.getClassPropertyDetails = function(recordId, classId) {
-        return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/property-details')
-            .then(response => response.data, util.rejectError);
+    getClassPropertyDetails(recordId: string, classId: string): Observable<PropertyDetails[]> {
+        const url = this.prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) 
+        + '/property-details';
+        return this.spinnerSvc.track(this.http.get<PropertyDetails[]>(url))
+            .pipe(catchError(this.helper.handleError));
     }
 
     /**
-     * @ngdoc method
-     * @name createInstance
-     * @methodOf discover.service:exploreService
-     *
-     * @description
-     * Calls the POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint
-     * and returns the instance IRI.
+     * Calls the POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint and returns the
+     * instance IRI.
      *
      * @param {string} recordId The id of the Record
-     * @param {Object} json The JSON-LD of the instance being created
-     * @returns {Promise} A promise that resolves to the instance IRI.
+     * @param {JSONLDObject} json The JSON-LD of the instance being created
+     * @returns {Observable} An observable that resolves to the instance IRI.
      */
-    self.createInstance = function(recordId, json) {
-        return $http.post(prefix + encodeURIComponent(recordId) + '/instances', json)
-            .then(response => response.data, util.rejectError);
+    createInstance(recordId: string, json: JSONLDObject[]): Observable<string> {
+        const url = this.prefix + encodeURIComponent(recordId) + '/instances';
+        return this.spinnerSvc.track(this.http.post(url, json, {responseType: 'text'}))
+            .pipe(catchError(this.helper.handleError));
     }
 
     /**
-     * @ngdoc method
-     * @name getInstance
-     * @methodOf discover.service:exploreService
-     *
-     * @description
-     * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
-     * and returns the instance.
+     * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint and
+     * returns the instance.
      *
      * @param {string} recordId The id of the Record
      * @param {string} instanceId The id of the instance
-     * @returns {Promise} A promise that resolves to an instance object defined as the identified class in the
+     * @returns {Observable} An observable that resolves to an instance object defined as the identified class in the
      * identified dataset record.
      */
-    self.getInstance = function(recordId, instanceId) {
-        return $http.get(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
-            .then(response => response.data, util.rejectError);
+    getInstance(recordId: string, instanceId: string): Observable<JSONLDObject[]> {
+        const url = this.prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId);
+        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(url))
+            .pipe(catchError(this.helper.handleError));
     }
 
     /**
-     * @ngdoc method
-     * @name updateInstance
-     * @methodOf discover.service:exploreService
-     *
-     * @description
-     * Calls the PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
-     * and identifies if the instance was updated.
+     * Calls the PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint and 
+     * identifies if the instance was updated.
      *
      * @param {string} recordId The id of the Record
      * @param {string} instanceId The id of the instance
      * @param {Object} json The JSON-LD object of the new instance
-     * @returns {Promise} A promise that indicates if the instance was updated successfully.
+     * @returns {Observable} A promise that indicates if the instance was updated successfully.
      */
-    self.updateInstance = function(recordId, instanceId, json) {
-        return $http.put(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId), angular.toJson(json))
-            .then(response => $q.when(), util.rejectError);
+    updateInstance(recordId: string, instanceId: string, json: JSONLDObject[]): Observable<string> {
+        const url = this.prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId);
+        return this.spinnerSvc.track(this.http.put(url, json))
+            .pipe(catchError(this.helper.handleError));
     }
 
     /**
-     * @ngdoc method
-     * @name deleteInstance
-     * @methodOf discover.service:exploreService
-     *
-     * @description
-     * Calls the DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
-     * and identifies if the instance was deleted.
+     * Calls the DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint and
+     * identifies if the instance was deleted.
      *
      * @param {string} recordId The id of the Record
      * @param {string} instanceId The id of the instance
-     * @returns {Promise} A promise that indicates if the instance was deleted successfully.
+     * @returns {Observable} A promise that indicates if the instance was deleted successfully.
      */
-    self.deleteInstance = function(recordId, instanceId) {
-        return $http.delete(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
-            .then(response => $q.when(), util.rejectError);
+    deleteInstance(recordId: string, instanceId: string): Observable<null> {
+        const url = this.prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId);
+        return this.spinnerSvc.track(this.http.delete(url))
+            .pipe(catchError(this.helper.handleError));
     }
 
     /**
+     * TODO
      * @ngdoc method
      * @name createPagedResultsObject
      * @methodOf discover.service:exploreService
@@ -188,18 +167,18 @@ function exploreService($http, $q, utilService, REST_PREFIX) {
      * @param {Object} response The response of an $http call which should contain paginated details in the header.
      * @returns {Object} An object which contains all of the paginated details in the expected format.
      */
-    self.createPagedResultsObject = function(response) {
-        var object = {};
-        set(object, 'data', response.data);
-        var headers = response.headers();
-        set(object, 'total', get(headers, 'x-total-count', 0));
-        if (has(headers, 'link')) {
-            var links = util.parseLinks(get(headers, 'link', {}));
-            set(object, 'links.next', get(links, 'next', ''));
-            set(object, 'links.prev', get(links, 'prev', ''));
+    createPagedResultsObject<Type>(response: HttpResponse<Type>): { data: Type, total: number } {
+        return {
+            data: response.body,
+            total: Number(response.headers.get('x-total-count'))
+        };
+    }
+
+    private _trackedRequest(request, tracked: boolean) {
+        if (tracked) {
+            return request;
+        } else {
+            return this.spinnerSvc.track(request);
         }
-        return object;
     }
 }
-
-export default exploreService;

@@ -287,7 +287,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
     }
     private resetToMaster(): Promise<any> {
         this.autocompleteTrigger.closePanel();
-        return this.state.deleteState(this.state.listItem.versionedRdfRecord.recordId).then(() => {
+        return this.state.deleteState(this.state.listItem.versionedRdfRecord.recordId).toPromise().then(() => {
             this.state.closeShapesGraph(this.state.listItem.versionedRdfRecord.recordId);
             return this.state.openShapesGraph({
                 recordId: this.state.listItem.versionedRdfRecord.recordId,

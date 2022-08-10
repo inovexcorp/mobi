@@ -23,6 +23,9 @@
 import { map, get, concat, reject, includes, findIndex, some, sortBy, pick } from 'lodash';
 
 import './importsBlock.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { Difference } from '../../../shared/models/difference.class';
+import { first } from 'rxjs/operators';
 
 const template = require('./importsBlock.component.html');
 
@@ -56,7 +59,7 @@ const importsBlockComponent = {
 
 importsBlockComponentCtrl.$inject = ['$q', '$timeout', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService', 'modalService'];
 
-function importsBlockComponentCtrl($q, $timeout, ontologyStateService, prefixes, utilService, propertyManagerService, modalService) {
+function importsBlockComponentCtrl($q, $timeout, ontologyStateService: OntologyStateService, prefixes, utilService, propertyManagerService, modalService) {
     var dvm = this;
     var util = utilService;
     var pm = propertyManagerService;
@@ -81,11 +84,14 @@ function importsBlockComponentCtrl($q, $timeout, ontologyStateService, prefixes,
     }
     dvm.remove = function() {
         var importsIRI = dvm.prefixes.owl + 'imports';
-        dvm.os.addToDeletions(dvm.listItem.ontologyRecord.recordId, util.createJson(dvm.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
+        dvm.os.addToDeletions(dvm.listItem.versionedRdfRecord.recordId, util.createJson(dvm.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
         pm.remove(dvm.listItem.selected, importsIRI, findIndex(dvm.listItem.selected[importsIRI], {'@id': dvm.url}));
-        dvm.os.saveChanges(dvm.listItem.ontologyRecord.recordId, {additions: dvm.listItem.additions, deletions: dvm.listItem.deletions})
-            .then(() => dvm.os.afterSave(), $q.reject)
-            .then(() => dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, dvm.listItem.ontologyRecord.branchId, dvm.listItem.ontologyRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit), $q.reject)
+        const difference = new Difference();
+        difference.additions = dvm.listItem.additions;
+        difference.deletions = dvm.listItem.deletions;
+        dvm.os.saveChanges(dvm.listItem.versionedRdfRecord.recordId, difference).pipe(first()).toPromise()
+            .then(() => dvm.os.afterSave().pipe(first()).toPromise(), $q.reject)
+            .then(() => dvm.os.updateOntology(dvm.listItem.versionedRdfRecord.recordId, dvm.listItem.versionedRdfRecord.branchId, dvm.listItem.versionedRdfRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit).pipe(first()).toPromise(), $q.reject)
             .then(() => {
                 dvm.os.updateIsSaved();
                 // dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem);
@@ -99,7 +105,7 @@ function importsBlockComponentCtrl($q, $timeout, ontologyStateService, prefixes,
         return includes(dvm.listItem.failedImports, iri);
     }
     dvm.refresh = function() {
-        dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, dvm.listItem.ontologyRecord.branchId, dvm.listItem.ontologyRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit, true)
+        dvm.os.updateOntology(dvm.listItem.versionedRdfRecord.recordId, dvm.listItem.versionedRdfRecord.branchId, dvm.listItem.versionedRdfRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit, true).pipe(first()).toPromise()
             .then(response => {
                 dvm.os.listItem.hasPendingRefresh = true;
                 dvm.setIndirectImports();

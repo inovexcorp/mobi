@@ -124,6 +124,7 @@
     "ng-handsontable": "^0.13.0",
     "ngclipboard": "^1.1.1",
     "ngx-showdown": "^6.0.0",
+    "ngx-ui-scroll": "^2.3.1",
     "perfectkb-yate": "^0.10.0",
     "popper.js": "^1.14.3",
     "reflect-metadata": "^0.1.12",

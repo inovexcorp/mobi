@@ -20,25 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { NgModule } from '@angular/core';
 
+import { NgModule } from '@angular/core';
 import { SharedModule } from '../shared/shared.module';
-import { DatasetFormGroupDirective } from './components/datasetFormGroup/datasetFormGroup.component';
+import { DiscoverDatasetSelectComponent } from './components/discoverDatasetSelect/discoverDatasetSelect.component';
+import { ExploreService } from './services/explore.service';
 
 /**
  * @namespace discoverShared
  *
  * The `discoverShared` module provides components that are shared in the child modules of the {@link discover} module.
  */
+
  @NgModule({
     imports: [ 
         SharedModule,
     ],
     declarations: [
-        DatasetFormGroupDirective
+        DiscoverDatasetSelectComponent
+    ],
+    providers: [
+        ExploreService
     ],
     exports: [
-        DatasetFormGroupDirective
+        DiscoverDatasetSelectComponent,
     ]
 })
 export class DiscoverSharedModule {}
+

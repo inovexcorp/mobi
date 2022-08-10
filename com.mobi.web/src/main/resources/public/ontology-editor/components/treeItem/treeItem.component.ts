@@ -23,6 +23,7 @@
 import { get, unionWith, map, includes, isEqual } from 'lodash';
 
 import './treeItem.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./treeItem.component.html');
 
@@ -65,7 +66,7 @@ const treeItemComponent = {
 
 treeItemComponentCtrl.$inject = ['ontologyStateService'];
 
-function treeItemComponentCtrl(ontologyStateService) {
+function treeItemComponentCtrl(ontologyStateService: OntologyStateService) {
     var dvm = this;
     dvm.os = ontologyStateService;
 

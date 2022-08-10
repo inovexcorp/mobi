@@ -53,10 +53,10 @@ function commitsTabComponentCtrl(ontologyStateService, utilService, prefixes) {
     dvm.commits = [];
 
     dvm.getHeadTitle = function() {
-        if (dvm.os.listItem.ontologyRecord.branchId) {
-            return dvm.util.getDctermsValue(find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId}), 'title');
+        if (dvm.os.listItem.versionedRdfRecord.branchId) {
+            return dvm.util.getDctermsValue(find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId}), 'title');
         } else {
-            var currentState = dvm.os.getCurrentStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
+            var currentState = dvm.os.getCurrentStateByRecordId(dvm.os.listItem.versionedRdfRecord.recordId);
             if (dvm.os.isStateTag(currentState)) {
                 var tagId = dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
                 var tag = find(dvm.os.listItem.tags, {'@id': tagId});
@@ -67,7 +67,7 @@ function commitsTabComponentCtrl(ontologyStateService, utilService, prefixes) {
         }
     }
     dvm.openOntologyAtCommit = function(commit) {
-        dvm.os.updateOntologyWithCommit(dvm.os.listItem.ontologyRecord.recordId, commit.id);
+        dvm.os.updateOntologyWithCommit(dvm.os.listItem.versionedRdfRecord.recordId, commit.id);
     }
 }
 

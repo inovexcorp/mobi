@@ -59,7 +59,7 @@ function uploadChangesOverlayComponentCtrl(ontologyStateService) {
         if (dvm.os.hasInProgressCommit()) {
             dvm.error = 'Unable to upload changes. Please either commit your current changes or discard them and try again.';
         } else {
-            var ontRecord = dvm.os.listItem.ontologyRecord;
+            var ontRecord = dvm.os.listItem.versionedRdfRecord;
             dvm.os.uploadChanges(dvm.file, ontRecord.recordId, ontRecord.branchId, ontRecord.commitId).then(() => {
                 dvm.os.getActivePage().active = false;
                 dvm.os.listItem.editorTabStates.savedChanges.active = true;

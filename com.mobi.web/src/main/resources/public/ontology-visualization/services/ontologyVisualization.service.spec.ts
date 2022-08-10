@@ -33,6 +33,13 @@ import {
 import { SharedModule } from '../../shared/shared.module';
 import { listItem, visData } from './testData';
 import { OntologyVisualizationService } from './ontologyVisualizaton.service';
+import { OntologyStateService } from '../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../shared/services/ontologyManager.service';
+import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
+import { HierarchyResponse } from '../../shared/models/hierarchyResponse.interface';
+import { EntityNames } from '../../shared/models/entityNames.interface';
+import { IriList } from '../../shared/models/iriList.interface';
+import { PropertyToRanges } from '../../shared/models/propertyToRanges.interface';
 
 describe('OntologyVisualization Service', () => {
     let visualizationStub : OntologyVisualizationService;
@@ -51,8 +58,8 @@ describe('OntologyVisualization Service', () => {
             imports: [HttpClientTestingModule, SharedModule],
             providers: [
                 { provide: 'OntologyVisualizationService' },
-                { provide: 'ontologyStateService', useClass: mockOntologyState },
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyStateService, useClass: mockOntologyState },
+                { provide: OntologyManagerService, useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
             ]
         });
@@ -61,28 +68,51 @@ describe('OntologyVisualization Service', () => {
     beforeEach(() => {
         visualizationStub = TestBed.get(OntologyVisualizationService);
         httpMock = TestBed.get(HttpTestingController);
-        ontologyStateStub = TestBed.get('ontologyStateService');
-        ontologyManagerServiceStub = TestBed.get('ontologyManagerService');
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get('utilService');
-        
-        ontologyStateStub.listItem = Object.freeze(listItem);
+        const listItemX: OntologyListItem = listItem;
+        ontologyStateStub.listItem = Object.freeze(listItem as OntologyListItem);
         ontologyStateStub.addToClassIRIs = jasmine.createSpy('addToClassIRIs').and.callFake((items, iri) => {
             items.classes.iris = listItem.classes.iris;
         });
 
-        ontologyManagerServiceStub.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.resolveTo(Object.freeze(listItem.classHierarchy));
-        ontologyManagerServiceStub.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.resolveTo(Object.freeze(listItem.entityInfo));
-        ontologyManagerServiceStub.getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.resolveTo(Object.freeze(listItem.propertyToRanges));
-        ontologyManagerServiceStub.getImportedIris = jasmine.createSpy('getImportedIris').and.resolveTo(Object.freeze([{
-            id: 1,
-            ontologyId: 1,
-            classes: []
-        },
-        {
-            id: 2,
-            ontologyId: 2,
-            classes: []
-        }]));
+        ontologyManagerServiceStub.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(of(Object.freeze(listItem.classHierarchy as HierarchyResponse)));
+        ontologyManagerServiceStub.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(of(Object.freeze(listItem.entityInfo as EntityNames)));
+        ontologyManagerServiceStub.getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.returnValue(of(Object.freeze({propertyToRanges: listItem.propertyToRanges} as PropertyToRanges)));
+        const emptyIriList: IriList[] = [
+            {
+                id: '1',
+                annotationProperties: [],
+                classes: [],
+                datatypes: [],
+                objectProperties: [],
+                dataProperties: [],
+                namedIndividuals: [],
+                concepts: [],
+                conceptSchemes: [],
+                derivedConcepts: [],
+                derivedConceptSchemes: [],
+                derivedSemanticRelations: [],
+                deprecatedIris: []
+            },
+            {
+                id: '2',
+                annotationProperties: [],
+                classes: [],
+                datatypes: [],
+                objectProperties: [],
+                dataProperties: [],
+                namedIndividuals: [],
+                concepts: [],
+                conceptSchemes: [],
+                derivedConcepts: [],
+                derivedConceptSchemes: [],
+                derivedSemanticRelations: [],
+                deprecatedIris: []
+            }
+        ];
+        ontologyManagerServiceStub.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(of(Object.freeze(emptyIriList as IriList[])));
 
         visualizationStub.getOntologyLocalObservable = jasmine.createSpy('getOntologyLocalObservable').and.returnValue(mockRequest(visData));
         visualizationStub.getSidebarState = jasmine.createSpy('getSidebarState').and.returnValue({
@@ -154,9 +184,7 @@ describe('OntologyVisualization Service', () => {
             const edgesLenght = Object.keys(state.data.edges).length;
             expect(nodesLenght).toBeGreaterThan(0);
             expect(edgesLenght).toBeGreaterThan(0);
-
         }));
-
         it('without InProgressCommit', fakeAsync(function() {
             visualizationStub.getOntologyLocalObservable = jasmine.createSpy('getOntologyLocalObservable').and.returnValue(mockRequest({}));
             expect(() => visualizationStub.getGraphState('commit', true)).toThrowError(Error); // ensure no state exist

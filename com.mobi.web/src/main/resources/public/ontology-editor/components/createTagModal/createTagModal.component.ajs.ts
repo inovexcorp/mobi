@@ -26,6 +26,7 @@ import { first } from 'rxjs/operators';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './createTagModal.component.scss';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 const template = require('./createTagModal.component.ajs.html');
 
@@ -56,7 +57,7 @@ const createTagModalComponentAjs = {
 
 createTagModalComponentCtrl.$inject = ['$q', '$filter', 'REGEX', 'catalogManagerService', 'ontologyStateService'];
 
-function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService: CatalogManagerService, ontologyStateService) {
+function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService: CatalogManagerService, ontologyStateService: OntologyStateService) {
     var dvm = this;
     var cm = catalogManagerService;
     var catalogId = get(cm.localCatalog, '@id', '');
@@ -75,7 +76,7 @@ function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService: 
         dvm.tagConfig = {
             iri: tagIRI,
             title: '',
-            commitId: dvm.os.listItem.ontologyRecord.commitId
+            commitId: dvm.os.listItem.versionedRdfRecord.commitId
         };
     }
 
@@ -86,12 +87,12 @@ function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService: 
         }
     }
     dvm.create = function() {
-        cm.createRecordTag(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.tagConfig).pipe(first()).toPromise()
-            .then(() => cm.getRecordVersion(dvm.tagConfig.iri, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise(), $q.reject)
+        cm.createRecordTag(dvm.os.listItem.versionedRdfRecord.recordId, catalogId, dvm.tagConfig).pipe(first()).toPromise()
+            .then(() => cm.getRecordVersion(dvm.tagConfig.iri, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise(), $q.reject)
             .then(tag => {
                 dvm.os.listItem.tags.push(tag);
-                dvm.os.listItem.ontologyRecord.branchId = '';
-                return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId: dvm.tagConfig.commitId, tagId: tag['@id']})
+                dvm.os.listItem.versionedRdfRecord.branchId = '';
+                return dvm.os.updateState({recordId: dvm.os.listItem.versionedRdfRecord.recordId, commitId: dvm.tagConfig.commitId, tagId: tag['@id']}).pipe(first()).toPromise();
             }, $q.reject)
             .then(() => {
                 dvm.close();

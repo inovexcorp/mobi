@@ -22,6 +22,8 @@
  */
 import { get, union } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './annotationBlock.component.scss';
 
 const template = require('./annotationBlock.component.html');
@@ -30,7 +32,6 @@ const template = require('./annotationBlock.component.html');
  * @ngdoc component
  * @name ontology-editor.component:annotationBlock
  * @requires shared.service:ontologyStateService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:propertyManagerService
  * @requires shared.service:modalService
  *
@@ -52,13 +53,12 @@ const annotationBlockComponent = {
     controller: annotationBlockComponentCtrl
 };
 
-annotationBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
+annotationBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'propertyManagerService', 'modalService'];
 
-function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUtilsManagerService, propertyManagerService, modalService) {
+function annotationBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, propertyManagerService, modalService) {
     var dvm = this;
     var pm = propertyManagerService;
     dvm.os = ontologyStateService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.annotations = [];
     dvm.annotationsFiltered = [];
 
@@ -67,7 +67,7 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
     }
     dvm.updatePropertiesFiltered = function(){
         dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
-        dvm.annotationsFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.annotations), dvm.ontoUtils.getLabelForIRI);
+        dvm.annotationsFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.annotations), iri => dvm.os.getEntityNameByListItem(iri));
     }
     dvm.openAddOverlay = function() {
         dvm.os.editingAnnotation = false;
@@ -79,8 +79,8 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
         modalService.openModal('annotationOverlay', {}, dvm.updatePropertiesFiltered);
     }
     dvm.openRemoveOverlay = function(key, index) {
-        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
-            dvm.ontoUtils.removeProperty(key, index);
+        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
+            dvm.os.removeProperty(key, index).subscribe();
             dvm.updatePropertiesFiltered();
             dvm.os.annotationModified(dvm.os.listItem.selected['@id'], key, null);
         });

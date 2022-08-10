@@ -20,81 +20,78 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { merge, chunk, orderBy, initial } from 'lodash';
+import { Component, Inject, Input, OnChanges } from '@angular/core';
+import { merge, chunk, orderBy } from 'lodash';
+import { Datasource, IDatasource } from 'ngx-ui-scroll';
+
+import { POLICY } from '../../../../prefixes';
+import { ExploreService } from '../../../services/explore.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { ClassDetails } from '../../../models/classDetails.interface';
 
 import './classCards.component.scss';
 
-const template = require('./classCards.component.html');
-    
 /**
- * @ngdoc component
- * @name explore.component:classCards
- * @requires shared.service:discoverStateService
- * @requires discover.service:exploreService
- * @requires shared.service:utilService
+ * @class explore.ClassCardsComponent
  *
- * @description
- * `classCards` is a component that creates a div which contains a 3 column grid used to display the
- * class details associated with a dataset record.
+ * A component that creates a div which contains a 3 column grid used to display the class details associated with a
+ * dataset record.
  *
- * @param {Object[]} classDetails the details about the classes to be presented as cards
+ * @param {ClassDetails[]} classDetails the details about the classes to be presented as cards
  */
-const classCardsComponent = {
-    template,
-    bindings: {
-        classDetails: '<'
-    },
-    controllerAs: 'dvm',
-    controller: classCardsComponentCtrl
-};
+@Component({
+    selector: 'class-cards',
+    templateUrl: './classCards.component.html'
+})
+export class ClassCardsComponent implements OnChanges {
+    @Input() classDetails: ClassDetails[];
 
-classCardsComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'utilService', 'prefixes', 'policyEnforcementService'];
+    chunks: ClassDetails[][] = [];
+    datasource: IDatasource = new Datasource({
+        get: (index, count, success) => {
+            // Index seems to start at 1 instead of 0
+            const data = this.chunks.slice(index - 1, (index - 1) + count);
+            success(data);
+        }
+    });
 
-function classCardsComponentCtrl(discoverStateService: DiscoverStateService, exploreService, utilService, prefixes, policyEnforcementService) {
-    const dvm = this;
-    const ds = discoverStateService;
-    const es = exploreService;
-    const util = utilService;
-    const pep = policyEnforcementService;
+    constructor(private state: DiscoverStateService, private es: ExploreService, 
+        @Inject('policyEnforcementService') private pep, @Inject('utilService') private util) {}
 
-    dvm.$onInit = function() {
-        dvm.chunks = getChunks(dvm.classDetails);
+    ngOnChanges(): void {
+        this.chunks = this._getChunks(this.classDetails);
+        const index = this.datasource.adapter.firstVisible.$index ? this.datasource.adapter.firstVisible.$index : this.datasource.adapter.lastVisible.$index
+        this.datasource.adapter.reload(index);
     }
-    dvm.$onChanges = function() {
-        dvm.chunks = getChunks(dvm.classDetails);
-    }
-    dvm.exploreData = function(item) {
+    exploreData(item: ClassDetails): void {
         const pepRequest = {
-            resourceId: ds.explore.recordId,
-            actionId: prefixes.policy + 'Read'
+            resourceId: this.state.explore.recordId,
+            actionId: POLICY + 'Read'
         };
-        pep.evaluateRequest(pepRequest)
+        this.pep.evaluateRequest(pepRequest)
             .then(response => {
-                const canRead = response !== pep.deny;
+                const canRead = response !== this.pep.deny;
                 if (canRead) {
-                    es.getClassInstanceDetails(ds.explore.recordId, item.classIRI, {offset: 0, limit: ds.explore.instanceDetails.limit})
-                        .then(response => {
-                            ds.explore.classId = item.classIRI;
-                            ds.explore.classDeprecated = item.deprecated;
-                            ds.resetPagedInstanceDetails();
-                            merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
-                            ds.explore.breadcrumbs.push(item.classTitle);
-                        }, util.createErrorToast);
+                    this.es.getClassInstanceDetails(this.state.explore.recordId, item.classIRI, {pageIndex: 0, limit: this.state.explore.instanceDetails.limit})
+                        .subscribe(response => {
+                            this.state.explore.classId = item.classIRI;
+                            this.state.explore.classDeprecated = item.deprecated;
+                            this.state.resetPagedInstanceDetails();
+                            merge(this.state.explore.instanceDetails, this.es.createPagedResultsObject(response));
+                            this.state.explore.breadcrumbs.push(item.classTitle);
+                        }, error => this.util.createErrorToast(error));
                 } else {
-                    util.createErrorToast('You don\'t have permission to read dataset');
-                    ds.resetPagedInstanceDetails()
-                    ds.explore.classDetails = [];
-                    ds.explore.hasPermissionError = true;
+                    this.util.createErrorToast('You don\'t have permission to read dataset');
+                    this.state.resetPagedInstanceDetails();
+                    this.state.explore.classDetails = [];
+                    this.state.explore.hasPermissionError = true;
                 }
             }, () => {
-                util.createWarningToast('Could not retrieve record permissions');
+                this.util.createWarningToast('Could not retrieve record permissions');
             });
     }
 
-    function getChunks(data) {
+    private _getChunks(data: ClassDetails[]): ClassDetails[][] {
         return chunk(orderBy(data, ['instancesCount', 'classTitle'], ['desc', 'asc']), 3);
     }
 }
-
-export default classCardsComponent;

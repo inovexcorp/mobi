@@ -21,6 +21,7 @@
  * #L%
  */
 import { get, has, intersection, map, filter, forEach } from 'lodash';
+import { first } from 'rxjs/operators';
 
 import './axiomOverlay.component.scss';
 
@@ -31,7 +32,6 @@ const template = require('./axiomOverlay.component.html');
  * @name ontology-editor.component:axiomOverlay
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:prefixes
  * @requires shared.service:manchesterConverterService
  * @requires shared.service:ontologyManagerService
@@ -60,14 +60,13 @@ const axiomOverlayComponent = {
     controller: axiomOverlayComponentCtrl
 };
 
-axiomOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', 'ontologyManagerService', 'propertyManagerService', '$filter'];
+axiomOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'manchesterConverterService', 'ontologyManagerService', 'propertyManagerService', '$filter'];
 
-function axiomOverlayComponentCtrl(ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, ontologyManagerService, propertyManagerService, $filter) {
+function axiomOverlayComponentCtrl(ontologyStateService, utilService, prefixes, manchesterConverterService, ontologyManagerService, propertyManagerService, $filter) {
     var dvm = this;
     var mc = manchesterConverterService;
     var om = ontologyManagerService;
     var pm = propertyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
     dvm.errorMessage = '';
@@ -111,7 +110,7 @@ function axiomOverlayComponentCtrl(ontologyStateService, utilService, ontologyUt
                 var bnodeId = result.jsonld[0]['@id'];
                 values = [bnodeId];
                 forEach(result.jsonld, obj => {
-                    dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj);
+                    dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, obj);
                     dvm.os.addEntity(obj);
                     dvm.os.listItem.selectedBlankNodes.push(obj); 
                 });
@@ -129,8 +128,8 @@ function axiomOverlayComponentCtrl(ontologyStateService, utilService, ontologyUt
                 dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
             }
             var valueObjs = map(addedValues, value => ({'@id': value}));
-            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: valueObjs});
-            dvm.ontoUtils.saveCurrentChanges()
+            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: valueObjs});
+            dvm.os.saveCurrentChanges().pipe(first()).toPromise()
                 .then(() => {
                     var returnValues = [];
                     if (dvm.tabs.list) {
@@ -148,7 +147,7 @@ function axiomOverlayComponentCtrl(ontologyStateService, utilService, ontologyUt
         }
         var array = Object.keys(has(dvm.os.listItem[valuesKey], 'iris') ? dvm.os.listItem[valuesKey].iris : dvm.os.listItem[valuesKey]);
         var filtered = $filter('removeIriFromArray')(array, dvm.os.listItem.selected['@id']);
-        dvm.array = dvm.ontoUtils.getSelectList(filtered, searchText, dvm.ontoUtils.getDropDownText);
+        dvm.array = dvm.os.getSelectList(filtered, searchText, iri => dvm.os.getEntityNameByListItem(iri));
     }
     dvm.cancel = function() {
         dvm.dismiss();

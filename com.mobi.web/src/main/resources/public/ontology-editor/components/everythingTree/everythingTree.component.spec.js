@@ -308,16 +308,16 @@ describe('Everything Tree component', function() {
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
                         expect(this.controller.isShown(this.node)).toEqual(true);
-                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                     });
                     it('and does not have a child with a text match', function() {
                         expect(this.controller.isShown(this.node)).toEqual(false);
-                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     expect(this.controller.isShown(this.node)).toEqual(true);
-                    expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                 });
             });
             describe('when node does have an entityIRI, does not have a get, indent is greater than 0, and areParentsOpen is true', function () {
@@ -411,16 +411,16 @@ describe('Everything Tree component', function() {
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
                         expect(this.controller.isShown(this.node)).toEqual(false);
-                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                     });
                     it('and does not have a child with a text match', function() {
                         expect(this.controller.isShown(this.node)).toEqual(false);
-                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     expect(this.controller.isShown(this.node)).toEqual(false);
-                    expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.versionedRdfRecord.recordId);
                 });
             });
             describe('when node indent is greater than 0 and areParentsOpen is false', function () {

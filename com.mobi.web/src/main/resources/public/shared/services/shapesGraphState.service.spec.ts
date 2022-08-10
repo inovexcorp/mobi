@@ -298,7 +298,7 @@ describe('Shapes Graph State service', function() {
                 inProgressCommit: new Difference(),
                 upToDate: true
             };
-            this.catalogDetailsSpy = spyOn(service, 'getCatalogDetails').and.resolveTo(this.catalogDetailsResponse);
+            this.catalogDetailsSpy = spyOn(service, 'getCatalogDetails').and.returnValue(of(this.catalogDetailsResponse));
         });
         it('when the item is already opened', async function() {
             const tempItem = new ShapesGraphListItem();
@@ -330,7 +330,7 @@ describe('Shapes Graph State service', function() {
                 expect(service.listItem.upToDate).toBeTrue();
             });
             it('unless an error occurs', async function() {
-                this.catalogDetailsSpy.and.rejectWith('Error');
+                this.catalogDetailsSpy.and.returnValue(throwError('Error'));
                 expect(service.listItem).toBeUndefined();
                 await service.openShapesGraph(this.selectedRecord)
                     .then(() => {
@@ -384,7 +384,7 @@ describe('Shapes Graph State service', function() {
     });
     describe('should delete shapes graph', function() {
         beforeEach(function() {
-           this.deleteStateSpy = spyOn(service, 'deleteState').and.resolveTo();
+           this.deleteStateSpy = spyOn(service, 'deleteState').and.returnValue(of());
         });
         describe('first deleting the state', function() {
             describe('then deleting the record', function() {
@@ -406,7 +406,7 @@ describe('Shapes Graph State service', function() {
                 });
             });
             it('unless an error occurs', async function() {
-                this.deleteStateSpy.and.rejectWith('Error');
+                this.deleteStateSpy.and.returnValue(throwError('Error'));
                 await service.deleteShapesGraph('recordId')
                     .then(() => {
                         fail('Promise should have rejected');
@@ -430,7 +430,7 @@ describe('Shapes Graph State service', function() {
             this.inProgressCommit = new Difference();
             this.inProgressCommit.additions.push({'change': 'change'});
             service.listItem.inProgressCommit = this.inProgressCommit;
-            this.updateStateSpy = spyOn(service, 'updateState').and.resolveTo();
+            this.updateStateSpy = spyOn(service, 'updateState').and.returnValue(of(null));
         });
         describe('for a branch and update state', function() {
             beforeEach(function() {
@@ -475,7 +475,7 @@ describe('Shapes Graph State service', function() {
             });
             it('unless an error occurs', async function() {
                 service.listItem = undefined;
-                this.updateStateSpy.and.rejectWith('Error');
+                this.updateStateSpy.and.returnValue(throwError('Error'));
                 await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle')
                     .then(() => {
                         fail('Promise should have rejected');
@@ -529,7 +529,7 @@ describe('Shapes Graph State service', function() {
             });
             it('unless an error occurs', async function() {
                 service.listItem = undefined;
-                this.updateStateSpy.and.rejectWith('Error');
+                this.updateStateSpy.and.returnValue(throwError('Error'));
                 await service.changeShapesGraphVersion('recordId', undefined, 'commitId', 'tagId', 'versionTitle')
                     .then(() => {
                         fail('Promise should have rejected');
@@ -597,15 +597,17 @@ describe('Shapes Graph State service', function() {
                 });
                 describe('and should change the shapes graph version to the target branch', function() {
                     it('successfully', async function() {
-                        await service.merge();
-                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-                        expect(this.deleteShapesGraphBranchSpy).toHaveBeenCalledWith('recordId', 'sourceBranchId');
-                        expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                        await service.merge()
+                            .subscribe(() => {
+                                expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+                                expect(this.deleteShapesGraphBranchSpy).toHaveBeenCalledWith('recordId', 'sourceBranchId');
+                                expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                            }, () => fail('Observable should have succeeded'));
                     });
                     it('unless an error occurs', async function() {
                         this.changeShapesGraphVersionSpy.and.rejectWith('Error');
                         await service.merge()
-                            .then(() => {
+                            .subscribe(() => {
                                 fail('Promise should have rejected');
                             }, response => {
                                 expect(response).toEqual('Error');
@@ -618,8 +620,8 @@ describe('Shapes Graph State service', function() {
                 it('unless an error occurs', async function() {
                     this.deleteShapesGraphBranchSpy.and.rejectWith('Error');
                     await service.merge()
-                        .then(() => {
-                            fail('Promise should have rejected');
+                        .subscribe(() => {
+                            fail('Observable should have errored');
                         }, response => {
                             expect(response).toEqual('Error');
                         });
@@ -634,22 +636,24 @@ describe('Shapes Graph State service', function() {
                 });
                 describe('and should change the shapes graph version to the target branch', function() {
                     it('successfully', async function() {
-                        await service.merge();
-                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-                        expect(this.deleteShapesGraphBranchSpy).not.toHaveBeenCalled();
-                        expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                        catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
+                        await service.merge()
+                            .subscribe(() => {
+                                expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+                                expect(this.deleteShapesGraphBranchSpy).not.toHaveBeenCalled();
+                                expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                            }, () => fail('Observable should have succeeded'));
                     });
                     it('unless an error occurs', async function() {
+                        catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
                         this.changeShapesGraphVersionSpy.and.rejectWith('Error');
                         await service.merge()
-                            .then(() => {
+                            .subscribe(() => {
                                 fail('Promise should have rejected');
                             }, response => {
                                 expect(response).toEqual('Error');
                             });
-                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-                        expect(this.deleteShapesGraphBranchSpy).not.toHaveBeenCalled();
-                        expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                        
                     });
                 });
             });
@@ -657,7 +661,7 @@ describe('Shapes Graph State service', function() {
         it('unless an error occurs', async function() {
             catalogManagerStub.mergeBranches.and.returnValue(throwError('Error'));
             await service.merge()
-                .then(() => {
+                .subscribe(() => {
                     fail('Promise should have rejected');
                 }, response => {
                     expect(response).toEqual('Error');

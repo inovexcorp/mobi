@@ -20,42 +20,34 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Edit IRI</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Edit IRI</h1>
+<div>
+    <div [formGroup]="iriFormControl">
+        <mat-form-field class="w-100 template-begins-with">
+            <mat-label>Begins With</mat-label>
+            <input type="text" matInput name="beginsWith" formControlName="beginsWith" required focus/>
+            <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.pattern">This value is invalid</mat-error>
+            <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.required">This value is required</mat-error>
+        </mat-form-field>
+        <mat-form-field class="template-then w-100">
+            <mat-label>Then</mat-label>
+            <mat-select name="then" formControlName="then" required>
+                <mat-option class="then-option" value="/">/</mat-option>
+                <mat-option class="then-option" value="#">#</mat-option>
+                <mat-option class="then-option" value=":">:</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field class="w-100 template-begins-with">
+            <mat-label>Ends With</mat-label>
+            <input type="text" matInput name="endsWith" formControlName="endsWith" required focus/>
+            <mat-error *ngIf="iriFormControl.get('endsWith').errors?.pattern">This value is invalid</mat-error>
+            <mat-error *ngIf="iriFormControl.get('endsWith').errors?.required">This value is required</mat-error>
+        </mat-form-field>
+    </div>
 </div>
-<div class="modal-body">
-    <form name="dvm.iriForm" novalidate autocomplete="off">
-        <error-display ng-if="dvm.resolve.customValidation && dvm.resolve.customValidation.func(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">{{dvm.resolve.customValidation.msg}}</error-display>
-        <!-- Begins with -->
-        <div class="form-group begin-container">
-            <custom-label>Begins with</custom-label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.validateNamespace" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriBegin.$error.pattern}" required focus-me="true" />
-            <p ng-messages="dvm.iriForm.iriBegin.$error" class="invalid-feedback">
-                <ng-message when="pattern">Value is not a valid namespace.</ng-message>
-            </p>
-        </div>
-        <!-- Then -->
-        <div class="form-group then-container">
-            <custom-label>Then</custom-label>
-            <select class="form-control" id="iriThen" name="iriThen" ng-model="dvm.iriThen" required>
-                <option value="#">#</option>
-                <option value="/">/</option>
-                <option value=":">:</option>
-            </select>
-        </div>
-        <!-- Ends with -->
-        <div class="form-group ends-container">
-            <custom-label>Ends with</custom-label>
-            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="dvm.endsWithPattern" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriEnd.$error.pattern}" required />
-            <p ng-messages="dvm.iriForm.iriEnd.$error" class="invalid-feedback">
-                <ng-message when="pattern">There is an invalid character.</ng-message>
-            </p>
-        </div>
-    </form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false" (click)="this.cancel()">Cancel</button>
+    <button mat-raised-button (click)="this.resetVariables()"><i class="fa fa-refresh"></i></button>
+    <button mat-raised-button color="primary" (click)="this.submit()"  [disabled]="iriFormControl.invalid">Submit</button>
 </div>
-<div class="modal-footer">
-    <button type="button" class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button type="button" class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.iriForm.$invalid || (dvm.resolve.customValidation && dvm.resolve.customValidation.func(dvm.iriBegin + dvm.iriThen + dvm.iriEnd))">Submit</button>
-    <button type="button" class="btn btn-primary refresh-button float-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
-</div>
+

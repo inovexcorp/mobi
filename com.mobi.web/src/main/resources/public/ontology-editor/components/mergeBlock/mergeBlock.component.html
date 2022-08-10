@@ -32,13 +32,13 @@
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <commit-difference-tabset ng-if="dvm.os.listItem.merge.target"
                                   [branch-title]="dvm.branchTitle"
-                                  [commit-id]="dvm.os.listItem.ontologyRecord.commitId"
+                                  [commit-id]="dvm.os.listItem.versionedRdfRecord.commitId"
                                   [target-id]="dvm.targetHeadCommitId"
                                   [difference]="dvm.os.listItem.merge.difference"
-                                  [entity-name-func]="dvm.os.getEntityNameByListItem"
+                                  [entity-name-func]="getEntityName"
                                   (show-more-results-func)="dvm.retrieveMoreResults.bind(this)"
                                   [start-index]="dvm.os.listItem.merge.startIndex"
-                                  [record-id]="dvm.os.listItem.ontologyRecord.recordId"
+                                  [record-id]="dvm.os.listItem.versionedRdfRecord.recordId"
                                   (receive-commits)="dvm.commits = $event"></commit-difference-tabset>
     </div>
     <div class="btn-container pt-2">

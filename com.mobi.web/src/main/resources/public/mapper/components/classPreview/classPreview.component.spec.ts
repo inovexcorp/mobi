@@ -33,6 +33,7 @@ import {
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { ClassPreviewComponent } from './classPreview.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 describe('Class Preview component', function() {
     let component: ClassPreviewComponent;
@@ -48,7 +49,7 @@ describe('Class Preview component', function() {
             ],
             providers: [
                 MockProvider(MapperStateService),
-                { provide: 'ontologyManagerService', useClass: mockOntologyManager },
+                { provide: OntologyManagerService, useClass: mockOntologyManager }
             ]
         });
     });
@@ -58,7 +59,7 @@ describe('Class Preview component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mapperStateStub = TestBed.get(MapperStateService);
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
     });
 
     afterEach(function() {

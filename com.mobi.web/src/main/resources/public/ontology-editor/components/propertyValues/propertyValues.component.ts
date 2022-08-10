@@ -22,6 +22,9 @@
  */
 import { includes } from 'lodash';
 
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+
 import './propertyValues.component.scss';
 
 const template = require('./propertyValues.component.html');
@@ -29,7 +32,6 @@ const template = require('./propertyValues.component.html');
 /**
  * @ngdoc component
  * @name ontology-editor.component:propertyValues
- * @requires ontology-editor.service:ontologyUtilsManagerService
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
  *
@@ -64,12 +66,11 @@ const propertyValuesComponent = {
     controller: propertyValuesComponentCtrl
 };
 
-propertyValuesComponentCtrl.$inject = ['ontologyUtilsManagerService', 'ontologyStateService', 'ontologyManagerService'];
+propertyValuesComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-function propertyValuesComponentCtrl(ontologyUtilsManagerService, ontologyStateService, ontologyManagerService) {
+function propertyValuesComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService) {
     var dvm = this;
     dvm.om = ontologyManagerService;
-    dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.os = ontologyStateService;
 
     dvm.valueInList = function() {
