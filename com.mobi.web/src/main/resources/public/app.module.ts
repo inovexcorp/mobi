@@ -43,6 +43,7 @@ import { AppComponent } from './app.component';
 import { MergeRequestsModule } from './merge-requests/merge-requests.module';
 import { MapperModule } from './mapper/mapper.module';
 import { DiscoverModule } from './discover/discover.module';
+import { OntologyEditorModule } from './ontology-editor/ontology-editor.module';
 
 @NgModule({
     imports: [
@@ -58,6 +59,7 @@ import { DiscoverModule } from './discover/discover.module';
         MapperModule,
         HomeModule,
         DiscoverModule,
+        OntologyEditorModule,
         OntologyVisualizationModule,
         MergeRequestsModule,
         SettingsModule,

@@ -20,55 +20,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './ontologyCloseOverlay.component.scss';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { first } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
+import { Component, Inject } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
-const template = require('./ontologyCloseOverlay.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { Difference } from '../../../shared/models/difference.class';
+
+import './ontologyCloseOverlay.component.scss';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:ontologyCloseOverlay
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.OntologyCloseOverlayComponent
  *
- * @description
- * `ontologyCloseOverlay` is a component that creates content for a modal that will close the current
- * {@link shared.service:ontologyStateService selected ontology}. The modal provides buttons to Cancel
- * the close, close without saving, or save and then close. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that will close the provided `listItem`. The modal provides buttons to
+ * Cancel the modal, close without saving, or save and then close. Meant to be used in conjunction with the `MatDialog`
+ * service.
  */
-const ontologyCloseOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: ontologyCloseOverlayComponentCtrl
-};
+@Component({
+    selector: 'ontology-close-overlay',
+    templateUrl: './ontologyCloseOverlay.component.html'
+})
+export class OntologyCloseOverlayComponent {
+    error = '';
+    constructor(private dialogRef: MatDialogRef<OntologyCloseOverlayComponent>,
+        @Inject(MAT_DIALOG_DATA) public data: {listItem: OntologyListItem}, public os: OntologyStateService) {}
 
-ontologyCloseOverlayComponentCtrl.$inject = ['$q', 'ontologyStateService'];
-
-function ontologyCloseOverlayComponentCtrl($q, ontologyStateService: OntologyStateService): void {
-    const dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.error = '';
-
-    dvm.saveThenClose = function() {
-        dvm.os.saveChanges(dvm.os.listItem.versionedRdfRecord.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions}).pipe(first()).toPromise()
-            .then(() => dvm.os.afterSave().pipe(first()).toPromise(), $q.reject)
-            .then(() => dvm.closeModal(), errorMessage => dvm.error = errorMessage);
-    };
-    dvm.closeModal = function() {
-        dvm.os.closeOntology(dvm.os.recordIdToClose);
-        dvm.close();
-    };
-    dvm.cancel = function() {
-        dvm.dismiss();
-    };
+    saveThenClose(): void {
+        const diff = new Difference();
+        diff.additions = this.data.listItem.additions;
+        diff.deletions = this.data.listItem.deletions;
+        this.os.saveChanges(this.data.listItem.versionedRdfRecord.recordId, diff)
+            .pipe(switchMap(() => this.os.afterSave()))
+            .subscribe(() => this.closeModal(), errorMessage => this.error = errorMessage);
+    }
+    closeModal(): void {
+        this.os.closeOntology(this.data.listItem.versionedRdfRecord.recordId);
+        this.dialogRef.close();
+    }
 }
-
-export default ontologyCloseOverlayComponent;

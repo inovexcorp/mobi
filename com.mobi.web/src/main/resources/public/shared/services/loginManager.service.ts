@@ -34,9 +34,11 @@ import { MapperStateService } from './mapperState.service';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
+import { StateManagerService } from './stateManager.service';
 import { UserManagerService } from './userManager.service';
 import { UserStateService } from './userState.service';
 import { YasguiService } from './yasgui.service';
+import { OntologyStateService } from './ontologyState.service';
 
 loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
     'catalogManagerService',
@@ -89,8 +91,8 @@ function loginManagerService($q, $http, $state, REST_PREFIX,
                              datasetStateService: DatasetStateService, delimitedManagerService: DelimitedManagerService,
                              discoverStateService: DiscoverStateService, mapperStateService: MapperStateService,
                              mergeRequestsStateService: MergeRequestsStateService, ontologyManagerService: OntologyManagerService,
-                             ontologyStateService, shapesGraphStateService: ShapesGraphStateService,
-                             stateManagerService, userManagerService: UserManagerService,
+                             ontologyStateService: OntologyStateService, shapesGraphStateService: ShapesGraphStateService,
+                             stateManagerService: StateManagerService, userManagerService: UserManagerService,
                              userStateService: UserStateService, utilService, yasguiService: YasguiService) {
     const self = this,
         prefix = REST_PREFIX + 'session';
@@ -219,7 +221,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX,
                 return $q.reject(data);
             }
             let promises = [
-                stateManagerService.initialize(),
+                stateManagerService.initialize().pipe(first()).toPromise(),
                 userManagerService.initialize(),
                 userManagerService.getUser(data).then(user => {
                     self.currentUserIRI = user.iri;

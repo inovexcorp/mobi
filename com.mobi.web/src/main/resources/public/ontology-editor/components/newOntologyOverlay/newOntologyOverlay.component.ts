@@ -20,72 +20,77 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { trim, map } from 'lodash';
-import { first } from 'rxjs/operators';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { trim, map, uniq } from 'lodash';
 
+import { REGEX } from '../../../constants';
+import { DCTERMS, OWL } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
-const template = require('./newOntologyOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:newOntologyOverlay
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
- * @requires shared.service:utilService
+ * @class ontology-editor.NewOntologyOverlayComponent
  *
- * @description
- * `newOntologyOverlay` is a component that creates content for a modal that creates a new ontology. The form
- * in the modal contains a {@link shared.component:textInput} for the name, a field for the IRI, a
- * {@link shared.component:textArea} for the description, an
- * {@link ontology-editor.component:advancedLanguageSelect}, and a {@link shared.component:keywordSelect}. The value
- * of the name field will populate the IRI field unless the IRI value is manually changed.  Meant to be used in
- * conjunction with the {@link shared.service:modalService}.
+ * A component that creates content for a modal that creates a new ontology. The form in the modal contains a field for
+ * the name, a field for the IRI, a field for the description, an
+ * {@link ontology-editor.AdvancedLanguageSelectComponent}, and a {@link shared.KeywordSelectComponent}. The value
+ * of the name field will populate the IRI field unless the IRI value is manually changed. Meant to be used in
+ * conjunction with the `MatDialog` service.
  */
-const newOntologyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: newOntologyOverlayComponentCtrl
-};
+@Component({
+    selector: 'new-ontology-overlay',
+    templateUrl: './newOntologyOverlay.component.html'
+})
+export class NewOntologyOverlayComponent implements OnInit {
+    error: string|RESTError;
+    iriPattern = REGEX.IRI;
+    iriHasChanged = false;
 
-newOntologyOverlayComponentCtrl.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'utilService'];
+    newOntologyForm = this.fb.group({
+        title: ['', [ Validators.required]],
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
+        description: [''],
+        keywords: [[]],
+        language: ['']
+    });
 
-function newOntologyOverlayComponentCtrl($q, $filter, REGEX, ontologyStateService: OntologyStateService, prefixes, utilService) {
-    var dvm = this;
-    var util = utilService;
+    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<NewOntologyOverlayComponent>, 
+        @Inject(MAT_DIALOG_DATA) public data: {defaultNamespace: string}, public os: OntologyStateService,
+        private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
 
-    dvm.prefixes = prefixes;
-    dvm.iriPattern = REGEX.IRI;
-    dvm.os = ontologyStateService;
-
-    dvm.nameChanged = function() {
-        if (!dvm.iriHasChanged) {
-            var split = $filter('splitIRI')(dvm.os.newOntology['@id']);
-            dvm.os.newOntology['@id'] = split.begin + split.then + $filter('camelCase')(util.getPropertyValue(dvm.os.newOntology, prefixes.dcterms + 'title'), 'class');
+    ngOnInit(): void {
+        this.newOntologyForm.controls.iri.setValue(this.data.defaultNamespace);
+        this.newOntologyForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+    }
+    manualIRIEdit(): void {
+        this.iriHasChanged = true;
+    }
+    nameChanged(newName: string): void {
+        if (!this.iriHasChanged) {
+            const split = this.splitIRI.transform(this.newOntologyForm.controls.iri.value);
+            this.newOntologyForm.controls.iri.setValue(split.begin + split.then + this.camelCase.transform(newName, 'class'));
         }
     }
-    dvm.create = function() {
-        var title = util.getPropertyValue(dvm.os.newOntology, prefixes.dcterms + 'title');
-        var description = util.getPropertyValue(dvm.os.newOntology, prefixes.dcterms + 'description');
-        if (!description) {
-            delete dvm.os.newOntology[prefixes.dcterms + 'description'];
+    create(): void {
+        const newOntology: JSONLDObject = {
+            '@id': this.newOntologyForm.controls.iri.value,
+            '@type': [OWL + 'Ontology'],
+            [DCTERMS + 'title']: [{'@value': this.newOntologyForm.controls.title.value}],
+        };
+        if (this.newOntologyForm.controls.description.value) {
+            newOntology[DCTERMS + 'description'] = [{'@value': this.newOntologyForm.controls.description.value}];
         }
-        dvm.os.addLanguageToNewEntity(dvm.os.newOntology, dvm.os.newLanguage);
-        dvm.os.createOntology(dvm.os.newOntology, title, description, map(dvm.os.newKeywords, trim))
-        .toPromise().then(response => dvm.os.createState({recordId: response.recordId, commitId: response.commitId, branchId: response.branchId}).pipe(first()).toPromise(), $q.reject)
-            .then(() => dvm.close(), onError);
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
-
-    function onError(errorMessage) {
-        dvm.error = errorMessage;
+        this.os.addLanguageToNewEntity(newOntology, this.newOntologyForm.controls.language.value);
+        this.os.createOntology([newOntology], this.newOntologyForm.controls.title.value, this.newOntologyForm.controls.description.value, uniq(map(this.newOntologyForm.controls.keywords.value, trim)))
+            .subscribe(() => {
+                this.dialogRef.close();
+            }, error => {
+                this.error = error;
+            });
     }
 }
-
-export default newOntologyOverlayComponent;

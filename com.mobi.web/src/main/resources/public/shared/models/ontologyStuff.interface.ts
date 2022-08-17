@@ -26,7 +26,11 @@ import { IriList } from './iriList.interface';
 import { PropertyToRanges } from './propertyToRanges.interface';
 import { VocabularyStuff } from './vocabularyStuff.interface';
 
-/**
+ /**
+ * @ngdoc interface
+ * @name shared.models:OntologyStuff
+ *
+ * @description
  * Represents a response from the ontology-stuff endpoint
  */
 export interface OntologyStuff extends VocabularyStuff, PropertyToRanges {

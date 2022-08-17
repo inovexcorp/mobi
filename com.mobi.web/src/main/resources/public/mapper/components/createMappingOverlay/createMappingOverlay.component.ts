@@ -20,10 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ENTER } from '@angular/cdk/keycodes';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { MatChipInputEvent, MatDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material';
 import { map, trim, uniq } from 'lodash';
 
 import { Mapping } from '../../../shared/models/mapping.class';
@@ -34,8 +33,8 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
  * @class mapper.CreateMappingOverlayComponent
  *
  * A component that creates content for a modal with three inputs for metadata about a new MappingRecord: a text input
- * for the title, a textarea for the description, and a field for the keywords. Meant to be used in conjunction with the
- * `MatDialog` service.
+ * for the title, a textarea for the description, and {@link shared.KeywordSelectComponent}. Meant to be used in
+ * conjunction with the `MatDialog` service.
  * 
  */
 @Component({
@@ -49,7 +48,6 @@ export class CreateMappingOverlayComponent implements OnInit {
         description: [''],
         keywords: [[]]
     });
-    readonly separatorKeysCodes: number[] = [ENTER];
 
     constructor(private mm: MappingManagerService, private state: MapperStateService, private fb: FormBuilder,
         private dialogRef: MatDialogRef<CreateMappingOverlayComponent>,) {}
@@ -90,27 +88,6 @@ export class CreateMappingOverlayComponent implements OnInit {
             this.state.sourceOntologies = [];
             this.state.availableClasses = [];
             this._nextStep();
-        }
-    }
-    addKeyword(event: MatChipInputEvent): void {
-        const input = event.input;
-        const value = event.value;
-
-        if ((value || '').trim()) {
-            this.createMappingForm.controls.keywords.setValue([...this.createMappingForm.controls.keywords.value, value.trim()]);
-            this.createMappingForm.controls.keywords.updateValueAndValidity();
-        }
-
-        // Reset the input value
-        if (input) {
-            input.value = '';
-        }
-    }
-    removeKeyword(keyword: string): void {
-        const idx = this.createMappingForm.controls.keywords.value.indexOf(keyword);
-        if (idx >= 0) {
-            this.createMappingForm.controls.keywords.value.splice(idx, 1);
-            this.createMappingForm.controls.keywords.updateValueAndValidity();
         }
     }
 

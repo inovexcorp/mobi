@@ -24,7 +24,7 @@
 <div mat-dialog-content [formGroup]="editDatasetForm">
     <div class="dataset-info">
         <p><small><span class="field-label">Dataset IRI:</span> {{datasetIRI}}</small></p>
-        <p><small><span class="field-label">Repository ID:</span> {{repositoryId}}</small></p>
+    <p><small><span class="field-label">Repository ID:</span> {{repositoryId}}</small></p>
     </div>
     <error-display *ngIf="error">{{error}}</error-display>
     <mat-form-field class="w-100">
@@ -35,20 +35,7 @@
         <mat-label>Description</mat-label>
         <textarea matInput name="description" formControlName="description"></textarea>
     </mat-form-field>
-    <!-- TODO: Replace with keyword-select when upgraded -->
-    <mat-form-field class="flex-1 w-100">
-        <mat-chip-list #keywordSelect formControlName="keywords">
-            <mat-chip *ngFor="let keyword of editDatasetForm.get('keywords').value" [removable]="true" (removed)="removeKeyword(keyword)">
-                {{keyword}}
-                <mat-icon matChipRemove>cancel</mat-icon>
-            </mat-chip>
-        </mat-chip-list>
-        <input placeholder="Keywords"
-        [matChipInputFor]="keywordSelect"
-        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-        [matChipInputAddOnBlur]="false"
-        (matChipInputTokenEnd)="addKeyword($event)">
-    </mat-form-field>
+    <keyword-select [parentForm]="editDatasetForm"></keyword-select>
     <datasets-ontology-picker class="w-100" [(selected)]="selectedOntologies"></datasets-ontology-picker>
 </div>
 <div mat-dialog-actions>

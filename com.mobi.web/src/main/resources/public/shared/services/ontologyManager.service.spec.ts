@@ -75,7 +75,7 @@ describe('Ontology Manager service', function() {
         this.commitId = 'commitId';
         this.catalogId = 'catalogId';
         this.format = 'jsonld';
-        this.file = {};
+        this.file = {name: 'title'};
         this.title = 'title';
         this.description = 'description';
         this.keywords = ['keyword1', 'keyword2'];

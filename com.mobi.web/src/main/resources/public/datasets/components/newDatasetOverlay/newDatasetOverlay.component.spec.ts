@@ -35,6 +35,7 @@ import {
     mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetsOntologyPickerComponent } from '../datasetsOntologyPicker/datasetsOntologyPicker.component';
 import { NewDatasetOverlayComponent } from './newDatasetOverlay.component';
@@ -62,7 +63,8 @@ describe('New Dataset Overlay component', function() {
             declarations: [
                 NewDatasetOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
-                MockComponent(DatasetsOntologyPickerComponent)
+                MockComponent(DatasetsOntologyPickerComponent),
+                MockComponent(KeywordSelectComponent)
             ],
             providers: [
                 MockProvider(DatasetManagerService),
@@ -150,21 +152,6 @@ describe('New Dataset Overlay component', function() {
                 expect(component.error).toBe('');
             }));
         });
-        it('should add a keyword', function() {
-            component.addKeyword({input: null, value: ' A'});
-            expect(component.createDatasetForm.controls.keywords.value).toEqual(['A']);
-
-            component.addKeyword({input: null, value: 'B '});
-            expect(component.createDatasetForm.controls.keywords.value).toEqual(['A', 'B']);
-        });
-        it('should remove a keyword', function() {
-            component.createDatasetForm.controls.keywords.setValue(['A', 'B']);
-            component.removeKeyword('A');
-            expect(component.createDatasetForm.controls.keywords.value).toEqual(['B']);
-
-            component.removeKeyword('C');
-            expect(component.createDatasetForm.controls.keywords.value).toEqual(['B']);
-        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -172,7 +159,7 @@ describe('New Dataset Overlay component', function() {
             expect(element.queryAll(By.css('div[mat-dialog-content]')).length).toEqual(1);
             expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
         });
-        ['input[name="title"]', 'input[name="datasetIRI"]', 'textarea', 'input[placeholder="Keywords"]', 'mat-chip-list', '.repository-id', 'datasets-ontology-picker'].forEach(test => {
+        ['input[name="title"]', 'input[name="datasetIRI"]', 'textarea', 'keyword-select', '.repository-id', 'datasets-ontology-picker'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toBe(1);
             });

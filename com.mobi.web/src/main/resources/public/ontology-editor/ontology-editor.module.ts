@@ -19,10 +19,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+*/
 import * as angular from 'angular';
+import { NgModule } from '@angular/core';
+import { downgradeComponent } from '@angular/upgrade/static';
 
-import advancedLanguageSelectComponent from './components/advancedLanguageSelect/advancedLanguageSelect.component';
+import { SharedModule } from '../shared/shared.module';
+
 import annotationBlockComponent from './components/annotationBlock/annotationBlock.component';
 import annotationOverlayComponent from './components/annotationOverlay/annotationOverlay.component';
 import associationBlockComponent from './components/associationBlock/associationBlock.component';
@@ -52,7 +55,6 @@ import createTagModalComponentAjs from './components/createTagModal/createTagMod
 import datatypePropertyAxiomsComponent from './components/datatypePropertyAxioms/datatypePropertyAxioms.component';
 import datatypePropertyBlockComponent from './components/datatypePropertyBlock/datatypePropertyBlock.component';
 import datatypePropertyOverlayComponent from './components/datatypePropertyOverlay/datatypePropertyOverlay.component';
-import editBranchOverlayComponent from './components/editBranchOverlay/editBranchOverlay.component';
 import everythingTreeComponent from './components/everythingTree/everythingTree.component';
 import hierarchyFilterComponent from './components/hierarchyFilter/hierarchyFilter.component';
 import hierarchyTreeComponent from './components/hierarchyTree/hierarchyTree.component';
@@ -65,21 +67,15 @@ import individualTypesModalComponent from './components/individualTypesModal/ind
 import iriSelectOntologyComponent from './components/iriSelectOntology/iriSelectOntology.component';
 import mergeBlockComponent from './components/mergeBlock/mergeBlock.component';
 import mergeTabComponent from './components/mergeTab/mergeTab.component';
-import newOntologyOverlayComponent from './components/newOntologyOverlay/newOntologyOverlay.component';
 import objectPropertyAxiomsComponent from './components/objectPropertyAxioms/objectPropertyAxioms.component';
 import objectPropertyBlockComponent from './components/objectPropertyBlock/objectPropertyBlock.component';
 import objectPropertyOverlayComponent from './components/objectPropertyOverlay/objectPropertyOverlay.component';
 import ontologyButtonStackComponent from './components/ontologyButtonStack/ontologyButtonStack.component';
 import ontologyClassSelectComponent from './components/ontologyClassSelect/ontologyClassSelect.component';
-import ontologyCloseOverlayComponent from './components/ontologyCloseOverlay/ontologyCloseOverlay.component';
-import ontologyEditorPageComponent from './components/ontologyEditorPage/ontologyEditorPage.component';
 import ontologyPropertiesBlockComponent from './components/ontologyPropertiesBlock/ontologyPropertiesBlock.component';
 import ontologyPropertyOverlayComponent from './components/ontologyPropertyOverlay/ontologyPropertyOverlay.component';
-import ontologySidebarComponent from './components/ontologySidebar/ontologySidebar.component';
-import ontologyTabComponent from './components/ontologyTab/ontologyTab.component';
+import { ontologyTabComponent, OntologyTabDirective } from './components/ontologyTab/ontologyTab.component';
 import openEntitySnackbarComponent from './components/openEntitySnackbar/openEntitySnackbar.component';
-import openOntologySelectComponent from './components/openOntologySelect/openOntologySelect.component';
-import openOntologyTabComponent from './components/openOntologyTab/openOntologyTab.component';
 import overviewTabComponent from './components/overviewTab/overviewTab.component';
 import previewBlockComponent from './components/previewBlock/previewBlock.component';
 import projectTabComponent from './components/projectTab/projectTab.component';
@@ -98,22 +94,62 @@ import superClassSelectComponent from './components/superClassSelect/superClassS
 import superPropertySelectComponent from './components/superPropertySelect/superPropertySelect.component';
 import treeItemComponent from './components/treeItem/treeItem.component';
 import uploadChangesOverlayComponent from './components/uploadChangesOverlay/uploadChangesOverlay.component';
-import uploadOntologyOverlayComponent from './components/uploadOntologyOverlay/uploadOntologyOverlay.component';
-import uploadErrorsOverlayComponent from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
-import uploadSnackbarComponent from './components/uploadSnackbar/uploadSnackbar.component';
 import usagesBlockComponent from './components/usagesBlock/usagesBlock.component';
-import visualizationTabComponent from './components/visualizationTab/visualizationTab.component';
+
+import { VisualizationTabComponent } from './components/visualizationTab/visualizationTab.component';
+import { AdvancedLanguageSelectComponent } from './components/advancedLanguageSelect/advancedLanguageSelect.component';
+import { EditBranchOverlayComponent } from './components/editBranchOverlay/editBranchOverlay.component';
+import { NewOntologyOverlayComponent } from './components/newOntologyOverlay/newOntologyOverlay.component';
+import { OntologyCloseOverlayComponent } from './components/ontologyCloseOverlay/ontologyCloseOverlay.component';
+import { OntologyEditorPageComponent } from './components/ontologyEditorPage/ontologyEditorPage.component';
+import { OntologySidebarComponent } from './components/ontologySidebar/ontologySidebar.component';
+import { OpenOntologySelectComponent } from './components/openOntologySelect/openOntologySelect.component';
+import { OpenOntologyTabComponent } from './components/openOntologyTab/openOntologyTab.component';
+import { UploadErrorsOverlayComponent } from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
+import { UploadOntologyOverlayComponent } from './components/uploadOntologyOverlay/uploadOntologyOverlay.component';
+import { UploadSnackbarComponent } from './components/uploadSnackbar/uploadSnackbar.component';
+import { OntologyVisualizationModule } from '../ontology-visualization/ontologyVisualization.module';
 
 /**
- * @ngdoc overview
- * @name ontology-editor
+ * @namespace ontology-editor
  *
- * @description
  * The `ontology-editor` module provides components and services that make up the Ontology Editor page of Mobi for
  * creating, editing, and managing ontologies/vocabularies.
  */
+@NgModule({
+    imports: [
+        SharedModule,
+        OntologyVisualizationModule
+    ],
+    declarations: [
+        AdvancedLanguageSelectComponent,
+        EditBranchOverlayComponent,
+        NewOntologyOverlayComponent,
+        OntologyCloseOverlayComponent,
+        OntologyEditorPageComponent,
+        OntologyTabDirective,
+        OntologySidebarComponent,
+        OpenOntologySelectComponent,
+        OpenOntologyTabComponent,
+        UploadErrorsOverlayComponent,
+        UploadOntologyOverlayComponent,
+        UploadSnackbarComponent,
+        VisualizationTabComponent
+    ],
+    entryComponents: [
+        EditBranchOverlayComponent,
+        NewOntologyOverlayComponent,
+        OntologyCloseOverlayComponent,
+        OntologyEditorPageComponent,
+        UploadErrorsOverlayComponent,
+        UploadOntologyOverlayComponent,
+        UploadSnackbarComponent,
+        VisualizationTabComponent,
+    ]
+})
+export class OntologyEditorModule {}
+
 angular.module('ontology-editor', [])
-    .component('advancedLanguageSelect', advancedLanguageSelectComponent)
     .component('annotationBlock', annotationBlockComponent)
     .component('annotationOverlay', annotationOverlayComponent)
     .component('associationBlock', associationBlockComponent)
@@ -143,7 +179,6 @@ angular.module('ontology-editor', [])
     .component('datatypePropertyAxioms', datatypePropertyAxiomsComponent)
     .component('datatypePropertyBlock', datatypePropertyBlockComponent)
     .component('datatypePropertyOverlay', datatypePropertyOverlayComponent)
-    .component('editBranchOverlay', editBranchOverlayComponent)
     .component('everythingTree', everythingTreeComponent)
     .component('hierarchyFilter', hierarchyFilterComponent)
     .component('hierarchyTree', hierarchyTreeComponent)
@@ -156,21 +191,15 @@ angular.module('ontology-editor', [])
     .component('iriSelectOntology', iriSelectOntologyComponent)
     .component('mergeBlock', mergeBlockComponent)
     .component('mergeTab', mergeTabComponent)
-    .component('newOntologyOverlay', newOntologyOverlayComponent)
     .component('objectPropertyAxioms', objectPropertyAxiomsComponent)
     .component('objectPropertyBlock', objectPropertyBlockComponent)
     .component('objectPropertyOverlay', objectPropertyOverlayComponent)
     .component('ontologyButtonStack', ontologyButtonStackComponent)
     .component('ontologyClassSelect', ontologyClassSelectComponent)
-    .component('ontologyCloseOverlay', ontologyCloseOverlayComponent)
-    .component('ontologyEditorPage', ontologyEditorPageComponent)
     .component('ontologyPropertiesBlock', ontologyPropertiesBlockComponent)
     .component('ontologyPropertyOverlay', ontologyPropertyOverlayComponent)
-    .component('ontologySidebar', ontologySidebarComponent)
     .component('ontologyTab', ontologyTabComponent)
     .component('openEntitySnackbar', openEntitySnackbarComponent)
-    .component('openOntologySelect', openOntologySelectComponent)
-    .component('openOntologyTab', openOntologyTabComponent)
     .component('overviewTab', overviewTabComponent)
     .component('previewBlock', previewBlockComponent)
     .component('projectTab', projectTabComponent)
@@ -189,8 +218,16 @@ angular.module('ontology-editor', [])
     .component('superPropertySelect', superPropertySelectComponent)
     .component('treeItem', treeItemComponent)
     .component('uploadChangesOverlay', uploadChangesOverlayComponent)
-    .component('uploadErrorsOverlay', uploadErrorsOverlayComponent)
-    .component('uploadOntologyOverlay', uploadOntologyOverlayComponent)
-    .component('uploadSnackbar', uploadSnackbarComponent)
     .component('usagesBlock', usagesBlockComponent)
-    .component('visualizationTab', visualizationTabComponent);
+    .directive('visualizationTab', downgradeComponent({component: VisualizationTabComponent}) as angular.IDirectiveFactory)
+    .directive('advancedLanguageSelect', downgradeComponent({component: AdvancedLanguageSelectComponent}) as angular.IDirectiveFactory)
+    .directive('editBranchOverlay', downgradeComponent({component: EditBranchOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('newOntologyOverlay', downgradeComponent({component: NewOntologyOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('ontologyCloseOverlay', downgradeComponent({component: OntologyCloseOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('ontologyEditorPage', downgradeComponent({component: OntologyEditorPageComponent}) as angular.IDirectiveFactory)
+    .directive('ontologySidebar', downgradeComponent({component: OntologySidebarComponent}) as angular.IDirectiveFactory)
+    .directive('openOntologySelect', downgradeComponent({component: OpenOntologySelectComponent}) as angular.IDirectiveFactory)
+    .directive('openOntologyTab', downgradeComponent({component: OpenOntologyTabComponent}) as angular.IDirectiveFactory)
+    .directive('uploadErrorsOverlay', downgradeComponent({component: UploadErrorsOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('uploadOntologyOverlay', downgradeComponent({component: UploadOntologyOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('uploadSnackbar', downgradeComponent({component: UploadSnackbarComponent}) as angular.IDirectiveFactory);

@@ -67,7 +67,7 @@ import {
     values,
     without
 } from 'lodash';
-import { switchMap, map, catchError, tap } from 'rxjs/operators';
+import { switchMap, map, catchError, tap, finalize } from 'rxjs/operators';
 import { Inject, Injectable } from '@angular/core';
 
 import { Difference } from '../models/difference.class';
@@ -88,7 +88,11 @@ import { OntologyRecordActionI } from './ontologyRecordAction.interface';
 import { OntologyAction } from '../models/ontologyAction';
 import { JSONLDId } from '../models/JSONLDId.interface';
 import { JSONLDValue } from '../models/JSONLDValue.interface';
+import { StateManagerService } from './stateManager.service';
 import { ParentNode } from '../models/parentNode.interface';
+import { RESTError } from '../models/RESTError.interface';
+import { OntologyUploadItem } from '../models/ontologyUploadItem.interface';
+import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 
 /**
  * @class shared.OntologyStateService
@@ -121,7 +125,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         SKOS + 'hasTopConcept'
     ];
 
-    constructor(@Inject('stateManagerService') protected sm, protected cm: CatalogManagerService,
+    constructor(protected sm: StateManagerService, protected cm: CatalogManagerService,
         @Inject('utilService') protected util, protected om: OntologyManagerService, @Inject('updateRefsService') protected updateRefs, 
         @Inject('propertyManagerService') protected pm, @Inject('manchesterConverterService') protected mc, 
         @Inject('policyEnforcementService') protected pe, @Inject('policyManagerService') protected polm,
@@ -140,26 +144,15 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     
     /**
      * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
-     * {@link uploadOntologyTab.directive:uploadOntologyTab} and
-     * {@link ontology-editor.component:uploadOntologyOverlay}.
+     * {@link ontology-editor.OpenOntologyTabComponent} and {@link ontology-editor.UploadOntologyOverlayComponent}.
      * @type {File[]}
      */
     uploadFiles: File[] = [];
-    fileStatus = [];
-
     /**
      * `uploadList` holds an array of upload objects which contain properties about the uploaded files.
-     * The structure of the upload object is:
-     * {
-     *     error: {'errorMessage': '', 'errorDetails': []},
-     *     id: '',
-     *     promise: {},
-     *     title: ''
-     * }
-     * @type {Object[]}
+     * @type {OntologyUploadItem[]}
      */
-    uploadList = [];
-
+    uploadList: OntologyUploadItem[] = [];
     /**
      * `uploadFiles` holds the number of pending uploads.
      * @type {number}
@@ -178,37 +171,51 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     }
 
     /**
+     * Adds additional ontology action emit to state creation
+     */
+    createState(versionedRdfStateBase: VersionedRdfStateBase): Observable<null> {
+        return super.createState(versionedRdfStateBase).pipe(finalize(() => {
+            this._ontologyRecordActionSubject.next({recordId: versionedRdfStateBase.recordId, action: OntologyAction.UPDATE_STATE});
+        }));
+    }
+    /**
+     * Adds additional ontology action emit to state updates
+     */
+    updateState(versionedRdfStateBase: VersionedRdfStateBase): Observable<null> {
+        return super.updateState(versionedRdfStateBase).pipe(finalize(() => {
+            this._ontologyRecordActionSubject.next({recordId: versionedRdfStateBase.recordId, action: OntologyAction.UPDATE_STATE});
+        }));
+    }
+
+    /**
      * Adds the error message to the list item with the identified id.
      *
      * @param {string} id The id of the upload item.
-     * @param {object} error The error message for the upload item.
+     * @param {RESTError} error The error message for the upload item.
      */
-    addErrorToUploadItem(id: string, errorObject): void {
+    addErrorToUploadItem(id: string, errorObject: RESTError): void {
         set(find(this.uploadList, {id}), 'error', errorObject);
     }
+
     /**
      * Resets all state variables.
      */
     reset(): void {
         this.list = [];
         this.listItem = undefined;
-        // TODO: is this required?
-        // showUploadTab = false;
         this.uploadList = [];
     }
     /**
-     * Uploads the provided JSON-LD as a new ontology and creates a new list item for the new ontology.
-     * Returns an Observable with the entityIRI, recordId, branchId, and commitId for the state of the newly
-     * created ontology.
+     * Uploads the provided JSON-LD as a new ontology and creates a new list item for the new ontology along with
+     * setting up the new state.
      *
      * @param {JSONLDObject[]} ontologyJson The JSON-LD object representing the ontology definition.
      * @param {string} title The title for the OntologyRecord.
      * @param {string} description The description for the OntologyRecord.
      * @param {string[]} keywords The array of keywords for the OntologyRecord.
-     * @returns {Observable} An Observable with the entityIRI, recordId, branchId, and commitId for the state of the 
-     * newly created ontology.
+     * @returns {Observable} An Observable indicating the success of the creation
      */
-    createOntology(ontologyJson: JSONLDObject[], title: string, description: string, keywords: string[]): Observable<{entityIRI: string, recordId: string, branchId: string, commitId: string}> {
+    createOntology(ontologyJson: JSONLDObject[], title: string, description: string, keywords: string[]): Observable<null> {
         let listItem: OntologyListItem;
         const recordConfig: OntologyRecordConfig = {
             title,
@@ -229,18 +236,17 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     listItem.masterBranchIri = listItem.versionedRdfRecord.branchId;
                     listItem.userCanModify = true;
                     listItem.userCanModifyMaster = true;
+                    return this.createState({
+                        recordId: listItem.versionedRdfRecord.recordId,
+                        commitId: listItem.versionedRdfRecord.commitId,
+                        branchId: listItem.versionedRdfRecord.branchId
+                    });
+                }),
+                switchMap(() => {
                     this.list.push(listItem);
                     this.listItem = listItem;
                     return this.setSelected(this.getActiveEntityIRI(), false, this.listItem);
                 }),
-                map(() => {
-                    return {
-                        entityIRI: listItem.ontologyId,
-                        recordId: listItem.versionedRdfRecord.recordId,
-                        branchId: listItem.versionedRdfRecord.branchId,
-                        commitId: listItem.versionedRdfRecord.commitId
-                    };
-                })
             );
     }
     /**
@@ -794,8 +800,8 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     }
     /**
      * Used to open an ontology from the Mobi repository. It calls
-     * {@link shared.OntologyStateService#getOntologyCatalogDetails} to get the specified
-     * ontology catalog information from the Mobi repository. Returns an Observable.
+     * {@link shared.OntologyStateService#getCatalogDetails} to get the specified ontology catalog information from the
+     * Mobi repository. Returns an Observable.
      *
      * @param {string} recordId The record ID of the requested ontology.
      * @param {string} recordTitle The title of the requested ontology.
@@ -828,7 +834,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             this.listItem = undefined;
         }
         remove(this.list, { versionedRdfRecord: { recordId }});
-        // TODO Figure this out
         this.emitOntologyAction({ action: OntologyAction.ONTOLOGY_CLOSE, recordId });
     }
     /**

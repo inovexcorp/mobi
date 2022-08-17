@@ -20,10 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ENTER } from '@angular/cdk/keycodes';
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatChipInputEvent, MatDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material';
 import { map, get, sortBy, remove, difference, includes, forEach, concat, find } from 'lodash';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -57,7 +56,6 @@ export class EditDatasetOverlayComponent implements OnInit {
     keywords = [];
     selectedOntologies: OntologyDetails[] = [];
     editDatasetForm: FormGroup;
-    readonly separatorKeysCodes: number[] = [ENTER];
 
     constructor(private dialogRef: MatDialogRef<EditDatasetOverlayComponent>, private fb: FormBuilder,
         public state: DatasetStateService, public dm: DatasetManagerService, public cm: CatalogManagerService, 
@@ -130,27 +128,6 @@ export class EditDatasetOverlayComponent implements OnInit {
                 }, error => this.error = error);
         } else {
             this._triggerUpdate(newRecord, newIdentifiers);
-        }
-    }
-    addKeyword(event: MatChipInputEvent): void {
-        const input = event.input;
-        const value = event.value;
-
-        if ((value || '').trim()) {
-            this.editDatasetForm.controls.keywords.setValue([...this.editDatasetForm.controls.keywords.value, value.trim()]);
-            this.editDatasetForm.controls.keywords.updateValueAndValidity();
-        }
-
-        // Reset the input value
-        if (input) {
-            input.value = '';
-        }
-    }
-    removeKeyword(keyword: string): void {
-        const idx = this.editDatasetForm.controls.keywords.value.indexOf(keyword);
-        if (idx >= 0) {
-            this.editDatasetForm.controls.keywords.value.splice(idx, 1);
-            this.editDatasetForm.controls.keywords.updateValueAndValidity();
         }
     }
 

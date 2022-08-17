@@ -72,10 +72,14 @@ module.exports = {
                             browser.waitForElementVisible("//div[contains(@class,'mat-form-field')]/input");
                             break;
                         case "Ontology Editor":
-                            browser.waitForElementVisible("//div[contains(@class, 'ontology-sidebar')]/div/button[text()[contains(.,'Ontologies')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'search-bar')]//input");
-                            browser.waitForElementVisible("//button[text()[contains(.,'New Ontology')]]");
-                            browser.waitForElementVisible("//button[text()[contains(.,'Upload Ontology')]]");
+                            browser.waitForElementVisible('//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button');
+                            browser
+                                .useCss()
+                                .waitForElementVisible("open-ontology-tab input.ontology-search");
+                            browser
+                                .useXpath()
+                                .waitForElementVisible("//span[text()[contains(.,'New Ontology')]]/parent::button")
+                                .waitForElementVisible("//span[text()[contains(.,'Upload Ontology')]]/parent::button");
                             break;
                         case "Merge Requests":
                             browser.waitForElementVisible("//button/span[text()[contains(.,'New Request')]]");
@@ -89,7 +93,6 @@ module.exports = {
                             break;
                         case "Discover":
                             browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Explore")]]');
-                            browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Search")]]');
                             browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Query")]]');
                             break;
                         default:

@@ -50,7 +50,8 @@ import {
     MatGridListModule,
     MatRadioModule,
     MatButtonToggleModule,
-    MatProgressBarModule} from '@angular/material';
+    MatProgressBarModule,
+    MatSnackBarModule} from '@angular/material';
 
 import { MatTableModule } from '@angular/material/table';
 import { CdkTableModule } from '@angular/cdk/table';
@@ -60,6 +61,7 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatMarkdownEditorModule } from 'mat-markdown-editor';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { UiScrollModule } from 'ngx-ui-scroll';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blankNodeValueDisplayComponent from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
@@ -77,7 +79,6 @@ import entityDatesComponent from './components/entityDates/entityDates.component
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
 import warningMessageComponent from './components/warningMessage/warningMessage.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
-import keywordSelectComponent from './components/keywordSelect/keywordSelect.component';
 import languageSelectComponent from './components/languageSelect/languageSelect.component';
 import materialTabComponent from './components/materialTab/materialTab.component';
 import materialTabsetComponent from './components/materialTabset/materialTabset.component';
@@ -98,7 +99,6 @@ import buttonHoverText from './directives/buttonHoverText/buttonHoverText.direct
 import clickAnywhereButHere from './directives/clickAnywhereButHere/clickAnywhereButHere.directive';
 import clickToCopy from './directives/clickToCopy/clickToCopy.directive';
 import disableAnimate from './directives/disableAnimate/disableAnimate.directive';
-import dragFile from './directives/dragFile/dragFile.directive';
 import dragMe from './directives/dragMe/dragMe.directive';
 import dropOnMe from './directives/dropOnMe/dropOnMe.directive';
 import fileChange from './directives/fileChange/fileChange.directive';
@@ -132,11 +132,8 @@ import prefixes from './services/prefixes.service';
 import propertyManagerService from './services/propertyManager.service';
 import provManagerService from './services/provManager.service';
 import recordPermissionsManagerService from './services/recordPermissionsManager.service';
-import stateManagerService from './services/stateManager.service';
 import updateRefsService from './services/updateRefs.service';
 import utilService from './services/util.service';
-import { OntologyVisualizationService } from '../ontology-visualization/services/ontologyVisualizaton.service';
-import { ProgressSpinnerService } from '../shared/components/progress-spinner/services/progressSpinner.service';
 
 
 // NgUpgrade
@@ -151,18 +148,45 @@ import {
     propertyManagerServiceProvider,
     provManagerServiceProvider,
     settingManagerServiceProvider,
-    stateManagerServiceProvider,
     toastrProvider,
     utilServiceProvider,
     updateRefsServiceProvider,
 } from '../ajs.upgradedProviders';
 
+import { BranchSelectComponent } from './components/branchSelect/branchSelect.component';
+import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
+import { DatasetSelectComponent } from './components/datasetSelect/datasetSelect.component';
+import { CheckboxComponent } from './components/checkbox/checkbox.component';
+import { CommitChangesDisplayComponent } from './components/commitChangesDisplay/commitChangesDisplay.component';
+import { CommitDifferenceTabsetComponent } from './components/commitDifferenceTabset/commitDifferenceTabset.component';
+import { CommitHistoryTableComponent } from './components/commitHistoryTable/commitHistoryTable.component';
+import { CommitInfoOverlayComponent } from './components/commitInfoOverlay/commitInfoOverlay.component';
 import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
+import { CustomLabelComponent } from './components/customLabel/customLabel.component';
+import { editIriOverlayComponent } from './components/editIriOverlay/editIriOverlay.component';
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+import { FileInputComponent } from './components/fileInput/fileInput.component';
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
 import { InlineEditComponent } from './components/inlineEdit/inlineEdit.component';
+import { KeywordSelectComponent } from './components/keywordSelect/keywordSelect.component';
+import { LimitDescriptionComponent } from './components/limitDescription/limitDescription.component';
+import { MarkdownEditorComponent } from './components/markdownEditor/markdownEditor.component';
+import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolveConflictsBlock.component';
+import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
+import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
+import { SettingFormComponent } from './components/settingForm/settingForm.component';
+import { SettingFormFieldComponent } from './components/settingFormField/settingFormField.component';
+import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
+import { SpinnerComponent } from './components/progress-spinner/components/spinner/spinner.component';
+import { StatementDisplayComponent } from './components/statementDisplay/statementDisplay.component';
+import { StatementContainerComponent } from './components/statementContainer/statementContainer.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { UserAccessControlsComponent } from './components/userAccessControls/userAccessControls.component';
+import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.component';
+
+import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
+import { DragFileDirective } from './directives/dragFile/dragFile.directive';
+import { FocusDirective } from './directives/focus/focus.directive';
 
 import { CatalogManagerService } from './services/catalogManager.service';
 import { CatalogStateService } from './services/catalogState.service';
@@ -177,45 +201,25 @@ import { MergeRequestManagerService } from './services/mergeRequestManager.servi
 import { MergeRequestsStateService } from './services/mergeRequestsState.service';
 import { OntologyManagerService } from './services/ontologyManager.service';
 import { OntologyStateService } from './services/ontologyState.service';
+import { OntologyVisualizationService } from '../ontology-visualization/services/ontologyVisualizaton.service';
 import { PolicyManagerService } from './services/policyManager.service';
-import { UserManagerService } from './services/userManager.service';
-import { UserStateService } from './services/userState.service';
+import { ProgressSpinnerService } from '../shared/components/progress-spinner/services/progressSpinner.service';
 import { ShapesGraphManagerService } from './services/shapesGraphManager.service';
 import { ShapesGraphStateService } from './services/shapesGraphState.service';
 import { SparqlManagerService } from './services/sparqlManager.service';
-import { YasguiService } from './services/yasgui.service';
+import { StateManagerService } from './services/stateManager.service';
+import { UserManagerService } from './services/userManager.service';
+import { UserStateService } from './services/userState.service';
 import { WindowRef } from './services/windowRef.service';
+import { YasguiService } from './services/yasgui.service';
+
 import { HighlightTextPipe } from './pipes/highlightText.pipe';
-import { MarkdownEditorComponent } from './components/markdownEditor/markdownEditor.component';
-import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
-import { SpinnerComponent } from './components/progress-spinner/components/spinner/spinner.component';
-import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
-import { FileInputComponent } from './components/fileInput/fileInput.component';
-import { CustomLabelComponent } from './components/customLabel/customLabel.component';
-import { StatementDisplayComponent } from './components/statementDisplay/statementDisplay.component';
-import { StatementContainerComponent } from './components/statementContainer/statementContainer.component';
-import { CommitHistoryTableComponent } from './components/commitHistoryTable/commitHistoryTable.component';
-import { CommitInfoOverlayComponent } from './components/commitInfoOverlay/commitInfoOverlay.component';
-import { CommitChangesDisplayComponent } from './components/commitChangesDisplay/commitChangesDisplay.component';
-import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
-import { CommitDifferenceTabsetComponent } from './components/commitDifferenceTabset/commitDifferenceTabset.component';
-import { CheckboxComponent } from './components/checkbox/checkbox.component';
-import { BranchSelectComponent } from './components/branchSelect/branchSelect.component';
-import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { PrefixationPipe } from './pipes/prefixation.pipe';
-import { SplitIRIPipe } from './pipes/splitIRI.pipe';
-import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
-import { FocusDirective } from './directives/focus/focus.directive';
-import { DatasetSelectComponent } from './components/datasetSelect/datasetSelect.component';
-import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
-import { LimitDescriptionComponent } from '../shared/components/limitDescription/limitDescription.component';
-import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
-import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
-import { SettingFormComponent } from './components/settingForm/settingForm.component';
-import { SettingFormFieldComponent } from './components/settingFormField/settingFormField.component';
 import { ShowPropertiesPipe } from './pipes/showProperties.pipe';
-import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.component';
-import { editIriOverlayComponent } from './components/editIriOverlay/editIriOverlay.component';
+import { SplitIRIPipe } from './pipes/splitIRI.pipe';
+import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
+
+import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 
 /**
  * @namespace shared
@@ -225,13 +229,13 @@ import { editIriOverlayComponent } from './components/editIriOverlay/editIriOver
  */
 @NgModule({
     imports: [
-        CommonModule,
-        FormsModule,
-        ReactiveFormsModule,
-        HttpClientModule,
-        CodemirrorModule,
+        BrowserAnimationsModule,
         CdkTableModule,
+        CodemirrorModule,
+        CommonModule,
         FlexLayoutModule,
+        FormsModule,
+        HttpClientModule,
         MatMarkdownEditorModule,
         MatAutocompleteModule,
         MatButtonModule,
@@ -254,81 +258,85 @@ import { editIriOverlayComponent } from './components/editIriOverlay/editIriOver
         MatRadioModule,
         MatSelectModule,
         MatSlideToggleModule,
+        MatSnackBarModule,
         MatStepperModule,
         MatTableModule,
         MatTabsModule,
         MatTooltipModule,
+        ReactiveFormsModule,
         ShowdownModule.forRoot({flavor: 'github'}),
         UiScrollModule
     ],
     declarations: [
+        BranchSelectComponent,
         BreadcrumbsComponent,
+        CheckboxComponent,
+        CommitHistoryTableComponent,
+        CommitChangesDisplayComponent,
+        CommitDifferenceTabsetComponent,
+        CommitInfoOverlayComponent,
         ConfirmModalComponent,
+        CustomLabelComponent,
+        DatasetSelectComponent,
+        editIriOverlayComponent,
         ErrorDisplayComponent,
+        FileInputComponent,
         InfoMessageComponent,
         InlineEditComponent,
-        UnmaskPasswordComponent,
-        UserAccessControlsComponent,
-        SpinnerComponent,
-        HighlightTextPipe,
-        TrustedHtmlPipe,
-        PrefixationPipe,
-        SplitIRIPipe,
-        ShowPropertiesPipe,
-        CamelCasePipe,
-        FileInputComponent,
-        CustomLabelComponent,
+        KeywordSelectComponent,
+        LimitDescriptionComponent,
+        MarkdownEditorComponent,
+        ResolveConflictsBlock,
+        ResolveConflictsFormComponent,
         SettingEditPageComponent,
-        SettingGroupComponent,
         SettingFormComponent,
         SettingFormFieldComponent,
-        StatementDisplayComponent,
+        SettingGroupComponent,
+        SpinnerComponent,
         StatementContainerComponent,
-        CommitHistoryTableComponent,
-        CommitInfoOverlayComponent,
-        CommitChangesDisplayComponent,
-        ResolveConflictsFormComponent,
-        CommitDifferenceTabsetComponent,
-        CheckboxComponent,
-        LimitDescriptionComponent,
-        BranchSelectComponent,
-        ResolveConflictsBlock,
-        CopyClipboardDirective,
-        FocusDirective,
+        StatementDisplayComponent,
+        UnmaskPasswordComponent,
+        UserAccessControlsComponent,
         ValueDisplayComponent,
-        MarkdownEditorComponent,
-        DatasetSelectComponent,
-        editIriOverlayComponent
+        CamelCasePipe,
+        CopyClipboardDirective,
+        DragFileDirective,
+        FocusDirective,
+        HighlightTextPipe,
+        PrefixationPipe,
+        ShowPropertiesPipe,
+        SplitIRIPipe,
+        TrustedHtmlPipe
     ],
     entryComponents: [
-        ConfirmModalComponent,
-        ErrorDisplayComponent,
-        InfoMessageComponent,
-        UnmaskPasswordComponent,
-        SpinnerComponent,
-        UserAccessControlsComponent,
-        FileInputComponent,
-        CustomLabelComponent,
-        StatementDisplayComponent,
-        StatementContainerComponent,
+        BranchSelectComponent,
+        CheckboxComponent,
+        CommitChangesDisplayComponent,
+        CommitDifferenceTabsetComponent,
         CommitHistoryTableComponent,
         CommitInfoOverlayComponent,
-        CommitChangesDisplayComponent,
-        ResolveConflictsFormComponent,
-        CommitDifferenceTabsetComponent,
-        CheckboxComponent,
-        BranchSelectComponent,
+        ConfirmModalComponent,
+        CustomLabelComponent,
+        editIriOverlayComponent,
+        ErrorDisplayComponent,
+        FileInputComponent,
+        InfoMessageComponent,
         ResolveConflictsBlock,
-        ValueDisplayComponent,
-        editIriOverlayComponent
+        ResolveConflictsFormComponent,
+        SpinnerComponent,
+        StatementDisplayComponent,
+        StatementContainerComponent,
+        UnmaskPasswordComponent,
+        UserAccessControlsComponent,
+        ValueDisplayComponent
     ],
     exports: [
+        BrowserAnimationsModule,
+        CdkTableModule,
+        CodemirrorModule,
         CommonModule,
         FormsModule,
-        ReactiveFormsModule,
         HttpClientModule,
-        CodemirrorModule,
-        CdkTableModule,
         MatMarkdownEditorModule,
         MatAutocompleteModule,
         MatButtonModule,
@@ -351,45 +359,49 @@ import { editIriOverlayComponent } from './components/editIriOverlay/editIriOver
         MatRadioModule,
         MatSelectModule,
         MatSlideToggleModule,
+        MatSnackBarModule,
         MatStepperModule,
         MatTableModule,
         MatTabsModule,
         MatTooltipModule,
+        ReactiveFormsModule,
         ShowdownModule,
         UiScrollModule,
-        ConfirmModalComponent,
-        ErrorDisplayComponent,
-        InfoMessageComponent,
-        InlineEditComponent,
-        UnmaskPasswordComponent,
-        SpinnerComponent,
-        UserAccessControlsComponent,
-        HighlightTextPipe,
-        TrustedHtmlPipe,
-        PrefixationPipe,
-        SplitIRIPipe,
-        ShowPropertiesPipe,
-        CamelCasePipe,
+        BranchSelectComponent,
         BreadcrumbsComponent,
-        FileInputComponent,
-        CustomLabelComponent,
-        SettingEditPageComponent,
-        StatementDisplayComponent,
-        StatementContainerComponent,
+        CheckboxComponent,
+        CommitChangesDisplayComponent,
+        CommitDifferenceTabsetComponent,
         CommitHistoryTableComponent,
         CommitInfoOverlayComponent,
-        CommitChangesDisplayComponent,
-        ResolveConflictsFormComponent,
-        CommitDifferenceTabsetComponent,
-        CheckboxComponent,
-        BranchSelectComponent,
+        ConfirmModalComponent,
+        CustomLabelComponent,
+        DatasetSelectComponent,
+        ErrorDisplayComponent,
+        FileInputComponent,
+        InfoMessageComponent,
+        InlineEditComponent,
+        KeywordSelectComponent,
         LimitDescriptionComponent,
-        ResolveConflictsBlock,
-        CopyClipboardDirective,
-        FocusDirective,
-        ValueDisplayComponent,
         MarkdownEditorComponent,
-        DatasetSelectComponent
+        ResolveConflictsBlock,
+        ResolveConflictsFormComponent,
+        SettingEditPageComponent,
+        SpinnerComponent,
+        StatementContainerComponent,
+        StatementDisplayComponent,
+        UnmaskPasswordComponent,
+        UserAccessControlsComponent,
+        ValueDisplayComponent,
+        CamelCasePipe,
+        HighlightTextPipe,
+        PrefixationPipe,
+        ShowPropertiesPipe,
+        SplitIRIPipe,
+        TrustedHtmlPipe,
+        CopyClipboardDirective,
+        DragFileDirective,
+        FocusDirective
     ],
     providers: [
         httpServiceProvider,
@@ -404,7 +416,6 @@ import { editIriOverlayComponent } from './components/editIriOverlay/editIriOver
         propertyManagerServiceProvider,
         provManagerServiceProvider,
         settingManagerServiceProvider,
-        stateManagerServiceProvider,
         toastrProvider,
         updateRefsServiceProvider,
         utilServiceProvider,
@@ -421,23 +432,23 @@ import { editIriOverlayComponent } from './components/editIriOverlay/editIriOver
         MergeRequestsStateService,
         OntologyManagerService,
         OntologyStateService,
+        OntologyVisualizationService,
+        ProgressSpinnerService,
         PolicyManagerService,
-        UserManagerService,
-        UserStateService,
         ShapesGraphManagerService,
         ShapesGraphStateService,
         SparqlManagerService,
-        YasguiService,
+        StateManagerService,
+        UserManagerService,
+        UserStateService,
         WindowRef,
-        OntologyVisualizationService,
-        ProgressSpinnerService,
-        { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher },
+        YasguiService,
+        CamelCasePipe,
         PrefixationPipe,
-        SplitIRIPipe,
         ShowPropertiesPipe,
-        TrustedHtmlPipe,
         SplitIRIPipe,
-        CamelCasePipe
+        TrustedHtmlPipe,
+        { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
     ]
 })
 export class SharedModule {}
@@ -459,7 +470,6 @@ angular.module('shared', [])
     .component('entityDescription', entityDescriptionComponent)
     .component('warningMessage', warningMessageComponent)
     .component('iriSelect', iriSelectComponent)
-    .component('keywordSelect', keywordSelectComponent)
     .component('languageSelect', languageSelectComponent)
     .component('materialTab', materialTabComponent)
     .component('materialTabset', materialTabsetComponent)
@@ -479,7 +489,6 @@ angular.module('shared', [])
     .directive('clickAnywhereButHere', clickAnywhereButHere)    
     .directive('clickToCopy', clickToCopy)
     .directive('disableAnimate', disableAnimate)
-    .directive('dragFile', dragFile)
     .directive('dragMe', dragMe)
     .directive('dropOnMe', dropOnMe)
     .directive('fileChange', fileChange)
@@ -509,7 +518,6 @@ angular.module('shared', [])
     .service('propertyManagerService', propertyManagerService)
     .service('provManagerService', provManagerService)
     .service('recordPermissionsManagerService', recordPermissionsManagerService)
-    .service('stateManagerService', stateManagerService)
     .service('updateRefsService', updateRefsService)
     .service('utilService', utilService)
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
@@ -525,43 +533,45 @@ angular.module('shared', [])
     .factory('mergeRequestsStateService', downgradeInjectable(MergeRequestsStateService))
     .factory('ontologyManagerService', downgradeInjectable(OntologyManagerService))
     .factory('ontologyStateService', downgradeInjectable(OntologyStateService))
+    .factory('ontologyVisualizationService', downgradeInjectable(OntologyVisualizationService))
     .factory('policyManagerService', downgradeInjectable(PolicyManagerService))
-    .factory('userManagerService', downgradeInjectable(UserManagerService))
-    .factory('userStateService', downgradeInjectable(UserStateService))
+    .factory('progressSpinnerService', downgradeInjectable(ProgressSpinnerService)) 
     .factory('shapesGraphManagerService', downgradeInjectable(ShapesGraphManagerService))
     .factory('shapesGraphStateService', downgradeInjectable(ShapesGraphStateService))
     .factory('sparqlManagerService', downgradeInjectable(SparqlManagerService))
+    .factory('stateManagerService', downgradeInjectable(StateManagerService))
+    .factory('userManagerService', downgradeInjectable(UserManagerService))
+    .factory('userStateService', downgradeInjectable(UserStateService))
     .factory('yasguiService', downgradeInjectable(YasguiService))
-    .factory('ontologyVisualizationService', downgradeInjectable(OntologyVisualizationService))
-    .factory('progressSpinnerService', downgradeInjectable(ProgressSpinnerService)) 
+    .directive('branchSelect', downgradeComponent({component: BranchSelectComponent}) as angular.IDirectiveFactory)
     .directive('breadcrumbs', downgradeComponent({component: BreadcrumbsComponent}) as angular.IDirectiveFactory)
-    .directive('confirmModal', downgradeComponent({component: ConfirmModalComponent}) as angular.IDirectiveFactory)
-    .directive('datasetSelect', downgradeComponent({component: DatasetSelectComponent}) as angular.IDirectiveFactory)
-    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
-    .directive('inlineEdit', downgradeComponent({component: InlineEditComponent}) as angular.IDirectiveFactory)
-    .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory)
-    .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory)
-    .directive('userAccessControls', downgradeComponent({component: UserAccessControlsComponent}) as angular.IDirectiveFactory)
-    .directive('fileInput', downgradeComponent({component: FileInputComponent}) as angular.IDirectiveFactory)
-    .directive('customLabel', downgradeComponent({component: CustomLabelComponent}) as angular.IDirectiveFactory)
-    .directive('limitDescription', downgradeComponent({component: LimitDescriptionComponent}) as angular.IDirectiveFactory)
-    .directive('settingEditPage', downgradeComponent({component: SettingEditPageComponent}) as angular.IDirectiveFactory)
-    .directive('settingGroup', downgradeComponent({component: SettingGroupComponent}) as angular.IDirectiveFactory)
-    .directive('settingForm', downgradeComponent({component: SettingFormComponent}) as angular.IDirectiveFactory)
-    .directive('settingFormField', downgradeComponent({component: SettingFormFieldComponent}) as angular.IDirectiveFactory)
-    .directive('statementDisplay', downgradeComponent({component: StatementDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('statementContainer', downgradeComponent({component: StatementContainerComponent}) as angular.IDirectiveFactory)
+    .directive('checkbox', downgradeComponent({component: CheckboxComponent}) as angular.IDirectiveFactory)
+    .directive('commitChangesDisplay', downgradeComponent({component: CommitChangesDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('commitDifferenceTabset', downgradeComponent({component: CommitDifferenceTabsetComponent}) as angular.IDirectiveFactory)
     .directive('commitHistoryTable', downgradeComponent({component: CommitHistoryTableComponent}) as angular.IDirectiveFactory)
     .directive('commitInfoOverlay', downgradeComponent({component: CommitInfoOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('commitChangesDisplay', downgradeComponent({component: CommitChangesDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('resolveConflictsForm', downgradeComponent({component: ResolveConflictsFormComponent}) as angular.IDirectiveFactory)
-    .directive('commitDifferenceTabset', downgradeComponent({component: CommitDifferenceTabsetComponent}) as angular.IDirectiveFactory)
-    .directive('checkbox', downgradeComponent({component: CheckboxComponent}) as angular.IDirectiveFactory)
-    .directive('branchSelect', downgradeComponent({component: BranchSelectComponent}) as angular.IDirectiveFactory)
-    .directive('resolveConflictsBlock', downgradeComponent({component: ResolveConflictsBlock}) as angular.IDirectiveFactory)
+    .directive('confirmModal', downgradeComponent({component: ConfirmModalComponent}) as angular.IDirectiveFactory)
+    .directive('customLabel', downgradeComponent({component: CustomLabelComponent}) as angular.IDirectiveFactory)
+    .directive('datasetSelect', downgradeComponent({component: DatasetSelectComponent}) as angular.IDirectiveFactory)
+    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('fileInput', downgradeComponent({component: FileInputComponent}) as angular.IDirectiveFactory)
+    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
+    .directive('inlineEdit', downgradeComponent({component: InlineEditComponent}) as angular.IDirectiveFactory)
+    .directive('keywordSelect', downgradeComponent({component: KeywordSelectComponent}) as angular.IDirectiveFactory)
+    .directive('limitDescription', downgradeComponent({component: LimitDescriptionComponent}) as angular.IDirectiveFactory)
     .directive('markdownEditor', downgradeComponent({component: MarkdownEditorComponent}) as angular.IDirectiveFactory)
+    .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory)
+    .directive('resolveConflictsBlock', downgradeComponent({component: ResolveConflictsBlock}) as angular.IDirectiveFactory)
+    .directive('resolveConflictsForm', downgradeComponent({component: ResolveConflictsFormComponent}) as angular.IDirectiveFactory)
+    .directive('settingEditPage', downgradeComponent({component: SettingEditPageComponent}) as angular.IDirectiveFactory)
+    .directive('settingForm', downgradeComponent({component: SettingFormComponent}) as angular.IDirectiveFactory)
+    .directive('settingFormField', downgradeComponent({component: SettingFormFieldComponent}) as angular.IDirectiveFactory)
+    .directive('settingGroup', downgradeComponent({component: SettingGroupComponent}) as angular.IDirectiveFactory)
+    .directive('statementContainer', downgradeComponent({component: StatementContainerComponent}) as angular.IDirectiveFactory)
+    .directive('statementDisplay', downgradeComponent({component: StatementDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory)
+    .directive('userAccessControls', downgradeComponent({component: UserAccessControlsComponent}) as angular.IDirectiveFactory)
     .directive('valueDisplay', downgradeComponent({component: ValueDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('dragFile', downgradeComponent({component: DragFileDirective}) as angular.IDirectiveFactory)
     .directive('copyClipboard', downgradeComponent({component: CopyClipboardDirective}) as angular.IDirectiveFactory)
-    .directive('editIriOverlay', downgradeComponent({component: editIriOverlayComponent}) as angular.IDirectiveFactory)
-
+    .directive('editIriOverlay', downgradeComponent({component: editIriOverlayComponent}) as angular.IDirectiveFactory);

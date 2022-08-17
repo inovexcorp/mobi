@@ -38,7 +38,7 @@ module.exports = {
     },
 
     'Step 3: Open new Ontology Overlay' : function(browser) {
-        var newOntologyButtonXpath = '//button[text()="New Ontology"]';
+        var newOntologyButtonXpath = '//span[text()="New Ontology"]/parent::button';
         browser
             .useXpath()
             .waitForElementVisible(newOntologyButtonXpath)
@@ -50,10 +50,10 @@ module.exports = {
         browser
             .useCss()
             .waitForElementVisible('new-ontology-overlay')
-            .waitForElementVisible('new-ontology-overlay text-input[display-text="\'Title\'"] input')
-            .waitForElementVisible('new-ontology-overlay text-area[display-text="\'Description\'"] textarea')
-            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'Metadata Test Ontology')
-            .setValue('new-ontology-overlay text-area[display-text="\'Description\'"] textarea', 'Metadata Test Description')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', 'Metadata Test Ontology')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', 'Metadata Test Description')
     },
 
     'Step 4: Submit New Ontology Overlay' : function(browser) {
@@ -61,7 +61,7 @@ module.exports = {
             .useCss()
             .waitForElementVisible('new-ontology-overlay')
             .useXpath()
-            .click('//new-ontology-overlay//button[text()="Submit"]')
+            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
             .useCss()
             .waitForElementNotPresent('new-ontology-overlay')
             .waitForElementPresent('ontology-editor-page ontology-tab')
@@ -189,13 +189,14 @@ module.exports = {
             .click('//ontology-sidebar//span[@class[contains(.,"close-icon")]]')
             .useCss()
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .click('ontology-editor-page open-ontology-tab search-bar')
-            .keys('Metadata Test Ontology')
-            .keys(browser.Keys.ENTER)
-            .waitForElementNotVisible('.spinner')
+            .clearValue('open-ontology-tab input.ontology-search')
+            .setValue('open-ontology-tab input.ontology-search', 'Metadata Test Ontology')
+            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+        browser.globals.wait_for_no_spinners(browser);
+        browser
             .waitForElementVisible('ontology-editor-page open-ontology-tab')
-            .setValue('open-ontology-tab search-bar input', 'Metadata')
-            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
+            .setValue('open-ontology-tab input.ontology-search', 'Metadata')
+            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER)
             .useXpath()
             .assert.textContains('//open-ontology-tab//small', 'MetadataTestOntology')
             .click('//open-ontology-tab//small[text()[contains(.,"MetadataTestOntology")]]')

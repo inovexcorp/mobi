@@ -20,8 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="advanced-language-select">
-    <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show language</a>
-    <a ng-if="dvm.isShown" class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide language</a>
-    <language-select ng-if="dvm.isShown" bind-model="dvm.bindModel" change-event="dvm.onChange(value)"></language-select>
+<div class="advanced-language-select" [formGroup]="parentForm">
+    <button *ngIf="!isShown; else elseBlock" class="btn-show" mat-button (click)="show()"><i class="fa fa-fw fa-plus"></i>Show language</button>
+    <ng-template #elseBlock>
+        <button mat-button class="btn-hide" (click)="hide()"><i class="fa fa-fw fa-times"></i>Hide language</button>
+        <!-- TODO: Swap back to language-select once upgraded -->
+        <mat-form-field *ngIf="isShown" class="language-select w-100">
+            <mat-label>Language</mat-label>
+            <mat-select placeholder="Select Language..." formControlName="language">
+                <mat-option *ngFor="let languageOption of languages" [value]="languageOption.value">
+                    <span>{{languageOption.label}} <small class="text-muted">@{{languageOption.value}}</small></span>
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </ng-template>
 </div>

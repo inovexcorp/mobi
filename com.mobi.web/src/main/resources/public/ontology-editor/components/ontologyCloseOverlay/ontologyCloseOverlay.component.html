@@ -20,21 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Close Ontology</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Close Ontology</h1>
+<div mat-dialog-content>
+    <error-display *ngIf="error">{{error}}</error-display>
+    <div class="main">
+        <p>Are you sure that you want to close <strong>{{os.listItem.ontologyId}}</strong> from your workspace without saving?</p>
+        <p><strong>NOTE: You will lose all unsaved changes.</strong></p>
+    </div>
 </div>
-<div class="modal-body">
-    <form name="dvm.form" novalidate autocomplete="off">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div class="main">
-            <p>Are you sure that you want to close <strong>{{dvm.os.listItem.ontologyId}}</strong> from your workspace without saving?</p>
-            <p><strong>NOTE: You will lose all unsaved changes.</strong></p>
-        </div>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary close-btn" ng-click="dvm.closeModal()">Close Without Saving</button>
-    <button class="btn btn-primary save-close-btn" ng-click="dvm.saveThenClose()">Save and Close</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button class="close-btn" mat-raised-button color="primary" (click)="closeModal()">Close Without Saving</button>
+    <button class="save-close-btn" mat-raised-button color="primary" (click)="saveThenClose()">Save and Close</button>
 </div>

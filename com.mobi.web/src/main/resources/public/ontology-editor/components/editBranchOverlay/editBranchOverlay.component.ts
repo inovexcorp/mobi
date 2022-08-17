@@ -20,73 +20,58 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { unset, get } from 'lodash';
-import { first } from 'rxjs/operators';
 
+import { DCTERMS } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-
-const template = require('./editBranchOverlay.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:editBranchOverlay
- * @requires shared.service:catalogManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class ontology-editor.EditBranchOverlayComponent
  *
- * @description
- * `editBranchOverlay` is a component that creates content for a modal that edits the provided branch in the
- * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
- * a {@link shared.component:textInput} for the branch title and a {@link shared.component:textArea} for
- * the branch description. Meant to be used in conjunction with the {@link shared.service:modalService}.
+ * A component that creates content for a modal that edits the provided branch in the current
+ * {@link shared.OntologyStateService#listItem}. The form in the modal contains a field for the branch title and a field
+ * for the branch description. Meant to be used in conjunction with the `MatDialog` service.
  *
- * @param {Object} resolve Information provided to the modal
- * @param {Object} resolve.branch The JSON-LD of the branch to be edited
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * @param {JSONLDObject} branch The JSON-LD of the branch to be edited
  */
-const editBranchOverlayComponent = {
-    template,
-    bindings: {
-        resolve: '<',
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: editBranchOverlayComponentCtrl
-};
+@Component({
+    selector: 'edit-branch-overlay',
+    templateUrl: './editBranchOverlay.component.html'
+})
+export class EditBranchOverlayComponent implements OnInit {
+    error = '';
 
-editBranchOverlayComponentCtrl.$inject = ['catalogManagerService', 'ontologyStateService', 'prefixes', 'utilService'];
+    editBranchForm: FormGroup = this.fb.group({
+        title: ['', [Validators.required]],
+        description: ['']
+    });
 
-function editBranchOverlayComponentCtrl(catalogManagerService: CatalogManagerService, ontologyStateService, prefixes, utilService) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var os = ontologyStateService;
-    var util = utilService;
-    var catalogId = '';
-    dvm.error = '';
-
-    dvm.$onInit = function() {
-        catalogId = get(cm.localCatalog, '@id', '');
-        dvm.branchTitle = util.getDctermsValue(dvm.resolve.branch, 'title');
-        dvm.branchDescription = util.getDctermsValue(dvm.resolve.branch, 'description');
+    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<EditBranchOverlayComponent>, 
+        @Inject(MAT_DIALOG_DATA) public data: {branch: JSONLDObject},
+        private cm: CatalogManagerService, private os: OntologyStateService, @Inject('utilService') public util) {}
+        
+    ngOnInit(): void {
+        this.editBranchForm.controls.title.setValue(this.util.getDctermsValue(this.data.branch, 'title'));
+        this.editBranchForm.controls.description.setValue(this.util.getDctermsValue(this.data.branch, 'description'));
     }
-    dvm.edit = function() {
-        util.updateDctermsValue(dvm.resolve.branch, 'title', dvm.branchTitle);
-        if (dvm.branchDescription === '') {
-            unset(dvm.resolve.branch, prefixes.dcterms + 'description');
+    edit(): void {
+        const catalogId = get(this.cm.localCatalog, '@id', '');
+        this.util.updateDctermsValue(this.data.branch, 'title', this.editBranchForm.controls.title.value);
+        if (!this.editBranchForm.controls.description.value) {
+            unset(this.data.branch, DCTERMS + 'description');
         } else {
-            util.updateDctermsValue(dvm.resolve.branch, 'description', dvm.branchDescription);
+            this.util.updateDctermsValue(this.data.branch, 'description', this.editBranchForm.controls.description.value);
         }
-        cm.updateRecordBranch(dvm.resolve.branch['@id'], os.listItem.versionedRdfRecord.recordId, catalogId, dvm.resolve.branch).pipe(first()).toPromise()
-            .then(() => {
-                dvm.close();
-            }, errorMessage => dvm.error = errorMessage);
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+        this.cm.updateRecordBranch(this.data.branch['@id'], this.os.listItem.versionedRdfRecord.recordId, catalogId, this.data.branch)
+            .subscribe(() => {
+                this.dialogRef.close(true);
+            }, errorMessage => {
+                this.error = errorMessage;
+            });
     }
 }
-
-export default editBranchOverlayComponent;

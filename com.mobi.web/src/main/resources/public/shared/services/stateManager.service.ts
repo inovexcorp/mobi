@@ -20,158 +20,142 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { get, remove, forEach, set } from 'lodash';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Inject, Injectable } from '@angular/core';
+import { get, remove, set } from 'lodash';
+import { Observable } from 'rxjs';
 
-stateManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'REST_PREFIX'];
+import { catchError, map } from 'rxjs/operators';
+import { REST_PREFIX } from '../../constants';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { State } from '../models/state.interface';
+import { HelperService } from './helper.service';
 
 /**
- * @ngdoc service
- * @name shared.service:stateManagerService
- * @requires shared.service:utilService
+ * @class shared.StateManagerService
  *
- * @description
- * `stateManagerService` is a service that provides access to the Mobi state REST endpoints and the `states`
- * variable which holds all the state for the currently logged in user.
+ * A service that provides access to the Mobi state REST endpoints and the `states` variable which holds all the state
+ * for the currently logged in user.
  */
-function stateManagerService($http, $q, $httpParamSerializer, utilService, REST_PREFIX) {
-    var self = this;
-    var prefix = REST_PREFIX + 'states';
-    var util = utilService;
+@Injectable()
+export class StateManagerService {
+    prefix = REST_PREFIX + 'states';
+
+    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util) {}
 
     /**
-     * @ngdoc property
-     * @name states
-     * @propertyOf shared.service:stateManagerService
-     * @type {Object[]}
-     *
-     * @description
-     * `states` holds the list of all states for the current user. Each object looks like this:
-     * ```
-     * {
-     *     id: '',
-     *     model: [...]
-     * }
-     * ```
+     * `states` holds the list of all states for the current user.
+     * @type {State[]}
      */
-    self.states = [];
+    states: State[] = [];
 
     /**
-     * @ngdoc method
-     * @name initialize
-     * @methodOf shared.service:stateManagerService
-     *
-     * @description
      * Initializes the `states` variable using the `getStates` method. If the states cannot be retrieved,
      * creates an error toast.
      *
-     * @returns {Promise} A promise that resolves whether the initialization was successful or not
+     * @returns {Observable<null>} An Observable that resolves whether the initialization was successful or not
      */
-    self.initialize = function() {
-        return self.getStates()
-            .then(states => self.states = states, () => util.createErrorToast('Problem getting states'));
+    initialize(): Observable<null> {
+        return this.getStates().pipe(
+            map(states => {
+                this.states = states;
+                return null;
+            }),
+            catchError(() => {
+                this.util.createErrorToast('Problem getting states');
+                return null;
+            })
+        );
     }
     /**
-     * @ngdoc method
-     * @name getStates
-     * @methodOf shared.service:stateManagerService
-     *
-     * @description
      * Calls the GET /mobirest/states endpoint with the provided parameters and returns the array of state
      * objects.
      *
      * @param {Object} stateConfig The query parameters to add to the request
-     * @returns {Promise} A promise that resolves to the array of state objects or rejects with an error message
+     * @returns {Observable<State[]>} An Observable that resolves to the array of state objects or rejects with an error 
+     * message
      */
-    self.getStates = function(stateConfig) {
-        var params = $httpParamSerializer(stateConfig);
-        return $http.get(prefix + (params ? '?' + params : ''))
-            .then(response => get(response, 'data', []), util.rejectError);
+    // TODO: type the argument better
+    getStates(applicationId = '', subjects: string[] = []): Observable<State[]> {
+        const params = this.helper.createHttpParams({
+            applicationId,
+            subjects
+        });
+        return this.http.get<State[]>(this.prefix, { params: this.helper.createHttpParams(params) })
+            .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name createState
-     * @methodOf shared.service:stateManagerService
-     *
-     * @description
      * Calls the POST /mobirest/states endpoint with the provided state JSON-LD and a string identifying the
      * application that state will be for. If the state was created successfully, it is added to the `states`
      * array. Returns a Promise.
      *
-     * @param {Object[]} stateJson A JSON-LD array of the state data.
+     * @param {JSONLDObject[]} stateJson A JSON-LD array of the state data.
      * @param {string} application A string identifying the application the state will belong to
-     * @returns {Promise} A promise that resolves if the creation was successful or rejects with an error message
+     * @returns {Observable<null>} An Observable that resolves if the creation was successful or rejects with an error 
+     * message
      */
-    self.createState = function(stateJson, application) {
-        var config: any= {
-            transformResponse: undefined,
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-        if (application) {
-            config.params = {application};
-        }
-        return $http.post(prefix, angular.toJson(stateJson), config)
-            .then(response => self.states.push({id: response.data, model: stateJson}), util.rejectError);
+    createState(stateJson: JSONLDObject[], application?: string): Observable<null> {
+        const headers = new HttpHeaders().append('Content-Type', 'application/json');
+        const params = this.helper.createHttpParams(application ? { application } : {});
+        return this.http.post(this.prefix, stateJson, { headers, params, responseType: 'text' }).pipe(
+            catchError(this.helper.handleError),
+            map(stateId => {
+                this.states.push({id: stateId, model: stateJson});
+                return null;
+            })
+        );
     }
     /**
-     * @ngdoc method
-     * @name getState
-     * @methodOf shared.service:stateManagerService
-     *
-     * @description
      * Calls the GET /mobirest/states/{stateId} endpoint with the provided state IRI string to retrieve a
      * state object. Returns a Promise with the state object.
      *
      * @param {string} stateId A string identifying the state to retrieve
-     * @returns {Promise} A promise that resolves with the identified state object or rejects with an error
-     *      message
+     * @returns {Observable<State>} An Observable that resolves with the identified state object or rejects with an
+     * error message
      */
-    self.getState = function(stateId) {
-        return $http.get(prefix + '/' + encodeURIComponent(stateId))
-            .then(response => get(response, 'data', {}), util.rejectError);
+    getState(stateId: string): Observable<State> {
+        return this.http.get<State>(this.prefix + '/' + encodeURIComponent(stateId))
+            .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name updateState
-     * @methodOf shared.service:stateManagerService
-     *
-     * @description
      * Calls the PUT /mobirest/states/{stateId} endpoint and updates the identified state with the provided IRI
      * string with the provided JSON-LD array of new data. If the update was successful, updates the `states`
      * array with the new model data. Returns a Promise indicating the success.
      *
      * @param {string} stateId A string identifying the state to retrieve
-     * @param {Object[]} stateJson A JSON-LD array of the new state data
-     * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
+     * @param {JSONLDObject[]} stateJson A JSON-LD array of the new state data
+     * @returns {Observable<null>} An Observable that resolves if the update was successful or rejects with an error 
+     * message
      */
-    self.updateState = function(stateId, stateJson) {
-        return $http.put(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
-            .then(() => forEach(self.states, state => {
-                if (get(state, 'id', '') === stateId) {
-                    set(state, 'model', stateJson);
-                    return false;
-                }
-            }), util.rejectError);
+    updateState(stateId: string, stateJson: JSONLDObject[]): Observable<null> {
+        return this.http.put(this.prefix + '/' + encodeURIComponent(stateId), stateJson).pipe(
+            catchError(this.helper.handleError),
+            map(() => {
+                this.states.forEach(state => {
+                    if (get(state, 'id', '') === stateId) {
+                        set(state, 'model', stateJson);
+                        return false;
+                    }
+                });
+                return null;
+            })
+        );
     }
     /**
-     * @ngdoc method
-     * @name deleteState
-     * @methodOf shared.service:stateManagerService
-     *
-     * @description
      * Calls the DELETE /mobirest/states/{stateId} endpoint to remove the identified state object with the
      * provided IRI from the application. If the deletion was successful, updates the `states` array. Returns a
      * Promise indicating the success.
      *
      * @param {string} stateId A string identifying the state to delete
-     * @returns {Promise} A promise that resolves if the deletion was successful or rejects with an error message
+     * @returns {Observable} An Observable that resolves if the deletion was successful or rejects with an error message
      */
-    self.deleteState = function(stateId) {
-        return $http.delete(prefix + '/' + encodeURIComponent(stateId))
-            .then(() => remove(self.states, {id: stateId}), util.rejectError);
+    deleteState(stateId: string): Observable<null> {
+        return this.http.delete(this.prefix + '/' + encodeURIComponent(stateId)).pipe(
+            catchError(this.helper.handleError),
+            map(() => {
+                remove(this.states, {id: stateId});
+                return null;
+            })
+        );
     }
 }
-
-export default stateManagerService;

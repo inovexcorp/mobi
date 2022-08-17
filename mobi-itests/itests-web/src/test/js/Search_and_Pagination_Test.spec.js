@@ -53,53 +53,62 @@ module.exports = {
     'Step 3: Validate Pagination With No text': function (browser) {
         browser
             .useXpath()
-            .click('//div[contains(@class, "upload-snackbar")]//div//button[text()[contains(.,"close")]]')
-            .waitForElementNotVisible('//div[contains(@class, "upload-snackbar")]')
-            .click('//div[contains(@class, "paging")]//li[3]//a')
+            .click('//div[contains(@class, "upload-snackbar")]//div//button//mat-icon[text()[contains(.,"close")]]')
+            .waitForElementNotPresent('//div[contains(@class, "upload-snackbar")]')
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]');
+        browser.globals.wait_for_no_spinners(browser)
+        browser
             .useCss()
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementVisible('shapes-graph-editor-page')
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .waitForElementVisible('button.upload-button')
+            .waitForElementNotPresent('open-ontology-tab button.mat-paginator-navigation-next:disabled')
+            .click('open-ontology-tab button.mat-paginator-navigation-next');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")][text()[contains(.,"pagination-ontology-4")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//small[text()[contains(.,"pagination-ontology-4")]]')
     },
 
     'Step 4: Go Back to Previous Page': function (browser) {
         browser
-            .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
             .useCss()
-            .waitForElementNotVisible('div.spinner')
-            .useXpath()
-            .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
+            .click('open-ontology-tab button.mat-paginator-navigation-previous');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useXpath().expect.elements('//open-ontology-tab//div[contains(@class, "ontology-info")]').count.to.equal(10);
     },
 
     'Step 5: Validate Pagination With Unconfirmed Search Text': function (browser) {
         browser
-            .click('xpath', '//search-bar')
-            .keys('test')
-            .pause(1000)
-            .click('xpath', '//div[contains(@class, "paging")]//li[3]//a')
             .useCss()
-            .waitForElementNotVisible('div.spinner')
+            .setValue('open-ontology-tab input.ontology-search', 'test')
+            .pause(1000)
+            .click('open-ontology-tab button.mat-paginator-navigation-next');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
             .useXpath()
-            .waitForElementVisible('//div[contains(@class, "ontologies")]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")][text()[contains(.,"pagination-ontology-4")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//small[text()[contains(.,"pagination-ontology-4")]]')
     },
 
     'Step 6: Validate Search Function': function (browser) {
         browser
-            .click('//div[contains(@class, "paging")]//li[1]//a')
             .useCss()
-            .waitForElementNotVisible('div.spinner')
-            .waitForElementVisible('open-ontology-tab search-bar input')
-            .setValue('open-ontology-tab search-bar input', 'test-local-imports')
-          .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-          .waitForElementNotVisible('div.spinner')
-          .waitForElementNotVisible('mat-spinner')
-          .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-          .waitForElementNotPresent('div.fade')
-          .useXpath()
-          .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"test-local-imports")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-1")]')
-            .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-2")]')
-            .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-3")]')
+            .click('open-ontology-tab button.mat-paginator-navigation-previous');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .waitForElementVisible('open-ontology-tab input.ontology-search')
+            .setValue('open-ontology-tab input.ontology-search', 'test-local-imports')
+            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useXpath()
+            .waitForElementVisible('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"test-local-imports")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//small[text()[contains(.,"test-local-imports-1")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//small[text()[contains(.,"test-local-imports-2")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//small[text()[contains(.,"test-local-imports-3")]]')
     }
 }

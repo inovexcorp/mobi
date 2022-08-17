@@ -20,24 +20,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="upload-snackbar snackbar snackbar-right flex-column p-0" ng-class="{'show': dvm.showSnackbar}">
-    <div class="snackbar-header w-100 text-white">
-        <span>{{dvm.getTitle()}}</span>
-        <button class="btn btn-outline-light material-icons remove-min-width float-right p-0" ng-click="dvm.attemptClose()">close</button>
-        <button class="btn btn-outline-light material-icons remove-min-width float-right p-0 mr-2 collapse-button" ng-click="dvm.collapse = !dvm.collapse">{{dvm.collapse ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</button>
+<div @enterLeave class="upload-snackbar flex-column p-0">
+    <div class="snackbar-header text-white w-100" [ngClass]="{'open': !collapse}">
+        <span class="title">{{getTitle()}}</span>
+        <button mat-icon-button class="float-right" (click)="attemptClose()"><mat-icon>close</mat-icon></button>
+        <button mat-icon-button class="float-right collapse-button" (click)="collapse = !collapse"><mat-icon>{{collapse ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</mat-icon></button>
     </div>
-    <div class="snackbar-body w-100 vertical-scroll flex-1" ng-hide="dvm.collapse">
-        <div ng-repeat="item in dvm.os.uploadList | orderBy:'-'" class="uploaded-ontology d-flex align-items-baseline py-2" ng-class="{'last': $last}">
-            <div class="item-indicator pr-2">
-                <md-progress-circular ng-if="dvm.isPending(item)" md-diameter="18"></md-progress-circular>
-                <div ng-if="!dvm.isPending(item)" class="item-completed">
-                    <i ng-class="{'fa-check text-success': (item.status === 'complete') && !item.error, 'fa-times text-danger': (item.error && item.error.errorMessage) }" class="fa fa-fw"></i>
-                </div>
+    <div class="snackbar-body vertical-scroll flex-1 w-100" [hidden]="collapse">
+        <div *ngFor="let item of os.uploadList; last as lastItem" class="uploaded-ontology d-flex align-items-baseline py-2" [ngClass]="{'last': lastItem}">
+            <div class="item-indicator pr-2" *ngIf="(item.status | async) as status">
+                <mat-spinner *ngIf="status === 'processing'; else elseBlock" [diameter]="18"></mat-spinner>
+                <ng-template #elseBlock><div class="item-completed">
+                    <i [ngClass]="{'fa-check text-success': (status === 'complete') && !item.error, 'fa-times text-danger': (item.error && item.error.errorMessage) }" class="fa fa-fw"></i>
+                </div></ng-template>
             </div>
             <div class="item-details flex-1 remove-min-width">
-                <h3 class="m-0 text-truncate">{{item.title}}</h3>
-                <p ng-if="item.error" class="text-danger m-0"><small>{{item.error.errorMessage}}</small></p>
-                <a ng-if="item.error && item.error.errorDetails && item.error.errorDetails.length > 0" href="" ng-click="dvm.showUploadErrorsOverlay(item)">Details</a>
+                <h4 class="m-0 text-truncate">{{item.title}}</h4>
+                <p *ngIf="item.error" class="text-danger m-0"><small>{{item.error.errorMessage}}</small></p>
+                <a *ngIf="item.error && item.error.errorDetails && item.error.errorDetails.length > 0" (click)="showUploadErrorsOverlay(item)">Details</a>
             </div>
         </div>
     </div>

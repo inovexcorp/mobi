@@ -20,85 +20,96 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, some, get } from 'lodash';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { Component, EventEmitter, OnDestroy, Output } from '@angular/core';
+import { MatDialog } from '@angular/material';
+
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { OntologyUploadItem } from '../../../shared/models/ontologyUploadItem.interface';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UploadErrorsOverlayComponent } from '../uploadErrorsOverlay/uploadErrorsOverlay.component';
 
 import './uploadSnackbar.component.scss';
 
-const template = require('./uploadSnackbar.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:uploadSnackbar
- * @requires shared.service:httpService
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.UploadSnackbarComponent
  *
- * @description
- * `uploadSnackbar` is a component that creates a custom Material Design `snackbar` on the right of the screen
- * with a body containing the list of ontologies currently being uploaded. The list displays the ontology record
- * title and an indicator of the status of the upload. The header of the snackbar contains an indicator of how
- * many ontologies have been uploaded and buttons to minimize the body of the snackbar and close it. Whether the
- * snackbar should be shown is handled by the provided boolean variable.
+ * A component that creates a custom Material Design `snackbar` on the right of the screen with a body containing the
+ * list of ontologies currently being uploaded. The list displays the ontology record title and an indicator of the
+ * status of the upload. The header of the snackbar contains an indicator of how many ontologies have been uploaded and
+ * buttons to minimize the body of the snackbar and close it. Whether the snackbar should be shown is handled by the
+ * provided boolean variable.
  *
- * @param {boolean} showSnackbar Whether the snackbar should have the `show` styles applied
+ * @param {Function} closeEvent An emitted that gets fired when the snackbar is closed
  */
-const uploadSnackbarComponent = {
-    template,
-    bindings: {
-        showSnackbar: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: uploadSnackbarComponentCtrl
-};
+@Component({
+    selector: 'upload-snackbar',
+    templateUrl: './uploadSnackbar.component.html',
+    animations: [
+        trigger('enterLeave', [
+            transition(':enter', [
+                style({
+                    opacity: 0,
+                    transform: 'translateY(100%)'
+                }),
+                animate('.15s cubic-bezier(0.4, 0, 1, 1)', style({
+                    opacity: 1,
+                    transform: 'translateY(-1.5rem)'
+                }))
+            ]),
+            transition(':leave', [
+                style({
+                    opacity: 1,
+                    transform: 'translateY(-1.5rem)'
+                }),
+                animate('.13s cubic-bezier(0.4, 0, 1, 1)', style({
+                    opacity: 0,
+                    transform: 'translateY(100%)'
+                }))
+            ])
+        ])
+    ]
+})
+export class UploadSnackbarComponent implements OnDestroy {
+    collapse = false;
 
-uploadSnackbarComponentCtrl.$inject = ['httpService', 'ontologyStateService', 'modalService'];
+    @Output() closeEvent = new EventEmitter<null>();
+    
+    constructor(public os: OntologyStateService, private dialog: MatDialog) {}
 
-function uploadSnackbarComponentCtrl(httpService, ontologyStateService, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.showOntology = false;
-
-    dvm.$onDestroy = function() {
-        dvm.close();
+    ngOnDestroy(): void {
+        this.close();
     }
-    dvm.hasStatus = function(promise, value) { // value: 0 for pending, 1 for fulfilled, or 2 for rejected
-        return get(promise, '$$state.status') === value;
-    }
-    dvm.isPending = function(item) {
-        let isProcessing = dvm.isFilePending(item.id)
-        return isProcessing ?  isProcessing : httpService.isPending(item.id);
-    }
-    dvm.attemptClose = function() {
-        if (dvm.hasPending()) {
-            modalService.openConfirmModal('Close the snackbar will cancel all pending uploads. Are you sure you want to proceed?', dvm.close);
+    attemptClose(): void {
+        if (this.os.uploadPending > 0) {
+            this.dialog.open(ConfirmModalComponent, {
+                data: {
+                    content: 'Closing the snackbar will cancel all pending uploads. Are you sure you want to proceed?'
+                }
+            }).afterClosed().subscribe(result => {
+                if (result) {
+                    this.close();
+                }
+            });
         } else {
-            dvm.close();
+            this.close();
         }
     }
-    dvm.close = function() {
-        dvm.changeEvent({value: false});
-        forEach(dvm.os.uploadList, item => httpService.cancel(item.id));
-        dvm.os.uploadList = [];
-        dvm.os.uploadFiles = [];
-        dvm.os.uploadPending = 0;
+    close(): void {
+        this.closeEvent.emit();
+        this.os.uploadList.forEach(item => item.sub.unsubscribe());
+        this.os.uploadList = [];
+        this.os.uploadFiles = [];
+        this.os.uploadPending = 0;
     }
-    dvm.hasPending = function() {
-        return some(dvm.os.uploadList, dvm.isPending);
-    }
-    dvm.getTitle = function() {
-        if (dvm.hasPending()) {
-            return 'Uploading ' + (dvm.os.uploadPending === 1 ? '1 item' : dvm.os.uploadPending + ' items');
+    getTitle(): string {
+        if (this.os.uploadPending > 0) {
+            return 'Uploading ' + (this.os.uploadPending === 1 ? '1 item' : this.os.uploadPending + ' items');
         } else {
-            return dvm.os.uploadList.length + ' uploads complete';
+            return this.os.uploadList.length + ' upload(s) complete';
         }
     }
-    dvm.showUploadErrorsOverlay = function(item) {
-        modalService.openModal('uploadErrorsOverlay', {item}, undefined, "lg");
-    }
-    dvm.isFilePending = (id) => {
-        const status = dvm.os.uploadList.find(item => item.id === id);
-        return status ? status.isProcessing : false;
+    showUploadErrorsOverlay(item: OntologyUploadItem): void {
+        this.dialog.open(UploadErrorsOverlayComponent, {data: { item }});
     }
 }
-
-export default uploadSnackbarComponent;

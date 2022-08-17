@@ -23,6 +23,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { find, get, remove } from 'lodash';
 import { first, switchMap } from 'rxjs/operators';
+import { from, Observable, of } from 'rxjs';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
@@ -34,10 +35,9 @@ import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { from, Observable, of } from 'rxjs';
 import { BRANCHID, COMMITID, SHAPESGRAPHSTATE, TAGID, GRAPHEDITOR, DCTERMS, CATALOG } from '../../prefixes';
+import { StateManagerService } from './stateManager.service';
 import { PolicyManagerService } from './policyManager.service';
-import { HttpResponse } from '@angular/common/http';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -47,11 +47,12 @@ import { HttpResponse } from '@angular/common/http';
 @Injectable()
 export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
 
-    constructor(@Inject('stateManagerService') protected sm,
-                protected cm:CatalogManagerService,
+    constructor(protected sm: StateManagerService,
+                protected cm: CatalogManagerService,
                 @Inject('utilService') protected util,
                 @Inject('policyEnforcementService') protected pep,
-                private pm: PolicyManagerService, private sgm: ShapesGraphManagerService) {
+                private pm: PolicyManagerService,
+                private sgm: ShapesGraphManagerService) {
         super(SHAPESGRAPHSTATE,
             BRANCHID,
             TAGID,
@@ -113,24 +114,24 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
                 };
                 listItem.currentVersionTitle = 'MASTER';
                 return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, listItem.shapesGraphId)
-            .then((arr: Array<JSONLDObject>) => {
-                listItem.metadata = find(arr, {'@id': listItem.shapesGraphId});
-                this.listItem = listItem;
-                return this.sgm.getShapesGraphContent(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId);
-            })
-            .then(content => {
-                this.listItem.content = content;
-                this.listItem.userCanModify = true;
-                this.listItem.userCanModifyMaster = true;
-                this.list.push(this.listItem);
-                const stateBase: VersionedRdfStateBase = {
-                    recordId: response.recordId,
-                    commitId: response.commitId,
-                    branchId: response.branchId
-                };
-                return this.createState(stateBase); 
-            })
-            .catch(error => Promise.reject(error));
+                    .then((arr: Array<JSONLDObject>) => {
+                        listItem.metadata = find(arr, {'@id': listItem.shapesGraphId});
+                        this.listItem = listItem;
+                        return this.sgm.getShapesGraphContent(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId);
+                    })
+                    .then(content => {
+                        this.listItem.content = content;
+                        this.listItem.userCanModify = true;
+                        this.listItem.userCanModifyMaster = true;
+                        this.list.push(this.listItem);
+                        const stateBase: VersionedRdfStateBase = {
+                            recordId: response.recordId,
+                            commitId: response.commitId,
+                            branchId: response.branchId
+                        };
+                        return this.createState(stateBase).pipe(first()).toPromise();
+                    })
+                    .catch(error => Promise.reject(error));
         });
     }
     /**
@@ -190,7 +191,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
             })
             .then(content => {
                 this.listItem.content = content;
-                return this.cm.getRecordBranches(recordId, this.catalogId).toPromise();
+                return this.cm.getRecordBranches(recordId, this.catalogId).pipe(first()).toPromise();
             })
             .then((branches) => {
                 this.listItem.branches = branches.body;

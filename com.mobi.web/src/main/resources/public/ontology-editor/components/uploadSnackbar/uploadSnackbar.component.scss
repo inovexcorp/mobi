@@ -25,26 +25,50 @@
 
 .upload-snackbar {
     color: inherit;
-    border-radius: 2px;
     background-color: #ffffff;
     box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.14), 0 3px 4px 0 rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
     max-height: 400px;
     width: 400px;
 
+    // Stolen from Daemonite Material Bootstrap styles
+    align-items: center;
+    display: flex;
+    font-size: .875rem;
+    line-height: 1.42857;
+    position: fixed;
+    bottom: 0;
+    z-index: 60;
+    max-width: 35.5rem;
+    min-width: 18rem;
+    right: 1.5rem;
+    left: auto;
+
     .snackbar-header {
         background-color: #323232;
-        padding: 0.875rem 1.5rem;
+        border-radius: 2px 2px 0px 0px;
 
-        button {
-            background-image: none;
-            line-height: 0.9;
-            font-size: 1.5rem;
+        button:focus {
+            outline: none !important;
+        }
+        span.title {
+            padding-left: 1em;
+            display: inline-block;
+            position: relative;
+            top: 50%;
+            -webkit-transform: translateY(50%);
+            -ms-transform: translateY(-50%);
+            transform: translateY(50%);
         }
     }
     .snackbar-body {
         padding: 0.875rem 1.5rem;
         white-space: normal;
         text-overflow: unset;
+
+        // Stolen from Daemonite Material Bootstrap styles
+        margin-right: auto;
+        max-height: 100%;
+        min-width: 0;
 
         .uploaded-ontology {
             border-bottom: 1px solid var(--light-dark);
@@ -56,7 +80,7 @@
                 p {
                     word-break: break-word;
                 }
-                h3 {
+                h4 {
                     font-size: 1rem;
                 }
             }

@@ -101,7 +101,7 @@ describe('Catalog Record Keywords component', function() {
             spyOn(component.saveEvent, 'emit');
             component.record = this.record;
             component.edit = true;
-            component.editedKeywords = ['C', 'D', 'E'];
+            component.addKeywordsForm.controls.keywords.setValue(['C', 'D', 'E']); // component.editedKeywords = ['C', 'D', 'E'];
             component.saveChanges();
             expect(component.saveEvent.emit).toHaveBeenCalledWith({
                 '@id': recordId,

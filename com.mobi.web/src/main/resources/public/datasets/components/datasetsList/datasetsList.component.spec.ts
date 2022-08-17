@@ -27,7 +27,7 @@ import { MatButtonModule, MatDialog, MatDividerModule, MatFormFieldModule, MatIc
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
@@ -41,6 +41,7 @@ import { InfoMessageComponent } from '../../../shared/components/infoMessage/inf
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
@@ -97,7 +98,8 @@ describe('Datasets List component', function() {
                 MockComponent(UploadDataOverlayComponent),
                 MockComponent(NewDatasetOverlayComponent),
                 MockComponent(InfoMessageComponent),
-                MockDirective(CopyClipboardDirective)
+                MockDirective(CopyClipboardDirective),
+                MockPipe(HighlightTextPipe)
             ],
             providers: [
                 MockProvider(DatasetManagerService),

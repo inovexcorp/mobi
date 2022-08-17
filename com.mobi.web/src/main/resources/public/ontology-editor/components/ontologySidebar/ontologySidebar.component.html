@@ -22,15 +22,15 @@
   -->
 <div class="ontology-sidebar d-flex flex-column h-100">
     <div class="button-container text-center my-2">
-        <button class="btn btn-primary" ng-click="dvm.onClick()">Ontologies</button>
+        <button mat-raised-button color="primary" (click)="onClick()">Ontologies</button>
     </div>
     <div class="nav-container vertical-scroll pb-2">
         <ul class="nav flex-column">
-            <li class="nav-item w-100" ng-repeat="item in dvm.list track by item.versionedRdfRecord.recordId" ng-class="{'active': item.active}">
+            <li class="nav-item w-100" *ngFor="let item of list" [ngClass]="{'active': item.active}">
                 <div class="d-flex">
-                    <a class="nav-link text-truncate" ng-click="dvm.onClick(item)">{{item.versionedRdfRecord.title}}</a><span class="close-icon fa fa-times" ng-click="dvm.onClose(item)"></span>
+                    <a class="nav-link text-truncate" (click)="onClick(item)">{{item.versionedRdfRecord.title}}</a><span class="close-icon fa fa-times" (click)="onClose(item)"></span>
                 </div>
-                <open-ontology-select ng-if="item.active" list-item="dvm.os.listItem" state="dvm.os.getStateByRecordId(dvm.os.listItem.versionedRdfRecord.recordId)"></open-ontology-select>
+                <open-ontology-select *ngIf="item.active" [listItem]="os.listItem"></open-ontology-select>
             </li>
         </ul>
     </div>

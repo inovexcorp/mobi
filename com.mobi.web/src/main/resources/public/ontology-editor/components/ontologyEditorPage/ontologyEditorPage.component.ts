@@ -20,40 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { isEmpty } from 'lodash';
+import { Component } from '@angular/core';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './ontologyEditorPage.component.scss';
 
-const template = require('./ontologyEditorPage.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:ontologyEditorPage
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.OntologyEditorPageComponent
  *
- * @description
- * `ontologyEditorPage` is a component that creates a `div` containing the main components of the Ontology Editor.
- * These components are {@link ontology-editor.component:ontologySidebar},
+ * A component that creates a `div` containing the main components of the Ontology Editor.
+ * These components are {@link ontology-editor.OntologySidebarComponent},
  * {@link ontology-editor.component:ontologyTab} with the
- * {@link shared.service:ontologyStateService currently selected open ontology}, and
- * {@link ontology-editor.component:openOntologyTab}.
+ * {@link shared.OntologyStateService#listItem currently selected open ontology}, and
+ * {@link ontology-editor.OpenOntologyTabComponent}.
  */
-const ontologyEditorPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: ontologyEditorPageComponentCtrl
-};
-
-ontologyEditorPageComponentCtrl.$inject = ['ontologyStateService'];
-
-function ontologyEditorPageComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.isOpenTab = function() {
-        return isEmpty(dvm.os.listItem);
-    }
+@Component({
+    selector: 'ontology-editor-page',
+    templateUrl: './ontologyEditorPage.component.html'
+})
+export class OntologyEditorPageComponent {
+    constructor(public os: OntologyStateService) {}
 }
-
-export default ontologyEditorPageComponent;

@@ -21,43 +21,55 @@
  * #L%
  */
 
-const template = require('./keywordSelect.component.html');
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { MatChipInputEvent } from '@angular/material';
 
 /**
- * @ngdoc component
- * @name shared.component:keywordSelect
+ * @class shared.KeywordSelectComponent
  * 
- * @description
- * `keywordSelect` is a component that creates a `ui-select` for editing keywords on an entity in Mobi. The label
- * for the select shows as Optional. The value of the select is bound to `bindModel`, but only one way. The provided
- * `changeEvent` function is expected to update the value of `bindModel`.
+ * A component that creates an input with a `mat-chip-list` for editing keywords on an entity in Mobi. Uses the
+ * `keywords` control on the provided `FormGroup` to capture the set keywords. Has an optional cancel event handler.
  * 
- * @param {string[]} bindModel An array of strings representing keywords that are bound to the `ui-select`
- * @param {Function} changeEvent A function that will be called when the value of the `ui-select` changes. Should
- * update the value of `bindModel`. Expects an argument called `value`.
- * @param {boolean} [hideLabel=false] Whether the label should be hidden.
- * @param {string} isFocusMe Whether the `ui-select` should be focused once rendered. The presence of the attribute
- * is enough to set it.
+ * @param {FormGroup} parentForm The parent FormGroup to attach this input to. Expected to have a `keywords` control
+ * @param {Function} cancelEvent An optional function that will be called when the escape key is hit while focusing the
+ * keyword input
  */
-const keywordSelectComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&',
-        hideLabel: '<',
-        isFocusMe: '@'
-    },
-    controllerAs: 'dvm',
-    controller: keywordSelectComponentCtrl
-};
+@Component({
+    selector: 'keyword-select',
+    templateUrl: './keywordSelect.component.html'
+})
+export class KeywordSelectComponent {
+    readonly separatorKeysCodes: number[] = [ENTER];
+    
+    @Input() parentForm: FormGroup;
+    @Output() cancelEvent = new EventEmitter<null>();
+    
+    constructor() {}
 
-function keywordSelectComponentCtrl() {
-    var dvm = this;
-    dvm.keywordList = [];
+    addKeyword(event: MatChipInputEvent): void {
+        const input = event.input;
+        const value = event.value;
 
-    dvm.onChange = function() {
-        dvm.changeEvent({value: dvm.bindModel});
+        if ((value || '').trim()) {
+            this.parentForm.controls.keywords.setValue([...this.parentForm.controls.keywords.value, value.trim()]);
+            this.parentForm.controls.keywords.updateValueAndValidity();
+        }
+
+        // Reset the input value
+        if (input) {
+            input.value = '';
+        }
+    }
+    removeKeyword(keyword: string): void {
+        const idx = this.parentForm.controls.keywords.value.indexOf(keyword);
+        if (idx >= 0) {
+            this.parentForm.controls.keywords.value.splice(idx, 1);
+            this.parentForm.controls.keywords.updateValueAndValidity();
+        }
+    }
+    cancel(): void {
+        this.cancelEvent.emit();
     }
 }
-
-export default keywordSelectComponent;

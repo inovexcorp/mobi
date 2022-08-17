@@ -22,6 +22,7 @@
  */
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material';
 import { map, get } from 'lodash';
 
@@ -51,13 +52,16 @@ export class CatalogRecordKeywordsComponent {
     editedKeywords: string[] = [];
     edit = false;
     readonly separatorKeysCodes: number[] = [ENTER];
-
+    addKeywordsForm = this.fb.group({
+        keywords: [[]]
+    });
     private _record: JSONLDObject;
 
     @Input() set record(value: JSONLDObject) {
         this._record = value;
         this.keywords = this.getKeywords(this._record);
         this.editedKeywords = Object.assign([], this.keywords);
+        this.addKeywordsForm.controls.keywords.setValue(this.keywords);
     }
 
     get record(): JSONLDObject {
@@ -67,11 +71,12 @@ export class CatalogRecordKeywordsComponent {
     @Input() canEdit: boolean;
     @Output() saveEvent = new EventEmitter<JSONLDObject>();
 
-    constructor() {}
+    constructor(private fb: FormBuilder) {}
 
     addKeyword(event: MatChipInputEvent): void {
-        if (event.value) {
-            this.editedKeywords.push(event.value);
+        const value = (event.value || '').trim();
+        if (value) {
+            this.editedKeywords.push(value);
         }
         if (event.input) {
             event.input.value = '';
@@ -85,11 +90,12 @@ export class CatalogRecordKeywordsComponent {
     }
     saveChanges(): void {
         this.edit = false;
-        this.record[CATALOG + 'keyword'] = map(this.editedKeywords, keyword => ({'@value': keyword}));
+        this.record[CATALOG + 'keyword'] = map(this.addKeywordsForm.controls.keywords.value, keyword => ({'@value': keyword}));
         this.saveEvent.emit(this.record);
     }
     cancelChanges(): void {
         this.editedKeywords = this.keywords;
+        this.addKeywordsForm.controls.keywords.setValue(this.keywords)
         this.edit = false;
     }
 

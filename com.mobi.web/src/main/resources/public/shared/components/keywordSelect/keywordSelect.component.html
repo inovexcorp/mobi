@@ -20,10 +20,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="keyword-select form-group">
-    <custom-label ng-if="!dvm.hideLabel" [muted-text]="'(Optional)'">Keywords</custom-label>
-    <ui-select multiple ng-model="dvm.bindModel" ng-attr-autofocus="{{dvm.isFocusMe}}" ng-change="dvm.onChange()" tagging tagging-label>
-        <ui-select-match>{{$item}}</ui-select-match>
-        <ui-select-choices repeat="keyword in dvm.keywordList">{{keyword}}</ui-select-choices>
-    </ui-select>
+  <div [formGroup]="parentForm" class="keyword-select w-100">
+    <mat-form-field class="w-100">
+        <mat-label>Keywords</mat-label>
+        <mat-chip-list #keywordSelect formControlName="keywords">
+            <mat-chip *ngFor="let keyword of parentForm.get('keywords').value" [removable]="true" (removed)="removeKeyword(keyword)">
+                {{keyword}}
+                <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+        </mat-chip-list>
+        <input placeholder="Keywords"
+        [matChipInputFor]="keywordSelect"
+        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+        [matChipInputAddOnBlur]="false"
+        (matChipInputTokenEnd)="addKeyword($event)"
+        (keyup.escape)="cancel()">
+    </mat-form-field>
 </div>

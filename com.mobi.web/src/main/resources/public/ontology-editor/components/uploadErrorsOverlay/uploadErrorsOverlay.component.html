@@ -20,18 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Upload Ontology Error</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <p><b>File name: </b>{{dvm.itemTitle}}</p>
-    <p><b>Error message: </b>{{dvm.errorMessage}}</p>
+<h1 mat-dialog-title>Upload Ontology Error</h1>
+<div mat-dialog-content>
+    <p><b>File name: </b>{{itemTitle}}</p>
+    <p><b>Error message: </b>{{errorMessage}}</p>
     <ul>
-        <li class="text-danger m-0" ng-repeat="detailError in dvm.errorDetails">
+        <li class="text-danger m-0" *ngFor="let detailError of errorDetails">
             {{ detailError }}
         </li>
     </ul>
 </div>
-<div class="modal-footer">
+<div mat-dialog-actions>
+    <button mat-raised-button (click)="cancel()">Cancel</button>
 </div>

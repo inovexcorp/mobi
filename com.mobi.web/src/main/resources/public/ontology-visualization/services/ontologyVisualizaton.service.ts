@@ -20,21 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';    
 import { Inject, Injectable, } from '@angular/core';
 import { Observable, Subject, Subscriber, from, of, forkJoin } from 'rxjs';
 import { map, tap, switchMap, catchError, shareReplay } from 'rxjs/operators';
 
 import { buildColorScale } from '../helpers/graphSettings';
 import { StateNode, SidebarState, StateEdge, GraphState } from '../classes/index';
-import { 
-    RangesI, 
-    ControlRecordI, 
-    SidePanelPayloadI, 
-    ParentMapI, 
-    ChildIrisI, 
-    EntityInfoI, 
-    inProgressCommitI 
+import {
+    RangesI,
+    ControlRecordI,
+    SidePanelPayloadI,
+    ParentMapI,
+    ChildIrisI,
+    EntityInfoI,
+    inProgressCommitI,
+    OntologyGraphData
 } from '../interfaces/visualization.interfaces';
 import { OntologyManagerService } from '../../shared/services/ontologyManager.service';
 import { HierarchyResponse } from '../../shared/models/hierarchyResponse.interface';
@@ -44,7 +44,9 @@ import { OntologyAction } from '../../shared/models/ontologyAction';
 import { OntologyStateService } from '../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
 import { Hierarchy } from '../../shared/models/hierarchy.interface';
-
+import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
+import { HelperService } from '../../shared/services/helper.service'
+import { cloneDeep, forEach } from "lodash";
 
 /**
  * @class OntologyVisualization.service
@@ -75,8 +77,10 @@ export class OntologyVisualizationService {
     readonly DEFAULT_NODE_LIMIT = 500; // GLOBAL Node Limit for graph, each graphState will has it own
 
     constructor(private os: OntologyStateService,
-        private om: OntologyManagerService,
-        @Inject('utilService') private utilService) {
+                private spinnerSrv : ProgressSpinnerService,
+                private om: OntologyManagerService,
+                private helper: HelperService,
+                @Inject('utilService') private utilService) {
         if (this.os.ontologyRecordAction$) {
             this.os.ontologyRecordAction$.subscribe(record => this.removeOntologyCache(record));
         }
@@ -206,7 +210,8 @@ export class OntologyVisualizationService {
      */
     // TODO figure out targeted spinnner
     getOntologyNetworkObservable(): Observable<any>{
-        return forkJoin([this.om.getClassHierarchies(this.os.listItem.versionedRdfRecord.recordId,
+
+        return this.spinnerSrv.track(forkJoin([this.om.getClassHierarchies(this.os.listItem.versionedRdfRecord.recordId,
             this.os.listItem.versionedRdfRecord.branchId,
             this.os.listItem.versionedRdfRecord.commitId,
             false),
@@ -263,8 +268,7 @@ export class OntologyVisualizationService {
                     ranges: ranges
                 };
              })
-        );
-    
+        )).pipe(catchError(this.helper.handleError));
     }
 
     /**
@@ -273,7 +277,7 @@ export class OntologyVisualizationService {
      */
     // TODO figure out targeted spinner
     getOntologyLocalObservable(): Observable<any>{
-        return forkJoin(
+        return  this.spinnerSrv.track(forkJoin(
             [this.om.getPropertyToRange(this.os.listItem.versionedRdfRecord.recordId,
                 this.os.listItem.versionedRdfRecord.branchId,
                 this.os.listItem.versionedRdfRecord.commitId,
@@ -295,13 +299,13 @@ export class OntologyVisualizationService {
                     const ranges = this.getPropertyRange(this.os.listItem.classToChildProperties, this.os.listItem.dataProperties, propertyRanges);
 
                     return  {
-                        classParentMap: _.cloneDeep(classParentMap), 
-                        childIris: _.cloneDeep(classIris), 
-                        entityInfo: _.cloneDeep(entityInfo),
-                        ranges: _.cloneDeep(ranges)
+                        classParentMap: cloneDeep(classParentMap),
+                        childIris: cloneDeep(classIris),
+                        entityInfo: cloneDeep(entityInfo),
+                        ranges: cloneDeep(ranges)
                     };
                 })
-            );
+            )).pipe(catchError(this.helper.handleError));
     }
 
     /**
@@ -327,11 +331,11 @@ export class OntologyVisualizationService {
             // If hasInProgress then use getOntologyNetworkObservable, 
             // else use getOntologyLocalObservable
             if (hasInProgressCommit) {
-                this.getOntologyNetworkObservable().subscribe( ontologyData => { // todo add typescript interface for ontologyData 
+                this.getOntologyNetworkObservable().subscribe( (ontologyData: OntologyGraphData) => {
                     return this.graphDataFormat(ontologyData, commitGraphState, observer);
                 });
             } else {
-                this.getOntologyLocalObservable().subscribe( ontologyData => { // todo add typescript interface for ontologyData 
+                this.getOntologyLocalObservable().subscribe( (ontologyData:OntologyGraphData) => {
                     return this.graphDataFormat(ontologyData, commitGraphState, observer);
                 });
             }
@@ -339,7 +343,7 @@ export class OntologyVisualizationService {
         });
     }
 
-    private graphDataFormat(ontologyData, commitGraphState: GraphState, observer) {
+    private graphDataFormat(ontologyData:OntologyGraphData, commitGraphState: GraphState, observer) {
         const result = this.buildGraph(ontologyData.classParentMap, 
             ontologyData.childIris,
             ontologyData.entityInfo,
@@ -408,7 +412,7 @@ export class OntologyVisualizationService {
         };
         
         // iteration of classParentMap
-        _.map(classParentMap, function(childrenIris, parentIri) { 
+        forEach(classParentMap, function(childrenIris, parentIri) {
             const parentEntityInfo = entityInfo[parentIri];
             const currentStateNode = self.buildStateNode(parentEntityInfo, parentIri);
             currentStateNode.data.subClassesCount = childrenIris.length;
@@ -423,7 +427,7 @@ export class OntologyVisualizationService {
             }
         });
         
-        _.map(childIris, function(ontologyId, parentIri) { 
+        forEach(childIris, function(ontologyId, parentIri) {
             const nodeEntityInfo = entityInfo[parentIri];
             pushNode(self.buildStateNode(nodeEntityInfo, parentIri));
         } );

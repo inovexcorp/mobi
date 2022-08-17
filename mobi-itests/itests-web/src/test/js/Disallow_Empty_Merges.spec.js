@@ -37,7 +37,7 @@ module.exports = {
     },
 
     'Step 3: Open new Ontology Overlay' : function(browser) {
-        var newOntologyButtonXpath = '//button[text()="New Ontology"]';
+        var newOntologyButtonXpath = '//span[text()="New Ontology"]/parent::button';
         browser
             .useXpath()
             .waitForElementVisible(newOntologyButtonXpath)
@@ -48,10 +48,10 @@ module.exports = {
         browser   
             .useCss()        
             .waitForElementVisible('new-ontology-overlay')
-            .waitForElementVisible('new-ontology-overlay text-input[display-text="\'Title\'"] input')
-            .waitForElementVisible('new-ontology-overlay text-area[display-text="\'Description\'"] textarea')
-            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'myTitle2')
-            .setValue('new-ontology-overlay text-area[display-text="\'Description\'"] textarea', 'myDescription')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', 'myTitle2')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', 'myDescription')
     },
 
     'Step 5: Submit New Ontology Overlay' : function(browser) {
@@ -59,7 +59,7 @@ module.exports = {
             .useCss()        
             .waitForElementVisible('new-ontology-overlay')
             .useXpath()
-            .click('//new-ontology-overlay//button[text()="Submit"]')
+            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
             .useCss()
             .waitForElementNotPresent('new-ontology-overlay')
             .waitForElementPresent('ontology-editor-page ontology-tab')
@@ -113,8 +113,8 @@ module.exports = {
         browser
             .useCss()
             .waitForElementPresent('ontology-editor-page ontology-tab')
-            .waitForElementPresent('ontology-sidebar button.btn.btn-primary')
-            .click('ontology-sidebar button.btn.btn-primary')
+            .waitForElementPresent('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button')
+            .click('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button')
             .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
     },
@@ -123,11 +123,11 @@ module.exports = {
         browser
             .useCss() 
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .click('ontology-editor-page open-ontology-tab search-bar')
-            .keys('myTitle')
-            .keys(browser.Keys.ENTER)
-            .waitForElementNotVisible('.spinner')
-            .waitForElementVisible('ontology-editor-page open-ontology-tab')
+            .clearValue('open-ontology-tab input.ontology-search')
+            .setValue('open-ontology-tab input.ontology-search', 'myTitle')
+            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementVisible('ontology-editor-page open-ontology-tab')
     },
 
     'Step 12: Ensure IRI changes are successful' : function(browser) {
@@ -162,11 +162,17 @@ module.exports = {
     'Step 14: Switch to new branch' : function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle2")]]')
+            .getValue("//open-ontology-select//input", function(result) {
+                this.assert.equal(typeof result, "object");
+                this.assert.equal(result.status, 0);
+                this.assert.equal(result.value, "newBranchTitle2");
+            })
             .useCss()
-            .click('open-ontology-select span[role=button]')
-            .waitForElementVisible('span[title=newBranchTitle2]')
-            .click('span[title=newBranchTitle2]')
+            .click('open-ontology-select .mat-form-field-infix')
+            .useXpath()
+            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "newBranchTitle2")]')
+            .click('//mat-optgroup//mat-option//span[contains(text(), "newBranchTitle2")]')
+            .useCss()
     },
 
     'Step 15: Verify no changes are shown': function(browser) {

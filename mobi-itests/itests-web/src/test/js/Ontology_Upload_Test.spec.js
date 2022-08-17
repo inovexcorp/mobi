@@ -45,22 +45,26 @@ module.exports = {
 
     'Step 3: Upload Corrupt Ontologies' : function (browser) {
         browser
+            .click('button.upload-button')
             .uploadFile('input[type=file]', Onto1e)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .click('xpath', '//upload-ontology-overlay//span[text() = "Submit"]/parent::button')
+            .waitForElementNotPresent('xpath', '//upload-ontology-overlay//span[text() = "Cancel"]/parent::button')
+            .click('button.upload-button')
             .uploadFile('input[type=file]', Onto1s)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .click('xpath', '//upload-ontology-overlay//span[text() = "Submit"]/parent::button')
+            .waitForElementNotPresent('xpath', '//upload-ontology-overlay//span[text() = "Cancel"]/parent::button')
+            .click('button.upload-button')
             .uploadFile('input[type=file]', Onto1TrigZip)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .click('xpath', '//upload-ontology-overlay//span[text() = "Submit"]/parent::button')
+            .waitForElementNotPresent('xpath', '//upload-ontology-overlay//span[text() = "Cancel"]/parent::button')
+            .click('button.upload-button')
             .uploadFile('input[type=file]', Onto1Trig)
     },
 
     'Step 4: Submit all ontology files' : function (browser) {
         browser
             .waitForElementVisible('upload-ontology-overlay')
-            .click('xpath', '//button[text()[contains(.,"Submit All")]]')
+            .click('xpath', '//upload-ontology-overlay//span[text() = "Submit All"]/parent::button')
     },
 
    'Step 5: Validate Ontology Appearance' : function (browser) {
@@ -68,28 +72,29 @@ module.exports = {
            .waitForElementVisible('div.ontologies')
            .assert.not.elementPresent('div.modal-header')
            .waitForElementVisible('div.ontologies')
-           .clearValue('open-ontology-tab search-bar input')
-           .setValue('open-ontology-tab search-bar input', Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
+           .clearValue('open-ontology-tab input.ontology-search')
+           .setValue('open-ontology-tab input.ontology-search', Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
            .keys(browser.Keys.ENTER)
            .useXpath()
-           .assert.not.elementPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
-           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+           .assert.not.elementPresent('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
+           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h4[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
            .useCss()
-           .clearValue('open-ontology-tab search-bar input')
-           .setValue('open-ontology-tab search-bar input', Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
+           .clearValue('open-ontology-tab input.ontology-search')
+           .setValue('open-ontology-tab input.ontology-search', Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
            .keys(browser.Keys.ENTER)
            .useXpath()
-           .assert.not.elementPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
-           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+           .useXpath()
+           .assert.not.elementPresent('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
+           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h4[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
            .useCss()
-           .clearValue('open-ontology-tab search-bar input')
-           .setValue('open-ontology-tab search-bar input', '')
+           .clearValue('open-ontology-tab input.ontology-search')
+           .setValue('open-ontology-tab input.ontology-search', '')
            .keys(browser.Keys.ENTER)
    },
 
-    'Step 6: Open an Ontology called “test-local-imports-1.ttl' : function (browser) {
+    'Step 6: Open an Ontology called “test-local-imports-1' : function (browser) {
         browser
-            .setValue('open-ontology-tab search-bar input', '')
+            .setValue('open-ontology-tab input.ontology-search', '')
             .globals.open_ontology(browser, Onto1)
     },
 
@@ -115,7 +120,7 @@ module.exports = {
         browser.globals.return_to_ontology_editor_search(browser)
     },
 
-    'Step 10: Open an Ontology called test-class-empty-label.ttl' : function (browser) {
+    'Step 10: Open an Ontology called test-class-empty-label' : function (browser) {
         browser.globals.open_ontology(browser, Onto5)
     },
 

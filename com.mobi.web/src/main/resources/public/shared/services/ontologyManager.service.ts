@@ -85,9 +85,10 @@ export class OntologyManagerService {
         const fd = new FormData();
         let prepObservable: Observable<null>;
         if (config.file !== undefined) {
-            const titleInfo = this._getFileTitleInfo(config.title);
+            const titleInfo = this._getFileTitleInfo(config.file.name);
             if (endsWith(titleInfo.title, '.trig') || endsWith(titleInfo.title, '.trig.zip') || endsWith(titleInfo.title, '.trig.gzip')) {
-                prepObservable = throwError('TriG data is not supported for ontology upload.');
+                // prepObservable = throwError('TriG data is not supported for ontology upload.');
+                return throwError({errorMessage: 'TriG data is not supported for ontology upload.', errorDetails: []});
             } else if (titleInfo.ext !== 'zip' && config.file.size) {
                 prepObservable = this.compressFile(config.file).pipe(map((file: File) => {
                     fd.append('file',file);

@@ -250,7 +250,6 @@ describe('Instance Display component', function() {
             expect(discoverStateStub.explore.creating).toBe(false);
             expect(splitIriStub.transform).not.toHaveBeenCalledWith('instanceIRI');
             expect(utilStub.createErrorToast).toHaveBeenCalled();
-            console.log(discoverStateStub.explore.instance.metadata)
             expect(discoverStateStub.explore.instance.metadata).toBeUndefined();
         });
         it('button should say [Deprecated] if the class is deprecated', function() {

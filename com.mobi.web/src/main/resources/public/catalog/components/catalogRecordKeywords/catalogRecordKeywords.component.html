@@ -21,29 +21,19 @@
   #L%
   -->
 <div class="catalog-record-keywords">
-    <div *ngIf="canEdit && edit" class="keyword-editor d-flex p-2">
-        <!-- TODO: Replace with keyword-select when upgraded -->
-        <mat-form-field class="flex-1">
-            <mat-chip-list #keywordSelect>
-                <mat-chip *ngFor="let keyword of editedKeywords" [removable]="true" (removed)="removeKeyword(keyword)">
-                    <span class="keyword-text">{{keyword}}</span>
-                    <mat-icon matChipRemove>cancel</mat-icon>
-                </mat-chip>
+    <form [formGroup]="addKeywordsForm">
+        <div *ngIf="canEdit && edit" class="keyword-editor d-flex p-2" >
+            <keyword-select
+                [parentForm]="addKeywordsForm"
+                (keyup.escape)="cancelChanges()"
+            ></keyword-select>
+            <a (click)="saveChanges()" class="fa fa-save fa-2x"></a>
+        </div>
+        <div class="static-area" *ngIf="!canEdit || !edit" (click)="edit = true" [ngClass]="{'hover-area': canEdit}" title="{{canEdit ? 'Click to edit' : undefined}}">
+            <span *ngIf="keywords.length === 0">(No keywords specified)</span>
+            <mat-chip-list>
+                <mat-chip *ngFor="let keyword of keywords"><span class="keyword-text">{{keyword}}</span></mat-chip>
             </mat-chip-list>
-            <input placeholder="Keywords"
-            [matChipInputFor]="keywordSelect"
-            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-            [matChipInputAddOnBlur]="false"
-            (matChipInputTokenEnd)="addKeyword($event)"
-            (keyup.escape)="cancelChanges()"
-            focus>
-        </mat-form-field>
-        <a (click)="saveChanges()" class="fa fa-save fa-2x"></a>
-    </div>
-    <div class="static-area" *ngIf="!canEdit || !edit" (click)="edit = true" [ngClass]="{'hover-area': canEdit}" title="{{canEdit ? 'Click to edit' : undefined}}">
-        <span *ngIf="keywords.length === 0">(No keywords specified)</span>
-        <mat-chip-list>
-            <mat-chip *ngFor="let keyword of keywords"><span class="keyword-text">{{keyword}}</span></mat-chip>
-        </mat-chip-list>
-    </div>
+        </div>
+    </form>
 </div>

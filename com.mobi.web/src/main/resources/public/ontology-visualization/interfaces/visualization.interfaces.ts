@@ -26,6 +26,7 @@ import {
     StateEdge,
     StateNode
 } from '../classes';
+import {HierarchyNode} from "../../shared/models/hierarchyNode.interface";
 
 export interface ParentMapI {
     [key: string]: Array<string>
@@ -200,4 +201,18 @@ export interface ControlRecordSearchGroupedI extends Omit<ControlRecordSearchRes
 
 export interface d3ForceStaticLoadI {
     [key: string]: positionI
+}
+
+export interface OntologyGraphData {
+    parentMap: {
+        [key: string]: string[]
+    },
+    iris: {
+        [key: string]: string
+    },
+    entityInfo: EntityInfoI,
+    ranges: Array<RangesI>[],
+    childIris: ChildIrisI,
+    classParentMap: ParentMapI
+
 }

@@ -37,6 +37,7 @@ import {
 } from '../../../../../../test/ts/Shared';
 import { CATALOG, DATASET, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { Dataset } from '../../../shared/models/dataset.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
@@ -77,7 +78,8 @@ describe('Edit Dataset Overlay component', function() {
             declarations: [
                 EditDatasetOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
-                MockComponent(DatasetsOntologyPickerComponent)
+                MockComponent(DatasetsOntologyPickerComponent),
+                MockComponent(KeywordSelectComponent)
             ],
             providers: [
                 MockProvider(DatasetManagerService),
@@ -251,24 +253,6 @@ describe('Edit Dataset Overlay component', function() {
                     expect(component.error).toBe('');
                 }));
             });
-        }); 
-        it('should add a keyword', function() {
-            component.ngOnInit();
-            component.editDatasetForm.controls.keywords.setValue([]);
-            component.addKeyword({input: null, value: ' A'});
-            expect(component.editDatasetForm.controls.keywords.value).toEqual(['A']);
-
-            component.addKeyword({input: null, value: 'B '});
-            expect(component.editDatasetForm.controls.keywords.value).toEqual(['A', 'B']);
-        });
-        it('should remove a keyword', function() {
-            component.ngOnInit();
-            component.editDatasetForm.controls.keywords.setValue(['A', 'B']);
-            component.removeKeyword('A');
-            expect(component.editDatasetForm.controls.keywords.value).toEqual(['B']);
-
-            component.removeKeyword('C');
-            expect(component.editDatasetForm.controls.keywords.value).toEqual(['B']);
         });
     });
     describe('contains the correct html', function() {
@@ -277,7 +261,7 @@ describe('Edit Dataset Overlay component', function() {
             expect(element.queryAll(By.css('div[mat-dialog-content]')).length).toEqual(1);
             expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
         });
-        ['input[name="title"]', 'textarea', 'input[placeholder="Keywords"]', 'mat-chip-list', '.dataset-info', 'datasets-ontology-picker'].forEach(test => {
+        ['input[name="title"]', 'textarea', 'keyword-select', '.dataset-info', 'datasets-ontology-picker'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toBe(1);
             });

@@ -120,16 +120,6 @@ export const policyEnforcementServiceProvider = {
     deps: ['$injector']
 };
 
-export function stateManagerServiceFactory(i: any) {
-    return i.get('stateManagerService');
-}
-
-export const stateManagerServiceProvider = {
-    provide: 'stateManagerService',
-    useFactory: stateManagerServiceFactory,
-    deps: ['$injector']
-};
-
 export function toastrFactory(i: any) {
     return i.get('toastr');
 }

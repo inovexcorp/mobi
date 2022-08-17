@@ -21,6 +21,14 @@
  * #L%
  */
 
+ /**
+ * @ngdoc interface
+ * @name shared.models:OntologyAction
+ *
+ * @description
+ * Represents an ontology action
+ */
 export enum OntologyAction {
-    ONTOLOGY_CLOSE
+    ONTOLOGY_CLOSE,
+    UPDATE_STATE
 }

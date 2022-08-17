@@ -60,9 +60,9 @@ module.exports = {
             .waitForElementVisible('//imports-overlay//span[text()[contains(.,"On Server")]]//parent::a')
             .click('xpath', '//imports-overlay//span[text()[contains(.,"On Server")]]//parent::a')
             .useCss().waitForElementNotVisible('div.spinner') // waits for imports to loads up
-            .useXpath().waitForElementVisible('//imports-overlay//h4[text()[contains(.,"single-concept-vocab.ttl")]]')
-            .click('//imports-overlay//h4[text()[contains(.,"single-concept-vocab.ttl")]]//parent::div//following-sibling::md-checkbox')
-            .waitForElementVisible('//imports-overlay//h4[text()[contains(.,"single-concept-vocab.ttl")]]//parent::div//following-sibling::md-checkbox[contains(@class, "md-checked")]')
+            .useXpath().waitForElementVisible('//imports-overlay//h4[text()[contains(.,"single-concept-vocab")]]')
+            .click('//imports-overlay//h4[text()[contains(.,"single-concept-vocab")]]//parent::div//following-sibling::md-checkbox')
+            .waitForElementVisible('//imports-overlay//h4[text()[contains(.,"single-concept-vocab")]]//parent::div//following-sibling::md-checkbox[contains(@class, "md-checked")]')
             .click('xpath', '//button[text()[contains(.,"Submit")]]')
             .useCss()
 //            .waitForElementNotVisible('div.spinner')
