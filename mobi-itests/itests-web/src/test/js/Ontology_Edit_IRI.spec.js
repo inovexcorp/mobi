@@ -42,7 +42,7 @@ module.exports = {
         browser.globals.upload_ontologies(browser, Onto1)
     },
 
-    'Step 3: Open on Ontology called “CurrencyUnitOntology.ttl' : function (browser) {
+    'Step 3: Open on Ontology called “CurrencyUnitOntology' : function (browser) {
         browser.globals.open_ontology(browser, Onto1)
     },
 

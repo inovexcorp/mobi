@@ -37,7 +37,7 @@ module.exports = {
     },
 
     'Step 3: Open new Ontology Overlay' : function(browser) {
-        var newOntologyButtonXpath = '//button[text()="New Ontology"]';
+        var newOntologyButtonXpath = '//span[text()="New Ontology"]/parent::button';
         browser
             .useXpath()
             .waitForElementVisible(newOntologyButtonXpath)
@@ -49,10 +49,10 @@ module.exports = {
         browser   
             .useCss()        
             .waitForElementVisible('new-ontology-overlay')
-            .waitForElementVisible('new-ontology-overlay text-input[display-text="\'Title\'"] input')
-            .waitForElementVisible('new-ontology-overlay text-area[display-text="\'Description\'"] textarea')
-            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'myTitle')
-            .setValue('new-ontology-overlay text-area[display-text="\'Description\'"] textarea', 'myDescription')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', 'myTitle')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', 'myDescription')
     },
 
     'Step 4: Submit New Ontology Overlay' : function(browser) {
@@ -60,7 +60,7 @@ module.exports = {
             .useCss()        
             .waitForElementVisible('new-ontology-overlay')
             .useXpath()
-            .click('//new-ontology-overlay//button[text()="Submit"]')
+            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
             .useCss()
             .waitForElementNotPresent('new-ontology-overlay')
             .waitForElementPresent('ontology-editor-page ontology-tab')
@@ -115,7 +115,7 @@ module.exports = {
         browser
             .useCss()  
             .waitForElementPresent('ontology-editor-page ontology-tab')
-            .click('ontology-sidebar button.btn.btn-primary')
+            .click('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button')
             .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
     },
@@ -124,18 +124,18 @@ module.exports = {
         browser
             .useCss() 
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .click('ontology-editor-page open-ontology-tab search-bar')
-            .keys('myTitle')
-            .keys(browser.Keys.ENTER)
-            .waitForElementNotVisible('.spinner')
-            .waitForElementVisible('ontology-editor-page open-ontology-tab')
+            .clearValue('open-ontology-tab input.ontology-search')
+            .setValue('open-ontology-tab input.ontology-search', 'myTitle')
+            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementVisible('ontology-editor-page open-ontology-tab')
     },
 
     'Step 10: Ensure IRI changes are successful' : function(browser) {
         browser
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .setValue('open-ontology-tab search-bar input', 'myTitle')
-            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
+            .setValue('open-ontology-tab input.ontology-search', 'myTitle')
+            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER)
             .useXpath()
             .assert.textContains('//open-ontology-tab//small', 'myOntology')
             .click('//open-ontology-tab//small[text()[contains(.,"myOntology")]]')
@@ -161,13 +161,18 @@ module.exports = {
             .useXpath()
             .click('//create-branch-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('create-branch-overlay .modal-title')
+            .waitForElementNotPresent('create-branch-overlay .modal-title');
+            browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 12: Verify a new branch was created' : function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
+            .getValue("//open-ontology-select//input", function(result) {
+                this.assert.equal(typeof result, "object");
+                this.assert.equal(result.status, 0);
+                this.assert.equal(result.value, "newBranchTitle");
+            })
             .useCss()
     },
 
@@ -301,13 +306,24 @@ module.exports = {
     'Step 21: Verify Master Branch only has initial commit': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
+            .getValue("//open-ontology-select//input", function(result) {
+                this.assert.equal(typeof result, "object");
+                this.assert.equal(result.status, 0);
+                this.assert.equal(result.value, "newBranchTitle");
+            })
             .useCss()
-            .click('open-ontology-select span[role=button]')
-            .waitForElementVisible('span[title=MASTER]')
-            .click('span[title=MASTER]')
+            .click('open-ontology-select .mat-form-field-infix')
             .useXpath()
-            .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"MASTER")]]')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
+            .click('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useXpath()
+            .getValue("//open-ontology-select//input", function(result) {
+                this.assert.equal(typeof result, "object");
+                this.assert.equal(result.status, 0);
+                this.assert.equal(result.value, "MASTER");
+            })
             .assert.visible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementNotPresent('commit-history-table .commit-message[title="commit123"]')
@@ -317,13 +333,24 @@ module.exports = {
     'Step 22: Switch back to the other branch': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"MASTER")]]')
+            .getValue("//open-ontology-select//input", function(result) {
+                this.assert.equal(typeof result, "object");
+                this.assert.equal(result.status, 0);
+                this.assert.equal(result.value, "MASTER");
+            })
             .useCss()
-            .click('open-ontology-select span[role=button]')
-            .waitForElementVisible('span[title=newBranchTitle]')
-            .click('span[title=newBranchTitle]')
+            .click('open-ontology-select .mat-form-field-infix')
             .useXpath()
-            .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "newBranchTitle")]')
+            .click('//mat-optgroup//mat-option//span[contains(text(), "newBranchTitle")]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useXpath()
+            .getValue("//open-ontology-select//input", function(result) {
+                this.assert.equal(typeof result, "object");
+                this.assert.equal(result.status, 0);
+                this.assert.equal(result.value, "newBranchTitle");
+            })
             .useCss()
     },
 

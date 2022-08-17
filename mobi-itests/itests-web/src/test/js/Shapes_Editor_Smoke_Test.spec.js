@@ -125,11 +125,13 @@ module.exports = {
     'Step 9: Upload merge conflict into master': function (browser) {
         browser
             .click('editor-branch-select mat-form-field mat-icon')
+            .pause(1000)
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
             .click('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
         browser
+            .pause(1000)
             .click('button.upload-changes')
             .waitForElementVisible('upload-record-modal')
             .waitForElementVisible('upload-record-modal file-input')
@@ -138,7 +140,7 @@ module.exports = {
             .click('upload-record-modal button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
-            .click('xpath', '//div[@id="toast-container"]')
+            .pause(1000)
             .click('button.commit')
             .sendKeys('commit-modal textarea', 'A conflict commit on master')
             .click('commit-modal button.mat-primary')
@@ -148,6 +150,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('editor-branch-select mat-form-field mat-icon')
+            .pause(1000)
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]')
             .click('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]')
@@ -188,14 +191,16 @@ module.exports = {
             .useCss()
             .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
             .click('editor-branch-select mat-form-field i')
+            .pause(1000)
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]/following-sibling::button')
             .click('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]/following-sibling::button')
-            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
-            // .click('css selector', 'confirm-modal-ajs div.modal-footer button.btn-primary')
-        browser.globals.wait_for_no_spinners(browser)
+            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary');
+        browser.globals.wait_for_no_spinners(browser);
         browser
+            .pause(1000)
             .click('editor-branch-select mat-form-field i')
+            .pause(1000)
             .useXpath()
             .assert.not.elementPresent('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]')
     },
@@ -215,6 +220,7 @@ module.exports = {
     'Step 14: Delete created tag and verify deletion': function (browser) {
         browser
             .click('editor-branch-select mat-form-field mat-icon')
+            .pause(1000)
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
             .click('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
@@ -222,13 +228,17 @@ module.exports = {
         browser
             .useCss()
             .click('editor-branch-select mat-form-field mat-icon')
+            .pause(3000)
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Tag")]/following-sibling::button')
             .click('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Tag")]/following-sibling::button')
-            .click('css selector', 'confirm-modal-ajs div.modal-footer button.btn-primary')
+            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
+            .click('xpath', '//div[@id="toast-container"]')
+            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
             .click('editor-branch-select mat-form-field mat-icon')
+            .pause(3000)
             .useXpath()
             .assert.not.elementPresent('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Tag")]')
             .useCss()

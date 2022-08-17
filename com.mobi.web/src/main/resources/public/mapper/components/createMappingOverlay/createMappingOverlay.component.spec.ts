@@ -32,6 +32,7 @@ import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
@@ -83,6 +84,7 @@ describe('Create Mapping Overlay component', function() {
             declarations: [
                 CreateMappingOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(KeywordSelectComponent)
             ],
             providers: [
                 MockProvider(MapperStateService),
@@ -240,21 +242,7 @@ describe('Create Mapping Overlay component', function() {
             expect(mapperStateStub.availableClasses).toEqual([]);
             expect(matDialogRef.close).toHaveBeenCalledWith();
         });
-        it('should add a keyword', function() {
-            component.addKeyword({input: null, value: ' A'});
-            expect(component.createMappingForm.controls.keywords.value).toEqual(['A']);
-
-            component.addKeyword({input: null, value: 'B '});
-            expect(component.createMappingForm.controls.keywords.value).toEqual(['A', 'B']);
-        });
-        it('should remove a keyword', function() {
-            component.createMappingForm.controls.keywords.setValue(['A', 'B']);
-            component.removeKeyword('A');
-            expect(component.createMappingForm.controls.keywords.value).toEqual(['B']);
-
-            component.removeKeyword('C');
-            expect(component.createMappingForm.controls.keywords.value).toEqual(['B']);
-        });
+        
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -262,13 +250,13 @@ describe('Create Mapping Overlay component', function() {
             expect(element.queryAll(By.css('form[mat-dialog-content]')).length).toEqual(1);
             expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
         });
-        ['input[name="title"]', 'textarea', 'mat-chip-list', 'input[placeholder="Keywords"]'].forEach(test => {
+        ['input[name="title"]', 'textarea', 'keyword-select'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });
         it('with a mat-form-fields', function() {
-            expect(element.queryAll(By.css('mat-form-field')).length).toEqual(3);
+            expect(element.queryAll(By.css('mat-form-field')).length).toEqual(2);
         });
         it('depending on whether there is an error', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);

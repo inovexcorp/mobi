@@ -36,7 +36,8 @@
         <text-area bind-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
             change-event="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
             display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select>
+        <!-- TODO: Add back in once upgraded -->
+        <!-- <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select> -->
     </form>
 </div>
 <div class="modal-footer">

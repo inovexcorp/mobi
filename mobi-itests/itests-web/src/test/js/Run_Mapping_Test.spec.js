@@ -44,7 +44,7 @@ module.exports = {
             .click('imports-block div.section-header a.float-right.fa.fa-fw.fa-plus.ng-scope')
             .waitForElementVisible('imports-overlay form')
             .click('xpath', '//imports-overlay//li//span[text()[contains(.,"On Server")]]')
-            .click('xpath', '//imports-overlay//h4[text()[contains(.,"skos.rdf")]]')
+            .click('xpath', '//imports-overlay//h4[text()[contains(.,"skos")]]')
             .click('imports-overlay div.modal-footer button.btn-primary')
             .waitForElementNotPresent('imports-overlay')
     },
@@ -62,10 +62,10 @@ module.exports = {
             .waitForElementVisible('new-dataset-overlay input[name="title"]')
             .setValue('div.mat-dialog-content input[name=title]', 'UHTC ontology data')
             .setValue('div.mat-dialog-content textarea', 'A dataset consisting of information recorded on various earthly materials')
-            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology.ttl")]]//ancestor::mat-list-option')
+            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology")]]//ancestor::mat-list-option')
         browser.globals.wait_for_no_spinners(browser)
         browser
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
@@ -97,30 +97,26 @@ module.exports = {
     },
 
     'Step 9: Attach csv to mapping' : function (browser) {
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .waitForElementVisible('.file-upload-form file-input')
-            .setValue('file-input input', OntoCSV)
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.file-input button')
             .uploadFile('input[type=file]', OntoCSV)
-            .waitForElementNotVisible('div.spinner')
-            .click('div.block-footer button.continue-btn')
+            .waitForElementNotPresent('#spinner-full')
+            .click('button.continue-btn')
     },
 
     'Step 10: Click on uploaded ontology' : function (browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .waitForElementVisible('mapping-config-overlay')
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .setValue('div.mat-dialog-content input[name="Search"]', 'uhtc')
             .keys(browser.Keys.ENTER)
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-list-option//h4[text()[contains(.,"uhtc")]]'})
             .click('xpath', '//mat-list-option//h4[text()[contains(.,"uhtc")]]')
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled', 15000, 'Element %s is disabled after %d ms')
             .click('div.mat-dialog-actions button.mat-primary')
 
@@ -154,7 +150,7 @@ module.exports = {
             .waitForElementVisible('div.mat-select-panel')
             .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
             .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Material")]]')
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
@@ -185,11 +181,11 @@ module.exports = {
                     browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "' + properties[i] + '")]]')
                     break;
                 }
-                browser.waitForElementNotVisible('div.spinner')
-                browser.click('div.mat-dialog-actions button.mat-primary')
-                browser.globals.wait_for_no_spinners(browser)
-                browser.useXpath()
-                browser.assert.visible('//div[contains(@class, "mat-list-item")]//h4[text()[contains(., "' + properties[i] + '")]]')
+                browser.waitForElementNotPresent('#spinner-full');
+                browser.click('div.mat-dialog-actions button.mat-primary');
+                browser.globals.wait_for_no_spinners(browser);
+                browser.useXpath();
+                browser.assert.visible('//div[contains(@class, "mat-list-item")]//h4[text()[contains(., "' + properties[i] + '")]]');
                 browser.useCss()
         }
     },
@@ -219,7 +215,7 @@ module.exports = {
             .waitForElementVisible('div.mat-select-panel')
             .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
             .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "New Crystal Structure")]]')
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
@@ -255,7 +251,7 @@ module.exports = {
             .waitForElementVisible('div.mat-select-panel')
             .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
             .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Crystal")]]')
-            .waitForElementNotVisible('div.spinner')
+            .waitForElementNotPresent('#spinner-full')
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
@@ -295,20 +291,19 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
-            .click('dataset-select div.ui-select-match')
-            .waitForElementPresent('dataset-select div.ui-select-container.open')
+            .click('dataset-select mat-form-field')
+            .waitForElementVisible('dataset-select mat-form-field')
             .useXpath()
-            .waitForElementVisible('//dataset-select//div[text()[contains(.,"UHTC")]]')
-            .click('//dataset-select//div[text()[contains(., "UHTC")]]')
+            .waitForElementVisible('//span[text()[contains(.,"UHTC")]]')
+            .click('//span[text()[contains(.,"UHTC")]]')
             .useCss()
-            .waitForElementNotPresent('dataset-select div.ui-select-container.open')
-            // .click('xpath' ,'//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]//ancestor::div[contains(@class, "ui-select-choices-row")]')
     },
 
     'Step 25: Check for Material and Crystal structure cards' : function (browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
-            .assert.visible('//md-card//md-card-title//span[text()[contains(., "Crystal Structure")]]')
-            .assert.visible('//md-card//md-card-title//span[text()[contains(., "UHTC Material")]]')
+            .useXpath()
+            .assert.visible('//mat-card//mat-card-title//span[text()[contains(., "Crystal Structure")]]')
+            .assert.visible('//mat-card//mat-card-title//span[text()[contains(., "UHTC Material")]]')
     }
 }

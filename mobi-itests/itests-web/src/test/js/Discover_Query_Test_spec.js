@@ -55,7 +55,7 @@ module.exports = {
             .waitForElementVisible('new-dataset-overlay input[name="title"]')
             .setValue('div.mat-dialog-content input[name=title]', 'Event ontology data')
             .setValue('div.mat-dialog-content textarea', 'A dataset consisting of information about events')
-            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"EventOntology.ttl")]]//ancestor::mat-list-option')
+            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"EventOntology")]]//ancestor::mat-list-option')
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('div.mat-dialog-actions button.mat-primary')
@@ -72,17 +72,19 @@ module.exports = {
     },
     'Step 6: Click Upload data' : function (browser) {
         browser
-            .click('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//button')
-            .waitForElementVisible('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//div[contains(@class, "dropdown-menu")]//a[contains(@class, "upload-data")]')
-            .click('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//div[contains(@class, "dropdown-menu")]//a[contains(@class, "upload-data")]')
+            .click('.dataset .menu-button.mat-icon-button')
+            .waitForElementVisible('.mat-menu-content .upload-data')
+            .click('.mat-menu-content .upload-data')
+            .useXpath()
             .waitForElementVisible('//upload-data-overlay')
             .waitForElementVisible('//upload-data-overlay//file-input')
             .waitForElementNotPresent('//div[contains(@class, "ng-animate")]')
             .uploadFile('//upload-data-overlay//file-input//div//input[@type="file"]',Onto1)
-            .assert.visible('//file-input//div[@class="file-input mt-2"]//span[text()[contains(.,"EventOntology.ttl")]]')
+            .assert.visible('//file-input//div[@class="file-input mt-2"]//span[text()[contains(.,"EventOntology")]]')
     },
     'Step 7: Submit data' : function (browser) {
         browser
+            .useCss()
             .click('div.mat-dialog-actions button.mat-primary')
             .waitForElementVisible('div#toast-container')
             .assert.visible('div#toast-container')
@@ -100,18 +102,20 @@ module.exports = {
             .click('//mat-tab-group//div[contains(@class,"mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(., "Query")]]')
             .waitForElementVisible('//query-tab')
             .waitForElementVisible('//query-tab//form')
-            .assert.visible('//query-tab//form//dataset-form-group')
-            .assert.visible('//query-tab//form//dataset-form-group//a[text()[contains(., "Clear")]]')
+            .assert.visible('//query-tab//form//discover-dataset-select')
+            .assert.visible('//query-tab//form//discover-dataset-select//span[text()[contains(., "Clear")]]')
             .assert.visible('//query-tab//form//div[contains(@class, "discover-query")]')
             .assert.not.visible('//query-tab//form//div[contains(@class, "yasr")]')
     },
     'Step 10: Submit default query' : function (browser) {
         browser
-            .click('//query-tab//form//dataset-form-group//div[contains(@class, "dropdown")]')
-            .waitForElementVisible(dropDownSelector)
-            .click(dropDownSelector)
-            .waitForElementNotPresent(dropDownSelector)
-            .click('//query-tab//form//button')
+            .click('//query-tab//form//discover-dataset-select//mat-form-field')
+            .useCss()
+            .waitForElementVisible('mat-option .mat-option-text')
+            .click('mat-option .mat-option-text')
+            .waitForElementNotPresent('mat-option .mat-option-text')
+            .click('query-tab form button.mat-raised-button.mat-primary')
+            .useXpath()
             .waitForElementVisible('//query-tab//form//div[contains(@class, "yasr")]')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//ul[contains(@class, "yasr_btnGroup")]')
@@ -204,7 +208,9 @@ module.exports = {
                      }';
                 document.getElementsByClassName('CodeMirror')[0].CodeMirror.setValue(value);
             }, [])
-            .click('//query-tab//form//button')
+            .useCss()
+            .click('query-tab form button.mat-raised-button.mat-primary')
+            .useXpath()
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]//div[contains(@class, "dataTables_paginate")]')
             .expect.elements('//tbody/tr').count.to.equal(50)
     }

@@ -33,12 +33,17 @@
         background-color: rgba(224, 224, 224, 0.5);
         opacity: 1;
 
-        &.ng-hide {
-            opacity: 0;
-        }
-        &.ng-hide-add, &.ng-hide-remove {
+        &.fade-in {
+            visibility: visible;
+            opacity: 1;
             -webkit-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);    
+        }
+        &.fade-out {
+            visibility: hidden;
+            opacity: 0;
+            -webkit-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);    
         }
         .drag-file-info {
             top: 50%;

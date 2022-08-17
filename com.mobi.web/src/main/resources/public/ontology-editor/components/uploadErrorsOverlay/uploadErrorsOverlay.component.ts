@@ -20,46 +20,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
-const template = require('./uploadErrorsOverlay.component.html');
+import { OntologyUploadItem } from '../../../shared/models/ontologyUploadItem.interface';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:uploadErrorsOverlay
+ * @class ontology-editor.UploadErrorsOverlayComponent
  *
- * @description
- * `uploadErrorsOverlay` is a component that creates content for a modal that shows errors of the uploaded file
+ * A component that creates content for a modal that shows errors of an uploaded file. Meant to be used in conjunction
+ * with the `MatDialog` service.
  *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * @param {OntologyUploadItem} item A representation of an ontology upload containing error details
  */
-const uploadErrorsOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&',
-        resolve: '<'
-    },
-    controllerAs: 'dvm',
-    controller: uploadErrorsOverlayComponentCtrl
-};
+@Component({
+    selector: 'upload-errors-overlay',
+    templateUrl: './uploadErrorsOverlay.component.html'
+})
+export class UploadErrorsOverlayComponent implements OnInit {
+    itemTitle = '';
+    errorMessage = '';
+    errorDetails = [];
 
-function uploadErrorsOverlayComponentCtrl() {
-    var dvm = this;
-    dvm.itemTitle = '';
-    dvm.errorMessage = '';
-    dvm.errorDetails = [];
-
-    dvm.$onInit = function() {
-        dvm.itemTitle = get(dvm.resolve, 'item.title', 'Something went wrong. Please try again later.');
-        dvm.errorMessage = get(dvm.resolve, 'item.error.errorMessage', '');
-        dvm.errorDetails = get(dvm.resolve, 'item.error.errorDetails', []);
+    constructor(@Inject(MAT_DIALOG_DATA) public data: {item: OntologyUploadItem}, private dialogRef: MatDialogRef<UploadErrorsOverlayComponent>) {}
+    
+    ngOnInit(): void {
+        this.itemTitle = this.data.item.title || 'Something went wrong. Please try again later.';
+        this.errorMessage = this.data.item.error?.errorMessage || '';
+        this.errorDetails = this.data.item.error?.errorDetails || [];
     }
 
-    dvm.cancel = function() {
-        dvm.dismiss();
+    cancel(): void {
+        this.dialogRef.close();
     }
 }
-
-export default uploadErrorsOverlayComponent;

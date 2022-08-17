@@ -20,48 +20,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './advancedLanguageSelect.component.scss';
-
-const template = require('./advancedLanguageSelect.component.html');
+import { Component, Inject, Input, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:advancedLanguageSelect
+ * @name ontology-editor.AdvancedLanguageSelectComponent
  *
- * @description
- * `advancedLanguageSelect` is a component that creates a collapsible {@link shared.component:languageSelect}. The
- * `languageSelect` is bound to `bindModel`, but only one way. The provided `changeEvent` function is expected to
- * update the value of `bindModel`.
+ * A component that creates a collapsible language selector bound to the `language` control of the provided parent
+ * `FormGroup`. When collapsed, sets the `language` value to empty string, when opened, defaults to 'en'.
  * 
- * @param {string} bindModel The variable to bind the value of the `languageSelect` to
- * @param {Function} changeEvent A function that is called when the value of the `languageSelect` changes. Should
- * update the value of `bindModel`. Expects an argument called `value`
+ * @param {FormGroup} parentForm The parent FormGroup to attached the language select to
  */
-const advancedLanguageSelectComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: advancedLanguageSelectComponentCtrl
-};
+@Component({
+    selector: 'advanced-language-select',
+    templateUrl: './advancedLanguageSelect.component.html'
+})
+export class AdvancedLanguageSelectComponent implements OnInit {
+    @Input() parentForm: FormGroup;
 
-function advancedLanguageSelectComponentCtrl() {
-    var dvm = this;
-    dvm.isShown = false;
+    isShown = false;
+    languages: {label: string, value: string}[] = [];
 
-    dvm.onChange = function(value) {
-        dvm.changeEvent({value});
+    constructor(@Inject('propertyManagerService') private pm) {}
+
+    ngOnInit(): void {
+        this.languages = this.pm.languageList;
     }
-    dvm.show = function() {
-        dvm.isShown = true;
-        dvm.changeEvent({value: 'en'});
+    show(): void {
+        this.isShown = true;
+        this.parentForm.controls.language.setValue('en');
     }
-    dvm.hide = function() {
-        dvm.isShown = false;
-        dvm.changeEvent({value: undefined});
+    hide(): void {
+        this.isShown = false;
+        this.parentForm.controls.language.setValue('');
     }
 }
-
-export default advancedLanguageSelectComponent;

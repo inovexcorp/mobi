@@ -67,7 +67,7 @@ function commitsTabComponentCtrl(ontologyStateService, utilService, prefixes) {
         }
     }
     dvm.openOntologyAtCommit = function(commit) {
-        dvm.os.updateOntologyWithCommit(dvm.os.listItem.versionedRdfRecord.recordId, commit.id);
+        dvm.os.updateOntologyWithCommit(dvm.os.listItem.versionedRdfRecord.recordId, commit.id).subscribe();
     }
 }
 

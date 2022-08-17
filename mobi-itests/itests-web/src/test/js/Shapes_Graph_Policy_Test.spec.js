@@ -1,4 +1,3 @@
-
 /*-
  * #%L
  * itests-web
@@ -89,28 +88,28 @@ module.exports = {
 
     'Step 10: The admin user toggles off Create Shapes Graph permission' : function(browser) {
         browser
-            .waitForElementVisible('//mat-slide-toggle[1]') // TODO: this is brittle we should change at some point
-            .click('//mat-slide-toggle[1]')
+            .waitForElementVisible('//h4[contains(text(), "Create Shapes Graph Record")]/following-sibling::mat-slide-toggle')
+            .click('//h4[contains(text(), "Create Shapes Graph Record")]/following-sibling::mat-slide-toggle')
             .useCss()
             .waitForElementVisible('.save-container')
             .click('.save-container');
         browser.globals.wait_for_no_spinners(browser);
     },
-    
+
     'Step 11: The admin user clicks logout' : function(browser) {
         browser.globals.logout(browser)
     },
-    
+
     'Step 12: Test logins as the newly created user' : function(browser) {
         browser.globals.login(browser, newUser.username, newUser.password)
     },
-    
+
     'Step 13: Wait for visibility of home elements' : function(browser) {
         browser
             .useCss()
             .waitForElementVisible('.home-page')
     },
-    
+
     'Step 14: New User name is displayed in sidebar on left' : function(browser) {
         browser
             .useCss()
@@ -127,9 +126,11 @@ module.exports = {
 
     'Step 16: Assert Create Shapes graph button is disabled' : function(browser) {
         browser
-            .waitForElementVisible('//mat-form-field/div/div[1]/div[2]/mat-icon')
-            .click('//mat-form-field/div/div[1]/div[2]/mat-icon')
-            .waitForElementVisible('//span[@class="mat-option-text"]/span/button[contains(@class,"create-record")]')
+            .useCss()
+            .click('shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
+            .waitForElementVisible('mat-option button.create-record')
+            .pause(2000)
+            .useXpath()
             .assert.not.enabled('//span[@class="mat-option-text"]/span/button[contains(@class,"create-record")]')
     },
 
@@ -188,16 +189,14 @@ module.exports = {
     'Step 24: The admin user removes modify permission for the shapes graph record' : function (browser) {
         browser
             .useCss()
-            .setValue('catalog-page records-view div.d-flex search-bar.record-search input', 'UHTC Test Graph')
-            .sendKeys('catalog-page records-view div.d-flex search-bar.record-search input', browser.Keys.ENTER)
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .click('xpath', '//catalog-page//records-view//record-card' +
-                                   '//*[div[contains(@class, "card-body")]//h5[contains(@class, "card-title")]' +
-                                   '//span[contains(@class, "ng-binding")][text()[contains(., "UHTC Test Graph")]]]',
-                                   function(result) { this.assert.strictEqual(result.status, 0) })
+            .waitForElementNotPresent('#spinner-full')
+            .setValue('catalog-page records-view .d-flex .search-form input','UHTC Test Graph')
+            .sendKeys('catalog-page records-view .d-flex .search-form input', browser.Keys.ENTER)
+            .waitForElementNotPresent('#spinner-full')
+            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "UHTC Test Graph")]]//ancestor::mat-card')
             .waitForElementVisible('catalog-page record-view div.record-body')
             .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('UHTC Test Graph');
+        browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
         browser
             .assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button')
             .click('catalog-page record-view div.record-sidebar manage-record-button button')

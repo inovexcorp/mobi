@@ -26,6 +26,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
+// TODO: update this
 describe('State Manager service', function() {
     var $httpBackend, stateManagerSvc, $q, scope, $httpParamSerializer, util;
 

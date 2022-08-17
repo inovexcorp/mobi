@@ -20,122 +20,124 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { pullAt, map, trim } from 'lodash';
+import { pullAt, map, trim, uniq, set, find } from 'lodash';
+import { MatDialogRef } from '@angular/material';
+import { finalize, shareReplay, startWith } from 'rxjs/operators';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { BehaviorSubject, of, Subject } from 'rxjs';
+
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { finalize, first } from 'rxjs/operators';
-import { noop } from 'rxjs';
-
-const template = require('./uploadOntologyOverlay.component.html');
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:uploadOntologyOverlay
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.UploadOntologyOverlayComponent
  *
- * @description
- * `uploadOntologyOverlay` is a component that creates content for a modal that provides a form for entering
- * catalog record metadata about each of the {@link shared.service:ontologyStateService uploaded files}.
- * The form contains a {@link shared.component:textInput} for the record title, a
- * {@link shared.component:textArea} for the record description, and a
- * {@link shared.component:keywordSelect} for each uploaded file. The title defaults to the file name.
- * The modal contains buttons to Cancel, Submit the current ontology upload, and Submit all the subsequent
- * ontology uploads with the default values.
+ * A component that creates content for a modal that provides a form for entering catalog record metadata about each of
+ * the {@link shared.OntologyStateService#uploadFiles uploaded files}. The form contains a field for the record title, a
+ * field for the record description, and a {@link shared.KeywordSelectComponent} for each uploaded file. The title
+ * defaults to the file name. The modal contains buttons to Cancel, Submit the current ontology upload, and Submit all
+ * the subsequent ontology uploads with the default values. Meant to be used in conjunction with the `MatDialog`
+ * service.
  *
  * @param {Function} close A function that closes the modal
  * @param {Function} dismiss A function that dismisses the modal
  */
-const uploadOntologyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&',
-        resolve: '<'
-    },
-    controllerAs: 'dvm',
-    controller: uploadOntologyOverlayComponentCtrl
-};
+@Component({
+    selector: 'upload-ontology-overlay',
+    templateUrl: './uploadOntologyOverlay.component.html'
+})
+export class UploadOntologyOverlayComponent implements OnInit {
+    file: File = undefined;
+    uploadOffset = 0;
+    total = 0;
+    index = 0;
 
-uploadOntologyOverlayComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService'];
+    uploadOntologyForm: FormGroup = this.fb.group({
+        title: ['', [ Validators.required]],
+        description: [''],
+        keywords: [[]],
+    });
 
-function uploadOntologyOverlayComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    var os = ontologyStateService;
-    var file = undefined;
-    var uploadOffset = 0;
-    dvm.total = 0;
-    dvm.index = 0;
-    dvm.title = '';
-    dvm.description = '';
-    dvm.keywords = [];
+    @Output() uploadStarted = new EventEmitter<boolean>();
 
-    dvm.$onInit = function() {
-        uploadOffset = os.uploadList.length;
-        dvm.total = os.uploadFiles.length;
-        if (dvm.total) {
-            setFormValues();
+    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<UploadOntologyOverlayComponent>, 
+        private om: OntologyManagerService, private os: OntologyStateService) {}
+
+    ngOnInit(): void {
+        this.uploadOffset = this.os.uploadList.length;
+        this.total = this.os.uploadFiles.length;
+        if (this.total) {
+            this._setFormValues();
         }
-        if (dvm.total < 1) {
-            dvm.cancel();
+        if (this.total < 1) {
+            this.cancel();
         }
     }
-    dvm.submit = function() {
-        const id = 'upload-' + (uploadOffset + dvm.index);
-        const emtyPromise = new Promise(resolve => {
+    submit(): void {
+        const id = 'upload-' + (this.uploadOffset + this.index);
+        // Notify the parent the upload has started
+        this.uploadStarted.emit(true);
+        // Create a subject to provide status updates on the upload progress
+        const _statusSubject = new BehaviorSubject<string>('processing');
+        // Increment the upload counter
+        this.os.uploadPending += 1;
+        // Create the upload request and signal the upload has started in the Subject
+        const request = this.om.uploadOntology({
+            file: this.file,
+            title: this.uploadOntologyForm.controls.title.value,
+            description: this.uploadOntologyForm.controls.description.value,
+            keywords: uniq(map(this.uploadOntologyForm.controls.keywords.value, trim))
         });
-        dvm.resolve.startUpload();
-        os.uploadList
-            .push({title: dvm.title, id, promise: emtyPromise, error: undefined, isProcessing: true});
-        const request = om.uploadOntology({file: file, title: dvm.title, description: dvm.description, keywords: map(dvm.keywords, trim)});
-        request.pipe(finalize(() => {
-            const fileInfo = os.uploadList.find(item => item.id === id);
-            fileInfo.isProcessing = false;
+        const item = {
+            title: this.uploadOntologyForm.controls.title.value,
+            id,
+            sub: undefined, // Can't put subscription here
+            error: undefined,
+            // Allows us to subscribe to the status updates
+            status: _statusSubject.asObservable().pipe(shareReplay(1))
+        }; 
+
+        // Add the representation of the upload to the uploadList
+        this.os.uploadList.push(item);
+        
+        // By putting this here, we can unsubscribe from the observable, effectively canceling the request
+        set(item, 'sub', request.pipe(finalize(() => {
+            // When request completes, decrement counter and notify parent upload completed
+            this.os.uploadPending -= 1;
+            this.uploadStarted.emit(false);
         })).subscribe(() => {
-            const fileInfo = os.uploadList.find(item => item.id === id);
-            fileInfo.status = 'complete';
-            dvm.resolve.finishUpload();
+            _statusSubject.next('complete');
         }, error => {
-            const fileInfo = os.uploadList.find(item => item.id === id);
-            fileInfo.status = 'error';
-            os.addErrorToUploadItem(id, error);
-            dvm.resolve.finishUpload();
-        });
-        if ((dvm.index + 1) < dvm.total) {
-            dvm.index++;
-            setFormValues();
+            _statusSubject.next('error');  // TODO this is not removing the spinner
+            this.os.addErrorToUploadItem(id, error);
+            // return a new disposable stream and keep the original stream alive.
+            return of(false);
+        }));
+
+        if ((this.index + 1) < this.total) {
+            this.index++;
+            this._setFormValues();
         } else {
-            os.uploadFiles.splice(0);
-            dvm.close();
+            this.os.uploadFiles.splice(0);
+            this.dialogRef.close();
         }
     }
-    dvm.submitAll = function() {
-        for (var i = dvm.index; i < dvm.total; i++) {
-            dvm.submit();
+    submitAll(): void {
+        for (let i = this.index; i < this.total; i++) {
+            this.submit();
         }
     }
-    dvm.finishLoading = function(id, promise) {
-        promise.then(dvm.resolve.finishUpload, errorObject => {
-                 os.addErrorToUploadItem(id, errorObject);
-                 dvm.resolve.finishUpload();
-             });
-        let fileInfo = os.uploadList.find(item => item.id === id);
-        fileInfo.promise = promise;
-        fileInfo.isProcessing = false;
-    }
-    dvm.cancel = function() {
-        os.uploadFiles.splice(0);
-        dvm.total = 0;
-        dvm.dismiss();
+    cancel(): void {
+        this.os.uploadFiles.splice(0);
+        this.total = 0;
+        this.dialogRef.close();
     }
 
-    function setFormValues() {
-        file = pullAt(os.uploadFiles, 0)[0];
-        dvm.title = file.name;
-        dvm.description = '';
-        dvm.keywords = [];
+    private _setFormValues() {
+        this.file = pullAt(this.os.uploadFiles, 0)[0];
+        this.uploadOntologyForm.controls.title.setValue(this.file.name.replace(/\.[^/.]+$/, '')); // TODO fix faultly logic `Compressed upload must only contain a single file` error
+        this.uploadOntologyForm.controls.description.setValue('');
+        this.uploadOntologyForm.controls.keywords.setValue([]);
     }
 }
-
-export default uploadOntologyOverlayComponent;

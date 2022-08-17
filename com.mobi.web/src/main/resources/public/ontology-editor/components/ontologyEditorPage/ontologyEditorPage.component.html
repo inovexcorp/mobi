@@ -22,9 +22,9 @@
   -->
 <div class="ontology-editor-page container-fluid h-100">
     <div class="row flex-nowrap h-100">
-        <ontology-sidebar list="dvm.os.list"></ontology-sidebar>
-        <ontology-tab class="col p-0 remove-min-width" ng-if="!dvm.isOpenTab()" ng-class="{'up-to-date': dvm.os.listItem.upToDate && !dvm.os.listItem.userBranch}"></ontology-tab>
-        <div class="col p-0 remove-min-width" ng-if="dvm.isOpenTab()">
+        <ontology-sidebar [list]="os.list"></ontology-sidebar>
+        <ontology-tab class="col p-0 remove-min-width" *ngIf="os.listItem" [ngClass]="{'up-to-date': os.listItem.upToDate && !os.listItem.userBranch}"></ontology-tab>
+        <div class="col p-0 remove-min-width" *ngIf="!os.listItem">
             <open-ontology-tab></open-ontology-tab>
         </div>
     </div>

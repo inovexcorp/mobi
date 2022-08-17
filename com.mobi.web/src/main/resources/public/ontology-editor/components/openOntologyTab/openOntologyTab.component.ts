@@ -21,162 +21,179 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { some, find, noop, remove, get, isEmpty, forEach } from 'lodash';
-import { first } from 'rxjs/operators';
+import { some, find, get, isEmpty } from 'lodash';
+import { finalize } from 'rxjs/operators';
+import { MatDialog, PageEvent } from '@angular/material';
+import { animateChild, query, transition, trigger } from '@angular/animations';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 
-import './openOntologyTab.component.scss';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOverlay.component';
+import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
 
-const template = require('./openOntologyTab.component.html');
+import './openOntologyTab.component.scss';
+import { templateJitUrl } from '@angular/compiler';
+
+interface OntologyRecordDisplay {
+    title: string,
+    ontologyIRI: string,
+    description: string,
+    jsonld: JSONLDObject
+}
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:openOntologyTab
- * @requires shared.service:httpService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
- * @requires shared.service:utilService
- * @requires shared.service:mapperStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:modalService
- * @requires shared.service:policyEnforcementService
- * @requires shared.service:policyManagerService
+ * @class ontology-editor.OpenOntologyTabComponent
  *
- * @description
- * `openOntologyTab` is a component that creates a page for opening ontologies. The page includes a
- * {@link shared.component:searchBar} and a paginated list of ontologies with
- * {@link shared.component:actionMenu action menus} to manage and delete. In addition, the page includes buttons
- * for {@link ontology-editor.component:newOntologyTab creating new ontologies} and
- * {@link ontology-editor.component:uploadOntologyTab uploading ontologies}. The component houses a method
- * for opening the modal deleting an ontology.
+ * A component that creates a page for opening ontologies. The page includes a paginated searchable list of
+ * OntologyRecords with the ability to delete and open. Each ontology displays its title, ontology IRI, and description.
+ * In addition, the page includes buttons for {@link ontology-editor.NewOntologyOverlayComponent creating new ontologies}
+ * and {@link ontology-editor.UploadOntologyOverlayComponent uploading ontologies}.
  */
-const openOntologyTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: openOntologyTabComponentCtrl
-};
+@Component({
+    selector: 'open-ontology-tab',
+    templateUrl: './openOntologyTab.component.html',
+    animations: [
+        trigger('ngIfAnimation', [
+            transition(':enter, :leave', [
+                query('@*', animateChild(), { optional: true })
+            ])
+        ])
+    ]
+})
+export class OpenOntologyTabComponent implements OnInit {
+    pageIndex = 0;
+    limit = 10;
+    totalSize = 0;
+    filteredList: OntologyRecordDisplay[] = [];
+    filterText = '';
+    showSnackbar = false;
 
-openOntologyTabComponentCtrl.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'settingManagerService'];
+    @ViewChild('openOntologyFileInput') fileInput: ElementRef;
+    @ViewChild('ontologyList') ontologyList: ElementRef;
 
-function openOntologyTabComponentCtrl(httpService, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, settingManagerService) {
-    const dvm = this;
-    let ontologyRecords = [];
+    constructor(public dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, public om: OntologyManagerService, 
+        public os: OntologyStateService, public ms: MapperStateService, private cm: CatalogManagerService, 
+        @Inject('settingManagerService') private sm, @Inject('utilService') public util) {}
 
-    dvm.prefixes = prefixes;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.ms = mapperStateService;
-    dvm.util = utilService;
-    dvm.currentPage = 1;
-    dvm.limit = 10;
-    dvm.totalSize = 0;
-    dvm.filteredList = [];
-    dvm.id = 'openOntologyTabTargetedSpinner';
-
-    dvm.$onInit = function() {
-        dvm.getPageOntologyRecords(1, '');
+    ngOnInit(): void {
+        this.setPageOntologyRecords(0, '');
     }
-    dvm.clickUpload = function(id) {
-        const upload = <HTMLInputElement> document.getElementById(id);
-        upload.value = null;
-        upload.click();
+    clickUpload(): void {
+        this.fileInput.nativeElement.value = null;
+        this.fileInput.nativeElement.click();
     }
-    dvm.updateFiles = function(event, files) {
-        dvm.os.uploadFiles = files;
-        dvm.showUploadOntologyOverlay();
-    }
-    dvm.showUploadOntologyOverlay = function() {
-        modalService.openModal('uploadOntologyOverlay', {startUpload: dvm.startUpload, finishUpload: dvm.finishUpload});
-    }
-    dvm.startUpload = function() {
-        dvm.os.uploadPending += 1;
-        dvm.showSnackbar = true;
-    }
-    dvm.finishUpload = function() {
-        dvm.os.uploadPending -= 1;
-        if (dvm.os.uploadPending === 0) {
-            dvm.search();
+    updateFiles(files: FileList): void {
+        if (files) {
+            this.os.uploadFiles = Array.from(files);
+            this.showUploadOntologyOverlay();
         }
     }
-    dvm.isOpened = function(record) {
-        return some(dvm.os.list, {versionedRdfRecord: {recordId: record['@id']}});
-    }
-    dvm.open = function(record) {
-        const listItem: OntologyListItem = find(dvm.os.list, {versionedRdfRecord: {recordId: record['@id']}});
-        if (listItem) {
-            dvm.os.listItem = listItem;
-            dvm.os.listItem.active = true;
-        } else {
-            dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
-                .subscribe(noop, dvm.util.createErrorToast);
-        }
-    }
-    dvm.newOntology = function() {
-        settingManagerService.getDefaultNamespace()
-            .then(defaultNamespace => {
-                dvm.os.newOntology = {
-                    '@id': defaultNamespace,
-                    '@type': [prefixes.owl + 'Ontology'],
-                    [prefixes.dcterms + 'title']: [{
-                        '@value': ''
-                    }],
-                    [prefixes.dcterms + 'description']: [{
-                        '@value': ''
-                    }]
-                };
-                dvm.os.newKeywords = [];
-                dvm.os.newLanguage = undefined;
-                modalService.openModal('newOntologyOverlay');
-            }, error => Promise.reject(error));
-    }
-    dvm.showDeleteConfirmationOverlay = function(record) {
-        dvm.recordId = get(record, '@id', '');
-
-        let msg = '';
-        if (find(dvm.ms.sourceOntologies, {recordId: dvm.recordId})) {
-            msg += '<error-display>Warning: The ontology you\'re about to delete is currently open in the mapping tool.</error-display>';
-        }
-        modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(record, 'title') + '</strong>?</p>', dvm.deleteOntology);
-    }
-    dvm.deleteOntology = function() {
-        return dvm.om.deleteOntology(dvm.recordId)
-            .subscribe(() => {
-                dvm.os.closeOntology(dvm.recordId);
-                const state = dvm.os.getStateByRecordId(dvm.recordId);
-                if (!isEmpty(state)) {
-                    dvm.os.deleteState(dvm.recordId);
+    showUploadOntologyOverlay(): void {
+        const overlay = this.dialog.open(UploadOntologyOverlayComponent);
+        overlay.componentInstance.uploadStarted.subscribe(result => {
+            if (result) {
+                this.showSnackbar = true;
+            } else {
+                if (this.os.uploadPending === 0) {
+                    this.search();
                 }
-                return dvm.getPageOntologyRecords(1, dvm.filterText);
-            }, dvm.util.createErrorToast);
-    }
-    dvm.getPageOntologyRecords = function(page, inputFilterText) {
-        dvm.currentPage = page;
-        const catalogId = get(catalogManagerService.localCatalog, '@id', '');
-        const paginatedConfig = {
-            pageIndex: dvm.currentPage - 1,
-            limit: dvm.limit,
-            recordType: prefixes.ontologyEditor + 'OntologyRecord',
-            sortOption: find(catalogManagerService.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
-            searchText: inputFilterText
-        };
-        httpService.cancel(dvm.id);
-        catalogManagerService.getRecords(catalogId, paginatedConfig, dvm.id).subscribe(response => {
-            dvm.filteredList = response.body.filter(item => {
-                return item['@type'].some(i => i === 'http://mobi.com/ontologies/ontology-editor#OntologyRecord');
-            });
-            if (response.headers !== undefined) {
-                dvm.totalSize = Number(response.headers.get('x-total-count')) || 0 ;
             }
         });
     }
-    dvm.search = function(event) {
-        dvm.getPageOntologyRecords(1, dvm.filterText);
+    closeSnackbar(): void {
+        this.showSnackbar = false;
+    }
+    isOpened(record: JSONLDObject): boolean {
+        return some(this.os.list, {versionedRdfRecord: {recordId: record['@id']}});
+    }
+    open(record: OntologyRecordDisplay): void {
+        const listItem: OntologyListItem = find(this.os.list, {versionedRdfRecord: {recordId: record.jsonld['@id']}});
+        if (listItem) {
+            this.os.listItem = listItem;
+            this.os.listItem.active = true;
+        } else {
+            this.os.openOntology(record.jsonld['@id'], record.title)
+                .subscribe(() => {}, error => this.util.createErrorToast(error));
+        }
+    }
+    newOntology(): void {
+        this.sm.getDefaultNamespace()
+            .then(defaultNamespace => {
+                this.dialog.open(NewOntologyOverlayComponent, { autoFocus: false, data: { defaultNamespace } });
+            }, error => this.util.createErrorToast(error));
+    }
+    showDeleteConfirmationOverlay(record: OntologyRecordDisplay): void {
+        const recordId = get(record.jsonld, '@id', '');
+
+        let msg = '';
+        if (find(this.ms.sourceOntologies, {recordId: recordId})) {
+            msg += '<error-display>Warning: The ontology you\'re about to delete is currently open in the mapping tool.</error-display>';
+        }
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: `${msg}<p>Are you sure that you want to delete <strong>${record.title}</strong>?</p>`
+            }
+        }).afterClosed().subscribe(result => {
+            if (result) {
+                this.deleteOntology(recordId);
+            }
+        });
+    }
+    deleteOntology(recordId: string): void {
+        this.om.deleteOntology(recordId)
+            .subscribe(() => {
+                this.os.closeOntology(recordId);
+                const state = this.os.getStateByRecordId(recordId);
+                if (!isEmpty(state)) {
+                    this.os.deleteState(recordId);
+                }
+                return this.setPageOntologyRecords(0, this.filterText);
+            }, error => this.util.createErrorToast(error));
+    }
+    getPage(pageEvent: PageEvent): void {
+        this.setPageOntologyRecords(pageEvent.pageIndex, this.filterText);
+    }
+    setPageOntologyRecords(page: number, inputFilterText: string): void {
+        this.filterText = inputFilterText;
+        this.pageIndex = page;
+        const catalogId = get(this.cm.localCatalog, '@id', '');
+        const paginatedConfig = {
+            pageIndex: this.pageIndex,
+            limit: this.limit,
+            type: ONTOLOGYEDITOR + 'OntologyRecord',
+            sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
+            searchText: inputFilterText
+        };
+        this.spinnerSvc.startLoadingForComponent(this.ontologyList);
+        this.cm.getRecords(catalogId, paginatedConfig, true)
+            .pipe(finalize(() => {
+                this.spinnerSvc.finishLoadingForComponent(this.ontologyList);
+            }))
+            .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+                this.filteredList = response.body
+                    .filter(item => {
+                        return get(item, '@type', []).some(i => i === ONTOLOGYEDITOR + 'OntologyRecord');
+                    })
+                    .map(record => ({
+                        title: this.util.getDctermsValue(record, 'title'),
+                        ontologyIRI: this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI'),
+                        description: this.util.getDctermsValue(record, 'description'),
+                        jsonld: record
+                    }));
+                if (response.headers !== undefined) {
+                    this.totalSize = Number(response.headers.get('x-total-count')) || 0;
+                }
+            });
+    }
+    search(): void {
+        this.setPageOntologyRecords(0, this.filterText);
     }
 }
-
-export default openOntologyTabComponent;

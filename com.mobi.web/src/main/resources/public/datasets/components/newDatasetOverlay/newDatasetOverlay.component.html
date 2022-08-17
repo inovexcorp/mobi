@@ -36,20 +36,7 @@
         <mat-label>Description</mat-label>
         <textarea matInput name="description" formControlName="description"></textarea>
     </mat-form-field>
-    <!-- TODO: Replace with keyword-select when upgraded -->
-    <mat-form-field class="flex-1 w-100">
-        <mat-chip-list #keywordSelect formControlName="keywords">
-            <mat-chip *ngFor="let keyword of createDatasetForm.get('keywords').value" [removable]="true" (removed)="removeKeyword(keyword)">
-                {{keyword}}
-                <mat-icon matChipRemove>cancel</mat-icon>
-            </mat-chip>
-        </mat-chip-list>
-        <input placeholder="Keywords"
-        [matChipInputFor]="keywordSelect"
-        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-        [matChipInputAddOnBlur]="false"
-        (matChipInputTokenEnd)="addKeyword($event)">
-    </mat-form-field>
+    <keyword-select [parentForm]="createDatasetForm"></keyword-select>
     <div class="repository-id">
         <div class="field-label">Repository ID</div>
         <p>{{repositoryId}}</p>
@@ -60,3 +47,4 @@
     <button mat-raised-button [mat-dialog-close]="">Cancel</button>
     <button mat-raised-button color="primary" (click)="create()" [disabled]="createDatasetForm.invalid">Submit</button>
 </div>
+  

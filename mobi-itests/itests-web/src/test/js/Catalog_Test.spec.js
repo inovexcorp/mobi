@@ -261,25 +261,25 @@ module.exports = {
 
     'Step 5: Search catalog page ASC' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (asc)'});
-        catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-9p.ttl');
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-1,z-catalog-ontology-2,z-catalog-ontology-3,z-catalog-ontology-4,z-catalog-ontology-9p.ttl');
         
     },
 
     'Step 6: Search catalog page DESC' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
-        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4,z-catalog-ontology-3,z-catalog-ontology-2,z-catalog-ontology-1');
         
     },
 
     'Step 7: Search catalog page one item ASC' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-1', order: 'Title (asc)'});
-        catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl');
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-1');
         
     },
 
     'Step 8: Check metadata of z-catalog-ontology-9p.ttl' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
-        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4,z-catalog-ontology-3,z-catalog-ontology-2,z-catalog-ontology-1');
         catalogPage.openRecordItem(browser, 'z-catalog-ontology-9p.ttl');
         catalogPage.changeRecordFields(browser, 'z-catalog-ontology-9p.ttl', {'description': 'new description', 'keywords': keywordsList});
 
@@ -288,11 +288,11 @@ module.exports = {
         catalogPage.leaveCatalogRecord(browser);
     },
 
-    'Step 9: Check metadata of z-catalog-ontology-1.ttl' : function(browser) {
+    'Step 9: Check metadata of z-catalog-ontology-1' : function(browser) {
         browser.waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
-        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
-        catalogPage.openRecordItem(browser, 'z-catalog-ontology-1.ttl');
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4,z-catalog-ontology-3,z-catalog-ontology-2,z-catalog-ontology-1');
+        catalogPage.openRecordItem(browser, 'z-catalog-ontology-1');
 
         browser
             .useCss()
@@ -368,7 +368,7 @@ module.exports = {
             .waitForElementNotPresent('#spinner-full')
 
 
-        catalogPage.openRecordItem(browser, 'z-catalog-ontology-1.ttl');
+        catalogPage.openRecordItem(browser, 'z-catalog-ontology-1');
 
         browser.assert.not.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
     }

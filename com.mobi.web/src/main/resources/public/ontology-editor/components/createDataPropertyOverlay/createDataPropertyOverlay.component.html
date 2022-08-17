@@ -36,7 +36,8 @@
         <text-area bind-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
                    change-event="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
                    display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select>
+        <!-- TODO: Add back in once upgraded -->
+        <!-- <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select> -->
         <div class="mt-2">
             <p class="identifier"><strong>Characteristics</strong></p>
             <checkbox ng-repeat="obj in dvm.characteristics track by obj.typeIRI" [(model)]="obj.checked" [display-text]="obj.displayText"></checkbox>

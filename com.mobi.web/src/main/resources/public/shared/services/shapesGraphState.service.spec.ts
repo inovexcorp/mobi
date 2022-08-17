@@ -26,16 +26,14 @@ import { get } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
 
 import {
-    mockShapesGraphManager,
-    mockStateManager,
     mockUtil,
     mockPolicyEnforcement,
-    mockPolicyManager
-} from '../../../../../test/ts/Shared';
-import {CATALOG, DCTERMS} from '../../prefixes';
+    cleanStylesFromDOM} from '../../../../../test/ts/Shared';
+import { CATALOG, DCTERMS } from '../../prefixes';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
 import { Difference } from '../models/difference.class';
 import { RdfUpload } from '../models/rdfUpload.interface';
@@ -46,21 +44,17 @@ import { CatalogManagerService } from './catalogManager.service';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 import { PolicyManagerService } from './policyManager.service';
-import { OptionalJSONLD } from '../models/OptionalJSONLD.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-
+import { StateManagerService } from './stateManager.service';
 
 describe('Shapes Graph State service', function() {
     let service: ShapesGraphStateService;
-    let shapesGraphManagerStub;
-    let utilStub;
+    let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    const catalogId = 'catalog';
-    let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;;
+    let utilStub;
     let policyEnforcementStub;
-    let branch;
-    let branches;
+
+    const catalogId = 'catalog';
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -69,25 +63,21 @@ describe('Shapes Graph State service', function() {
                 ShapesGraphStateService,
                 MockProvider(CatalogManagerService),
                 MockProvider(PolicyManagerService),
-                { provide: 'shapesGraphManagerService', useClass: mockShapesGraphManager },
-                { provide: 'stateManagerService', useClass: mockStateManager },
+                MockProvider(StateManagerService),
+                MockProvider(ShapesGraphManagerService),
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: ShapesGraphManagerService, useClass: mockShapesGraphManager },
             ]
         });
     });
 
     beforeEach(function() {
-        
         catalogManagerStub = TestBed.get(CatalogManagerService);
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         service = TestBed.get(ShapesGraphStateService);
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
-        policyManagerStub = TestBed.get(PolicyManagerService);
         policyEnforcementStub = TestBed.get('policyEnforcementService');
         service.listItem = new ShapesGraphListItem();
-        this.catalogId = 'catalog';
         this.branch = {
             '@id': 'branch123',
             [CATALOG + 'head']: [{'@id': 'commit123'}],
@@ -98,16 +88,18 @@ describe('Shapes Graph State service', function() {
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
             return get(obj, `['${DCTERMS}${prop}'][0]['@value']`, '');
         });
-        catalogManagerStub.localCatalog = {'@id': this.catalogId};
-        catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': this.catalogId, data: this.branches}]})));
+        catalogManagerStub.localCatalog = {'@id': catalogId};
+        catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': catalogId, data: this.branches}]})));
         service.initialize();
     });
 
     afterEach(function() {
+        cleanStylesFromDOM();
         service = null;
         utilStub = null;
         shapesGraphManagerStub = null;
         catalogManagerStub = null;
+        policyEnforcementStub = null;
     });
 
     it('should reset variables', function() {
@@ -159,14 +151,16 @@ describe('Shapes Graph State service', function() {
                 file: this.file
             } as RdfUpload;
 
-            this.createStateSpy = spyOn(service, 'createState');
+            this.createStateSpy = spyOn(service, 'createState').and.returnValue(of(null));
+            shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo('theId');
+            shapesGraphManagerStub.getShapesGraphContent.and.resolveTo('content');
         });
         describe('and create the record', function() {
             describe('and create the state', function() {
                describe('successfully', function() {
                    it('with a success toast', async function() {
+                    //    shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo('theId');
                        await service.uploadShapesGraph(this.rdfUpload);
-                       shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo('theId');
                        expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                        expect(shapesGraphManagerStub.getShapesGraphMetadata).toHaveBeenCalledWith(this.createResponse.recordId, this.createResponse.branchId, this.createResponse.commitId, this.createResponse.shapesGraphId);
@@ -189,6 +183,7 @@ describe('Shapes Graph State service', function() {
                        expect(service.list).toContain(service.listItem);
                    });
                    it('without a success toast', async function() {
+                    //    shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo('theId');
                        await service.uploadShapesGraph(this.rdfUpload, false);
                        expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
                        expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
@@ -213,7 +208,7 @@ describe('Shapes Graph State service', function() {
                });
                describe('unless an error occurs', function() {
                    beforeEach(function() {
-                      this.createStateSpy.and.rejectWith('Error');
+                      this.createStateSpy.and.returnValue(throwError('Error'));
                    });
                    it('with a success toast', async function() {
                        await service.uploadShapesGraph(this.rdfUpload)
@@ -314,7 +309,7 @@ describe('Shapes Graph State service', function() {
             it('successfully', async function() {
                 shapesGraphManagerStub.getShapesGraphIRI.and.resolveTo('theId');
                 shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo([{'@id': 'theId'}]);
-                const updateShapesGraphMetadataSpy = spyOn(service, 'updateShapesGraphMetadata').and.returnValue(Promise.resolve());
+                const updateShapesGraphMetadataSpy = spyOn(service, 'updateShapesGraphMetadata').and.resolveTo();
                 await service.openShapesGraph(this.selectedRecord);
                 expect(this.catalogDetailsSpy).toHaveBeenCalledWith(this.selectedRecord.recordId);
                 expect(service.listItem.versionedRdfRecord).toEqual({
@@ -355,10 +350,10 @@ describe('Shapes Graph State service', function() {
     });
     describe('should update shapes graph metadata', function() {
         beforeEach(function() {
-            shapesGraphManagerStub.getShapesGraphIRI.and.returnValue(Promise.resolve('theId'));
-            shapesGraphManagerStub.getShapesGraphMetadata.and.returnValue(Promise.resolve([{'@id': 'theId'}]));
-            shapesGraphManagerStub.getShapesGraphContent.and.returnValue(Promise.resolve('<urn:testClass> a <http://www.w3.org/2002/07/owl#Class>;'));
-            policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve('Permit'));
+            shapesGraphManagerStub.getShapesGraphIRI.and.resolveTo('theId');
+            shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo([{'@id': 'theId'}]);
+            shapesGraphManagerStub.getShapesGraphContent.and.resolveTo('<urn:testClass> a <http://www.w3.org/2002/07/owl#Class>;');
+            policyEnforcementStub.evaluateRequest.and.resolveTo('Permit');
         });
         it('successfully', async function() {
             await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
@@ -371,7 +366,7 @@ describe('Shapes Graph State service', function() {
             expect(service.list).toContain(service.listItem);
         });
         it('when the user does not have permission to modify', async function() {
-            policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve('Deny'));
+            policyEnforcementStub.evaluateRequest.and.resolveTo('Deny');
             await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
             expect(service.listItem.shapesGraphId).toEqual('theId');
             expect(service.listItem.metadata['@id']).toEqual('theId');
@@ -431,6 +426,10 @@ describe('Shapes Graph State service', function() {
             this.inProgressCommit.additions.push({'change': 'change'});
             service.listItem.inProgressCommit = this.inProgressCommit;
             this.updateStateSpy = spyOn(service, 'updateState').and.returnValue(of(null));
+            this.updateShapesGraphMetadataSpy = spyOn(service, 'updateShapesGraphMetadata').and.callFake(() => {
+                service.list.push(service.listItem);
+                return Promise.resolve();
+            });
         });
         describe('for a branch and update state', function() {
             beforeEach(function() {
@@ -446,6 +445,7 @@ describe('Shapes Graph State service', function() {
                     expect(service.list.length).toEqual(0);
                     await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle', true);
                     expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(this.updateShapesGraphMetadataSpy).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
                     expect(service.listItem.versionedRdfRecord).toEqual({
                         recordId: 'recordId',
                         branchId: 'branchId',
@@ -461,6 +461,7 @@ describe('Shapes Graph State service', function() {
                     expect(service.list.length).toEqual(0);
                     await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle');
                     expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(this.updateShapesGraphMetadataSpy).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
                     expect(service.listItem.versionedRdfRecord).toEqual({
                         recordId: 'recordId',
                         branchId: 'branchId',
@@ -483,6 +484,7 @@ describe('Shapes Graph State service', function() {
                         expect(response).toEqual('Error');
                     });
                 expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                expect(this.updateShapesGraphMetadataSpy).not.toHaveBeenCalled();
                 expect(service.listItem).toBeUndefined();
             });
         });
@@ -500,6 +502,7 @@ describe('Shapes Graph State service', function() {
                     expect(service.list.length).toEqual(0);
                     await service.changeShapesGraphVersion('recordId', undefined, 'commitId', 'tagId', 'versionTitle', true);
                     expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(this.updateShapesGraphMetadataSpy).toHaveBeenCalledWith('recordId', undefined, 'commitId');
                     expect(service.listItem.versionedRdfRecord).toEqual({
                         recordId: 'recordId',
                         branchId: undefined,
@@ -515,6 +518,7 @@ describe('Shapes Graph State service', function() {
                     expect(service.list.length).toEqual(0);
                     await service.changeShapesGraphVersion('recordId', undefined, 'commitId', 'tagId', 'versionTitle');
                     expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(this.updateShapesGraphMetadataSpy).toHaveBeenCalledWith('recordId', undefined, 'commitId');
                     expect(service.listItem.versionedRdfRecord).toEqual({
                         recordId: 'recordId',
                         branchId: undefined,
@@ -537,6 +541,7 @@ describe('Shapes Graph State service', function() {
                         expect(response).toEqual('Error');
                     });
                 expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                expect(this.updateShapesGraphMetadataSpy).not.toHaveBeenCalled();
                 expect(service.listItem).toBeUndefined();
             });
         });

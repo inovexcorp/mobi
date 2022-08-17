@@ -31,21 +31,7 @@
         <mat-label>Description</mat-label>
         <textarea matInput name="description" formControlName="description"></textarea>
     </mat-form-field>
-    <!-- TODO: Replace with keyword-select when upgraded -->
-    <mat-form-field class="flex-1 w-100">
-        <mat-label>Keywords</mat-label>
-        <mat-chip-list #keywordSelect formControlName="keywords">
-            <mat-chip *ngFor="let keyword of createMappingForm.get('keywords').value" [removable]="true" (removed)="removeKeyword(keyword)">
-                {{keyword}}
-                <mat-icon matChipRemove>cancel</mat-icon>
-            </mat-chip>
-        </mat-chip-list>
-        <input placeholder="Keywords"
-        [matChipInputFor]="keywordSelect"
-        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-        [matChipInputAddOnBlur]="false"
-        (matChipInputTokenEnd)="addKeyword($event)">
-    </mat-form-field>
+    <keyword-select [parentForm]="createMappingForm"></keyword-select>
 </form>
 <div mat-dialog-actions>
     <button mat-raised-button (click)="cancel()">Cancel</button>

@@ -20,53 +20,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Input } from '@angular/core';
+import { MatDialog } from '@angular/material';
 import { isEmpty } from 'lodash';
 
-import './ontologySidebar.component.scss';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyCloseOverlayComponent } from '../ontologyCloseOverlay/ontologyCloseOverlay.component';
 
-const template = require('./ontologySidebar.component.html');
+import './ontologySidebar.component.scss';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:ontologySidebar
- * @requires shared.service:ontologyStateService
- * @requires shared.service:modalService
+ * @class ontology-editor.OntologySidebarComponent
  *
- * @description
- * `ontologySidebar` is a component that creates a `div` containing a button to
- * {@link ontology-editor.component:ontologyDefaultTab open ontologies} and a `nav` of the
- * {@link shared.service:ontologyStateService opened ontologies}. The currently selected
- * {@link shared.service:ontologyStateService listItem} will have a
- * {@link ontology-editor.component:ontologyBranchSelect} displayed underneath and a link to
- * {@link ontology-editor.component:ontologyCloseOverlay close the ontology}. 
+ * A component that creates a `div` containing a button to
+ * {@link ontology-editor.component:ontologyTab open ontologies} and a `nav` of the
+ * {@link shared.OntologyStateService opened ontologies}. The currently selected
+ * {@link shared.OntologyStateService listItem} will have a
+ * {@link ontology-editor.OpenOntologySelectComponent} displayed underneath and a link to
+ * {@link ontology-editor.OntologyCloseOverlayComponent close the ontology}. 
  */
+@Component({
+    selector: 'ontology-sidebar',
+    templateUrl: './ontologySidebar.component.html'
+})
+export class OntologySidebarComponent {
+    @Input() list: OntologyListItem[];
 
-const ontologySidebarComponent = {
-    template,
-    bindings: {
-        list: '<'
-    },
-    controllerAs: 'dvm',
-    controller: ontologySidebarComponentCtrl
-};
+    constructor(private dialog: MatDialog, public os: OntologyStateService) {}
 
-ontologySidebarComponentCtrl.$inject = ['ontologyStateService', 'modalService'];
-
-function ontologySidebarComponentCtrl(ontologyStateService: OntologyStateService, modalService, ontologyVisualizationService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.onClose = function(listItem) {
-        if (dvm.os.hasChanges(listItem)) {
-            dvm.os.recordIdToClose = listItem.versionedRdfRecord.recordId;
-            modalService.openModal('ontologyCloseOverlay');
+    onClose(listItem: OntologyListItem): void {
+        if (this.os.hasChanges(listItem)) {
+            this.dialog.open(OntologyCloseOverlayComponent, {
+                data: { listItem }
+            });
         } else {
-            dvm.os.closeOntology(listItem.versionedRdfRecord.recordId);
+            this.os.closeOntology(listItem.versionedRdfRecord.recordId);
         }
     }
-    dvm.onClick = function(listItem) {
-        var previousListItem = dvm.os.listItem;
+    onClick(listItem?: OntologyListItem): void {
+        const previousListItem = this.os.listItem;
         if (previousListItem) {
             previousListItem.active = false;
             if (previousListItem.goTo) {
@@ -76,11 +69,9 @@ function ontologySidebarComponentCtrl(ontologyStateService: OntologyStateService
         }
         if (listItem && !isEmpty(listItem)) {
             listItem.active = true;
-            dvm.os.listItem = listItem;
+            this.os.listItem = listItem;
         } else {
-            dvm.os.listItem = {};
+            this.os.listItem = undefined;
         }
     }
 }
-
-export default ontologySidebarComponent;

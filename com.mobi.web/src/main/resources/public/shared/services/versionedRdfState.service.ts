@@ -34,12 +34,13 @@ import { State } from '../models/state.interface';
 import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { CatalogManagerService } from './catalogManager.service';
+import { StateManagerService } from './stateManager.service';
 
 /**
  * Service for common VersionedRdfState methods to be used in the ontology-editor or shapes-graph-editor.
  */
 export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
-    protected sm: any;
+    protected sm: StateManagerService;
     protected cm: CatalogManagerService;
     protected util: any;
     protected statePrefix: string;
@@ -72,9 +73,9 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * Creates a new state for the application type for the current user.
      *
      * @param versionedRdfStateBase {VersionedRdfStateBase} the state base containing VersionedRDFRecord information.
-     * @return {Observable} An Observable that resolves if the state creation was successful or not.
+     * @return {Observable<null>} An Observable that resolves if the state creation was successful or not.
      */
-    createState(versionedRdfStateBase: VersionedRdfStateBase): Observable<unknown> {
+    createState(versionedRdfStateBase: VersionedRdfStateBase): Observable<null> {
         let stateIri;
         const recordState: JSONLDObject = {
             '@id': this.statePrefix + v4(),
@@ -106,7 +107,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
             ...commitStatePartial
         } as JSONLDObject;
 
-        return from(this.sm.createState([recordState, commitState], this.application));
+        return this.sm.createState([recordState, commitState], this.application);
     }
     /**
      * Retrieves the current state for the provided recordId.
@@ -125,9 +126,9 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * Updates the State for the associated VersionedRdfStateBase.recordId with the provided VersionedRdfStateBase.
      *
      * @param versionedRdfStateBase {VersionedRdfStateBase} the new state to update to.
-     * @return {Observable} An Observable that resolves if the state update was successful or not.
+     * @return {Observable<null>} An Observable that resolves if the state update was successful or not.
      */
-    updateState(versionedRdfStateBase: VersionedRdfStateBase): Observable<unknown> {
+    updateState(versionedRdfStateBase: VersionedRdfStateBase): Observable<null> {
         const stateObj: State = cloneDeep(this.getStateByRecordId(versionedRdfStateBase.recordId));
         const stateId: string = stateObj.id;
         const model: JSONLDObject[] = stateObj.model;
@@ -171,16 +172,16 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
             });
         }
         recordState[this.statePrefix + 'currentState'] = [{'@id': currentStateId}];
-        return from(this.sm.updateState(stateId, model));
+        return this.sm.updateState(stateId, model);
     }
     /**
      * Deletes the state for the provided branchId.
      *
-     * @param recordId {string} the IRI of the VersionedRdfRecord that contains the branch.
-     * @param branchId {string} the IRI of the branch state to delete.
-     * @return {Observable} An Observable that resolves if the state deletion and update was successful or not.
+     * @param {string} recordId the IRI of the VersionedRdfRecord that contains the branch.
+     * @param {string} branchId the IRI of the branch state to delete.
+     * @return {Observable<null>} An Observable that resolves if the state deletion and update was successful or not.
      */
-    deleteBranchState(recordId: string, branchId:string): Observable<unknown> {
+    deleteBranchState(recordId: string, branchId:string): Observable<null> {
         const stateObj: State = cloneDeep(this.getStateByRecordId(recordId));
         const record: JSONLDObject = find(stateObj.model, {'@type': [this.statePrefix + 'StateRecord']});
         const branchState: JSONLDObject = head(remove(stateObj.model, {[this.statePrefix + 'branch']: [{'@id': branchId}]}));
@@ -188,20 +189,20 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
         if (!record[this.statePrefix + 'branchStates'].length) {
             delete record[this.statePrefix + 'branchStates'];
         }
-        return from(this.sm.updateState(stateObj.id, stateObj.model));
+        return this.sm.updateState(stateObj.id, stateObj.model);
     }
     /**
      * Deletes the state for the provided recordId.
      *
-     * @param recordId {string} the IRI of the VersionedRdfRecord state to delete.
+     * @param {string} recordId the IRI of the VersionedRdfRecord state to delete.
      * @return {Observable} An Observable that resolves if the state deletion was successful and rejects if not.
      */
-    deleteState(recordId: string): Observable<unknown> {
+    deleteState(recordId: string): Observable<null> {
         const state = this.getStateByRecordId(recordId);
         if (state === undefined) {
             return of();
         }
-        return from(this.sm.deleteState(state.id));
+        return this.sm.deleteState(state.id);
     }
     /**
      * Retrieves the ID of the current State object for the provided recordId.

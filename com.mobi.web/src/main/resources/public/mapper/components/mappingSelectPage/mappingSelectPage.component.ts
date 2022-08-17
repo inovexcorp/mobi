@@ -43,12 +43,13 @@ import { DownloadMappingOverlayComponent } from '../downloadMappingOverlay/downl
 import { ViewMappingModalComponent } from '../viewMappingModal/viewMappingModal.component';
 
 /**
- * @class mapper.MappingSelectPage
+ * @class mapper.MappingSelectPageComponent
  * 
+ * TODO: update this
  * A component that creates a Bootstrap `row` div with two columns for selecting and
- * previewing a mapping. The left column contains a {@link mapper.component:mappingListBlock mappingListBlock} for
- * selecting the current {@link shared.service:mapperStateService#mapping mapping}. The right column contains a
- * {@link mapper.component:mappingPreview mappingPreview} of the selected mapping and buttons for editing running,
+ * previewing a mapping. The left column contains a {@link mapper.MappingListBlockComponent mappingListBlock} for
+ * selecting the current {@link shared.MapperStateService#mapping}. The right column contains a
+ * {@link mapper.MappingPreviewComponent} of the selected mapping and buttons for editing running,
  * duplicating, and downloading the mapping.
  */
 @Component({

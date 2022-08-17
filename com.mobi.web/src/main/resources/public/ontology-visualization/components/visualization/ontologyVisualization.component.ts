@@ -50,7 +50,7 @@ import './ontologyVisualization.component.scss';
  * `OntologyVisualization`
  */
 @Component({
-    selector: 'ontologyVisualization',
+    selector: 'ontology-visualization',
     templateUrl: './ontologyVisualization.component.html'
 })
 export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
@@ -92,6 +92,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         private spinnerSrv : ProgressSpinnerService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
+        //@TODO Fix double loader indicator
         this.spinnerSrv.startLoadingForComponent(this.ontoVis);
         if (changes?.inProgress?.currentValue) {
             if (changes.inProgress.currentValue['additions'].length > 0  || 
@@ -123,16 +124,18 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                         } else {
                             self.initGraph(commitGraphState);
                         }
+                        this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
                     },
                     error(reason) { 
                         self.clearGraph();
                         self.initFailed(reason);
-                        self.spinnerSrv.startLoadingForComponent(this.ontoVis);
+                        self.spinnerSrv.finishLoadingForComponent(this.ontoVis);
                     }
                 });
             } else if (this.hasInProgressCommit) {
                 const state = this.ovis.getGraphState(this.commitId);
                 this.updateMessages(state.isOverLimit, state.nodeLimit);
+                this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
             }
         } 
     }

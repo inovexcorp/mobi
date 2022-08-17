@@ -48,7 +48,9 @@ import { MatExpansionModule } from "@angular/material/expansion";
          MatExpansionModule
      ],
      exports: [
-         MatExpansionModule
+         MatExpansionModule,
+         VisualizationSidebar,
+         OntologyVisualization
      ],
      entryComponents: [ 
         OntologyVisualization,

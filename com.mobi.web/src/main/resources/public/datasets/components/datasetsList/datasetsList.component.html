@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="datasets-list h-100 row">
+  <div class="datasets-list h-100 row">
     <div class="col-lg-8 offset-lg-2 h-100">
         <div class="h-100 d-flex flex-column">
             <div class="search-form d-flex pt-2">
@@ -38,11 +38,11 @@
                     <div class="result-contents" class="d-flex w-100">
                         <div class="dataset-info flex-1 remove-min-width">
                             <div class="header align-items-center d-flex">
-                                <h3 class="text-truncate" [title]="datasetDisplay.title">{{datasetDisplay.title}}</h3>
+                                <h3 class="text-truncate" [title]="datasetDisplay.title" [innerHTML]="datasetDisplay.title | highlightText:searchText"></h3>
                                 <small class="dataset-iri text-muted flex-1 text-truncate pl-2"><span [copy-clipboard]="datasetDisplay.datasetIRI" matTooltip="Copy Dataset IRI" matTooltipPosition="above">{{datasetDisplay.datasetIRI}}</span></small>
                             </div>
                             <p class="text-muted">Updated {{datasetDisplay.modified}}</p>
-                            <p class="description break-word m-0">{{datasetDisplay.description}}</p>
+                            <p class="description break-word m-0" [innerHTML]="datasetDisplay.description | highlightText:searchText"></p>
                             <dl>
                                 <dt class="text-muted">Repository</dt>
                                 <dd>{{datasetDisplay.repositoryId}}</dd>

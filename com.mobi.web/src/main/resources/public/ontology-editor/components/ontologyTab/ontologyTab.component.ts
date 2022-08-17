@@ -22,12 +22,13 @@
  */
 import { find, get } from 'lodash';
 import { first } from 'rxjs/operators';
+import { UpgradeComponent } from '@angular/upgrade/static';
+import { Directive, ElementRef, Injector } from '@angular/core';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './ontologyTab.component.scss';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { noop } from 'rxjs';
 
 const template = require('./ontologyTab.component.html');
 
@@ -50,7 +51,7 @@ const template = require('./ontologyTab.component.html');
  * {@link ontology-editor.component:conceptsTab}, {@link ontology-editor.component:searchTab},
  * {@link ontology-editor.component:savedChangesTab}, and {@link ontology-editor.component:commitsTab}.
  */
-const ontologyTabComponent = {
+export const ontologyTabComponent = {
     template,
     bindings: {},
     controllerAs: 'dvm',
@@ -94,4 +95,11 @@ function ontologyTabComponentCtrl($q, ontologyStateService: OntologyStateService
     }
 }
 
-export default ontologyTabComponent;
+@Directive({
+    selector: 'ontology-tab'
+})
+export class OntologyTabDirective extends UpgradeComponent {
+    constructor(elementRef: ElementRef, injector: Injector) {
+        super('ontologyTab', elementRef, injector);
+    }
+}

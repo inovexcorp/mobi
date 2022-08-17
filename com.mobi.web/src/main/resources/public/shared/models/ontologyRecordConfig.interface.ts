@@ -23,6 +23,13 @@
 import { JSONLDObject } from './JSONLDObject.interface';
 import { RecordConfig } from './recordConfig.interface';
 
+ /**
+ * @ngdoc interface
+ * @name shared.models:OntologyRecordConfig
+ *
+ * @description
+ * Represents Ontology Record Config
+ */
 export interface OntologyRecordConfig extends RecordConfig {
     jsonld?: JSONLDObject[],
     file?: File

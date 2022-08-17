@@ -20,18 +20,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="open-ontology-select">
-    <ui-select ng-model="dvm.selected" ng-disabled="dvm.os.hasChanges(dvm.listItem) || dvm.os.isCommittable(dvm.listItem)" on-select="dvm.changeEntity($item)">
-        <ui-select-match placeholder="Open at...">
-            <span class="text-truncate">{{dvm.getType($select.selected)}}: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
-        </ui-select-match>
-        <ui-select-choices repeat="entity in dvm.selectList | branchesToDisplay | filter:$select.search" group-by="dvm.getGroupTitle">
-            <div class="entity-display" ng-init="title = dvm.util.getDctermsValue(entity, 'title')" ng-class="{'master': title === 'MASTER', 'active': entity['@id'] === dvm.selected['@id']}">
-                <span ng-bind-html="title | highlight:$select.search | trusted" title="{{title}}"></span>
-                <a ng-if="dvm.cm.isUserBranch(entity)" class="fa fa-exclamation-triangle fa-fw-red"></a>
-                <a ng-if="dvm.canDelete(entity)" class="fa fa-trash-o fa-fw text-muted" ng-click="dvm.openDeleteConfirmation($event, entity)"></a>
-                <a ng-if="dvm.cm.isBranch(entity) && dvm.listItem.userCanModify" class="fa fa-pencil fa-fw text-muted" ng-click="dvm.openEditOverlay($event, entity)"></a>
-            </div>
-        </ui-select-choices>
-    </ui-select>
-</div>
+<mat-form-field class="open-ontology-select w-100">
+    <input class="text-truncate" #ontologySearch matInput placeholder="Open at..." [matAutocomplete]="ontologyAutoComplete" [formControl]="ontologySearchControl"/>
+    <mat-icon *ngIf="selected && selected?.icon.value.mat" matSuffix>{{selected.icon.value.icon}}</mat-icon>
+    <i *ngIf="selected && !selected?.icon.value.mat" class="{{selected.icon.value.icon}}" matSuffix></i>
+    <mat-autocomplete #ontologyAutoComplete="matAutocomplete"
+        (optionSelected)="changeEntity($event)"
+        (opened)="openPanel()"
+        (closed)="closePanel()">
+        <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
+            <mat-option *ngFor="let option of group.options" [value]="option">
+                <div class="entity-display d-flex" [ngClass]="{'master': option.title === 'MASTER', 'active': option.jsonld['@id'] === selected?.jsonld['@id']}">
+                    <span class="flex-1 remove-min-width text-truncate" title="{{option.title}}">{{option.title}}</span>
+                    <span class="pl-1" *ngIf="option.isUserBranch"><i class="fa fa-exclamation-triangle fa-fw-red"></i></span>
+                    <span class="pl-1" *ngIf="option.canDelete"><a class="fa fa-trash-o fa-fw text-muted" (click)="openDeleteConfirmation(option, $event)"></a></span>
+                    <span class="pl-1" *ngIf="option.type === 'Branch' && listItem?.userCanModify && option.title !== 'MASTER'"><a class="fa fa-pencil fa-fw text-muted" (click)="openEditOverlay(option.jsonld, $event)"></a></span>
+                </div>
+            </mat-option>
+        </mat-optgroup>
+    </mat-autocomplete>
+</mat-form-field>

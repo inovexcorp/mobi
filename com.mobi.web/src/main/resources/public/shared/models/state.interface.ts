@@ -22,6 +22,10 @@
  */
 import { JSONLDObject } from './JSONLDObject.interface';
 
+/**
+ * Represents a State object from the `states` rest for a particular user. `id` is the IRI of the State object used for 
+ * REST calls and `model` contains all the RDF data associated with the State
+ */
 export interface State {
     id: string;
     model: JSONLDObject[];

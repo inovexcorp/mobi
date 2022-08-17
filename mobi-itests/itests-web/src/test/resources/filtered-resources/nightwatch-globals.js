@@ -26,10 +26,9 @@ module.exports = {
         browser
             .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home');
         browser.globals.login(browser, user, password);
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-            .waitForElementNotVisible('div.spinner')
-            .waitForElementVisible('div.btn-container button')
+        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementVisible('button.upload-button');
     },
 
     'login': function (browser, username, password) {
@@ -53,68 +52,70 @@ module.exports = {
     },
 
     'return_to_ontology_editor_search': function (browser) {
-        browser
-            .click('xpath', '//div[contains(@class, \'ontology-sidebar\')]//button[@class=\'btn btn-primary\']')
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, \'open-ontology-tab\')]//div[contains(@class, \'search-bar\')]/input'})
+        browser.click('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementPresent('ontology-editor-page open-ontology-tab');
     },
 
     // TODO: Add a check to see if the ontology already exists, and if it does, either skip upload or delete and re-upload.
     'upload_ontologies': function (browser, ...args) {
       for (var i = 0; i < args.length - 1; i++) {
           browser
+              .click('button.upload-button')
               .uploadFile('input[type=file]', args[i])
-              .click('upload-ontology-overlay div.modal-footer button.btn')
-              .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+              .useXpath()
+              .click('//upload-ontology-overlay//span[text() = "Submit"]/parent::button')
+              .waitForElementNotPresent('//upload-ontology-overlay//span[text() = "Cancel"]/parent::button')
+              .useCss()
       }
       browser
+          .click('button.upload-button')
           .uploadFile('input[type=file]', args[args.length - 1])
           .waitForElementVisible('upload-ontology-overlay')
-          .click('xpath', '//button[text()[contains(.,"Submit All")]]')
+          .click('xpath', '//upload-ontology-overlay//span[text() = "Submit All"]/parent::button')
           .waitForElementVisible('div.ontologies')
-          .assert.not.elementPresent('div.modal-header');
+          .assert.not.elementPresent('upload-ontology-overlay');
       for (var j = 0; j < args.length; j++) {
           browser
-            .clearValue('open-ontology-tab search-bar input')
-            .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
-            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-              .waitForElementNotVisible('mat-spinner')
-              .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-              .waitForElementNotPresent('div.fade')
-
+            .clearValue('open-ontology-tab input.ontology-search')
+            .setValue('open-ontology-tab input.ontology-search', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, ''))
+            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER)
+            .pause(1000) // TODO: Remove!
+          browser.globals.wait_for_no_spinners(browser);
           browser
-            .waitForElementVisible('open-ontology-tab search-bar input')
+            .waitForElementVisible('open-ontology-tab input.ontology-search')
             .useXpath()
-            .assert.visible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
             .useCss()
       }
       browser
-          .clearValue('open-ontology-tab search-bar input')
-          .setValue('open-ontology-tab search-bar input', '')
-          .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-          .waitForElementNotVisible('.spinner')
-          .waitForElementNotVisible('mat-spinner')
+          .clearValue('open-ontology-tab input.ontology-search')
+          .setValue('open-ontology-tab input.ontology-search', '')
+          .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+      browser.globals.wait_for_no_spinners(browser);
+      browser
           .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
           .waitForElementNotPresent('div.fade')
 
     },
 
     'search_for_ontology': function (browser, ontology) {
-          browser
+        browser
               .useCss()
-              .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
-              .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-              .waitForElementNotVisible('div.spinner')
-              .waitForElementNotVisible('mat-spinner')
+              .setValue('open-ontology-tab input.ontology-search', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, ''))
+              .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+        browser.globals.wait_for_no_spinners(browser);
+        browser
               .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
               .waitForElementNotPresent('div.fade')
               .useXpath()
-              .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+              .waitForElementVisible('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
         },
 
     'open_ontology': function (browser, ontology) {
         browser.globals.search_for_ontology(browser, ontology);
         browser
-          .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+          .click('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
           .useCss()
           .waitForElementVisible('div.material-tabset li.nav-item') // ensures that project tab is showing
     },
@@ -211,7 +212,7 @@ module.exports = {
         const t = timeout || 15000;
         browser
             .useCss()
-            .waitForElementNotPresent('#spinner-full', 45000)
+            .waitForElementNotPresent('#spinner-full', t)
             .waitForElementNotPresent('xpath', '//div[@id="toast-container"]', t)
             .waitForElementNotPresent('div.fade', t)
     },

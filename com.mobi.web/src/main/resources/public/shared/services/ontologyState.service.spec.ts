@@ -30,7 +30,6 @@ import { of, throwError } from 'rxjs';
 import {
     mockPropertyManager,
     mockUpdateRefs,
-    mockStateManager,
     mockUtil,
     mockManchesterConverter,
     mockPolicyEnforcement,
@@ -47,6 +46,8 @@ import { OntologyManagerService } from './ontologyManager.service';
 import { OntologyStateService } from './ontologyState.service';
 import { Hierarchy } from '../models/hierarchy.interface';
 import { OntologyAction } from '../models/ontologyAction';
+import { RESTError } from '../models/RESTError.interface';
+import { StateManagerService } from './stateManager.service';
 
 describe('Ontology State Service', function() {
     let service: OntologyStateService;
@@ -149,8 +150,8 @@ describe('Ontology State Service', function() {
                 OntologyStateService,
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyManagerService),
+                MockProvider(StateManagerService),
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
-                { provide: 'stateManagerService', useClass: mockStateManager },
                 { provide: 'propertyManagerService', useClass: mockPropertyManager },
                 { provide: 'updateRefsService', useClass: mockUpdateRefs },
                 { provide: 'policyManagerService', useClass: mockPolicyManager },
@@ -217,7 +218,7 @@ describe('Ontology State Service', function() {
             title: 'recordTitle',
             recordId,
             commitId,
-            branchId: branchId
+            branchId
         };
         listItem.branches = [branch];
         listItem.tags = [tag];
@@ -266,16 +267,36 @@ describe('Ontology State Service', function() {
     });
 
     describe('addErrorToUploadItem should add the message to the correct message when', function() {
+        const errorObj: RESTError = {
+            error: '',
+            errorMessage: '',
+            errorDetails: []
+        };
         beforeEach(function() {
-            service.uploadList = [{id: 'id'}, {id: 'id2'}];
+            this.item1 = {
+                id: 'id',
+                title: '',
+                status: undefined,
+                sub: undefined,
+                error: undefined
+            };
+            this.item2 = {
+                id: 'id2',
+                title: '',
+                status: undefined,
+                sub: undefined,
+                error: undefined
+            };
+            service.uploadList = [this.item1, this.item2];
         });
         it('found', function() {
-            service.addErrorToUploadItem('id2', error);
-            expect(service.uploadList).toEqual([{id: 'id'}, {id: 'id2', error: error}]);
+            service.addErrorToUploadItem('id2', errorObj);
+            expect(this.item2.error).toEqual(errorObj);
         });
         it('not found', function() {
-            service.addErrorToUploadItem('missing', error);
-            expect(service.uploadList).toEqual([{id: 'id'}, {id: 'id2'}]);
+            service.addErrorToUploadItem('missing', errorObj);
+            expect(this.item1.error).toBeUndefined();
+            expect(this.item2.error).toBeUndefined();
         });
     });
     it('reset should clear the correct variables', function() {
@@ -285,39 +306,98 @@ describe('Ontology State Service', function() {
         expect(service.uploadList).toEqual([]);
     });
     describe('createOntology calls the correct methods', function() {
+        beforeEach(function() {
+            spyOn(service, 'setSelected').and.returnValue(of(null));
+        });
         describe('when uploadOntology succeeds', function() {
             beforeEach(function() {
-                ontologyManagerStub.uploadOntology.and.returnValue(of({ ontologyId, recordId, branchId: branchId, commitId }));
+                ontologyManagerStub.uploadOntology.and.returnValue(of({ ontologyId, recordId, branchId, commitId }));
                 service.list = [];
-                spyOn(service, 'setSelected').and.returnValue(of(null));
                 spyOn(service, 'getActiveEntityIRI').and.returnValue('entityId');
             });
-            it('and getRecordBranch resolves', fakeAsync(function() {
-                catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
-                service.createOntology([ontologyObj], title, 'description', ['A', 'B'])
-                    .subscribe(response => {
-                        expect(response).toEqual({ entityIRI: ontologyObj['@id'], recordId, branchId: branchId, commitId });
-                    }, () => fail('Observable should have resolved'));
-                tick();
-                expect(service.list.length).toBe(1);
-                expect(service.setSelected).toHaveBeenCalledWith('entityId', false, service.listItem);
-            }));
+            describe('and getRecordBranch resolves', function() {
+                beforeEach(function() {
+                    catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
+                });
+                it('and createState resolves', fakeAsync(function() {
+                    spyOn(service, 'createState').and.returnValue(of(null));
+                    service.createOntology([ontologyObj], title, 'description', ['A', 'B'])
+                        .subscribe(() => {}, () => fail('Observable should have resolved'));
+                    tick();
+                    expect(ontologyManagerStub.uploadOntology).toHaveBeenCalledWith({
+                        title,
+                        description: 'description',
+                        keywords: ['A', 'B'],
+                        jsonld: [ontologyObj]
+                    });
+                    expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
+                    expect(service.createState).toHaveBeenCalledWith({ branchId, recordId, commitId });
+                    expect(service.list.length).toBe(1);
+                    expect(service.listItem.ontologyId).toEqual(ontologyId);
+                    expect(service.listItem.editorTabStates.project.entityIRI).toEqual(ontologyId);
+                    expect(service.listItem.branches).toEqual([branch]);
+                    expect(service.listItem.masterBranchIri).toEqual(branchId);
+                    expect(service.listItem.userCanModify).toBeTrue();
+                    expect(service.listItem.userCanModifyMaster).toBeTrue();
+                    expect(service.setSelected).toHaveBeenCalledWith('entityId', false, service.listItem);
+                }));
+                it('and createState rejects', fakeAsync(function() {
+                    spyOn(service, 'createState').and.returnValue(throwError(error));
+                    service.createOntology([ontologyObj], title, 'description', ['A', 'B'])
+                        .subscribe(() => fail('Observable should have rejected'), response => {
+                            expect(response).toEqual(error);
+                        });
+                    tick();
+                    expect(ontologyManagerStub.uploadOntology).toHaveBeenCalledWith({
+                        title,
+                        description: 'description',
+                        keywords: ['A', 'B'],
+                        jsonld: [ontologyObj]
+                    });
+                    expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
+                    expect(service.createState).toHaveBeenCalledWith({ branchId, recordId, commitId });
+                    expect(service.list.length).toBe(0);
+                    expect(service.setSelected).not.toHaveBeenCalled();
+                }));
+            });
             it('and getRecordBranch rejects', fakeAsync(function() {
+                spyOn(service, 'createState')
                 catalogManagerStub.getRecordBranch.and.returnValue(throwError(error));
                 service.createOntology([ontologyObj], title, 'description', ['A', 'B'])
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
                     });
                 tick();
+                expect(ontologyManagerStub.uploadOntology).toHaveBeenCalledWith({
+                    title,
+                    description: 'description',
+                    keywords: ['A', 'B'],
+                    jsonld: [ontologyObj]
+                });
+                expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
+                expect(service.createState).not.toHaveBeenCalled();
+                expect(service.list.length).toBe(0);
+                expect(service.setSelected).not.toHaveBeenCalled();
             }));
         });
         it('when uploadOntology rejects', fakeAsync(function() {
+            spyOn(service, 'createState');
             ontologyManagerStub.uploadOntology.and.returnValue(throwError(error));
             service.createOntology([ontologyObj], title, 'description', ['A', 'B'])
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
             tick();
+            expect(ontologyManagerStub.uploadOntology).toHaveBeenCalledWith({
+                title,
+                description: 'description',
+                keywords: ['A', 'B'],
+                jsonld: [ontologyObj]
+            });
+            expect(catalogManagerStub.getRecordBranch).not.toHaveBeenCalled();
+            expect(service.createState).not.toHaveBeenCalled();
+            expect(service.list.length).toBe(0);
+            expect(service.setSelected).not.toHaveBeenCalled();
         }));
     });
     describe('uploadChanges should call the proper methods', function() {
@@ -1820,11 +1900,9 @@ describe('Ontology State Service', function() {
                             spyOn(service, 'getStateByRecordId').and.returnValue(undefined);
                         });
                         it('and createState resolves', fakeAsync(function() {
-                            spyOn(service, 'createState').and.returnValue(of(recordId));
+                            spyOn(service, 'createState').and.returnValue(of(null));
                             service.afterSave()
-                                .subscribe(response => {
-                                    expect(response).toEqual(recordId);
-                                }, () => fail('Observable should have resolved'));
+                                .subscribe(() => {}, () => fail('Observable should have resolved'));
                             tick();
                             expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
                             expect(service.listItem.inProgressCommit).toEqual(difference);
@@ -1857,11 +1935,9 @@ describe('Ontology State Service', function() {
                             spyOn(service, 'getStateByRecordId').and.returnValue({id: 'id', model: []});
                         });
                         it('and updateState resolves', fakeAsync(function() {
-                            spyOn(service, 'updateState').and.returnValue(of(recordId));
+                            spyOn(service, 'updateState').and.returnValue(of(null));
                             service.afterSave()
-                                .subscribe(response => {
-                                    expect(response).toEqual(recordId);
-                                }, () => fail('Observable should have resolved'));
+                                .subscribe(() => {}, () => fail('Observable should have resolved'));
                             tick();
                             expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
                             expect(service.listItem.inProgressCommit).toEqual(difference);
@@ -1915,11 +1991,9 @@ describe('Ontology State Service', function() {
                         spyOn(service, 'getStateByRecordId').and.returnValue(undefined);
                     });
                     it('and createState resolves', fakeAsync(function() {
-                        spyOn(service, 'createState').and.returnValue(of(recordId));
+                        spyOn(service, 'createState').and.returnValue(of(null));
                         service.afterSave()
-                            .subscribe(response => {
-                                expect(response).toEqual(recordId);
-                            }, () => fail('Observable should have resolved'));
+                            .subscribe(() => {}, () => fail('Observable should have resolved'));
                         tick();
                         expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
                         expect(service.listItem.inProgressCommit).toEqual(this.difference);
@@ -1952,11 +2026,9 @@ describe('Ontology State Service', function() {
                         spyOn(service, 'getStateByRecordId').and.returnValue({id: 'id', model: []});
                     });
                     it('and updateState resolves', fakeAsync(function() {
-                        spyOn(service, 'updateState').and.returnValue(of(recordId));
+                        spyOn(service, 'updateState').and.returnValue(of(null));
                         service.afterSave()
-                            .subscribe(response => {
-                                expect(response).toEqual(recordId);
-                            }, () => fail('Observable should have resolved'));
+                            .subscribe(() => {}, () => fail('Observable should have resolved'));
                         tick();
                         expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
                         expect(service.listItem.inProgressCommit).toEqual(this.difference);

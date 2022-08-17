@@ -24,24 +24,7 @@
 @import "../../../css/variables";
 
 .open-ontology-tab {
-    .ontology-info .details {
+    .ontology-info {
         cursor: pointer;
-
-        .header h3 {
-            max-width: 75%;
-        }
-        .header-title{
-            display: inline-block;
-            vertical-align: bottom;
-            max-width: 22vw;
-        }
     }
-
-    .spinner {
-        z-index: 60;
-    }
-}
-
-small {
-    max-width: 740px;
 }

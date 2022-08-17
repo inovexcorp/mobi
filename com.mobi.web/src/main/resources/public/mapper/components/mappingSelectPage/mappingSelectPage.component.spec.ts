@@ -24,7 +24,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatButtonModule, MatDialog, MatDividerModule, MatFormFieldModule, MatIconModule, MatInputModule, MatMenuModule, MatPaginatorModule, PageEvent } from '@angular/material';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -54,6 +54,7 @@ import { MappingRecord } from '../../../shared/models/mappingRecord.interface';
 import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { MappingSelectPageComponent } from './mappingSelectPage.component';
+import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 
 describe('Mapping Select Page component', function() {
     let component: MappingSelectPageComponent;
@@ -122,6 +123,7 @@ describe('Mapping Select Page component', function() {
                 MockComponent(DownloadMappingOverlayComponent),
                 MockComponent(ConfirmModalComponent),
                 MockComponent(InfoMessageComponent),
+                MockPipe(HighlightTextPipe)
             ],
             providers: [
                 MockProvider(MappingManagerService),

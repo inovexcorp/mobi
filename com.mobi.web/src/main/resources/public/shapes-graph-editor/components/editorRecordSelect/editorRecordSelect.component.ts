@@ -26,8 +26,8 @@ import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialog } from '@angular/material';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { find, forEach, get, remove } from 'lodash';
-import { Observable } from 'rxjs';
-import { map, startWith, switchMap } from 'rxjs/operators';
+import { Observable, from, of, throwError } from 'rxjs';
+import { map, startWith, switchMap, catchError } from 'rxjs/operators';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
@@ -138,30 +138,36 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     retrieveShapesGraphRecords(): void {
         this.spinnerSrv.startLoadingForComponent(this.editorRecordSelectSpinner, 15);
         this.cm.getRecords(get(this.cm.localCatalog, '@id'), this.shapesRecordSearchConfig, true)
-            .pipe(map((response: HttpResponse<JSONLDObject[]>) => {
-                const openTmp: RecordSelectFiltered[] = [];
-                const unopenedTmp: RecordSelectFiltered[] = [];
-                forEach(response.body, (recordJsonld: JSONLDObject) => {
-                    const listItem = this.state.list.find(item => item.versionedRdfRecord.recordId === recordJsonld['@id']);
-                    if (listItem) {
-                        openTmp.push(this.getRecordSelectFiltered(recordJsonld));
+            .pipe(
+                switchMap((response: HttpResponse<JSONLDObject[]>) => {
+                    const openTmp: RecordSelectFiltered[] = [];
+                    const unopenedTmp: RecordSelectFiltered[] = [];
+                    forEach(response.body, (recordJsonld: JSONLDObject) => {
+                        const listItem = this.state.list.find(item => item.versionedRdfRecord.recordId === recordJsonld['@id']);
+                        if (listItem) {
+                            openTmp.push(this.getRecordSelectFiltered(recordJsonld));
+                        } else {
+                            unopenedTmp.push(this.getRecordSelectFiltered(recordJsonld));
+                        }
+                    });
+                    
+                    this.opened = openTmp;
+                    this.unopened = unopenedTmp;
+                    if (this.unopened.length !== 0) {
+                        const deleteRequest: any = {
+                            resourceId: _.map(this.unopened, 'recordId'),
+                            actionId: [this.pm.actionDelete]
+                        };
+                        return from(this.pep.evaluateMultiDecisionRequest(deleteRequest, this.spinnerId));
                     } else {
-                        unopenedTmp.push(this.getRecordSelectFiltered(recordJsonld));
+                        return of(null);
                     }
-                });
-                
-                this.opened = openTmp;
-                this.unopened = unopenedTmp;
-                if (this.unopened.length !== 0) {
-                    const deleteRequest: any = {
-                        resourceId: _.map(this.unopened, 'recordId'),
-                        actionId: [this.pm.actionDelete]
-                    };
-                    return this.pep.evaluateMultiDecisionRequest(deleteRequest, this.spinnerId);
-                } else {
-                    return Promise.resolve();
-                }
-            }, errorMessage => this.util.createErrorToast(errorMessage)))
+                }),
+                catchError(errorMessage => {
+                    this.util.createErrorToast(errorMessage);
+                    this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
+                    return throwError(errorMessage);
+                }))
             .subscribe(decisions => {
                 if (decisions !== undefined) {
                     const recordsForbiddenToDelete = _.map(_.filter(decisions, {'decision': this.pep.deny}), 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource');
@@ -171,9 +177,6 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                 }
                 this.checkRecordDeleted();
                 this.setFilteredOptions();
-                this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
-            }, errorMessage => {
-                this.util.createErrorToast(errorMessage);
                 this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
             });
     }
@@ -245,7 +248,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                 this.disabledFlag = true;
             });
     }
-    isDisabled() {
+    isDisabled(): boolean {
         return this.disabledFlag;
     }
     private createPepRequest() {
@@ -253,8 +256,8 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
             resourceId: 'http://mobi.com/catalog-local',
             actionId: POLICY + 'Create',
             actionAttrs: {
-                         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":"http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord"
+                         'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord'
             }
-        }
+        };
     }
 }

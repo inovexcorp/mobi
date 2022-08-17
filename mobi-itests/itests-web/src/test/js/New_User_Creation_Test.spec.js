@@ -177,21 +177,21 @@ module.exports = {
         browser
             .useXpath()
             .click('//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-            .useCss()
-            .waitForElementNotVisible('div.spinner')
-            .waitForElementVisible('div.btn-container button')
+            .useCss();
+        browser.globals.wait_for_no_spinners(browser);
+        browser
             .useXpath()
-            .waitForElementVisible('//button[text()="New Ontology"]')
-            .click('//button[text()="New Ontology"]')
+            .waitForElementVisible('//span[text()="New Ontology"]/parent::button')
+            .click('//span[text()="New Ontology"]/parent::button')
             .useCss()
-            .waitForElementVisible('new-ontology-overlay text-input[display-text="\'Title\'"] input')
-            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'testOntology')
-            .waitForElementVisible('new-ontology-overlay text-area[display-text="\'Description\'"] textarea')
-            .setValue('new-ontology-overlay text-area[display-text="\'Description\'"] textarea', 'testDescription')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', 'testOntology')
+            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
+            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', 'testDescription')
             .useXpath()
-            .click('//new-ontology-overlay//button[text()="Submit"]')
+            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
             .useCss()
-            .waitForElementNotPresent('new-ontology-overlay .modal-header h3')
+            .waitForElementNotPresent('new-ontology-overlay h1')
     },
 
     'Step 16: The user successfully logs out' : function(browser) {
@@ -217,12 +217,12 @@ module.exports = {
         browser
             .click('sidebar div ul a[class=nav-link][href="#/catalog"]')
             .waitForElementNotPresent('#spinner-full')
-            .setValue('catalog-page records-view .d-flex .search-form input','z-catalog-ontology-1.ttl')
+            .setValue('catalog-page records-view .d-flex .search-form input','z-catalog-ontology-1')
             .sendKeys('catalog-page records-view .d-flex .search-form input', browser.Keys.ENTER)
             .waitForElementNotPresent('#spinner-full')
-            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "z-catalog-ontology-1.ttl")]]//ancestor::mat-card')
+            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "z-catalog-ontology-1")]]//ancestor::mat-card')
             .waitForElementVisible('catalog-page record-view div.record-body')
-            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('z-catalog-ontology-1.ttl');
+            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('z-catalog-ontology-1');
         browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
 
     }

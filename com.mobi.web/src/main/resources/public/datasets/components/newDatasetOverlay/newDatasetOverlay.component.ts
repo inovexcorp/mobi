@@ -20,10 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ENTER } from '@angular/cdk/keycodes';
 import { Component, Inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { MatChipInputEvent, MatDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material';
 import { trim, map } from 'lodash';
 
 import { REGEX } from '../../../constants';
@@ -35,9 +34,9 @@ import { OntologyDetails } from '../../models/ontologyDetails.interface';
  * @class datasets.NewDatasetOverlayComponent
  *
  * A component that creates content for a modal with a form containing fields for creating a new Dataset Record. The
- * fields are for the title, repository id, dataset IRI, description, keywords, and
- * {@link datasets.DatasetsOntologyPickerComponent ontologies to be linked} to the new Dataset Record. The repository
- * id is a static field for now. Meant to be used in conjunction with the `MatDialog` service.
+ * fields are for the title, repository id, dataset IRI, description, {@link shared.KeywordSelectComponent keywords},
+ * and {@link datasets.DatasetsOntologyPickerComponent ontologies to be linked} to the new Dataset Record. The
+ * repository id is a static field for now. Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
     selector: 'new-dataset-overlay',
@@ -54,7 +53,6 @@ export class NewDatasetOverlayComponent {
     });
     repositoryId = 'system';
     selectedOntologies: OntologyDetails[] = [];
-    readonly separatorKeysCodes: number[] = [ENTER];
 
     constructor(private dialogRef: MatDialogRef<NewDatasetOverlayComponent>, private fb: FormBuilder,
         public dm: DatasetManagerService, @Inject('utilService') public util) {}
@@ -73,26 +71,5 @@ export class NewDatasetOverlayComponent {
                 this.util.createSuccessToast('Dataset successfully created');
                 this.dialogRef.close(true);
             }, error => this.error = error);
-    }
-    addKeyword(event: MatChipInputEvent): void {
-        const input = event.input;
-        const value = event.value;
-
-        if ((value || '').trim()) {
-            this.createDatasetForm.controls.keywords.setValue([...this.createDatasetForm.controls.keywords.value, value.trim()]);
-            this.createDatasetForm.controls.keywords.updateValueAndValidity();
-        }
-
-        // Reset the input value
-        if (input) {
-            input.value = '';
-        }
-    }
-    removeKeyword(keyword: string): void {
-        const idx = this.createDatasetForm.controls.keywords.value.indexOf(keyword);
-        if (idx >= 0) {
-            this.createDatasetForm.controls.keywords.value.splice(idx, 1);
-            this.createDatasetForm.controls.keywords.updateValueAndValidity();
-        }
     }
 }

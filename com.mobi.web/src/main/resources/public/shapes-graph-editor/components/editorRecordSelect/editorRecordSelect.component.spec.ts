@@ -134,7 +134,7 @@ describe('Editor Record Select component', function() {
         matDialog = TestBed.get(MatDialog);
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         policyEnforcementStub = TestBed.get('policyEnforcementService')
-        policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue([
+        policyEnforcementStub.evaluateMultiDecisionRequest.and.resolveTo([
             {
               "urn:oasis:names:tc:xacml:3.0:attribute-category:resource": "record3",
               "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject": "urn:testUser",
@@ -305,7 +305,7 @@ describe('Editor Record Select component', function() {
                   }, jasmine.anything());
             });
             it('when user does not have permission to delete a record', async function() {
-                policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue([
+                policyEnforcementStub.evaluateMultiDecisionRequest.and.resolveTo([
                     {
                       "urn:oasis:names:tc:xacml:3.0:attribute-category:resource": "record3",
                       "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject": "urn:testUser",

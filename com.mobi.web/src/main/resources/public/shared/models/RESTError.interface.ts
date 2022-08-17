@@ -20,16 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
-
-.advanced-language-select {
-    .btn-link {
-        display: inline-block;
-        margin-bottom: 8px;
-
-        i {
-            padding-right: 5px;
-        }
-    }
+export interface RESTError {
+    error: string,
+    errorMessage: string,
+    errorDetails: string[]
 }
