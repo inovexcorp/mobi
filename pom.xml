@@ -119,6 +119,7 @@
         <module>com.mobi.shapes.api</module>
         <module>com.mobi.shapes.impl</module>
         <module>com.mobi.shapes.rest</module>
+        <module>com.mobi.owlapi.utils</module>
     </modules>
 
     <properties>

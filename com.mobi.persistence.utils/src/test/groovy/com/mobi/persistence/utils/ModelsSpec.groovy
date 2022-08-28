@@ -196,6 +196,7 @@ class ModelsSpec extends Specification{
 
     def "findFirstSubject returns an empty optional when provided a matching predicate and non matching object"(){
         when:
+        model5.isEmpty() >> true
         def result = Models.findFirstSubject(model1, predIRI, objIRI2).isPresent()
 
         then:
@@ -204,6 +205,7 @@ class ModelsSpec extends Specification{
 
     def "findFirstSubject returns an empty optional when provided a non matching predicate and matching object"(){
         when:
+        model5.isEmpty() >> true
         def result = Models.findFirstSubject(model1, predIRI2, objIRI).isPresent()
 
         then:
@@ -220,6 +222,7 @@ class ModelsSpec extends Specification{
 
     def "findFirstObject returns an empty optional when provided a matching subject and non matching predicate"(){
         when:
+        model5.isEmpty() >> true
         def result = Models.findFirstObject(model1, subIRI, predIRI2).isPresent()
 
         then:
@@ -228,42 +231,11 @@ class ModelsSpec extends Specification{
 
     def "findFirstObject returns an empty optional when provided a non matching subject and matching predicate"(){
         when:
+        model5.isEmpty() >> true
         def result = Models.findFirstObject(model1, subIRI2, predIRI).isPresent()
 
         then:
         !result
-    }
-
-    def "createModel for OBO format returns correct data"() {
-        setup:
-        def input = getClass().getResourceAsStream("/bfo.obo")
-            when:
-        when:
-        def parsedModel = Models.createModel(input)
-
-        then:
-        assert parsedModel.size() == 1213;
-    }
-
-    def "createModel with preferredExtension for OBO format returns correct data"() {
-        setup:
-        def input = getClass().getResourceAsStream("/bfo.obo")
-            when:
-        def parsedModel = Models.createModel("obo", input)
-
-        then:
-        assert parsedModel.getRdfFormatName() == "OBO"
-    }
-
-    def "createModel with invalid extension for OBO format returns correct data"() {
-        setup:
-        def input = getClass().getResourceAsStream("/bfo.obo")
-
-        when:
-        def parsedModel = Models.createModel('invalid', input)
-
-        then:
-        assert parsedModel.getRdfFormatName() == "OBO"
     }
 
     def "createModel for Trig format returns correct data"() {

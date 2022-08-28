@@ -41,7 +41,7 @@ class SesameRepositoryWrapperSpec extends Specification {
     def "initialize() and shutdown() do not throw exceptions"() {
         when:
         memRepo.setDelegate(new SailRepository(new MemoryStore()))
-        memRepo.initialize()
+        memRepo.init()
         memRepo.shutDown()
 
         then:
@@ -51,7 +51,7 @@ class SesameRepositoryWrapperSpec extends Specification {
     def "isInitialized() returns true when initialized"() {
         setup:
         memRepo.setDelegate(new SailRepository(new MemoryStore()))
-        memRepo.initialize()
+        memRepo.init()
 
         expect:
         memRepo.isInitialized()
@@ -60,7 +60,7 @@ class SesameRepositoryWrapperSpec extends Specification {
     def "getConnection() returns a RepositoryConnection Object"() {
         setup:
         memRepo.setDelegate(new SailRepository(new MemoryStore()))
-        memRepo.initialize()
+        memRepo.init()
         def conn = memRepo.getConnection()
 
         expect:
@@ -70,7 +70,7 @@ class SesameRepositoryWrapperSpec extends Specification {
     def "getDataDir() returns an empty optional when not configured"() {
         setup:
         memRepo.setDelegate(new SailRepository(new MemoryStore()))
-        memRepo.initialize()
+        memRepo.init()
 
         expect:
         memRepo.getDataDir() == null

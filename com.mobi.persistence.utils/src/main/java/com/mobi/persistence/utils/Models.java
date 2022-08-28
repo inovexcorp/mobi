@@ -23,11 +23,9 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import static java.util.Arrays.asList;
-
 import com.mobi.exception.MobiException;
+import com.mobi.owlapi.utils.OwlApiUtils;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.owlapi.OWLManagerSilent;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.BNode;
@@ -41,55 +39,35 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.obolibrary.obo2owl.OWLAPIObo2Owl;
-import org.obolibrary.oboformat.model.OBODoc;
-import org.obolibrary.oboformat.parser.OBOFormatParser;
-import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyManagerFactory;
-import org.semanticweb.owlapi.model.OWLRuntimeException;
-import org.semanticweb.owlapi.model.OntologyConfigurator;
-import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioOWLRDFParser;
-import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
-import org.semanticweb.owlapi.rio.RioRenderer;
+import org.eclipse.rdf4j.rio.rdfxml.RDFXMLParser;
+import org.eclipse.rdf4j.rio.turtle.TurtleParser;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Models {
-    public static final LinkedHashMap<String, List<RDFParser>> preferredExtensionParsers;
-    public static final List<RDFParser> rdfParsers;
+    protected static final Map<String, List<RDFParser>> preferredExtensionParsers;
+    protected static final List<RDFParser> rdfParsers;
     public static final String ERROR_OBJECT_DELIMITER = ";;;";
 
     static {
@@ -102,33 +80,18 @@ public class Models {
         RDFParser nTriplesParser = Rio.createParser(RDFFormat.NTRIPLES);
         RDFParser nQuadsParser = Rio.createParser(RDFFormat.NQUADS);
 
-        // OWLAPIRDFFormat Parsers
-        RDFParser rioFunctionalSyntaxParser = new RioFunctionalSyntaxParserFactory().getParser();
-        RDFParser rioManchesterSyntaxParser = new RioManchesterSyntaxParserFactory().getParser();
-        RDFParser rioOWLXMLParser = new RioOWLXMLParserFactory().getParser();
-        Set<OWLOntologyManagerFactory> ontologyManagerFactories = Collections.singleton(new OWLManagerSilent());
-        ((RioOWLRDFParser) rioFunctionalSyntaxParser).setOntologyManagerFactories(ontologyManagerFactories);
-        ((RioOWLRDFParser) rioManchesterSyntaxParser).setOntologyManagerFactories(ontologyManagerFactories);
-        ((RioOWLRDFParser) rioOWLXMLParser).setOntologyManagerFactories(ontologyManagerFactories);
-
-        rdfParsers = Arrays.asList(rdfJsonParser, jsonLdParser, turtleParser, rdfXmlParser,
-                rioFunctionalSyntaxParser, rioManchesterSyntaxParser, rioOWLXMLParser, trigParser,
+        rdfParsers = List.of(rdfJsonParser, jsonLdParser, turtleParser, rdfXmlParser, trigParser,
                 nTriplesParser, nQuadsParser);
 
         preferredExtensionParsers = new LinkedHashMap<>();
-        preferredExtensionParsers.put("json", Arrays.asList(rdfJsonParser, jsonLdParser));
-        preferredExtensionParsers.put("jsonld", Arrays.asList(jsonLdParser));
-        preferredExtensionParsers.put("ttl", Arrays.asList(turtleParser));
-        preferredExtensionParsers.put("xml", Arrays.asList(rioOWLXMLParser, rdfXmlParser));
-        preferredExtensionParsers.put("ofn", Arrays.asList(rioFunctionalSyntaxParser));
-        preferredExtensionParsers.put("omn", Arrays.asList(rioManchesterSyntaxParser));
-        preferredExtensionParsers.put("owx", Arrays.asList(rioOWLXMLParser));
-        preferredExtensionParsers.put("rdf", Arrays.asList(rdfXmlParser));
-        preferredExtensionParsers.put("rdfs", Arrays.asList(rdfXmlParser));
-        preferredExtensionParsers.put("owl", Arrays.asList(rdfXmlParser, rioOWLXMLParser));
-        preferredExtensionParsers.put("trig", Arrays.asList(trigParser));
-        preferredExtensionParsers.put("nt", Arrays.asList(nTriplesParser));
-        preferredExtensionParsers.put("nq", Arrays.asList(nQuadsParser));
+        preferredExtensionParsers.put("json", List.of(rdfJsonParser, jsonLdParser));
+        preferredExtensionParsers.put("jsonld", List.of(jsonLdParser));
+        preferredExtensionParsers.put("ttl", List.of(turtleParser));
+        preferredExtensionParsers.put("rdf", List.of(rdfXmlParser));
+        preferredExtensionParsers.put("rdfs", List.of(rdfXmlParser));
+        preferredExtensionParsers.put("trig", List.of(trigParser));
+        preferredExtensionParsers.put("nt", List.of(nTriplesParser));
+        preferredExtensionParsers.put("nq", List.of(nQuadsParser));
     }
 
     protected Models(){}
@@ -137,55 +100,68 @@ public class Models {
      * Retrieves an Object (Value) from the statements in a model.
      * Only one value is picked from the model and returned.
      *
-     * @param m The model to retrieve the value from
+     * @param model The model to retrieve the value from
      * @return an object value from a model or an empty Optional.
      */
-    public static Optional<Value> object(Model m) {
-        return m.stream().map(Statement::getObject).findAny();
+    public static Optional<Value> object(Model model) {
+        return model.stream().map(Statement::getObject).findAny();
     }
 
     /**
      * Retrieves an Object (Literal) from the statements in a model.
      * Only one value is picked from the model and returned.
      *
-     * @param m The model to retrieve the object literal from
+     * @param model The model to retrieve the object literal from
      * @return an object literal from a model or an empty Optional.
      */
-    public static Optional<Literal> objectLiteral(Model m) {
-        return m.stream().map(Statement::getObject).filter(o -> o instanceof Literal).map(l -> (Literal) l).findAny();
+    public static Optional<Literal> objectLiteral(Model model) {
+        return model.stream().map(Statement::getObject)
+                .filter(Literal.class::isInstance)
+                .map(Literal.class::cast)
+                .findAny();
     }
 
     /**
      * Retrieves an Object (IRI) from the statements in a model.
      * Only one value is picked from the model and returned.
      *
-     * @param m The model to retrieve the object iri from
+     * @param model The model to retrieve the object iri from
      * @return an object iri from a model or an empty Optional.
      */
-    public static Optional<IRI> objectIRI(Model m) {
-        return m.stream().map(Statement::getObject).filter(o -> o instanceof IRI).map(r -> (IRI) r).findAny();
+    public static Optional<IRI> objectIRI(Model model) {
+        return model.stream()
+                .map(Statement::getObject)
+                .filter(IRI.class::isInstance)
+                .map(IRI.class::cast)
+                .findAny();
     }
 
     /**
      * Retrieves an Object (Resource) from the statements in a model.
      * Only one value is picked from the model and returned.
      *
-     * @param m The model to retrieve the object resource from
+     * @param model The model to retrieve the object resource from
      * @return an object resource from a model or an empty Optional.
      */
-    public static Optional<Resource> objectResource(Model m) {
-        return m.stream().map(Statement::getObject).filter(o -> o instanceof Resource).map(r -> (Resource) r).findAny();
+    public static Optional<Resource> objectResource(Model model) {
+        return model.stream()
+                .map(Statement::getObject)
+                .filter(Resource.class::isInstance)
+                .map(Resource.class::cast)
+                .findAny();
     }
 
     /**
      * Retrieves an Object (String) from the statements in a model.
      * Only one value is picked from the model and returned.
      *
-     * @param m The model to retrieve the object string from
+     * @param model The model to retrieve the object string from
      * @return an object string from a model or an empty Optional.
      */
-    public static Optional<String> objectString(Model m) {
-        return m.stream().map(st -> st.getObject().stringValue()).findAny();
+    public static Optional<String> objectString(Model model) {
+        return model.stream()
+                .map(st -> st.getObject().stringValue())
+                .findAny();
 
     }
 
@@ -193,22 +169,28 @@ public class Models {
      * Retrieves an Subject (Resource) from the statements in a model.
      * Only one resource is picked from the model and returned.
      *
-     * @param m The model to retrieve the subject from
+     * @param model The model to retrieve the subject from
      * @return a subject resource from a model or an empty Optional.
      */
-    public static Optional<Resource> subject(Model m) {
-        return m.stream().map(Statement::getSubject).findAny();
+    public static Optional<Resource> subject(Model model) {
+        return model.stream()
+                .map(Statement::getSubject)
+                .findAny();
     }
 
     /**
      * Retrieves an Subject (IRI) from the statements in a model.
      * Only one IRI is picked from the model and returned.
      *
-     * @param m The model to retrieve the subject from
+     * @param model The model to retrieve the subject from
      * @return a subject IRI from a model or an empty Optional.
      */
-    public static Optional<IRI> subjectIRI(Model m) {
-        return m.stream().map(Statement::getSubject).filter(s -> s instanceof IRI).map(s -> (IRI) s).findAny();
+    public static Optional<IRI> subjectIRI(Model model) {
+        return model.stream()
+                .map(Statement::getSubject)
+                .filter(IRI.class::isInstance)
+                .map(IRI.class::cast)
+                .findAny();
 
     }
 
@@ -216,22 +198,28 @@ public class Models {
      * Retrieves an Subject (BNode) from the statements in a model.
      * Only one BNode is picked from the model and returned.
      *
-     * @param m The model to retrieve the subject from
+     * @param model The model to retrieve the subject from
      * @return a subject BNode from a model or an empty Optional.
      */
-    public static Optional<BNode> subjectBNode(Model m) {
-        return m.stream().map(Statement::getSubject).filter(s -> s instanceof BNode).map(s -> (BNode) s).findAny();
+    public static Optional<BNode> subjectBNode(Model model) {
+        return model.stream()
+                .map(Statement::getSubject)
+                .filter(BNode.class::isInstance)
+                .map(BNode.class::cast)
+                .findAny();
     }
 
     /**
      * Retrieves an Predicate (IRI) from the statements in a model.
      * Only one predicate is picked from the model and returned.
      *
-     * @param m The model to retrieve the predicate from
+     * @param model The model to retrieve the predicate from
      * @return a predicate IRI from a model or an empty Optional.
      */
-    public static Optional<IRI> predicate(Model m) {
-        return m.stream().map(Statement::getPredicate).findAny();
+    public static Optional<IRI> predicate(Model model) {
+        return model.stream()
+                .map(Statement::getPredicate)
+                .findAny();
     }
 
     /**
@@ -244,9 +232,11 @@ public class Models {
      */
     public static Optional<Resource> findFirstSubject(Model model, IRI predicate, IRI object) {
         Model filteredModel = model.filter(null, predicate, object);
-        if (filteredModel.size() > 0) {
-            Optional<Statement> optionalStatement = filteredModel.stream().findFirst();
-            return Optional.of(optionalStatement.get().getSubject());
+        if (!filteredModel.isEmpty()) {
+            Statement statement = filteredModel.stream()
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Model cannot be empty"));
+            return Optional.of(statement.getSubject());
         }
         return Optional.empty();
     }
@@ -261,9 +251,11 @@ public class Models {
      */
     public static Optional<Value> findFirstObject(Model model, IRI subject, IRI predicate) {
         Model filteredModel = model.filter(subject, predicate, null);
-        if (filteredModel.size() > 0) {
-            Optional<Statement> optionalStatement = filteredModel.stream().findFirst();
-            return Optional.of(optionalStatement.get().getObject());
+        if (!filteredModel.isEmpty()) {
+            Statement statement = filteredModel.stream()
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Model cannot be empty"));
+            return Optional.of(statement.getObject());
         }
         return Optional.empty();
     }
@@ -288,7 +280,7 @@ public class Models {
      * @param inputStream the InputStream to parse
      * @param collector the StatementCollector used to aggregate statements
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
-     * @throws IOException if a error occurs when accessing the InputStream contents
+     * @throws IOException if an error occurs when accessing the InputStream contents
      */
     public static ParsedModel createModel(String preferredExtension, InputStream inputStream,
                                           StatementCollector collector) throws IOException {
@@ -330,12 +322,18 @@ public class Models {
         try {
             rdfData.mark(0);
             if ("obo".equalsIgnoreCase(preferredExtension)) {
-                parsedModel = parseOBO(rdfData, triedRDFFormats);
+                parsedModel = parseOBO(rdfData, collector, triedRDFFormats);
+            } else if ("ofn".equalsIgnoreCase(preferredExtension)) {
+                parsedModel = parseFunctional(rdfData, collector, triedRDFFormats);
+            } else if ("omn".equalsIgnoreCase(preferredExtension)) {
+                parsedModel = parseManchester(rdfData, collector, triedRDFFormats);
+            } else if ("owl".equalsIgnoreCase(preferredExtension) || "xml".equalsIgnoreCase(preferredExtension)) {
+                parsedModel = parseOWLXML(rdfData, collector, triedRDFFormats);
             } else if (preferredExtensionParsers.containsKey(preferredExtension.toLowerCase())) {
                 parsedModel = parseIteration(rdfData, collector, triedRDFFormats,
                         preferredExtensionParsers.get(preferredExtension));
             } else {
-                parsedModel = parseOBO(rdfData, triedRDFFormats);
+                parsedModel = parseOBO(rdfData, collector, triedRDFFormats);
                 if (parsedModel.getRdfFormatName() == null) {
                     parsedModel = parseIteration(rdfData, collector, triedRDFFormats, rdfParsers);
                 }
@@ -382,8 +380,7 @@ public class Models {
         return parsedModel;
     }
 
-    private static Model parse(ByteArrayInputStream rdfData, RDFParser parser,
-                                                       StatementCollector collector)
+    private static Model parse(ByteArrayInputStream rdfData, RDFParser parser, StatementCollector collector)
             throws RDFParseException, IOException {
         parser.setRDFHandler(collector);
         parser.setParseErrorListener(new ParseErrorLogger());
@@ -400,8 +397,7 @@ public class Models {
      * @return a Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createModel(InputStream inputStream, RDFParser... parsers)
-            throws IOException {
+    public static Model createModel(InputStream inputStream, RDFParser... parsers) throws IOException {
         StatementCollector stmtCollector = new StatementCollector();
         return createModel(inputStream, stmtCollector, parsers).getModel();
     }
@@ -449,11 +445,11 @@ public class Models {
     private static ParsedModel createModel(InputStream inputStream, StatementCollector collector,
                                            RDFParser... parsers) throws IOException {
         List<String> triedRDFFormats = new ArrayList<>();
-        List<RDFFormat> formats = asList(RDFFormat.JSONLD, RDFFormat.TURTLE,
+        List<RDFFormat> formats = List.of(RDFFormat.JSONLD, RDFFormat.TURTLE,
                 RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS, RDFFormat.TRIG);
 
         List<RDFParser> allParsers = formats.stream().map(Rio::createParser).collect(Collectors.toList());
-        allParsers.addAll(Arrays.asList(parsers));
+        allParsers.addAll(List.of(parsers));
 
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
@@ -463,7 +459,16 @@ public class Models {
             parsedModel = parseIteration(rdfData, collector, triedRDFFormats , rdfParsers);
 
             if (parsedModel.getRdfFormatName() == null) {
-                parsedModel = parseOBO(rdfData, triedRDFFormats);
+                parsedModel = parseOWLXML(rdfData, collector, triedRDFFormats);
+            }
+            if (parsedModel.getRdfFormatName() == null) {
+                parsedModel = parseOBO(rdfData, collector, triedRDFFormats);
+            }
+            if (parsedModel.getRdfFormatName() == null) {
+                parsedModel = parseFunctional(rdfData, collector, triedRDFFormats);
+            }
+            if (parsedModel.getRdfFormatName() == null) {
+                parsedModel = parseManchester(rdfData, collector, triedRDFFormats);
             }
 
         } finally {
@@ -477,43 +482,80 @@ public class Models {
         return parsedModel;
     }
 
-    private static ParsedModel parseOBO(ByteArrayInputStream rdfData, List<String> triedRDFFormats) {
+    private static ParsedModel parseFunctional(ByteArrayInputStream rdfData, StatementCollector collector,
+                                               List<String> triedRDFFormats) {
         ParsedModel parsedModel;
         try {
-            OBOFormatParser parser = new OBOFormatParser();
-            OBODoc obodoc;
-            // Parse into an OBODoc
-            try (InputStreamReader isReader = new InputStreamReader(rdfData, StandardCharsets.UTF_8);
-                    BufferedReader bufferedReader = new BufferedReader(isReader)) {
-                parser.setReader(new BufferedReader(bufferedReader));
-                obodoc = new OBODoc();
-                parser.parseOBODoc(obodoc);
-            }
-            // Convert to an OWLOntology
-            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-            manager.setOntologyConfigurator(new OntologyConfigurator());
-            OWLAPIObo2Owl bridge = new OWLAPIObo2Owl(manager);
-            OWLOntology ontology;
+            Path tmpTurtleFile = OwlApiUtils.parseFunctional(rdfData);
+            parsedModel = getTurtleFromPath(tmpTurtleFile, collector,"OFN");
+            Files.delete(tmpTurtleFile);
+        } catch (Exception e) {
+            triedRDFFormats.add("OFN");
+            parsedModel = new ParsedModel();
+            parsedModel.addFormatToError("OFN", e.getMessage());
+            rdfData.reset();
+        }
+        return parsedModel;
+    }
+
+    private static ParsedModel parseManchester(ByteArrayInputStream rdfData, StatementCollector collector,
+                                               List<String> triedRDFFormats) {
+        ParsedModel parsedModel;
+        try {
+            Path tmpTurtleFile = OwlApiUtils.parseManchester(rdfData);
+            parsedModel = getTurtleFromPath(tmpTurtleFile, collector,"OMN");
+            Files.delete(tmpTurtleFile);
+        } catch (Exception e) {
+            triedRDFFormats.add("OMN");
+            parsedModel = new ParsedModel();
+            parsedModel.addFormatToError("OMN", e.getMessage());
+            rdfData.reset();
+        }
+        return parsedModel;
+    }
+
+    private static ParsedModel parseOWLXML(ByteArrayInputStream rdfData, StatementCollector collector,
+                                           List<String> triedRDFFormats) {
+        ParsedModel parsedModel = parseIteration(rdfData, collector, triedRDFFormats, List.of(new RDFXMLParser()));
+        if (parsedModel.getModel() == null) {
             try {
-                ontology = bridge.convert(obodoc);
-            } catch (OWLOntologyCreationException e) {
-                throw new OWLRuntimeException(e);
+                Path tmpTurtleFile = OwlApiUtils.parseOWLXML(rdfData);
+                parsedModel = getTurtleFromPath(tmpTurtleFile, collector,RDFFormat.RDFXML.getName());
+                Files.delete(tmpTurtleFile);
+            } catch (Exception e) {
+                triedRDFFormats.add(RDFFormat.RDFXML.getName());
+                parsedModel = new ParsedModel();
+                parsedModel.addFormatToError(RDFFormat.RDFXML.getName(), e.getMessage());
+                rdfData.reset();
             }
-            // Render into an RDF4J Model
-            Model model = new LinkedHashModel();
-            RDFHandler rdfHandler = new StatementCollector(model);
-            OWLDocumentFormat format = ontology.getFormat();
-            format.setAddMissingTypes(false);
-            RioRenderer renderer = new RioRenderer(ontology, rdfHandler, format);
-            renderer.render();
-            parsedModel = new ParsedModel(model, "OBO");
-        } catch (OBOFormatParserException | IOException e) {
+        }
+        return parsedModel;
+    }
+
+    private static ParsedModel parseOBO(ByteArrayInputStream rdfData, StatementCollector collector,
+                                        List<String> triedRDFFormats) {
+        ParsedModel parsedModel;
+        try {
+            Path tmpTurtleFile = OwlApiUtils.parseOBO(rdfData);
+            parsedModel = getTurtleFromPath(tmpTurtleFile, collector,"OBO");
+            Files.delete(tmpTurtleFile);
+        } catch (Exception e) {
             triedRDFFormats.add("OBO");
             parsedModel = new ParsedModel();
             parsedModel.addFormatToError("OBO", e.getMessage());
             rdfData.reset();
         }
         return parsedModel;
+    }
+
+    private static ParsedModel getTurtleFromPath(Path path, StatementCollector collector, String rdfFormatName)
+            throws IOException {
+        RDFParser parser = new TurtleParser();
+        parser.setRDFHandler(collector);
+        parser.setParseErrorListener(new ParseErrorLogger());
+        parser.setParserConfig(new ParserConfig());
+        parser.parse(Files.newInputStream(path), "");
+        return new ParsedModel(new LinkedHashModel(collector.getStatements()), rdfFormatName);
     }
 
     /**

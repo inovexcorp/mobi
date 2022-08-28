@@ -139,21 +139,6 @@ class RDFFilesSpec extends Specification {
         file.get().delete()
     }
 
-    def "parseFileToFileFormat attempts to parse an OBO file into a RDFXML file and deletes tempFile"() {
-        when:
-        def input = getClass().getResourceAsStream("/bfo.obo")
-        File tempFile = RDFFiles.writeStreamToTempFile(input)
-        Optional<File> file = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML)
-        tempFile.deleteOnExit()
-
-        then:
-        assert !tempFile.exists()
-        assert file.isPresent()
-        assert file.get().exists()
-        assert file.get().getName().endsWith(".rdf")
-        file.get().delete()
-    }
-
     def "parseFileToFileFormat returns an empty optional and deletes tempFile when invalid RDF"() {
         when:
         File tempFile = RDFFiles.writeStreamToTempFile(new ByteArrayInputStream("THIS IS NOT RDF".getBytes()))

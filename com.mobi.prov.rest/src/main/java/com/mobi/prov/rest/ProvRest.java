@@ -173,6 +173,7 @@ public class ProvRest {
                     || !(bindingSet = countResult.next()).getBindingNames().contains(ACTIVITY_COUNT_BINDING)
                     || (totalCount = Bindings.requiredLiteral(bindingSet, ACTIVITY_COUNT_BINDING).intValue()) == 0) {
                 watch.stop();
+                countResult.close();
                 LOG.trace("End collecting prov activities count: " + watch.getTime() + "ms");
                 return Response.ok(createReturnObj(activityList)).header("X-Total-Count", 0).build();
             }

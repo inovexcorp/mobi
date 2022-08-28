@@ -35,15 +35,11 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParser;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
-import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,17 +90,14 @@ public class ImportsResolverImpl implements ImportsResolver {
     @Override
     public Optional<Model> retrieveOntologyFromWeb(Resource resource) {
         long startTime = getStartTime();
-        RDFParser[] parsers = {new RioFunctionalSyntaxParserFactory().getParser(),
-                new RioManchesterSyntaxParserFactory().getParser(),
-                new RioOWLXMLParserFactory().getParser()};
         Model model = mf.createEmptyModel();
         String urlStr = resource.stringValue();
-        Optional<Model> modelOpt = getModel(urlStr, parsers);
+        Optional<Model> modelOpt = getModel(urlStr);
         if (modelOpt.isPresent()) {
             model = modelOpt.get();
         }
         logDebug("Retrieving " + resource + " from web", startTime);
-        return model.size() > 0 ? Optional.of(model) : Optional.empty();
+        return !model.isEmpty() ? Optional.of(model) : Optional.empty();
     }
 
     /**
@@ -147,13 +140,12 @@ public class ImportsResolverImpl implements ImportsResolver {
      * Attempts to build a {@link Model} from the urlStr representing a web resource.
      *
      * @param urlStr The String representation of a URL.
-     * @param parsers An optional list of {@link RDFParser}s to use to try to parse the resource contents.
      * @return An {@link Optional} of the {@link Model} if resolved and parsed. Otherwise, an empty {@link Optional}.
      */
-    private Optional<Model> getModel(String urlStr, RDFParser... parsers) {
+    private Optional<Model> getModel(String urlStr) {
         Model model = mf.createEmptyModel();
         try {
-            model = Models.createModel(getWebInputStream(urlStr), parsers);
+            model = Models.createModel(getWebInputStream(urlStr));
         } catch (IOException | IllegalArgumentException e) {
             log.debug("Could not parse InputStream to model from URL: " + urlStr);
         }
@@ -164,13 +156,10 @@ public class ImportsResolverImpl implements ImportsResolver {
     public Optional<File> retrieveOntologyFromWebFile(Resource resource) {
         long startTime = getStartTime();
         try {
-            RDFParser[] parsers = {new RioFunctionalSyntaxParserFactory().getParser(),
-                    new RioManchesterSyntaxParserFactory().getParser(),
-                    new RioOWLXMLParserFactory().getParser()};
             String urlStr = resource.stringValue();
             try {
                 File tempFile = RDFFiles.writeStreamToTempFile(getWebInputStream(urlStr));
-                return RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.NQUADS, parsers);
+                return RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.NQUADS);
             } catch (IOException e) {
                 log.error("Error opening InputStream from web ontology", e);
             }

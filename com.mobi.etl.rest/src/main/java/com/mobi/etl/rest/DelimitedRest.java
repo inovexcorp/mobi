@@ -52,7 +52,11 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -705,10 +709,11 @@ public class DelimitedRest {
      * @return a string with the JSON of the CSV rows
      * @throws IOException csv file could not be read
      */
-    private String convertCSVRows(File input, int numRows, char separator) throws IOException {
+    private String convertCSVRows(File input, int numRows, char separator) throws IOException, CsvException {
         Charset charset = getCharset(Files.readAllBytes(input.toPath()));
-        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()),
-                separator)) {
+        CSVParser parser = new CSVParserBuilder().withSeparator(separator).build();
+        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(new FileInputStream(input), charset.name()))
+                .withCSVParser(parser).build()) {
             List<String[]> csvRows = reader.readAll();
             JSONArray returnRows = new JSONArray();
             for (int i = 0; i <= numRows && i < csvRows.size(); i++) {

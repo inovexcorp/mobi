@@ -29,6 +29,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.SimpleLiteral;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.Test;
@@ -124,6 +125,11 @@ public class DefaultValueConverterRegistryTest {
 
         @Override
         public XMLGregorianCalendar calendarValue() {
+            return null;
+        }
+
+        @Override
+        public CoreDatatype getCoreDatatype() {
             return null;
         }
 
