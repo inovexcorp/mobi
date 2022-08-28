@@ -80,7 +80,7 @@ unit_test_web:
   stage: test
   script:
     # Build and run tests for dependencies for web bundle.
-    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS install -P release-build -pl ':api,:persistence.api,:persistence.utils,:rdf.orm,:rdf.orm.ontologies,:rdf.orm.generate,:rdf-orm-maven-plugin,:web.security,:jaas.api,:web'
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS install -P release-build -pl ':api,:persistence.api,:persistence.utils,:rdf.orm,:rdf.orm.ontologies,:rdf.orm.generate,:rdf-orm-maven-plugin,:web.security,:jaas.api,:web,:owlapi.utils'
   only:
     - merge_requests
     - master # Any commit to master triggers this job

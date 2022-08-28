@@ -108,7 +108,7 @@ public class MobiSparqlValueExprRenderer extends AbstractQueryModelVisitor<Excep
         if (theVar.isAnonymous() && !theVar.hasValue()) {
             mBuffer.append("?").append(BaseTupleExprRenderer.scrubVarName(theVar.getName()));
         } else if (theVar.hasValue()) {
-            mBuffer.append(RenderUtils.getSPARQLQueryString(theVar.getValue()));
+            mBuffer.append(RenderUtils.toSPARQL(theVar.getValue()));
         } else {
             mBuffer.append("?").append(theVar.getName());
         }
@@ -199,7 +199,7 @@ public class MobiSparqlValueExprRenderer extends AbstractQueryModelVisitor<Excep
      */
     @Override
     public void meet(ValueConstant theVal) throws Exception {
-        mBuffer.append(RenderUtils.getSPARQLQueryString(theVal.getValue()));
+        mBuffer.append(RenderUtils.toSPARQL(theVal.getValue()));
     }
 
     /**

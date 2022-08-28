@@ -38,6 +38,7 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvValidationException;
 import org.apache.commons.io.FilenameUtils;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -63,7 +64,6 @@ import java.util.Map;
 public class CsvSemanticTranslator extends AbstractSemanticTranslator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CsvSemanticTranslator.class);
-    private FilenameUtils util = new FilenameUtils();
 
     private static final String ONTOLOGY_IRI = "getOntologyIri()";
     private static final String DEFAULT_ONTOLOGY_TITLE = "CSV Extracted Ontology";
@@ -107,7 +107,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
         try (final BufferedInputStream is = new BufferedInputStream(new FileInputStream(rawFile.toFile()))) {
             is.mark(size + 1);
             generateOntologyTitle(managedOntology);
-            String className = util.removeExtension(rawFile.getFileName().toString());
+            String className = FilenameUtils.removeExtension(rawFile.getFileName().toString());
             classIRI = generateClassIri(managedOntology, className);
             classInstance = getOrCreateClass(managedOntology, classIRI, className);
 
@@ -141,7 +141,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
             dataStream.reset();
             generateClassInstances(dataStream, managedOntology);
 
-        } catch (IOException e) {
+        } catch (IOException | CsvValidationException e) {
             throw new SemanticTranslationException("Issue reading incoming stream to extract meaning from "
                     + entityIdentifier, e);
         }
@@ -232,7 +232,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
                     index++;
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | CsvValidationException e) {
             throw new SemanticTranslationException("Issue reading type of datatype property");
         } catch (NullPointerException n) {
             throw new SemanticTranslationException("Cannot parse more rows than in file");
@@ -280,7 +280,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
                     index++;
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | CsvValidationException e) {
             throw new SemanticTranslationException("Issue reading type of datatype property");
         }
 

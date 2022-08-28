@@ -90,7 +90,7 @@
         <bundle start-level="20">mvn:org.jvnet.staxex/stax-ex/1.7.4</bundle>
     </feature>
     <feature name="mobi-deps" description="Mobi Dependency Bundles" version="${project.version}">
-        <feature>owlapi-deps</feature>
+        <feature>rdf4j-deps</feature>
 
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ezmorph/1.0.6_1</bundle>
         <bundle>mvn:org.apache.httpcomponents/httpclient-osgi/${httpclient.version}</bundle>
@@ -160,15 +160,17 @@
         <bundle>mvn:com.google.guava/guava/30.1.1-jre</bundle>
         <bundle>mvn:commons-collections/commons-collections/3.2.1</bundle>
         <bundle>mvn:commons-beanutils/commons-beanutils/1.9.3</bundle>
-        <bundle>mvn:org.apache.commons/commons-lang3/3.8.1</bundle>
-        <bundle>mvn:org.apache.commons/commons-text/1.6</bundle>
-        <bundle>mvn:org.apache.commons/commons-collections4/4.2</bundle>
-        <bundle>mvn:com.opencsv/opencsv/${opencsv.version}</bundle>
-
-        <bundle>mvn:org.locationtech.jts/jts-core/1.17.1</bundle>
         <bundle>mvn:org.locationtech.spatial4j/spatial4j/0.8</bundle>
         <bundle>mvn:org.mapdb/mapdb/1.0.8</bundle>
-        <bundle>mvn:org.eclipse.rdf4j/rdf4j-runtime-osgi/3.7.4</bundle>
+        <bundle>mvn:org.apache.commons/commons-lang3/3.12.0</bundle>
+        <bundle>mvn:org.apache.commons/commons-text/1.9</bundle>
+        <bundle>mvn:org.apache.commons/commons-collections4/4.4</bundle>
+        <bundle>mvn:com.opencsv/opencsv/5.3</bundle>
+        <bundle>mvn:org.locationtech.jts/jts-core/1.18.1</bundle>
+        <bundle>mvn:org.lwjgl.osgi/org.lwjgl.lmdb/3.3.0</bundle>
+        <bundle>mvn:org.lwjgl.osgi/org.lwjgl.lwjgl/3.3.0</bundle>
+
+        <bundle>mvn:org.eclipse.rdf4j/rdf4j-runtime-osgi/${rdf4j.version}</bundle>
     </feature>
     <feature name="elasticsearch-deps" description="Elasticsearch Bundles" version="${project.version}">
         <bundle>mvn:org.yaml/snakeyaml/1.30</bundle>
@@ -188,19 +190,6 @@
         <bundle>mvn:com.ning/compress-lzf/1.0.4</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch/6.6.2_1</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch-client/6.6.2_1</bundle>
-    </feature>
-    <feature name="owlapi-deps" description="OWLAPI Bundles" version="${project.version}">
-        <feature>rdf4j-deps</feature>
-
-        <!-- OWLAPI Dependencies -->
-        <bundle>mvn:com.github.vsonnier/hppcrt/0.7.5</bundle>
-        <bundle>mvn:org.glassfish.hk2.external/javax.inject/2.5.0-b32</bundle>
-        <bundle>mvn:com.google.guava/failureaccess/1.0.1</bundle>
-        <bundle>mvn:com.google.guava/guava/30.0-jre</bundle>
-        <bundle>mvn:com.github.ben-manes.caffeine/caffeine/2.8.6</bundle>
-        <bundle>mvn:org.apache.commons/commons-rdf-api/${commons-rdf-api.version}</bundle>
-        <bundle>mvn:org.tukaani/xz/1.6</bundle>
-        <bundle>mvn:net.sourceforge.owlapi/owlapi-distribution/${owlapi.version}</bundle>
     </feature>
     <feature name="mobi-core" description="Mobi Core Platform Bundles" version="${project.version}">
         <feature>mobi-deps</feature>
@@ -259,6 +248,7 @@
         <bundle>mvn:com.mobi/shapes.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/shapes.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/shapes.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/owlapi.utils/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">
         <bundle>mvn:com.mobi/etl.cli/${project.version}</bundle>

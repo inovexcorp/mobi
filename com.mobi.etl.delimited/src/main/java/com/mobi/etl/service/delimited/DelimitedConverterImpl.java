@@ -39,7 +39,11 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.vocabularies.xsd.XSD;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvValidationException;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -116,45 +120,51 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
                 config.getOntologies();
         byte[] data = toByteArrayOutputStream(config.getData()).toByteArray();
-        Charset charset = CharsetUtils.getEncoding(new ByteArrayInputStream(data)).orElseThrow(() ->
-                new MobiException("Unsupported character set"));
-        CSVReader reader = new CSVReader(new InputStreamReader(new ByteArrayInputStream(data), charset),
-                config.getSeparator());
+
         Model convertedRDF = modelFactory.createEmptyModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
         long offset = config.getOffset();
         boolean containsHeaders = config.getContainsHeaders();
 
-        // If headers exist, skip them
-        if (containsHeaders) {
-            reader.readNext();
-        }
+        Charset charset = CharsetUtils.getEncoding(new ByteArrayInputStream(data)).orElseThrow(() ->
+                new MobiException("Unsupported character set"));
+        CSVParser parser = new CSVParserBuilder().withSeparator(config.getSeparator()).build();
+        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(new ByteArrayInputStream(data), charset))
+                .withCSVParser(parser).build()) {
+            // If headers exist, skip them
+            if (containsHeaders) {
+                reader.readNext();
+            }
 
-        // Skip to offset point
-        while (reader.getLinesRead() - (containsHeaders ? 1 : 0) < offset) {
-            reader.readNext();
-        }
+            // Skip to offset point
+            while (reader.getLinesRead() - (containsHeaders ? 1 : 0) < offset) {
+                reader.readNext();
+            }
 
-        //Traverse each row and convert column into RDF
-        String[] nextLine;
-        long index = config.getOffset();
-        Optional<Long> limit = config.getLimit();
-        while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
-            //Exporting to CSV from Excel can cause empty rows to contain columns
-            //Therefore, we must ensure at least one cell has values before processing the row
-            boolean rowContainsValues = false;
-            for (String cell : nextLine) {
-                if (!cell.isEmpty()) {
-                    rowContainsValues = true;
-                    writeClassMappingsToModel(convertedRDF, nextLine, classMappings, sourceOntologies);
-                    break;
+            //Traverse each row and convert column into RDF
+            String[] nextLine;
+            long index = config.getOffset();
+            Optional<Long> limit = config.getLimit();
+            while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
+                //Exporting to CSV from Excel can cause empty rows to contain columns
+                //Therefore, we must ensure at least one cell has values before processing the row
+                boolean rowContainsValues = false;
+                for (String cell : nextLine) {
+                    if (!cell.isEmpty()) {
+                        rowContainsValues = true;
+                        writeClassMappingsToModel(convertedRDF, nextLine, classMappings, sourceOntologies);
+                        break;
+                    }
                 }
+                if (!rowContainsValues) {
+                    LOGGER.debug(String.format("Skipping empty row number: %d", index + 1));
+                }
+                index++;
             }
-            if (!rowContainsValues) {
-                LOGGER.debug(String.format("Skipping empty row number: %d", index + 1));
-            }
-            index++;
+        } catch (CsvValidationException e) {
+            throw new IllegalStateException("Error reading csv.", e);
         }
+
         return convertedRDF;
     }
 

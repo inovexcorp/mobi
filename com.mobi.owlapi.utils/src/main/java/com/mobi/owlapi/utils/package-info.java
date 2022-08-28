@@ -1,10 +1,10 @@
 @Version("1.0.0.${build}")
 
-package com.mobi.persistence.utils.owlapi;
+package com.mobi.owlapi.utils;
 
 /*-
  * #%L
- * com.mobi.persistence.utils
+ * com.mobi.owlapi.utils
  * $Id:$
  * $HeadURL:$
  * %%

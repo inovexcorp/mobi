@@ -132,7 +132,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         mf = getModelFactory();
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo.init();
 
         engineManager = mock(EngineManager.class) ;
         configProvider = mock(CatalogConfigProvider.class);

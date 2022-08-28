@@ -1,8 +1,8 @@
-package com.mobi.persistence.utils.owlapi;
+package com.mobi.owlapi.utils;
 
 /*-
  * #%L
- * com.mobi.persistence.utils
+ * com.mobi.owlapi.utils
  * $Id:$
  * $HeadURL:$
  * %%
@@ -38,7 +38,7 @@ public class OWLManagerSilent extends OWLManager {
 
     @Override
     public OWLOntologyManager get() {
-        OWLOntologyManager ontologyManager = createOWLOntologyManager();
+        OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
         OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration();
         config = config.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
         ontologyManager.setOntologyLoaderConfiguration(config);

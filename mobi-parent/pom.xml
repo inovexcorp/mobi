@@ -73,7 +73,7 @@
         <logback.version>1.2.11</logback.version>
         <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
         <mockito.version>4.6.1</mockito.version>
-        <opencsv.version>4.6</opencsv.version> <!-- 5.6 doesn't allow custom delimiters -->
+        <opencsv.version>5.3</opencsv.version>
         <osgi-service-jaxrs.version>1.0.0</osgi-service-jaxrs.version>
         <osgi-service-cm.version>1.6.1</osgi-service-cm.version>
         <osgi-service-component>1.5.0</osgi-service-component>
@@ -81,9 +81,9 @@
         <osgi-metatype-annotations.version>1.4.1</osgi-metatype-annotations.version>
         <osgi-versioning.version>1.1.2</osgi-versioning.version>
         <osgi.version>8.0.0</osgi.version>
-        <owlapi.version>5.1.19-MOBI</owlapi.version>
+        <owlapi.version>5.1.20</owlapi.version>
         <poi.version>3.14_1</poi.version>
-        <rdf4j.version>3.7.6</rdf4j.version>
+        <rdf4j.version>4.1.0</rdf4j.version>
         <servlet.version>3.1.0</servlet.version>  <!-- 4.0.1 with later pax web -->
         <swagger.version>2.2.0</swagger.version>
     </properties>
@@ -116,6 +116,17 @@
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-repository-api</artifactId>
+                <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-repository-http</artifactId>
                 <version>${rdf4j.version}</version>
                 <exclusions>
                     <exclusion>
@@ -218,48 +229,6 @@
                 </exclusions>
             </dependency>
 
-            <!-- OWLAPI Dependencies -->
-            <dependency>
-                <groupId>net.sourceforge.owlapi</groupId>
-                <artifactId>owlapi-oboformat</artifactId>
-                <version>${owlapi.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.code.findbugs</groupId>
-                        <artifactId>jsr305</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>net.sourceforge.owlapi</groupId>
-                <artifactId>owlapi-rio</artifactId>
-                <version>${owlapi.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.fasterxml.jackson.core</groupId>
-                        <artifactId>jackson-databind</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.google.code.findbugs</groupId>
-                        <artifactId>jsr305</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.github.jsonld-java</groupId>
-                        <artifactId>*</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>net.sourceforge.owlapi</groupId>
-                <artifactId>owlapi-apibinding</artifactId>
-                <version>${owlapi.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.code.findbugs</groupId>
-                        <artifactId>jsr305</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
@@ -630,9 +599,6 @@
                     <systemPropertyVariables>
                         <logback.configurationFile>../mobi-parent/src/test/resources/logback-test.xml</logback.configurationFile>
                     </systemPropertyVariables>
-                    <argLine>
-                        --illegal-access=permit
-                    </argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -642,9 +608,6 @@
                 <configuration>
                     <skipTests>${skipITs}</skipTests>
                     <trimStackTrace>false</trimStackTrace>
-                    <argLine>
-                        --illegal-access=permit
-                    </argLine>
                 </configuration>
                 <executions>
                     <execution>
