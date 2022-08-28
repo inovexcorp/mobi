@@ -22,7 +22,7 @@
  */
 import { endsWith, get, indexOf, forEach, some, includes, find, isMatch, has, filter, map as lodashMap, reduce, intersection, isString, concat, uniq } from 'lodash';
 import { Inject, Injectable } from '@angular/core';
-import * as jszip from 'jszip';
+import * as JSZip from 'jszip';
 import { from, Observable, throwError, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
@@ -1330,7 +1330,7 @@ export class OntologyManagerService {
      */
     compressFile(file: File): Observable<File> {
         const reader = new FileReader();
-        const zip = new jszip();
+        const zip: JSZip = new (<any>JSZip).default();
         if (file && file.size) {
             reader.readAsArrayBuffer(file); 
         } else {

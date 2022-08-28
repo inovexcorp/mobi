@@ -8,7 +8,8 @@
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
       "noImplicitAny": false,
-      "suppressImplicitAnyIndexErrors": true
+      "suppressImplicitAnyIndexErrors": true,
+      "esModuleInterop": true
     },
     "exclude": [
         "node_modules",
