@@ -22,6 +22,7 @@
  */
 import { AfterViewInit, Component, ElementRef, ViewChild, Input, SimpleChanges, OnChanges, ChangeDetectorRef} from '@angular/core';
 import * as YATE from 'perfectkb-yate';
+import { pull } from 'lodash';
 
 import './yate.component.scss';
 
@@ -53,24 +54,27 @@ export class YateComponent implements OnChanges, AfterViewInit {
     }
    
     initUI(content: string): void {
-        YATE.defaults = {
-            tabMode: 'indent',
-            lineNumbers: true,
-            lineWrapping: true,
-            backdrop: false,
-            foldGutter: {
-                rangeFinder: new YATE.fold.combine(YATE.fold.brace, YATE.fold.prefix)
-            },
-            collapsePrefixesOnLoad: false,
-            gutters: ['gutterErrorBar', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
-            matchBrackets: true,
-            readOnly: true,
-            fixedGutter: true,
-            syntaxErrorCheck: true,
-            value: content
-        };
-        delete YATE.Autocompleters.prefixes;
-        this.yate = YATE(this.shapesGraphContent.nativeElement);
+        delete YATE.Autocompleters.prefixes
+        this.yate = (<any>YATE).default(this.shapesGraphContent.nativeElement,
+            {
+                tabMode: 'indent',
+                lineNumbers: true,
+                lineWrapping: true,
+                backdrop: false,
+                foldGutter: {
+                    rangeFinder: new YATE.fold.combine(YATE.fold.brace, YATE.fold.prefix)
+                },
+                collapsePrefixesOnLoad: false,
+                gutters: ['gutterErrorBar', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+                matchBrackets: true,
+                readOnly: true,
+                fixedGutter: true,
+                syntaxErrorCheck: true,
+                value: content,
+                options: {
+                    autocompleters: []
+                }
+            });
         this.yate.setSize('100%', '100%');
     }
 }

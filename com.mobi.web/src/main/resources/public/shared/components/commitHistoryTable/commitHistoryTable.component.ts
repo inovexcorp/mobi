@@ -118,7 +118,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     ngOnInit(): void {
         this.showGraph = this.graph !== undefined;
         this.colors = chroma.brewer.Set1;
-        this.snap = Snap('.commit-graph');
+        this.snap = new (<any>Snap).default('.commit-graph');
     }
     ngOnChanges(changesObj: SimpleChanges): void {
         if (changesObj?.headTitle || changesObj?.commitId || changesObj?.targetId || changesObj?.entityId) {
@@ -219,7 +219,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         this.xI = 1;
         this.colorIdx = 0;
         this.snap.clear();
-        this.snap = new Snap('.commit-graph');
+        this.snap = new (<any>Snap).default('.commit-graph');
         this.wrapper = undefined;
         this.deltaX = 5 + this.circleRadius;
     }

@@ -75,8 +75,7 @@ export class YasguiService {
         if (!this.hasInitialized) {
             this.reset();
         }
-        
-        this.yasgui = new Yasgui(element, configuration);
+        this.yasgui = new (<any>Yasgui).default(element, configuration);
         this._updateYasguiUI();
         this.hasInitialized = true;
     }
