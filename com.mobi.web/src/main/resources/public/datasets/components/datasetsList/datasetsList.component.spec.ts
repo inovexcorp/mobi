@@ -39,6 +39,7 @@ import { CATALOG, DATASET, DCTERMS, POLICY } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
@@ -98,6 +99,7 @@ describe('Datasets List component', function() {
                 MockComponent(UploadDataOverlayComponent),
                 MockComponent(NewDatasetOverlayComponent),
                 MockComponent(InfoMessageComponent),
+                MockComponent(SearchBarComponent),
                 MockDirective(CopyClipboardDirective),
                 MockPipe(HighlightTextPipe)
             ],
@@ -420,7 +422,7 @@ describe('Datasets List component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.datasets-list')).length).toEqual(1);
         });
-        ['mat-form-field', 'mat-paginator', 'button.new-button'].forEach(test => {
+        ['search-bar', 'mat-paginator', 'button.new-button'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toBe(1);
             });

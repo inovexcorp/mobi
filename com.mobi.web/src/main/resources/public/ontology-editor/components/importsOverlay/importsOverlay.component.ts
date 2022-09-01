@@ -20,166 +20,164 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpResponse } from '@angular/common/http';
-import { get, find, remove, sortBy, map, filter, forEach, some, includes } from 'lodash';
-import { first } from 'rxjs/operators';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef, MatSelectionListChange, MatTabChangeEvent } from '@angular/material';
+import { get, find, remove, sortBy, map, filter, some, includes } from 'lodash';
+import { finalize, switchMap } from 'rxjs/operators';
 
+import { REGEX } from '../../../constants';
+import { OntologyDetails } from '../../../datasets/models/ontologyDetails.interface';
+import { DCTERMS, ONTOLOGYEDITOR, OWL } from '../../../prefixes';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './importsOverlay.component.scss';
 
-const template = require('./importsOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:importsOverlay
- * @requires shared.service:httpService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- * @requires shared.service:propertyManagerService
- * @requires shared.service:catalogManagerService
+ * @class ontology-editor.ImportsOverlayComponent
  *
- * @description
- * `importsOverlay` is a component that creates content for a modal that adds an imported ontology to the
- * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
- * a {@link shared.component:tabset} to choose between a URL import or an ontology within the Mobi instance. The
- * "Server" tab contains a searchable selectable list of ontologies. Only 100 will be shown at a time. Selected
- * ontologies can be removed from the list by either unchecking the checkbox in the list or clicking the x button
- * on the ontology in the Selected list. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that adds an imported ontology to the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a `mat-tab-group to
+ * choose between a URL import or an ontology within the Mobi instance. The "Server" tab contains a searchable
+ * selectable list of ontologies. Only 100 will be shown at a time. Selected ontologies can be removed from the list by
+ * either unchecking the checkbox in the list or clicking the x button on the associated chip. Meant to be used in
+ * conjunction with the `MatDialog` service.
  */
-const importsOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: importsOverlayComponentCtrl
-};
-
-importsOverlayComponentCtrl.$inject = ['$http', 'httpService', '$q', 'REGEX', 'ontologyStateService', 'utilService', 'prefixes', 'propertyManagerService', 'catalogManagerService'];
-
-function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStateService, utilService, prefixes, propertyManagerService, catalogManagerService: CatalogManagerService) {
-    var dvm = this;
-    var os = ontologyStateService;
-    var pm = propertyManagerService;
-    var cm = catalogManagerService;
-    var catalogId = get(cm.localCatalog, '@id', '');
-    dvm.spinnerId = 'imports-overlay';
-    dvm.util = utilService;
-    dvm.url = '';
-    dvm.urls = [];
-    dvm.ontologies = [];
-    dvm.selectedOntologies = [];
-    dvm.iriPattern = REGEX.IRI;
-    dvm.urlError = '';
-    dvm.serverError = '';
-    dvm.tabs = {
-        url: true,
-        server: false
-    };
-    dvm.getOntologyConfig = {
+@Component({
+    selector: 'imports-overlay',
+    templateUrl: './importsOverlay.component.html'
+})
+export class ImportsOverlayComponent implements OnInit {
+    catalogId = '';
+    spinnerId = 'imports-overlay';
+    ontologies: OntologyDetails[] = [];
+    selectedOntologies: OntologyDetails[] = [];
+    urlError = '';
+    serverError = '';
+    getOntologyConfig: PaginatedConfig = {
         pageIndex: 0,
         limit: 100,
-        type: prefixes.ontologyEditor + 'OntologyRecord',
-        sortOption: find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+        type: ONTOLOGYEDITOR + 'OntologyRecord',
+        sortOption: undefined,
         searchText: ''
     };
+    tabIndex = 0;
 
-    dvm.setOntologies = function() {
-        httpService.cancel(dvm.spinnerId);
-        return cm.getRecords(catalogId, dvm.getOntologyConfig, dvm.spinnerId).pipe(first()).toPromise()
-            .then(parseOntologyResults, errorMessage => onError(errorMessage, 'server'));
+    importForm: FormGroup = this.fb.group({
+        url: ['', [Validators.required, Validators.pattern(REGEX.IRI)]]
+    });
+
+    @ViewChild('ontologiesList') ontologiesList: ElementRef;
+    
+    constructor(private fb: FormBuilder, private http: HttpClient, private dialogRef: MatDialogRef<ImportsOverlayComponent>,
+        private os: OntologyStateService, private spinnerSvc: ProgressSpinnerService, private cm: CatalogManagerService,
+        @Inject('utilService') public util, @Inject('propertyManagerService') private pm) {}
+    
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+        this.getOntologyConfig.sortOption = find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true});
     }
-    dvm.toggleOntology = function(ontology) {
+    setOntologies(): void {
+        if (this.ontologiesList) {
+            this.spinnerSvc.startLoadingForComponent(this.ontologiesList, 30);
+        }
+        this.cm.getRecords(this.catalogId, this.getOntologyConfig, true)
+            .pipe(finalize(() => {
+                if (this.ontologiesList) {
+                    this.spinnerSvc.finishLoadingForComponent(this.ontologiesList);
+                }
+            }))
+            .subscribe((response: HttpResponse<JSONLDObject[]>) => this._parseOntologyResults(response),
+            error => this._onError(error, 1));
+    }
+    selectedUpdate(event: MatSelectionListChange): void {
+        this.toggleOntology(event.option.value);
+    }
+    toggleOntology(ontology: OntologyDetails): void {
+        ontology.selected = !ontology.selected;
         if (ontology.selected) {
-            dvm.selectedOntologies.push(ontology);
-            dvm.selectedOntologies = sortBy(dvm.selectedOntologies, 'title');
+            this.selectedOntologies.push(ontology);
+            this.selectedOntologies = sortBy(this.selectedOntologies, 'title');
         } else {
-            remove(dvm.selectedOntologies, ontology);
+            remove(this.selectedOntologies, ontology);
         }
     }
-    dvm.unselectOntology = function(ontology) {
-        ontology.selected = false;
-        remove(dvm.selectedOntologies, ontology);
-    }
-    dvm.clickTab = function(tabKey) {
-        if (tabKey === 'server' && dvm.ontologies.length === 0) {
-            dvm.getOntologyConfig.searchText = '';
-            dvm.selectedOntologies = [];
-            dvm.setOntologies();
+    onTabChanged(event: MatTabChangeEvent): void {
+        if (event.index === 0) {
+            this.importForm.controls.url.setValidators([Validators.required, Validators.pattern(REGEX.IRI)]);
+            this.importForm.controls.url.setValue(this.importForm.controls.url.value);
+        } else if (event.index === 1) {
+            this.importForm.controls.url.clearValidators();
+            if (this.ontologies.length === 0) {
+                this.getOntologyConfig.searchText = '';
+                this.selectedOntologies = [];
+                this.setOntologies();
+            }
         }
     }
-    dvm.getOntologyIRI = function(record) {
-        return dvm.util.getPropertyId(record, prefixes.ontologyEditor + 'ontologyIRI');
+    getOntologyIRI(record: JSONLDObject): string {
+        return this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI');
     }
-    dvm.addImport = function() {
-        if (dvm.tabs.url) {
-            $http.get('/mobirest/imported-ontologies/' + encodeURIComponent(dvm.url))
-                .then(() => {
-                    dvm.confirmed([dvm.url], 'url');
-                }, () => onError('The provided URL was unresolvable.', 'url'));
-        } else if (dvm.tabs.server) {
-            dvm.confirmed(map(dvm.selectedOntologies, 'ontologyIRI'), 'server');
+    addImport(): void {
+        if (this.tabIndex === 0) {
+            this.http.get('/mobirest/imported-ontologies/' + encodeURIComponent(this.importForm.controls.url.value))
+                .subscribe(() => {
+                    this.confirmed([this.importForm.controls.url.value], 0);
+                }, () => this._onError('The provided URL was unresolvable.', 0));
+        } else if (this.tabIndex === 1) {
+            this.confirmed(map(this.selectedOntologies, 'ontologyIRI'), 1);
         }
     }
-    dvm.confirmed = function(urls, tabKey) {
-        var importsIRI = prefixes.owl + 'imports';
-        var addedUrls = filter(urls, url => pm.addId(os.listItem.selected, importsIRI, url));
+    confirmed(urls: string[], tabIndex: number): void {
+        const importsIRI = OWL + 'imports';
+        const addedUrls = filter(urls, url => this.pm.addId(this.os.listItem.selected, importsIRI, url));
         if (addedUrls.length !== urls.length) {
-            dvm.util.createWarningToast('Duplicate property values not allowed');
+            this.util.createWarningToast('Duplicate property values not allowed');
         }
         if (addedUrls.length) {
-            var urlObjs = map(addedUrls, url => ({'@id': url}));
-            os.addToAdditions(os.listItem.versionedRdfRecord.recordId, {'@id': os.listItem.selected['@id'], [importsIRI]: urlObjs});
-            os.saveChanges(os.listItem.versionedRdfRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions}).pipe(first()).toPromise()
-                .then(() => os.afterSave().pipe(first()).toPromise(), $q.reject)
-                .then(() => os.updateOntology(os.listItem.versionedRdfRecord.recordId, os.listItem.versionedRdfRecord.branchId, os.listItem.versionedRdfRecord.commitId, os.listItem.upToDate, os.listItem.inProgressCommit).pipe(first()).toPromise(), $q.reject)
-                .then(() => {
-                    os.listItem.isSaved = os.isCommittable(os.listItem);
-                    dvm.close();
-                }, errorMessage => onError(errorMessage, tabKey));
+            const urlObjs = map(addedUrls, url => ({'@id': url}));
+            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, {'@id': this.os.listItem.selected['@id'], [importsIRI]: urlObjs});
+            this.os.saveCurrentChanges().pipe(
+                switchMap(() => this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.upToDate, this.os.listItem.inProgressCommit))
+            ).subscribe(() => {
+                this.dialogRef.close(true);
+            }, errorMessage => this._onError(errorMessage, tabIndex));
         } else {
-            dvm.dismiss();
+            this.dialogRef.close(false);
         }
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
 
-    function parseOntologyResults(response: HttpResponse<JSONLDObject[]>) {
-        dvm.ontologies = map(filter(response.body, isOntologyUnused), record => ({
+    private _parseOntologyResults(response: HttpResponse<JSONLDObject[]>) {
+        this.serverError = '';
+        this.ontologies = map(filter(response.body, record => this._isOntologyUnused(record)), record => ({
             recordId: record['@id'],
-            ontologyIRI: dvm.getOntologyIRI(record),
-            title: dvm.util.getDctermsValue(record, 'title'),
-            selected: false
+            ontologyIRI: this.getOntologyIRI(record),
+            title: this.util.getDctermsValue(record, 'title'),
+            selected: false,
+            jsonld: record
         }));
-        if (dvm.selectedOntologies.length) {
-            forEach(dvm.ontologies, ontology => {
-                if (some(dvm.selectedOntologies, {recordId: ontology.recordId})) {
+        if (this.selectedOntologies.length) {
+            this.ontologies.forEach(ontology => {
+                if (some(this.selectedOntologies, {recordId: ontology.recordId})) {
                     ontology.selected = true;
                 }
             });
         }
-        dvm.serverError = '';
     }
-    function isOntologyUnused(ontologyRecord) {
-        return ontologyRecord['@id'] !== os.listItem.versionedRdfRecord.recordId && !includes(os.listItem.importedOntologyIds, dvm.getOntologyIRI(ontologyRecord));
+    private _isOntologyUnused(ontologyRecord: JSONLDObject): boolean {
+        return ontologyRecord['@id'] !== this.os.listItem.versionedRdfRecord.recordId && !includes(this.os.listItem.importedOntologyIds, this.getOntologyIRI(ontologyRecord));
     }
-    function onError(errorMessage, tabKey) {
-        if (tabKey === 'url') {
-            dvm.urlError = errorMessage;
-        } else if (tabKey === 'server') {
-            dvm.ontologies = [];
-            dvm.serverError = errorMessage;
+    private _onError(errorMessage: string, tabIndex: number) {
+        if (tabIndex === 0) {
+            this.urlError = errorMessage;
+        } else if (tabIndex === 1) {
+            this.ontologies = [];
+            this.serverError = errorMessage;
         }
     }
 }
-
-export default importsOverlayComponent;

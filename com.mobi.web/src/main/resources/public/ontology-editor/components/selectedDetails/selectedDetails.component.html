@@ -21,17 +21,18 @@
   #L%
   -->
 <div class="selected-details">
-    <div class="selected-heading" ng-if="dvm.os.listItem.selected">
-        <span class="entity-name">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</span>
-        <static-iri class="editable-iri" read-only="dvm.readOnly" iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)" highlight-text="dvm.highlightText"></static-iri>
+    <div class="selected-heading" *ngIf="os.listItem.selected">
+        <!-- TODO: fix spacing between name and IRI -->
+        <span class="entity-name">{{om.getEntityName(os.listItem.selected)}}</span>
+        <static-iri class="editable-iri" [readOnly]="readOnly" [iri]="os.listItem.selected['@id']" (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)" [highlightText]="highlightText"></static-iri>
     </div>
-    <p ng-if="dvm.isFromImportedOntology()" class="type-wrapper is-imported-ontology">
+    <p *ngIf="isFromImportedOntology()" class="type-wrapper is-imported-ontology">
         <span class="type-label">Ontology:</span>
-        <span class="imported-ontology text-muted">{{dvm.getImportedOntology()}}</span>
+        <span class="imported-ontology text-muted">{{getImportedOntology()}}</span>
     </p>
-    <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper entity-types">
+    <p *ngIf="os.listItem.selected && os.listItem.selected['@type']?.length" class="type-wrapper entity-types">
         <span class="type-label">Type(s):</span>
-        <span class="types text-muted">{{dvm.getTypes()}}</span>
-        <a ng-if="dvm.om.isIndividual(dvm.os.listItem.selected) && !dvm.readOnly && !dvm.os.isSelectedImported() && dvm.os.canModify()" ng-click="dvm.showTypesOverlay()"><i class="fa fa-pencil"></i></a>
+        <span class="types text-muted">{{getTypes()}}</span>
+        <a *ngIf="om.isIndividual(os.listItem.selected) && !readOnly && !os.isSelectedImported() && os.canModify()" (click)="showTypesOverlay()"><i class="fa fa-pencil"></i></a>
     </p>
 </div>

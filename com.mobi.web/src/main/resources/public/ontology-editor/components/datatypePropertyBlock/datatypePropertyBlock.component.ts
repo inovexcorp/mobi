@@ -20,76 +20,94 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get } from 'lodash';
+import { Component, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { get, has, sortBy } from 'lodash';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./datatypePropertyBlock.component.html');
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { RDF, XSD } from '../../../prefixes';
+import {
+    DatatypePropertyOverlayComponent
+} from '../datatypePropertyOverlay/datatypePropertyOverlay.component';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:datatypePropertyBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
- * @requires shared.service:modalService
+ * @class ontology-editor.DatatypePropertyBlockComponent
  *
- * @description
- * `datatypePropertyBlock` is a component that creates a section that displays the data properties on the
- * {@link shared.service:ontologyStateService selected individual} using
- * {@link ontology-editor.component:propertyValues}. The section header contains a button for adding a data
- * property. The component houses the methods for opening the modal for
- * {@link ontology-editor.component:datatypePropertyOverlay editing, adding}, and removing data property
- * values. T
+ * A component that creates a section that displays the data properties on the
+ * {@link shared.OntologyStateService#listItem selected individual} using {@link ontology-editor.PropertyValuesComponent}.
+ * The section header contains a button for adding a data property. The component houses the methods for opening the
+ * modal for {@link ontology-editor.DatatypePropertyOverlayComponent editing, adding}, and removing data property
+ * values.
  */
-const datatypePropertyBlockComponent = {
-    template,
-    bindings: {
-        selected:'<'
-    },
-    controllerAs: 'dvm',
-    controller: datatypePropertyBlockComponentCtrl
-};
+@Component({
+    templateUrl: './datatypePropertyBlock.component.html',
+    selector: 'datatype-property-block'
+})
+export class DatatypePropertyBlockComponent implements OnChanges {
+    @Input() selected;
+    data : {
+        editingProperty: boolean,
+        propertySelect: string,
+        propertyValue: string,
+        propertyType: string,
+        propertyIndex: number,
+        propertyLanguage:string
+    }
+    dataProperties = [];
+    dataPropertiesFiltered = [];
 
-datatypePropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'modalService'];
+    constructor(public os: OntologyStateService,
+                private dialog: MatDialog,
+    ) {}
 
-function datatypePropertyBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.dataProperties = [];
-    dvm.dataPropertiesFiltered = [];
-
-    dvm.$onChanges = function (changes) { 
-        dvm.updatePropertiesFiltered();
+    ngOnChanges(): void  {
+        this.updatePropertiesFiltered();
     }
-    dvm.updatePropertiesFiltered = function(){
-        dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
-        dvm.dataPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.dataProperties), iri => dvm.os.getEntityNameByListItem(iri));
+    updatePropertiesFiltered(): void {
+        this.dataProperties = Object.keys(this.os.listItem.dataProperties.iris);
+        this.dataPropertiesFiltered = sortBy(this.dataProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
     }
-    dvm.openAddDataPropOverlay = function() {
-        dvm.os.editingProperty = false;
-        dvm.os.propertySelect = undefined;
-        dvm.os.propertyValue = '';
-        dvm.os.propertyType = prefixes.xsd + 'string';
-        dvm.os.propertyIndex = 0;
-        dvm.os.propertyLanguage = 'en';
-        modalService.openModal('datatypePropertyOverlay' ,{} ,dvm.updatePropertiesFiltered);
+    openAddDataPropOverlay(): void {
+        const data = {
+            editingProperty: false,
+            propertySelect: undefined,
+            propertyValue: '',
+            propertyType: XSD + 'string',
+            propertyIndex: 0,
+            propertyLanguage: 'en'
+        };
+        this.dialog.open(DatatypePropertyOverlayComponent, {data: data}).afterClosed().subscribe( (result) => {
+            this.updatePropertiesFiltered();
+        });
     }
-    dvm.editDataProp = function(property, index) {
-        var propertyObj = dvm.os.listItem.selected[property][index];
-        dvm.os.editingProperty = true;
-        dvm.os.propertySelect = property;
-        dvm.os.propertyValue = propertyObj['@value'];
-        dvm.os.propertyIndex = index;
-        dvm.os.propertyLanguage = get(propertyObj, '@language');
-        dvm.os.propertyType = dvm.os.propertyLanguage ? prefixes.rdf + 'langString' : get(propertyObj, '@type');
-        modalService.openModal('datatypePropertyOverlay', {}, dvm.updatePropertiesFiltered);
+    editDataProp(input: {property: string, index: number}): void {
+        const propertyObj = this.os.listItem.selected[input.property][input.index];
+        const propertyLanguage = get(propertyObj, '@language');
+        const data = {
+            editingProperty: true,
+            propertySelect: input.property,
+            propertyValue: propertyObj['@value'],
+            propertyIndex: input.index,
+            propertyLanguage: propertyLanguage,
+            propertyType: propertyLanguage? RDF + 'langString' : get(propertyObj, '@type')
+        };
+        this.dialog.open(DatatypePropertyOverlayComponent, {data: data}).afterClosed().subscribe(result => {
+            if (result) {
+                this.updatePropertiesFiltered();
+            }
+        });
     }
-    dvm.showRemovePropertyOverlay = function(key, index) {
-        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
-            dvm.os.removeProperty(key, index).subscribe();
-            dvm.updatePropertiesFiltered();
+    showRemovePropertyOverlay(input: {key: string, index: number}): void {
+        this.dialog.open(ConfirmModalComponent,{
+            data: {
+                content: 'Are you sure you want to clear <strong>' +  this.os.getRemovePropOverlayMessage(input.key, input.index)+ '</strong>?'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.os.removeProperty(input.key, input.index).subscribe();
+                this.updatePropertiesFiltered();
+            }
         });
     }
 }
-
-export default datatypePropertyBlockComponent;

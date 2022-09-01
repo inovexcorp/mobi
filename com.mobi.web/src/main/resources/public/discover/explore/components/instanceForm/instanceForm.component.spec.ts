@@ -20,31 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {DebugElement, EventEmitter} from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import _ = require('lodash');
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
+import { MockProvider } from 'ng-mocks';
+import { of, throwError} from 'rxjs';
+import { MatDialogRef}  from '@angular/material/dialog';
+import { HttpHeaders, HttpResponse} from '@angular/common/http';
 
 import { 
     cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
- } from '../../../../../../../test/ts/Shared';
+} from '../../../../../../../test/ts/Shared';
+import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { InstanceFormComponent } from './instanceForm.component';
-import editIriOverlayComponent from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
+import { EditIriOverlayComponent } from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
 import { OWL } from '../../../../prefixes';
-import { of, throwError} from 'rxjs';
-import { MatDialogRef}  from '@angular/material/dialog';
 import NewInstancePropertyOverlayComponent from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
-import { HttpHeaders, HttpResponse} from '@angular/common/http';
-
 
 describe('Instance Form component', function() {
     let component: InstanceFormComponent;
@@ -52,7 +51,7 @@ describe('Instance Form component', function() {
     let fixture: ComponentFixture<InstanceFormComponent>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let dialogStub : jasmine.SpyObj<MatDialog>
+    let dialogStub : jasmine.SpyObj<MatDialog>;
     let policyEnforcementStub;
     let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
     let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
@@ -63,7 +62,7 @@ describe('Instance Form component', function() {
         'begin': 'http://mobi.com/data/TestOntology',
         'then': '/',
         'end': 'e45471f1-371d-4f77-88c4-a301d00fe07a'
-    }
+    };
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -74,12 +73,11 @@ describe('Instance Form component', function() {
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
                 MockProvider(SplitIRIPipe),
-                MockProvider('prefixes', 'prefixes'),
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 { provide: 'utilService', useClass: mockUtil },
             ]
         });
@@ -123,7 +121,7 @@ describe('Instance Form component', function() {
             recordId: '',
             recordTitle: '',
             hasPermissionError: false
-        }
+        };
         component.instance = {
             '@id': 'http://mobi.com/data/TestOntology/e45471f1-371d-4f77-88c4-a301d00fe07a',
             '@type': ['http://matonto.org/ontologies/Ontologu#Test'],
@@ -166,7 +164,7 @@ describe('Instance Form component', function() {
             propertyIRI: 'propertyId3',
             type: 'Data',
             range: [],
-            restrictions:  [ {
+            restrictions: [ {
                 cardinality: 0,
                 cardinalityType: ''
             }]
@@ -174,7 +172,7 @@ describe('Instance Form component', function() {
             propertyIRI: 'propertyId4',
             type: 'Data',
             range: [],
-            restrictions:  [ {
+            restrictions: [ {
                 cardinality: 0,
                 cardinalityType: ''
             }]
@@ -306,8 +304,8 @@ describe('Instance Form component', function() {
 
                 fixture.detectChanges();
                 expect(splitIriStub.transform).toHaveBeenCalledWith(component.instance['@id']);
-                expect(dialogStub.open).toHaveBeenCalledWith( editIriOverlayComponent, {
-                    data :{
+                expect(dialogStub.open).toHaveBeenCalledWith( EditIriOverlayComponent, {
+                    data: {
                         iriBegin: 'http://mobi.com/data/TestOntology',
                         iriThen: '/',
                         iriEnd: 'e45471f1-371d-4f77-88c4-a301d00fe07a'
@@ -317,7 +315,7 @@ describe('Instance Form component', function() {
             describe('getOptions should result in the correct list when the propertyIRI', function () {
                 describe('has a range and getClassInstanceDetails is', function () {
                     beforeEach(function () {
-                        let tempData = {
+                        const tempData = {
                             body: [
                                 {
                                     instanceIRI: 'propertyId',
@@ -336,11 +334,11 @@ describe('Instance Form component', function() {
                                 }
                             ],
                             headers: new HttpHeaders({'x-total-count': ''})
-                        }
+                        };
                         exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse(tempData)));
                         component.instance = {
                             '@id': 'https://mobi.com/data/TestOntology/1234-4535',
-                            "@type": ['http://matonto.org/ontologies/Ontologu#Test']
+                            '@type': ['http://matonto.org/ontologies/Ontologu#Test']
                         };
                         component.setIRI = jasmine.createSpy();
                         exploreUtilsServiceStub.getRange.and.returnValue('string');
@@ -384,7 +382,7 @@ describe('Instance Form component', function() {
                                 expect(res).toEqual([]);
                             }
                         } as MatDialogRef<typeof dialogStub>);
-                        component.getOptions('propertyId2')
+                        component.getOptions('propertyId2');
                         fixture.detectChanges();
                     });
                 });
@@ -392,18 +390,16 @@ describe('Instance Form component', function() {
                     beforeEach(() => {
                         spyOn(component, 'getMissingProperties').and.returnValue(['missing property']);
                     });
-
-
                     it('when it is new', function () {
                         component.addToChanged('new');
                         expect(component.changed).toEqual(['iri', 'new']);
-                        expect(component.getMissingProperties).toHaveBeenCalled();
+                        expect(component.getMissingProperties).toHaveBeenCalledWith();
                         expect(component.missingProperties).toEqual(['missing property']);
                     });
                     it('when it is not new', function () {
                         component.addToChanged('iri');
                         expect(component.changed).toEqual(['iri']);
-                        expect(component.getMissingProperties).toHaveBeenCalled();
+                        expect(component.getMissingProperties).toHaveBeenCalledWith();
                         expect(component.missingProperties).toEqual(['missing property']);
                     });
                 });
@@ -454,7 +450,7 @@ describe('Instance Form component', function() {
                         type: 'Data',
                         range: [],
                     }];
-                    let expected = [
+                    const expected = [
                         'Must have exactly 1 value(s) for propertyId',
                         'Must have at least 1 value(s) for propertyId2',
                         'Must have at most 1 value(s) for propertyId3',
@@ -515,9 +511,9 @@ describe('Instance Form component', function() {
             });
             it('should call showIriConfirm when the IRI edit link is clicked', function () {
                 spyOn(component, 'showIriConfirm');
-                let link = element.nativeElement.querySelectorAll('.instance-iri a')[0] as HTMLElement;
+                const link = element.nativeElement.querySelectorAll('.instance-iri a')[0] as HTMLElement;
                 link.click();
-                expect(component.showIriConfirm).toHaveBeenCalled();
+                expect(component.showIriConfirm).toHaveBeenCalledWith();
             });
         });
 });

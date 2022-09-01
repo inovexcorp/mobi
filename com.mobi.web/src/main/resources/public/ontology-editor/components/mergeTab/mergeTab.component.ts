@@ -1,3 +1,6 @@
+import { Component } from '@angular/core';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 /*-
  * #%L
  * com.mobi.web
@@ -21,31 +24,18 @@
  * #L%
  */
 
-const template = require('./mergeTab.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:mergeTab
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.MergeTabComponent
  *
- * @description
  * `mergeTab` is a component that creates a contains for performing a direct merge between two branches in the
- * currently {@link shared.service:ontologyStateService selected ontology}. If there are no conflicts, a
- * {@link ontology-editor.component:mergeBlock} is shown. If there are conflicts, a
- * {@link ontology-editor.component:resolveConflictsForm} is shown.
+ * currently {@link shared.OntologyStateService#listItem selected ontology}. If there are no conflicts, a
+ * {@link ontology-editor.MergeBlockComponent} is shown. If there are conflicts, a
+ * {@link ontology-editor.ResolveConflictsFormComponent} is shown.
  */
-const mergeTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: mergeTabComponentCtrl
-};
-
-mergeTabComponentCtrl.$inject = ['ontologyStateService'];
-
-function mergeTabComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
+@Component({
+    selector: 'merge-tab',
+    templateUrl: './mergeTab.component.html'
+})
+export class MergeTabComponent {
+    constructor(public os: OntologyStateService) {}
 }
-
-export default mergeTabComponent;

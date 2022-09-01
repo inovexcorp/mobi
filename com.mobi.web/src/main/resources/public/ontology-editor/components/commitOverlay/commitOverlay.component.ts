@@ -20,98 +20,81 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 import { get, find } from 'lodash';
-import { first } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
-const template = require('./commitOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:commitOverlay
- * @requires shared.service:ontologyStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
+ * @class ontology-editor.CommitOverlayComponent
  *
- * @description
- * `commitOverlay` is a component that creates content for a modal to commit the changes to the
- * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
- * {@link shared.component:textArea} for the commit message. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal to commit the changes to the
+ * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a field for the commit
+ * message. Meant to be used in conjunction with the `MatDialog` service.
  */
-const commitOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: commitOverlayComponentCtrl
-};
+@Component({
+    selector: 'commit-overlay',
+    templateUrl: './commitOverlay.component.html'
+})
+export class CommitOverlayComponent implements OnInit {
+    catalogId = '';
+    error = '';
 
-commitOverlayComponentCtrl.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService'];
+    commitForm: FormGroup = this.fb.group({
+        comment: ['', [Validators.required]]
+    });
 
-function commitOverlayComponentCtrl($q, ontologyStateService: OntologyStateService, catalogManagerService: CatalogManagerService, utilService) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var catalogId = get(cm.localCatalog, '@id', '');
-    var util = utilService;
-
-    dvm.os = ontologyStateService;
-    dvm.error = '';
-
-    dvm.commit = function() {
-        if (dvm.os.listItem.upToDate) {
-            createCommit(dvm.os.listItem.versionedRdfRecord.branchId);
+    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<CommitOverlayComponent>,
+        public os: OntologyStateService, private cm: CatalogManagerService, @Inject('utilService') private util) {}
+    
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+    }
+    commit(): void {
+        if (this.os.listItem.upToDate) {
+            this._createCommit(this.os.listItem.versionedRdfRecord.branchId);
         } else {
-            var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
-            var branchConfig: any = {title: util.getDctermsValue(branch, 'title')};
-            var description = util.getDctermsValue(branch, 'description');
+            const branch = find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
+            const branchConfig: any = {title: this.util.getDctermsValue(branch, 'title')};
+            const description = this.util.getDctermsValue(branch, 'description');
             if (description) {
                 branchConfig.description = description;
             }
-            var branchId;
-            cm.createRecordUserBranch(dvm.os.listItem.versionedRdfRecord.recordId, catalogId, branchConfig, dvm.os.listItem.versionedRdfRecord.commitId, dvm.os.listItem.versionedRdfRecord.branchId).pipe(first()).toPromise()
-                .then((branchIri: string) => {
+            let branchId;
+            this.cm.createRecordUserBranch(this.os.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.versionedRdfRecord.branchId)
+                .pipe(switchMap((branchIri: string) => {
                     branchId = branchIri;
-                    return cm.getRecordBranch(branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise();
-                }, $q.reject)
-                .then(branch => {
-                    dvm.os.listItem.branches.push(branch);
-                    dvm.os.listItem.versionedRdfRecord.branchId = branch['@id'];
-                    dvm.os.listItem.upToDate = true;
-                    dvm.os.listItem.userBranch = true;
-                    createCommit(branch['@id']);
-                }, onError);
+                    return this.cm.getRecordBranch(branchId, this.os.listItem.versionedRdfRecord.recordId, this.catalogId);
+                }))
+                .subscribe(branch => {
+                    this.os.listItem.branches.push(branch);
+                    this.os.listItem.versionedRdfRecord.branchId = branch['@id'];
+                    this.os.listItem.upToDate = true;
+                    this.os.listItem.userBranch = true;
+                    this._createCommit(branch['@id']);
+                }, error => this._onError(error));
         }
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
 
-    function onError(errorMessage) {
-        dvm.error = errorMessage;
+    private _onError(errorMessage) {
+        this.error = errorMessage;
     }
-
-    function createCommit(branchId) {
-        var commitId;
-        cm.createBranchCommit(branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId, dvm.comment).pipe(first()).toPromise()
-            .then((commitIri: string) => {
+    private _createCommit(branchId) {
+        let commitId;
+        this.cm.createBranchCommit(branchId, this.os.listItem.versionedRdfRecord.recordId, this.catalogId, this.commitForm.controls.comment.value)
+            .pipe(switchMap((commitIri: string) => {
                 commitId = commitIri;
-                return dvm.os.updateState({recordId: dvm.os.listItem.versionedRdfRecord.recordId, commitId, branchId}).pipe(first()).toPromise();
-            }, $q.reject)
-            .then(() => {
-                dvm.os.listItem.versionedRdfRecord.branchId = branchId;
-                dvm.os.listItem.versionedRdfRecord.commitId = commitId;
-                dvm.os.clearInProgressCommit();
-                dvm.close();
-            }, onError);
+                return this.os.updateState({recordId: this.os.listItem.versionedRdfRecord.recordId, commitId, branchId});
+            }))
+            .subscribe(() => {
+                this.os.listItem.versionedRdfRecord.branchId = branchId;
+                this.os.listItem.versionedRdfRecord.commitId = commitId;
+                this.os.clearInProgressCommit();
+                this.dialogRef.close(true);
+            }, error => this._onError(error));
     }
 }
-
-export default commitOverlayComponent;

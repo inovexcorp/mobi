@@ -26,89 +26,87 @@ import { downgradeComponent } from '@angular/upgrade/static';
 
 import { SharedModule } from '../shared/shared.module';
 
-import annotationBlockComponent from './components/annotationBlock/annotationBlock.component';
-import annotationOverlayComponent from './components/annotationOverlay/annotationOverlay.component';
-import associationBlockComponent from './components/associationBlock/associationBlock.component';
-import axiomBlockComponent from './components/axiomBlock/axiomBlock.component';
-import axiomOverlayComponent from './components/axiomOverlay/axiomOverlay.component';
-import characteristicsBlockComponent from './components/characteristicsBlock/characteristicsBlock.component';
-import characteristicsRowComponent from './components/characteristicsRow/characteristicsRow.component';
-import classAxiomsComponent from './components/classAxioms/classAxioms.component';
-import classesTabComponent from './components/classesTab/classesTab.component';
-import classHierarchyBlockComponent from './components/classHierarchyBlock/classHierarchyBlock.component';
-import commitOverlayComponent from './components/commitOverlay/commitOverlay.component';
-import commitsTabComponent from './components/commitsTab/commitsTab.component';
-import conceptHierarchyBlockComponent from './components/conceptHierarchyBlock/conceptHierarchyBlock.component';
-import conceptSchemeHierarchyBlockComponent from './components/conceptSchemeHierarchyBlock/conceptSchemeHierarchyBlock.component';
-import conceptSchemesTabComponent from './components/conceptSchemesTab/conceptSchemesTab.component';
-import conceptsTabComponent from './components/conceptsTab/conceptsTab.component';
-import createAnnotationPropertyOverlayComponent from './components/createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.component';
-import createBranchOverlayComponent from './components/createBranchOverlay/createBranchOverlay.component';
-import createClassOverlayComponent from './components/createClassOverlay/createClassOverlay.component';
-import createConceptOverlayComponent from './components/createConceptOverlay/createConceptOverlay.component';
-import createConceptSchemeOverlayComponent from './components/createConceptSchemeOverlay/createConceptSchemeOverlay.component';
-import createDataPropertyOverlayComponent from './components/createDataPropertyOverlay/createDataPropertyOverlay.component';
-import createEntityModalComponent from './components/createEntityModal/createEntityModal.component';
-import createIndividualOverlayComponent from './components/createIndividualOverlay/createIndividualOverlay.component';
-import createObjectPropertyOverlayComponent from './components/createObjectPropertyOverlay/createObjectPropertyOverlay.component';
-import createTagModalComponentAjs from './components/createTagModal/createTagModal.component.ajs';
-import datatypePropertyAxiomsComponent from './components/datatypePropertyAxioms/datatypePropertyAxioms.component';
-import datatypePropertyBlockComponent from './components/datatypePropertyBlock/datatypePropertyBlock.component';
-import datatypePropertyOverlayComponent from './components/datatypePropertyOverlay/datatypePropertyOverlay.component';
-import everythingTreeComponent from './components/everythingTree/everythingTree.component';
-import hierarchyFilterComponent from './components/hierarchyFilter/hierarchyFilter.component';
-import hierarchyTreeComponent from './components/hierarchyTree/hierarchyTree.component';
-import importsBlockComponent from './components/importsBlock/importsBlock.component';
-import importsOverlayComponent from './components/importsOverlay/importsOverlay.component';
-import individualHierarchyBlockComponent from './components/individualHierarchyBlock/individualHierarchyBlock.component';
-import individualsTabComponent from './components/individualsTab/individualsTab.component';
-import individualTreeComponent from './components/individualTree/individualTree.component';
-import individualTypesModalComponent from './components/individualTypesModal/individualTypesModal.component';
-import iriSelectOntologyComponent from './components/iriSelectOntology/iriSelectOntology.component';
-import mergeBlockComponent from './components/mergeBlock/mergeBlock.component';
-import mergeTabComponent from './components/mergeTab/mergeTab.component';
-import objectPropertyAxiomsComponent from './components/objectPropertyAxioms/objectPropertyAxioms.component';
-import objectPropertyBlockComponent from './components/objectPropertyBlock/objectPropertyBlock.component';
-import objectPropertyOverlayComponent from './components/objectPropertyOverlay/objectPropertyOverlay.component';
-import ontologyButtonStackComponent from './components/ontologyButtonStack/ontologyButtonStack.component';
-import ontologyClassSelectComponent from './components/ontologyClassSelect/ontologyClassSelect.component';
-import ontologyPropertiesBlockComponent from './components/ontologyPropertiesBlock/ontologyPropertiesBlock.component';
-import ontologyPropertyOverlayComponent from './components/ontologyPropertyOverlay/ontologyPropertyOverlay.component';
-import { ontologyTabComponent, OntologyTabDirective } from './components/ontologyTab/ontologyTab.component';
-import openEntitySnackbarComponent from './components/openEntitySnackbar/openEntitySnackbar.component';
-import overviewTabComponent from './components/overviewTab/overviewTab.component';
-import previewBlockComponent from './components/previewBlock/previewBlock.component';
-import projectTabComponent from './components/projectTab/projectTab.component';
-import propertiesTabComponent from './components/propertiesTab/propertiesTab.component';
-import propertyHierarchyBlockComponent from './components/propertyHierarchyBlock/propertyHierarchyBlock.component';
-import propertyTreeComponent from './components/propertyTree/propertyTree.component';
-import propertyValuesComponent from './components/propertyValues/propertyValues.component';
-import recordAccessOverlayComponent from './components/recordAccessOverlay/recordAccessOverlay.component';
-import savedChangesTabComponent from './components/savedChangesTab/savedChangesTab.component';
-import searchTabComponent from './components/searchTab/searchTab.component';
-import seeHistoryComponent from './components/seeHistory/seeHistory.component';
-import selectedDetailsComponent from './components/selectedDetails/selectedDetails.component';
-import serializationSelectComponent from './components/serializationSelect/serializationSelect.component';
-import staticIriComponent from './components/staticIri/staticIri.component';
-import superClassSelectComponent from './components/superClassSelect/superClassSelect.component';
-import superPropertySelectComponent from './components/superPropertySelect/superPropertySelect.component';
-import treeItemComponent from './components/treeItem/treeItem.component';
-import uploadChangesOverlayComponent from './components/uploadChangesOverlay/uploadChangesOverlay.component';
-import usagesBlockComponent from './components/usagesBlock/usagesBlock.component';
-
-import { VisualizationTabComponent } from './components/visualizationTab/visualizationTab.component';
 import { AdvancedLanguageSelectComponent } from './components/advancedLanguageSelect/advancedLanguageSelect.component';
+import { AnnotationBlockComponent } from './components/annotationBlock/annotationBlock.component';
+import { AnnotationOverlayComponent } from './components/annotationOverlay/annotationOverlay.component';
+import { AssociationBlockComponent } from './components/associationBlock/associationBlock.component';
+import { AxiomBlockComponent } from './components/axiomBlock/axiomBlock.component';
+import { AxiomOverlayComponent } from './components/axiomOverlay/axiomOverlay.component';
+import { CharacteristicsBlockComponent } from './components/characteristicsBlock/characteristicsBlock.component';
+import { CharacteristicsRowComponent } from './components/characteristicsRow/characteristicsRow.component';
+import { ClassAxiomsComponent } from './components/classAxioms/classAxioms.component';
+import { ClassHierarchyBlockComponent } from './components/classHierarchyBlock/classHierarchyBlock.component';
+import { ClassesTabComponent } from './components/classesTab/classesTab.component';
+import { CommitOverlayComponent } from './components/commitOverlay/commitOverlay.component';
+import { CommitsTabComponent } from './components/commitsTab/commitsTab.component';
+import { ConceptHierarchyBlockComponent } from './components/conceptHierarchyBlock/conceptHierarchyBlock.component';
+import { ConceptSchemeHierarchyBlockComponent } from './components/conceptSchemeHierarchyBlock/conceptSchemeHierarchyBlock.component';
+import { ConceptSchemesTabComponent } from './components/conceptSchemesTab/conceptSchemesTab.component';
+import { ConceptsTabComponent } from './components/conceptsTab/conceptsTab.component';
+import { CreateAnnotationPropertyOverlayComponent } from './components/createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.component';
+import { CreateBranchOverlayComponent } from './components/createBranchOverlay/createBranchOverlay.component';
+import { CreateClassOverlayComponent } from './components/createClassOverlay/createClassOverlay.component';
+import { CreateConceptOverlayComponent } from './components/createConceptOverlay/createConceptOverlay.component';
+import { CreateConceptSchemeOverlayComponent }  from './components/createConceptSchemeOverlay/createConceptSchemeOverlay.component';
+import { CreateDataPropertyOverlayComponent }  from './components/createDataPropertyOverlay/createDataPropertyOverlay.component';
+import { CreateEntityModalComponent } from './components/createEntityModal/createEntityModal.component';
+import { CreateIndividualOverlayComponent } from './components/createIndividualOverlay/createIndividualOverlay.component';
+import { CreateObjectPropertyOverlayComponent } from './components/createObjectPropertyOverlay/createObjectPropertyOverlay.component';
+import { CreateTagOverlayComponent } from './components/createTagOverlay/createTagOverlay.component';
+import { DatatypePropertyAxiomsComponent } from './components/datatypePropertyAxioms/datatypePropertyAxioms.component';
+import { DatatypePropertyBlockComponent } from './components/datatypePropertyBlock/datatypePropertyBlock.component';
+import { DatatypePropertyOverlayComponent } from './components/datatypePropertyOverlay/datatypePropertyOverlay.component';
 import { EditBranchOverlayComponent } from './components/editBranchOverlay/editBranchOverlay.component';
+import { EverythingTreeComponent } from './components/everythingTree/everythingTree.component';
+import { HierarchyFilterComponent } from './components/hierarchyFilter/hierarchyFilter.component';
+import { HierarchyTreeComponent } from './components/hierarchyTree/hierarchyTree.component';
+import { ImportsBlockComponent } from './components/importsBlock/importsBlock.component';
+import { ImportsOverlayComponent } from './components/importsOverlay/importsOverlay.component';
+import { IndividualsTabComponent } from './components/individualsTab/individualsTab.component';
+import { IndividualHierarchyBlockComponent } from './components/individualHierarchyBlock/individualHierarchyBlock.component';
+import { IndividualTypesModalComponent } from './components/individualTypesModal/individualTypesModal.component';
+import { IndividualTreeComponent } from './components/individualTree/individualTree.component';
+import { IriSelectOntologyComponent } from './components/iriSelectOntology/iriSelectOntology.component';
 import { NewOntologyOverlayComponent } from './components/newOntologyOverlay/newOntologyOverlay.component';
+import { ObjectPropertyAxiomsComponent } from './components/objectPropertyAxioms/objectPropertyAxioms.component';
+import { ObjectPropertyBlockComponent } from './components/objectPropertyBlock/objectPropertyBlock.component';
+import { ObjectPropertyOverlayComponent } from './components/objectPropertyOverlay/objectPropertyOverlay.component';
+import { OntologyButtonStackComponent } from './components/ontologyButtonStack/ontologyButtonStack.component';
+import { OntologyClassSelectComponent } from './components/ontologyClassSelect/ontologyClassSelect.component';
 import { OntologyCloseOverlayComponent } from './components/ontologyCloseOverlay/ontologyCloseOverlay.component';
 import { OntologyEditorPageComponent } from './components/ontologyEditorPage/ontologyEditorPage.component';
+import { OntologyPropertiesBlockComponent } from './components/ontologyPropertiesBlock/ontologyPropertiesBlock.component';
+import { OntologyPropertyOverlayComponent } from './components/ontologyPropertyOverlay/ontologyPropertyOverlay.component';
 import { OntologySidebarComponent } from './components/ontologySidebar/ontologySidebar.component';
+import { OntologyTabComponent } from './components/ontologyTab/ontologyTab.component';
 import { OpenOntologySelectComponent } from './components/openOntologySelect/openOntologySelect.component';
 import { OpenOntologyTabComponent } from './components/openOntologyTab/openOntologyTab.component';
+import { OverviewTabComponent } from './components/overviewTab/overviewTab.component';
+import { PreviewBlockComponent } from './components/previewBlock/previewBlock.component';
+import { ProjectTabComponent } from './components/projectTab/projectTab.component';
+import { PropertiesTabComponent } from './components/propertiesTab/propertiesTab.component';
+import { PropertyHierarchyBlockComponent } from './components/propertyHierarchyBlock/propertyHierarchyBlock.component';
+import { PropertyTreeComponent } from './components/propertyTree/propertyTree.component';
+import { PropertyValuesComponent } from './components/propertyValues/propertyValues.component';
+import { SavedChangesTabComponent } from './components/savedChangesTab/savedChangesTab.component';
+import { SearchTabComponent } from './components/searchTab/searchTab.component';
+import { SeeHistoryComponent } from './components/seeHistory/seeHistory.component';
+import { SelectedDetailsComponent } from './components/selectedDetails/selectedDetails.component';
+import { SerializationSelectComponent } from './components/serializationSelect/serializationSelect.component';
+import { StaticIriComponent } from './components/staticIri/staticIri.component';
+import { SuperClassSelectComponent } from './components/superClassSelect/superClassSelect.component';
+import { SuperPropertySelectComponent } from './components/superPropertySelect/superPropertySelect.component';
+import { TreeItemComponent } from './components/treeItem/treeItem.component';
+import { UploadChangesOverlayComponent } from './components/uploadChangesOverlay/uploadChangesOverlay.component';
 import { UploadErrorsOverlayComponent } from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
 import { UploadOntologyOverlayComponent } from './components/uploadOntologyOverlay/uploadOntologyOverlay.component';
 import { UploadSnackbarComponent } from './components/uploadSnackbar/uploadSnackbar.component';
+import { UsagesBlockComponent } from './components/usagesBlock/usagesBlock.component';
+import { VisualizationTabComponent } from './components/visualizationTab/visualizationTab.component';
+
 import { OntologyVisualizationModule } from '../ontology-visualization/ontologyVisualization.module';
+import { MergeBlockComponent } from './components/mergeBlock/mergeBlock.component';
+import { MergeTabComponent } from './components/mergeTab/mergeTab.component';
 
 /**
  * @namespace ontology-editor
@@ -119,115 +117,203 @@ import { OntologyVisualizationModule } from '../ontology-visualization/ontologyV
 @NgModule({
     imports: [
         SharedModule,
-        OntologyVisualizationModule
+        OntologyVisualizationModule,
     ],
     declarations: [
         AdvancedLanguageSelectComponent,
+        AnnotationBlockComponent,
+        AnnotationOverlayComponent,
+        AssociationBlockComponent,
+        AxiomBlockComponent,
+        AxiomOverlayComponent,
+        CharacteristicsBlockComponent,
+        CharacteristicsRowComponent,
+        ClassAxiomsComponent,
+        ClassHierarchyBlockComponent,
+        ClassesTabComponent,
+        CommitOverlayComponent,
+        CommitsTabComponent,
+        ConceptHierarchyBlockComponent,
+        ConceptSchemeHierarchyBlockComponent,
+        ConceptSchemesTabComponent,
+        ConceptsTabComponent,
+        CreateAnnotationPropertyOverlayComponent,
+        CreateBranchOverlayComponent,
+        CreateClassOverlayComponent,
+        CreateConceptOverlayComponent,
+        CreateConceptSchemeOverlayComponent,
+        CreateDataPropertyOverlayComponent,
+        CreateEntityModalComponent,
+        CreateIndividualOverlayComponent,
+        CreateObjectPropertyOverlayComponent,
+        CreateTagOverlayComponent,
+        DatatypePropertyAxiomsComponent,
+        DatatypePropertyOverlayComponent,
+        DatatypePropertyBlockComponent,
         EditBranchOverlayComponent,
+        EverythingTreeComponent,
+        HierarchyFilterComponent,
+        HierarchyTreeComponent,
+        ImportsBlockComponent,
+        ImportsOverlayComponent,
+        IndividualHierarchyBlockComponent,
+        IndividualsTabComponent,
+        IndividualTypesModalComponent,
+        IndividualTreeComponent,
+        IriSelectOntologyComponent,
+        MergeBlockComponent,
+        MergeTabComponent,
         NewOntologyOverlayComponent,
+        ObjectPropertyAxiomsComponent,
+        ObjectPropertyBlockComponent,
+        ObjectPropertyOverlayComponent,
+        OntologyButtonStackComponent,
+        OntologyClassSelectComponent,
         OntologyCloseOverlayComponent,
         OntologyEditorPageComponent,
-        OntologyTabDirective,
+        OntologyPropertiesBlockComponent,
+        OntologyPropertyOverlayComponent,
+        OntologyTabComponent,
         OntologySidebarComponent,
         OpenOntologySelectComponent,
         OpenOntologyTabComponent,
+        OverviewTabComponent,
+        PreviewBlockComponent,
+        ProjectTabComponent,
+        PropertiesTabComponent,
+        PropertyHierarchyBlockComponent,
+        PropertyTreeComponent,
+        PropertyValuesComponent,
+        SavedChangesTabComponent,
+        SearchTabComponent,
+        SeeHistoryComponent,
+        SelectedDetailsComponent,
+        SerializationSelectComponent,
+        StaticIriComponent,
+        SuperClassSelectComponent,
+        SuperPropertySelectComponent,
+        TreeItemComponent,
+        UploadChangesOverlayComponent,
         UploadErrorsOverlayComponent,
         UploadOntologyOverlayComponent,
         UploadSnackbarComponent,
-        VisualizationTabComponent
+        UsagesBlockComponent,
+        VisualizationTabComponent,
     ],
     entryComponents: [
+        AnnotationOverlayComponent,
+        AxiomOverlayComponent,
+        CommitOverlayComponent,
+        ClassesTabComponent,
+        ClassHierarchyBlockComponent,
+        CommitOverlayComponent,
+        CreateAnnotationPropertyOverlayComponent,
+        CreateBranchOverlayComponent,
+        CreateClassOverlayComponent,
+        CreateConceptOverlayComponent,
+        CreateConceptSchemeOverlayComponent,
+        CreateDataPropertyOverlayComponent,
+        CreateEntityModalComponent,
+        CreateIndividualOverlayComponent,
+        CreateObjectPropertyOverlayComponent,
+        CreateTagOverlayComponent,
+        DatatypePropertyOverlayComponent,
         EditBranchOverlayComponent,
+        ImportsOverlayComponent,
+        IndividualTypesModalComponent,
+        MergeBlockComponent,
+        MergeTabComponent,
         NewOntologyOverlayComponent,
+        ObjectPropertyOverlayComponent,
+        OntologyButtonStackComponent,
         OntologyCloseOverlayComponent,
         OntologyEditorPageComponent,
+        OntologyPropertyOverlayComponent,
+        UploadChangesOverlayComponent,
         UploadErrorsOverlayComponent,
         UploadOntologyOverlayComponent,
         UploadSnackbarComponent,
-        VisualizationTabComponent,
     ]
 })
 export class OntologyEditorModule {}
 
 angular.module('ontology-editor', [])
-    .component('annotationBlock', annotationBlockComponent)
-    .component('annotationOverlay', annotationOverlayComponent)
-    .component('associationBlock', associationBlockComponent)
-    .component('axiomBlock', axiomBlockComponent)
-    .component('axiomOverlay', axiomOverlayComponent)
-    .component('characteristicsBlock', characteristicsBlockComponent)
-    .component('characteristicsRow', characteristicsRowComponent)
-    .component('classAxioms', classAxiomsComponent)
-    .component('classesTab', classesTabComponent)
-    .component('classHierarchyBlock', classHierarchyBlockComponent)
-    .component('commitOverlay', commitOverlayComponent)
-    .component('commitsTab', commitsTabComponent)
-    .component('conceptHierarchyBlock', conceptHierarchyBlockComponent)
-    .component('conceptSchemeHierarchyBlock', conceptSchemeHierarchyBlockComponent)
-    .component('conceptSchemesTab', conceptSchemesTabComponent)
-    .component('conceptsTab', conceptsTabComponent)
-    .component('createAnnotationPropertyOverlay', createAnnotationPropertyOverlayComponent)
-    .component('createBranchOverlay', createBranchOverlayComponent)
-    .component('createClassOverlay', createClassOverlayComponent)
-    .component('createConceptOverlay', createConceptOverlayComponent)
-    .component('createConceptSchemeOverlay', createConceptSchemeOverlayComponent)
-    .component('createDataPropertyOverlay', createDataPropertyOverlayComponent)
-    .component('createEntityModal', createEntityModalComponent)
-    .component('createIndividualOverlay', createIndividualOverlayComponent)
-    .component('createObjectPropertyOverlay', createObjectPropertyOverlayComponent)
-    .component('createTagModalAjs', createTagModalComponentAjs)
-    .component('datatypePropertyAxioms', datatypePropertyAxiomsComponent)
-    .component('datatypePropertyBlock', datatypePropertyBlockComponent)
-    .component('datatypePropertyOverlay', datatypePropertyOverlayComponent)
-    .component('everythingTree', everythingTreeComponent)
-    .component('hierarchyFilter', hierarchyFilterComponent)
-    .component('hierarchyTree', hierarchyTreeComponent)
-    .component('importsBlock', importsBlockComponent)
-    .component('importsOverlay', importsOverlayComponent)
-    .component('individualHierarchyBlock', individualHierarchyBlockComponent)
-    .component('individualsTab', individualsTabComponent)
-    .component('individualTree', individualTreeComponent)
-    .component('individualTypesModal', individualTypesModalComponent)
-    .component('iriSelectOntology', iriSelectOntologyComponent)
-    .component('mergeBlock', mergeBlockComponent)
-    .component('mergeTab', mergeTabComponent)
-    .component('objectPropertyAxioms', objectPropertyAxiomsComponent)
-    .component('objectPropertyBlock', objectPropertyBlockComponent)
-    .component('objectPropertyOverlay', objectPropertyOverlayComponent)
-    .component('ontologyButtonStack', ontologyButtonStackComponent)
-    .component('ontologyClassSelect', ontologyClassSelectComponent)
-    .component('ontologyPropertiesBlock', ontologyPropertiesBlockComponent)
-    .component('ontologyPropertyOverlay', ontologyPropertyOverlayComponent)
-    .component('ontologyTab', ontologyTabComponent)
-    .component('openEntitySnackbar', openEntitySnackbarComponent)
-    .component('overviewTab', overviewTabComponent)
-    .component('previewBlock', previewBlockComponent)
-    .component('projectTab', projectTabComponent)
-    .component('propertiesTab', propertiesTabComponent)
-    .component('propertyHierarchyBlock', propertyHierarchyBlockComponent)
-    .component('propertyTree', propertyTreeComponent)
-    .component('propertyValues', propertyValuesComponent)
-    .component('recordAccessOverlay', recordAccessOverlayComponent)
-    .component('savedChangesTab', savedChangesTabComponent)
-    .component('searchTab', searchTabComponent)
-    .component('seeHistory', seeHistoryComponent)
-    .component('selectedDetails', selectedDetailsComponent)
-    .component('serializationSelect', serializationSelectComponent)
-    .component('staticIri', staticIriComponent)
-    .component('superClassSelect', superClassSelectComponent)
-    .component('superPropertySelect', superPropertySelectComponent)
-    .component('treeItem', treeItemComponent)
-    .component('uploadChangesOverlay', uploadChangesOverlayComponent)
-    .component('usagesBlock', usagesBlockComponent)
-    .directive('visualizationTab', downgradeComponent({component: VisualizationTabComponent}) as angular.IDirectiveFactory)
     .directive('advancedLanguageSelect', downgradeComponent({component: AdvancedLanguageSelectComponent}) as angular.IDirectiveFactory)
+    .directive('annotationBlock', downgradeComponent({component: AnnotationBlockComponent}) as angular.IDirectiveFactory)
+    .directive('annotationOverlay', downgradeComponent({component: AnnotationOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('associationBlock',downgradeComponent({component: AssociationBlockComponent}) as angular.IDirectiveFactory)
+    .directive('axiomBlock', downgradeComponent({component: AxiomBlockComponent}) as angular.IDirectiveFactory)
+    .directive('axiomOverlay', downgradeComponent({component: AxiomOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('characteristicsBlock', downgradeComponent({component: CharacteristicsBlockComponent}) as angular.IDirectiveFactory)
+    .directive('characteristicsRow', downgradeComponent({component: CharacteristicsRowComponent}) as angular.IDirectiveFactory)
+    .directive('classAxioms', downgradeComponent({component: ClassAxiomsComponent}) as angular.IDirectiveFactory)
+    .directive('classHierarchyBlock', downgradeComponent({component: ClassHierarchyBlockComponent}) as angular.IDirectiveFactory)
+    .directive('classesTab', downgradeComponent({component: ClassesTabComponent}) as angular.IDirectiveFactory)
+    .directive('commitOverlay', downgradeComponent({component: CommitOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('commitsTab', downgradeComponent({component: CommitsTabComponent}) as angular.IDirectiveFactory)
+    .directive('conceptHierarchyBlock', downgradeComponent({component: ConceptHierarchyBlockComponent}) as angular.IDirectiveFactory)
+    .directive('conceptSchemeHierarchyBlock', downgradeComponent({component: ConceptSchemeHierarchyBlockComponent}) as angular.IDirectiveFactory)
+    .directive('conceptSchemesTab', downgradeComponent({component: ConceptSchemesTabComponent}) as angular.IDirectiveFactory)
+    .directive('conceptsTab', downgradeComponent({component: ConceptsTabComponent}) as angular.IDirectiveFactory)
+    .directive('createAnnotationPropertyOverlay', downgradeComponent({component: CreateAnnotationPropertyOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createBranchOverlay', downgradeComponent({component: CreateBranchOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createClassOverlay', downgradeComponent({component: CreateClassOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createConceptOverlay', downgradeComponent({component: CreateConceptOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createConceptSchemeOverlay', downgradeComponent({component: CreateConceptSchemeOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createDataPropertyOverlay', downgradeComponent({component: CreateDataPropertyOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createEntityModal', downgradeComponent({component: CreateEntityModalComponent}) as angular.IDirectiveFactory)
+    .directive('createIndividualOverlay', downgradeComponent({component: CreateIndividualOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createObjectPropertyOverlay', downgradeComponent({component: CreateObjectPropertyOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createTagOverlay', downgradeComponent({component: CreateTagOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('datatypePropertyAxioms', downgradeComponent({component: DatatypePropertyAxiomsComponent}) as angular.IDirectiveFactory)
+    .directive('datatypePropertyBlock', downgradeComponent({component: DatatypePropertyBlockComponent}) as angular.IDirectiveFactory)
+    .directive('datatypePropertyOverlay', downgradeComponent({component: DatatypePropertyOverlayComponent}) as angular.IDirectiveFactory)
     .directive('editBranchOverlay', downgradeComponent({component: EditBranchOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('everythingTree', downgradeComponent({component: EverythingTreeComponent}) as angular.IDirectiveFactory)
+    .directive('hierarchyTree', downgradeComponent({component: HierarchyTreeComponent}) as angular.IDirectiveFactory)
+    .directive('hierarchyFilter', downgradeComponent({component: HierarchyFilterComponent}) as angular.IDirectiveFactory)
+    .directive('importsBlock', downgradeComponent({component: ImportsBlockComponent}) as angular.IDirectiveFactory)
+    .directive('importsOverlay', downgradeComponent({component: ImportsOverlayComponent}) as angular.IDirectiveFactory)
+    .component('individualHierarchyBlock', downgradeComponent({component: IndividualHierarchyBlockComponent}) as angular.IDirectiveFactory)
+    .component('individualsTab',  IndividualsTabComponent,downgradeComponent({component: IndividualsTabComponent}) as angular.IDirectiveFactory)
+    .component('individualTree',  IndividualTreeComponent,downgradeComponent({component: IndividualsTabComponent}) as angular.IDirectiveFactory)
+    .directive('individualTypesModal', downgradeComponent({component: IndividualTypesModalComponent}) as angular.IDirectiveFactory)
+    .directive('iriSelectOntology', downgradeComponent({component: IriSelectOntologyComponent}) as angular.IDirectiveFactory)
+    .directive('mergeBlock', downgradeComponent({component: MergeBlockComponent}) as angular.IDirectiveFactory)
+    .directive('mergeTab', downgradeComponent({component: MergeTabComponent}) as angular.IDirectiveFactory)
     .directive('newOntologyOverlay', downgradeComponent({component: NewOntologyOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('objectPropertyAxioms', downgradeComponent({component: ObjectPropertyAxiomsComponent}) as angular.IDirectiveFactory)
+    .directive('objectPropertyBlock', downgradeComponent({component: ObjectPropertyBlockComponent}) as angular.IDirectiveFactory)
+    .directive('objectPropertyOverlay', downgradeComponent({component: ObjectPropertyOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('ontologyButtonStack', downgradeComponent({component: OntologyButtonStackComponent}) as angular.IDirectiveFactory)
+    .directive('ontologyClassSelect', downgradeComponent({component: OntologyClassSelectComponent}) as angular.IDirectiveFactory)
     .directive('ontologyCloseOverlay', downgradeComponent({component: OntologyCloseOverlayComponent}) as angular.IDirectiveFactory)
     .directive('ontologyEditorPage', downgradeComponent({component: OntologyEditorPageComponent}) as angular.IDirectiveFactory)
+    .directive('ontologyPropertiesBlock', downgradeComponent({component: OntologyPropertiesBlockComponent}) as angular.IDirectiveFactory)
+    .directive('ontologyPropertyOverlay', downgradeComponent({component: OntologyPropertyOverlayComponent}) as angular.IDirectiveFactory)
     .directive('ontologySidebar', downgradeComponent({component: OntologySidebarComponent}) as angular.IDirectiveFactory)
+    .directive('ontologyTab', downgradeComponent({component: OntologyTabComponent}) as angular.IDirectiveFactory)
     .directive('openOntologySelect', downgradeComponent({component: OpenOntologySelectComponent}) as angular.IDirectiveFactory)
     .directive('openOntologyTab', downgradeComponent({component: OpenOntologyTabComponent}) as angular.IDirectiveFactory)
+    .directive('overviewTab', downgradeComponent({component: OverviewTabComponent}) as angular.IDirectiveFactory)
+    .directive('previewBlock', downgradeComponent({component: PreviewBlockComponent}) as angular.IDirectiveFactory)
+    .directive('projectTab', downgradeComponent({component: ProjectTabComponent}) as angular.IDirectiveFactory)
+    .directive('propertiesTab', downgradeComponent({component: PropertiesTabComponent}) as angular.IDirectiveFactory)
+    .directive('propertyHierarchyBlock', downgradeComponent({component: PropertyHierarchyBlockComponent}) as angular.IDirectiveFactory)
+    .directive('propertyTree', downgradeComponent({component: PropertyTreeComponent}) as angular.IDirectiveFactory)
+    .directive('propertyValues', downgradeComponent({component: PropertyValuesComponent}) as angular.IDirectiveFactory)
+    .directive('searchTab', downgradeComponent({component: SearchTabComponent}) as angular.IDirectiveFactory)
+    .directive('savedChangesTab', downgradeComponent({component: SavedChangesTabComponent}) as angular.IDirectiveFactory)
+    .directive('seeHistory', downgradeComponent({component: SeeHistoryComponent}) as angular.IDirectiveFactory)
+    .directive('selectedDetails', downgradeComponent({component: SelectedDetailsComponent}) as angular.IDirectiveFactory)
+    .directive('serializationSelect', downgradeComponent({component: SerializationSelectComponent}) as angular.IDirectiveFactory)
+    .directive('staticIri', downgradeComponent({component: StaticIriComponent}) as angular.IDirectiveFactory)
+    .directive('superClassSelect', downgradeComponent({component: SuperClassSelectComponent}) as angular.IDirectiveFactory)
+    .directive('superPropertySelect', downgradeComponent({component: SuperPropertySelectComponent}) as angular.IDirectiveFactory)
+    .directive('treeItem', downgradeComponent({component: TreeItemComponent}) as angular.IDirectiveFactory)
+    .directive('uploadChangesOverlay', downgradeComponent({component: UploadChangesOverlayComponent}) as angular.IDirectiveFactory)
     .directive('uploadErrorsOverlay', downgradeComponent({component: UploadErrorsOverlayComponent}) as angular.IDirectiveFactory)
     .directive('uploadOntologyOverlay', downgradeComponent({component: UploadOntologyOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('uploadSnackbar', downgradeComponent({component: UploadSnackbarComponent}) as angular.IDirectiveFactory);
+    .directive('uploadSnackbar', downgradeComponent({component: UploadSnackbarComponent}) as angular.IDirectiveFactory)
+    .directive('usagesBlock', downgradeComponent({component: UsagesBlockComponent}) as angular.IDirectiveFactory)
+    .directive('visualizationTab', downgradeComponent({component: VisualizationTabComponent}) as angular.IDirectiveFactory);

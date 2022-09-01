@@ -28,9 +28,19 @@
         min-height: 200px;
     }
     .predicate {
+        margin: auto .20rem;
         color: #08B36E;
     }
     .text-center {
         padding-bottom: 10px;
     }
+    .value-display-wrapper {
+        flex-direction: row-reverse;
+        display: flex;
+        align-items: initial;
+        justify-content: flex-end;
+        align-items: flex-end;
+        flex-wrap: wrap-reverse;
+    }
+
 }

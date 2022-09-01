@@ -20,75 +20,75 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { union, get } from 'lodash';
+import { Component, Inject, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { union, sortBy, has, get } from 'lodash';
 
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./ontologyPropertiesBlock.component.html');
+import { OntologyPropertyOverlayComponent } from '../ontologyPropertyOverlay/ontologyPropertyOverlay.component';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:ontologyPropertiesBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:modalService
+ * @class ontology-editor.OntologyPropertiesBlockComponent
  *
- * @description
- * `ontologyPropertiesBlock` is a component that creates a section that displays the ontology properties (and
- * annotations) on the provided ontology using {@link ontology-editor.component:propertyValues}. The section header
- * contains a button for adding a property. The component houses the methods for opening the modal for
- * {@link ontology-editor.component:ontologyPropertyOverlay editing, adding}, and removing ontology properties.
+ * A component that creates a section that displays the ontology properties (and annotations) on the provided ontology
+ * using {@link ontology-editor.PropertyValuesComponent}. The section header contains a button for adding a property.
+ * The component houses the methods for opening the modal for
+ * {@link ontology-editor.OntologyPropertyOverlayComponent editing, adding}, and removing ontology properties.
  * 
- * @param {Object} ontology A JSON-LD object representing an ontology 
+ * @param {JSONLDObject} ontology A JSON-LD object representing an ontology 
  */
-const ontologyPropertiesBlockComponent = {
-    template,
-    bindings: {
-        ontology: '<'
-    },
-    controllerAs: 'dvm',
-    controller: ontologyPropertiesBlockComponentCtrl
-};
+@Component({
+    selector: 'ontology-properties-block',
+    templateUrl: './ontologyPropertiesBlock.component.html'
+})
+export class OntologyPropertiesBlockComponent implements OnChanges {
+    @Input() ontology: JSONLDObject;
 
-ontologyPropertiesBlockComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'modalService'];
+    properties = [];
+    propertiesFiltered = [];
 
-function ontologyPropertiesBlockComponentCtrl(ontologyStateService: OntologyStateService, propertyManagerService, modalService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.properties = [];
+    constructor(private dialog: MatDialog, public os: OntologyStateService, @Inject('propertyManagerService') private pm) {}
     
-    dvm.$onChanges = function() {
-        dvm.properties = union(pm.ontologyProperties, pm.defaultAnnotations, pm.owlAnnotations, Object.keys(dvm.os.listItem.annotations.iris));
+    ngOnChanges(): void {
+        this.updatePropertiesFiltered();
     }
-    dvm.openAddOverlay = function() {
-        dvm.os.editingOntologyProperty = false;
-        dvm.os.ontologyProperty = undefined;
-        dvm.os.ontologyPropertyIRI = '';
-        dvm.os.ontologyPropertyValue = '';
-        dvm.os.ontologyPropertyType = undefined;
-        dvm.os.ontologyPropertyLanguage = '';
-        modalService.openModal('ontologyPropertyOverlay');
+    updatePropertiesFiltered(): void {
+        this.properties = union(this.pm.ontologyProperties, this.pm.defaultAnnotations, this.pm.owlAnnotations, Object.keys(this.os.listItem.annotations.iris));
+        this.propertiesFiltered = sortBy(this.properties.filter(prop => has(this.ontology, prop)), iri => this.os.getEntityNameByListItem(iri));
     }
-    dvm.openRemoveOverlay = function(key, index) {
-        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
-            dvm.os.removeProperty(key, index).subscribe();
+    openAddOverlay(): void {
+        this.dialog.open(OntologyPropertyOverlayComponent, {data: { editing: false }}).afterClosed()
+            .subscribe(result => {
+                if (result) {
+                    this.updatePropertiesFiltered();
+                }
+            });
+    }
+    openRemoveOverlay(input: {iri: string, index: number}): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: { content: this.os.getRemovePropOverlayMessage(input.iri, input.index)}
+        }).afterClosed().subscribe(result => {
+            if (result) {
+                this.os.removeProperty(input.iri, input.index).subscribe();
+                this.updatePropertiesFiltered();
+            }
         });
     }
-    dvm.editClicked = function(property, index) {
-        var propertyObj = dvm.ontology[property][index];
-        dvm.os.editingOntologyProperty = true;
-        dvm.os.ontologyProperty = property;
-        dvm.os.ontologyPropertyIRI = get(propertyObj, '@id');
-        dvm.os.ontologyPropertyValue = get(propertyObj, '@value');
-        dvm.os.ontologyPropertyType = get(propertyObj, '@type');
-        dvm.os.ontologyPropertyIndex = index;
-        dvm.os.ontologyPropertyLanguage = get(propertyObj, '@language');
-        modalService.openModal('ontologyPropertyOverlay');
-    }
-    dvm.orderByEntityName = function(iri) {
-        return dvm.os.getEntityNameByListItem(iri);
+    editClicked(input: {property: string, index: number}): void {
+        const propertyObj = this.ontology[input.property][input.index];
+        this.dialog.open(OntologyPropertyOverlayComponent, {data: {
+            editing: true,
+            property: input.property,
+            value: propertyObj['@value'] || propertyObj['@id'],
+            type: get(propertyObj, '@type', ''),
+            index: input.index,
+            language: get(propertyObj, '@language', '')
+        }}).afterClosed().subscribe(result => {
+            if (result) {
+                this.updatePropertiesFiltered();
+            }
+        });
     }
 }
-
-export default ontologyPropertiesBlockComponent;

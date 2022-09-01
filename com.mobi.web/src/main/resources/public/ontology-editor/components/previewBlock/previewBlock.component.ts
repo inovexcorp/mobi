@@ -20,85 +20,81 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 
-import './previewBlock.component.scss';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 
-const template = require('./previewBlock.component.html');
+import './previewBlock.component.scss';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:previewBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:modalService
+ * @class ontology-editor.PreviewBlockComponent
  *
- * @description
- * `previewBlock` is a component that creates a {@link shared.component:block} that displays a `codemirror` with
- * the current {@link shared.service:ontologyStateService selected ontology} in a specified RDF format.
- * The `block` contains a {@link ontology-editor.component:serializationSelect}, button to refresh the
- * preview, and a button for downloading the ontology in the selected format.
+ * A component that creates a `mat-card` that displays a `codemirror` with the current
+ * {@link shared.OntologyStateService#listItem selected ontology} in a specified RDF format. The card contains a
+ * {@link ontology-editor.SerializationSelectComponent}, button to refresh the preview, and a button for downloading
+ * the ontology in the selected format.
  */
-const previewBlockComponent = {
-    template,
-    bindings: {
-        activePage: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: previewBlockComponentCtrl
-};
-
-previewBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService'];
-
-function previewBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    var previewQuery = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000"
-    dvm.os = ontologyStateService;
-    dvm.options = {
+@Component({
+    selector: 'preview-block',
+    templateUrl: './previewBlock.component.html'
+})
+export class PreviewBlockComponent implements OnInit, OnChanges {
+    previewQuery = 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000'
+    options = {
         mode: '',
         lineNumbers: true,
         lineWrapping: true,
         readOnly: true
-    };
-
-    dvm.$onChanges = function() {
-        dvm.options.mode = dvm.activePage.mode;            
     }
-    dvm.getPreview = function() {
-        setMode(dvm.activePage.serialization);
-        om.getQueryResults(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, previewQuery, dvm.activePage.serialization, false, true)
+
+    @Input() activePage: any;
+    @Output() activePageChange = new EventEmitter<any>();
+
+    previewForm: FormGroup = this.fb.group({
+        serialization: ['']
+    });
+
+    constructor(private fb: FormBuilder, public os: OntologyStateService, private om: OntologyManagerService,
+        private splitIRI: SplitIRIPipe) {}
+
+    ngOnInit(): void {
+        this.previewForm.controls.serialization.setValue(this.activePage.serialization);
+        this.previewForm.controls.serialization.valueChanges.subscribe(value => {
+            this.activePage.serialization = value;
+            this.activePageChange.emit(this.activePage);
+        });
+    }
+    ngOnChanges(): void {
+        this.options.mode = this.activePage.mode;
+    }
+    setPreview(): void {
+        this._setMode(this.activePage.serialization);
+        this.om.getQueryResults(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.previewQuery, this.activePage.serialization, false, true)
             .subscribe(ontology => {
-                dvm.activePage.preview = ontology;
-                dvm.changeEvent({value: dvm.activePage});
+                this.activePage.preview = ontology;
+                this.activePageChange.emit(this.activePage);
             }, response => {
-                dvm.activePage.preview = response;
-                dvm.changeEvent({value: dvm.activePage});
+                this.activePage.preview = response;
+                this.activePageChange.emit(this.activePage);
             });
     }
-    dvm.download = function() {
-        var fileName = $filter('splitIRI')(dvm.os.listItem.ontologyId).end;
-        om.downloadOntology(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, dvm.activePage.serialization, fileName);
-    }
-    dvm.changeSerialization = function(value) {
-        dvm.activePage.serialization = value;
-        dvm.changeEvent({value: dvm.activePage});
+    download(): void {
+        const fileName = this.splitIRI.transform(this.os.listItem.ontologyId).end;
+        this.om.downloadOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.activePage.serialization, fileName);
     }
 
-    function setMode(serialization) {
+    private _setMode(serialization) {
         if (serialization === 'turtle') {
-            dvm.options.mode = 'text/turtle';
+            this.options.mode = 'text/turtle';
         } else if (serialization === 'jsonld') {
-            dvm.options.mode = 'application/ld+json';
+            this.options.mode = 'application/ld+json';
         } else {
-            dvm.options.mode = 'application/xml';
+            this.options.mode = 'application/xml';
         }
-        dvm.activePage.mode = angular.copy(dvm.options.mode);
-        dvm.changeEvent({value: dvm.activePage});
+        this.activePage.mode = this.options.mode;
+        this.activePageChange.emit(this.activePage);
     }
 }
-
-export default previewBlockComponent;

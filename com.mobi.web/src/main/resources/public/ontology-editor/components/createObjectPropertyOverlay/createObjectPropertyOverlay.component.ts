@@ -20,164 +20,164 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, unset, forEach } from 'lodash';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
+import { unset, map } from 'lodash';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { DCTERMS, OWL, RDFS } from '../../../prefixes';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { REGEX } from '../../../constants';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 
-const template = require('./createObjectPropertyOverlay.component.html');
+interface CharacteristicI { 
+    typeIRI: string, 
+    displayText: string, 
+}
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:createObjectPropertyOverlay
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
+ * @class ontology-editor.CreateObjectPropertyOverlayComponent
  *
- * @description
- * `createObjectPropertyOverlay` is a component that creates content for a modal that creates an object property in
- * the current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a text
- * input for the property name (which populates the {@link ontology-editor.component:staticIri IRI}), a
- * {@link shared.component:textArea} for the property description,
- * {@link ontology-editor.component:advancedLanguageSelect},
- * {@link shared.component:checkbox checkboxes} for the property characteristics, an
- * {@link ontology-editor.component:iriSelectOntology} for the domain, an
- * {@link ontology-editor.component:iriSelectOntology} for the range, and a
- * {@link ontology-editor.component:superPropertySelect}. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that creates an object property in the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a text input for the
+ * property name (which populates the {@link ontology-editor.StaticIriComponent IRI}), a field for the property
+ * description, {@link ontology-editor.AdvancedLanguageSelectComponent}, `mat-checkbox` elements for the property
+ * characteristics, an {@link ontology-editor.IriSelectOntologyComponent} for the domain, an
+ * {@link ontology-editor.IriSelectOntologyComponent} for the range, and a
+ * {@link ontology-editor.SuperPropertySelectComponent}. Meant to be used in conjunction with the `MatDialog` service.
  */
-const createObjectPropertyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createObjectPropertyOverlayComponentCtrl
-};
-
-createObjectPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes'];
-
-function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes) {
-    var dvm = this;
-    dvm.duplicateCheck = true;
-    dvm.characteristics = [
+@Component({
+    selector: 'create-object-property-overlay',
+    templateUrl: './createObjectPropertyOverlay.component.html'
+})
+export class CreateObjectPropertyOverlayComponent implements OnInit {
+    characteristics: CharacteristicI[] = [
         {
-            checked: false,
-            typeIRI: prefixes.owl + 'FunctionalProperty',
+            typeIRI: OWL + 'FunctionalProperty',
             displayText: 'Functional Property',
         },
         {
-            checked: false,
-            typeIRI: prefixes.owl + 'AsymmetricProperty',
+            typeIRI: OWL + 'AsymmetricProperty',
             displayText: 'Asymmetric Property',
         },
         {
-            checked: false,
-            typeIRI: prefixes.owl + 'SymmetricProperty',
+            typeIRI: OWL + 'SymmetricProperty',
             displayText: 'Symmetric Property',
-            objectOnly: true
         },
         {
-            checked: false,
-            typeIRI: prefixes.owl + 'TransitiveProperty',
+            typeIRI: OWL + 'TransitiveProperty',
             displayText: 'Transitive Property',
-            objectOnly: true
         },
         {
-            checked: false,
-            typeIRI: prefixes.owl + 'ReflexiveProperty',
+            typeIRI: OWL + 'ReflexiveProperty',
             displayText: 'Reflexive Property',
-            objectOnly: true
         },
         {
-            checked: false,
-            typeIRI: prefixes.owl + 'IrreflexiveProperty',
+            typeIRI: OWL + 'IrreflexiveProperty',
             displayText: 'Irreflexive Property',
-            objectOnly: true
         }
     ];
-    dvm.prefixes = prefixes;
-    dvm.os = ontologyStateService;
-    dvm.prefix = dvm.os.getDefaultPrefix();
-    dvm.values = [];
-    dvm.property = {
-        '@id': dvm.prefix,
-        '@type': [dvm.prefixes.owl + 'ObjectProperty'],
-        [prefixes.dcterms + 'title']: [{
-            '@value': ''
-        }],
-        [prefixes.dcterms + 'description']: [{
-            '@value': ''
-        }]
-    };
-    dvm.domains = [];
-    dvm.ranges = [];
 
-    dvm.nameChanged = function() {
-        if (!dvm.iriHasChanged) {
-            dvm.property['@id'] = dvm.prefix + $filter('camelCase')(dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
+    iriHasChanged = false;
+    duplicateCheck = true;
+    iriPattern = REGEX.IRI;
+
+    selectedDomains: string[] = [];
+    selectedRanges: string[] = [];
+    selectedSubProperties: JSONLDId[] = [];
+
+    createForm = this.fb.group({
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
+        name: ['', [ Validators.required]],
+        description: [''],
+        language: [''],
+        characteristics: this.fb.array(this.characteristics.map(() => false))
+    });
+    
+    constructor(private fb: FormBuilder,
+        private dialogRef: MatDialogRef<CreateObjectPropertyOverlayComponent>, 
+        public os: OntologyStateService,
+        private camelCasePipe: CamelCasePipe,
+        private splitIRIPipe: SplitIRIPipe) {}
+
+    ngOnInit(): void {
+        this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
+        this.createForm.controls.name.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+    }
+    nameChanged(newName: string): void {
+        if (!this.iriHasChanged) {
+            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
         }
     }
-    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
-        dvm.iriHasChanged = true;
-        dvm.property['@id'] = iriBegin + iriThen + iriEnd;
-        dvm.os.setCommonIriParts(iriBegin, iriThen);
+    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void  {
+        this.iriHasChanged = true;
+        this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
+        this.os.setCommonIriParts(iriBegin, iriThen);
     }
-    dvm.create = function() {
-        dvm.duplicateCheck = false;
-        if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
-            unset(dvm.property, prefixes.dcterms + 'description');
+    get property(): JSONLDObject {
+        const property = {
+            '@id': this.createForm.controls.iri.value,
+            '@type': [OWL + 'ObjectProperty'],
+            [DCTERMS + 'title']: [{
+                '@value': this.createForm.controls.name.value
+            }],
+            [DCTERMS + 'description']: [{
+                '@value': this.createForm.controls.description.value
+            }]
+        };
+        if (property[DCTERMS + 'description'][0]['@value'] === '') {
+            unset(property, DCTERMS + 'description');
         }
-        forEach(dvm.characteristics, (obj, key) => {
-            if (obj.checked) {
-                dvm.property['@type'].push(obj.typeIRI);
+        this.createForm.controls.characteristics.value.forEach((val, index) => {
+            if (val) {
+                property['@type'].push(this.characteristics[index].typeIRI);
             }
         });
-        if (dvm.domains.length) {
-            dvm.property[prefixes.rdfs + 'domain'] = map(dvm.domains, iri => ({'@id': iri}));
+        this.os.addLanguageToNewEntity(property, this.createForm.controls.language.value);
+        if (this.selectedDomains.length) {
+            property[RDFS + 'domain'] = this.selectedDomains.map(iri => ({'@id': iri}));
         }
-        if (dvm.ranges.length) {
-            dvm.property[prefixes.rdfs + 'range'] = map(dvm.ranges, iri => ({'@id': iri}));
+        if (this.selectedRanges.length) {
+            property[RDFS + 'range'] = this.selectedRanges.map(iri => ({'@id': iri}));
         }
-        dvm.os.addLanguageToNewEntity(dvm.property, dvm.language);
-        dvm.os.updatePropertyIcon(dvm.property);
-        dvm.os.handleNewProperty(dvm.property);
+        if (this.selectedSubProperties.length) {
+            property[RDFS + 'subPropertyOf'] = this.selectedSubProperties;
+        }
+        return property;
+    }
+    create(): void  {
+        this.duplicateCheck = false;
+        const property = this.property;
+        this.os.updatePropertyIcon(property);
+        this.os.handleNewProperty(property);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.property);
+        this.os.addEntity(property);
         // update lists
-        updateLists();
-        dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
+        this.updateLists(property);
+        this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
         // Update InProgressCommit
-        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.property);
+        this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, property);
         // Save the changes to the ontology
-        dvm.os.saveCurrentChanges().subscribe();
-        // Open snackbar
-        dvm.os.listItem.goTo.entityIRI = dvm.property['@id'];
-        dvm.os.listItem.goTo.active = true;
+        this.os.saveCurrentChanges().subscribe(() => {
+            // Open snackbar
+            this.os.openSnackbar(property['@id']);
+        }, () => {});
         // hide the overlay
-        dvm.close();
+        this.dialogRef.close();
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
-    dvm.getObjType = function(obj) {
-        return obj.typeIRI;
-    }
-
-    function updateLists() {
-        dvm.os.listItem.objectProperties.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
-        if (dvm.values.length) {
-            dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
-            dvm.os.setSuperProperties(dvm.property['@id'], map(dvm.values, '@id'), 'objectProperties');
-            if (dvm.os.containsDerivedSemanticRelation(map(dvm.values, '@id'))) {
-                dvm.os.listItem.derivedSemanticRelations.push(dvm.property['@id']);
+    updateLists(property: JSONLDObject): void  {
+        this.os.listItem.objectProperties.iris[property['@id']] = this.os.listItem.ontologyId;
+        if (this.selectedSubProperties.length) {
+            this.os.setSuperProperties(property['@id'], map(this.selectedSubProperties, '@id'), 'objectProperties');
+            if (this.os.containsDerivedSemanticRelation(map(this.selectedSubProperties, '@id'))) {
+                this.os.listItem.derivedSemanticRelations.push(property['@id']);
             }
         } else {
-            dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties);
+            this.os.listItem.objectProperties.flat = this.os.flattenHierarchy(this.os.listItem.objectProperties);
         }
     }
 }
-
-export default createObjectPropertyOverlayComponent;

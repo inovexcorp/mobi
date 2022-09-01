@@ -28,10 +28,7 @@
             </mat-panel-title>
         </mat-expansion-panel-header>
         <div class="filter-options">
-            <!-- TODO: Use search-bar when upgraded -->
-            <mat-form-field *ngIf="currentFilter.searchable" class="w-100">
-                <input matInput placeholder="Search..." [(ngModel)]="currentFilter.searchModel" (ngModelChange)="currentFilter.searchChanged($event)" (keyup.enter)="currentFilter.searchSubmitted()">
-            </mat-form-field>
+            <search-bar *ngIf="currentFilter.searchable" class="w-100" [bindModel]="currentFilter.searchModel" (bindModelChange)="currentFilter.searchChanged($event)" (submitEvent)="currentFilter.searchSubmitted()"></search-bar>
             <info-message *ngIf="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
             <div [ngClass]="{pageable: currentFilter.pageable}">
                 <div class="filter-option my-2" *ngFor="let filterItem of currentFilter.filterItems">

@@ -127,7 +127,7 @@ describe('Commit Info Overlay component', function() {
             difference.additions = [emptyObj];
             difference.deletions = [];
             catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
-            await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
+            await component.retrieveMoreResults(100, 0);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -137,7 +137,7 @@ describe('Commit Info Overlay component', function() {
             difference.additions = [];
             difference.deletions = [emptyObj];
             catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: difference, headers: new HttpHeaders(headers)})));
-            await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
+            await component.retrieveMoreResults(100, 0);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -178,7 +178,7 @@ describe('Commit Info Overlay component', function() {
                     describe('and getOntologyEntityNames', function() {
                         it('resolves', async function() {
                             ontologyManagerStub.getOntologyEntityNames.and.returnValue(of({'iri1': {label: 'label'}}));
-                            await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
+                            await component.retrieveMoreResults(100, 0);
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                             expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
@@ -189,7 +189,7 @@ describe('Commit Info Overlay component', function() {
                         });
                         it('rejects', async function() {
                             ontologyManagerStub.getOntologyEntityNames.and.returnValue(throwError('Error Message'));
-                            await component.retrieveMoreResults(100, 0).subscribe(() => fail('Observable should have errored'), noop);
+                            await component.retrieveMoreResults(100, 0);
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                             expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
@@ -204,7 +204,7 @@ describe('Commit Info Overlay component', function() {
                     fixture.detectChanges();
                     await fixture.whenStable();
 
-                    await component.retrieveMoreResults(100, 0).subscribe(noop, () => fail('Observable should have succeeded'));
+                    await component.retrieveMoreResults(100, 0);
                     expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                     expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}]);
                     expect(component.deletions).toEqual([]);
@@ -220,7 +220,7 @@ describe('Commit Info Overlay component', function() {
                 await fixture.whenStable();
 
                 catalogManagerStub.getDifference.and.returnValue(throwError('Error Message'));
-                await component.retrieveMoreResults(100, 0).subscribe(() => fail('Observable should have errored'), noop);
+                await component.retrieveMoreResults(100, 0);
                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
             });

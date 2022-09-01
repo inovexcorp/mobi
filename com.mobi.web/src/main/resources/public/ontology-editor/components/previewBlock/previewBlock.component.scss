@@ -24,14 +24,12 @@
 @import "../../../css/variables";
 
 .preview-block {
+    .mat-card-header {
+        justify-content: end;
+    }
     .CodeMirror {
-        bottom: 0;
-        height: auto;
-        left: 0;
-        position: absolute;
-        right: 0;
-        top: 0;
-
+        height: 100%;
+        
         .CodeMirror-cursor {
             display: none !important
         }

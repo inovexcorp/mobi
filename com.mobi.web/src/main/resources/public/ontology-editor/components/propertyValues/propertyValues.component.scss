@@ -44,9 +44,16 @@
                     transition: opacity ease-in-out 0.1s;
             opacity: 0;
 
-            button:hover {
-                text-decoration: none;
-                color: inherit;
+            button.mat-icon-button {
+                width: 20px;
+                height: 20px;
+                line-height: 20px;
+
+                .mat-icon {
+                    width: 14px !important;
+                    height: 14px !important;
+                    font-size: 14px !important;
+                }
             }
         }
         &:hover {

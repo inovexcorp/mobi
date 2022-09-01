@@ -53,6 +53,7 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { MappingConfigOverlayComponent } from './mappingConfigOverlay.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 
 describe('Mapping Config Overlay component', function() {
     let component: MappingConfigOverlayComponent;
@@ -118,7 +119,8 @@ describe('Mapping Config Overlay component', function() {
                 MappingConfigOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(LimitDescriptionComponent),
-                MockComponent(InfoMessageComponent)
+                MockComponent(InfoMessageComponent),
+                MockComponent(SearchBarComponent)
             ],
             providers: [
                 MockProvider(MapperStateService),
@@ -733,18 +735,18 @@ describe('Mapping Config Overlay component', function() {
             expect(element.queryAll(By.css('div[mat-dialog-content]')).length).toEqual(1);
             expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
         });
-        ['.row', '.ontology-select-container', '.preview-display', '.ontologies', 'mat-selection-list', 'input[name="Search"]', 'mat-select'].forEach(test => {
+        ['.row', '.ontology-select-container', '.preview-display', '.ontologies', 'mat-selection-list', 'search-bar', 'mat-select'].forEach(test => {
             it('with a '+ test, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });
-        it('depending on whether an error has occured', function() {
+        it('depending on whether an error has occurred', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
             component.errorMessage = 'Error message';
             fixture.detectChanges();
             expect(element.queryAll(By.css('error-display')).length).toEqual(1);
         });
-        it('depending on whether an error has occured when retrieving the records', function() {
+        it('depending on whether an error has occurred when retrieving the records', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
             component.recordsErrorMessage = 'Error message';
             fixture.detectChanges();

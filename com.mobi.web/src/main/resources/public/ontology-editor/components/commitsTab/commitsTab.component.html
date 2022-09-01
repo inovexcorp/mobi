@@ -26,8 +26,8 @@
             <h5>Commits</h5>
         </div>
         <div class="flex-1 vertical-scroll d-flex">
-            <commit-history-table class="flex-1" [commit-id]="dvm.os.listItem.versionedRdfRecord.commitId" [head-title]="dvm.getHeadTitle()" (receive-commits)="dvm.commits = $event" [record-id]="dvm.os.listItem.versionedRdfRecord.recordId" graph></commit-history-table>
-            <div class="view-table" ng-if="dvm.commits.length">
+            <commit-history-table class="flex-1" [commitId]="os.listItem.versionedRdfRecord.commitId" [headTitle]="getHeadTitle()" (receiveCommits)="commits = $event" [recordId]="os.listItem.versionedRdfRecord.recordId" graph></commit-history-table>
+            <div class="view-table" *ngIf="commits.length">
                 <table class="table">
                     <thead>
                         <tr>
@@ -35,9 +35,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="commit in dvm.commits track by commit.id">
+                        <tr *ngFor="let commit of commits; trackBy:trackCommits">
                             <td class="p-0 align-middle">
-                                <button type="button" class="btn btn-flat-primary remove-min-width" ng-click="dvm.openOntologyAtCommit(commit)" ng-disabled="dvm.os.hasChanges(dvm.os.listItem) || dvm.os.isCommittable(dvm.os.listItem)">View</button>
+                                <button type="button" mat-button color="primary" class="remove-min-width" (click)="openOntologyAtCommit(commit)" [disabled]="os.hasChanges(os.listItem) || os.isCommittable(os.listItem)">View</button>
                             </td>
                         </tr>
                     </tbody>

@@ -21,6 +21,9 @@
   #L%
   -->
 <div class="circle-button-stack">
-    <div class="hidden-buttons" ng-transclude></div>
-    <button type="button" class="btn btn-float base-btn btn-primary fa fa-fw fa-plus"></button>
+    <div class="hidden-buttons"> <!-- this div had ng-transclude -->
+      <!-- https://angular.io/guide/content-projection -->
+      <ng-content></ng-content>  
+    </div>
+    <button mat-fab color="primary" class="btn-float base-btn"><mat-icon>add</mat-icon></button>
 </div>

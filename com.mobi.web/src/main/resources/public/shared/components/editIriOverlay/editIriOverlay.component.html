@@ -21,30 +21,29 @@
   #L%
   -->
 <h1 mat-dialog-title>Edit IRI</h1>
-<div>
-    <div [formGroup]="iriFormControl">
-        <mat-form-field class="w-100 template-begins-with">
-            <mat-label>Begins With</mat-label>
-            <input type="text" matInput name="beginsWith" formControlName="beginsWith" required focus/>
-            <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.pattern">This value is invalid</mat-error>
-            <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.required">This value is required</mat-error>
-        </mat-form-field>
-        <mat-form-field class="template-then w-100">
-            <mat-label>Then</mat-label>
-            <mat-select name="then" formControlName="then" required>
-                <mat-option class="then-option" value="/">/</mat-option>
-                <mat-option class="then-option" value="#">#</mat-option>
-                <mat-option class="then-option" value=":">:</mat-option>
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field class="w-100 template-begins-with">
-            <mat-label>Ends With</mat-label>
-            <input type="text" matInput name="endsWith" formControlName="endsWith" required focus/>
-            <mat-error *ngIf="iriFormControl.get('endsWith').errors?.pattern">This value is invalid</mat-error>
-            <mat-error *ngIf="iriFormControl.get('endsWith').errors?.required">This value is required</mat-error>
-        </mat-form-field>
-    </div>
-</div>
+<form mat-dialog-content [formGroup]="iriFormControl">
+    <error-display *ngIf="data.validator && iriFormControl.errors && iriFormControl.errors[data.validatorKey]">{{data.validatorMsg}}</error-display>
+    <mat-form-field class="w-100 template-begins-with">
+        <mat-label>Begins With</mat-label>
+        <input type="text" matInput name="beginsWith" formControlName="beginsWith" required focus/>
+        <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.pattern">This value is invalid</mat-error>
+        <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.required">This value is required</mat-error>
+    </mat-form-field>
+    <mat-form-field class="template-then w-100">
+        <mat-label>Then</mat-label>
+        <mat-select name="then" formControlName="then" required>
+            <mat-option class="then-option" value="/">/</mat-option>
+            <mat-option class="then-option" value="#">#</mat-option>
+            <mat-option class="then-option" value=":">:</mat-option>
+        </mat-select>
+    </mat-form-field>
+    <mat-form-field class="w-100 template-begins-with">
+        <mat-label>Ends With</mat-label>
+        <input type="text" matInput name="endsWith" formControlName="endsWith" required focus/>
+        <mat-error *ngIf="iriFormControl.get('endsWith').errors?.pattern">This value is invalid</mat-error>
+        <mat-error *ngIf="iriFormControl.get('endsWith').errors?.required">This value is required</mat-error>
+    </mat-form-field>
+</form>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false" (click)="this.cancel()">Cancel</button>
     <button mat-raised-button (click)="this.resetVariables()"><i class="fa fa-refresh"></i></button>

@@ -21,42 +21,33 @@
  * #L%
  */
 
-const template = require('./searchBar.component.html');
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 /**
- * @ngdoc directive
- * @name shared.component:searchBar
+ * @class shared.SearchBarComponent
  *
- * @description
- * `searchBar` is a component that creates a Bootstrap '.input-group' div element with an input for searching a list
- * of items. The search will be submitted when the enter button is clicked. The component takes a function to be
- * called when the search is submitted. The value of the input is bound to `bindModel`, but only one way. The
- * provided `changeEvent` function is expected to update the value of `bindModel`.
+ * A component that creates a 'mat-form-field' element with an input for searching a list of items. The search will be
+ * submitted when the enter button is clicked. The component takes a function to be called when the search is submitted.
  *
  * @param {string} bindModel The contents of the search input
- * @param {Function} changeEvent The function to be called when the text of the input changes. Should update the
- * value of `bindModel`. Expects an argument called `value`
  * @param {Function} submitEvent The function to be called when the enter button is clicked
  */
-const searchBarComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&',
-        submitEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: searchBarComponentCtrl
-};
+@Component({
+    selector: 'search-bar',
+    templateUrl: './searchBar.component.html'
+})
+export class SearchBarComponent {
+    @Input() bindModel: string;
+    @Output() bindModelChange = new EventEmitter<string>();
 
-function searchBarComponentCtrl() {
-    var dvm = this;
+    @Output() submitEvent = new EventEmitter<null>();
 
-    dvm.onKeyUp = function(event) {
-        if (event.keyCode === 13) {
-            dvm.submitEvent();
-        }
+    constructor() {}
+
+    search(): void {
+        this.submitEvent.emit();
+    }
+    updateValue(newValue: string): void {
+        this.bindModelChange.emit(newValue);
     }
 }
-
-export default searchBarComponent;

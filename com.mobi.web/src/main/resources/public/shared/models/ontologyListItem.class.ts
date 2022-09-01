@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { MatSnackBarRef, SimpleSnackBar } from '@angular/material';
 import * as angular from 'angular';
 import { EntityNames } from './entityNames.interface';
 import { Hierarchy } from './hierarchy.interface';
@@ -27,74 +28,62 @@ import { HierarchyNode } from './hierarchyNode.interface';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { ParentNode } from './parentNode.interface';
 import { VersionedRdfListItem } from './versionedRdfListItem.class';
+import { cloneDeep } from 'lodash';
 
 const ontologyEditorTabStates = {
     project: {
         entityIRI: '',
-        active: true,
+        component: undefined,
         targetedSpinnerId: 'project-entity-spinner'
     },
     overview: {
-        active: false,
         searchText: '',
         open: {},
         targetedSpinnerId: 'overview-entity-spinner'
     },
     classes: {
-        active: false,
         searchText: '',
         index: 0,
         open: {},
         targetedSpinnerId: 'classes-entity-spinner'
     },
     properties: {
-        active: false,
         searchText: '',
         index: 0,
         open: {},
         targetedSpinnerId: 'properties-entity-spinner'
     },
     individuals: {
-        active: false,
         searchText: '',
         index: 0,
         open: {},
         targetedSpinnerId: 'individuals-entity-spinner'
     },
     concepts: {
-        active: false,
         searchText: '',
         index: 0,
         open: {},
         targetedSpinnerId: 'concepts-entity-spinner'
     },
     schemes: {
-        active: false,
         searchText: '',
         index: 0,
         open: {},
         targetedSpinnerId: 'schemes-entity-spinner'
     },
-    search: {
-        active: false
-    },
-    savedChanges: {
-        active: false
-    },
-    commits: {
-        active: false
-    },
+    search: { },
+    savedChanges: { },
+    commits: { },
     visualization: {
-        active: false,
         targetedSpinnerId: 'visualization-spinner'
     }
 };
 
 export class OntologyListItem extends VersionedRdfListItem {
+    tabIndex: number;
     ontologyId: string
     isVocabulary: boolean
     editorTabStates: any // TODO better typing
-    // ontology TODO: determine if needed
     importedOntologies: {id: string, ontologyId: string}[]
     importedOntologyIds: string[]
     createdFromExists: boolean
@@ -134,18 +123,28 @@ export class OntologyListItem extends VersionedRdfListItem {
     seeHistory: boolean
     isSaved: boolean
     hasPendingRefresh: boolean
-    goTo: {
-        entityIRI: string,
-        active: boolean
-    }
+    openSnackbar: MatSnackBarRef<SimpleSnackBar>
     iriBegin: string
     iriThen: string
 
+    static PROJECT_TAB = 0;
+    static OVERVIEW_TAB = 1;
+    static CLASSES_TAB = 2;
+    static PROPERTIES_TAB = 3;
+    static INDIVIDUALS_TAB = 4;
+    static CONCEPTS_SCHEMES_TAB = 5;
+    static CONCEPTS_TAB = 6;
+    static SEARCH_TAB = 7;
+    static SAVED_CHANGES_TAB = 8;
+    static COMMITS_TAB = 9;
+    static VISUALIZATION_TAB = 10;
+
     constructor() {
         super();
+        this.tabIndex = OntologyListItem.PROJECT_TAB;
         this.ontologyId = '';
         this.isVocabulary = false;
-        this.editorTabStates = angular.copy(ontologyEditorTabStates);
+        this.editorTabStates = cloneDeep(ontologyEditorTabStates);
         this.importedOntologies = [];
         this.importedOntologyIds = [];
         this.createdFromExists = true;
@@ -219,10 +218,6 @@ export class OntologyListItem extends VersionedRdfListItem {
         this.seeHistory = false;
         this.isSaved = false;
         this.hasPendingRefresh = false;
-        this.goTo = {
-            entityIRI: '',
-            active: false
-        };
         this.iriBegin = '';
         this.iriThen = '';
     }

@@ -20,8 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { forOwn, merge, includes, replace } from 'lodash';
+import { forOwn, merge, includes, replace, cloneDeep } from 'lodash';
 
 prefixation.$inject = ['prefixes'];
 
@@ -43,7 +42,7 @@ prefixation.$inject = ['prefixes'];
  */
 function prefixation(prefixes) {
     return function(iri, extraPrefixes={}) {
-        var result = angular.copy(iri);
+        var result = cloneDeep(iri);
         if (typeof result === 'string') {
             forOwn(merge({}, prefixes, extraPrefixes), (namespace, prefix) => {
                 if (includes(result, namespace)) {

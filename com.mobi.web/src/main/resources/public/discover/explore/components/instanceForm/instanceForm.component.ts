@@ -20,42 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import NewInstancePropertyOverlayComponent from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
-import editIriOverlayComponent from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
-
+import { MatDialog } from '@angular/material/dialog';
 import { filter, some, forEach, concat, includes, uniq, map, join, find, get, flatten, remove } from 'lodash';
-import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { forkJoin } from 'rxjs';
+import { MatChipInputEvent } from '@angular/material/chips';
+
+import NewInstancePropertyOverlayComponent from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
+import { EditIriOverlayComponent } from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
-
-import { DCTERMS, OWL, RDFS, RDF } from '../../../../prefixes';
-import { MatDialog } from '@angular/material/dialog';
-
+import { DCTERMS, OWL, RDFS } from '../../../../prefixes';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
-import { forkJoin } from 'rxjs';
 import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
 import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
-import { MatChipInputEvent } from '@angular/material/chips';
 import { SplitIRI } from '../../../../shared/models/splitIRI.interface';
-import { PropertyDetails } from "../../../models/propertyDetails.interface";
+import { PropertyDetails } from '../../../models/propertyDetails.interface';
 
 /**
- * @ngdoc component
- * @name explore.component:instanceForm
- * @requires shared.filter:splitIRIFilter
- * @requires shared.service:discoverStateService
- * @requires shared.service:utilService
- * @requires discover.service:exploreService
- * @requires shared.service:prefixes
- * @requires explore.service:exploreUtilsService
- * @requires shared.service:modalService
+ * @class explore.InstanceFormComponent
  *
- * @description
- * `instanceForm` is a component that creates a form with the complete list of properties associated with the
- * {@link shared.service:discoverStateService selected instance} in an editable format. Also provides a
- * way to {@link shared.component:editIriOverlay edit the instance IRI} after acknowledging the danger.
- * If there are required properties not set on the instance, the provided `isValid` variable is set to false.
+ * A component that creates a form with the complete list of properties associated with the
+ * {@link shared.DiscoverStateService selected instance} in an editable format. Also provides a way to
+ * {@link shared.EditIriOverlayComponent edit the instance IRI} after acknowledging the danger. If there are required
+ * properties not set on the instance, the provided `isValid` variable is set to false.
  *
  * @param {string} header The configurable header for the form
  * @param {boolean} isValid Whether all the required properties for the instance are set
@@ -117,14 +106,14 @@ export class InstanceFormComponent implements OnInit {
     instance: JSONLDObject = {'@id': ''};
     options = [];
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.instance = this.ds.getInstance();
         this.getProperties();
-        this.getOptions(this.instance);
+        this.getOptions(this.instance['@id']);
         const newProperties = this.eu.getNewProperties(this.properties, this.instance, '');
         this.isInstancePropertyDisabled = newProperties ? !newProperties.length : false ;
     }
-    newInstanceProperty() {
+    newInstanceProperty(): void {
         this.dialog.open(NewInstancePropertyOverlayComponent, {
             data: {
                 properties: this.properties,
@@ -136,7 +125,7 @@ export class InstanceFormComponent implements OnInit {
             }
         });
     }
-    showIriConfirm() {
+    showIriConfirm(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
                 content: '<p>Changing this IRI might break relationships within the dataset. Are you sure you want to continue?</p>'
@@ -147,20 +136,22 @@ export class InstanceFormComponent implements OnInit {
             }
         });
     }
-    showIriOverlay() {
+    showIriOverlay(): void {
         const split: SplitIRI = this.splitIRI.transform(this.instance['@id']);
-        this.dialog.open(editIriOverlayComponent, {
+        this.dialog.open(EditIriOverlayComponent, {
             data: { iriBegin: split.begin, iriThen: split.then, iriEnd: split.end }
         }).afterClosed().subscribe((result) => {
-            if (result) this.setIRI(result)
+            if (result) {
+                this.setIRI(result);
+            }
         });
     }
-    getOptions(propertyIRI): void {
+    getOptions(propertyIRI: string): void {
         const range = this.eu.getRange(propertyIRI, this.properties);
         if (range) {
             this.es.getClassInstanceDetails(this.ds.explore.recordId, range, {offset: 0, infer: true}, true)
                 .subscribe(response => {
-                    let options = filter(response.body, item => !some(this.instance[propertyIRI], {'@id': item.instanceIRI}));
+                    const options = filter(response.body, item => !some(this.instance[propertyIRI], {'@id': item.instanceIRI}));
                     if (this.searchText[propertyIRI]) {
                         this.options = filter(options, item => this.eu.contains(item.title, this.searchText[propertyIRI]) || this.eu.contains(item.instanceIRI, this.searchText[propertyIRI]));
                     }
@@ -172,18 +163,18 @@ export class InstanceFormComponent implements OnInit {
         }
         this.options = [];
     }
-    addToChanged(propertyIRI): void {
+    addToChanged(propertyIRI: string): void {
         this.changed = uniq(concat(this.changed, [propertyIRI]));
         this.missingProperties = this.getMissingProperties();
     }
-    isChanged(propertyIRI) {
+    isChanged(propertyIRI: string): boolean {
         return includes(this.changed, propertyIRI);
     }
     setIRI(iriObj): void {
         this.instance['@id'] = iriObj.value.iriBegin + iriObj.value.iriThen + iriObj.value.iriEnd;
     }
     getMissingProperties(): string[] {
-        let missing = [];
+        const missing = [];
         forEach(this.properties, property => {
             forEach(get(property, 'restrictions', []), restriction => {
                 const length = get(this.instance, property.propertyIRI, []).length;
@@ -200,9 +191,9 @@ export class InstanceFormComponent implements OnInit {
         this.changeEvent.emit({value: this.isValid});
         return missing;
     }
-    getRestrictionText(propertyIRI): string {
+    getRestrictionText(propertyIRI: string): string {
         const details: PropertyDetails = find(this.properties, {propertyIRI});
-        let results = [];
+        const results = [];
         forEach(get(details, 'restrictions', []), restriction => {
             if (restriction.cardinalityType === OWL + 'cardinality') {
                 results.push('exactly ' + restriction.cardinality);

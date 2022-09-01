@@ -22,46 +22,41 @@
 */
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./classesTab.component.html');
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:classesTab
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:modalService
+ * @class ontology-editor.ClassesTabComponent
  *
- * @description
  * `classesTab` is a component that creates a page containing the
- * {@link ontology-editor.component:classHierarchyBlock} of the current
- * {@link shared.service:ontologyStateService selected ontology} and information about a
+ * {@link ontology-editor.ClassHierarchyBlockComponent} of the current
+ * {@link shared.OntologyStateService#listItem selected ontology} and information about a
  * selected class from that list. The selected class display includes a
- * {@link ontology-editor.component:selectedDetails}, a button to delete the class, an
- * {@link ontology-editor.component:annotationBlock}, an {@link ontology-editor.component:axiomBlock}, and a
- * {@link ontology-editor.component:usagesBlock}. The component houses the method for opening a modal for deleting
+ * {@link ontology-editor.SelectedDetailsComponent}, a button to delete the class, an
+ * {@link ontology-editor.AnnotationBlockComponent}, an {@link ontology-editor.AxiomBlockComponent}, and a
+ * {@link ontology-editor.UsagesBlockComponent}. The component houses the method for opening a modal for deleting
  * classes.
  */
-const classesTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: classesTabComponentCtrl
-};
+@Component({
+    selector: 'classes-tab',
+    templateUrl: './classesTab.component.html'
+})
+export class ClassesTabComponent {
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
 
-classesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'modalService']
-
-function classesTabComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.om = ontologyManagerService;
-
-    dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.os.deleteClass);
+    showDeleteConfirmation(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: `<p>Are you sure you want to delete <strong>${this.os.listItem.selected['@id']}</strong>?</p>`
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.os.deleteClass();
+            }
+        });
     }
-    dvm.seeHistory = function() {
-        dvm.os.listItem.seeHistory = true;
+    seeHistory(): void {
+        this.os.listItem.seeHistory = true;
     }
 }
-
-export default classesTabComponent;

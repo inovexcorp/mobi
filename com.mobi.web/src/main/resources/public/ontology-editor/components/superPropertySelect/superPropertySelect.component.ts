@@ -21,60 +21,122 @@
  * #L%
  */
 
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatChipInputEvent } from '@angular/material';
+import { findIndex, includes } from 'lodash';
+import { Observable } from 'rxjs';
+import { map, debounceTime, startWith } from 'rxjs/operators';
+
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
-const template = require('./superPropertySelect.component.html');
-
-/**
- * @ngdoc component
- * @name ontology-editor.component:superPropertySelect
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- *
- * @description
- * `superPropertySelect` is a component which provides a link to hide/show a `ui-select` of all available properties
- * IRIs in the currently {@link shared.service:ontologyStateService selected ontology} in the list identified by the
- * provided key. The value of the select is bound to `bindModel`, but only one way. The provided `changeEvent`
- * function is expected to update the value of `bindModel`.
- * 
- * @param {string} key The key to a list on the currently selected ontology
- * @param {Object[]} bindModel The variable to bind the selected properties to in the form of `{'@id': propIRI}`
- * @param {Function} changeEvent A function that will be called when the value of the `ui-select` changes. Should
- * update the value of `bindModel`. Expects an argument called `values`.
- */
-const superPropertySelectComponent = {
-    template,
-    bindings: {
-        key: '<',
-        bindModel: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: superPropertySelectComponentCtrl
-};
-
-superPropertySelectComponentCtrl.$inject = ['ontologyStateService', 'utilService'];
-
-function superPropertySelectComponentCtrl(ontologyStateService: OntologyStateService, utilService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.isShown = false;
-    dvm.array = [];
-
-    dvm.show = function() {
-        dvm.isShown = true;
-    }
-    dvm.hide = function() {
-        dvm.isShown = false;
-        dvm.changeEvent({values: []});
-    }
-    dvm.onChange = function() {
-        dvm.changeEvent({values: dvm.bindModel});
-    }
-    dvm.getValues = function(searchText) {
-        dvm.array = dvm.os.getSelectList(Object.keys(dvm.os.listItem[dvm.key].iris), searchText, iri => dvm.os.getEntityNameByListItem(iri));
-    }
+interface PropGrouping {
+    namespace: string,
+    options: PropOption[]
 }
 
-export default superPropertySelectComponent;
+interface PropOption {
+    item: string,
+    name: string
+}
+
+/**
+ * @class ontology-editor.SuperPropertySelectComponent
+ *
+ * A component which provides a link to hide/show a `mat-autocomplete` of all available property IRIs in the currently
+ * {@link shared.OntologyStateService#listItem selected ontology} in the list identified by the provided key. The value
+ * of the select is bound to `selected` and the values are in the form of `{'@id': 'propIRI'}`.
+ * 
+ * @param {string} key The key to a list on the currently selected ontology
+ * @param {JSONLDId[]} selected The variable to bind the selected properties to in the form of `{'@id': propIRI}`
+ */
+@Component({
+    selector: 'super-property-select',
+    templateUrl: './superPropertySelect.component.html'
+})
+export class SuperPropertySelectComponent implements OnInit {
+    @Input() key: string;
+    @Input() selected: JSONLDId[] = [];
+    
+    @Output() selectedChange = new EventEmitter<JSONLDId[]>();
+    
+    isShown = false;
+    separatorKeysCodes: number[] = [ENTER];
+    filteredProperties: Observable<PropGrouping[]>;
+    selectedOptions: PropOption[] = [];
+
+    propControl: FormControl = new FormControl();
+
+    @ViewChild('propInput') propInput: ElementRef;
+
+    constructor(public os: OntologyStateService) {}
+    
+    ngOnInit(): void {
+        this.selectedOptions = this.selected.map(iriObj => ({
+            name: this.os.getEntityNameByListItem(iriObj['@id']),
+            item: iriObj['@id']
+        }));
+        this.filteredProperties = this.propControl.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string | PropOption>(''),
+                map(val => {
+                    const searchText = typeof val === 'string' ? 
+                        val : 
+                        val ? 
+                            val.name :
+                            '';
+                    return this.filter(searchText);
+                })
+            );
+    }
+    show(): void {
+        this.isShown = true;
+    }
+    hide(): void {
+        this.isShown = false;
+        this.selected = [];
+        this.selectedOptions = [];
+        this.selectedChange.emit([]);
+    }
+    filter(searchText: string): PropGrouping[] {
+        let iris = Object.keys(this.os.listItem[this.key].iris);
+        iris = iris.filter(iri => findIndex(this.selected, val => val['@id'] === iri) < 0);
+        return this.os.getGroupedSelectList(iris, searchText, iri => this.os.getEntityNameByListItem(iri));
+    }
+    add(event: MatChipInputEvent): void {
+        const input = event.input;
+        const value = event.value;
+    
+        if (value) {
+            this.selectedOptions.push({ item: value, name: this.os.getEntityNameByListItem(value) });
+            this.selected.push({'@id': value});
+            this.selectedChange.emit(this.selected);
+        }
+    
+        // Reset the input value
+        if (input) {
+            input.value = '';
+        }
+    
+        this.propControl.setValue(null);
+    }
+    remove(option: PropOption): void {
+        const index = findIndex(this.selected, obj => obj['@id'] === option.item);
+    
+        if (index >= 0) {
+            this.selectedOptions.splice(index, 1); // TODO: Should be at the same position but test this
+            this.selected.splice(index, 1);
+            this.selectedChange.emit(this.selected);
+        }
+    }
+    select(event: MatAutocompleteSelectedEvent): void {
+        this.selectedOptions.push(event.option.value);
+        this.selected.push({'@id': event.option.value.item});
+        this.selectedChange.emit(this.selected);
+        this.propInput.nativeElement.value = '';
+        this.propControl.setValue(null);
+    }
+}

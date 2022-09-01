@@ -55,6 +55,7 @@ import { MappingOntology } from '../../../shared/models/mappingOntology.interfac
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { MappingSelectPageComponent } from './mappingSelectPage.component';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 
 describe('Mapping Select Page component', function() {
     let component: MappingSelectPageComponent;
@@ -123,6 +124,7 @@ describe('Mapping Select Page component', function() {
                 MockComponent(DownloadMappingOverlayComponent),
                 MockComponent(ConfirmModalComponent),
                 MockComponent(InfoMessageComponent),
+                MockComponent(SearchBarComponent),
                 MockPipe(HighlightTextPipe)
             ],
             providers: [
@@ -515,7 +517,7 @@ describe('Mapping Select Page component', function() {
             expect(element.queryAll(By.css('.row')).length).toEqual(1);
             expect(element.queryAll(By.css('.col-lg-8')).length).toEqual(1);
         });
-        ['mat-form-field', 'input.record-search', 'mat-paginator', 'button.new-button', '.results-list'].forEach(test => {
+        ['search-bar', 'mat-paginator', 'button.new-button', '.results-list'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });

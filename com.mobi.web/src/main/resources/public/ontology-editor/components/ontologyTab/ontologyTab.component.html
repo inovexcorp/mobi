@@ -21,65 +21,67 @@
   #L%
   -->
 <div class="ontology-tab h-100">
-    <see-history ng-if="dvm.os.listItem.seeHistory"></see-history>
-    <merge-tab ng-if="dvm.os.listItem.merge.active"></merge-tab>
-    <div class="main-tabs h-100" ng-if="!dvm.os.listItem.merge.active && !dvm.os.listItem.seeHistory">
-        <material-tabset>
-            <material-tab heading="'Project'" active="dvm.os.listItem.editorTabStates.project.active"
-                 set-active="dvm.os.listItem.editorTabStates.project.active = value"
-                 on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.project.entityIRI, false)">
-                <project-tab></project-tab>
-            </material-tab>
-            <material-tab heading="'Overview'" active="dvm.os.listItem.editorTabStates.overview.active"
-                 set-active="dvm.os.listItem.editorTabStates.overview.active = value"
-                 on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.overview.entityIRI)">
-                <overview-tab></overview-tab>
-            </material-tab>
-            <material-tab heading="'Classes'" active="dvm.os.listItem.editorTabStates.classes.active"
-                 set-active="dvm.os.listItem.editorTabStates.classes.active = value"
-                 on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.classes.entityIRI)">
-                <classes-tab></classes-tab>
-            </material-tab>
-            <material-tab heading="'Properties'" active="dvm.os.listItem.editorTabStates.properties.active"
-                 set-active="dvm.os.listItem.editorTabStates.properties.active = value"
-                 on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.properties.entityIRI)">
-                <properties-tab></properties-tab>
-            </material-tab>
-            <material-tab heading="'Individuals'" active="dvm.os.listItem.editorTabStates.individuals.active"
-                 set-active="dvm.os.listItem.editorTabStates.individuals.active = value"
-                 on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.individuals.entityIRI, false)">
-                <individuals-tab></individuals-tab>
-            </material-tab>
-            <material-tab heading="'Schemes'" active="dvm.os.listItem.editorTabStates.schemes.active" hide-tab="!dvm.os.listItem.isVocabulary"
-                 set-active="dvm.os.listItem.editorTabStates.schemes.active = value"
-                on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.schemes.entityIRI, false)">
-                <concept-schemes-tab></concept-schemes-tab>
-            </material-tab>
-            <material-tab heading="'Concepts'" active="dvm.os.listItem.editorTabStates.concepts.active" hide-tab="!dvm.os.listItem.isVocabulary"
-                 set-active="dvm.os.listItem.editorTabStates.concepts.active = value"
-                on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.concepts.entityIRI, false)">
-                <concepts-tab></concepts-tab>
-            </material-tab>
-            <material-tab heading="'Search'" active="dvm.os.listItem.editorTabStates.search.active"
-                 set-active="dvm.os.listItem.editorTabStates.search.active = value"
-                 on-click="dvm.setSelected(dvm.os.listItem.editorTabStates.search.entityIRI, false)">
-                <search-tab></search-tab>
-            </material-tab>
-            <material-tab heading="dvm.savedChanges" active="dvm.os.listItem.editorTabStates.savedChanges.active"
-                 set-active="dvm.os.listItem.editorTabStates.savedChanges.active = value">
-                <saved-changes-tab additions="dvm.os.listItem.inProgressCommit.additions" deletions="dvm.os.listItem.inProgressCommit.deletions"></saved-changes-tab>
-            </material-tab>
-            <material-tab heading="'Commits'" active="dvm.os.listItem.editorTabStates.commits.active"
-                 set-active="dvm.os.listItem.editorTabStates.commits.active = value">
-                <commits-tab></commits-tab>
-            </material-tab>
-            <material-tab heading="'Visualization'" active="dvm.os.listItem.editorTabStates.visualization.active"
-                          set-active="dvm.os.listItem.editorTabStates.visualization.active = value">
-                <visualization-tab></visualization-tab>
-            </material-tab>
-        </material-tabset>
-        <span ng-if="dvm.os.listItem.isSaved" class="saved-text text-muted">Saved</span>
+    <see-history *ngIf="os.listItem.seeHistory"></see-history>
+    <merge-tab *ngIf="os.listItem.merge.active"></merge-tab>
+    <div class="main-tabs h-100" *ngIf="!os.listItem.merge.active && !os.listItem.seeHistory">
+        <mat-tab-group dynamicHeight="true" class="h-100" [(selectedIndex)]="os.listItem.tabIndex" (selectedTabChange)="onTabChanged($event)">
+            <mat-tab label="Project">
+                <ng-template matTabContent>
+                    <project-tab></project-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Overview">
+                <ng-template matTabContent>
+                     <overview-tab></overview-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Classes">
+                <ng-template matTabContent>
+                     <classes-tab></classes-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Properties">
+                <ng-template matTabContent>
+                     <properties-tab></properties-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Individuals">
+                <ng-template matTabContent>
+                    <individuals-tab></individuals-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Schemes" [aria-labelledby]="!os.listItem.isVocabulary ? 'hidden' : undefined">
+                <ng-template matTabContent>
+                    <concept-schemes-tab></concept-schemes-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Concepts" [aria-labelledby]="!os.listItem.isVocabulary ? 'hidden' : undefined">
+                <ng-template matTabContent>
+                    <concepts-tab></concepts-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Search">
+                <ng-template matTabContent>
+                    <search-tab></search-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab>
+                <ng-template mat-tab-label><i class="fa fa-exclamation-triangle"></i> Changes</ng-template>
+                <ng-template matTabContent>
+                    <saved-changes-tab [additions]="os.listItem.inProgressCommit.additions" [deletions]="os.listItem.inProgressCommit.deletions"></saved-changes-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Commits">
+                <ng-template matTabContent>
+                    <commits-tab></commits-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Visualization">
+                <ng-template matTabContent>
+                    <visualization-tab></visualization-tab>
+                </ng-template>
+            </mat-tab>
+        </mat-tab-group>
         <ontology-button-stack></ontology-button-stack>
     </div>
-    <open-entity-snackbar ng-if="dvm.os.listItem.goTo.active" iri="dvm.os.listItem.goTo.entityIRI"></open-entity-snackbar>
 </div>

@@ -40,7 +40,6 @@ import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOv
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
 
 import './openOntologyTab.component.scss';
-import { templateJitUrl } from '@angular/compiler';
 
 interface OntologyRecordDisplay {
     title: string,

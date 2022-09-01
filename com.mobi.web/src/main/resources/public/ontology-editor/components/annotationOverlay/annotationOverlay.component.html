@@ -20,33 +20,36 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>{{dvm.os.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <form name="dvm.annotationForm" novalidate autocomplete="off">
-        <div class="form-group">
-            <label class="control-label">Annotation</label>
-            <ui-select ng-model="dvm.os.annotationSelect" ng-disabled="dvm.os.editingAnnotation" autofocus on-select="dvm.selectProp()">
-                <ui-select-match placeholder="Select an annotation">{{$select.selected}}</ui-select-match>
-                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="annotation in dvm.annotations | filter: $select.search | orderBy:dvm.orderByEntityName" ui-disable-choice="dvm.disableProp(annotation)">
-                    <div ng-bind-html="dvm.os.getEntityNameByListItem(annotation) | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-        <div ng-if="dvm.os.annotationSelect !== dvm.prefixes.owl + 'deprecated'">
-            <text-area bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value" display-text="'Value'"></text-area>
-            <language-select bind-model="dvm.os.annotationLanguage" change-event="dvm.os.annotationLanguage = value"></language-select>
-        </div>
-        <div ng-if="dvm.os.annotationSelect === dvm.prefixes.owl + 'deprecated'">
-            <radio-button display-text="'True'" value="'true'" bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value"></radio-button>
-            <radio-button display-text="'False'" value="'false'" bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value"></radio-button>
-        </div>
-        <!--<iri-select bind-model="dvm.os.annotationType" change-event="dvm.os.annotationType = value" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.isDisabled()">Submit</button>
+<h1 mat-dialog-title>{{data.editing ? 'Edit Annotation' : 'Add Annotation'}}</h1>
+<form mat-dialog-content [formGroup]="annotationForm">
+    <mat-form-field class="w-100">
+        <mat-label>Annotation</mat-label>
+        <input type="text" matInput aria-label="Annotation"
+               placeholder="Select an annotation..."
+               formControlName="annotation"
+               [matAutocomplete]="annotationAuto">
+        <mat-autocomplete #annotationAuto="matAutocomplete" (optionSelected)="selectProp($event)" [displayWith]="getName.bind(this)">
+            <mat-optgroup *ngFor="let group of filteredAnnotations | async" [label]="group.namespace">
+                <mat-option *ngFor="let option of group.options" [value]="option.annotation" [title]="option.annotation" [disabled]="option.disabled">
+                    {{option.name}}
+                </mat-option>
+            </mat-optgroup>
+        </mat-autocomplete>
+    </mat-form-field>
+    <mat-radio-group *ngIf="annotationForm.controls.annotation.value === deprecatedIri; else notDeprecated" formControlName="value">
+        <mat-radio-button value="true">True</mat-radio-button>
+        <mat-radio-button value="false">False</mat-radio-button>
+    </mat-radio-group>
+    <ng-template #notDeprecated>
+        <mat-form-field class="w-100">
+            <mat-label>Value</mat-label>
+            <textarea matInput name="value" formControlName="value" required></textarea>
+        </mat-form-field>
+        <language-select [parentForm]="annotationForm"></language-select>
+    </ng-template>
+    <!--<iri-select bind-model="os.annotationType" change-event="os.annotationType = value" display-text="'Type'" select-list="os.listItem.dataPropertyRange"></iri-select>-->
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="submit()" [disabled]="annotationForm.invalid">Submit</button>
 </div>

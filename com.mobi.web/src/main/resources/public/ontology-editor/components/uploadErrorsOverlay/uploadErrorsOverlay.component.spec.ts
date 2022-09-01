@@ -104,8 +104,12 @@ describe('Upload Errors Overlay component', function() {
         expect(component.errorMessage).toEqual(uploadItem.error.errorMessage);
         expect(component.errorDetails).toEqual(uploadItem.error.errorDetails);
     });
-    // TODO Cancel button test
-
+    it('should call cancel when the button is clicked', function() {
+        const cancelButton = element.queryAll(By.css('.mat-dialog-actions button'))[0];
+        cancelButton.triggerEventHandler('click', null);
+        fixture.detectChanges();
+        expect(matDialogRef.close).toHaveBeenCalledWith();
+    });
     it('cancel should call the correct method and set the correct variable', function() {
         component.cancel();
         expect(matDialogRef.close).toHaveBeenCalledWith();

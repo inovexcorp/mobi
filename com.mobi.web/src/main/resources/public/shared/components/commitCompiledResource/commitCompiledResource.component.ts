@@ -22,15 +22,15 @@
  */
 
 import { has, head, map, get, forEach, omit, find, mergeWith, isArray } from 'lodash';
-import { first } from 'rxjs/operators';
-
+import {first, switchMap} from 'rxjs/operators';
+import { Component, Inject, OnChanges, Input } from '@angular/core';
 import { CommitDifference } from '../../models/commitDifference.interface';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
 
 import './commitCompiledResource.component.scss';
-
-const template = require('./commitCompiledResource.component.html');
+import {OntologyStateService} from '../../services/ontologyState.service';
 
 /**
  * @ngdoc component
@@ -49,57 +49,54 @@ const template = require('./commitCompiledResource.component.html');
  * @param {string} entityId entityId The IRI string of the entity to display
  * @param {Function} [entityNameFunc=undefined] An optional function to control how entity names are displayed.
  */
-const commitCompiledResourceComponent = {
-    template,
-    bindings: {
-        commitId: '<',
-        entityId: '<',
-        entityNameFunc: '<'
-    },
-    controllerAs: 'dvm',
-    controller: commitCompiledResourceComponentCtrl
-};
+@Component({
+    selector: 'commit-compiled-resource',
+    templateUrl: './commitCompiledResource.component.html'
+})
 
-commitCompiledResourceComponentCtrl.$inject = ['$q', 'httpService', 'catalogManagerService', 'utilService'];
+export class CommitCompiledResourceComponent implements OnChanges {
+    @Input() commitId;
+    @Input() entityId;
+    @Input() entityNameFunc;
+    error = '';
+    resource = undefined;
+    types = [];
+    id = 'commit-compiled-resource';
+    
+    constructor(public cm: CatalogManagerService, public om: OntologyManagerService,
+                public os: OntologyStateService, @Inject('utilService') public util) {}
 
-function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerService: CatalogManagerService, utilService) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    dvm.util = utilService;
-
-    dvm.error = '';
-    dvm.resource = undefined;
-    dvm.types = [];
-    dvm.id = 'commit-compiled-resource';
-
-    dvm.$onChanges = function(changes) {
+    ngOnChanges(changes) {
         if (has(changes, 'commitId') || has(changes, 'entityId')) {
-            dvm.setResource();
+            this.setResource();
         }
     }
-    dvm.setResource = function() {
-        if (dvm.commitId) {
-            httpService.cancel(dvm.id);
-            cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id).pipe(first()).toPromise()
-                .then((resources: JSONLDObject[]) => {
-                    var resource : any = head(resources) || {};
-                    dvm.types = map(get(resource, '@type', []), type => ({type}));
-                    dvm.resource = omit(resource, ['@id', '@type']);
-                    return cm.getDifferenceForSubject(dvm.entityId, dvm.commitId).pipe(first()).toPromise();
-                }, $q.reject)
-                .then((response: CommitDifference) => {
-                    var additionsObj = find(response.additions as JSONLDObject[], {'@id': dvm.entityId});
-                    var deletionsObj = find(response.deletions as JSONLDObject[], {'@id': dvm.entityId});
+    setResource() {
+        if (this.commitId) {
+            // httpService.cancel(this.id);
+            this.cm.getCompiledResource(this.commitId, this.entityId, true)
+                .pipe(
+                    first(),
+                    switchMap( (resources: JSONLDObject[]) => {
+                        const resource : any = head(resources) || {};
+                        this.types = map(get(resource, '@type', []), type => ({type}));
+                        this.resource = omit(resource, ['@id', '@type']);
+                        return this.cm.getDifferenceForSubject(this.entityId, this.commitId).pipe(first());
+                    })
+                )
+                .subscribe((response: CommitDifference) => {
+                    const additionsObj = find(response.additions as JSONLDObject[], {'@id': this.entityId});
+                    const deletionsObj = find(response.deletions as JSONLDObject[], {'@id': this.entityId});
                     forEach(get(additionsObj, '@type'), addedType => {
-                        var typeObj = find(dvm.types, {type: addedType});
+                        let typeObj = find(this.types, {type: addedType});
                         typeObj.add = true;
                     });
-                    dvm.types = dvm.types.concat(map(get(deletionsObj, '@type', []), type => ({type, del: true})));
-                    var additions = omit(additionsObj, ['@id', '@type']);
-                    var deletions = omit(deletionsObj, ['@id', '@type']);
+                    this.types = this.types.concat(map(get(deletionsObj, '@type', []), type => ({type, del: true})));
+                    const additions = omit(additionsObj, ['@id', '@type']);
+                    const deletions = omit(deletionsObj, ['@id', '@type']);
                     forEach(additions, (values, prop) => {
                         forEach(values, value => {
-                            var resourceVal: any = find(dvm.resource[prop], value);
+                            let resourceVal: any = find(this.resource[prop], value);
                             if (resourceVal) {
                                 resourceVal.add = true;
                             }
@@ -108,22 +105,20 @@ function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerServ
                     forEach(deletions, (values, prop) => {
                         forEach(values, value => { value.del = true });
                     });
-                    mergeWith(dvm.resource, deletions, (objValue, srcValue) => {
+                    mergeWith(this.resource, deletions, (objValue, srcValue) => {
                         if (isArray(objValue)) {
                             return objValue.concat(srcValue);
                         }
                     });
-                    dvm.error = '';
+                    this.error = '';
                 }, errorMessage => {
-                    dvm.error = errorMessage;
-                    dvm.resource = undefined;
-                    dvm.types = [];
+                    this.error = errorMessage;
+                    this.resource = undefined;
+                    this.types = [];
                 });
         } else {
-            dvm.resource = undefined;
-            dvm.types = [];
+            this.resource = undefined;
+            this.types = [];
         }
     }
 }
-
-export default commitCompiledResourceComponent;

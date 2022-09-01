@@ -24,7 +24,7 @@ import { Component, Inject, Input, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 /**
- * @name ontology-editor.AdvancedLanguageSelectComponent
+ * @class ontology-editor.AdvancedLanguageSelectComponent
  *
  * A component that creates a collapsible language selector bound to the `language` control of the provided parent
  * `FormGroup`. When collapsed, sets the `language` value to empty string, when opened, defaults to 'en'.

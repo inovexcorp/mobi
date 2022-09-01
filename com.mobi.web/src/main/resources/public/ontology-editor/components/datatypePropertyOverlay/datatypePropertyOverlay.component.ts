@@ -20,111 +20,121 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { cloneDeep } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
+import { map, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
+import { XSD, RDF } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './datatypePropertyOverlay.component.scss';
 
-const template = require('./datatypePropertyOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:datatypePropertyOverlay
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- * @requires shared.service:propertyManagerService
+ * @class ontology-editor.DatatypePropertyOverlayComponent
  *
- * @description
- * `datatypePropertyOverlay` is a component that creates content for a modal that adds a data property value to the
- * {@link shared.service:ontologyStateService selected individual}. The form in the modal contains a `ui-select` of
- * all the data properties in the ontology, a {@link shared.component:textArea} for the data property value, an
- * {@link ontology-editor.component:iriSelectOntology} for the datatype, and a
- * {@link shared.component:languageSelect}. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that adds a data property value to the
+ * {@link shared.OntologyStateService#listItem selected individual}. The form in the modal contains a `mat-autocomplete`
+ * of all the data properties in the ontology, a field for the data property value, an
+ * {@link ontology-editor.IriSelectOntologyComponent} for the datatype, and a {@link shared.LanguageSelectComponent}.
+ * Meant to be used in conjunction with the `MatDialog` service.
  */
-const datatypePropertyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: datatypePropertyOverlayComponentCtrl
-};
+@Component({
+    selector: 'datatype-property-overlay',
+    templateUrl: './datatypePropertyOverlay.component.html'
+})
+export class DatatypePropertyOverlayComponent implements OnInit {
+    dataProperties = [];
+    dataPropertiesFiltered:Observable<any>;
+    propertyForm = this.fb.group({
+        propertySelect: ['', Validators.required],
+        propertyValue: ['', Validators.required],
+    })
+    constructor(private dialogRef: MatDialogRef<DatatypePropertyOverlayComponent>,
+                public os: OntologyStateService,
+                @Inject('propertyManagerService') private pm,
+                private fb: FormBuilder,
+                @Inject('utilService') public util,
+                @Inject(MAT_DIALOG_DATA) public data:  { editingProperty: boolean,
+                    propertySelect: string,
+                    propertyValue: string, 
+                    propertyType: string, 
+                    propertyIndex: number, 
+                    propertyLanguage: string
+                }){}
 
-datatypePropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'propertyManagerService'];
-
-function datatypePropertyOverlayComponentCtrl(ontologyStateService: OntologyStateService, utilService, prefixes, propertyManagerService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.dataProperties = [];
-
-    dvm.$onInit = function() {
-        dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);            
+    ngOnInit(): void {
+        this.dataProperties = Object.keys(this.os.listItem.dataProperties.iris);
+        this.dataPropertiesFiltered =  this.propertyForm.controls.propertySelect.valueChanges.pipe(
+            startWith(''),
+            map(value => this.filter(value))
+        );
+        if (this.data.editingProperty) {
+            this.propertyForm.controls.propertySelect.setValue(this.data.propertySelect);
+            this.propertyForm.controls.propertyValue.setValue(this.data.propertyValue);
+        }
     }
-    dvm.isDisabled = function() {
-        var isDisabled = dvm.propertyForm.$invalid || !dvm.os.propertyValue;
-        if (!dvm.os.editingProperty) {
-            isDisabled = isDisabled || dvm.os.propertySelect === undefined;
+    filter(val: string) {
+        return this.dataProperties.filter(prop => prop.toLowerCase().includes(val.toLowerCase()))
+            .sort(prop => prop.orderByEntityName());
+    }
+
+    isDisabled(): boolean {
+        let isDisabled = this.propertyForm.invalid || !this.data.propertyValue;
+        if (!this.data.editingProperty) {
+            isDisabled = isDisabled || this.data.propertySelect === undefined;
         }
         return isDisabled;
     }
-    dvm.submit = function(select, value, type, language) {
-        if (dvm.os.editingProperty) {
-            dvm.editProperty(select, value, type, language);
+    submit(): void {
+        if (this.data.editingProperty) {
+            this.editProperty();
         } else {
-            dvm.addProperty(select, value, type, language);
+            this.addProperty();
         }
     }
-    dvm.addProperty = function(select, value, type, language) {
-        var lang = getLang(language);
-        var realType = getType(lang, type);
-        var added = pm.addValue(dvm.os.listItem.selected, select, value, realType, lang);
+    addProperty (): void {
+        const selectedValue = this.propertyForm.controls.propertySelect.value;
+        const propertyValue = this.propertyForm.controls.propertyValue.value;
+        const lang = this.getLang(this.data.propertyLanguage);
+        const realType = this.getType(lang, this.data.propertyType);
+        const added = this.pm.addValue(this.os.listItem.selected, selectedValue, propertyValue, realType, lang);
         if (added) {
-            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
-            dvm.os.saveCurrentChanges().subscribe();
+            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this.util.createJson(this.os.listItem.selected['@id'], selectedValue, this.pm.createValueObj(propertyValue, realType, lang)));
+            this.os.saveCurrentChanges().subscribe();
         } else {
-            dvm.util.createWarningToast('Duplicate property values not allowed');
+            this.util.createWarningToast('Duplicate property values not allowed');
         }
-        dvm.close();
+        this.dialogRef.close();
     }
-    dvm.editProperty = function(select, value, type, language) {
-        var oldObj = angular.copy(dvm.os.listItem.selected[select][dvm.os.propertyIndex]);
-        var lang = getLang(language);
-        var realType = getType(lang, type);
-        var edited = pm.editValue(dvm.os.listItem.selected, select, dvm.os.propertyIndex, value, realType, lang);
+    editProperty(): void {
+        const selectedValue = this.propertyForm.controls.propertySelect.value;
+        const propertyValue = this.propertyForm.controls.propertyValue.value;
+        const lang = this.getLang(this.data.propertyLanguage);
+        const realType = this.getType(lang, this.data.propertyType);
+        const oldObj = cloneDeep(this.os.listItem.selected[selectedValue][this.data.propertyIndex]);
+        const edited = this.pm.editValue(this.os.listItem.selected, selectedValue, this.data.propertyIndex, propertyValue, realType, lang);
         if (edited) {
-            dvm.os.addToDeletions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, oldObj));
-            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
-            dvm.os.saveCurrentChanges().subscribe();
+            this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, this.util.createJson(this.os.listItem.selected['@id'], selectedValue, oldObj));
+            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this.util.createJson(this.os.listItem.selected['@id'], selectedValue, this.pm.createValueObj(propertyValue, realType, lang)));
+            this.os.saveCurrentChanges().subscribe();
         } else {
-            dvm.util.createWarningToast('Duplicate property values not allowed');
+            this.util.createWarningToast('Duplicate property values not allowed');
         }
-        dvm.close();
+        this.dialogRef.close();
     }
-    dvm.isLangString = function() {
-        return prefixes.rdf + 'langString' === dvm.os.propertyType;
+    isLangString(): boolean {
+        return RDF + 'langString' === this.data.propertyType;
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    orderByEntityName(iri: string): string {
+        return this.os.getEntityNameByListItem(iri);
     }
-    dvm.orderByEntityName = function(iri) {
-        return dvm.os.getEntityNameByListItem(iri);
+    getType(language: string, type: string):string {
+        return language ? '' : type || XSD + 'string';
     }
-
-    function getType(language, type) {
-        return language ? '' : type || prefixes.xsd + 'string';
-    }
-    function getLang(language) {
-        return language && dvm.isLangString() ? language : '';
+    getLang(language: string): string {
+        return language && this.isLangString() ? language : '';
     }
 }
-
-export default datatypePropertyOverlayComponent;

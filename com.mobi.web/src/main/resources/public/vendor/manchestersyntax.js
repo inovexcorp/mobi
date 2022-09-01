@@ -20,122 +20,124 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-CodeMirror.defineOption("localNames", [], undefined);
-CodeMirror.defineMode("manchestersyntax", config => {
+import * as CodeMirror from 'codemirror';
 
-    var tokenTypes = {
-        "some": "manchester-rest",
-        "only": "manchester-rest",
-        "value": "manchester-rest",
-        "min": "manchester-rest",
-        "max": "manchester-rest",
-        "exactly": "manchester-rest",
-        "and": "manchester-expr",
-        "or": "manchester-expr",
-        "not": "manchester-expr",
-        "(": "open-par",
-        ")": "close-par",
-        "{": "open-par",
-        "}": "close-par",
-        "integer": "builtin-kw",
-        "double": "builtin-kw",
-        "float": "builtin-kw",
-        "decimal": "builtin-kw",
-        ",": "comma",
-        "<": "facet",
-        "<=": "facet",
-        ">": "facet",
-        ">=": "facet",
-        "length": "facet",
-        "minLength": "facet",
-        "maxLength": "facet",
-        "pattern": "facet",
-        "langRange": "facet",
-        "true" : "manchester-lit",
-        "false" : "manchester-lit",
-        "owl:Thing" : "builtin-kw owl-thing",
-        "owl:Nothing" : "builtin-kw owl-nothing",
+CodeMirror.defineOption('localNames', [], undefined);
+CodeMirror.defineMode('manchestersyntax', config => {
+
+    const tokenTypes = {
+        'some': 'manchester-rest',
+        'only': 'manchester-rest',
+        'value': 'manchester-rest',
+        'min': 'manchester-rest',
+        'max': 'manchester-rest',
+        'exactly': 'manchester-rest',
+        'and': 'manchester-expr',
+        'or': 'manchester-expr',
+        'not': 'manchester-expr',
+        '(': 'open-par',
+        ')': 'close-par',
+        '{': 'open-par',
+        '}': 'close-par',
+        'integer': 'builtin-kw',
+        'double': 'builtin-kw',
+        'float': 'builtin-kw',
+        'decimal': 'builtin-kw',
+        ',': 'comma',
+        '<': 'facet',
+        '<=': 'facet',
+        '>': 'facet',
+        '>=': 'facet',
+        'length': 'facet',
+        'minLength': 'facet',
+        'maxLength': 'facet',
+        'pattern': 'facet',
+        'langRange': 'facet',
+        'true': 'manchester-lit',
+        'false': 'manchester-lit',
+        'owl:Thing': 'builtin-kw owl-thing',
+        'owl:Nothing': 'builtin-kw owl-nothing',
     };
-    var tokenRegexes = {
-        '<[^>]*>': "iri",
-        '"(\\"|[^"])*"': "manchester-lit",
-        '\\^\\^[^ ]+': "literal-datatype",
-        '@[^ ]+': "lang-tag",
-        '(\\+|\\-)?(\\d+(\\.\\d+)?((e|E)(\\+|\\-)?\\d+)?|\\.\\d+((e|E)(\\+|\\-)?\\d+)?)(f|F)': "manchester-lit",
-        '(\\+|\\-)?\\d+\\.\\d+': "manchester-lit",
-        '(\\+|\\-)?\\d+': "manchester-lit",
+    const tokenRegexes = {
+        '<[^>]*>': 'iri',
+        '"(\\"|[^"])*"': 'manchester-lit',
+        '\\^\\^[^ ]+': 'literal-datatype',
+        '@[^ ]+': 'lang-tag',
+        '(\\+|\\-)?(\\d+(\\.\\d+)?((e|E)(\\+|\\-)?\\d+)?|\\.\\d+((e|E)(\\+|\\-)?\\d+)?)(f|F)': 'manchester-lit',
+        '(\\+|\\-)?\\d+\\.\\d+': 'manchester-lit',
+        '(\\+|\\-)?\\d+': 'manchester-lit',
     };
-    var delimeters = {
-        "(" : "delim",
-        ")" : "delim",
-        "{" : "delim",
-        "}" : "delim",
-        "[" : "delim",
-        "]" : "delim",
-        " " : "delim",
-        "\t" : "delim",
-        "\r" : "delim",
-        "\n" : "delim",
-        "," : "delim"
+    const delimeters = {
+        '(': 'delim',
+        ')': 'delim',
+        '{': 'delim',
+        '}': 'delim',
+        '[': 'delim',
+        ']': 'delim',
+        ' ': 'delim',
+        '\t': 'delim',
+        '\r': 'delim',
+        '\n': 'delim',
+        ',': 'delim'
     };
 
     function consumeUntilTerminator(stream, state, terminatingCharacter, inStateFlag) {
         state[inStateFlag] = true;
-        var buffer = stream.next();
-        var nextCharIsEscaped = false;
+        let buffer = stream.next();
+        const nextCharIsEscaped = false;
         while (true) {
-            var ch = stream.next();
-            if (ch == '\\') {
+            const ch = stream.next();
+            if (ch === '\\') {
                 state.nextCharIsEscaped = true;
             }
-            if (!state.nextCharIsEscaped && ch == terminatingCharacter) {
+            if (!state.nextCharIsEscaped && ch === terminatingCharacter) {
                 buffer += ch;
                 state[inStateFlag] = false;
                 return buffer;
             }
-            if (ch != '\\') {
+            if (ch !== '\\') {
                 state.nextCharIsEscaped = false;
             }
-            if (ch == null) {
+            if (ch === null || ch === undefined) {
                 // Not reached the end of the state
                 return buffer;
             }
         }
     }
     function isDelimeter(ch) {
-        return delimeters[ch] != null;
+        return delimeters[ch] !== undefined;
     }
     function peekDelimeter(stream, state) {
         return isDelimeter(stream.peek());
     }
     function nextToken(stream, state) {
         if (state.inString) {
-            return new Token(consumeUntilTerminator(stream, state, '"', 'inString'), "string");
+            return new Token(consumeUntilTerminator(stream, state, '"', 'inString'), 'string');
         }
-        if (stream.peek() == '"') {
-            return new Token(consumeUntilTerminator(stream, state, '"', 'inString'), "string");
+        if (stream.peek() === '"') {
+            return new Token(consumeUntilTerminator(stream, state, '"', 'inString'), 'string');
         }
         if (peekDelimeter(stream, state)) {
-            var delimeter = stream.next();
-            var additionalStyle = tokenTypes[delimeter];
-            return new Token(delimeter, "delim " + additionalStyle == null ? "" : additionalStyle);
+            const delimeter = stream.next();
+            const additionalStyle = tokenTypes[delimeter];
+            return new Token(delimeter, 'delim ' + ((additionalStyle === null || additionalStyle === undefined) ? '' : additionalStyle));
         }
-        var tokenBuffer = "";
+        let tokenBuffer = '';
         while (!peekDelimeter(stream, state)) {
-            if (stream.peek() == null) {
+            if (stream.peek() === null || stream.peek() === undefined) {
                 break;
             }
             tokenBuffer += stream.next();
         }
-        var type = tokenTypes[tokenBuffer];
-        if (type == null) {
-            for (var regex in tokenRegexes) {
-                if (tokenRegexes.hasOwnProperty(regex)) {
-                    var regExp = new RegExp(regex);
-                    var match = regExp.exec(tokenBuffer);
-                    if (match != null) {
-                        var firstMatch = match[0];
-                        if (firstMatch == tokenBuffer) {
+        let type = tokenTypes[tokenBuffer];
+        if (type === null || type === undefined) {
+            for (const regex in tokenRegexes) {
+                if (Object.prototype.hasOwnProperty.call(tokenRegexes, regex)) {
+                    const regExp = new RegExp(regex);
+                    const match = regExp.exec(tokenBuffer);
+                    if (match !== null && match !== undefined) {
+                        const firstMatch = match[0];
+                        if (firstMatch === tokenBuffer) {
                             type = tokenRegexes[regex];
                             break;
                         }
@@ -143,11 +145,11 @@ CodeMirror.defineMode("manchestersyntax", config => {
                 }
             }
         }
-        if (type == null) {
+        if (type === null || type === undefined) {
             if (config.localNames.length && !config.localNames.includes(tokenBuffer)) {
-                type = "manchester-error";
+                type = 'manchester-error';
             } else {
-                type = "word";
+                type = 'word';
             }
         }
         return new Token(tokenBuffer, type);
@@ -159,13 +161,13 @@ CodeMirror.defineMode("manchestersyntax", config => {
 
     return {
         startState: () => {
-            return {inString: false, inIRI: false, loc: "start", nextCharIsEscaped: false};
+            return {inString: false, inIRI: false, loc: 'start', nextCharIsEscaped: false};
         },
         token: (stream, state) => {
-            var token = nextToken(stream, state);
+            const token = nextToken(stream, state);
             return token.type;
         }
-    }
+    };
 });
 
-CodeMirror.defineMIME("text/omn", "manchestersyntax");
+CodeMirror.defineMIME('text/omn', 'manchestersyntax');

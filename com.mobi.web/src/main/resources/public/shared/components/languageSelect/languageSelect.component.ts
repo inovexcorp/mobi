@@ -21,58 +21,42 @@
  * #L%
  */
 
+import { Component, Inject, Input, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+
 import './languageSelect.component.scss';
 
-const template = require('./languageSelect.component.html');
-
 /**
- * @ngdoc component
- * @name shared.component:languageSelect
- * @requires shared.service:propertyManagerService
+ * @class shared.LanguageSelect
  *
- * @description
- * `languageSelect` is a component which provides options for a formatted ui-select for picking language tags. The
+ * A component which provides options for a formatted ui-select for picking language tags. The
  * select is bound to `bindModel`, but only one way. The provided `changeEvent` function is expected to update the
  * value of `bindModel`. The component provides an option to have a clear selection button. If the button is not
  * enabled, the choice defaults to English.
  *
- * @param {string} bindModel The variable to bind the value of the language to
- * @param {Function} changeEvent A function that is called when the value of the select changes. Should update the
- * value of `bindModel`. Expects an argument called `value`
+ * @param {FormGroup} parentForm The parent FormGroup to attached the language select to
  * @param {boolean} disableClear A boolean that indicates if the clear button should be disabled
- * @param {boolean} required Whether the select is a required field. The presence of the attribute is enough to set
- * the value to true
  */
-const languageSelectComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&',
-        disableClear: '<',
-        required: '@'
-    },
-    controllerAs: 'dvm',
-    controller: languageSelectComponentCtrl
-};
+@Component({
+    selector: 'language-select',
+    templateUrl: './languageSelect.component.html'
+})
+export class LanguageSelectComponent implements OnInit {
+    @Input() parentForm: FormGroup;
+    @Input() disableClear: boolean;
+    
+    languages: {label: string, value: string}[] = [];
 
-languageSelectComponentCtrl.$inject = ['propertyManagerService'];
+    constructor(@Inject('propertyManagerService') private pm) {}
 
-function languageSelectComponentCtrl(propertyManagerService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.languages = [];
+    ngOnInit(): void {
+        this.languages = this.pm.languageList;
 
-    dvm.$onInit = function() {
-        dvm.languages = pm.languageList;
-        dvm.isRequired = dvm.required !== undefined;
-
-        if (dvm.disableClear && typeof dvm.bindModel === 'undefined') {
-            dvm.changeEvent({value: 'en'});
+        if (this.disableClear && !this.parentForm.controls.language.value) {
+            this.parentForm.controls.language.setValue('en');
         }
     }
-    dvm.clear = function() {
-        dvm.changeEvent({value: undefined});
+    clear(): void {
+        this.parentForm.controls.language.setValue('');
     }
 }
-
-export default languageSelectComponent;

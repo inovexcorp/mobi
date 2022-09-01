@@ -23,6 +23,7 @@
 import { Conflict } from './conflict.interface';
 import { Difference } from './difference.class';
 import { JSONLDObject } from './JSONLDObject.interface';
+import {Commit} from './commit.interface';
 
 export class VersionedRdfListItem {
     active: boolean;
@@ -51,6 +52,7 @@ export class VersionedRdfListItem {
         resolutions: Difference
         startIndex: number
     }
+    selectedCommit?: Commit
 
     constructor() {
         this.active = true;
@@ -78,5 +80,6 @@ export class VersionedRdfListItem {
             resolutions: new Difference(),
             startIndex: 0
         };
+        this.selectedCommit = undefined;
     }
 }

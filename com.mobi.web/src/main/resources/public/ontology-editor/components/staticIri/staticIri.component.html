@@ -21,11 +21,15 @@
   #L%
   -->
 <div class="static-iri">
-    <error-display ng-if="dvm.duplicateCheck && dvm.os.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</error-display>
+    <error-display *ngIf="duplicateCheck && os.checkIri(iriBegin + iriThen + iriEnd)">This IRI already exists</error-display>
     <span>
-        <strong class="text-muted" ng-class="{'duplicate-iri': dvm.duplicateCheck && dvm.os.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)}" click-to-copy="dvm.iri">
-            <span>{{dvm.iriBegin + dvm.iriThen}}</span><span ng-bind-html="dvm.iriEnd | highlight:dvm.highlightText | trusted"></span>
+        <strong class="text-muted"
+            [ngClass]="{'duplicate-iri': duplicateCheck && os.checkIri(iriBegin + iriThen + iriEnd)}"
+            [copy-clipboard]="iri"
+            matTooltip="Copy IRI"
+            matTooltipPosition="above">
+            <span>{{iriBegin + iriThen}}</span><span [innerHTML]="iriEnd | highlightText:highlightText | safeHtml: 'html'"></span>
         </strong>
-        <a ng-if="!dvm.os.isSelectedImported() && dvm.os.canModify() && !dvm.readOnly" ng-click="dvm.showIriOverlay()"><i class="fa fa-pencil"></i></a>
+        <a *ngIf="!os.isSelectedImported() && os.canModify() && !readOnly" (click)="showIriOverlay()" class="ml-1"><i class="fa fa-pencil"></i></a>
     </span>
 </div>

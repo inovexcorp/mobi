@@ -20,57 +20,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { CommitOverlayComponent } from '../commitOverlay/commitOverlay.component';
+import { CreateBranchOverlayComponent } from '../createBranchOverlay/createBranchOverlay.component';
+import { CreateEntityModalComponent } from '../createEntityModal/createEntityModal.component';
+import { CreateTagOverlayComponent } from '../createTagOverlay/createTagOverlay.component';
+import { UploadChangesOverlayComponent } from '../uploadChangesOverlay/uploadChangesOverlay.component';
+
 import './ontologyButtonStack.component.scss';
 
-const template = require('./ontologyButtonStack.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:ontologyButtonStack
- * @requires shared.service:ontologyStateService
- * @requires shared.service:modalService
+ * @class ontology-editor.OntologyButtonStackComponent
  *
- * @description
- * `ontologyButtonStack` is a component that creates a {@link shared.component:circleButtonStack} for actions in
- * the Ontology Editor against the current {@link shared.service:ontologyStateService selected ontology}. These
- * actions are uploading a file of changes, creating a branch, merging branches, and committing changes. The
- * component houses the methods for opening modals for
- * {@link ontology-editor.component:uploadChangesOverlay uploading changes},
- * {@link ontology-editor.component:createBranchOverlay creating branches},
- * {@link ontology-editor.component:commitOverlay committing}, and
- * {@link ontology-editor.component:createEntityModal creating entities}.
+ * A component that creates a {@link shared.CircleButtonStackComponent} for actions in the Ontology Editor against the
+ * current {@link shared.OntologyStateService#listItem selected ontology}. These actions are uploading a file of changes,
+ * creating a branch, merging branches, and committing changes. The component houses the methods for opening modals for
+ * {@link ontology-editor.CreateTagOverlayComponent creating tags},
+ * {@link ontology-editor.UploadChangesOverlayComponent uploading changes},
+ * {@link ontology-editor.CreateBranchOverlayComponent creating branches},
+ * {@link ontology-editor.CommitOverlayComponent committing}, and
+ * {@link ontology-editor.CreateEntityModalComponent creating entities}.
  */
-const ontologyButtonStackComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: ontologyButtonStackComponentCtrl
-};
+@Component({
+    selector: 'ontology-button-stack',
+    templateUrl: './ontologyButtonStack.component.html'
+})
+export class OntologyButtonStackComponent {
 
-ontologyButtonStackComponentCtrl.$inject = ['ontologyStateService', 'modalService'];
+    constructor(public os: OntologyStateService, private dialog: MatDialog) {}
 
-function ontologyButtonStackComponentCtrl(ontologyStateService, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.showCreateBranchOverlay = function() {
-        modalService.openModal('createBranchOverlay');
+    showCreateBranchOverlay(): void {
+        this.dialog.open(CreateBranchOverlayComponent);
     }
-    dvm.showCreateTagModal = function() {
-        modalService.openModal('createTagModalAjs');
+    showCreateTagModal(): void {
+        this.dialog.open(CreateTagOverlayComponent, { autoFocus: false });
     }
-    dvm.showCommitOverlay = function() {
-        modalService.openModal('commitOverlay');
+    showCommitOverlay(): void{
+        this.dialog.open(CommitOverlayComponent);
     }
-    dvm.showUploadChangesOverlay = function() {
-        modalService.openModal('uploadChangesOverlay');
+    showUploadChangesOverlay(): void{
+        this.dialog.open(UploadChangesOverlayComponent);
     }
-    dvm.showCreateEntityOverlay = function() {
-        if (dvm.os.getActiveKey() !== 'project') {
-            dvm.os.unSelectItem();
+    showCreateEntityOverlay(): void {
+        if (this.os.getActiveKey() !== 'project') {
+            this.os.unSelectItem();
         }
-        modalService.openModal('createEntityModal', undefined, undefined, 'sm');
+        this.dialog.open(CreateEntityModalComponent);
     }
 }
-
-export default ontologyButtonStackComponent;

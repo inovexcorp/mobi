@@ -20,35 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
 
-const template = require('./propertyHierarchyBlock.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:propertyHierarchyBlock
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.PropertyHierarchyBlockComponent
  *
- * @description
- * `propertyHierarchyBlock` is a component that creates a section that displays a
- * {@link propertyTree.component:hierarchyTree} of the classes in the current
- * {@link shared.service:ontologyStateService selected ontology}.
+ * A component that creates a section that displays a {@link ontology-editor.HierarchyTreeComponent} of the classes in
+ * the current {@link shared.OntologyStateService#listItem selected ontology}.
  */
-const propertyHierarchyBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: propertyHierarchyBlockComponentCtrl
-};
+@Component({
+    selector: 'property-hierarchy-block',
+    templateUrl: './propertyHierarchyBlock.component.html'
+})
+export class PropertyHierarchyBlockComponent {
+    constructor(public os: OntologyStateService) {}
 
-propertyHierarchyBlockComponentCtrl.$inject = ['ontologyStateService'];
-
-function propertyHierarchyBlockComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.updateSearch = function(value) {
-        dvm.os.listItem.editorTabStates.properties.searchText = value;
+    updateSearch(value: string): void {
+        this.os.listItem.editorTabStates.properties.searchText = value;
     }
 }
-
-export default propertyHierarchyBlockComponent;

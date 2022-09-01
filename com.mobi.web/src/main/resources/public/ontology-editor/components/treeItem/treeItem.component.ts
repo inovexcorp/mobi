@@ -24,15 +24,11 @@ import { get, unionWith, map, includes, isEqual } from 'lodash';
 
 import './treeItem.component.scss';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./treeItem.component.html');
+import { OnChanges, Component, Input, Output, EventEmitter } from '@angular/core';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:treeItem
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.TreeItemComponent
  * 
- * @description
  * `treeItem` is a component that creates the content for an individual entry in a tree hierarchy.
  * 
  * @param {boolean} hasChildren Whether the item has child elements
@@ -46,38 +42,40 @@ const template = require('./treeItem.component.html');
  * @param {Object} inProgressCommit The object containing the saved entities
  * @param {string} currentIri The IRI of the item to determine if it is saved
  */
-const treeItemComponent = {
-    template,
-    bindings: {
-        hasChildren: '<',
-        isActive: '<',
-        onClick: '&',
-        entityInfo: '<',
-        isOpened: '<',
-        path: '<',
-        underline: '<',
-        toggleOpen: '&',
-        inProgressCommit: '<',
-        currentIri: '<'
-    },
-    controllerAs: 'dvm',
-    controller: treeItemComponentCtrl
-};
+@Component({
+    selector: 'tree-item',
+    templateUrl: './treeItem.component.html'
+})
+export class TreeItemComponent implements OnChanges {
+    @Input() hasChildren: boolean;
+    @Input() isActive: boolean;
+    @Input() entityInfo;
+    @Input() isOpened: boolean;
+    @Input() path;
+    @Input() underline;
+    @Input() inProgressCommit;
+    @Input() currentIri: string;
+    @Output() onClick = new EventEmitter<null>();
+    @Output() toggleOpen = new EventEmitter<null>();
 
-treeItemComponentCtrl.$inject = ['ontologyStateService'];
+    saved: boolean;
 
-function treeItemComponentCtrl(ontologyStateService: OntologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
+    constructor(public os: OntologyStateService) {}
 
-    dvm.$onChanges = function() {
-        dvm.saved = dvm.isSaved();
+    ngOnChanges(): void {
+        this.saved = this.isSaved();
     }
 
-    dvm.isSaved = function() {
-        var ids = unionWith(map(get(dvm.inProgressCommit, 'additions', []), '@id'), map(get(dvm.inProgressCommit, 'deletions', []), '@id'), isEqual);
-        return includes(ids, dvm.currentIri);
+    clickAction(): void {
+        this.onClick.emit();
+    }
+
+    toggleAction(): void {
+        this.toggleOpen.emit();
+    }
+
+    isSaved(): boolean {
+        const ids = unionWith(map(get(this.inProgressCommit, 'additions', []), '@id'), map(get(this.inProgressCommit, 'deletions', []), '@id'), isEqual);
+        return includes(ids, this.currentIri);
     }
 }
-
-export default treeItemComponent;

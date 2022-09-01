@@ -127,14 +127,14 @@ describe('Ontology Close Overlay component', function() {
                     tick();
                     expect(ontologyStateStub.saveChanges).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, expectedDiff);
                     expect(component.closeModal).toHaveBeenCalledWith();
-                    expect(ontologyStateStub.afterSave).toHaveBeenCalledWith();
+                    expect(ontologyStateStub.afterSave).toHaveBeenCalledWith(ontologyStateStub.listItem);
                 }));
                 it('when afterSave is rejected', fakeAsync(function() {
                     ontologyStateStub.afterSave.and.returnValue(throwError('error'));
                     component.saveThenClose();
                     tick();
                     expect(component.closeModal).not.toHaveBeenCalled();
-                    expect(ontologyStateStub.afterSave).toHaveBeenCalledWith();
+                    expect(ontologyStateStub.afterSave).toHaveBeenCalledWith(ontologyStateStub.listItem);
                     expect(component.error).toEqual('error');
                 }));
             });

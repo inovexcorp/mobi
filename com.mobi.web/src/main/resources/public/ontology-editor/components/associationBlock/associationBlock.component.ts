@@ -21,34 +21,25 @@
  * #L%
  */
 
-const template = require('./associationBlock.component.html');
+import {Component} from '@angular/core';
+
+import {OntologyStateService} from '../../../shared/services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:associationBlock
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.AssociationBlockComponent
  *
- * @description
- * `associationBlock` is a component that creates a section that displays the
- * {@link ontology-editor.component:everythingTree} for the current
- * {@link shared.service:ontologyStateService selected ontology}.
+ * A component that creates a section that displays the {@link ontology-editor.EverythingTreeComponent} for the current
+ * {@link shared.OntologyStateService#listItem selected ontology}.
  */
-const associationBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: associationBlockComponentCtrl
-};
+@Component({
+    selector: 'association-block',
+    templateUrl: './associationBlock.component.html'
+})
+export class AssociationBlockComponent{
+    constructor(public os: OntologyStateService) {
+    }
 
-associationBlockComponentCtrl.$inject = ['ontologyStateService'];
-
-function associationBlockComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.updateSearch = function(value) {
-        dvm.os.listItem.editorTabStates.overview.searchText = value;
+    updateSearch(value: string): void {
+        this.os.listItem.editorTabStates.overview.searchText = value;
     }
 }
-
-export default associationBlockComponent;

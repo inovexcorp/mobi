@@ -20,39 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './conceptSchemeHierarchyBlock.component.scss';
 
-const template = require('./conceptSchemeHierarchyBlock.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:conceptSchemeHierarchyBlock
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.ConceptSchemeHierarchyBlockComponent
  *
- * @description
- * `conceptSchemeHierarchyBlock` is a component that creates a section that displays a
- * {@link ontology-editor.component:hierarchyTree} of the concept schemes and concepts in the current
- * {@link shared.service:ontologyStateService selected ontology/vocabulary}.
+ * A component that creates a section that displays a {@link ontology-editor.HierarchyTreeComponent} of the concept
+ * schemes and concepts in the current {@link shared.OntologyStateService#listItem selected ontology/vocabulary}.
  */
-const conceptSchemeHierarchyBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: conceptSchemeHierarchyBlockComponentCtrl
-};
+@Component({
+    selector: 'concept-scheme-hierarchy-block',
+    templateUrl: './conceptSchemeHierarchyBlock.component.html'
+})
+export class ConceptSchemeHierarchyBlockComponent {
+    constructor(public os: OntologyStateService) {}
 
-conceptSchemeHierarchyBlockComponentCtrl.$inject = ['ontologyStateService'];
-
-function conceptSchemeHierarchyBlockComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.updateSearch = function(value) {
-        dvm.os.listItem.editorTabStates.schemes.searchText = value;
+    updateSearch(value: string): void {
+        this.os.listItem.editorTabStates.schemes.searchText = value;
     }
-    dvm.resetIndex = function() {
-        dvm.os.listItem.editorTabStates.schemes.index = 0;
+    resetIndex(): void {
+        this.os.listItem.editorTabStates.schemes.index = 0;
     }
 }
-
-export default conceptSchemeHierarchyBlockComponent;

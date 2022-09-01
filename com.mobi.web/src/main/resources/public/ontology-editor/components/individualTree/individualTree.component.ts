@@ -20,130 +20,145 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-
-import { every, filter, some, get } from 'lodash';
-
+// other Libs
+import { Datasource, IDatasource } from 'ngx-ui-scroll';
+import {every, filter, some, get, cloneDeep} from 'lodash';
+// Angular Imports
+import { Component, EventEmitter, Inject, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+// Services
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import UtilService from '../../../shared/services/util.service';
+//constants
+import { INDENT } from '../../../constants';
+import {HierarchyNode} from "../../../shared/models/hierarchyNode.interface";
 
-const template = require('./individualTree.component.html');
 
 /**
  * @ngdoc component
- * @name ontology-editor.component:individualTree
+ * @class ontology-editor.IndividualTreeComponent
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
  * @requires shared.service:utilService
  *
  * @description
- * `individualTree` is a component that creates a `div` containing a {@link shared.component:searchBar}
- * and hierarchy of {@link ontology-editor.component:treeItem}s of individuals. When search text is provided,
+ * `individualTree` is a component that creates a `div` containing a {@link shared.SearchBarComponent}
+ * and hierarchy of {@link ontology-editor.TreeItemComponent}s of individuals. When search text is provided,
  * the hierarchy filters what is shown based on value matches with predicates in the
- * {@link shared.service:ontologyManagerService entityNameProps}.
+ * {@link shared.OntologyManagerService entityNameProps}.
  *
  * @param {Object[]} hierarchy An array which represents a flattened individual hierarchy
  * @param {Function} updateSearch A function to update the state variable used to track the search filter text
  */
-const individualTreeComponent = {
-    template,
-    bindings: {
-        hierarchy: '<',
-        index: '<',
-        updateSearch: '&',
-        branchId: '<'
-    },
-    controllerAs: 'dvm',
-    controller: individualTreeComponentCtrl
-};
+@Component({
+    templateUrl: 'individualTree.component.html',
+    selector: 'individual-tree'
+})
+export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
+    @Input() branchId;
+    @Input() key;
+    @Input() index: number;
+    @Input() hierarchy;
+    @Output() updateSearch = new EventEmitter<{value:string}>();
 
-individualTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'INDENT'];
-
-function individualTreeComponentCtrl(ontologyManagerService, ontologyStateService: OntologyStateService, utilService, INDENT) {
-    var dvm = this;
-    dvm.indent = INDENT;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.searchText = '';
-    dvm.filterText = '';
-    dvm.filteredHierarchy = [];
-    dvm.preFilteredHierarchy = [];
-    dvm.midFilteredHierarchy = [];
-    dvm.activeTab = '';
-    dvm.dropdownFilterActive = false;
-    dvm.activeEntityFilter = {
-        name: 'Hide unused imports',
-        checked: false,
-        flag: false, 
-        filter: node => {
-            var match = true;
-            if (dvm.os.isImported(node.entityIRI)) {
-                match = false;
-            }
-            return match;
+    datasource: IDatasource = new Datasource({
+        get: (index, count, success) => {
+            const data = this.filteredHierarchy.slice(index, index + count);
+            success(data);
+        },
+        settings: {
+            bufferSize: 35,
+            startIndex: 0,
+            minIndex: 0
         }
-    };
-    dvm.deprecatedEntityFilter = {
-        name: 'Hide deprecated individuals',
-        checked: false,
-        flag: false,
-        filter: node => {
-            var match = true;
-            if (dvm.os.isIriDeprecated(node.entityIRI)) {
-                match = false;
-            }
-            return match;
-        }
-    };
-    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
+    });
 
-    dvm.$onInit = function() {
-        dvm.activeTab = dvm.os.getActiveKey();
-        update();
+    indent = INDENT;
+    searchText = '';
+    filterText = '';
+    filteredHierarchy = [];
+    preFilteredHierarchy = [];
+    midFilteredHierarchy = [];
+    activeTab = '';
+    dropdownFilterActive = false;
+    dropdownFilters = [];
+    activeEntityFilter;
+    deprecatedEntityFilter;
+    chunks = [];
+
+    constructor(public om:OntologyStateService, public os: OntologyStateService,  @Inject('utilService') public util) {}
+
+
+    ngOnInit(){
+        this.activeEntityFilter = {
+            name: 'Hide unused imports',
+            checked: false,
+            flag: false,
+            filter: node => {
+                let match = true;
+                if (this.os.isImported(node.entityIRI)) {
+                    match = false;
+                }
+                return match;
+            }
+        };
+        this.deprecatedEntityFilter = {
+            name: 'Hide deprecated individuals',
+            checked: false,
+            flag: false,
+            filter: node => {
+                let match = true;
+                if (this.os.isIriDeprecated(node.entityIRI)) {
+                    match = false;
+                }
+                return match;
+            }
+        };
+
+        this.dropdownFilters = [cloneDeep(this.activeEntityFilter), cloneDeep(this.deprecatedEntityFilter)];
+        this.activeTab = this.os.getActiveKey();
+        this.update();
     }
-    dvm.$onChanges = function(changesObj) {
+    ngOnChanges(changesObj) {
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             if (changesObj.branchId) {
-                removeFilters();
+                this.removeFilters();
             }
-            update();
+            this.update();
         }
     }
-    dvm.$onDestroy = function() {
-        if (dvm.os.listItem?.editorTabStates) {
-            dvm.os.listItem.editorTabStates.individuals.index = 0;
+    ngOnDestroy() {
+        if (this.os.listItem?.editorTabStates) {
+            this.os.listItem.editorTabStates.individuals.index = 0;
         }
     }
-    function removeFilters() {
-        dvm.searchText = '';
-        dvm.filterText = '';
-        dvm.dropdownFilterActive = false;
-        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
+    clickItem(entityIRI) {
+        this.os.selectItem(entityIRI).subscribe();
     }
-    dvm.clickItem = function(entityIRI) {
-        dvm.os.selectItem(entityIRI).toPromise();
+    onKeyup () {
+        this.filterText = this.searchText;
+        this.dropdownFilterActive = some(this.dropdownFilters, 'flag');
+        this.update()
     }
-    dvm.onKeyup = function() {
-        dvm.filterText = dvm.searchText;
-        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
-        update();
+    matchesDropdownFilters(node) {
+        return every(this.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
-    dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
+    shouldFilter() :string | boolean{
+        return (this.filterText || this.dropdownFilterActive);
     }
-    dvm.shouldFilter = function() {
-        return (dvm.filterText || dvm.dropdownFilterActive);
-    }
-    dvm.toggleOpen = function(node) {
+    toggleOpen(node) {
         node.isOpened = !node.isOpened;
-        node.isOpened ? dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath] = true : delete dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath];
-        dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
+        if (node.title) {
+            node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened);
+        }
+        node.isOpened ? this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = true : delete this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
+        this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this));
+        this.datasource.adapter.reload(this.datasource.adapter.firstVisible.$index);
     }
-    dvm.matchesSearchFilter = function(node) {
-        var searchMatch = false;
+    matchesSearchFilter(node) {
+        let searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
         some(node.entityInfo.names, name => {
-            if (name.toLowerCase().includes(dvm.filterText.toLowerCase()))
+            if (name.toLowerCase().includes(this.filterText.toLowerCase()))
                 searchMatch = true;
         });
 
@@ -152,41 +167,41 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
 
         // Check if beautified entity id matches search text
-        if (dvm.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+        if (this.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(this.filterText.toLowerCase())) {
             searchMatch = true;
         }
-        
+
         return searchMatch;
     }
-    // Start at the current node and go up through the parents marking each path as an iriToOpen. If a path is already present in dvm.os.listItem.editorTabStates[dvm.activeTab].open, it means it was already marked as an iriToOpen by another one of it's children. In that scenario we know all of it's parents will also be open, and we can break out of the loop.
-    dvm.openAllParents = function(node) {
-        for (var i = node.path.length - 1; i > 1; i--) {
-            var fullPath = dvm.os.joinPath(node.path.slice(0, i));
+    // Start at the current node and go up through the parents marking each path as an iriToOpen. If a path is already present in this.os.listItem.editorTabStates[this.activeTab].open, it means it was already marked as an iriToOpen by another one of it's children. In that scenario we know all of it's parents will also be open, and we can break out of the loop.
+    openAllParents = function(node) {
+        for (let i = node.path.length - 1; i > 1; i--) {
+            let fullPath = this.os.joinPath(node.path.slice(0, i));
 
-            if (dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath]) {
+            if (this.os.listItem.editorTabStates[this.activeTab].open[fullPath]) {
                 break;
             }
 
-            dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath] = true;
+            this.os.listItem.editorTabStates[this.activeTab].open[fullPath] = true;
         }
     }
-    dvm.searchFilter = function (node) {
+    searchFilter(node: HierarchyNode) {
         delete node.underline;
         delete node.parentNoMatch;
         delete node.displayNode;
         if (node.isClass) {
-            if (dvm.shouldFilter()) {
+            if (this.shouldFilter()) {
                 delete node.isOpened;
                 node.parentNoMatch = true;
             }
         } else {
-            if (dvm.shouldFilter()) {
+            if (this.shouldFilter()) {
                 delete node.isOpened;
-                var match = false;
-                
-                if (dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
+                let match = false;
+
+                if (this.matchesSearchFilter(node) && this.matchesDropdownFilters(node)) {
                     match = true;
-                    dvm.openAllParents(node);
+                    this.openAllParents(node);
                     node.underline = true;
                 }
                 return match;
@@ -194,19 +209,19 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
         return true;
     }
-    dvm.openEntities = function(node) {
-        var toOpen = dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath];
+    openEntities(node) {
+        let toOpen = this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
         if (toOpen) {
             if (!node.isOpened) {
                 node.isOpened = true;
             }
-            node.displayNode = true; 
+            node.displayNode = true;
         }
         return true;
     }
-    dvm.isShown = function(node) {
-        var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node, dvm.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
-        if (dvm.shouldFilter() && node.parentNoMatch) {
+    isShown(node) {
+        let displayNode = (node.indent > 0 && this.os.areParentsOpen(node, this.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
+        if (this.shouldFilter() && node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
             } else {
@@ -215,16 +230,26 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
         return displayNode;
     }
+    updateDropdownFilters(value) {
+        this.dropdownFilters = value;
+    }
+    updateSearchText(value: string): void {
+        this.searchText = value;
+    }
 
-    function update() {
-        if (dvm.shouldFilter()) {
-            dvm.os.listItem.editorTabStates[dvm.activeTab].open = {};
+    private removeFilters() {
+        this.searchText = '';
+        this.filterText = '';
+        this.dropdownFilterActive = false;
+        this.dropdownFilters = [cloneDeep(this.activeEntityFilter), cloneDeep(this.deprecatedEntityFilter)];
+    }
+    update():void {
+        if (this.shouldFilter) {
+            this.os.listItem.editorTabStates[this.activeTab].open = {};
         }
-        dvm.updateSearch({value: dvm.filterText});
-        dvm.preFilteredHierarchy = dvm.hierarchy.filter(dvm.searchFilter);
-        dvm.midFilteredHierarchy = dvm.preFilteredHierarchy.filter(dvm.openEntities);
-        dvm.filteredHierarchy = dvm.midFilteredHierarchy.filter(dvm.isShown);
+        this.updateSearch.emit({value: this.filterText});
+        this.preFilteredHierarchy = this.hierarchy.filter(this.searchFilter.bind(this));
+        this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
+        this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
     }
 }
-
-export default individualTreeComponent;

@@ -21,16 +21,16 @@
  * #L%
  */
 import { findIndex } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
-const template = require('./seeHistory.component.html');
 
 /**
  * @ngdoc component
- * @name ontology-editor.component:seeHistory
+ * @class ontology-editor.SeeHistoryComponent
  * @requires shared.service:catalogManagerService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
@@ -40,51 +40,52 @@ const template = require('./seeHistory.component.html');
  * The `seeHistory` component creates a page for viewing the addition and deletion history of commits on a
  * particular entity in an ontology. If no commitId is selected, no compiled resource will be shown.
  */
-const seeHistoryComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: seeHistoryComponentCtrl
-};
+@Component({
+    selector: 'see-history',
+    templateUrl: './seeHistory.component.html'
+})
 
-seeHistoryComponentCtrl.$inject = ['catalogManagerService', 'ontologyManagerService', 'ontologyStateService', 'utilService'];
+export class SeeHistoryComponent{
+    commits = [];
+    selectedCommit;
 
-function seeHistoryComponentCtrl(catalogManagerService: CatalogManagerService, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, utilService) {
-    var dvm = this;
-    dvm.cm = catalogManagerService;
-    dvm.os = ontologyStateService;
-    dvm.om = ontologyManagerService;
-    dvm.util = utilService;
-    dvm.commits = [];
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, public cm: CatalogManagerService,
+                @Inject('utilService') private util) {}
 
-    dvm.goBack = function() {
-        dvm.os.listItem.seeHistory = undefined;
-        dvm.os.listItem.selectedCommit = undefined;
+    goBack() {
+        this.os.listItem.seeHistory = undefined;
+        this.os.listItem['selectedCommit'] = undefined;
+        this.selectedCommit = undefined;
     }
-    dvm.prev = function() {
-        var index = findIndex(dvm.commits, dvm.os.listItem.selectedCommit);
-        dvm.os.listItem.selectedCommit = dvm.commits[index + 1];
+    prev() {
+        const index = findIndex(this.commits, this.os.listItem.selectedCommit);
+        this.os.listItem['selectedCommit'] = this.commits[index + 1];
+        this.selectedCommit = this.commits[index + 1];
     }
-    dvm.next = function() {
-        var index = dvm.commits.indexOf(dvm.os.listItem.selectedCommit);
-        dvm.os.listItem.selectedCommit = dvm.commits[index - 1];
+    next() {
+        const index = this.commits.indexOf(this.os.listItem.selectedCommit);
+        this.os.listItem['selectedCommit'] = this.commits[index - 1];
+        this.selectedCommit = this.commits[index - 1];
     }
-    dvm.getEntityNameDisplay = function(iri) {
-        return dvm.om.isBlankNodeId(iri) ? dvm.os.getBlankNodeValue(iri) : dvm.os.getEntityNameByListItem(iri);
+    getEntityNameDisplay(iri) {
+        return this.om.isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityNameByListItem(iri);
     }
-    dvm.receiveCommits = function(commits) {
-        dvm.commits = commits;
-        if (dvm.commits[0]) {
-            dvm.os.listItem.selectedCommit = dvm.commits[0];
+    receiveCommits(commits) {
+        this.commits = commits;
+        if (this.commits[0]) {
+            this.os.listItem.selectedCommit = this.commits[0];
+            this.selectedCommit = this.commits[0];
+            this.selectCommit();
         }
     }
-    dvm.createLabel = function(commitId) {
-        var label = dvm.util.condenseCommitId(commitId);
-        if (commitId == dvm.commits[0].id) {
+    createLabel(commitId) {
+        let label = this.util.condenseCommitId(commitId);
+        if (commitId == this.commits[0].id) {
             label = label + ' (latest)';
         }
         return label;
     }
+    selectCommit() {
+        this.os.listItem.selectedCommit = this.selectedCommit;
+    }
 }
-
-export default seeHistoryComponent;

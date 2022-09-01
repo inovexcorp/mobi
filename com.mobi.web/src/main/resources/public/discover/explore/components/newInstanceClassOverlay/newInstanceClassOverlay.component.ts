@@ -51,10 +51,11 @@ export class NewInstanceClassOverlayComponent implements OnInit {
     classControl = new FormControl();
     filteredClasses: Observable<{id: string, title: string, deprecated: boolean}[]>;
 
-    constructor(private dialogRef: MatDialogRef<NewInstanceClassOverlayComponent>, 
-        @Inject(MAT_DIALOG_DATA) public data: {classes: {id: string, title: string, deprecated: boolean}[]},
+    constructor(private dialogRef: MatDialogRef<NewInstanceClassOverlayComponent>,
         private state: DiscoverStateService, private es: ExploreService, 
-        private splitIRI: SplitIRIPipe, @Inject('utilService') public util) {}
+        private splitIRI: SplitIRIPipe, @Inject('utilService') public util,
+        @Inject(MAT_DIALOG_DATA) public data: {classes: {id: string, title: string, deprecated: boolean}[]}
+    ) {}
 
     ngOnInit(): void {
         this.filteredClasses = this.classControl.valueChanges

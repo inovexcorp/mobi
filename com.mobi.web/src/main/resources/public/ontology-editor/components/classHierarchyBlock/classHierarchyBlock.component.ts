@@ -1,3 +1,6 @@
+import { Component } from '@angular/core';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 /*-
  * #%L
  * com.mobi.web
@@ -21,37 +24,25 @@
  * #L%
  */
 
-const template = require('./classHierarchyBlock.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:classHierarchyBlock
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.ClassHierarchyBlockComponent
  *
- * @description
  * `classHierarchyBlock` is a component that creates a section that displays a
- * {@link ontology-editor.component:hierarchyTree} of the classes in the current
- * {@link shared.service:ontologyStateService selected ontology}.
+ * {@link ontology-editor.HierarchyTreeComponent} of the classes in the current
+ * {@link shared.OntologyStateService#listItem selected ontology}.
  */
-const classHierarchyBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: classHierarchyBlockComponentCtrl
-};
 
-classHierarchyBlockComponentCtrl.$inject = ['ontologyStateService'];
+@Component({
+    selector: 'class-hierarchy-block',
+    templateUrl: './classHierarchyBlock.component.html'
+})
+export class ClassHierarchyBlockComponent {
+    constructor(public os: OntologyStateService) {}
 
-function classHierarchyBlockComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.updateSearch = function(value) {
-        dvm.os.listItem.editorTabStates.classes.searchText = value;
+    updateSearch(value: string): void {
+        this.os.listItem.editorTabStates.classes.searchText = value;
     }
-    dvm.resetIndex = function() {
-        dvm.os.listItem.editorTabStates.classes.index = 0;
+    resetIndex(): void {
+        this.os.listItem.editorTabStates.classes.index = 0;
     }
 }
-
-export default classHierarchyBlockComponent;

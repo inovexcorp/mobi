@@ -51,7 +51,7 @@ export class OntologyCloseOverlayComponent {
         diff.additions = this.data.listItem.additions;
         diff.deletions = this.data.listItem.deletions;
         this.os.saveChanges(this.data.listItem.versionedRdfRecord.recordId, diff)
-            .pipe(switchMap(() => this.os.afterSave()))
+            .pipe(switchMap(() => this.os.afterSave(this.data.listItem)))
             .subscribe(() => this.closeModal(), errorMessage => this.error = errorMessage);
     }
     closeModal(): void {

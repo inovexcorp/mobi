@@ -21,75 +21,65 @@
  * #L%
  */
 import { forEach, get, chunk, union } from 'lodash';
+import { Component, Input, OnInit, OnChanges } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './usagesBlock.component.scss';
 
-const template = require('./usagesBlock.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:usagesBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
+ * @class ontology-editor.UsagesBlockComponent
  *
- * @description
- * `usagesBlock` is a component that creates a section that displays the provided usages of the
- * {@link shared.service:ontologyStateService selected entity} using
- * {@link ontology-editor.component:propertyValues}. The usages are only shown 100 at a time to save rendering
+ * A component that creates a section that displays the provided usages of the
+ * {@link shared.OntologyStateService#listItem selected entity} using
+ * {@link ontology-editor.PropertyValuesComponent}. The usages are only shown 100 at a time to save rendering
  * time with a link at the bottom to load more.
  * 
  * @param {Object[]} usages An array of usage results for the selected entity
  */
-const usagesBlockComponent = {
-    template,
-    bindings: {
-        usages: '<'
-    },
-    controllerAs: 'dvm',
-    controller: usagesBlockComponentCtrl
-};
 
-usagesBlockComponentCtrl.$inject = ['ontologyStateService'];
+@Component({
+    selector: 'usages-block',
+    templateUrl: './usagesBlock.component.html'
+})
+export class UsagesBlockComponent implements OnInit, OnChanges {
+    @Input() usages;
 
-function usagesBlockComponentCtrl(ontologyStateService: OntologyStateService) {
-    var dvm = this;
-    dvm.size = 100;
-    dvm.index = 0;
-    dvm.os = ontologyStateService;
-    dvm.id = '';
-    dvm.results = {};
-    dvm.total = 0;
-    dvm.shown = 0;
+    size = 100;
+    index = 0;
+    id = '';
+    results: {[key: string]: any} = {};
+    total = 0;
+    shown = 0;
+    chunks = 0;
 
-    dvm.$onInit = function() {
-        dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.versionedRdfRecord.recordId;
+    constructor(public os: OntologyStateService) {}
+
+    ngOnInit(): void {
+        this.id = 'usages-' + this.os.getActiveKey() + '-' + this.os.listItem.versionedRdfRecord.recordId;
     }
-    dvm.$onChanges = function() {
-        dvm.size = 100;
-        dvm.index = 0;
-        dvm.shown = 0;
-        dvm.results = getResults();
+    ngOnChanges(): void {
+        this.size = 100;
+        this.index = 0;
+        this.shown = 0;
+        this.results = this.getResults();
     }
-    dvm.getMoreResults = function() {
-        dvm.index++;
-        forEach(get(chunk(dvm.usages, dvm.size), dvm.index, []), binding => addToResults(dvm.results, binding));
+    getMoreResults(): void {
+        this.index++;
+        forEach(get(chunk(this.usages, this.size), this.index, []), binding => this.addToResults(this.results, binding));
     }
-
-    function getResults() {
-        var results = {};
-        dvm.total = get(dvm.usages, 'length');
-        var chunks = chunk(dvm.usages, dvm.size);
-        dvm.chunks = chunks.length === 0 ? 0 : chunks.length - 1;
-        forEach(get(chunks, dvm.index, []), binding => addToResults(results, binding));
+    getResults(): any {
+        const results = {};
+        this.total = get(this.usages, 'length');
+        const chunks = chunk(this.usages, this.size);
+        this.chunks = chunks.length === 0 ? 0 : chunks.length - 1;
+        forEach(get(chunks, this.index, []), binding => this.addToResults(results, binding));
         return results;
     }
 
-    function addToResults(results, binding) {
+    private addToResults(results, binding) {
         results[binding.p.value] = union(get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]);
-        dvm.shown++;
+        this.shown++;
     }
-}
 
-export default usagesBlockComponent;
+}

@@ -20,28 +20,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Create New OWL Class</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <static-iri iri="dvm.clazz['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)" duplicate-check="dvm.duplicateCheck"></static-iri>
-    <form name="dvm.form" novalidate autocomplete="off">
-        <div class="form-group">
-            <custom-label>Name</custom-label>
-            <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" ng-blur="dvm.nameChanged()" required
-                   ng-model="dvm.clazz[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
-        </div>
-        <text-area bind-model="dvm.clazz[dvm.prefixes.dcterms + 'description'][0]['@value']"
-                   change-event="dvm.clazz[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
-                   display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <!-- TODO: Add back in once upgraded -->
-        <!-- <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select> -->
-        <super-class-select bind-model="dvm.values" change-event="dvm.values = values"></super-class-select>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || dvm.os.checkIri(dvm.clazz['@id'])" ng-click="dvm.create()">Submit</button>
+<h1 mat-dialog-title>Create New OWL Class</h1>
+<form mat-dialog-content [formGroup]="createForm">
+    <static-iri [iri]="clazz['@id']" (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)" [duplicateCheck]="duplicateCheck"></static-iri>
+    <mat-form-field class="w-100">
+        <mat-label>Name</mat-label>
+        <input matInput type="text" name="name" formControlName="title" required focus/>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" formControlName="description"></textarea>
+    </mat-form-field>
+    <advanced-language-select [parentForm]="createForm"></advanced-language-select>
+    <super-class-select [(selected)]="selectedClasses"></super-class-select>       
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" (click)="create()" [disabled]="createForm.invalid">Submit</button>
 </div>

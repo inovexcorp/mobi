@@ -22,7 +22,7 @@
   -->
 <div class="annotation-block">
     <div class="section-header">
-        <h5>Annotations</h5><a ng-if="dvm.os.listItem.selected && !dvm.os.isSelectedImported() && dvm.os.canModify()" class="float-right fa fa-fw fa-plus" ng-click="dvm.openAddOverlay()"></a>
+        <h5>Annotations</h5><a *ngIf="os.listItem.selected && !os.isSelectedImported() && os.canModify()" class="float-right fa fa-fw fa-plus" (click)="openAddOverlay()"></a>
     </div>
-    <property-values ng-repeat="annotation in dvm.annotationsFiltered" property="annotation" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)" edit="dvm.editClicked(property, index)" highlight-iris="dvm.highlightIris" highlight-text="dvm.highlightText"></property-values>
+    <property-values *ngFor="let annotation of annotationsFiltered" [property]="annotation" [entity]="os.listItem.selected" (remove)="openRemoveOverlay($event)" (edit)="editClicked($event)" [highlightIris]="highlightIris" [highlightText]="highlightText"></property-values>
 </div>

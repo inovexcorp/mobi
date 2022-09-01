@@ -27,9 +27,6 @@
     .info-message {
         padding: 10px;
     }
-    .block-header .float-right {
-        margin-left: 10px;
-    }
     .import {
         margin: 0;
         padding: 10px;
@@ -37,6 +34,17 @@
 
         &:hover {
             background: var(--light);
+        }
+    }
+    a.mat-icon-button {
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+
+        .mat-icon {
+            width: 14px !important;
+            height: 14px !important;
+            font-size: 14px !important;
         }
     }
 }

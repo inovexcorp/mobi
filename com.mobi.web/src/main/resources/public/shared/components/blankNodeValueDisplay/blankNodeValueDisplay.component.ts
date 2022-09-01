@@ -20,37 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+
 import { OntologyStateService } from '../../services/ontologyState.service';
 
 import './blankNodeValueDisplay.component.scss';
 
-const template = require('./blankNodeValueDisplay.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:blankNodeValueDisplay
+ * @name shared.BlankNodeValueDisplayComponent
  *
- * @description
- * `blankNodeValueDisplay` is a component that creates a ui-codemirror container for displaying a blank node with
+ * A component that creates a ui-codemirror container for displaying a blank node with
  * provided `nodeId`. The codemirror syntax is Manchester syntax and is non-editable.
  *
- * @param {string} nodeId The ID of a blank node in the current {@link shared.service:ontologyStateService ontology}
+ * @param {string} nodeId The ID of a blank node in the current {@link shared.OntologyStateService#listItem ontology}
  */
-const blankNodeValueDisplayComponent = {
-    template,
-    bindings: {
-        nodeId: '<'
-    },
-    controllerAs: 'dvm',
-    controller: blankNodeValueDisplayComponentCtrl
-};
+@Component({
+    selector: 'blank-node-value-display',
+    templateUrl: './blankNodeValueDisplay.component.html'
+})
+export class BlankNodeValueDisplayComponent implements OnChanges {
+    @Input() nodeId: string;
 
-blankNodeValueDisplayComponentCtrl.$inject = ['ontologyStateService'];
-
-function blankNodeValueDisplayComponentCtrl(ontologyStateService: OntologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.editorOptions = {
+    editorOptions = {
         mode: 'text/omn',
         indentUnit: 4,
         lineWrapping: true,
@@ -60,11 +51,11 @@ function blankNodeValueDisplayComponentCtrl(ontologyStateService: OntologyStateS
         scrollbarStyle: 'null',
         viewportMargin: Infinity
     };
-    dvm.value = '';
+    value = '';
 
-    dvm.$onChanges = function(changesObj) {
-        dvm.value = dvm.os.getBlankNodeValue(changesObj.nodeId.currentValue);
+    constructor(public os: OntologyStateService) {}
+
+    ngOnChanges(changes: SimpleChanges): void {
+        this.value = this.os.getBlankNodeValue(changes.nodeId.currentValue);
     }
 }
-
-export default blankNodeValueDisplayComponent;

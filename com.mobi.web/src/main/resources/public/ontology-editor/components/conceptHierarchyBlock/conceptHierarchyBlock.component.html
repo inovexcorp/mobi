@@ -21,6 +21,13 @@
   #L%
   -->
 <div class="concept-hierarchy-block h-100 py-1">
-    <info-message ng-if="!dvm.os.listItem.concepts.flat.length">(No concepts defined)</info-message>
-    <hierarchy-tree ng-if="dvm.os.listItem.concepts.flat.length" parent-label="concepts" hierarchy="dvm.os.listItem.concepts.flat" update-search="dvm.updateSearch(value)" index="dvm.os.listItem.editorTabStates.concepts.index" reset-index="dvm.resetIndex()" branch-id="dvm.os.listItem.versionedRdfRecord.branchId"></hierarchy-tree>
+    <info-message *ngIf="!os.listItem.concepts.flat.length">(No concepts defined)</info-message>
+    <hierarchy-tree *ngIf="os.listItem.concepts.flat.length"
+                    [parentLabel]="concepts"
+                    [hierarchy]="os.listItem.concepts.flat"
+                    (updateSearch)="updateSearch(value)"
+                    [index]="os.listItem.editorTabStates.concepts.index"
+                    (resetIndex)="resetIndex()"
+                    [branchId]="os.listItem.versionedRdfRecord.branchId">
+    </hierarchy-tree>
 </div>

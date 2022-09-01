@@ -24,26 +24,28 @@
     <div class="section-header">
         <h5>Usages</h5>
     </div>
-    <div class="usages-container" targeted-spinner="dvm.id">
-        <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results" disable-animate>
-            <div class="prop-header d-flex align-items-center clearfix">
-                <p class="text text-truncate m-0">{{dvm.os.getEntityNameByListItem(key)}}</p>
-                <small class="ml-1 text-muted text-truncate flex-1">&lt;{{key}}&gt;</small>
-            </div>
-            <div class="prop-value-container p-1 ml-3 mt-1" ng-repeat="statement in value">
-                <span class="value-display-wrapper">
-                    <span ng-repeat="(key, value) in statement" class="{{key}}">
-                        <span ng-if="value === dvm.os.listItem.selected['@id']" class="selected font-weight-bold">{{dvm.os.getEntityNameByListItem(value)}}</span>
-                        <span ng-if="value !== dvm.os.listItem.selected['@id']">
-                            <span ng-if="!dvm.os.isLinkable(value)">{{(key === 'predicate') ? (value | splitIRI).end : value}}</span>
-                            <a ng-if="dvm.os.isLinkable(value)" ng-click="dvm.os.goTo(value)">{{dvm.os.getEntityNameByListItem(value)}}</a>
+    <div class="usages-container" targeted-spinner="this.id">
+        <div *ngIf="this.results">
+            <div class="property-values mt-3" *ngFor="let property of this.results | keyvalue">
+                <div class="prop-header d-flex align-items-center clearfix">
+                    <p class="text text-truncate m-0">{{this.os.getEntityNameByListItem(property.key)}}</p>
+                    <small class="ml-1 text-muted text-truncate flex-1">{{property.key}}</small>
+                </div>
+                <div class="prop-value-container p-1 ml-3 mt-1" *ngFor="let statement of property.value">
+                    <span class="value-display-wrapper">
+                        <span *ngFor="let item of statement | keyvalue" class="{{item.key}}">
+                            <span *ngIf="item.value === this.os.listItem.selected['@id']" class="selected font-weight-bold">{{this.os.getEntityNameByListItem(item.value)}}</span>
+                            <span *ngIf="item.value !== this.os.listItem.selected['@id']">
+                                <span *ngIf="!this.os.isLinkable(item.value)"> {{(item.key === 'predicate') ? (item.value | splitIRI).end : item.value}}</span>
+                                <a *ngIf="this.os.isLinkable(item.value)" (click)="this.os.goTo(item.value)"> {{this.os.getEntityNameByListItem(item.value)}}</a>
+                            </span>
                         </span>
                     </span>
-                </span>
+                </div>
             </div>
         </div>
         <div class="text-center pt-1">
-            <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
+            <a *ngIf="this.chunks !== this.index" (click)="this.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
         </div>
     </div>
 </div>

@@ -28,4 +28,17 @@
     position: absolute;
     right: 25px;
     z-index: 1000;
+
+    .btn-dark {
+        background-color: #424242;
+    }
+    .btn-warning {
+        background-color: #ff9800;
+    }
+    .btn-success {
+        background-color: #4caf50;
+    }
+    .btn-info {
+        background-color: #424fff;
+    }
 }

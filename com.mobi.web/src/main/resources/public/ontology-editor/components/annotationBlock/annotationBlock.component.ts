@@ -20,81 +20,77 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, union } from 'lodash';
+import { Component, Inject, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { get, has, sortBy, union } from 'lodash';
 
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { AnnotationOverlayComponent } from '../annotationOverlay/annotationOverlay.component';
 
 import './annotationBlock.component.scss';
 
-const template = require('./annotationBlock.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:annotationBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:modalService
+ * @class ontology-editor.AnnotationBlockComponent
  *
- * @description
- * `annotationBlock` is a component that creates a section that displays the annotations on the
- * {@link shared.service:ontologyStateService selected entity} using
- * {@link ontology-editor.component:propertyValues}. The section header contains a button for adding an
- * annotation. The component houses the methods for opening the modal for
- * {@link ontology-editor.component:annotationOverlay editing, adding}, and removing annotations.
+ * A component that creates a section that displays the annotations on the
+ * {@link shared.OntologyStateService selected entity} using {@link ontology-editor.PropertyValuesComponent}. The
+ * section header contains a button for adding an annotation. The component houses the methods for opening the modal for
+ * {@link ontology-editor.AnnotationOverlayComponent editing, adding}, and removing annotations.
  */
-const annotationBlockComponent = {
-    template,
-    bindings: {
-        highlightIris: '<',
-        highlightText: '<',
-        selected:'<'
-    },
-    controllerAs: 'dvm',
-    controller: annotationBlockComponentCtrl
-};
+@Component({
+    selector: 'annotation-block',
+    templateUrl: './annotationBlock.component.html'
+})
+export class AnnotationBlockComponent implements OnChanges {
+    annotations = [];
+    annotationsFiltered = [];
 
-annotationBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'propertyManagerService', 'modalService'];
+    @Input() highlightIris: string[] = [];
+    @Input() highlightText: string;
+    @Input() selected: JSONLDObject;
 
-function annotationBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, propertyManagerService, modalService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.annotations = [];
-    dvm.annotationsFiltered = [];
+    constructor(private dialog: MatDialog, public os: OntologyStateService, @Inject('propertyManagerService') private pm) {}
 
-    dvm.$onChanges = function (changes) {
-        dvm.updatePropertiesFiltered();
+    ngOnChanges(): void {
+        this.updatePropertiesFiltered();
     }
-    dvm.updatePropertiesFiltered = function(){
-        dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
-        dvm.annotationsFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.annotations), iri => dvm.os.getEntityNameByListItem(iri));
+    updatePropertiesFiltered(): void {
+        this.annotations = union(Object.keys(this.os.listItem.annotations.iris), this.pm.defaultAnnotations, this.pm.owlAnnotations);
+        this.annotationsFiltered = sortBy(this.annotations.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
     }
-    dvm.openAddOverlay = function() {
-        dvm.os.editingAnnotation = false;
-        dvm.os.annotationSelect = undefined;
-        dvm.os.annotationValue = '';
-        dvm.os.annotationType = undefined;
-        dvm.os.annotationIndex = 0;
-        dvm.os.annotationLanguage = 'en';
-        modalService.openModal('annotationOverlay', {}, dvm.updatePropertiesFiltered);
-    }
-    dvm.openRemoveOverlay = function(key, index) {
-        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
-            dvm.os.removeProperty(key, index).subscribe();
-            dvm.updatePropertiesFiltered();
-            dvm.os.annotationModified(dvm.os.listItem.selected['@id'], key, null);
+    openAddOverlay(): void {
+        this.dialog.open(AnnotationOverlayComponent, {data: { editing: false }}).afterClosed().subscribe(result => {
+            if (result) {
+                this.updatePropertiesFiltered();
+            }
         });
     }
-    dvm.editClicked = function(annotation, index) {
-        var annotationObj = dvm.os.listItem.selected[annotation][index];
-        dvm.os.editingAnnotation = true;
-        dvm.os.annotationSelect = annotation;
-        dvm.os.annotationValue = annotationObj['@value'];
-        dvm.os.annotationIndex = index;
-        dvm.os.annotationType = get(annotationObj, '@type');
-        dvm.os.annotationLanguage = get(annotationObj, '@language');
-        modalService.openModal('annotationOverlay', {}, dvm.updatePropertiesFiltered);
+    openRemoveOverlay(input: {iri: string, index: number}): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: { content: this.os.getRemovePropOverlayMessage(input.iri, input.index) }
+        }).afterClosed().subscribe(result => {
+            if (result) {
+                this.os.removeProperty(input.iri, input.index).subscribe();
+                this.updatePropertiesFiltered();
+                this.os.annotationModified(this.os.listItem.selected['@id'], input.iri, null);
+            }
+        });
+    }
+    editClicked(input: {property: string, index: number}): void {
+        const annotationObj = this.os.listItem.selected[input.property][input.index];
+        this.dialog.open(AnnotationOverlayComponent, {data: {
+            editing: true,
+            annotation: input.property,
+            value: annotationObj['@value'],
+            type: get(annotationObj, '@type', ''),
+            index: input.index,
+            language: get(annotationObj, '@language', '')
+        }}).afterClosed().subscribe(result => {
+            if (result) {
+                this.updatePropertiesFiltered();
+            }
+        });
     }
 }
-
-export default annotationBlockComponent;

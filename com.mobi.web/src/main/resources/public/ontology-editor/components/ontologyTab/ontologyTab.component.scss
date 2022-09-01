@@ -24,15 +24,23 @@
 @import "../../../css/variables";
 
 .ontology-tab {
-    position: relative;
-
-    .saved-text {
-        position: absolute;
-        right: 15px;
-        top: 16px;
+    .selected-header {
+        .btn-container {
+            .btn.btn-primary {
+                margin-right: .25rem;
+              }
+        }
     }
-
+    .mat-tab-label[aria-labelledby='hidden'] {
+        width: 0px !important;
+        min-width: 0px;
+        padding: 0px;
+    }
     .search-tab {
         height: 100%;
+    }
+    .mat-tab-body-wrapper {
+        flex: 1;
+        min-height: 0;
     }
 }

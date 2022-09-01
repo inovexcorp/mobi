@@ -22,27 +22,29 @@
   -->
 <div class="merge-block h-100 d-flex flex-column">
     <div class="row justify-content-center m-0">
-        <form name="dvm.form" novalidate autocomplete="off">
-            <span class="merge-message">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into</span>
-            <branch-select [model]="dvm.os.listItem.merge.target" [required]="true" class="select-branch" [is-disabled-when]="dvm.os.listItem.userBranch" (model-change)="dvm.changeTarget($event)" [branches]="dvm.branches"></branch-select>
-            <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.os.listItem.userBranch" [(model)]="dvm.os.listItem.merge.checkbox" [display-text]="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
-        </form>
+        <div [formGroup]="mergeRequestForm">
+            <span class="merge-message">Merge <strong>Branch: {{branchTitle}}</strong> into</span>
+            <branch-select [model]="os.listItem.merge.target" [required]="true" class="select-branch" [isDisabledWhen]="os.listItem.userBranch" (modelChange)="changeTarget($event)" [branches]="branches"></branch-select>
+            <div>
+                <mat-checkbox *ngIf="branchTitle !== 'MASTER' && !os.listItem.userBranch" [(ngModel)]="os.listItem.merge.checkbox" [ngModelOptions]="{standalone: true}">Remove Branch: {{branchTitle}} after merge</mat-checkbox>
+            </div>
+        </div>
     </div>
     <div class="flex-1 vertical-scroll p-2">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <commit-difference-tabset ng-if="dvm.os.listItem.merge.target"
-                                  [branch-title]="dvm.branchTitle"
-                                  [commit-id]="dvm.os.listItem.versionedRdfRecord.commitId"
-                                  [target-id]="dvm.targetHeadCommitId"
-                                  [difference]="dvm.os.listItem.merge.difference"
-                                  [entity-name-func]="getEntityName"
-                                  (show-more-results-func)="dvm.retrieveMoreResults.bind(this)"
-                                  [start-index]="dvm.os.listItem.merge.startIndex"
-                                  [record-id]="dvm.os.listItem.versionedRdfRecord.recordId"
-                                  (receive-commits)="dvm.commits = $event"></commit-difference-tabset>
+        <error-display *ngIf="error">{{error}}</error-display>
+        <commit-difference-tabset *ngIf="os.listItem.merge.target"
+                                  [branchTitle]="branchTitle"
+                                  [commitId]="os.listItem.versionedRdfRecord.commitId"
+                                  [targetId]="targetHeadCommitId"
+                                  [difference]="os.listItem.merge.difference"
+                                  [entityNameFunc]="getEntityName"
+                                  (showMoreResultsFunc)="retrieveMoreResults.bind(this)"
+                                  [startIndex]="os.listItem.merge.startIndex"
+                                  [recordId]="os.listItem.versionedRdfRecord.recordId"
+                                  (receiveCommits)="commits = $event"></commit-difference-tabset>
     </div>
     <div class="btn-container pt-2">
-        <button class="btn btn-primary float-right" ng-click="dvm.submit()" ng-disabled="dvm.isDisabled() || !dvm.os.listItem.merge.target || !dvm.os.listItem.upToDate">Submit</button>
-        <button class="btn float-right mr-2" ng-click="dvm.os.cancelMerge()">Cancel</button>
+        <button class="btn btn-primary float-right" (click)="submit()" [disabled]="isDisabled() || !os.listItem.merge.target || !os.listItem.upToDate">Submit</button>
+        <button class="btn float-right mr-2" (click)="os.cancelMerge()">Cancel</button>
     </div>
 </div>

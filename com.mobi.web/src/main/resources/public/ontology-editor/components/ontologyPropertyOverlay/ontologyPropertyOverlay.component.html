@@ -20,42 +20,42 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>{{dvm.os.editingOntologyProperty ? 'Edit Property' : 'Add Property'}}</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <form name="dvm.propertyForm" novalidate autocomplete="off">
-        <div class="form-group">
-            <custom-label>Property</custom-label>
-            <ui-select ng-model="dvm.os.ontologyProperty" ng-disabled="dvm.os.editingOntologyProperty" autofocus on-select="dvm.selectProp()">
-                <ui-select-match placeholder="Select a property">{{$select.selected}}</ui-select-match>
-                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="property in dvm.properties | filter:$select.search | orderBy:dvm.orderByEntityName">
-                    <div ng-bind-html="dvm.os.getEntityNameByListItem(property) | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-        <div ng-if="dvm.isOntologyProperty()" class="form-group">
-            <custom-label>Ontology IRI</custom-label>
-            <input class="form-control" ng-model="dvm.os.ontologyPropertyIRI" ng-pattern="dvm.iriPattern" name="iri" ng-required="dvm.isOntologyProperty()" ng-class="{'is-invalid': dvm.propertyForm.iri.$invalid}" />
-            <p ng-messages="dvm.propertyForm.iri.$error" class="invalid-feedback">
-                <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
-                <ng-message when="required">This field cannot be left empty.</ng-message>
-            </p>
-        </div>
-        <div ng-if="dvm.isAnnotationProperty()">
-            <div ng-if="dvm.os.ontologyProperty !== dvm.prefixes.owl + 'deprecated'">
-                <text-area bind-model="dvm.os.ontologyPropertyValue" change-event="dvm.os.ontologyPropertyValue = value" display-text="'Value'"></text-area>
-                <language-select bind-model="dvm.os.ontologyPropertyLanguage" change-event="dvm.os.ontologyPropertyLanguage = value"></language-select>
-            </div>
-            <div ng-if="dvm.os.ontologyProperty === dvm.prefixes.owl + 'deprecated'">
-                <radio-button display-text="'True'" value="'true'" bind-model="dvm.os.ontologyPropertyValue" change-event="dvm.os.ontologyPropertyValue = value"></radio-button>
-                <radio-button display-text="'False'" value="'false'" bind-model="dvm.os.ontologyPropertyValue" change-event="dvm.os.ontologyPropertyValue = value"></radio-button>
-            </div>
-        </div>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.propertyForm.$invalid">Submit</button>
+<h1 mat-dialog-title>{{data.editing ? 'Edit Property' : 'Add Property'}}</h1>
+<form mat-dialog-content [formGroup]="propertyForm">
+    <mat-form-field class="w-100">
+        <mat-label>Property</mat-label>
+        <input type="text" matInput aria-label="Property"
+               placeholder="Select a property..."
+               formControlName="property"
+               [matAutocomplete]="propertyAuto">
+        <mat-autocomplete #propertyAuto="matAutocomplete" (optionSelected)="selectProp($event)">
+            <mat-optgroup *ngFor="let group of filteredProperties | async" [label]="group.namespace">
+                <mat-option *ngFor="let option of group.options" [value]="option.property" [title]="option.property" [disabled]="option.disabled">
+                    {{option.name}}
+                </mat-option>
+            </mat-optgroup>
+        </mat-autocomplete>
+    </mat-form-field>
+    <mat-form-field *ngIf="isOntologyProperty; else notOntProp" class="w-100">
+        <mat-label>Ontology IRI</mat-label>
+        <input matInput type="text" aria-label="Value" formControlName="value" required/>
+        <mat-error *ngIf="propertyForm.get('value').errors?.pattern">The value provided is not a valid IRI</mat-error>
+    </mat-form-field>
+    <ng-template #notOntProp>
+        <mat-radio-group *ngIf="propertyForm.controls.property.value === deprecatedIri; else notDeprecated" formControlName="value" class="d-inline-flex flex-column">
+            <mat-radio-button value="true">True</mat-radio-button>
+            <mat-radio-button value="false">False</mat-radio-button>
+        </mat-radio-group>
+        <ng-template #notDeprecated>
+            <mat-form-field class="w-100">
+                <mat-label>Value</mat-label>
+                <textarea matInput name="value" formControlName="value" required></textarea>
+            </mat-form-field>
+            <language-select [parentForm]="propertyForm"></language-select>
+        </ng-template>
+    </ng-template>
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="submit()" [disabled]="propertyForm.invalid">Submit</button>
 </div>

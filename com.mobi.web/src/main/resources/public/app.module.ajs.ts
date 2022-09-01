@@ -24,17 +24,9 @@
 import * as angular from 'angular';
 import * as Snap from 'snapsvg';
 import * as chroma from 'chroma-js';
-import * as CodeMirror  from 'codemirror-minified';
-(<any> window).CodeMirror = CodeMirror;
 import * as Handsontable from 'handsontable';
 (<any> window).Handsontable = Handsontable;
 import { downgradeComponent } from '@angular/upgrade/static';
-import 'codemirror-no-newlines/no-newlines.js';
-import 'codemirror-minified/mode/sparql/sparql.js';
-import 'codemirror-minified/mode/turtle/turtle.js';
-import 'codemirror-minified/mode/xml/xml.js';
-import 'codemirror-minified/mode/javascript/javascript.js';
-import 'codemirror-minified/addon/edit/matchbrackets.js';
 import 'lodash';
 import 'jquery';
 import 'popper.js';
@@ -42,7 +34,6 @@ import 'angular-animate';
 import 'angular-touch';
 import 'ui-bootstrap4';
 import 'daemonite-material';
-import 'angular-ui-codemirror';
 import '@uirouter/angular-hybrid';
 import 'angular-toastr';
 import 'angular-uuid';
@@ -64,7 +55,6 @@ import 'font-awesome/css/font-awesome.min.css';
 import 'handsontable/dist/handsontable.full.min.css';
 import 'ui-select/dist/select.min.css';
 import 'angular-toastr/dist/angular-toastr.css';
-import 'codemirror-minified/lib/codemirror.css';
 import './css/angular-material.scss';
 import './css/customMaterial.scss';
 import './css/manchestersyntax.scss';
@@ -72,8 +62,6 @@ import './css/styles.scss';
 import '@triply/yasgui/build/yasgui.min.css';
 import './css/yasgui.scss';
 import 'gridjs/dist/theme/mermaid.min.css';
-
-import './vendor/manchestersyntax.js';
 
 import ariaConfig from './aria.config';
 import httpInterceptorConfig from './httpInterceptor.config';
@@ -116,7 +104,6 @@ angular
         'ngMessages',
         'toastr',
         'ui.bootstrap',
-        'ui.codemirror',
         'ui.router',
         'ui.router.upgrade',
         'ui.select',

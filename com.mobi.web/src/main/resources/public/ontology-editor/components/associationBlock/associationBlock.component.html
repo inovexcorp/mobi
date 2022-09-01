@@ -21,6 +21,10 @@
   #L%
   -->
 <div class="association-block py-1 h-100">
-    <info-message ng-if="!dvm.os.listItem.flatEverythingTree.length">(No entities defined)</info-message>
-    <everything-tree ng-if="dvm.os.listItem.flatEverythingTree.length" hierarchy="dvm.os.listItem.flatEverythingTree" update-search="dvm.updateSearch(value)" branch-id="dvm.os.listItem.versionedRdfRecord.branchId"></everything-tree>
+    <info-message *ngIf="!this.os.listItem.flatEverythingTree.length">(No entities defined)</info-message>
+    <everything-tree *ngIf="this.os.listItem.flatEverythingTree.length"
+                     [hierarchy]="this.os.listItem.flatEverythingTree"
+                     (updateSearch)="this.updateSearch(value)"
+                     [branchId]="this.os.listItem.versionedRdfRecord.branchId">
+    </everything-tree>
 </div>
