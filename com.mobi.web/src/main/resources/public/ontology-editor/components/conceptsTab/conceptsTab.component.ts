@@ -20,56 +20,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { filter, concat, includes } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { includes, concat, filter } from 'lodash';
 
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./conceptsTab.component.html');
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:conceptsTab
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:modalService
+ * @class ontology-editor.ConceptsTabComponent
  *
- * @description
- * `conceptsTab` is a component that creates a page containing the
- * {@link ontology-editor.component:conceptHierarchyBlock} of the current
- * {@link shared.service:ontologyStateService selected ontology/vocabulary} and information about a
- * selected concept from that list. The selected concept display includes a
- * {@link ontology-editor.component:selectedDetails}, a button to delete the concept, an
- * {@link ontology-editor.component:annotationBlock}, and a {@link ontology-editor.component:usagesBlock}.
- * The component houses the method for opening a modal for deleting concepts.
+ * A component that creates a page containing the {@link ontology-editor.ConceptHierarchyBlockComponent} of the current
+ * {@link shared.OntologyStateService#listItem selected ontology/vocabulary} and information about a selected concept
+ * from that list. The selected concept display includes a {@link ontology-editor.SelectedDetailsComponent}, a button to
+ * delete the concept, an {@link ontology-editor.AnnotationBlockComponent}, and a
+ * {@link ontology-editor.UsagesBlockComponent}. The component houses the method for opening a modal for deleting
+ * concepts.
  */
-const conceptsTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: conceptsTabComponentCtrl
-};
+@Component({
+    selector: 'concepts-tab',
+    templateUrl: './conceptsTab.component.html'
+})
+export class ConceptsTabComponent implements OnInit {
+    constructor(public os: OntologyStateService, public om: OntologyManagerService,
+                @Inject('propertyManagerService') public pm, private dialog: MatDialog) {}
 
-conceptsTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'propertyManagerService', 'modalService'];
+    relationshipList = [];
 
-function conceptsTabComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, propertyManagerService, modalService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.relationshipList = [];
-
-    dvm.$onInit = function() {
-        var schemeRelationships = filter(pm.conceptSchemeRelationshipList, iri => includes(dvm.os.listItem.iriList, iri));
-        dvm.relationshipList = concat(dvm.os.listItem.derivedSemanticRelations, schemeRelationships);
+    ngOnInit(): void {
+        const schemeRelationships = filter(this.pm.conceptSchemeRelationshipList, iri => includes(this.os.listItem.iriList, iri));
+        this.relationshipList = concat(this.os.listItem.derivedSemanticRelations, schemeRelationships);
     }
-    dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.os.deleteConcept);
+    showDeleteConfirmation(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>'
+            }
+        }).afterClosed().subscribe(result => {
+            if (result) {
+                this.os.deleteConcept();
+            }
+        });
     }
-    dvm.seeHistory = function() {
-        dvm.os.listItem.seeHistory = true;
+    seeHistory(): void {
+        this.os.listItem.seeHistory = true;
     }
 }
-
-export default conceptsTabComponent;

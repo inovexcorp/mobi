@@ -20,110 +20,102 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, get, concat, reject, includes, findIndex, some, sortBy, pick } from 'lodash';
+import { map, get, concat, reject, includes, findIndex, sortBy, pick } from 'lodash';
+import { switchMap } from 'rxjs/operators';
+import { Component, Inject, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material';
+
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OWL } from '../../../prefixes';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
 
 import './importsBlock.component.scss';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { Difference } from '../../../shared/models/difference.class';
-import { first } from 'rxjs/operators';
-
-const template = require('./importsBlock.component.html');
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:importsBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
- * @requires shared.service:utilService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:modalService
+ * @class ontology-editor.ImportsBlockComponent
  *
- * @description
- * `importsBlock` is a component that creates a section that displays the imports on the ontology represented by
- * the provided {@link shared.service:ontologyStateService list item}. The section contains buttons for adding an
- * import and reloading the imports. Each import is displayed as its IRI and with a remove button. The component
- * houses the methods for opening the modal for {@link ontology-editor.component:importsOverlay adding} and removing
- * imports.
+ * A component that creates a section that displays the imports on the ontology represented by the provided
+ * {@link OntologyListItem}. The section contains buttons for adding an import and reloading the imports. Each import is
+ * displayed as its IRI and with a remove button. The component houses the methods for opening the modal for
+ * {@link ontology-editor.ImportsOverlayComponent adding} and removing imports.
  * 
- * @param {Object} listItem An object representing an ontology as defined by the
- * {@link shared.service:ontologyStateService ontologyStateService}.
+ * @param {OntologyListItem} listItem A {@link OntologyListItem} representing an ontology
  */
-const importsBlockComponent = {
-    template,
-    bindings: {
-        listItem: '<'
-    },
-    controllerAs: 'dvm',
-    controller: importsBlockComponentCtrl
-};
+@Component({
+    selector: 'imports-block',
+    templateUrl: './importsBlock.component.html'
+})
+export class ImportsBlockComponent implements OnChanges {
+    showRemoveOverlay = false;
+    imports: JSONLDId[] = [];
+    indirectImports: string[] = [];
 
-importsBlockComponentCtrl.$inject = ['$q', '$timeout', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService', 'modalService'];
+    @Input() listItem: OntologyListItem;
 
-function importsBlockComponentCtrl($q, $timeout, ontologyStateService: OntologyStateService, prefixes, utilService, propertyManagerService, modalService) {
-    var dvm = this;
-    var util = utilService;
-    var pm = propertyManagerService;
-    dvm.prefixes = prefixes;
-    dvm.os = ontologyStateService;
-    dvm.showRemoveOverlay = false;
-    dvm.indirectImports = [];
+    constructor(private dialog: MatDialog, public os: OntologyStateService, @Inject('utilService') private util, 
+        @Inject('propertyManagerService') private pm) {}
 
-    dvm.$onChanges = function() {
-        dvm.setIndirectImports();
+    ngOnChanges(): void {
+        this.setImports();
+        this.setIndirectImports();
     }
-    dvm.setupRemove = function(url) {
-        dvm.url = url;
-        dvm.showRemoveOverlay = true;
-        var msg = '';
-        if (dvm.os.hasChanges(dvm.listItem)) {
+    setupRemove(url: string): void {
+        this.showRemoveOverlay = true;
+        let msg = '';
+        if (this.os.hasChanges(this.listItem)) {
             msg = '<p><strong>NOTE: You have some unsaved changes.</strong></p><p>Would you like to save those changes and remove the import: <strong>' + url + '</strong>?</p>';
         } else {
             msg = '<p>Are you sure you want to remove the import: <strong>' + url + '</strong>?</p>';
         }
-        modalService.openConfirmModal(msg, dvm.remove);
+        this.dialog.open(ConfirmModalComponent, { data: { content: msg } }).afterClosed().subscribe(result => {
+            if (result) {
+                this.remove(url);
+            }
+        });
     }
-    dvm.remove = function() {
-        var importsIRI = dvm.prefixes.owl + 'imports';
-        dvm.os.addToDeletions(dvm.listItem.versionedRdfRecord.recordId, util.createJson(dvm.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
-        pm.remove(dvm.listItem.selected, importsIRI, findIndex(dvm.listItem.selected[importsIRI], {'@id': dvm.url}));
-        const difference = new Difference();
-        difference.additions = dvm.listItem.additions;
-        difference.deletions = dvm.listItem.deletions;
-        dvm.os.saveChanges(dvm.listItem.versionedRdfRecord.recordId, difference).pipe(first()).toPromise()
-            .then(() => dvm.os.afterSave().pipe(first()).toPromise(), $q.reject)
-            .then(() => dvm.os.updateOntology(dvm.listItem.versionedRdfRecord.recordId, dvm.listItem.versionedRdfRecord.branchId, dvm.listItem.versionedRdfRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit).pipe(first()).toPromise(), $q.reject)
-            .then(() => {
-                dvm.os.updateIsSaved();
-                // dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem);
-                dvm.setIndirectImports();
-            }, util.createErrorToast);
+    remove(url: string): void {
+        this.os.addToDeletions(this.listItem.versionedRdfRecord.recordId, this.util.createJson(this.listItem.selected['@id'], OWL + 'imports', {'@id': url}));
+        this.pm.remove(this.listItem.selected, OWL + 'imports', findIndex(this.listItem.selected[OWL + 'imports'], {'@id': url}));
+        this.os.saveCurrentChanges(this.listItem).pipe(
+            switchMap(() => this.os.updateOntology(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, this.listItem.upToDate, this.listItem.inProgressCommit))
+        ).subscribe(() => {
+            this.setImports();
+            this.setIndirectImports();
+        }, () => {});
     }
-    dvm.get = function(obj) {
-        return get(obj, '@id');
+    failed(iri: string): boolean {
+        return includes(this.listItem.failedImports, iri);
     }
-    dvm.failed = function(iri) {
-        return includes(dvm.listItem.failedImports, iri);
+    refresh(): void {
+        this.os.updateOntology(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, this.listItem.upToDate, this.listItem.inProgressCommit, true)
+            .subscribe(() => {
+                this.listItem.hasPendingRefresh = true;
+                this.setImports();
+                this.setIndirectImports();
+                this.util.createSuccessToast('Refreshed Imports');
+            }, error => this.util.createErrorToast(error));
     }
-    dvm.refresh = function() {
-        dvm.os.updateOntology(dvm.listItem.versionedRdfRecord.recordId, dvm.listItem.versionedRdfRecord.branchId, dvm.listItem.versionedRdfRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit, true).pipe(first()).toPromise()
-            .then(response => {
-                dvm.os.listItem.hasPendingRefresh = true;
-                dvm.setIndirectImports();
-                util.createSuccessToast('');
-            }, util.createErrorToast);
+    setImports(): void {
+        this.imports = sortBy(this.listItem.selected[OWL + 'imports'], '@id');
     }
-    dvm.setIndirectImports = function() {
-        var directImports = map(get(dvm.listItem.selected, prefixes.owl + 'imports'), '@id');
-        var goodImports = map(dvm.listItem.importedOntologies, item => pick(item, 'id', 'ontologyId'));
-        var failedImports = map(dvm.listItem.failedImports, iri => ({ id: iri, ontologyId: iri }));
-        var allImports = concat(goodImports, failedImports);
-        var filtered = reject(allImports, item => includes(directImports, item.id) || includes(directImports, item.ontologyId));
+    setIndirectImports(): void {
+        const directImports = map(get(this.listItem.selected, OWL + 'imports'), '@id');
+        const goodImports = map(this.listItem.importedOntologies, item => pick(item, 'id', 'ontologyId'));
+        const failedImports = map(this.listItem.failedImports, iri => ({ id: iri, ontologyId: iri }));
+        const allImports = concat(goodImports, failedImports);
+        const filtered = reject(allImports, item => includes(directImports, item.id) || includes(directImports, item.ontologyId));
         // TODO: currently a new filter was added in order to support situations where the back-end cannot set an ontologyIRI to ontologyID. Long term, changes will be made on the backend to properly support these scenarios.
-        dvm.indirectImports = sortBy(map(filtered, item => item.ontologyId || item.id));
+        this.indirectImports = sortBy(map(filtered, item => item.ontologyId || item.id));
     }
-    dvm.showNewOverlay = function() {
-        modalService.openModal('importsOverlay', {}, dvm.setIndirectImports);
+    showNewOverlay(): void {
+        this.dialog.open(ImportsOverlayComponent).afterClosed().subscribe(result => {
+            if (result) {
+                this.setImports();
+                this.setIndirectImports();
+            }
+        });
     }
 }
-
-export default importsBlockComponent;

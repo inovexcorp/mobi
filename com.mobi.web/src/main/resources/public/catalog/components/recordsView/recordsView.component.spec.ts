@@ -24,8 +24,10 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { PageEvent } from '@angular/material';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule, MatPaginatorModule, MatSelectModule, PageEvent } from '@angular/material';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
@@ -34,11 +36,12 @@ import {
     cleanStylesFromDOM,
     mockUtil
 } from '../../../../../../test/ts/Shared';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { SharedModule } from '../../../shared/shared.module';
 import { RecordCardComponent } from '../recordCard/recordCard.component';
 import { RecordFiltersComponent } from '../recordFilters/recordFilters.component';
 import { RecordsViewComponent } from './recordsView.component';
@@ -67,12 +70,20 @@ describe('Records View component', function() {
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ 
+                NoopAnimationsModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatFormFieldModule,
+                MatSelectModule,
+                MatPaginatorModule
+             ],
             declarations: [
                 RecordsViewComponent,
-                MockComponent(RecordFiltersComponent),
+                MockComponent(InfoMessageComponent),
                 MockComponent(RecordFiltersComponent),
                 MockComponent(RecordCardComponent),
+                MockComponent(SearchBarComponent)
             ],
             providers: [
                 MockProvider(CatalogManagerService),
@@ -198,13 +209,10 @@ describe('Records View component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.records-view')).length).toEqual(1);
         });
-        ['mat-paginator', 'record-filters'].forEach(test => {
+        ['mat-paginator', 'search-bar', 'record-filters'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toBe(1);
             });
-        });
-        it('with a search field', function() {
-            expect(element.queryAll(By.css('mat-form-field input.record-search')).length).toEqual(1);
         });
         it('with a select for sort options', function() {
             expect(element.queryAll(By.css('mat-form-field mat-select')).length).toEqual(1);

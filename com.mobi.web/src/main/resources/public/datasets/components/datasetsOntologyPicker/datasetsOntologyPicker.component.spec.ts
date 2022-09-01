@@ -40,6 +40,7 @@ import { CATALOG, DCTERMS, ONTOLOGYEDITOR, XSD } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DatasetsOntologyPickerComponent } from './datasetsOntologyPicker.component';
@@ -76,6 +77,7 @@ describe('Datasets Ontology Picker component', function() {
                 DatasetsOntologyPickerComponent,
                 MockComponent(InfoMessageComponent),
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(SearchBarComponent)
             ],
             providers: [
                 MockProvider(CatalogManagerService),
@@ -243,7 +245,7 @@ describe('Datasets Ontology Picker component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.datasets-ontology-picker')).length).toEqual(1);
         });
-        ['.field-label', 'mat-form-field', 'input', '.ontologies', 'mat-chip-list'].forEach(test => {
+        ['.field-label', 'search-bar', '.ontologies', 'mat-chip-list'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });

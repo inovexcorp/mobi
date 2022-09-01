@@ -368,10 +368,6 @@ describe('Class Mapping Details component', function() {
             expect(mapperStateStub.highlightIndexes).toEqual([]);
             expect(component.setPropMappings).toHaveBeenCalledWith();
         });
-        // TODO
-        // it('should set the list of property mappings', function() {
-
-        // });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

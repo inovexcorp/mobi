@@ -21,107 +21,95 @@
  * #L%
  */
 import { get, reject, find, noop } from 'lodash';
-import { first } from 'rxjs/operators';
+import { flatMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './mergeBlock.component.scss';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./mergeBlock.component.html');
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { CATALOG } from '../../../prefixes';
+import { throwError } from 'rxjs';
+import { FormBuilder } from '@angular/forms';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:mergeBlock
- * @requires $q
- * @requires shared.service:utilService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:prefixes
+ * @class ontology-editor.MergeBlockComponent
  *
- * @description
  * `mergeBlock` is a component that creates a form for merging the current branch of the opened
- * {@link shared.service:ontologyStateService ontology} into another branch. The form contains a
- * {@link shared.component:branchSelect} for the target branch, a {@link shared.component:checkbox} for indicating
+ * {@link shared.OntologyStateService#listItem ontology} into another branch. The form contains a
+ * {@link shared.BranchSelectComponent} for the target branch, a {@link shared.CheckboxComponent} for indicating
  * whether the source branch should be removed after the merge, a button to submit the merge, and a button to cancel
- * the merge. Once a target is selected, a {@link shared.component:commitDifferenceTabset} is displayed. The form
+ * the merge. Once a target is selected, a {@link shared.CommitDifferenceTabsetComponent} is displayed. The form
  * calls the appropriate methods to check for conflicts before performing the merge. 
  */
-const mergeBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: mergeBlockComponentCtrl
-};
+@Component({
+    selector: 'merge-block',
+    templateUrl: './mergeBlock.component.html'
+})
+export class MergeBlockComponent implements OnInit, OnDestroy {
+    constructor(public os: OntologyStateService, public cm: CatalogManagerService, @Inject('utilService') public util, private fb: FormBuilder) {}
 
-mergeBlockComponentCtrl.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes', '$q'];
+    catalogId = '';
+    error = '';
+    branches = [];
+    branchTitle = '';
+    targetHeadCommitId = undefined;   
+    commits = [];
+    mergeRequestForm = this.fb.group({});
 
-function mergeBlockComponentCtrl(utilService, ontologyStateService: OntologyStateService, catalogManagerService: CatalogManagerService, prefixes, $q) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
 
-    var catalogId = '';
-    dvm.error = '';
-    dvm.branches = [];
-    dvm.branchTile = '';
-    dvm.targetHeadCommitId = undefined;   
-    dvm.commits = [];     
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+        this.branches = reject(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
+        const branch = find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
+        this.branchTitle = this.util.getDctermsValue(branch, 'title');
 
-    dvm.$onInit = function() {
-        catalogId = get(cm.localCatalog, '@id', '');
-        dvm.branches = reject(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
-        var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
-        dvm.branchTitle = dvm.util.getDctermsValue(branch, 'title');
-
-        dvm.changeTarget();
+        this.changeTarget(undefined);
     }
-    dvm.$onDestroy = function() {
-        if (dvm.os.listItem?.merge) {
-            dvm.os.listItem.merge.difference = undefined;
-            dvm.os.listItem.merge.startIndex = 0;
+    ngOnDestroy(): void {
+        if (this.os.listItem?.merge) {
+            this.os.listItem.merge.difference = undefined;
+            this.os.listItem.merge.startIndex = 0;
         }
     }
-    dvm.getEntityName = function(entityIRI) {
-        return dvm.os.getEntityNameByListItem(entityIRI).bind(dvm.os);
+    getEntityName(entityIRI: string): string {
+        return this.os.getEntityNameByListItem(entityIRI, this.os.listItem);
     }
-    dvm.changeTarget = function(value) {
-        dvm.os.listItem.merge.difference = undefined;
-        dvm.os.listItem.merge.startIndex = 0;
-        dvm.os.listItem.merge.target = value;
-        if (dvm.os.listItem.merge.target) {
-            cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
-                .then(target => {
-                    dvm.targetHeadCommitId = dvm.util.getPropertyId(target, prefixes.catalog + 'head');
-                    return dvm.os.getMergeDifferences(dvm.os.listItem.versionedRdfRecord.commitId, dvm.targetHeadCommitId, cm.differencePageSize, 0).pipe(first()).toPromise();
-                    }, $q.reject)
-                .then(noop, errorMessage => {
-                    dvm.util.createErrorToast(errorMessage);
-                    dvm.os.listItem.merge.difference = undefined;
-                });
+    changeTarget(value): void {
+        this.os.listItem.merge.difference = undefined;
+        this.os.listItem.merge.startIndex = 0;
+        this.os.listItem.merge.target = value;
+        if (this.os.listItem.merge.target) {
+            this.cm.getRecordBranch(this.os.listItem.merge.target['@id'], this.os.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
+                flatMap(target => {
+                    this.targetHeadCommitId = this.util.getPropertyId(target, CATALOG + 'head');
+                    return this.os.getMergeDifferences(this.os.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0);
+                })
+            ).subscribe(noop, errorMessage => {
+                    this.util.createErrorToast(errorMessage);
+                    this.os.listItem.merge.difference = undefined;
+                    throwError(errorMessage);
+                    return throwError(errorMessage);
+            });
         } else {
-            dvm.os.listItem.merge.difference = undefined;
+            this.os.listItem.merge.difference = undefined;
         }
     }
-    dvm.retrieveMoreResults = function(limit, offset) {
-        dvm.os.getMergeDifferences(dvm.os.listItem.versionedRdfRecord.commitId, dvm.targetHeadCommitId, limit, offset).pipe(first()).toPromise()
-            .then(noop, dvm.util.createErrorToast);
+    retrieveMoreResults(limit: number, offset: number): void {
+        this.os.getMergeDifferences(this.os.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, limit, offset).subscribe(noop, this.util.createErrorToast);
     }
-    dvm.submit = function() {
-        ontologyStateService.attemptMerge().toPromise()
-            .then(() => {
-                dvm.os.resetStateTabs();
-                dvm.util.createSuccessToast('Your merge was successful.');
-                dvm.os.cancelMerge();
-            }, error => dvm.error = error);
+    submit(): void {
+        this.os.attemptMerge()
+            .subscribe(() => {
+                this.os.resetStateTabs();
+                this.util.createSuccessToast('Your merge was successful.');
+                this.os.cancelMerge();
+            }, error => this.error = error);
     }
-    dvm.isDisabled = function() {
-        return !(dvm.commits.length > 0);
+    isDisabled(): boolean {
+        return !(this.commits.length > 0);
     }
-    dvm.setCommits = function(value) {
-        dvm.commits = value;
+    setCommits(value): void {
+        this.commits = value;
     }
 }
-
-export default mergeBlockComponent;

@@ -20,25 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Upload Ontology Changes</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Upload Ontology Changes</h1>
+<div mat-dialog-content class="pb-1">
+    <error-display *ngIf="error && error.errorMessage">
+        {{error.errorMessage}}
+        <ul>
+            <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">
+                {{ detailError }}
+            </li>
+        </ul>
+    </error-display>
+    <file-input [displayText]="'Select a file'" [(files)]="file" [accept]="['.owl','.ttl','.xml','.jsonld','.owx','.rdf','.obo']" required></file-input>
 </div>
-<div class="modal-body">
-    <form name="dvm.form" novalidate autocomplete="off">
-        <error-display ng-if="dvm.error.errorMessage">
-            {{dvm.error.errorMessage}}
-            <ul>
-                <li class="text-danger m-0" ng-repeat="detailError in dvm.error.errorDetails">
-                    {{ detailError }}
-                </li>
-            </ul>
-        </error-display>
-        <warning-message ng-if="dvm.error.warningMessage">{{dvm.error.warningMessage}}</warning-message>
-        <file-input [display-text]="'Select a file'" [(files)]="dvm.file" [accept]="['.owl','.ttl','.xml','.jsonld','.owx','.rdf','.obo']" required></file-input>
-    </form>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button type="button" class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.form.$invalid">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="submit()" [disabled]="!file">Submit</button>
 </div>

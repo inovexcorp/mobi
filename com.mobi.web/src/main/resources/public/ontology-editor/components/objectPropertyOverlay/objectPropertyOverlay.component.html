@@ -20,28 +20,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Add Object Property Value</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <form name="dvm.propertyForm" class="content clearfix" novalidate autocomplete="off">
+<div class="object-property-overlay">
+    <h1 mat-dialog-title>Add Object Property Value</h1>
+    <form mat-dialog-content [formGroup]="objectPropertyForm" class="object-property-overlay-form">
         <!-- object property list -->
-        <div class="form-group">
-            <label class="control-label">Object Property</label>
-            <ui-select ng-model="dvm.os.propertySelect" autofocus>
-                <ui-select-match placeholder="Select an object property">{{$select.selected}}</ui-select-match>
-                <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="property in dvm.values">
-                    <div title="property" ng-bind-html="dvm.os.getEntityNameByListItem(property) | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-
+        <mat-form-field class="w-100">
+            <mat-label>Values</mat-label>
+            <input type="text"
+                   matInput
+                   formControlName="propertySelect"
+                   placeholder="Select values"
+                   [matAutocomplete]="autoComplete">
+            <mat-autocomplete #autoComplete>
+                <mat-option *ngFor="let value of filteredIriList | async" [value]="value">
+                    {{this.os.getEntityNameByListItem(value)}}
+                </mat-option>
+            </mat-autocomplete>
+        </mat-form-field>
         <!-- value -->
-        <iri-select-ontology bind-model="dvm.os.propertyValue" display-text="'Value'" select-list="dvm.individuals" multi-select="false" change-event="dvm.os.propertyValue = value"></iri-select-ontology>
+<!--    <iri-select-ontology bind-model="dvm.os.propertyValue" display-text="'Value'" select-list="dvm.individuals" multi-select="false" change-event="dvm.os.propertyValue = value"></iri-select-ontology>-->
     </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.propertyForm.$invalid || dvm.os.propertySelect === undefined || !dvm.os.propertyValue" ng-click="dvm.addProperty(dvm.os.propertySelect, dvm.os.propertyValue)">Submit</button>
+    <div mat-dialog-actions class="object-property-overlay-actions">
+        <button mat-raised-button [mat-dialog-close]="false" (click)="cancel()">Cancel</button>
+        <button mat-raised-button color="primary" (click)="addProperty()" [disabled]="!objectPropertyForm.valid">Submit</button>
+    </div>
 </div>

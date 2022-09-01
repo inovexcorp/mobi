@@ -20,48 +20,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import {OntologyManagerService} from "../../../shared/services/ontologyManager.service";
 
 const template = require('./individualsTab.component.html');
 
 /**
  * @ngdoc component
- * @name ontology-editor.component:individualsTab
+ * @class ontology-editor.IndividualsTabComponent
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:modalService
  *
  * @description
  * `individualsTab` is a component that creates a page containing the
- * {@link ontology-editor.component:individualHierarchyBlock} of the current
- * {@link shared.service:ontologyStateService selected ontology} and information about a selected
+ * {@link ontology-editor.IndividualHierarchyBlockComponent} of the current
+ * {@link shared.OntologyStateService#listItem selected ontology} and information about a selected
  * individual from that list. The selected individual display includes a
- * {@link ontology-editor.component:selectedDetails}, a button to delete the individual, a
- * {@link ontology-editor.component:datatypePropertyBlock}, and a
- * {@link ontology-editor.component:objectPropertyBlock}. The component houses the method for opening a
+ * {@link ontology-editor.SelectedDetailsComponent}, a button to delete the individual, a
+ * {@link ontology-editor.DatatypePropertyBlockComponent}, and a
+ * {@link ontology-editor.ObjectPropertyBlockComponent}. The component houses the method for opening a
  * modal for deleting individuals.
  */
-const individualsTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: individualsTabComponentCtrl
-};
+@Component({
+    templateUrl: './individualsTab.component.html',
+    selector: 'individuals-tab'
+})
+export class IndividualsTabComponent {
+    constructor(public os:OntologyStateService,
+                private dialog: MatDialog,
+                public om: OntologyManagerService) {}
 
-individualsTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'modalService']
-
-function individualsTabComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.om = ontologyManagerService;
-
-    dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.os.deleteIndividual);
+    showDeleteConfirmation(): void {
+        this.dialog.open(ConfirmModalComponent,
+            { data:
+                    {  body:
+                        '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>',
+                    }
+        }).afterClosed().subscribe()
     }
-    dvm.seeHistory = function() {
-        dvm.os.listItem.seeHistory = true;
+    seeHistory(): void {
+        this.os.listItem.seeHistory = true;
     }
 }
-
-export default individualsTabComponent;

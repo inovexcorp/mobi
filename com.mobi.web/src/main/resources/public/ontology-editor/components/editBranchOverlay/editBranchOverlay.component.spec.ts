@@ -126,6 +126,9 @@ describe('Edit Branch Overlay component', function() {
                 component.data.branch[DCTERMS + 'description'] = [{'@value': 'description'}];
                 catalogManagerStub.updateRecordBranch.and.returnValue(of(null));
             });
+            afterEach(function() {
+                component.data.branch = branch;
+            });
             describe('with initial setup', function() {
                 it('always calls this method', function() {
                     component.edit();

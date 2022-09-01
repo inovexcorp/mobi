@@ -31,7 +31,7 @@ export class HighlightTextPipe implements PipeTransform {
       return value;
     }
 
-    const regex = new RegExp(args, 'gi');
+    const regex = new RegExp(args.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'gi');
     const match = value.match(regex);
 
     if (!match) {

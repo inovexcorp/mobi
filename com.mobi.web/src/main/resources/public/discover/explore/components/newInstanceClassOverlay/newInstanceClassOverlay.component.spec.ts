@@ -22,7 +22,7 @@
  */
 import { DebugElement } from '@angular/core';
 import * as uuid from 'uuid';
-import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -39,9 +39,9 @@ import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { NewInstanceClassOverlayComponent } from './newInstanceClassOverlay.component';
 import { NewInstancePropertyOverlayComponent } from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
-import { of, throwError} from 'rxjs';
-import {HttpResponse} from '@angular/common/http';
-import {InstanceDetails} from '../../../models/instanceDetails.interface';
+import { of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { InstanceDetails } from '../../../models/instanceDetails.interface';
 
 describe('New Instance Class Overlay component', function() {
     let component: NewInstanceClassOverlayComponent;

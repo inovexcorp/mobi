@@ -24,6 +24,11 @@
 @import "../../../css/variables";
 
 .selected-details {
+    .selected-heading {
+        .editable-iri {
+            margin-left: .5rem;
+        }
+    }
     padding-bottom: 15px;
 
     .entity-name {

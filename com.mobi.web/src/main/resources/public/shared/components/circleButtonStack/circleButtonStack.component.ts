@@ -23,33 +23,24 @@
 
 import './circleButtonStack.component.scss';
 
-const template = require('./circleButtonStack.component.html');
-
 /**
- * @ngdoc component
- * @name shared.component:circleButtonStack
+ * @class shared.CircleButtonStackComponent
  * 
- * @description
- * `circleButtonStack` is a component that creates a Bootstrap circle button (`button.btn-float`) which reveals
- * transcluded content on hover. The transcluded content is expected to be a series of circle buttons with icons
- * inside that perform a variety of actions on click. The expectation is that the last button in the stack will be
- * "normal" size and the other will be sized smaller with the Bootstrap `btn-sm` class.Best practice is to also use
- * a {@link shared.directive:buttonHoverText} on each button to provide context as to what the button will do.
+ * A component that creates a Material Fab button (`mat-fab`) which reveals transcluded content on hover. The
+ * transcluded content is expected to be a series of `mat-mini-fab` buttons with icons inside that perform a variety of
+ * actions on click ending with a `mat-fab` button to replace the main button. Best practice is color each button
+ * differently and to also use `matTooltip` on each button to provide context as to what the button will do.
  * 
  * @usage
  * <circle-button-stack>
- *     <button class="btn btn-float btn-success btn-sm" button-hover-text="Secondray Action"></button>
- *     <button class="btn btn-float btn-primary" button-hover-text="Main Action"></button>
+ *     <button mat-mini-fab color="accent" [matTooltip]="Secondary Action"><mat-icon>local_offer</mat-icon></button>
+ *     <button mat-mini-fab color="primary" [matTooltip]="Main Action"><mat-icon>add</mat-icon></button>
  * </circle-button-stack>
  */
-const circleButtonStackComponent = {
-    template,
-    transclude: true,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: circleButtonStackComponentCtrl
-};
+import { Component } from '@angular/core';
 
-function circleButtonStackComponentCtrl() {}
-
-export default circleButtonStackComponent;
+@Component({
+    selector: 'circle-button-stack',
+    templateUrl: './circleButtonStack.component.html',
+})
+export class CircleButtonStackComponent {}

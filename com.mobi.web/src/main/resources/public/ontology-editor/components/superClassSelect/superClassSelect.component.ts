@@ -20,51 +20,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { map } from 'lodash';
 
-const template = require('./superClassSelect.component.html');
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:superClassSelect
+ * @class ontology-editor.SuperClassSelectComponent
  *
- * @description
- * `classSelect` is a component that creates a collapsible {@link ontology-editor.component:ontologyClassSelect} for
- * selecting the super classes of a class. When collapsed and then reopened, all previous values are cleared. The
- * value of the `ontologyClassSelect` is bound to `bindModel`, but only one way. The provided `changeEvent`
- * function is expected to update the value of `bindModel`.
+ * A component that creates a collapsible {@link ontology-editor.OntologyClassSelectComponent} for selecting the super
+ * classes of a class. When collapsed and then reopened, all previous values are cleared. The value of the select is
+ * bound to `selected` as an array of {@link JSONLDId}.
  *
- * @param {Object[]} bindModel The variable to bind the selected classes to in the form of `{'@id': propIRI}`
- * @param {Function} changeEvent A function that will be called when the value of the `ontologyClassSelect` changes.
- * Should update the value of `bindModel`. Expects an argument called `values`.
+ * @param {JSONLDId[]} selected The variable to bind the selected classes to in the form of `{'@id': propIRI}`
  */
-const superClassSelectComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: superClassSelectComponentCtrl
-};
+@Component({
+    selector: 'super-class-select',
+    templateUrl: './superClassSelect.component.html'
+})
+export class SuperClassSelectComponent implements OnChanges {
+    @Input() selected: JSONLDId[] = [];
+    
+    @Output() selectedChange = new EventEmitter<JSONLDId[]>();
 
-function superClassSelectComponentCtrl() {
-    var dvm = this;
-    dvm.isShown = false;
+    isShown = false;
+    iris: string[] = [];
 
-    dvm.$onChanges = function() {
-        dvm.iris = map(dvm.bindModel, '@id');
+    constructor() {}
+
+    ngOnChanges(): void {
+        this.iris = map(this.selected, '@id');
     }
-    dvm.show = function() {
-        dvm.isShown = true;
+    show(): void {
+        this.isShown = true;
     }
-    dvm.hide = function() {
-        dvm.isShown = false;
-        dvm.changeEvent({values: []});
+    hide(): void {
+        this.isShown = false;
+        this.iris = [];
+        this.selected = [];
+        this.selectedChange.emit([]);
     }
-    dvm.onChange = function(values) {
-        dvm.changeEvent({values: map(values, iri => ({'@id': iri}))});
+    onChange(newIris: string[]): void {
+        this.iris = newIris;
+        this.selected = newIris.map(iri => ({'@id': iri}));
+        this.selectedChange.emit(this.selected);
     }
 }
-
-export default superClassSelectComponent;

@@ -20,19 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Create Entity</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Create Entity</h1>
+<div mat-dialog-content>
+    <button mat-raised-button color="primary" class="create-class" (click)="createClass()">Class</button>
+    <button mat-raised-button color="primary" class="create-data-property" (click)="createDataProperty()">Data Property</button>
+    <button mat-raised-button color="primary" class="create-object-property" (click)="createObjectProperty()">Object Property</button>
+    <button mat-raised-button color="primary" class="create-annotation-property" (click)="createAnnotationProperty()">Annotation Property</button>
+    <button mat-raised-button color="primary" class="create-individual" (click)="createIndividual()">Individual</button>
+    <button mat-raised-button color="primary" class="create-concept" *ngIf="os.listItem.isVocabulary" (click)="createConcept()">Concept</button>
+    <button mat-raised-button color="primary" class="create-concept-scheme" *ngIf="os.listItem.isVocabulary"  (click)="createConceptScheme()">Concept Scheme</button>
 </div>
-<div class="modal-body text-center">
-    <button class="btn btn-primary w-100 mb-2 create-class" ng-click="dvm.createClass()">Class</button>
-    <button class="btn btn-primary w-100 mb-2 create-data-property" ng-click="dvm.createDataProperty()">Data Property</button>
-    <button class="btn btn-primary w-100 mb-2 create-object-property" ng-click="dvm.createObjectProperty()">Object Property</button>
-    <button class="btn btn-primary w-100 mb-2 create-annotation-property" ng-click="dvm.createAnnotationProperty()">Annotation Property</button>
-    <button class="btn btn-primary w-100 mb-2 create-individual" ng-click="dvm.createIndividual()">Individual</button>
-    <button ng-if="dvm.os.listItem.isVocabulary" class="btn btn-primary w-100 mb-2 create-concept" ng-click="dvm.createConcept()">Concept</button>
-    <button ng-if="dvm.os.listItem.isVocabulary" class="btn btn-primary w-100 create-concept-scheme" ng-click="dvm.createConceptScheme()">Concept Scheme</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
 </div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-</div>
+

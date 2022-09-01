@@ -22,19 +22,21 @@
   -->
 <div class="property-values mt-3">
     <div class="prop-header d-flex align-items-baseline clearfix">
-        <p class="text text-truncate m-0" title="{{dvm.property}}">{{dvm.os.getEntityNameByListItem(dvm.property, dvm.os.listItem)}}</p>
-        <small class="ml-1 text-muted text-truncate flex-1">&lt;{{dvm.property}}&gt;</small>
+        <p class="text text-truncate m-0" title="{{property}}">{{os.getEntityNameByListItem(property, os.listItem)}}</p>
+        <small class="ml-1 text-muted text-truncate flex-1">&lt;{{property}}&gt;</small>
     </div>
-    <div class="prop-value-container d-flex p-1 ml-3 mt-1" ng-repeat="value in dvm.entity[dvm.property]" disable-animate>
-        <span ng-if="::dvm.os.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">{{dvm.os.getEntityNameByListItem(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
-        <span ng-if="::!dvm.os.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">
-            <blank-node-value-display ng-if="::dvm.om.isBlankNodeId(value['@id'])" node-id="value['@id']"></blank-node-value-display>
-            <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && dvm.valueInList()" [value]="value" [highlight-text]="dvm.highlightText"></value-display>
-            <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && !dvm.valueInList()" [value]="value"></value-display>
-        </span>
+    <div class="prop-value-container d-flex p-1 ml-3 mt-1" *ngFor="let value of entity[property]; index as $index">
+        <span *ngIf="os.isLinkable(value['@id']); else notLinkable" class="value-display-wrapper flex-1 remove-min-width">{{os.getEntityNameByListItem(value['@id'])}} <small>&lt;<a (click)="os.goTo(value['@id'])">{{value['@id']}}</a>&gt;</small></span>
+        <ng-template #notLinkable><span class="value-display-wrapper flex-1 remove-min-width">
+            <blank-node-value-display *ngIf="om.isBlankNodeId(value['@id']); else notBlankNode" [nodeId]="value['@id']"></blank-node-value-display>
+            <ng-template #notBlankNode>
+                <value-display *ngIf="isHighlightedProp; else noHighlight" [value]="value" [highlightText]="highlightText"></value-display>
+                <ng-template #noHighlight><value-display [value]="value"></value-display></ng-template>
+            </ng-template>
+        </span></ng-template>
         <div class="button-container">
-            <button ng-if="dvm.remove && !dvm.os.isImported(dvm.entity['@id']) && dvm.os.canModify()" type="button" class="btn btn-link remove-min-width p-0 fa fa-times fa-fw" ng-click="dvm.remove({iri: dvm.property, index: $index})" title="Delete"></button>
-            <button ng-if="!dvm.om.isBlankNodeId(value['@id']) && dvm.edit && !dvm.os.isImported(dvm.entity['@id']) && dvm.os.canModify()" type="button" class="btn btn-link remove-min-width p-0 fa fa-pencil fa-fw" ng-click="dvm.edit({property: dvm.property, index: $index});" title="Edit"></button>
+            <button *ngIf="isRemoveSet && !os.isImported(entity['@id']) && os.canModify()" mat-icon-button color="primary" (click)="callRemove($index)" title="Delete"><mat-icon>delete</mat-icon></button>
+            <button *ngIf="!om.isBlankNodeId(value['@id']) && isEditSet && !os.isImported(entity['@id']) && os.canModify()" mat-icon-button color="primary" (click)="callEdit($index)" title="Edit"><mat-icon>edit</mat-icon></button>
         </div>
     </div>
 </div>

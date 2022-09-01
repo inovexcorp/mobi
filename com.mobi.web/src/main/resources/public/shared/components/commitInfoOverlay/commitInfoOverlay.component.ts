@@ -66,13 +66,13 @@ export class CommitInfoOverlayComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.retrieveMoreResults(100, 0).subscribe(noop, this.util.createErrorToast);
+        this.retrieveMoreResults(100, 0);
     }
     cancel(): void {
         this.dialogRef.close(false);
     }
-    retrieveMoreResults(limit: number, offset: number): Observable<null> {
-        return this.cm.getDifference(this.data.commit.id, null, limit, offset)
+    retrieveMoreResults(limit: number, offset: number): void {
+        this.cm.getDifference(this.data.commit.id, null, limit, offset)
             .pipe(
                 switchMap((response: HttpResponse<CommitDifference>) => {
                     this.tempAdditions = response.body.additions as JSONLDObject[];
@@ -103,7 +103,7 @@ export class CommitInfoOverlayComponent implements OnInit {
                     }
                     return throwError(errorMessage);
                 })
-            );
+            ).subscribe(noop, this.util.createErrorToast);
     }
     getEntityName(iri: string): string {
         if (get(this.entityNames, [iri, 'label'])) {

@@ -29,10 +29,7 @@
             <mat-icon matChipRemove>cancel</mat-icon>
         </mat-chip>
     </mat-chip-list>
-    <!-- TODO: Use search-bar when upgraded -->
-    <mat-form-field class="w-100 mt-2">
-        <input matInput placeholder="Search..." [(ngModel)]="ontologySearchConfig.searchText" (keyup.enter)="setOntologies()">
-    </mat-form-field>
+    <search-bar class="w-100 mt-2" [(bindModel)]="ontologySearchConfig.searchText" (submitEvent)="setOntologies()"></search-bar>
     <div class="ontologies" #datasetOntologies>
         <info-message *ngIf="ontologies.length === 0">No ontologies are available</info-message>
         <mat-selection-list #ontologyList (selectionChange)="selectedUpdate($event)">

@@ -21,85 +21,89 @@
  * #L%
  */
 import { find, get } from 'lodash';
-import { first } from 'rxjs/operators';
-import { UpgradeComponent } from '@angular/upgrade/static';
-import { Directive, ElementRef, Injector } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { MatTabChangeEvent } from '@angular/material';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { ONTOLOGYSTATE } from '../../../prefixes';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 import './ontologyTab.component.scss';
 
-const template = require('./ontologyTab.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:ontologyTab
- * @requires shared.service:ontologyStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class ontology-editor.OntologyTabComponent
  *
- * @description
- * `ontologyTab` is a component that creates a `div` containing all the components necessary for
- * displaying an ontology. This includes a {@link ontology-editor.component:mergeTab},
- * {@link ontology-editor.component:ontologyButtonStack}, and
- * {@link shared.component:materialTabset}. The `materialTabset` contains tabs for the
- * {@link ontology-editor.component:projectTab}, {@link ontology-editor.component:overviewTab},
- * {@link ontology-editor.component:classesTab}, {@link ontology-editor.component:propertiesTab},
- * {@link ontology-editor.component:individualsTab}, {@link ontology-editor.component:conceptSchemesTab},
- * {@link ontology-editor.component:conceptsTab}, {@link ontology-editor.component:searchTab},
- * {@link ontology-editor.component:savedChangesTab}, and {@link ontology-editor.component:commitsTab}.
+ * A component that creates a `div` containing all the components necessary for displaying an ontology. This includes a
+ * {@link ontology-editor.MergeTabComponent}, {@link ontology-editor.OntologyButtonStackComponent}, and a
+ * `mat-tab-group`. The `mat-tab-group` contains tabs for the {@link ontology-editor.ProjectTabComponent},
+ * {@link ontology-editor.OverviewTabComponent}, {@link ontology-editor.ClassesTabComponent},
+ * {@link ontology-editor.PropertiesTabComponent}, {@link ontology-editor.IndividualsTabComponent},
+ * {@link ontology-editor.ConceptSchemesTabComponent}, {@link ontology-editor.ConceptsTabComponent},
+ * {@link ontology-editor.SearchTabComponent}, {@link ontology-editor.SavedChangesTabComponent}, and
+ * {@link ontology-editor.CommitsTabComponent}.
  */
-export const ontologyTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: ontologyTabComponentCtrl
-};
-
-ontologyTabComponentCtrl.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService', 'prefixes'];
-
-function ontologyTabComponentCtrl($q, ontologyStateService: OntologyStateService, catalogManagerService: CatalogManagerService, utilService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var util = utilService;
-
-    dvm.os = ontologyStateService;
-    dvm.savedChanges = '<i class="fa fa-exclamation-triangle"></i> Changes';
-
-    dvm.$onInit = function() {
-        checkBranchExists();
+@Component({
+    selector: 'ontology-tab',
+    templateUrl: './ontologyTab.component.html'
+})
+export class OntologyTabComponent implements OnInit, OnDestroy {
+    constructor(public os: OntologyStateService, private cm: CatalogManagerService, @Inject('utilService') private util) {}
+    
+    ngOnInit(): void {
+        this._checkBranchExists();
+    }
+    ngOnDestroy(): void {
+        if (this.os.listItem && this.os.listItem.openSnackbar) {
+            this.os.listItem.openSnackbar.dismiss();
+        }
+    }
+    onTabChanged(event: MatTabChangeEvent): void {
+        switch (event.index) {
+            case OntologyListItem.PROJECT_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.project.entityIRI, false, this.os.listItem, this.os.listItem.editorTabStates.project.component).subscribe();
+                break;
+            case OntologyListItem.OVERVIEW_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.overview.entityIRI, true).subscribe();
+                break;
+            case OntologyListItem.CLASSES_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.classes.entityIRI, true).subscribe();
+                break;
+            case OntologyListItem.PROPERTIES_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.properties.entityIRI, true).subscribe();
+                break;
+            case OntologyListItem.INDIVIDUALS_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.individuals.entityIRI, false).subscribe();
+                break;
+            case OntologyListItem.CONCEPTS_SCHEMES_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.schemes.entityIRI, false).subscribe();
+                break;
+            case OntologyListItem.CONCEPTS_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.concepts.entityIRI, false).subscribe();
+                break;
+            case OntologyListItem.SEARCH_TAB:
+                this.os.setSelected(this.os.listItem.editorTabStates.search.entityIRI, false).subscribe();
+                break;
+            default:
+        }
     }
 
-    dvm.setSelected = function(entityIRI, getUsages = true) { // TODO: Remove this and call the os.setSelected method directly in html using async pipe once component gets upgraded
-        dvm.os.setSelected(entityIRI, getUsages).toPromise();
-    }
-
-    function checkBranchExists() {
-        if (dvm.os.listItem.versionedRdfRecord.branchId && !find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId})) {
-            var catalogId = get(cm.localCatalog, '@id', '');
-            var masterBranch = find(dvm.os.listItem.branches, branch => util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
-            var state = dvm.os.getStateByRecordId(dvm.os.listItem.versionedRdfRecord.recordId);
-            var commitId = util.getPropertyId(find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': masterBranch}]}), prefixes.ontologyState + 'commit');
-            cm.getBranchHeadCommit(masterBranch, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
-                .then(headCommit => {
-                    var headCommitId = get(headCommit, "commit['@id']", '');
+    private _checkBranchExists() {
+        if (this.os.listItem.versionedRdfRecord.branchId && !find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId})) {
+            const catalogId = get(this.cm.localCatalog, '@id', '');
+            const masterBranch = find(this.os.listItem.branches, branch => this.util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
+            const state = this.os.getStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);
+            let commitId = this.util.getPropertyId(find(state.model, {[ONTOLOGYSTATE + 'branch']: [{'@id': masterBranch}]}), ONTOLOGYSTATE + 'commit');
+            this.cm.getBranchHeadCommit(masterBranch, this.os.listItem.versionedRdfRecord.recordId, catalogId)
+                .pipe(switchMap(headCommit => {
+                    const headCommitId = get(headCommit, 'commit[\'@id\']', '');
                     if (!commitId) {
                         commitId = headCommitId;
                     }
-                    return dvm.os.updateOntology(dvm.os.listItem.versionedRdfRecord.recordId, masterBranch, commitId, commitId === headCommitId).pipe(first()).toPromise();
-                }, $q.reject)
-                .then(() => dvm.os.resetStateTabs(), util.createErrorToast);
+                    return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, masterBranch, commitId, commitId === headCommitId);
+                }))
+                .subscribe(() => this.os.resetStateTabs(), error => this.util.createErrorToast(error));
         }
-    }
-}
-
-@Directive({
-    selector: 'ontology-tab'
-})
-export class OntologyTabDirective extends UpgradeComponent {
-    constructor(elementRef: ElementRef, injector: Injector) {
-        super('ontologyTab', elementRef, injector);
     }
 }

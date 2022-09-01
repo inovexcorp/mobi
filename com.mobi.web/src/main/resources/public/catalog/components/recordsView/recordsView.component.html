@@ -28,9 +28,7 @@
             </div>
             <div class="col d-flex flex-column remove-min-width">
                 <div class="search-form d-flex">
-                    <mat-form-field class='flex-1 mr-2'>
-                        <input matInput class="record-search" placeholder="Search..." [(ngModel)]="state.recordSearchText" (keyup.enter)="searchRecords()">
-                    </mat-form-field>
+                    <search-bar class="flex-1 mr-2" [(bindModel)]="state.recordSearchText" (submitEvent)="searchRecords()"></search-bar>
                     <mat-form-field>
                         <mat-select [(ngModel)]="state.recordSortOption" (ngModelChange)="changeSort()">
                             <mat-option *ngFor="let option of cm.sortOptions" [value]="option">{{option.label}}</mat-option>

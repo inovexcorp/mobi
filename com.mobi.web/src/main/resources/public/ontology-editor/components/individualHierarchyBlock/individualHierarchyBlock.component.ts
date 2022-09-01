@@ -20,35 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+
+import { OntologyStateService } from "../../../shared/services/ontologyState.service";
 
 const template = require('./individualHierarchyBlock.component.html');
 
 /**
  * @ngdoc component
- * @name ontology-editor.component:individualHierarchyBlock
+ * @class ontology-editor.IndividualHierarchyBlockComponent
  * @requires shared.service:ontologyStateService
  *
  * @description
  * `individualHierarchyBlock` is a component that creates a section that displays a
- * {@link ontology-editor.component:individualTree} of the individuals in the current
- * {@link shared.service:ontologyStateService selected ontology} underneath their class types.
+ * {@link ontology-editor.IndividualTreeComponent} of the individuals in the current
+ * {@link shared.OntologyStateService#listItem selected ontology} underneath their class types.
  */
-const individualHierarchyBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: individualHierarchyBlockComponentCtrl
-};
+@Component({
+    templateUrl: './individualHierarchyBlock.component.html',
+    selector: 'individual-hierarchy-block'
+})
+export class IndividualHierarchyBlockComponent {
+    constructor(public os:OntologyStateService) {
+    }
 
-individualHierarchyBlockComponentCtrl.$inject = ['ontologyStateService'];
-
-function individualHierarchyBlockComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.updateSearch = function(value) {
-        dvm.os.listItem.editorTabStates.individuals.searchText = value;
+    updateSearch (value:string): void {
+        this.os.listItem.editorTabStates.individuals.searchText = value;
     }
 }
-
-export default individualHierarchyBlockComponent;

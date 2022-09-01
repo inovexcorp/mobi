@@ -93,7 +93,6 @@ describe('New Ontology Overlay component', function() {
         matDialogRef = TestBed.get(MatDialogRef);
         camelCaseStub = TestBed.get(CamelCasePipe);
         splitIRIStub = TestBed.get(SplitIRIPipe);
-
         splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
     });
 
@@ -239,7 +238,7 @@ describe('New Ontology Overlay component', function() {
         fixture.detectChanges();
         expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
     });
-    it('should call download when the button is clicked', function() {
+    it('should call create when the button is clicked', function() {
         spyOn(component, 'create');
         const submitButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         submitButton.triggerEventHandler('click', null);

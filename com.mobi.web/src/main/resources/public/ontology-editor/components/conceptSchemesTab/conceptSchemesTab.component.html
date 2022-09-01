@@ -22,28 +22,32 @@
   -->
 <div class="concept-schemes-tab h-100 row m-0">
     <concept-scheme-hierarchy-block class="col-3 h-100"></concept-scheme-hierarchy-block>
-    <div class="selected-entity col-9 pt-2 h-100" targeted-spinner="dvm.os.listItem.editorTabStates.schemes.targetedSpinnerId">
-        <div class="h-100 w-100 d-flex flex-column" ng-if="dvm.os.listItem.selected">
+    <div class="selected-entity col-9 pt-2 h-100" targeted-spinner="os.listItem.editorTabStates.schemes.targetedSpinnerId">
+        <div class="h-100 w-100 d-flex flex-column" *ngIf="os.listItem.selected">
             <div class="selected-header d-flex">
                 <selected-details class="flex-1"></selected-details>
-                <div>
-                    <button class="btn btn-primary" ng-disabled="!dvm.os.listItem.selected || dvm.os.isSelectedImported()" ng-click="dvm.seeHistory()">See History</button>
-                    <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="dvm.os.isSelectedImported()" ng-click="dvm.showDeleteConfirmation()">Delete</button>
+                <div class="btn-container">
+                    <button class="btn btn-primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
+                    <button *ngIf="os.canModify()" class="btn btn-danger" [disabled]="os.isSelectedImported()" (click)="showDeleteConfirmation()">Delete</button>
                 </div>
             </div>
             <div class="row flex-1 remove-min-height">
                 <div class="col-7 vertical-scroll h-100">
                     <div class="row py-2">
-                        <annotation-block selected="dvm.os.listItem.selected" class="col" highlight-iris="dvm.om.entityNameProps" highlight-text="dvm.os.listItem.editorTabStates.schemes.searchText"></annotation-block>
+                        <annotation-block [selected]="os.listItem.selected"
+                                          [highlightIris]="om.entityNameProps"
+                                          [highlightText]="os.listItem.editorTabStates.schemes.searchText"
+                                          class="col">
+                        </annotation-block>
                     </div>
-                    <div class="row py-2" ng-if="dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)">
-                        <datatype-property-block selected="dvm.os.listItem.selected" class="col"></datatype-property-block>
+                    <div class="row py-2" *ngIf="om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)">
+                        <datatype-property-block [selected]="os.listItem.selected" class="col"></datatype-property-block>
                     </div>
                     <div class="row py-2">
-                        <object-property-block selected="dvm.os.listItem.selected" class="col"></object-property-block>
+                        <object-property-block [selected]="os.listItem.selected" class="col"></object-property-block>
                     </div>
                 </div>
-                <usages-block class="col-5 vertical-scroll h-100" usages="dvm.os.listItem.editorTabStates.schemes.usages"></usages-block>
+                <usages-block class="col-5 vertical-scroll h-100" [usages]="os.listItem.editorTabStates.schemes.usages"></usages-block>
             </div>
         </div>
     </div>

@@ -25,8 +25,9 @@ import { Directive, Input, Output, EventEmitter, HostListener, Inject, HostBindi
 @Directive({ selector: '[copy-clipboard]' })
 export class CopyClipboardDirective {
 
-    @HostBinding('class')
-    elementClass = 'copy-clipboard';
+    @HostBinding('class.copyClipboard')
+    class_copyClipboard = true;
+    // elementClass = 'copy-clipboard';
 
     @Input('copy-clipboard')
     public payload: string;

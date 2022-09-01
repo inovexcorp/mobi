@@ -37,11 +37,11 @@
             line-height: 1.5;
         }
     }
-    .up-to-date .nav-link .fa.fa-exclamation-triangle {
+    .up-to-date .mat-tab-label .fa.fa-exclamation-triangle {
         display: none;
     }
-    .nav-link {
-        &.active .fa.fa-exclamation-triangle {
+    .mat-tab-label {
+        &.mat-tab-label-active .fa.fa-exclamation-triangle {
             color: var(--danger);
         }
 

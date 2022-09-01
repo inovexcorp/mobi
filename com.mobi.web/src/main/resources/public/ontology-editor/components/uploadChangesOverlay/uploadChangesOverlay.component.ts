@@ -1,75 +1,63 @@
 /*-
- * #%L
- * com.mobi.web
- * $Id:$
- * $HeadURL:$
- * %%
- * Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * #L%
- */
-const template = require('./uploadChangesOverlay.component.html');
+* #%L
+* com.mobi.web
+* $Id:$
+* $HeadURL:$
+* %%
+* Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+* %%
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* #L%
+*/
+import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material';
+
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { RESTError } from '../../../shared/models/RESTError.interface';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:uploadChangesOverlay
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.UploadChangesOverlayComponent
  *
- * @description
- * `uploadChangesOverlay` is a component that creates content for a modal that uploads an RDF file of an updated
- * version of the current {@link shared.service:ontologyStateService selected ontology} to be compared
- * and the differences added to the InProgressCommit. The form in the modal contains
- * {@link shared.component:fileInput} that accepts an RDF file. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that uploads an RDF file of an updated version of the current
+ * {@link shared.OntologyStateService#listItem selected ontology} to be compared and the differences added to the
+ * InProgressCommit. The form in the modal contains a {@link shared.FileInputComponent} that accepts an RDF file. Meant
+ * to be used in conjunction with the `MatDialog` service.
  */
-const uploadChangesOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: uploadChangesOverlayComponentCtrl
-};
+@Component({
+    selector: 'upload-changes-overlay',
+    templateUrl: './uploadChangesOverlay.component.html'
+})
+export class UploadChangesOverlayComponent {
+    error: RESTError;
+    file = undefined;
 
-uploadChangesOverlayComponentCtrl.$inject = ['ontologyStateService'];
+    constructor(public os: OntologyStateService, private dialogRef: MatDialogRef<UploadChangesOverlayComponent>,) {}
 
-function uploadChangesOverlayComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.error = '';
-    dvm.file = undefined;
-    dvm.os = ontologyStateService;
-
-    dvm.submit = function() {
-        if (dvm.os.hasInProgressCommit()) {
-            dvm.error = 'Unable to upload changes. Please either commit your current changes or discard them and try again.';
+    submit(): void {
+        if (this.os.hasInProgressCommit()) {
+            this.error = {
+                error: '',
+                errorDetails: [],
+                errorMessage: 'Unable to upload changes. Please either commit your current changes or discard them and try again.'
+            };
         } else {
-            var ontRecord = dvm.os.listItem.versionedRdfRecord;
-            dvm.os.uploadChanges(dvm.file, ontRecord.recordId, ontRecord.branchId, ontRecord.commitId).then(() => {
-                dvm.os.getActivePage().active = false;
-                dvm.os.listItem.editorTabStates.savedChanges.active = true;
-                dvm.close();
-            }, errorMessage => dvm.error = errorMessage);
+            const ontRecord = this.os.listItem.versionedRdfRecord;
+            this.os.uploadChanges(this.file, ontRecord.recordId, ontRecord.branchId, ontRecord.commitId).subscribe(() => {
+                this.os.listItem.tabIndex = OntologyListItem.SAVED_CHANGES_TAB;
+                this.dialogRef.close();
+            }, errorMessage => this.error = errorMessage);
         }
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
 }
-
-export default uploadChangesOverlayComponent;

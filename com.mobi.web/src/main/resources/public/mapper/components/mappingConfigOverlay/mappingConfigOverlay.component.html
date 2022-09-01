@@ -29,10 +29,7 @@
             <div class="col-6 ontology-select-container">
                 <div class="w-100">
                     <div class="field-label mb-2">Ontology</div>
-                    <!-- TODO: Use search-bar when upgraded -->
-                    <mat-form-field class="w-100 mt-2">
-                        <input matInput name="Search" placeholder="Search..." [(ngModel)]="recordsConfig.searchText" (keyup.enter)="setOntologies()">
-                    </mat-form-field>
+                    <search-bar class="w-100 mt-2" [(bindModel)]="recordsConfig.searchText" (submitEvent)="setOntologies()"></search-bar>
                     <div class="ontologies" #ontologyListBox>
                         <info-message *ngIf="ontologies.length === 0">No ontologies are available</info-message>
                         <mat-selection-list #ontologySelectionList (selectionChange)="ontologyChange($event)">

@@ -30,7 +30,7 @@ import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologySidebarComponent } from '../ontologySidebar/ontologySidebar.component';
-import { OntologyTabDirective } from '../ontologyTab/ontologyTab.component';
+import { OntologyTabComponent } from '../ontologyTab/ontologyTab.component';
 import { OpenOntologyTabComponent } from '../openOntologyTab/openOntologyTab.component';
 import { OntologyEditorPageComponent } from './ontologyEditorPage.component';
 
@@ -46,7 +46,7 @@ describe('Ontology Editor Page component', function() {
                 OntologyEditorPageComponent,
                 MockComponent(OpenOntologyTabComponent),
                 MockComponent(OntologySidebarComponent),
-                MockComponent(OntologyTabDirective),
+                MockComponent(OntologyTabComponent),
             ],
             providers: [
                 MockProvider(OntologyStateService),

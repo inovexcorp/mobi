@@ -20,136 +20,170 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { union, has, get } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { union, has, get, groupBy, sortBy } from 'lodash';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
+import { OWL, XSD } from '../../../prefixes';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 import './annotationOverlay.component.scss';
 
-const template = require('./annotationOverlay.component.html');
-
-/**
- * @ngdoc component
- * @name ontology-editor.component:annotationOverlay
- * @requires shared.service:propertyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- *
- * @description
- * `annotationOverlay` is a component that creates content for a modal that adds or edits an annotation on the
- * {@link shared.service:ontologyStateService selected entity}. The form in the modal contains a
- * `ui-select` for the annotation property, a {@link shared.component:textArea} for the annotation value, and
- * a {@link shared.component:languageSelect}. If the annotation is owl:deprecated, the `textArea` and
- * `languageSelect` are replaced by {@link shared.component:radioButton radio buttons} for the boolean
- * value. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
- */
-const annotationOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: annotationOverlayComponentCtrl
-};
-
-annotationOverlayComponentCtrl.$inject = ['ontologyManagerService', 'propertyManagerService', 'ontologyStateService', 'utilService', 'prefixes'];
-
-function annotationOverlayComponentCtrl(ontologyManagerService: OntologyManagerService, propertyManagerService, ontologyStateService: OntologyStateService, utilService, prefixes) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    dvm.pm = propertyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.prefixes = prefixes;
-    dvm.annotations = [];
-
-    dvm.$onInit = function() {
-        dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), dvm.pm.defaultAnnotations, dvm.pm.owlAnnotations);
-    }
-    dvm.disableProp = function(annotation) {
-        return annotation === prefixes.owl + 'deprecated' && has(dvm.os.listItem.selected, "['" + prefixes.owl + 'deprecated' + "']");
-    }
-    dvm.selectProp = function() {
-        dvm.os.annotationValue = '';
-        if (dvm.os.annotationSelect === prefixes.owl + 'deprecated') {
-            dvm.os.annotationType = prefixes.xsd + 'boolean';
-            dvm.os.annotationLanguage = '';
-        } else {
-            dvm.os.annotationType = undefined;
-            dvm.os.annotationLanguage = 'en';
-        }
-    }
-    dvm.submit = function() {
-        if (dvm.os.editingAnnotation) {
-            dvm.editAnnotation();
-        } else {
-            dvm.addAnnotation();
-        }
-    }
-    dvm.isDisabled = function() {
-        var isDisabled = dvm.annotationForm.$invalid || dvm.os.annotationValue === ''
-        if (!dvm.os.editingAnnotation) {
-            isDisabled = isDisabled || dvm.os.annotationSelect === undefined;
-        }
-        return isDisabled;
-    }
-    dvm.changeLanguage = function(value) {
-        dvm.os.annotationLanguage = value;
-        dvm.os.annotationType = undefined; // Unset type to create valid JSON-LD when language is set
-    }
-    dvm.addAnnotation = function() {
-        var added = dvm.pm.addValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
-        
-        if (added) {
-            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
-            dvm.os.saveCurrentChanges().subscribe();
-            if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
-                dvm.os.updateLabel();
-            }
-            dvm.os.annotationModified(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, dvm.os.annotationValue);
-        } else {
-            dvm.util.createWarningToast('Duplicate property values not allowed');
-        }
-        dvm.close();
-    }
-    dvm.editAnnotation = function() {
-        var oldObj = angular.copy(get(dvm.os.listItem.selected, "['" + dvm.os.annotationSelect + "']['" + dvm.os.annotationIndex + "']"));
-        var edited = dvm.pm.editValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationIndex, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
-        
-        if (edited) {
-            if (dvm.os.annotationLanguage) {
-                dvm.changeLanguage(dvm.os.annotationLanguage);
-            }
-            dvm.os.addToDeletions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(get(oldObj, '@value'), get(oldObj, '@type'), get(oldObj, '@language')));
-            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
-            dvm.os.saveCurrentChanges().subscribe();
-            if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
-                dvm.os.updateLabel();
-            }
-            dvm.os.annotationModified(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, dvm.os.annotationValue);
-        } else {
-            dvm.util.createWarningToast('Duplicate property values not allowed');
-        }
-        dvm.close();
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
-    dvm.orderByEntityName = function(iri) {
-        return dvm.os.getEntityNameByListItem(iri);
-    }
-
-    function createJson(value, type, language) {
-        var valueObj = dvm.pm.createValueObj(value, type, language);
-        return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, valueObj);
-    }
+interface AnnotationGroup {
+    namespace: string,
+    options: AnnotationOption[]
 }
 
-export default annotationOverlayComponent;
+interface AnnotationOption {
+    annotation: string,
+    disabled: boolean,
+    name: string
+}
+
+/**
+ * @class ontology-editor.AnnotationOverlayComponent
+ *
+ * A component that creates content for a modal that adds or edits an annotation on the
+ * {@link shared.OntologyStateService selected entity}. The form in the modal contains a `mat-autocomplete` for the
+ * annotation property, a `text-area` for the annotation value, and a {@link shared.LanguageSelectComponent}. If the
+ * annotation is owl:deprecated, the `text-area` and `languageSelect` are replaced by `mat-radio-button` components for
+ * the boolean value. Meant to be used in conjunction with the `MatDialog` service.
+ *
+ * @param {boolean} data.editing Whether an annotation is being edited or a new one is being added
+ * @param {string} data.annotation The annotation being edited
+ * @param {string} data.value The annotation value being edited
+ * @param {string} data.type The type of the annotation value being edited
+ * @param {number} data.index The index of the annotation value being edited within the annotation array
+ * @param {string} data.language The language of the annotation value being edited
+ */
+@Component({
+    selector: 'annotation-overlay',
+    templateUrl: './annotationOverlay.component.html'
+})
+export class AnnotationOverlayComponent implements OnInit {
+    deprecatedIri = OWL + 'deprecated';
+    annotations: string[] = [];
+
+    annotationForm = this.fb.group({
+        annotation: ['', [Validators.required]],
+        value: ['', [Validators.required]],
+        type: [''],
+        language: ['']
+    });
+
+    filteredAnnotations: Observable<AnnotationGroup[]>;
+
+    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
+        @Inject(MAT_DIALOG_DATA) public data: { editing: boolean, annotation?: string, value?: string, type?: string, index?: number, language?: string},
+        private om: OntologyManagerService, public os: OntologyStateService,
+        @Inject('propertyManagerService') public pm, @Inject('utilService') public util) {}
+    
+    ngOnInit(): void {
+        this.annotations = union(Object.keys(this.os.listItem.annotations.iris), this.pm.defaultAnnotations, this.pm.owlAnnotations);
+        this.filteredAnnotations = this.annotationForm.controls.annotation.valueChanges.pipe(
+            startWith(''),
+            map(value => this.filter(value || '')),
+        );
+        if (this.data.editing) {
+            this.annotationForm.controls.annotation.setValue(this.data.annotation);
+            this.annotationForm.controls.annotation.disable();
+            this.annotationForm.controls.value.setValue(this.data.value);
+            this.annotationForm.controls.type.setValue(this.data.type);
+            this.annotationForm.controls.language.setValue(this.data.language);
+        } else {
+            // Should already be enabled on startup, mostly here for test purposes
+            this.annotationForm.controls.annotation.enable();
+        }
+    }
+    filter(val: string): AnnotationGroup[] {
+        const filtered = this.annotations.filter(annotation => annotation.toLowerCase().includes(val.toLowerCase()));
+        const grouped: {[key: string]: string[]} = groupBy(filtered, annotation => this.util.getIRINamespace(annotation));
+        const rtn: AnnotationGroup[] = Object.keys(grouped).map(namespace => ({
+            namespace,
+            options: grouped[namespace].map(annotation => ({
+                annotation,
+                disabled: this.isPropDisabled(annotation),
+                name: this.os.getEntityNameByListItem(annotation)
+            }))
+        }));
+        rtn.forEach(group => {
+            group.options = sortBy(group.options, option => this.os.getEntityNameByListItem(option.annotation));
+        });
+        return rtn;
+    }
+    isPropDisabled(annotation: string): boolean {
+        return annotation === OWL + 'deprecated' && has(this.os.listItem.selected, `['${OWL + 'deprecated'}']`);
+    }
+    selectProp(event: MatAutocompleteSelectedEvent): void {
+        const selectedAnnotation: string = event.option.value;
+        this.annotationForm.controls.value.setValue('');
+        if (selectedAnnotation === OWL + 'deprecated') {
+            this.annotationForm.controls.type.setValue(XSD + 'boolean');
+            this.annotationForm.controls.language.setValue('');
+        } else {
+            this.annotationForm.controls.type.setValue('');
+            this.annotationForm.controls.language.setValue('en');
+        }
+    }
+    submit(): void {
+        if (this.data.editing) {
+            this.editAnnotation();
+        } else {
+            this.addAnnotation();
+        }
+    }
+    addAnnotation(): void {
+        const annotation = this.annotationForm.controls.annotation.value;
+        const value = this.annotationForm.controls.value.value;
+        const language = this.annotationForm.controls.language.value;
+        const type = language ? '' : this.annotationForm.controls.type.value;
+        
+        const added = this.pm.addValue(this.os.listItem.selected, annotation, value, type, language);
+        
+        if (added) {
+            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
+            this.os.saveCurrentChanges().subscribe();
+            if (this.om.entityNameProps.includes(annotation)) {
+                this.os.updateLabel();
+            }
+            this.os.annotationModified(this.os.listItem.selected['@id'], annotation, value);
+        } else {
+            this.util.createWarningToast('Duplicate property values not allowed');
+        }
+        this.dialogRef.close(added);
+    }
+    editAnnotation(): void {
+        const annotation = this.annotationForm.controls.annotation.value;
+        const value = this.annotationForm.controls.value.value;
+        const language = this.annotationForm.controls.language.value;
+        const type = language ? '' : this.annotationForm.controls.type.value;
+        const oldObj = Object.assign({}, get(this.os.listItem.selected, `['${annotation}']['${this.data.index}']`));
+        const edited = this.pm.editValue(this.os.listItem.selected, annotation, this.data.index, value, type, language);
+        
+        if (edited) {
+            this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(get(oldObj, '@value'), get(oldObj, '@type'), get(oldObj, '@language')));
+            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
+            this.os.saveCurrentChanges().subscribe();
+            if (this.om.entityNameProps.includes(annotation)) {
+                this.os.updateLabel();
+            }
+            this.os.annotationModified(this.os.listItem.selected['@id'], annotation, value);
+        } else {
+            this.util.createWarningToast('Duplicate property values not allowed');
+        }
+        this.dialogRef.close(edited);
+    }
+    getName(iri: string) {
+        return this.os.getEntityNameByListItem(iri);
+    }
+
+    private _createJson(value, type, language): JSONLDObject {
+        const valueObj = this.pm.createValueObj(value, type, language);
+        return this.util.createJson(this.os.listItem.selected['@id'], this.annotationForm.controls.annotation.value, valueObj);
+    }
+}

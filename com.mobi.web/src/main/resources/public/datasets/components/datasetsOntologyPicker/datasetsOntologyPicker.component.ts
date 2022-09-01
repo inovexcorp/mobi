@@ -24,6 +24,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, EventEmitter, Inject, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatSelectionListChange } from '@angular/material';
 import { find, get, remove, some, sortBy } from 'lodash';
+import { finalize } from 'rxjs/operators';
 
 import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -79,6 +80,7 @@ export class DatasetsOntologyPickerComponent implements OnInit {
     setOntologies(): void {
         this.spinnerSvc.startLoadingForComponent(this.datasetOntologies, 30);
         this.cm.getRecords(this.catalogId, this.ontologySearchConfig, true)
+            .pipe(finalize(() => this.spinnerSvc.finishLoadingForComponent(this.datasetOntologies)))
             .subscribe((response: HttpResponse<JSONLDObject[]>) => this.parseOntologyResults(response),
             error => this._onError(error));
     }

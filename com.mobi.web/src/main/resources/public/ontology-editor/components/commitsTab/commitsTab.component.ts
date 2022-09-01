@@ -20,55 +20,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject } from '@angular/core';
 import { find } from 'lodash';
+
+import { ONTOLOGYSTATE } from '../../../prefixes';
+import { Commit } from '../../../shared/models/commit.interface';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './commitsTab.component.scss';
 
-const template = require('./commitsTab.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:commitsTab
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
+ * @class ontology-editor.CommitsTabComponent
  *
- * @description
- * `commitsTab` is a component that creates a page containing the {@link shared.component:commitHistoryTable}
- * for the current {@link shared.service:ontologyStateService selected ontology} with a graph. It also creates a
- * table with buttons for viewing the ontology at each commit.
+ * A component that creates a page containing the {@link shared.CommitHistoryTableComponent} for the current
+ * {@link shared.OntologyStateService#listItem selected ontology} with a graph. It also creates a table with buttons for
+ * viewing the ontology at each commit.
  */
-const commitsTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: commitsTabComponentCtrl
-};
+@Component({
+    selector: 'commits-tab',
+    templateUrl: './commitsTab.component.html'
+})
+export class CommitsTabComponent {
+    commits: Commit[] = [];
+    
+    constructor(public os: OntologyStateService, @Inject('utilService') public util) {}
 
-commitsTabComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'prefixes'];
-
-function commitsTabComponentCtrl(ontologyStateService, utilService, prefixes) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.commits = [];
-
-    dvm.getHeadTitle = function() {
-        if (dvm.os.listItem.versionedRdfRecord.branchId) {
-            return dvm.util.getDctermsValue(find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId}), 'title');
+    getHeadTitle(): string {
+        if (this.os.listItem.versionedRdfRecord.branchId) {
+            return this.util.getDctermsValue(find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId}), 'title');
         } else {
-            var currentState = dvm.os.getCurrentStateByRecordId(dvm.os.listItem.versionedRdfRecord.recordId);
-            if (dvm.os.isStateTag(currentState)) {
-                var tagId = dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
-                var tag = find(dvm.os.listItem.tags, {'@id': tagId});
-                return dvm.util.getDctermsValue(tag, 'title');
+            const currentState = this.os.getCurrentStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);
+            if (this.os.isStateTag(currentState)) {
+                const tagId = this.util.getPropertyId(currentState, ONTOLOGYSTATE + 'tag');
+                const tag = find(this.os.listItem.tags, {'@id': tagId});
+                return this.util.getDctermsValue(tag, 'title');
             } else {
                 return '';
             }
         }
     }
-    dvm.openOntologyAtCommit = function(commit) {
-        dvm.os.updateOntologyWithCommit(dvm.os.listItem.versionedRdfRecord.recordId, commit.id).subscribe();
+    openOntologyAtCommit(commit: Commit): void {
+        this.os.updateOntologyWithCommit(this.os.listItem.versionedRdfRecord.recordId, commit.id).subscribe();
+    }
+    trackCommits(index: number, item: Commit): string {
+        return item.id;
     }
 }
-
-export default commitsTabComponent;

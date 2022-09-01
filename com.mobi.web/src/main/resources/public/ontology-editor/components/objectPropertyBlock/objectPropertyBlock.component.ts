@@ -21,70 +21,78 @@
  * #L%
  */
 
-import { first } from 'rxjs/operators';
+import { Component, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { has, sortBy } from 'lodash';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./objectPropertyBlock.component.html');
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import {
+    ObjectPropertyOverlayComponent as ObjectPropertyOverlay
+} from '../objectPropertyOverlay/objectPropertyOverlay.component';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:objectPropertyBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:modalService
+ * @class ontology-editor.ObjectPropertyBlockComponent
  *
- * @description
- * `objectPropertyBlock` is a component that creates a section that displays the object properties on the
- * {@link shared.service:ontologyStateService selected individual} using
- * {@link ontology-editor.component:propertyValues}. The section header contains a button for adding an object
- * property. The component houses the methods for opening the modal for
+ * A component that creates a section that displays the object properties on the
+ * {@link shared.OntologyStateService#listItem selected individual} using
+ * {@link ontology-editor.PropertyValuesComponent}. The section header contains a button for adding an object property.
+ * The component houses the methods for opening the modal for
  * {@link ontology-editor.component:objectPropertyOverlay adding} and removing object property values.
  */
-const objectPropertyBlockComponent = {
-    template,
-    bindings: {
-        selected:'<'
-    },
-    controllerAs: 'dvm',
-    controller: objectPropertyBlockComponentCtrl
-};
 
-objectPropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'modalService'];
+@Component({
+    templateUrl: './objectPropertyBlock.component.html',
+    selector: 'object-property-block'
+})
+export class ObjectPropertyBlockComponent implements OnChanges {
+    @Input() selected;
+    objectProperties = [];
+    objectPropertiesFiltered = [];
+    key = undefined;
+    constructor(public os: OntologyStateService,
+                private dialog: MatDialog,
+    ) {}
 
-function objectPropertyBlockComponentCtrl($filter, ontologyStateService: OntologyStateService, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.objectProperties = [];
-    dvm.objectPropertiesFiltered = [];
-
-    dvm.$onChanges = function(changes) { 
-        dvm.updatePropertiesFiltered();
+    ngOnChanges(): void {
+        this.updatePropertiesFiltered();
     }
-    dvm.updatePropertiesFiltered = function(){
-        dvm.objectProperties = Object.keys(dvm.os.listItem.objectProperties.iris);
-        dvm.objectPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.objectProperties), iri => dvm.os.getEntityNameByListItem(iri));
+    updatePropertiesFiltered(): void{
+        this.objectProperties = Object.keys(this.os.listItem.objectProperties.iris);
+        this.objectPropertiesFiltered = sortBy(this.objectProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
     }
-    dvm.openAddObjectPropOverlay = function() {
-        dvm.os.editingProperty = false;
-        dvm.os.propertySelect = undefined;
-        dvm.os.propertyValue = '';
-        dvm.os.propertyIndex = 0;
-        modalService.openModal('objectPropertyOverlay', {}, dvm.updatePropertiesFiltered);
-    }
-    dvm.showRemovePropertyOverlay = function(key, index) {
-        dvm.key = key;
-        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
-            dvm.os.removeProperty(key, index).pipe(first()).toPromise().then(dvm.removeObjectProperty);
-            dvm.updatePropertiesFiltered();
+    openAddObjectPropOverlay(): void {
+        const data = {
+            editingProperty: false,
+            propertySelect: undefined,
+            propertyValue: '',
+            propertyIndex: 0
+        };
+        this.dialog.open(ObjectPropertyOverlay, {data: data}).afterClosed().subscribe( (result) => {
+            this.updatePropertiesFiltered();
         });
     }
-    dvm.removeObjectProperty = function(axiomObject) {
-        var types = dvm.os.listItem.selected['@type'];
-        if (dvm.os.containsDerivedConcept(types) || dvm.os.containsDerivedConceptScheme(types)) {
-            dvm.os.removeFromVocabularyHierarchies(dvm.key, axiomObject);
-            dvm.updatePropertiesFiltered();
+    showRemovePropertyOverlay(key, index): void {
+        this.key = key;
+        this.dialog.open(ConfirmModalComponent,{
+            data: {
+                content: this.os.getRemovePropOverlayMessage(key, index) + '</strong>?'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.os.removeProperty(key, index).subscribe((res) => {
+                    this.removeObjectProperty(res as JSONLDId);
+                });
+                this.updatePropertiesFiltered();
+            }
+        });
+    }
+    removeObjectProperty(axiomObject: JSONLDId): void {
+        const types = this.os.listItem.selected['@type'];
+        if (this.os.containsDerivedConcept(types) || this.os.containsDerivedConceptScheme(types)) {
+            this.os.removeFromVocabularyHierarchies(this.key, axiomObject);
+            this.updatePropertiesFiltered();
         }
     }
 }
-
-export default objectPropertyBlockComponent;

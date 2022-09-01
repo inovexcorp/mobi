@@ -20,117 +20,112 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, pull, includes, get, unset, find, isEqual, remove, filter } from 'lodash';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { pull, includes, get, unset, find, isEqual, remove } from 'lodash';
 
+import { OWL } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './characteristicsBlock.component.scss';
 
-const template = require('./characteristicsBlock.component.html');
+interface Characteristic {
+    checked: boolean,
+    typeIRI: string,
+    displayText: string,
+    objectOnly: boolean
+}
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:characteristicsBlock
- * @requires shared.service:prefixes
- * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
+ * @class ontology-editor.CharacteristicsBlockComponent
  *
- * @description
- * `characteristicsBlock` is a component that creates a section that displays the appropriate characteristics
- * based on the provided `types` array for the entity identified by the provided `iri`. Characteristics are
- * displayed as {@link shared.component:checkbox checkboxes}. The `types` array is one way bound so the provided
- * `updateTypes` functio is expected to update the value of `types` when a checkbox changes.
+ * A component that creates a section that displays the appropriate characteristics based on the provided `types` array
+ * for the entity identified by the provided `iri`. Characteristics are displayed as `mat-checkbox`.
  * 
- * @param {string} iri An IRI string for an entity in the current {@link shared.service:ontologyStateService}
+ * @param {string} iri An IRI string for an entity in the current {@link shared.OntologyStateService}
  * @param {string[]} types An array of IRI strings
- * @param {Function} updateTypes A function to be called when the value of a checkbox changes. Should update the
- * value of `types`. Expects an argument called `value`
  */
-const characteristicsBlockComponent = {
-    template,
-    bindings: {
-        iri: '<',
-        types: '<',
-        updateTypes: '&'
-    },
-    controllerAs: 'dvm',
-    controller: characteristicsBlockComponentCtrl
-};
-
-characteristicsBlockComponentCtrl.$inject = ['prefixes', 'ontologyStateService', 'ontologyManagerService'];
-
-function characteristicsBlockComponentCtrl(prefixes, ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.characteristics = [
+@Component({
+    selector: 'characteristics-block',
+    templateUrl: './characteristicsBlock.component.html'
+})
+export class CharacteristicsBlockComponent implements OnInit, OnChanges {
+    characteristics: Characteristic[] = [
         {
             checked: false,
-            typeIRI: prefixes.owl + 'FunctionalProperty',
+            typeIRI: OWL + 'FunctionalProperty',
             displayText: 'Functional Property',
             objectOnly: false
         },
         {
             checked: false,
-            typeIRI: prefixes.owl + 'AsymmetricProperty',
+            typeIRI: OWL + 'AsymmetricProperty',
             displayText: 'Asymmetric Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: prefixes.owl + 'SymmetricProperty',
+            typeIRI: OWL + 'SymmetricProperty',
             displayText: 'Symmetric Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: prefixes.owl + 'TransitiveProperty',
+            typeIRI: OWL + 'TransitiveProperty',
             displayText: 'Transitive Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: prefixes.owl + 'ReflexiveProperty',
+            typeIRI: OWL + 'ReflexiveProperty',
             displayText: 'Reflexive Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: prefixes.owl + 'IrreflexiveProperty',
+            typeIRI: OWL + 'IrreflexiveProperty',
             displayText: 'Irreflexive Property',
             objectOnly: true
         }
     ];
-    dvm.filteredCharacteristics = [];
+    filteredCharacteristics: Characteristic[] = [];
 
-    dvm.$onInit = function() {
-        setVariables();
+    @Input() iri: string;
+    @Input() types: string[];
+
+    @Output() typesChange = new EventEmitter<string[]>()
+
+    constructor(public os: OntologyStateService, private om: OntologyManagerService) {}
+    
+    ngOnInit(): void {
+        // TODO: Decide whether this is needed
+        // setVariables();
     }
-    dvm.$onChanges = function() {
-        setVariables();
+    ngOnChanges(): void {
+        this._setVariables();
     }
-    dvm.filter = function(obj) {
-        return !obj.objectOnly || om.isObjectProperty({'@id': '', '@type': dvm.types || []});
+    filter(obj: Characteristic): boolean {
+        return !obj.objectOnly || this.om.isObjectProperty({'@id': '', '@type': this.types || []});
     }
-    dvm.onChange = function(characteristicObj, value) {
+    onChange(characteristicObj: Characteristic, value: boolean): void {
         characteristicObj.checked = value;
-        var types = dvm.types || [];
+        const types = this.types || [];
         if (characteristicObj.checked) {
             types.push(characteristicObj.typeIRI);
-            handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions, characteristicObj.typeIRI);
+            this._handleCase(this.os.listItem.deletions, (str, obj) => this.os.addToAdditions(str, obj), characteristicObj.typeIRI);
         } else {
             pull(types, characteristicObj.typeIRI);
-            handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions, characteristicObj.typeIRI);
+            this._handleCase(this.os.listItem.additions, (str, obj) => this.os.addToDeletions(str, obj), characteristicObj.typeIRI);
         }
-        dvm.updateTypes({value: types});
-        dvm.os.saveCurrentChanges().subscribe();
+        this.typesChange.emit(types);
+        this.os.saveCurrentChanges().subscribe();
     }
 
-    function handleCase(array, method, typeIRI) {
-        var match = find(array, item => includes(get(item, '@type', []), typeIRI));
+    private _handleCase(array, method: (s: string, o: JSONLDObject) => void, typeIRI: string) {
+        const match = find(array, item => includes(get(item, '@type', []), typeIRI));
         if (match) {
-            removeTypeFrom(match, typeIRI);
+            this._removeTypeFrom(match, typeIRI);
             if (!get(match, '@type', []).length) {
                 unset(match, '@type');
             }
@@ -138,23 +133,19 @@ function characteristicsBlockComponentCtrl(prefixes, ontologyStateService: Ontol
                 remove(array, match);
             }
         } else {
-            method(dvm.os.listItem.versionedRdfRecord.recordId, {
-                '@id': dvm.iri,
+            method(this.os.listItem.versionedRdfRecord.recordId, {
+                '@id': this.iri,
                 '@type': [typeIRI]
-            }).bind(dvm.os);
+            })/* .bind(this.os) */;
         }
     }
-
-    function removeTypeFrom(object, typeToRemove) {
+    private _removeTypeFrom(object, typeToRemove) {
         pull(get(object, '@type', []), typeToRemove);
     }
-
-    function setVariables() {
-        forEach(dvm.characteristics, obj => {
-            obj.checked = includes(dvm.types, obj.typeIRI);
+    private _setVariables() {
+        this.characteristics.forEach(obj => {
+            obj.checked = includes(this.types, obj.typeIRI);
         });
-        dvm.filteredCharacteristics = filter(dvm.characteristics, dvm.filter);
+        this.filteredCharacteristics = this.characteristics.filter(char => this.filter(char));
     }
 }
-
-export default characteristicsBlockComponent;

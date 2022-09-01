@@ -20,34 +20,30 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Create New OWL Data Property</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Create New OWL Data Property</h1>
+<form mat-dialog-content [formGroup]="createForm">
+    <static-iri [iri]="property['@id']" (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)" [duplicateCheck]="duplicateCheck"></static-iri>
+    <mat-form-field class="w-100">
+        <mat-label>Name</mat-label>
+        <input matInput type="text" name="name" formControlName="title" required focus/>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" formControlName="description"></textarea>
+    </mat-form-field>
+    <advanced-language-select [parentForm]="createForm"></advanced-language-select>
+    <div class="mt-2">
+        <div class="field-label">Characteristics</div>
+        <ng-container *ngFor="let characteristic of characteristics; let i = index" formArrayName="characteristics">
+            <mat-checkbox [formControlName]="i">{{ characteristic.displayText }}</mat-checkbox>
+        </ng-container>
+    </div>
+    <iri-select-ontology [(selected)]="selectedDomains" displayText="Domain" [selectList]="os.listItem.classes.iris" ></iri-select-ontology>
+    <iri-select-ontology [(selected)]="selectedRanges" displayText="Range" [selectList]="os.listItem.dataPropertyRange"></iri-select-ontology>
+    <super-property-select [(selected)]="selectedSubProperties" key="dataProperties"></super-property-select>
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="create()" [disabled]="createForm.invalid">Submit</button> 
 </div>
-<div class="modal-body">
-    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <static-iri iri="dvm.property['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)" duplicate-check="dvm.duplicateCheck"></static-iri>
-    <form name="dvm.createPropertyForm" novalidate autocomplete="off">
-        <div class="form-group">
-            <custom-label>Name</custom-label>
-            <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
-                   ng-model="dvm.property[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
-        </div>
-        <text-area bind-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
-                   change-event="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
-                   display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <!-- TODO: Add back in once upgraded -->
-        <!-- <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select> -->
-        <div class="mt-2">
-            <p class="identifier"><strong>Characteristics</strong></p>
-            <checkbox ng-repeat="obj in dvm.characteristics track by obj.typeIRI" [(model)]="obj.checked" [display-text]="obj.displayText"></checkbox>
-        </div>
-        <iri-select-ontology bind-model="dvm.domains" display-text="'Domain'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris" change-event="dvm.domains = value"></iri-select-ontology>
-        <iri-select-ontology bind-model="dvm.ranges" display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange" change-event="dvm.ranges = value"></iri-select-ontology>
-        <super-property-select bind-model="dvm.values" key="'dataProperties'" change-event="dvm.values = values"></super-property-select>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.createPropertyForm.$invalid || dvm.os.checkIri(dvm.property['@id'])" ng-click="dvm.create()">Submit</button>
-</div>
+

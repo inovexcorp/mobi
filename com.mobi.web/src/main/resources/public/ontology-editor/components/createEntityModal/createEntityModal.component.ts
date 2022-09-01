@@ -20,75 +20,70 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+import { MatDialog, MatDialogRef } from '@angular/material';
 
-const template = require('./createEntityModal.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { CreateAnnotationPropertyOverlayComponent } from '../createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.component';
+import { CreateClassOverlayComponent } from '../createClassOverlay/createClassOverlay.component';
+import { CreateConceptOverlayComponent } from '../createConceptOverlay/createConceptOverlay.component';
+import { CreateConceptSchemeOverlayComponent } from '../createConceptSchemeOverlay/createConceptSchemeOverlay.component';
+import { CreateDataPropertyOverlayComponent } from '../createDataPropertyOverlay/createDataPropertyOverlay.component';
+import { CreateIndividualOverlayComponent } from '../createIndividualOverlay/createIndividualOverlay.component';
+import { CreateObjectPropertyOverlayComponent } from '../createObjectPropertyOverlay/createObjectPropertyOverlay.component';
+
+import './createEntityModal.component.scss';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:createEntityModal
- * @requires shared.service:modalService
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.CreateEntityModalComponent
  *
- * @description
- * `createEntityModal` is a component that creates content for a modal that provides buttons to create different
- * types of entities in the current {@link shared.service:ontologyStateService selected ontology}. The
- * options are {@link ontology-editor.component:createClassOverlay classes},
- * {@link ontology-editor.component:createDataPropertyOverlay data properties},
- * {@link ontology-editor.component:createObjectPropertyOverlay object properties},
- * {@link ontology-editor.component:createAnnotationPropertyOverlay annotations properties},
- * {@link ontology-editor.component:createIndividualOverlay individuals}
- * {@link ontology-editor.component:createConceptOverlay concepts} if ontology is a vocabulary, and
- * {@link ontology-editor.component:createConceptSchemeOverlay concept schemes} if ontology is a
- * vocabulary. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that provides buttons to create different types of entities in the
+ * current {@link shared.OntologyStateService#listItem selected ontology}. The
+ * options are {@link ontology-editor.CreateClassOverlayComponent classes},
+ * {@link ontology-editor.CreateDataPropertyOverlayComponent data properties},
+ * {@link ontology-editor.CreateObjectPropertyOverlayComponent object properties},
+ * {@link ontology-editor.CreateAnnotationPropertyOverlayComponent annotations properties},
+ * {@link ontology-editor.CreateIndividualOverlayComponent individuals}
+ * {@link ontology-editor.CreateConceptOverlayComponent concepts} if ontology is a vocabulary, and
+ * {@link ontology-editor.CreateConceptSchemeOverlayComponent concept schemes} if ontology is a
+ * vocabulary. Meant to be used in conjunction with the `MatDialog` service.
  */
-const createEntityModalComponent = {
-    template,
-    bindings: {
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createEntityModalComponentCtrl
-};
+@Component({
+    selector: 'create-entity-modal',
+    templateUrl: './createEntityModal.component.html',
+})
+export class CreateEntityModalComponent {
 
-createEntityModalComponentCtrl.$inject = ['modalService', 'ontologyStateService'];
+    constructor(private dialogRef: MatDialogRef<CreateEntityModalComponent>,
+        public os: OntologyStateService,
+        private dialog: MatDialog) {}
 
-function createEntityModalComponentCtrl(modalService, ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.createClass = function() {
-        dvm.dismiss();
-        modalService.openModal('createClassOverlay');
+    createClass(): void  {
+        this.dialogRef.close();
+        this.dialog.open(CreateClassOverlayComponent);
     }
-    dvm.createDataProperty = function() {
-        dvm.dismiss();
-        modalService.openModal('createDataPropertyOverlay');
+    createDataProperty(): void  {
+        this.dialogRef.close();
+        this.dialog.open(CreateDataPropertyOverlayComponent); 
     }
-    dvm.createObjectProperty = function() {
-        dvm.dismiss();
-        modalService.openModal('createObjectPropertyOverlay');
+    createObjectProperty(): void  {
+        this.dialogRef.close();
+        this.dialog.open(CreateObjectPropertyOverlayComponent); 
     }
-    dvm.createAnnotationProperty = function() {
-        dvm.dismiss();
-        modalService.openModal('createAnnotationPropertyOverlay');
+    createAnnotationProperty(): void  {
+        this.dialogRef.close();
+        this.dialog.open(CreateAnnotationPropertyOverlayComponent); 
     }
-    dvm.createIndividual = function() {
-        dvm.dismiss();
-        modalService.openModal('createIndividualOverlay');
+    createIndividual(): void  {
+        this.dialogRef.close();
+        this.dialog.open(CreateIndividualOverlayComponent); 
     }
-    dvm.createConcept = function() {
-        dvm.dismiss();
-        modalService.openModal('createConceptOverlay');
+    createConcept(): void  {
+        this.dialogRef.close();
+        this.dialog.open(CreateConceptOverlayComponent);
     }
-    dvm.createConceptScheme = function() {
-        dvm.dismiss();
-        modalService.openModal('createConceptSchemeOverlay');
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    createConceptScheme(): void  {
+        this.dialogRef.close();
+        this.dialog.open(CreateConceptSchemeOverlayComponent);
     }
 }
-
-export default createEntityModalComponent;

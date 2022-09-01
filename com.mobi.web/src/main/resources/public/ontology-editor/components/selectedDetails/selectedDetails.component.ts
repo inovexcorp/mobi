@@ -21,80 +21,67 @@
  * #L%
  */
 import { join, orderBy, map, get } from 'lodash';
-import { first } from 'rxjs/operators';
+import { Component, Inject, Input } from '@angular/core';
+import { MatDialog } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
+import { IndividualTypesModalComponent } from '../individualTypesModal/individualTypesModal.component';
 
 import './selectedDetails.component.scss';
 
-const template = require('./selectedDetails.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:selectedDetails
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:manchesterConverterService
- * @requires shared.service:modalService
+ * @class ontology-editor.SelectedDetailsComponent
  *
- * @description
- * `classesTab` is a component that creates div with detailed about the currently selected entity in the active page
- * of the current {@link shared.service:ontologyStateService selected ontology}. This includes the entity's name, a
- * {@link ontology-editor.component:staticIri}, and a display of the types of the entity along with a button to
- * {@link ontology-editor.component:individualTypesModal edit the individual types}. The display is optionally
+ * A component that creates div with detailed about the currently selected entity in the active page
+ * of the current {@link shared.OntologyStateService#listItem selected ontology}. This includes the entity's name, a
+ * {@link ontology-editor.StaticIriComponent}, and a display of the types of the entity along with a button to
+ * {@link ontology-editor.IndividualTypesModalComponent edit the individual types}. The display is optionally
  * `readOnly` and can optionally highlight text in the `staticIri` matching the provided `highlightText`.
  * 
  * @param {boolean} readOnly Whether the display should be read only
  * @param {string} highlightText Optional text to pass along to the `staticIri` for highlighting
  */
-const selectedDetailsComponent = {
-    template,
-    bindings: {
-        readOnly: '<',
-        highlightText: '<'
-    },
-    controllerAs: 'dvm',
-    controller: selectedDetailsComponentCtrl
-};
+@Component({
+    selector: 'selected-details',
+    templateUrl: './selectedDetails.component.html'
+})
+export class SelectedDetailsComponent {
+    @Input() readOnly: boolean;
+    @Input() highlightText: string;
 
-selectedDetailsComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'manchesterConverterService', 'modalService'];
+    constructor(private prefixation: PrefixationPipe, private dialog: MatDialog, public om: OntologyManagerService, 
+        public os: OntologyStateService, @Inject('manchesterConverterService') private mc,
+        @Inject('utilService') private util) {}
 
-function selectedDetailsComponentCtrl($filter, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, manchesterConverterService, modalService) {
-    var dvm = this;
-    var mc = manchesterConverterService;
-    dvm.os = ontologyStateService;
-    dvm.om = ontologyManagerService;
-
-    dvm.isFromImportedOntology = function(){
-        const entity = get(dvm.os.listItem.entityInfo, get(dvm.os.listItem.selected, '@id'));
+    isFromImportedOntology(): boolean {
+        const entity = get(this.os.listItem.entityInfo, get(this.os.listItem.selected, '@id'));
         return get(entity, 'imported', false);
     }
-    dvm.getImportedOntology = function(){
-        const entity = get(dvm.os.listItem.entityInfo, get(dvm.os.listItem.selected, '@id'), {});
+    getImportedOntology(): string {
+        const entity = get(this.os.listItem.entityInfo, get(this.os.listItem.selected, '@id'), {});
         return get(entity, 'ontologyId', '');
     }
-    dvm.getTypes = function() {
+    getTypes(): string {
         return join(orderBy(
-                map(get(dvm.os.listItem.selected, '@type', []), t => { 
-                    if (dvm.om.isBlankNodeId(t)) {
-                        return mc.jsonldToManchester(t, dvm.os.listItem.selectedBlankNodes, dvm.os.getBnodeIndex());
+                map(get(this.os.listItem.selected, '@type', []), t => { 
+                    if (this.om.isBlankNodeId(t)) {
+                        return this.mc.jsonldToManchester(t, this.os.listItem.selectedBlankNodes, this.os.getBnodeIndex());
                     } else {
-                        return $filter('prefixation')(t);
+                        return this.prefixation.transform(t);
                     }
                 })
         ), ', ');
     }
-    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
-        dvm.os.onEdit(iriBegin, iriThen, iriEnd).pipe(first()).toPromise()
-            .then(() => {
-                dvm.os.saveCurrentChanges().subscribe();
-                dvm.os.updateLabel();
-            });
+    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void {
+        this.os.onEdit(iriBegin, iriThen, iriEnd)
+            .subscribe(() => {
+                this.os.saveCurrentChanges().subscribe();
+                this.os.updateLabel();
+            }, error => this.util.createErrorToast(error));
     }
-    dvm.showTypesOverlay = function() {
-        modalService.openModal('individualTypesModal');
+    showTypesOverlay(): void {
+        this.dialog.open(IndividualTypesModalComponent);
     }
 }
-
-export default selectedDetailsComponent;

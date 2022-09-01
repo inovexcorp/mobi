@@ -1,5 +1,3 @@
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
 /*-
  * #%L
  * com.mobi.web
@@ -22,33 +20,34 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
-const template = require('./projectTab.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:projectTab
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.ProjectTabComponent
  *
- * @description
- * `projectTab` is a component that creates a page containing information about the current
- * {@link shared.service:ontologyStateService selected ontology}. The display includes a
- * {@link ontology-editor.component:selectedDetails}, an
- * {@link ontology-editor.component:ontologyPropertiesBlock}, an
- * {@link ontology-editor.component:importsBlock}, and a {@link ontology-editor.component:previewBlock}.
+ * A component that creates a page containing information about the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The display includes a
+ * {@link ontology-editor.SelectedDetailsComponent}, an
+ * {@link ontology-editor.OntologyPropertiesBlockComponent}, an
+ * {@link ontology-editor.ImportsBlockComponent}, and a {@link ontology-editor.PreviewBlockComponent}.
  */
-const projectTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: projectTabComponentCtrl
-};
+@Component({
+    selector: 'project-tab',
+    templateUrl: './projectTab.component.html'
+})
+export class ProjectTabComponent implements OnInit, OnDestroy {
+    @ViewChild('projectTab') projectTab: ElementRef;
+    
+    constructor(public os: OntologyStateService) {}
 
-projectTabComponentCtrl.$inject = ['ontologyStateService'];
-
-function projectTabComponentCtrl(ontologyStateService: OntologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
+    ngOnDestroy(): void {
+        if (this.os.listItem) {
+            this.os.listItem.editorTabStates.project.component = undefined;
+        }
+    }
+    ngOnInit(): void {
+        this.os.listItem.editorTabStates.project.component = this.projectTab;
+    }
 }
-
-export default projectTabComponent;

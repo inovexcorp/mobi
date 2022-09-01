@@ -20,24 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material';
+
+import { EditIriOverlayComponent } from '../../../shared/components/editIriOverlay/editIriOverlay.component';
+import { OnEditEventI } from '../../../shared/models/onEditEvent.interface';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './staticIri.component.scss';
 
-const template = require('./staticIri.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:staticIri
- * @requires shared.service:ontologyStateService
- * @requires shared.service:modalService
+ * @class ontology-editor.StaticIriComponent
  *
- * @description
- * `staticIri` is a component that creates a `div` with a display of the provided IRI of an entity. If
- * `duplicateCheck` is true, an {@link shared.component:errorDisplay} will be displayed if the IRI already
- * exists in the current {@link shared.service:ontologyStateService selected ontology}. The the IRI if
- * for an entity that is not imported, an edit button is displayed that will open the
- * {@link shared.component:editIriOverlay}. The component accepts a method that will be called when an
- * edit of the IRI is completed. 
+ * A component that creates a `div` with a display of the provided IRI of an entity. If `duplicateCheck` is true, an
+ * {@link shared.ErrorDisplayComponent} will be displayed if the IRI already exists in the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The the IRI if for an entity that is not imported, an
+ * edit button is displayed that will open the {@link shared.EditIriOverlayComponent}. The component accepts a method
+ * that will be called when an edit of the IRI is completed. 
  *
  * @param {string} iri The IRI to be displayed and optionally edited
  * @param {boolean} readOnly Whether the IRI should be editable or not
@@ -45,53 +46,56 @@ const template = require('./staticIri.component.html');
  * @param {string} highlightText The optional text to highlight within the IRI
  * @param {Function} onEdit A function to be called when the `editIriOverlay` is confirmed
  */
-const staticIriComponent = {
-    template,
-    bindings: {
-        iri: '<',
-        readOnly: '<',
-        duplicateCheck: '<',
-        highlightText: '<',
-        onEdit: '&'
-    },
-    controllerAs: 'dvm',
-    controller: staticIriComponentCtrl
-};
+@Component({
+    selector: 'static-iri',
+    templateUrl: './staticIri.component.html'
+})
+export class StaticIriComponent implements OnInit, OnChanges {
+    @Input() iri: string;
+    @Input() readOnly: boolean;
+    @Input() duplicateCheck: boolean;
+    @Input() highlightText: string;
 
-staticIriComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'modalService'];
+    @Output() onEdit = new EventEmitter<OnEditEventI | boolean>();
 
-function staticIriComponentCtrl($filter, ontologyStateService: OntologyStateService, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
+    iriBegin: string;
+    iriThen: string;
+    iriEnd: string;
 
-    dvm.$onInit = function() {
-        dvm.setVariables();
+    constructor(private splitIRI: SplitIRIPipe, private dialog: MatDialog, public os: OntologyStateService) {}
+    
+    ngOnInit(): void {
+        this.setVariables();
     }
-    dvm.$onChanges = function(changesObj) {
+    ngOnChanges(changesObj: SimpleChanges): void {
         if (!changesObj.iri || !changesObj.iri.isFirstChange()) {
-            dvm.setVariables();
+            this.setVariables();
         }
     }
-    dvm.setVariables = function(obj) {
-        var splitIri = $filter('splitIRI')(dvm.iri);
-        dvm.iriBegin = splitIri.begin;
-        dvm.iriThen = splitIri.then;
-        dvm.iriEnd = splitIri.end;
+    setVariables(): void {
+        const splitIri = this.splitIRI.transform(this.iri);
+        this.iriBegin = splitIri.begin;
+        this.iriThen = splitIri.then;
+        this.iriEnd = splitIri.end;
     }
-    dvm.showIriOverlay = function() {
-        var resolveObj: any = {
-            iriBegin: dvm.iriBegin,
-            iriThen: dvm.iriThen,
-            iriEnd: dvm.iriEnd,
+    showIriOverlay(): void {
+        const dataObj: any = {
+            iriBegin: this.iriBegin,
+            iriThen: this.iriThen,
+            iriEnd: this.iriEnd,
         };
-        if (dvm.duplicateCheck) {
-            resolveObj.customValidation = {
-                func: dvm.os.checkIri,
-                msg: 'This IRI already exists'
-            };
+        if (this.duplicateCheck) {
+            dataObj.validator = (g: FormGroup) => 
+                this.os.checkIri(g.get('iriBegin').value + g.get('iriThen').value + g.get('iriEnd').value) ? null 
+                : { iri: true };
+            dataObj.validatorMsg = 'This IRI already exists';
+            dataObj.validatorKey = 'iri';
         }
-        modalService.openModal('editIriOverlayAjs', resolveObj, dvm.onEdit);
+
+        this.dialog.open(EditIriOverlayComponent, { data: dataObj }).afterClosed().subscribe((result: OnEditEventI) => {
+            if (result) {
+                this.onEdit.emit(result);
+            }
+        });
     }
 }
-
-export default staticIriComponent;

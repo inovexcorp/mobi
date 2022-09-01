@@ -20,108 +20,101 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach } from 'lodash';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./createConceptOverlay.component.html');
+import { OWL, SKOS } from '../../../prefixes';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { REGEX } from '../../../constants';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:createConceptOverlay
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
- * @requires shared.service:utilService
- * @requires shared.service:propertyManagerService
+ * @class ontology-editor.CreateConceptOverlayComponent
  *
- * @description
- * `createConceptOverlay` is a component that creates content for a modal that creates a concept in the current
- * {@link shared.service:ontologyStateService selected ontology/vocabulary}. The form in the modal
- * contains a text input for the concept name (which populates the {@link ontology-editor.component:staticIri IRI}),
- * an {@link ontology-editor.component:advancedLanguageSelect}, and a `ui-select` for the concept scheme the concept
- * is "top" of. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that creates a concept in the current
+ * {@link shared.OntologyStateService#listItem selected ontology/vocabulary}. The form in the modal contains a text
+ * input for the concept name (which populates the {@link ontology-editor.StaticIriComponent IRI}), an
+ * {@link ontology-editor.AdvancedLanguageSelectComponent}, and an {@link ontology-editor.IriSelectOntologyComponent}
+ * for the concept scheme the concept is "top" of. Meant to be used in conjunction with the `MatDialog` service.
  */
-const createConceptOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createConceptOverlayComponentCtrl
-};
+@Component({
+    selector: 'create-concept-overlay',
+    templateUrl: './createConceptOverlay.component.html'
+})
+export class CreateConceptOverlayComponent implements OnInit {
+    iriHasChanged = false;
+    duplicateCheck = true;
+    iriPattern = REGEX.IRI;
 
-createConceptOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService'];
+    hasSchemes = false;
+    selectedSchemes: string[] = [];
 
-function createConceptOverlayComponentCtrl($filter, ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, prefixes, utilService, propertyManagerService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.prefixes = prefixes;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.schemeIRIs = Object.keys(dvm.os.listItem.conceptSchemes.iris);
-    dvm.schemes = [];
-    dvm.selectedSchemes = [];
-    dvm.prefix = dvm.os.getDefaultPrefix();
-    dvm.duplicateCheck = true;
-    dvm.concept = {
-        '@id': dvm.prefix,
-        '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept'],
-        [prefixes.skos + 'prefLabel']: [{
-            '@value': ''
-        }]
+    createForm = this.fb.group({
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
+        title: ['', [ Validators.required]],
+        language: ['']
+    });
+    
+    constructor(private fb: FormBuilder,
+        private dialogRef: MatDialogRef<CreateConceptOverlayComponent>, 
+        public os: OntologyStateService,  
+        private camelCasePipe: CamelCasePipe,
+        private splitIRIPipe: SplitIRIPipe) {}
+
+    ngOnInit(): void {
+        this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
+        this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+        this.hasSchemes = !!Object.keys(this.os.listItem.conceptSchemes.iris).length;
     }
-
-    dvm.nameChanged = function() {
-        if (!dvm.iriHasChanged) {
-            dvm.concept['@id'] = dvm.prefix + $filter('camelCase')(
-                dvm.concept[prefixes.skos + 'prefLabel'][0]['@value'], 'class');
+    nameChanged(newName: string): void {
+        if (!this.iriHasChanged) {
+            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
         }
     }
-    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
-        dvm.iriHasChanged = true;
-        dvm.concept['@id'] = iriBegin + iriThen + iriEnd;
-        dvm.os.setCommonIriParts(iriBegin, iriThen);
+    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void  {
+        this.iriHasChanged = true;
+        this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
+        this.os.setCommonIriParts(iriBegin, iriThen);
     }
-    dvm.create = function() {
-        dvm.duplicateCheck = false;
-        dvm.os.addLanguageToNewEntity(dvm.concept, dvm.language);
+    get concept(): JSONLDObject {
+        const concept = {
+            '@id': this.createForm.controls.iri.value,
+            '@type': [OWL + 'NamedIndividual', SKOS + 'Concept'],
+            [SKOS + 'prefLabel']: [{
+                '@value': this.createForm.controls.title.value
+            }]
+
+        };
+        this.os.addLanguageToNewEntity(concept, this.createForm.controls.language.value);
+        return concept;
+    }
+    create(): void  {
+        this.duplicateCheck = false;
+        const concept = this.concept;
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.concept);
+        this.os.addEntity(concept);
         // update relevant lists
-        dvm.os.listItem.concepts.iris[dvm.concept['@id']] = dvm.os.listItem.ontologyId;
-        dvm.os.addConcept(dvm.concept);
-        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.concept);
-        dvm.os.addIndividual(dvm.concept);
-        if (dvm.selectedSchemes.length) {
-            forEach(dvm.selectedSchemes, scheme => {
-                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.versionedRdfRecord.recordId, scheme['@id']);
-                pm.addId(entity, prefixes.skos + 'hasTopConcept', dvm.concept['@id']);
-                dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
-                dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes, dvm.concept['@id'], scheme['@id']);
+        this.os.listItem.concepts.iris[concept['@id']] = this.os.listItem.ontologyId;
+        this.os.addConcept(concept);
+        this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, concept);
+        this.os.addIndividual(concept);
+        if (this.selectedSchemes.length) {
+            this.selectedSchemes.forEach(scheme => {
+                this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, {'@id': scheme, [SKOS + 'hasTopConcept']: [{'@id': concept['@id']}]});
+                this.os.addEntityToHierarchy(this.os.listItem.conceptSchemes, concept['@id'], scheme);
             });
-            dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
+            this.os.listItem.conceptSchemes.flat = this.os.flattenHierarchy(this.os.listItem.conceptSchemes);
         }
         // Save the changes to the ontology
-        dvm.os.saveCurrentChanges().subscribe();
-        // Open snackbar
-        dvm.os.listItem.goTo.entityIRI = dvm.concept['@id'];
-        dvm.os.listItem.goTo.active = true;
+        this.os.saveCurrentChanges().subscribe(() => {
+            // Open snackbar
+            this.os.openSnackbar(concept['@id']);
+        }, () => {});
         // hide the overlay
-        dvm.close();
-    }
-    dvm.getSchemes = function(searchText) {
-        dvm.schemes = dvm.os.getSelectList(dvm.schemeIRIs, searchText);
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+        this.dialogRef.close();
     }
 }
-
-export default createConceptOverlayComponent;

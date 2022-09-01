@@ -22,9 +22,10 @@
   -->
 <div class="axiom-block">
     <div class="section-header">
-        <h5>Axioms</h5><a ng-if="dvm.os.listItem.selected && !dvm.os.isSelectedImported() && dvm.os.canModify()" class="float-right fa fa-fw fa-plus" ng-click="dvm.showAxiomOverlay()"></a>
+        <h5>Axioms</h5>
+        <a *ngIf="os.listItem.selected && !os.isSelectedImported() && os.canModify()" class="float-right fa fa-fw fa-plus" (click)="this.showAxiomOverlay()"></a>
     </div>
-    <class-axioms ng-if="dvm.om.isClass(dvm.os.listItem.selected)"></class-axioms>
-    <object-property-axioms ng-if="dvm.om.isObjectProperty(dvm.os.listItem.selected)"></object-property-axioms>
-    <datatype-property-axioms ng-if="dvm.om.isDataTypeProperty(dvm.os.listItem.selected)"></datatype-property-axioms>
+    <class-axioms *ngIf="om.isClass(os.listItem.selected)" [selected]="os.listItem.selected"></class-axioms>
+    <object-property-axioms *ngIf="om.isObjectProperty(os.listItem.selected)"></object-property-axioms>
+    <datatype-property-axioms *ngIf="om.isDataTypeProperty(os.listItem.selected)"></datatype-property-axioms>
 </div>

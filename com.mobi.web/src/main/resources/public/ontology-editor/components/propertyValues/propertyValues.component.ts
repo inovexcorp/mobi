@@ -20,31 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { includes } from 'lodash';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 
 import './propertyValues.component.scss';
 
-const template = require('./propertyValues.component.html');
-
+interface ValueDisplay {
+    jsonld: JSONLDId|JSONLDValue,
+    isLinkable: boolean,
+    isBlankNodeId: boolean,
+}
 /**
- * @ngdoc component
- * @name ontology-editor.component:propertyValues
- * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
+ * @class ontology-editor.PropertyValuesComponent
  *
- * @description
- * `propertyValues` is a component that creates a display of the values of the provided `property` on the provided
- * JSON-LD `entity`. Display includes the property as a header and the individual values displayed using either
- * a {@link ontology-editor.component:blankNodeValueDisplay} or {@link shared.component:valueDisplay}. Each value
- * can optionally have a edit and remove button depending on whether functions for those actions are provided. The
- * values can also optionally be highlighted according to the provided `highlightText` and their property headers if
- * included in the provided `highlightIris` list.
+ * A component that creates a display of the values of the provided `property` on the provided JSON-LD `entity`. Display
+ * includes the property as a header and the individual values displayed using either a
+ * {@link shared.BlankNodeValueDisplayComponent} or {@link shared.ValueDisplayComponent}. Each value can optionally have
+ * an edit and remove button depending on whether functions for those actions are provided. The values can also
+ * optionally be highlighted according to the provided `highlightText` and their property headers if included in the
+ * provided `highlightIris` list.
  *
  * @param {string} property The ID of a property on the `entity`
- * @param {Object} entity A JSON-LD object
+ * @param {JSONLDObject} entity A JSON-LD object
  * @param {Function} edit An optional function for editing a property value. Expects an argument called iri for the
  * property ID and an argument called index for the value's index in the property array
  * @param {Function} remove An optional function for removing a property value. Expects an argument called iri for
@@ -52,30 +54,38 @@ const template = require('./propertyValues.component.html');
  * @param {string[]} highlightIris An optional array of property IRIs that should be highlighted
  * @param {string} highlightText An optional string that should be highlighted in any value displays
  */
-const propertyValuesComponent = {
-    template,
-    bindings: {
-        property: '<',
-        entity: '<',
-        edit: '&?',
-        remove: '&?',
-        highlightIris: '<',
-        highlightText: '<'
-    },
-    controllerAs: 'dvm',
-    controller: propertyValuesComponentCtrl
-};
+@Component({
+    selector: 'property-values',
+    templateUrl: './propertyValues.component.html'
+})
+export class PropertyValuesComponent implements OnInit, OnChanges {
+    @Input() property: string;
+    @Input() entity: JSONLDObject;
+    @Input() highlightText: string;
+    @Input() highlightIris: string[] = [];
 
-propertyValuesComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService'];
+    @Output() edit = new EventEmitter<{property: string, index: number}>();
+    @Output() remove = new EventEmitter<{iri: string, index: number}>();
 
-function propertyValuesComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService) {
-    var dvm = this;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
+    isHighlightedProp = false;
+    isEditSet = false;
+    isRemoveSet = false;
 
-    dvm.valueInList = function() {
-        return includes(dvm.highlightIris, dvm.property);
+    constructor(public os: OntologyStateService, public om: OntologyManagerService) {}
+    
+    ngOnInit(): void {
+        this.isEditSet = this.edit.observers.length > 0;
+        this.isRemoveSet = this.remove.observers.length > 0;
+    }
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.highlightIris) {
+            this.isHighlightedProp = changes.highlightIris.currentValue.includes(this.property);
+        }
+    }
+    callEdit(index: number): void {
+        this.edit.emit({ property: this.property, index });
+    }
+    callRemove(index: number): void {
+        this.remove.emit({ iri: this.property, index });
     }
 }
-
-export default propertyValuesComponent;

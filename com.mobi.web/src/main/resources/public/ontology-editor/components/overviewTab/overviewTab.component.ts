@@ -20,58 +20,53 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * #L%
 */
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material';
+
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-
-const template = require('./overviewTab.component.html');
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:overviewTab
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:modalService
+ * @class ontology-editor.OverviewTabComponent
  *
- * @description
- * `overviewTab` is a component that creates a page containing the
+ * A component that creates a page containing the
  * {@link ontology-editor.component:associationBlock class and property list} of the current
- * {@link shared.service:ontologyStateService selected ontology} and information about a
- * selected item from that list. The selected entity display includes a
- * {@link ontology-editor.component:selectedDetails}, a button to delete the entity, an
- * {@link ontology-editor.component:annotationBlock}, an {@link ontology-editor.component:axiomBlock}, and a
- * {@link ontology-editor.component:usagesBlock}. If the selected entity is a property, a
- * {@link ontology-editor.component:characteristicsRow} is also displayed. The component houses the method
- * for opening the modal to delete an entity.
+ * {@link shared.OntologyStateService#listItem selected ontology} and information about a selected item from that list.
+ * The selected entity display includes a {@link ontology-editor.SelectedDetailsComponent}, a button to delete the
+ * entity, an {@link ontology-editor.AnnotationBlockComponent}, an {@link ontology-editor.AxiomBlockComponent}, and a
+ * {@link ontology-editor.UsagesBlockComponent}. If the selected entity is a property, a
+ * {@link ontology-editor.CharacteristicsRowComponent} is also displayed. The component houses the method for opening
+ * the modal to delete an entity.
  */
-const overviewTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: overviewTabComponentCtrl
-};
+@Component({
+    selector: 'overview-tab',
+    templateUrl: './overviewTab.component.html'
+})
+export class OverviewTabComponent {
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
 
-overviewTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'modalService'];
-
-function overviewTabComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, modalService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.om = ontologyManagerService;
-
-    dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
+    showDeleteConfirmation(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.deleteEntity();
+            }
+        });
     }
-    dvm.deleteEntity = function() {
-        if (dvm.om.isClass(dvm.os.listItem.selected)) {
-            dvm.os.deleteClass();
-        } else if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
-            dvm.os.deleteObjectProperty();
-        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
-            dvm.os.deleteDataTypeProperty();
+    deleteEntity(): void {
+        if (this.om.isClass(this.os.listItem.selected)) {
+            this.os.deleteClass();
+        } else if (this.om.isObjectProperty(this.os.listItem.selected)) {
+            this.os.deleteObjectProperty();
+        } else if (this.om.isDataTypeProperty(this.os.listItem.selected)) {
+            this.os.deleteDataTypeProperty();
         }
     }
-    dvm.seeHistory = function() {
-        dvm.os.listItem.seeHistory = true;
+    seeHistory(): void {
+        this.os.listItem.seeHistory = true;
     }
 }
-
-export default overviewTabComponent;

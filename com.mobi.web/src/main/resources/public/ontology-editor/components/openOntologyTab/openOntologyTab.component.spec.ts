@@ -139,6 +139,7 @@ describe('Open Ontology Tab component', function() {
         mapperStateStub = null;
         catalogManagerStub = null;
         settingManagerStub = null;
+        matDialog = null;
     });
 
     it('should initialize correctly', function() {

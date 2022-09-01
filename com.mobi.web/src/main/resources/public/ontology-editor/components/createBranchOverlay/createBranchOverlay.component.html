@@ -20,18 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3 class="modal-title">Create New Branch</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <form name="dvm.form" novalidate autocomplete="off">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-input bind-model="dvm.branchConfig.title" change-event="dvm.branchConfig.title = value" display-text="'Title'" required="true" is-focus-me="true"></text-input>
-        <text-area bind-model="dvm.branchConfig.description" change-event="dvm.branchConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" type="button" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" type="button" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
+<h1 mat-dialog-title>Create New Branch</h1>
+<form mat-dialog-content [formGroup]="createForm">
+    <error-display *ngIf="error">{{error}}</error-display>
+    <mat-form-field class="w-100">
+        <input matInput placeholder="Title" name="title" type="text" formControlName="title" required>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <textarea matInput placeholder="Description" formControlName="description"></textarea>
+    </mat-form-field>
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" [disabled]="createForm.invalid" (click)="create()">Submit</button>
 </div>

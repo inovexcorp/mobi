@@ -23,19 +23,23 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatCheckboxModule, MatExpansionModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
     mockUtil
 } from '../../../../../../test/ts/Shared';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { SharedModule } from '../../../shared/shared.module';
 import { RecordFiltersComponent } from './recordFilters.component';
 
 describe('Record Filters component', function() {
@@ -53,9 +57,17 @@ describe('Record Filters component', function() {
     
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [
+                NoopAnimationsModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatExpansionModule,
+                MatCheckboxModule
+             ],
             declarations: [
-                RecordFiltersComponent
+                RecordFiltersComponent,
+                MockComponent(SearchBarComponent),
+                MockComponent(InfoMessageComponent)
             ],
             providers: [
                 MockProvider(CatalogManagerService),
@@ -176,7 +188,7 @@ describe('Record Filters component', function() {
             component.ngOnInit();
             fixture.detectChanges();
             expect(element.queryAll(By.css('.record-filters')).length).toEqual(1);
-            const expectedHtmlResults = [[ 'Record Type', 'test1,test2', 0, 0 ], [ 'Keywords', 'keyword1 (6)', 0, 1 ]];
+            const expectedHtmlResults = [[ 'Record Type', 'test1,test2', 0, 0 ], [ 'Keywords', 'keyword1 (6)', 1, 1 ]];
             expect(this.getHtmlResults(this)).toEqual(expectedHtmlResults);
         });
     });

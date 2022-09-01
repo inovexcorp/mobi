@@ -20,217 +20,215 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { Datasource, IDatasource } from 'ngx-ui-scroll';
+import {first} from 'rxjs/operators';
+import { every, filter, some, has, concat, map, merge } from 'lodash';
+import { Component, EventEmitter, Inject, Input, OnInit, OnChanges, Output, OnDestroy, SimpleChanges } from '@angular/core';
 
-import { every, filter, some, has, concat, map, merge, includes } from 'lodash';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-
-const template = require('./propertyTree.component.html');
+import { INDENT } from '../../../constants';
+import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:propertyTree
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class ontology-editor.PropertyTreeComponent
  *
- * @description
- * `propertyTree` is a component which creates a `div` containing a {@link shared.component:searchBar}
- * and hierarchy of {@link ontology-editor.component:treeItem}. When search text is provided, the hierarchy filters
- * what is shown based on value matches with predicates in the
- * {@link shared.service:ontologyManagerService entityNameProps}.
+ * A component which creates a `div` containing a {@link shared.SearchBarComponent} and hierarchy of
+ * {@link ontology-editor.TreeItemComponent}. When search text is provided, the hierarchy filters what is shown based on
+ * value matches with predicates in the {@link shared.OntologyManagerService entityNameProps}.
  *
  * @param {Object[]} datatypeProps An array which represents a flattened list of data properties
  * @param {Object[]} objectProps An array which represents a flattened list of object properties
  * @param {Object[]} annotationProps An array which represents a flattened list of annotation properties
  * @param {Function} updateSearch A function to update the state variable used to track the search filter text
  */
-const propertyTreeComponent = {
-    template,
-    bindings: {
-        datatypeProps: '<',
-        objectProps: '<',
-        annotationProps: '<',
-        index: '<',
-        updateSearch: '&',
-        branchId: '<'
-    },
-    controllerAs: 'dvm',
-    controller: propertyTreeComponentCtrl
-};
+@Component({
+    selector: 'property-tree',
+    templateUrl: './propertyTree.component.html'
+})
+export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
+    @Input() datatypeProps;
+    @Input() objectProps;
+    @Input() annotationProps;
+    @Input() index;
+    @Input() branchId;
+    @Output() updateSearch = new EventEmitter<string>();
 
-propertyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'prefixes', 'INDENT'];
-
-function propertyTreeComponentCtrl(ontologyManagerService: OntologyManagerService, ontologyStateService: OntologyStateService, utilService, prefixes, INDENT) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    var util = utilService;
-    dvm.indent = INDENT;
-    dvm.os = ontologyStateService;
-    dvm.searchText = '';
-    dvm.filterText = '';
-    dvm.flatPropertyTree = [];
-    dvm.filteredHierarchy = [];
-    dvm.preFilteredHierarchy = [];
-    dvm.midFilteredHierarchy = [];
-    dvm.activeTab = '';
-    dvm.dropdownFilterActive = false;
-    dvm.activeEntityFilter = {
-        name: 'Hide unused imports',
-        checked: false,
-        flag: false, 
-        filter: node => {
-            var match = true;
-            if (dvm.os.isImported(node.entityIRI)) {
-                match = false;
-            }
-            return match;
+    datasource: IDatasource = new Datasource({
+        get: (index, count, success) => {
+            const data = this.filteredHierarchy.slice(index, index + count);
+            success(data);
+        },
+        settings: {
+            bufferSize: 35,
+            startIndex: 0,
+            minIndex: 0
         }
-    };
-    dvm.deprecatedEntityFilter = {
-        name: 'Hide deprecated properties',
-        checked: false,
-        flag: false,
-        filter: node => {
-            var match = true;
-            if (dvm.os.isIriDeprecated(node.entityIRI)) {
-                match = false;
-            }
-            return match;
-        }
-    };
-    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
+    });
 
-    dvm.$onInit = function() {
-        dvm.activeTab = dvm.os.getActiveKey();
-        dvm.flatPropertyTree = constructFlatPropertyTree();
-        update();
+    indent = INDENT;
+    searchText = '';
+    filterText = '';
+    flatPropertyTree = [];
+    filteredHierarchy = [];
+    preFilteredHierarchy = [];
+    midFilteredHierarchy = [];
+    activeTab = '';
+    dropdownFilterActive = false;
+    dropdownFilters = [];
+    activeEntityFilter;
+    deprecatedEntityFilter;
+    chunks = [];
+
+    constructor(public os: OntologyStateService, @Inject('utilService') private util) {}
+
+    ngOnInit(): void {
+        this.activeEntityFilter = {
+            name: 'Hide unused imports',
+            checked: false,
+            flag: false,
+            filter: node => {
+                let match = true;
+                if (this.os.isImported(node.entityIRI)) {
+                    match = false;
+                }
+                return match;
+            }
+        };
+
+        this.deprecatedEntityFilter = {
+            name: 'Hide deprecated properties',
+            checked: false,
+            flag: false,
+            filter: node => {
+                let match = true;
+                if (this.os.isIriDeprecated(node.entityIRI)) {
+                    match = false;
+                }
+                return match;
+            }
+        };
+
+        this.dropdownFilters = [Object.assign({}, this.activeEntityFilter), Object.assign({}, this.deprecatedEntityFilter)];
+        this.activeTab = this.os.getActiveKey();
+        this.flatPropertyTree = this.constructFlatPropertyTree();
+        this.update();
     }
-    dvm.$onChanges = function(changesObj) {
+    ngOnChanges(changesObj: SimpleChanges): void {
         if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
             if (changesObj.branchId) {
-                removeFilters();
+                this.removeFilters();
             }
-            dvm.flatPropertyTree = constructFlatPropertyTree();
-            update();
+            this.flatPropertyTree = this.constructFlatPropertyTree();
+            this.update();
         }
     }
-    dvm.$onDestroy = function() {
-        if (dvm.os.listItem?.editorTabStates) {
-            dvm.os.listItem.editorTabStates.properties.index = 0;
+    ngOnDestroy(): void {
+        if (this.os.listItem?.editorTabStates) {
+            this.os.listItem.editorTabStates.properties.index = 0;
         }
     }
-    function removeFilters() {
-        dvm.dropdownFilterActive = false;
-        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
-        dvm.searchText = '';
-        dvm.filterText = '';
+    clickItem(entityIRI: string): void {
+        this.os.selectItem(entityIRI).pipe(first()).toPromise();
     }
-    dvm.clickItem = function(entityIRI) {
-        dvm.os.selectItem(entityIRI).toPromise();
+    onKeyup(): void {
+        this.filterText = this.searchText;
+        this.dropdownFilterActive = some(this.dropdownFilters, 'flag');
+        this.update();
     }
-    dvm.onKeyup = function() {
-        dvm.filterText = dvm.searchText;
-        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
-        update();
-    }
-    dvm.shouldFilter = function() {
-        return (dvm.filterText || dvm.dropdownFilterActive);
-    }
-    dvm.toggleOpen = function(node) {
+    toggleOpen(node: HierarchyNode): void {
         node.isOpened = !node.isOpened;
         if (!node.title) {
-            dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath] = node.isOpened;
+            this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = node.isOpened;
         } else {
-            node.set(dvm.os.listItem.versionedRdfRecord.recordId, node.isOpened);
-            dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.title] = node.isOpened;
+            node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened);
+            this.os.listItem.editorTabStates[this.activeTab].open[node.title] = node.isOpened;
         }
-        dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
+        this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this));
+        this.datasource.adapter.reload(this.datasource.adapter.firstVisible.$index);
     }
-    dvm.matchesSearchFilter = function(node) {
-        var searchMatch = false;
+    matchesSearchFilter(node: HierarchyNode): boolean {
+        let searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
         some(node.entityInfo.names, name => {
-            if (name.toLowerCase().includes(dvm.filterText.toLowerCase()))
+            if (name.toLowerCase().includes(this.filterText.toLowerCase())) {
                 searchMatch = true;
+            }
         });
         if (searchMatch) {
             return true;
         }
 
         // Check if beautified entity id matches search text
-        if (util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+        if (this.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(this.filterText.toLowerCase())) {
             searchMatch = true;
         }
-        
+
         return searchMatch;
     }
-    // Start at the current node and go up through the parents marking each path as an iriToOpen. If a path is already present in dvm.os.listItem.editorTabStates[dvm.activeTab].open, it means it was already marked as an iriToOpen by another one of it's children. In that scenario we know all of it's parents will also be open, and we can break out of the loop.
-    dvm.openAllParents = function(node) {
-        for (var i = node.path.length - 1; i > 1; i--) {
-            var fullPath = dvm.os.joinPath(node.path.slice(0, i));
+    // Start at the current node and go up through the parents marking each path as an iriToOpen. If a path is already present in this.os.listItem.editorTabStates[this.activeTab].open, it means it was already marked as an iriToOpen by another one of it's children. In that scenario we know all of it's parents will also be open, and we can break out of the loop.
+    openAllParents(node: HierarchyNode): void {
+        for (let i = node.path.length - 1; i > 1; i--) {
+            const fullPath = this.os.joinPath(node.path.slice(0, i));
 
-            if (dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath]) {
+            if (this.os.listItem.editorTabStates[this.activeTab].open[fullPath]) {
                 break;
             }
 
-            dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath] = true;
+            this.os.listItem.editorTabStates[this.activeTab].open[fullPath] = true;
         }
     }
-    dvm.openEntities = function(node) {
+    openEntities(node: HierarchyNode): boolean {
         if (node.title) {
-            var toOpen = dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.title];
+            const toOpen = this.os.listItem.editorTabStates[this.activeTab].open[node.title];
             if (toOpen) {
                 if (!node.isOpened) {
                     node.isOpened = true;
-                    node.set(dvm.os.listItem.versionedRdfRecord.recordId, true);
+                    node.set(this.os.listItem.versionedRdfRecord.recordId, true);
                 }
                 node.displayNode = true;
             }
             return true;
         } else {
-            var toOpen = dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath];
+            const toOpen = this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
             if (toOpen) {
                 if (!node.isOpened) {
                     node.isOpened = true;
                 }
-                node.displayNode = true; 
+                node.displayNode = true;
             }
             return true;
         }
     }
-    dvm.searchFilter = function (node) {
+    searchFilter(node: HierarchyNode): boolean {
         delete node.underline;
         delete node.parentNoMatch;
         delete node.displayNode;
 
         if (node.title) {
-            node.isOpened = node.get(dvm.os.listItem.versionedRdfRecord.recordId);
-            if (dvm.shouldFilter()) {
+            node.isOpened = node.get(this.os.listItem.versionedRdfRecord.recordId);
+            if (this.filterText || this.dropdownFilterActive) {
                 node.parentNoMatch = true;
             } else {
-                dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.title] = node.isOpened;
+                this.os.listItem.editorTabStates[this.activeTab].open[node.title] = node.isOpened;
             }
         } else {
-            if (dvm.shouldFilter()) {
+            if (this.filterText || this.dropdownFilterActive) {
                 delete node.isOpened;
-                var match = false;
-                if (dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
+                let match = false;
+                if (this.matchesSearchFilter(node) && this.matchesDropdownFilters(node)) {
                     match = true;
-                    dvm.openAllParents(node);
+                    this.openAllParents(node);
                     node.underline = true;
-                    if (has(dvm.os.listItem.dataProperties.iris, node.entityIRI)) {
-                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Data Properties'] = true;
+                    if (has(this.os.listItem.dataProperties.iris, node.entityIRI)) {
+                        this.os.listItem.editorTabStates[this.activeTab].open['Data Properties'] = true;
                         delete node.parentNoMatch;
                     }
-                    if (has(dvm.os.listItem.objectProperties.iris, node.entityIRI)) {
-                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Object Properties'] = true;
+                    if (has(this.os.listItem.objectProperties.iris, node.entityIRI)) {
+                        this.os.listItem.editorTabStates[this.activeTab].open['Object Properties'] = true;
                         delete node.parentNoMatch;
                     }
-                    if (has(dvm.os.listItem.annotations.iris, node.entityIRI)) {
-                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Annotation Properties'] = true;
+                    if (has(this.os.listItem.annotations.iris, node.entityIRI)) {
+                        this.os.listItem.editorTabStates[this.activeTab].open['Annotation Properties'] = true;
                         delete node.parentNoMatch;
                     }
                 }
@@ -243,12 +241,12 @@ function propertyTreeComponentCtrl(ontologyManagerService: OntologyManagerServic
         }
         return true;
     }
-    dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
+    matchesDropdownFilters(node: HierarchyNode): boolean {
+        return every(this.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
-    dvm.isShown = function (node) {
-        var displayNode = !has(node, 'entityIRI') || (dvm.os.areParentsOpen(node, dvm.activeTab) && node.get.call(dvm.os, dvm.os.listItem.versionedRdfRecord.recordId));
-        if (dvm.shouldFilter() && node.parentNoMatch) {
+    isShown(node: HierarchyNode): boolean {
+        const displayNode = !has(node, 'entityIRI') || (this.os.areParentsOpen(node, this.activeTab) && node.get(this.os.listItem.versionedRdfRecord.recordId));
+        if ((this.filterText || this.dropdownFilterActive)&& node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
             } else {
@@ -258,47 +256,58 @@ function propertyTreeComponentCtrl(ontologyManagerService: OntologyManagerServic
         return displayNode;
     }
 
-    function update() {
-        if (dvm.shouldFilter()) {
-            dvm.os.listItem.editorTabStates[dvm.activeTab].open = {};
+    private update() {
+        if (this.filterText || this.dropdownFilterActive) {
+            this.os.listItem.editorTabStates[this.activeTab].open = {};
         }
-        dvm.updateSearch({value: dvm.filterText});
-        dvm.preFilteredHierarchy = dvm.flatPropertyTree.filter(dvm.searchFilter);
-        dvm.midFilteredHierarchy = dvm.preFilteredHierarchy.filter(dvm.openEntities);
-        dvm.filteredHierarchy = dvm.midFilteredHierarchy.filter(dvm.isShown);
+        this.updateSearch.emit(this.filterText);
+        this.preFilteredHierarchy = this.flatPropertyTree.filter(this.searchFilter.bind(this));
+        this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
+        this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
+        this.datasource.adapter.reload(this.index);
     }
-    function addGetToArrayItems(array, get) {
+    private addGetToArrayItems(array, get) {
         return map(array, item => merge(item, {get}));
     }
-    function constructFlatPropertyTree() {
-        var result = [];
-        if (dvm.datatypeProps !== undefined && dvm.datatypeProps.length) {
+    private removeFilters() {
+        this.dropdownFilterActive = false;
+        this.dropdownFilters = [Object.assign({}, this.activeEntityFilter), Object.assign({}, this.deprecatedEntityFilter)];
+        this.searchText = '';
+        this.filterText = '';
+    }
+    private constructFlatPropertyTree() {
+        let result = [];
+        if (this.datatypeProps !== undefined && this.datatypeProps.length) {
             result.push({
                 title: 'Data Properties',
-                get: dvm.os.getDataPropertiesOpened.bind(dvm.os),
-                set: dvm.os.setDataPropertiesOpened.bind(dvm.os)
+                get: this.os.getDataPropertiesOpened.bind(this.os),
+                set: this.os.setDataPropertiesOpened.bind(this.os)
             });
 
-            result = concat(result, addGetToArrayItems(dvm.datatypeProps, dvm.os.getDataPropertiesOpened));
+            result = concat(result, this.addGetToArrayItems(this.datatypeProps, this.os.getDataPropertiesOpened.bind(this.os)));
         }
-        if (dvm.objectProps !== undefined && dvm.objectProps.length) {
+        if (this.objectProps !== undefined && this.objectProps.length) {
             result.push({
                 title: 'Object Properties',
-                get: dvm.os.getObjectPropertiesOpened.bind(dvm.os),
-                set: dvm.os.setObjectPropertiesOpened.bind(dvm.os)
+                get: this.os.getObjectPropertiesOpened.bind(this.os),
+                set: this.os.setObjectPropertiesOpened.bind(this.os)
             });
-            result = concat(result, addGetToArrayItems(dvm.objectProps, dvm.os.getObjectPropertiesOpened));
+            result = concat(result, this.addGetToArrayItems(this.objectProps, this.os.getObjectPropertiesOpened.bind(this.os)));
         }
-        if (dvm.annotationProps !== undefined && dvm.annotationProps.length) {
+        if (this.annotationProps !== undefined && this.annotationProps.length) {
             result.push({
                 title: 'Annotation Properties',
-                get: dvm.os.getAnnotationPropertiesOpened.bind(dvm.os),
-                set: dvm.os.setAnnotationPropertiesOpened.bind(dvm.os)
+                get: this.os.getAnnotationPropertiesOpened.bind(this.os),
+                set: this.os.setAnnotationPropertiesOpened.bind(this.os)
             });
-            result = concat(result, addGetToArrayItems(dvm.annotationProps, dvm.os.getAnnotationPropertiesOpened));
+            result = concat(result, this.addGetToArrayItems(this.annotationProps, this.os.getAnnotationPropertiesOpened.bind(this.os)));
         }
         return result;
     }
+    updateSearchText(value: string): void {
+        this.searchText = value;
+    }
+    updateDropdownFilters(value): void {
+        this.dropdownFilters = value;
+    }
 }
-
-export default propertyTreeComponent;

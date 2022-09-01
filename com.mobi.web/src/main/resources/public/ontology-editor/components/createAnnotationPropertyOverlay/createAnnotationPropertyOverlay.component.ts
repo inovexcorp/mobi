@@ -21,92 +21,97 @@
  * #L%
  */
 import { unset } from 'lodash';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./createAnnotationPropertyOverlay.component.html');
+import { DCTERMS, OWL } from '../../../prefixes';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { REGEX } from '../../../constants';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:createAnnotationPropertyOverlay
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
+ * @class ontology-editor.CreateAnnotationPropertyOverlayComponent
  *
- * @description
- * `createAnnotationPropertyOverlay` is a component that creates content for a modal that creates an annotation
- * property in the current {@link shared.service:ontologyStateService selected ontology}.
- * The form in the modal contains a text input for the property name (which populates the
- * {@link ontology-editor.component:staticIri IRI}), a {@link shared.component:textArea} for the property
- * description, and an {@link ontology-editor.component:advancedLanguageSelect}. Meant to be used in conjunction
- * with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that creates an annotation property in the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a text input for the
+ * property name (which populates the {@link ontology-editor.StaticIriComponent IRI}), a field for the property
+ * description, and an {@link ontology-editor.AdvancedLanguageSelectComponent}. Meant to be used in conjunction with the
+ * `MatDialog` service.
  */
-const createAnnotationPropertyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createAnnotationPropertyOverlayComponentCtrl
-};
+@Component({
+    selector: 'create-annotation-property-overlay',
+    templateUrl: './createAnnotationPropertyOverlay.component.html'
+})
+export class CreateAnnotationPropertyOverlayComponent implements OnInit {
+    iriHasChanged = false;
+    duplicateCheck = true;
+    iriPattern = REGEX.IRI;
 
-createAnnotationPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes'];
+    createForm = this.fb.group({
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]], // has prefix
+        title: ['', [ Validators.required]], 
+        description: [''],
+        language: ['']
+    });
+    
+    constructor(private fb: FormBuilder,
+        private dialogRef: MatDialogRef<CreateAnnotationPropertyOverlayComponent>, 
+        public os: OntologyStateService,
+        private camelCasePipe: CamelCasePipe,
+        private splitIRIPipe: SplitIRIPipe) {}
 
-function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes) {
-    var dvm = this;
-    dvm.prefixes = prefixes;
-    dvm.os = ontologyStateService;
-    dvm.prefix = dvm.os.getDefaultPrefix();
-    dvm.duplicateCheck = true;
-    dvm.property = {
-        '@id': dvm.prefix,
-        '@type': [dvm.prefixes.owl + 'AnnotationProperty'],
-        [prefixes.dcterms + 'title']: [{
-            '@value': ''
-        }],
-        [prefixes.dcterms + 'description']: [{
-            '@value': ''
-        }]
-    };
-
-    dvm.nameChanged = function() {
-        if (!dvm.iriHasChanged) {
-            dvm.property['@id'] = dvm.prefix + $filter('camelCase')(dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
+    ngOnInit(): void {
+        this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
+        this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+    }
+    nameChanged(newName: string): void {
+        if (!this.iriHasChanged) {
+            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
         }
     }
-    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
-        dvm.iriHasChanged = true;
-        dvm.property['@id'] = iriBegin + iriThen + iriEnd;
-        dvm.os.setCommonIriParts(iriBegin, iriThen);
+    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void  {
+        this.iriHasChanged = true;
+        this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
+        this.os.setCommonIriParts(iriBegin, iriThen);
     }
-    dvm.create = function() {
-        dvm.duplicateCheck = false;
-        if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
-            unset(dvm.property, prefixes.dcterms + 'description');
+    get property(): JSONLDObject{
+        const property = {
+            '@id': this.createForm.controls.iri.value,
+            '@type': [OWL + 'AnnotationProperty'],
+            [DCTERMS + 'title']: [{
+                '@value': this.createForm.controls.title.value
+            }],
+            [DCTERMS + 'description']: [{
+                '@value': this.createForm.controls.description.value
+            }]
+        };
+        if (property[DCTERMS + 'description'][0]['@value'] === '') {
+            unset(property, DCTERMS + 'description');
         }
-        dvm.os.addLanguageToNewEntity(dvm.property, dvm.language);
-        dvm.os.updatePropertyIcon(dvm.property);
+        this.os.addLanguageToNewEntity(property, this.createForm.controls.language.value);
+        return property;
+    }
+    create(): void {
+        this.duplicateCheck = false;
+        const property = this.property;
+        this.os.updatePropertyIcon(property);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.property);
+        this.os.addEntity(property);
         // update lists
-        dvm.os.listItem.annotations.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
-        dvm.os.listItem.annotations.flat = dvm.os.flattenHierarchy(dvm.os.listItem.annotations);
+        this.os.listItem.annotations.iris[property['@id']] = this.os.listItem.ontologyId;
+        this.os.listItem.annotations.flat = this.os.flattenHierarchy(this.os.listItem.annotations);
         // Update InProgressCommit
-        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.property);
+        this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, property);
         // Save the changes to the ontology
-        dvm.os.saveCurrentChanges().subscribe();
-        // Open snackbar
-        dvm.os.listItem.goTo.entityIRI = dvm.property['@id'];
-        dvm.os.listItem.goTo.active = true;
+        this.os.saveCurrentChanges().subscribe(() => {
+            // Open snackbar
+            this.os.openSnackbar(property['@id']);
+        }, () => {});
         // hide the overlay
-        dvm.close();
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+        this.dialogRef.close();
     }
 }
-
-export default createAnnotationPropertyOverlayComponent;

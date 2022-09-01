@@ -20,10 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="super-class-select advanced-language-select">
-    <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show Sub Class Of</a>
-    <div ng-if="dvm.isShown">
-        <a class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Sub Class Of</a>
-        <ontology-class-select bindModel="dvm.iris" change-event="dvm.onChange(values)"></ontology-class-select>
-    </div>
+<div class="super-class-select">
+    <button *ngIf="!isShown; else showSelect" class="btn-show" mat-button (click)="show()"><i class="fa fa-fw fa-plus"></i>Show Sub Class Of</button>
+    <ng-template #showSelect>
+        <button mat-button class="btn-hide" (click)="hide()"><i class="fa fa-fw fa-times"></i>Hide Sub Class Of</button>
+        <ontology-class-select [selected]="iris" (selectedChange)="onChange($event)"></ontology-class-select>
+    </ng-template>
 </div>

@@ -20,61 +20,113 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatChipInputEvent } from '@angular/material';
+import { Observable } from 'rxjs';
+import { debounceTime, map, startWith } from 'rxjs/operators';
+
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
-import './ontologyClassSelect.component.scss';
-
-const template = require('./ontologyClassSelect.component.html');
-
-/**
- * @ngdoc component
- * @name ontology-editor.component:ontologyClassSelect
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- *
- * @description
- * `ontologyClassSelect` is a component that creates a Bootstrap `form-group` with a `ui-select` of the IRIs of
- * all the classes in the current {@link shared.service:ontologyStateService selected ontology} and its
- * imports. The value of the select is bound to `bindModel`, but only one way. The provided `changeEvent`
- * function is expected to update the value of `bindModel`. Can also optionally provide more IRIs to be included on top
- * of the list of class IRIs
- *
- * @param {Object[]} bindModel The variable to bind the selected class IRIs to
- * @param {string[]} extraOptions Any extra IRIs to be included in the dropdown options
- * @param {Function} changeEvent A function that will be called when the value of the `ui-select` changes. Should
- * update the value of `bindModel`. Expects an argument called `values`.
- * @param {Function} lockChoice An optional expression to determine whether a selected class should be locked
- */
-const ontologyClassSelectComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        extraOptions: '<',
-        lockChoice: '&',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: ontologyClassSelectComponentCtrl
-};
-
-ontologyClassSelectComponentCtrl.$inject = ['ontologyStateService', 'utilService'];
-
-function ontologyClassSelectComponentCtrl(ontologyStateService: OntologyStateService, utilService) {
-    const dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.array = [];
-
-    dvm.getValues = function(searchText) {
-        let iris = Object.keys(dvm.os.listItem.classes.iris);
-        if (dvm.extraOptions && dvm.extraOptions.length) {
-            iris = iris.concat(dvm.extraOptions);
-        }
-        dvm.array = dvm.os.getSelectList(iris, searchText, iri => dvm.os.getEntityNameByListItem(iri));
-    };
-    dvm.onChange = function() {
-        dvm.changeEvent({values: dvm.bindModel});
-    };
+interface ClassGrouping {
+    namespace: string,
+    options: ClassOption[]
 }
 
-export default ontologyClassSelectComponent;
+interface ClassOption {
+    item: string,
+    name: string
+}
+
+/**
+ * @class ontology-editor.OntologyClassSelectComponent
+ *
+ * A component that creates a `mat-autocomplete` of the IRIs of all the classes in the current
+ * {@link shared.OntologyStateService#listItem selected ontology} and its imports. The value of the select is bound to
+ * `selected`. Can also optionally provide more IRIs to be included on top of the list of class IRIs
+ *
+ * @param {string[]} selected The variable to bind the selected class IRIs to
+ * @param {string[]} extraOptions Any extra IRIs to be included in the dropdown options
+ */
+@Component({
+    selector: 'ontology-class-select',
+    templateUrl: './ontologyClassSelect.component.html'
+})
+export class OntologyClassSelectComponent implements OnInit {
+    @Input() selected: string[] = [];
+    @Input() extraOptions: string[];
+    
+    @Output() selectedChange = new EventEmitter<string[]>();
+
+    @ViewChild('clazzInput') clazzInput: ElementRef;
+
+    separatorKeysCodes: number[] = [ENTER];
+    filteredClasses: Observable<ClassGrouping[]>;
+    selectedOptions: ClassOption[] = [];
+
+    clazzControl: FormControl = new FormControl();
+    
+    constructor(public os: OntologyStateService) {}
+
+    ngOnInit(): void {
+        this.selectedOptions = this.selected.map(iri => ({
+            name: this.os.getEntityNameByListItem(iri),
+            item: iri
+        }));
+        this.filteredClasses = this.clazzControl.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string | ClassOption>(''),
+                map(val => {
+                    const searchText = typeof val === 'string' ? 
+                        val : 
+                        val ? 
+                            val.name :
+                            '';
+                    return this.filter(searchText);
+                })
+            );
+    }
+    filter(searchText: string): ClassGrouping[] {
+        let iris = Object.keys(this.os.listItem.classes.iris);
+        if (this.extraOptions && this.extraOptions.length) {
+            iris = iris.concat(this.extraOptions);
+        }
+        iris = iris.filter(iri => !this.selected.includes(iri));
+        return this.os.getGroupedSelectList(iris, searchText, iri => this.os.getEntityNameByListItem(iri));
+    }
+    add(event: MatChipInputEvent): void {
+        const input = event.input;
+        const value = event.value;
+    
+        if (value) {
+            this.selectedOptions.push({ item: value, name: this.os.getEntityNameByListItem(value) });
+            this.selected.push(value);
+            this.selectedChange.emit(this.selected);
+        }
+    
+        // Reset the input value
+        if (input) {
+            input.value = '';
+        }
+    
+        this.clazzControl.setValue(null);
+    }
+    remove(option: ClassOption): void {
+        const index = this.selected.indexOf(option.item);
+    
+        if (index >= 0) {
+            this.selectedOptions.splice(index, 1); // TODO: Should be at the same position but test this
+            this.selected.splice(index, 1);
+            this.selectedChange.emit(this.selected);
+        }
+    }
+    select(event: MatAutocompleteSelectedEvent): void {
+        this.selectedOptions.push(event.option.value);
+        this.selected.push(event.option.value.item);
+        this.selectedChange.emit(this.selected);
+        this.clazzInput.nativeElement.value = '';
+        this.clazzControl.setValue(null);
+    }
+}

@@ -20,55 +20,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material';
 
-const template = require('./conceptSchemesTab.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:conceptSchemesTab
+ * @class ontology-editor.ConceptSchemesTabComponent
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:modalService
  *
  * @description
  * `conceptSchemesTab` is a component that creates a page containing the
- * {@link ontology-editor.component:conceptSchemeHierarchyBlock} of the current
- * {@link shared.service:ontologyStateService selected ontology/vocabulary} and information about a
+ * {@link ontology-editor.ConceptSchemeHierarchyBlockComponent} of the current
+ * {@link shared.OntologyStateService#listItem selected ontology/vocabulary} and information about a
  * selected entity from that list. The selected entity display includes a
- * {@link ontology-editor.component:selectedDetails}, a button to delete the entity, an
- * {@link ontology-editor.component:annotationBlock}, a {@link ontology-editor.component:datatypePropertyBlock},
- * and a {@link ontology-editor.component:usagesBlock}. The component houses the method for opening a modal for
+ * {@link ontology-editor.SelectedDetailsComponent}, a button to delete the entity, an
+ * {@link ontology-editor.AnnotationBlockComponent}, a {@link ontology-editor.DatatypePropertyBlockComponent},
+ * and a {@link ontology-editor.UsagesBlockComponent}. The component houses the method for opening a modal for
  * deleting concepts or concept schemes.
  */
-const conceptSchemesTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: conceptSchemesTabComponentCtrl
-};
+@Component({
+    selector: 'concept-schemes-tab',
+    templateUrl: './conceptSchemesTab.component.html'
+})
 
-conceptSchemesTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'modalService'];
-
-function conceptSchemesTabComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, modalService) {
-    var dvm = this;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-
-    dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
+export class ConceptSchemesTabComponent {
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog){}
+    showDeleteConfirmation() {
+        this.dialog.open(ConfirmModalComponent,{
+            data: {
+                content: '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>'
+            }
+        }).afterClosed().subscribe(result => {
+            if (result) this.deleteEntity();
+        });
     }
-    dvm.deleteEntity = function() {
-        if (dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
-            dvm.os.deleteConcept();
-        } else if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
-            dvm.os.deleteConceptScheme();
+    deleteEntity() {
+        if (this.om.isConcept(this.os.listItem.selected, this.os.listItem.derivedConcepts)) {
+            this.os.deleteConcept();
+        } else if (this.om.isConceptScheme(this.os.listItem.selected, this.os.listItem.derivedConceptSchemes)) {
+            this.os.deleteConceptScheme();
         }
     }
-    dvm.seeHistory = function() {
-        dvm.os.listItem.seeHistory = true;
+    seeHistory() {
+        this.os.listItem.seeHistory = true;
     }
 }
-
-export default conceptSchemesTabComponent;

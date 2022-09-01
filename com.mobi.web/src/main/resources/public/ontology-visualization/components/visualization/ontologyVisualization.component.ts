@@ -124,7 +124,10 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                         } else {
                             self.initGraph(commitGraphState);
                         }
-                        this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
+                        if (this.spinnerSrv) {
+                            // TODO why would spinnerSrv be null
+                            this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
+                        }
                     },
                     error(reason) { 
                         self.clearGraph();

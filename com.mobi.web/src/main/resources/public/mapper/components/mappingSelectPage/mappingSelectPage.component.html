@@ -24,9 +24,7 @@
 <div class="col-lg-8 offset-lg-2 h-100">
     <div class="h-100 d-flex flex-column">
         <div class="search-form d-flex pt-2">
-            <mat-form-field class="flex-1 mr-2">
-                <input matInput class="record-search" placeholder="Search..." [(ngModel)]="searchText" (keyup.enter)="searchRecords()">
-            </mat-form-field>
+            <search-bar class="flex-1 mr-2" [(bindModel)]="searchText" (submitEvent)="searchRecords()"></search-bar>
             <div>
                 <button class="new-button" mat-raised-button color="primary" (click)="showNew()">New Mapping</button>
             </div>

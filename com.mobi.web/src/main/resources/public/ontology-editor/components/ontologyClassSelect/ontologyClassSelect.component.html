@@ -20,14 +20,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-class-select form-group">
-    <custom-label>Classes</custom-label>
-    <ui-select multiple ng-model="dvm.bindModel" ng-change="dvm.onChange()">
-        <ui-select-match placeholder="Select classes" ui-lock-choice="dvm.lockChoice({iri: $item})">
-            <span title="{{$item}}">{{dvm.os.getEntityNameByListItem($item)}}</span>
-        </ui-select-match>
-        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="iri in dvm.array">
-            <div title="{{iri}}" ng-bind-html="dvm.os.getEntityNameByListItem(iri) | highlight: $select.search | trusted"></div>
-        </ui-select-choices>
-    </ui-select>
+<div class="ontology-class-select">
+    <mat-form-field class="w-100">
+        <mat-chip-list #clazzChips>
+            <mat-chip *ngFor="let option of selectedOptions" [removable]="true" (removed)="remove(option)">
+                <span class="text-truncate">{{option.name}}</span>
+                <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+            <input #clazzInput matInput type="text" placeholder="Select classes" [formControl]="clazzControl" [matChipInputFor]="clazzChips" [matAutocomplete]="clazzAutocomplete"
+                aria-label="Class"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                [matChipInputAddOnBlur]="false"
+                (matChipInputTokenEnd)="add($event)"/>
+        </mat-chip-list>
+        <mat-autocomplete #clazzAutocomplete="matAutocomplete" (optionSelected)="select($event)">
+            <mat-optgroup *ngFor="let group of filteredClasses | async" [label]="group.namespace">
+                <mat-option *ngFor="let clazz of group.options" [value]="clazz" [title]="clazz.iri">
+                    {{clazz.name}}
+                </mat-option>
+            </mat-optgroup>
+        </mat-autocomplete>
+    </mat-form-field>
 </div>

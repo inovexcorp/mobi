@@ -591,14 +591,16 @@ export class OntologyManagerService {
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
      * @param {string} branchId The branch ID of the ontology you want to get from the repository.
      * @param {string} commitId The commit ID of the ontology you want to get from the repository.
-     * @param {string} searchText The text that you are searching for in the ontology entity literal values.
+     * @param {string} searchText The text that you are searching for in the ontology
+     *  entity literal values.
      * @param {string} id The id to link this REST call to.
      * @returns {Observable} An Observable containing the SPARQL query results.
      */
-    getSearchResults(recordId: string, branchId: string, commitId: string, searchText: string): Observable<{[key: string]: string[]}> {
+    getSearchResults(recordId: string, branchId: string, commitId: string, searchText: string, isTracked = false): Observable<{[key: string]: string[]}> {
         const defaultErrorMessage = 'An error has occurred with your search.';
         const params = { searchText, branchId, commitId };
-        return this.http.get(this.prefix + '/' + encodeURIComponent(recordId) + '/search-results', {observe: 'response', params: this.helper.createHttpParams(params)})
+        const request = this.http.get(this.prefix + '/' + encodeURIComponent(recordId) + '/search-results', {observe: 'response', params: this.helper.createHttpParams(params)});
+        return this._trackedRequest(request, isTracked)
             .pipe(
                 catchError(this.helper.handleError),
                 map((response: HttpResponse<{[key: string]: string[]}>) => {

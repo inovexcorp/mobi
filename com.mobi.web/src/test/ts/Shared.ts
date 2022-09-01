@@ -200,6 +200,7 @@ export class mockOntologyState {
     getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
     getEntityNameByListItem = jasmine.createSpy('getEntityNameByListItem');
     saveChanges = jasmine.createSpy('saveChanges').and.returnValue(of({}));
+    saveCurrentChanges = jasmine.createSpy('saveCurrentChanges').and.returnValue(of({}));
     addToAdditions = jasmine.createSpy('addToAdditions');
     addToDeletions = jasmine.createSpy('addToDeletions');
     openOntology = jasmine.createSpy('openOntology').and.returnValue(of({}));
@@ -216,6 +217,8 @@ export class mockOntologyState {
     setObjectPropertiesOpened = jasmine.createSpy('setObjectPropertiesOpened');
     getAnnotationPropertiesOpened = jasmine.createSpy('getAnnotationPropertiesOpened');
     setAnnotationPropertiesOpened = jasmine.createSpy('setAnnotationPropertiesOpened');
+    isLinkable = jasmine.createSpy('isLinkable');
+    getBlankNodeValue = jasmine.createSpy('getBlankNodeValue');
     onEdit = jasmine.createSpy('onEdit');
     setCommonIriParts = jasmine.createSpy('setCommonIriParts');
     setSelected = jasmine.createSpy('setSelected');
@@ -230,6 +233,7 @@ export class mockOntologyState {
     isCommittable = jasmine.createSpy('isCommittable');
     updateIsSaved = jasmine.createSpy('updateIsSaved');
     addEntityToHierarchy = jasmine.createSpy('addEntityToHierarchy');
+    deleteClass = jasmine.createSpy('deleteClass');
     deleteEntityFromParentInHierarchy = jasmine.createSpy('deleteEntityFromParentInHierarchy');
     deleteEntityFromHierarchy = jasmine.createSpy('deleteEntityFromHierarchy');
     joinPath = jasmine.createSpy('joinPath').and.returnValue('');
@@ -252,6 +256,7 @@ export class mockOntologyState {
     removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
     addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
     attemptMerge = jasmine.createSpy('attemptMerge').and.returnValue(of(null));
+    getMergeDifferences = jasmine.createSpy('getMergeDifferences').and.returnValue(of(null));
     checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue(of(null));
     merge = jasmine.createSpy('merge').and.returnValue(of(null));
     cancelMerge = jasmine.createSpy('cancelMerge');

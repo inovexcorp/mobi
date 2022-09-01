@@ -22,27 +22,34 @@
   -->
 <div class="tree everything-tree hierarchy-tree h-100 w-100 p-0  d-flex flex-column">
     <div class="d-flex flex-row search pb-1">
-        <search-bar class="flex-1 remove-min-width" bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
-        <hierarchy-filter filters="dvm.dropdownFilters" update-filters="dvm.dropdownFilters = value" submit-event="dvm.onKeyup()"></hierarchy-filter>
+        <search-bar class="flex-1 remove-min-width" [bindModel]="searchText"
+                    (bindModelChange)="updateSearchText($event)"
+                    (submitEvent)="onKeyup()">
+        </search-bar>
+        <hierarchy-filter [filters]="dropdownFilters"
+                          (updateFilters)="updateDropdownFilters($event)"
+                          (submitEvent)="onKeyup()">
+        </hierarchy-filter>
     </div>
-    <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height">
-        <div md-virtual-repeat="item in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
-            <div ng-if="!item.entityIRI" class="tree-item">
-                <a ng-click="dvm.toggleOpen(item); $event.stopPropagation()">
-                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': item.isOpened, 'fa-folder-o': !item.isOpened}"></i><span>{{item.title}}</span>
+    <div class="repeater-container w-100 flex-1 remove-min-height">
+        <info-message *ngIf="!filteredHierarchy.length && (filterText || dropdownFilterActive)" class="no-match">No entities match your filter.</info-message>
+        <div *uiScroll="let item of datasource" class="tree-item-wrapper">
+            <div *ngIf="!item.entityIRI" class="tree-item">
+                <a (click)="toggleOpen(item); $event.stopPropagation()">
+                    <i class="fa fa-fw" [ngClass]="{'fa-folder-open-o': item.isOpened, 'fa-folder-o': !item.isOpened}"></i>
+                    <span>{{item.title}}</span>
                 </a>
             </div>
-            <div ng-if="item.entityIRI" ng-style="{'padding-left': (dvm.indent * item.indent) + 'em'}">
-                <tree-item is-active="dvm.os.getActiveEntityIRI() === item.entityIRI"
-                    entity-info="item.entityInfo"
-                    on-click="dvm.clickItem(item.entityIRI)" has-children="item.hasChildren"
-                    path="item.path" is-opened="item.isOpened"
-                    underline="item.underline"
-                    toggle-open="dvm.toggleOpen(item)"
-                    in-progress-commit="dvm.os.listItem.inProgressCommit"
-                    current-iri="item.entityIRI"></tree-item>
+            <div *ngIf="item.entityIRI" [ngStyle]="{'padding-left': (indent * item.indent) + 'em'}">
+                <tree-item [isActive]="os.getActiveEntityIRI() === item.entityIRI"
+                    [entityInfo]="item.entityInfo"
+                    (onClick)="clickItem(item.entityIRI)" [hasChildren]="item.hasChildren"
+                    [path]="item.path" [isOpened]="item.isOpened"
+                    [underline]="item.underline"
+                    (toggleOpen)="toggleOpen(item)"
+                    [inProgressCommit]="os.listItem.inProgressCommit"
+                    [currentIri]="item.entityIRI"></tree-item>
             </div>
         </div>
-        <info-message ng-if="!dvm.filteredHierarchy.length && (dvm.filterText || dvm.dropdownFilterActive)" class="no-match">No entities match your filter.</info-message>
-    </md-virtual-repeat-container>
+    </div>
 </div>

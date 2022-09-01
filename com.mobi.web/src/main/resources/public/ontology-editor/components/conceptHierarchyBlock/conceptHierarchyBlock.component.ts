@@ -20,38 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-const template = require('./conceptHierarchyBlock.component.html');
+import { Component } from '@angular/core';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:conceptHierarchyBlock
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.ConceptHierarchyBlockComponent
  *
- * @description
- * `conceptHierarchyBlock` is a component that creates a section that displays a
- * {@link ontology-editor.component:hierarchyTree} of the concepts in the current
- * {@link shared.service:ontologyStateService selected ontology/vocabulary}.
+ * a component that creates a section that displays a {@link ontology-editor.HierarchyTreeComponent} of the concepts in
+ * the current {@link shared.OntologyStateService#listItem selected ontology/vocabulary}.
  */
-const conceptHierarchyBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: conceptHierarchyBlockComponentCtrl
-};
+@Component({
+    selector: 'concept-hierarchy-block',
+    templateUrl: './conceptHierarchyBlock.component.html'
+})
 
-conceptHierarchyBlockComponentCtrl.$inject = ['ontologyStateService'];
-
-function conceptHierarchyBlockComponentCtrl(ontologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-
-    dvm.updateSearch = function(value) {
-        dvm.os.listItem.editorTabStates.concepts.searchText = value;
+export class ConceptHierarchyBlockComponent {
+    constructor(public os: OntologyStateService) {}
+    
+    updateSearch(value: string): void {
+        this.os.listItem.editorTabStates.concepts.searchText = value;
     }
-    dvm.resetIndex = function() {
-        dvm.os.listItem.editorTabStates.concepts.index = 0;
+    resetIndex(): void {
+        this.os.listItem.editorTabStates.concepts.index = 0;
     }
 }
-
-export default conceptHierarchyBlockComponent;

@@ -20,84 +20,91 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./createIndividualOverlay.component.html');
+import { DCTERMS, OWL } from '../../../prefixes';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { REGEX } from '../../../constants';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:createIndividualOverlay
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
+ * @class ontology-editor.CreateIndividualOverlayComponent
  *
- * @description
- * `createIndividualOverlay` is a component that creates content for a modal that creates an individual in the
- * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
- * a text input for the individual name (which populates the {@link ontology-editor.component:staticIri IRI}) and
- * a {@link ontology-editor.component:ontologyClassSelect} for the classes this individual will be an
- * instance of. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that creates an individual in the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a text input for the
+ * individual name (which populates the {@link ontology-editor.StaticIriComponent IRI}) and a
+ * {@link ontology-editor.OntologyClassSelectComponent} for the classes this individual will be an instance of. Meant to
+ * be used in conjunction with the `MatDialog` service.
  */
-const createIndividualOverlayComponent = {
-    template,
-        bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createIndividualOverlayComponentCtrl
-};
+@Component({
+    selector: 'create-individual-overlay',
+    templateUrl: './createIndividualOverlay.component.html'
+})
+export class CreateIndividualOverlayComponent implements OnInit {
+    iriHasChanged = false;
+    duplicateCheck = true;
+    iriPattern = REGEX.IRI;
+    classes: string[] = [];
+    
+    createForm = this.fb.group({
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
+        title: ['', [ Validators.required]],
+    });
+    
+    constructor(private fb: FormBuilder,
+        private dialogRef: MatDialogRef<CreateIndividualOverlayComponent>,
+        public os: OntologyStateService,
+        private camelCasePipe: CamelCasePipe,
+        private splitIRIPipe: SplitIRIPipe) {}
 
-createIndividualOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes'];
-
-function createIndividualOverlayComponentCtrl($filter, ontologyStateService: OntologyStateService, prefixes) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.prefix = dvm.os.getDefaultPrefix();
-    dvm.duplicateCheck = true;
-    dvm.individual = {
-        '@id': dvm.prefix,
-        '@type': []
-    };
-
-    dvm.nameChanged = function() {
-        if (!dvm.iriHasChanged) {
-            dvm.individual['@id'] = dvm.prefix + $filter('camelCase')(dvm.name, 'class');
+    ngOnInit(): void {
+        this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
+        this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+    }
+    nameChanged(newName: string): void  {
+        if (!this.iriHasChanged) {
+            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
         }
     }
-    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
-        dvm.iriHasChanged = true;
-        dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
-        dvm.os.setCommonIriParts(iriBegin, iriThen);
+    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void  {
+        this.iriHasChanged = true;
+        this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
+        this.os.setCommonIriParts(iriBegin, iriThen);
     }
-    dvm.create = function() {
-        dvm.duplicateCheck = false;
+    get individual(): JSONLDObject {
+        return {
+            '@id': this.createForm.controls.iri.value,
+            '@type': [OWL + 'NamedIndividual'].concat(this.classes),
+            [DCTERMS + 'title']: [{
+                '@value': this.createForm.controls.title.value
+            }],
+        };
+    }
+    create(): void  {
+        this. duplicateCheck = false;
+        const newIndividual = this.individual;
         // add the entity to the ontology
-        dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-        dvm.os.addEntity(dvm.individual);
-        dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.individual);
+        this.os.addEntity(newIndividual);
+        this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, newIndividual);
         // update relevant lists
-        dvm.os.addIndividual(dvm.individual);
+        this.os.addIndividual(newIndividual);
         // add to concept hierarchy if an instance of a derived concept
-        if (dvm.os.containsDerivedConcept(dvm.individual['@type'])) {
-            dvm.os.addConcept(dvm.individual);
-        } else if (dvm.os.containsDerivedConceptScheme(dvm.individual['@type'])) {
-            dvm.os.addConceptScheme(dvm.individual);
+        if (this.os.containsDerivedConcept(newIndividual['@type'])) {
+            this.os.addConcept(newIndividual);
+        } else if (this.os.containsDerivedConceptScheme(newIndividual['@type'])) {
+            this.os.addConceptScheme(newIndividual);
         }
         // Save the changes to the ontology
-        dvm.os.saveCurrentChanges().subscribe();
-        // Open snackbar
-        dvm.os.listItem.goTo.entityIRI = dvm.individual['@id'];
-        dvm.os.listItem.goTo.active = true;
+        this.os.saveCurrentChanges().subscribe(() => {
+            // Open snackbar
+            this.os.openSnackbar(newIndividual['@id']);
+        }, () => {});
         // hide the overlay
-        dvm.close();
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+        this.dialogRef.close();
     }
 }
-
-export default createIndividualOverlayComponent;

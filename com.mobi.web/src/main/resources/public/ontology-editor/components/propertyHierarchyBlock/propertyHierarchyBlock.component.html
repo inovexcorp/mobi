@@ -21,6 +21,13 @@
   #L%
   -->
 <div class="property-hierarchy-block h-100 py-1">
-    <info-message ng-if="!dvm.os.listItem.dataProperties.flat.length && !dvm.os.listItem.objectProperties.flat.length && !dvm.os.listItem.annotations.flat.length">(No properties defined)</info-message>
-    <property-tree ng-if="dvm.os.listItem.dataProperties.flat.length || dvm.os.listItem.objectProperties.flat.length || dvm.os.listItem.annotations.flat.length" datatype-props="dvm.os.listItem.dataProperties.flat" object-props="dvm.os.listItem.objectProperties.flat" annotation-props="dvm.os.listItem.annotations.flat" index="dvm.os.listItem.editorTabStates.properties.index" update-search="dvm.updateSearch(value)" branch-id="dvm.os.listItem.versionedRdfRecord.branchId"></property-tree>
+    <info-message *ngIf="!this.os.listItem.dataProperties.flat.length && !this.os.listItem.objectProperties.flat.length && !this.os.listItem.annotations.flat.length">(No properties defined)</info-message>
+    <property-tree *ngIf="this.os.listItem.dataProperties.flat.length || this.os.listItem.objectProperties.flat.length || this.os.listItem.annotations.flat.length"
+                   [datatypeProps]="this.os.listItem.dataProperties.flat"
+                   [objectProps]="this.os.listItem.objectProperties.flat"
+                   [annotationProps]="this.os.listItem.annotations.flat"
+                   [index]="this.os.listItem.editorTabStates.properties.index"
+                   (updateSearch)="this.updateSearch(value)"
+                   [branchId]="this.os.listItem.versionedRdfRecord.branchId">
+    </property-tree>
 </div>

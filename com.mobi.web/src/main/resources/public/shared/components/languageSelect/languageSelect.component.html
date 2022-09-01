@@ -20,20 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="language-select form-group">
-    <custom-label>Language</custom-label>
-    <div class="flex-container">
-        <div class="select-container">
-            <ui-select ng-model="dvm.bindModel" ng-required="dvm.isRequired" ng-change="dvm.changeEvent({value: dvm.bindModel})">
-                <ui-select-match placeholder="Select Language">
-                    <span>{{$select.selected.label}} <small class="text-muted">@{{$select.selected.value}}</small></span>
-                </ui-select-match>
-                <ui-select-choices repeat="language.value as language in dvm.languages | orderBy:'label' | filter:$select.search">
-                    <span ng-bind-html="language.label | highlight:$select.search | trusted"></span>
-                    <small class="text-muted" ng-bind-html="'@' + language.value | highlight:$select.search | trusted"></small>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-        <a ng-if="!dvm.disableClear" ng-click="dvm.clear()" class="btn-clear"><i class="fa fa-fw fa-times"></i>Clear</a>
-    </div>
+<div class="language-select w-100 d-flex" [formGroup]="parentForm">
+    <mat-form-field class="flex-1 remove-min-width">
+        <mat-label>Language</mat-label>
+        <mat-select placeholder="Select Language..." formControlName="language">
+            <mat-option *ngFor="let languageOption of languages" [value]="languageOption.value">
+                <span>{{languageOption.label}} <small class="text-muted">@{{languageOption.value}}</small></span>
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+    <div><a mat-button color="primary" *ngIf="!disableClear" (click)="clear()"><i class="fa fa-fw fa-times"></i>Clear</a></div>
 </div>

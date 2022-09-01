@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { omit } from 'lodash';
+import { omit, cloneDeep } from 'lodash';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './instanceView.component.scss';
@@ -79,7 +79,7 @@ export class InstanceViewComponent implements OnInit, OnChanges {
                 const canModify = response !== this.pep.deny;
                 if (canModify) {
                     this.ds.explore.editing = true;
-                    this.ds.explore.instance.original = angular.copy(this.ds.explore.instance.entity);
+                    this.ds.explore.instance.original = cloneDeep(this.ds.explore.instance.entity);
                 } else {
                     this.util.createErrorToast('You don\'t have permission to modify dataset');
                 }

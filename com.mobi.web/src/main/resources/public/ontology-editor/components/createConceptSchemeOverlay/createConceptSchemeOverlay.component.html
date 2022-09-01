@@ -20,35 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Create Concept Scheme</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Create Concept Scheme</h1>
+<form mat-dialog-content [formGroup]="createForm">
+    <static-iri [iri]="scheme['@id']" (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)" [duplicateCheck]="duplicateCheck"></static-iri>
+    <mat-form-field class="w-100">
+        <mat-label>Name</mat-label>
+        <input matInput type="text" name="name" formControlName="title" required focus/>
+    </mat-form-field>
+    <advanced-language-select [parentForm]="createForm"></advanced-language-select>
+    <iri-select-ontology *ngIf="hasConcepts" [(selected)]="selectedConcepts" [displayText]="'Select Concept(s)'" [selectList]="os.listItem.concepts.iris"></iri-select-ontology>
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="create()" [disabled]="createForm.invalid">Submit</button> 
 </div>
-<div class="modal-body">
-    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <static-iri iri="dvm.scheme['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)" duplicate-check="dvm.duplicateCheck"></static-iri>
-    <form name="dvm.form" novalidate autocomplete="off">
-        <div class="form-group">
-            <custom-label>Name</custom-label>
-            <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
-                   ng-model="dvm.scheme[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
-        </div>
-        <div ng-if="dvm.conceptIRIs.length" class="form-group">
-            <custom-label [muted-text]="'(Optional)'">Top Concept(s)</custom-label>
-            <ui-select multiple ng-model="dvm.selectedConcepts">
-                <ui-select-match placeholder="Select Concept(s)">
-                    <span title="{{$item}}">{{dvm.os.getEntityNameByListItem($item)}}</span>
-                </ui-select-match>
-                <ui-select-choices refresh="dvm.getConcepts($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.concepts">
-                    <div title="{{iri}}" ng-bind-html="dvm.os.getEntityNameByListItem(iri) | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-        <!-- TODO: Add back in once upgraded -->
-        <!-- <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select> -->
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || dvm.os.checkIri(dvm.scheme['@id'])" ng-click="dvm.create()">Submit</button>
-</div>
+

@@ -50,6 +50,9 @@ export class OntologySidebarComponent {
     constructor(private dialog: MatDialog, public os: OntologyStateService) {}
 
     onClose(listItem: OntologyListItem): void {
+        if (listItem.openSnackbar) {
+            listItem.openSnackbar.dismiss();
+        }
         if (this.os.hasChanges(listItem)) {
             this.dialog.open(OntologyCloseOverlayComponent, {
                 data: { listItem }
@@ -62,9 +65,13 @@ export class OntologySidebarComponent {
         const previousListItem = this.os.listItem;
         if (previousListItem) {
             previousListItem.active = false;
-            if (previousListItem.goTo) {
-                previousListItem.goTo.active = false;
-                previousListItem.goTo.entityIRI = '';
+            Object.keys(previousListItem.editorTabStates).forEach(tab => {
+                if (previousListItem.editorTabStates[tab].component) {
+                    previousListItem.editorTabStates[tab].component = undefined;
+                }
+            });
+            if (previousListItem.openSnackbar) {
+                previousListItem.openSnackbar.dismiss();
             }
         }
         if (listItem && !isEmpty(listItem)) {

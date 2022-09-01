@@ -20,64 +20,65 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map } from 'lodash';
+import { Component, Inject, OnChanges, Input} from '@angular/core';
+import { has, map, sortBy } from 'lodash';
 import { first } from 'rxjs/operators';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./classAxioms.component.html');
+import { MatDialog } from '@angular/material/dialog';
+import { RDFS } from '../../../prefixes';
+import {ConfirmModalComponent} from '../../../shared/components/confirmModal/confirmModal.component';
+import {JSONLDObject} from '../../../shared/models/JSONLDObject.interface';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:classAxioms
- * @requires shared.service:ontologyStateService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:prefixes
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:modalService
+ * @class ontology-editor.ClassAxiomsComponent
  *
- * @description
- * `classAxioms` is a component that creates a list of {@link ontology-editor.component:propertyValues} of the
- * axioms on the {@link shared.service:ontologyStateService selected class}. The component houses the methods for
- * opening the modal for removing class axioms.
+ * A component that creates a list of {@link ontology-editor.PropertyValuesComponent} of the axioms on the
+ * {@link shared.OntologyStateService#listItem selected class}. The component houses the methods for opening the modal
+ * for removing class axioms.
  */
-const classAxiomsComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: classAxiomsComponentCtrl
-};
 
-classAxiomsComponentCtrl.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyManagerService', 'modalService'];
+@Component({
+    selector: 'class-axioms',
+    templateUrl: './classAxioms.component.html'
+})
+export class ClassAxiomsComponent implements OnChanges {
+    @Input() selected: JSONLDObject;
+    key = '';
+    axioms = []
+    constructor(private om: OntologyManagerService, private os: OntologyStateService, private dialog: MatDialog,
+                @Inject('propertyManagerService') private pm) {}
 
-function classAxiomsComponentCtrl(ontologyStateService: OntologyStateService, propertyManagerService, prefixes, ontologyManagerService: OntologyManagerService, modalService) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.pm = propertyManagerService;
-
-    dvm.getAxioms = function() {
-        return map(dvm.pm.classAxiomList, 'iri');
+    ngOnChanges(): void {
+        this.updateAxioms();
     }
-    dvm.openRemoveOverlay = function(key, index) {
-        dvm.key = key;
-        modalService.openConfirmModal(dvm.os.getRemovePropOverlayMessage(key, index), () => {
-            dvm.os.removeProperty(key, index).pipe(first()).toPromise().then(dvm.removeFromHierarchy);
+    updateAxioms(): void {
+        const axioms =  map(this.pm.classAxiomList, 'iri');
+        this.axioms = sortBy(axioms.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
+    }
+    openRemoveOverlay(event: {iri: string, index: number}): void {
+        this.key = event.iri;
+        this.dialog.open(ConfirmModalComponent, {
+            data: { content: this.os.getRemovePropOverlayMessage(event.iri, event.index) }
+        }).afterClosed().subscribe(result => {
+            if (result) {
+                this.os.removeProperty(event.iri, event.index)
+                    .pipe(first())
+                    .subscribe( (res) => {
+                        this.updateAxioms();
+                        this.removeFromHierarchy(res);
+                    });
+            }
         });
     }
-    dvm.removeFromHierarchy = function(axiomObject) {
-        if (prefixes.rdfs + 'subClassOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
-            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classes, dvm.os.listItem.selected['@id'], axiomObject['@id']);
-            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes);
-            dvm.os.listItem.individualsParentPath = dvm.os.getIndividualsParentPath(dvm.os.listItem);
-            dvm.os.listItem.individuals.flat = dvm.os.createFlatIndividualTree(dvm.os.listItem);
-            dvm.os.setVocabularyStuff();
+    removeFromHierarchy(axiomObject): void {
+        if (RDFS + 'subClassOf' === this.key && !this.om.isBlankNodeId(axiomObject['@id'])) {
+            this.os.deleteEntityFromParentInHierarchy(this.os.listItem.classes, this.os.listItem.selected['@id'], axiomObject['@id']);
+            this.os.listItem.classes.flat = this.os.flattenHierarchy(this.os.listItem.classes);
+            this.os.listItem.individualsParentPath = this.os.getIndividualsParentPath(this.os.listItem);
+            this.os.listItem.individuals.flat = this.os.createFlatIndividualTree(this.os.listItem);
+            this.os.setVocabularyStuff();
         }
     }
-    dvm.orderByEntityName = function(iri) {
-        return dvm.os.getEntityNameByListItem(iri);
-    }
 }
-
-export default classAxiomsComponent;

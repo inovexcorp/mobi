@@ -48,12 +48,23 @@ import { Hierarchy } from '../models/hierarchy.interface';
 import { OntologyAction } from '../models/ontologyAction';
 import { RESTError } from '../models/RESTError.interface';
 import { StateManagerService } from './stateManager.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { ElementRef } from '@angular/core';
+import { MatSnackBar } from '@angular/material';
+
+class MockElementRef extends ElementRef {
+    constructor() {
+        super(null);
+    }
+}
 
 describe('Ontology State Service', function() {
     let service: OntologyStateService;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
+    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+    let snackBarStub: jasmine.SpyObj<MatSnackBar>;
     let propertyManagerStub;
     let updateRefsStub;
     let policyEnforcementStub;
@@ -140,6 +151,8 @@ describe('Ontology State Service', function() {
         '@id': individualId,
         '@type': [OWL + 'NamedIndividual', classId]
     };
+    const onActionSpy = jasmine.createSpy('onAction').and.returnValue(of(null));
+    const afterDismissedSpy = jasmine.createSpy('afterDismissed').and.returnValue(of(null));
     
     let listItem: OntologyListItem;
     let hierarchyInfo: Hierarchy;
@@ -151,6 +164,13 @@ describe('Ontology State Service', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyManagerService),
                 MockProvider(StateManagerService),
+                MockProvider(ProgressSpinnerService),
+                { provide: MatSnackBar, useFactory: () => jasmine.createSpyObj('MatSnackBar', {
+                    open: {
+                        onAction: onActionSpy,
+                        afterDismissed: afterDismissedSpy
+                    }
+                }) },
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
                 { provide: 'propertyManagerService', useClass: mockPropertyManager },
                 { provide: 'updateRefsService', useClass: mockUpdateRefs },
@@ -158,6 +178,7 @@ describe('Ontology State Service', function() {
                 { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 { provide: 'manchesterConverterService', useClass: mockManchesterConverter },
                 { provide: 'utilService', useClass: mockUtil },
+                { provide: ElementRef, useClass: MockElementRef }
             ]
         });
     });
@@ -167,6 +188,8 @@ describe('Ontology State Service', function() {
         catalogManagerStub = TestBed.get(CatalogManagerService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
         splitIRIStub = TestBed.get(SplitIRIPipe);
+        progressSpinnerStub = TestBed.get(ProgressSpinnerService);
+        snackBarStub = TestBed.get(MatSnackBar);
         propertyManagerStub = TestBed.get('propertyManagerService');
         updateRefsStub = TestBed.get('updateRefsService');
         policyEnforcementStub = TestBed.get('policyEnforcementService');
@@ -257,6 +280,7 @@ describe('Ontology State Service', function() {
         splitIRIStub = null;
         propertyManagerStub = null;
         ontologyManagerStub = null;
+        progressSpinnerStub = null;
         updateRefsStub = null;
         catalogManagerStub = null;
         policyEnforcementStub = null;
@@ -264,6 +288,7 @@ describe('Ontology State Service', function() {
         utilStub = null;
         listItem = null;
         hierarchyInfo = null;
+        snackBarStub = null;
     });
 
     describe('addErrorToUploadItem should add the message to the correct message when', function() {
@@ -443,9 +468,8 @@ describe('Ontology State Service', function() {
     describe('updateOntology should call the proper methods when', function() {
         beforeEach(function() {
             spyOn(service, 'resetStateTabs');
-            spyOn(service, 'getActiveKey').and.returnValue('key');
-            spyOn(service, 'setActivePage');
             this.oldListItem = Object.assign({}, listItem);
+            this.oldListItem.tabIndex = 1;
             spyOn(service, 'getListItemByRecordId').and.returnValue(this.oldListItem);
         });
         describe('createOntologyListItem resolves', function() {
@@ -464,8 +488,7 @@ describe('Ontology State Service', function() {
                     expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, branchId, commitId, difference, listItem.upToDate, listItem.versionedRdfRecord.title, clearCache);
                     expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
                     expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
-                    expect(service.getActiveKey).toHaveBeenCalledWith(this.oldListItem);
-                    expect(service.setActivePage).toHaveBeenCalledWith('key', this.oldListItem);
+                    expect(this.oldListItem.tabIndex).toEqual(1);
                 }));
                 it('and the ontologyId is the same', fakeAsync(function() {
                     this.oldListItem.selected = {'@id': 'old'};
@@ -480,8 +503,7 @@ describe('Ontology State Service', function() {
                     expect(listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
                     expect(listItem.blankNodes).toEqual({bnode: 'bnode'});
                     expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
-                    expect(service.getActiveKey).toHaveBeenCalledWith(this.oldListItem);
-                    expect(service.setActivePage).toHaveBeenCalledWith('key', this.oldListItem);
+                    expect(this.oldListItem.tabIndex).toEqual(1);
                 }));
             });
             it('and updateState rejects', fakeAsync(function() {
@@ -495,8 +517,7 @@ describe('Ontology State Service', function() {
                 expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, branchId, commitId, difference, listItem.upToDate, listItem.versionedRdfRecord.title, clearCache);
                 expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
                 expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
-                expect(service.getActiveKey).not.toHaveBeenCalled();
-                expect(service.setActivePage).not.toHaveBeenCalled();
+                expect(this.oldListItem.tabIndex).toEqual(1);
             }));
         });
         it('and createOntologyListItem rejects', fakeAsync(function() {
@@ -512,9 +533,8 @@ describe('Ontology State Service', function() {
     describe('updateOntologyWithCommit should call the proper methods', function() {
         beforeEach(function() {
             spyOn(service, 'resetStateTabs');
-            spyOn(service, 'getActiveKey').and.returnValue('key');
-            spyOn(service, 'setActivePage');
             this.oldListItem = Object.assign({}, listItem);
+            this.oldListItem.tabIndex = 1;
             spyOn(service, 'getListItemByRecordId').and.returnValue(this.oldListItem);
         });
         describe('and createOntologyListItem resolves', function() {
@@ -534,8 +554,7 @@ describe('Ontology State Service', function() {
                         expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, '', commitId, difference, true, listItem.versionedRdfRecord.title, false);
                         expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
                         expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, tagId });
-                        expect(service.getActiveKey).toHaveBeenCalledWith(this.oldListItem);
-                        expect(service.setActivePage).toHaveBeenCalledWith('key', this.oldListItem);
+                        expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
                     it('and the ontologyId is the same', fakeAsync(function() {
                         this.oldListItem.selected = {'@id': 'old'};
@@ -550,8 +569,7 @@ describe('Ontology State Service', function() {
                         expect(listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
                         expect(listItem.blankNodes).toEqual({bnode: 'bnode'});
                         expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, tagId });
-                        expect(service.getActiveKey).toHaveBeenCalledWith(this.oldListItem);
-                        expect(service.setActivePage).toHaveBeenCalledWith('key', this.oldListItem);
+                        expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
                 });
                 it('and updateState rejects', fakeAsync(function() {
@@ -565,8 +583,7 @@ describe('Ontology State Service', function() {
                     expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, '', commitId, difference, true, listItem.versionedRdfRecord.title, clearCache);
                     expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
                     expect(service.updateState).toHaveBeenCalledWith({recordId, commitId, tagId });
-                    expect(service.getActiveKey).not.toHaveBeenCalled();
-                    expect(service.setActivePage).not.toHaveBeenCalled();
+                    expect(this.oldListItem.tabIndex).toEqual(1);
                 }));
             });
             describe('and no tagId is provided', function() {
@@ -582,8 +599,7 @@ describe('Ontology State Service', function() {
                         expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, '', commitId, difference, true, listItem.versionedRdfRecord.title, clearCache);
                         expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
                         expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId });
-                        expect(service.getActiveKey).toHaveBeenCalledWith(this.oldListItem);
-                        expect(service.setActivePage).toHaveBeenCalledWith('key', this.oldListItem);
+                        expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
                     it('and the ontologyId is the same', fakeAsync(function() {
                         this.oldListItem.selected = {'@id': 'old'};
@@ -598,8 +614,7 @@ describe('Ontology State Service', function() {
                         expect(listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
                         expect(listItem.blankNodes).toEqual({bnode: 'bnode'});
                         expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId });
-                        expect(service.getActiveKey).toHaveBeenCalledWith(this.oldListItem);
-                        expect(service.setActivePage).toHaveBeenCalledWith('key', this.oldListItem);
+                        expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
                 });
                 it('and updateState rejects', fakeAsync(function() {
@@ -613,8 +628,7 @@ describe('Ontology State Service', function() {
                     expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, '', commitId, difference, true, listItem.versionedRdfRecord.title, clearCache);
                     expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
                     expect(service.updateState).toHaveBeenCalledWith({recordId, commitId});
-                    expect(service.getActiveKey).not.toHaveBeenCalled();
-                    expect(service.setActivePage).not.toHaveBeenCalled();
+                    expect(this.oldListItem.tabIndex).toEqual(1);
                 }));
             });
         });
@@ -2262,17 +2276,20 @@ describe('Ontology State Service', function() {
             expect(listItem.blankNodes).toEqual({});
             expect(ontologyManagerStub.getEntityAndBlankNodes).not.toHaveBeenCalled();
         }));
-        // it('when a spinner id is passed', fakeAsync(function() {
-        //     service.setSelected(id, false, listItem/* , 'spinner' */);
-        //     tick();
-        //     expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined/* , 'spinner' */);
-        //     expect(listItem.selected).toEqual(object);
-        //     expect(listItem.selectedBlankNodes).toEqual([bnode]);
-        //     expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
-        //     expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}});
-        //     expect(service.getActivePage).not.toHaveBeenCalled();
-        //     expect(service.setEntityUsages).not.toHaveBeenCalled();
-        // }));
+        it('when a component is passed', fakeAsync(function() {
+            const el = new MockElementRef();
+            service.setSelected(id, false, listItem, el).subscribe();
+            tick();
+            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined/* , '' */);
+            expect(listItem.selected).toEqual(object);
+            expect(listItem.selectedBlankNodes).toEqual([bnode]);
+            expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
+            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}});
+            expect(service.getActivePage).not.toHaveBeenCalled();
+            expect(service.setEntityUsages).not.toHaveBeenCalled();
+            expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
+            expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
+        }));
         it('when getUsages is true and getActivePage object does not have a usages property', fakeAsync(function() {
             service.setSelected(id, true, listItem).subscribe();
             tick();
@@ -2342,10 +2359,11 @@ describe('Ontology State Service', function() {
     // TODO test for getBnodeIndex
     describe('resetStateTabs should set the correct variables', function() {
         beforeEach(function() {
+            this.el = new MockElementRef();
             service.listItem = listItem;
             service.listItem.editorTabStates = {
                 classes: {entityIRI: 'id', usages: []},
-                project: {entityIRI: 'id', preview: 'test'}
+                project: {entityIRI: 'id', preview: 'test', component: this.el}
             };
             spyOn(service, 'setSelected').and.callFake(() => {
                 service.listItem.selected = {'@id': 'id'};
@@ -2369,17 +2387,16 @@ describe('Ontology State Service', function() {
             expect(service.setSelected).not.toHaveBeenCalled();
             expect(service.listItem.seeHistory).toBe(false);
         });
-        // TODO address last argument of setSelected
         it('when getActiveKey is project', fakeAsync(function() {
             spyOn(service, 'getActiveKey').and.returnValue('project');
             service.resetStateTabs();
             tick();
             expect(service.resetSearchTab).toHaveBeenCalledWith(listItem);
-            expect(service.listItem.editorTabStates.project).toEqual({entityIRI: 'newId', preview: ''});
+            expect(service.listItem.editorTabStates.project).toEqual({entityIRI: 'newId', preview: '', component: this.el});
             expect(service.listItem.selected).toEqual({'@id': 'id'});
             expect(service.listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
             expect(service.listItem.blankNodes).toEqual({bnode: 'bnode'});
-            expect(service.setSelected).toHaveBeenCalledWith('newId', false, service.listItem/* , 'project' */);
+            expect(service.setSelected).toHaveBeenCalledWith('newId', false, service.listItem, this.el);
             expect(service.listItem.seeHistory).toBe(false);
         }));
     });
@@ -2405,34 +2422,17 @@ describe('Ontology State Service', function() {
     });
     describe('getActiveKey', function() {
         it('defaults to "project"', function() {
+            listItem.tabIndex = undefined;
             expect(service.getActiveKey(listItem)).toEqual('project');
         });
         it('returns the correct value', function() {
-            listItem.editorTabStates.project.active = false;
-            listItem.editorTabStates.classes.active = true;
+            listItem.tabIndex = OntologyListItem.CLASSES_TAB;
             expect(service.getActiveKey(listItem)).toEqual('classes');
         });
     });
     it('getActivePage gets the proper item', function() {
         spyOn(service, 'getActiveKey').and.returnValue('tab');
         expect(service.getActivePage(listItem)).toEqual(listItem.editorTabStates.tab);
-    });
-    describe('setActivePage sets the correct variables', function() {
-        it('when state has the key', function() {
-            spyOn(service, 'getActivePage').and.returnValue(listItem.editorTabStates.classes);
-            service.setActivePage('overview', listItem);
-            expect(service.getActivePage).toHaveBeenCalledWith(listItem);
-            expect(listItem.editorTabStates.classes.active).toBe(false);
-            expect(listItem.editorTabStates.overview.active).toBe(true);
-        });
-        it('when state does not have the key', function() {
-            listItem.editorTabStates.classes.active = true;
-            spyOn(service, 'getActivePage');
-            service.setActivePage('notThere', listItem);
-            expect(service.getActivePage).not.toHaveBeenCalled();
-            expect(listItem.editorTabStates.classes.active).toBe(true);
-            expect(listItem.editorTabStates.overview.active).toBe(false);
-        });
     });
     it('getActiveEntityIRI should return the proper value', function() {
         listItem.editorTabStates.classes.entityIRI = classId;
@@ -2442,7 +2442,6 @@ describe('Ontology State Service', function() {
         spy.and.returnValue(listItem.editorTabStates.overview);
         expect(service.getActiveEntityIRI(listItem)).toEqual(undefined);
     });
-    // TODO address spinnerId
     describe('selectItem should call the proper functions', function() {
         beforeEach(function() {
             service.listItem = listItem;
@@ -2456,7 +2455,7 @@ describe('Ontology State Service', function() {
             tick();
             expect(service.getActivePage).not.toHaveBeenCalled();
             expect(service.setEntityUsages).not.toHaveBeenCalled();
-            expect(service.setSelected).toHaveBeenCalledWith(undefined, false, service.listItem/* , '' */);
+            expect(service.setSelected).toHaveBeenCalledWith(undefined, false, service.listItem, undefined);
         }));
         describe('when entityIRI is defined', function() {
             it('and getUsages is true', fakeAsync(function() {
@@ -2466,7 +2465,7 @@ describe('Ontology State Service', function() {
                 expect(service.getActivePage).toHaveBeenCalledWith();
                 expect(service.listItem.editorTabStates.classes.entityIRI).toEqual(classId);
                 expect(service.setEntityUsages).toHaveBeenCalledWith(classId);
-                expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem/* , '' */);
+                expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem, undefined);
             }));
             it('and getUsages is false', fakeAsync(function() {
                 service.selectItem(classId, false)
@@ -2475,17 +2474,18 @@ describe('Ontology State Service', function() {
                 expect(service.getActivePage).toHaveBeenCalledWith();
                 expect(service.listItem.editorTabStates.classes.entityIRI).toEqual(classId);
                 expect(service.setEntityUsages).not.toHaveBeenCalled();
-                expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem/* , '' */);
+                expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem, undefined);
             }));
-            // it('and spinnerId is provided', function() {
-            //     service.selectItem(this.newId, undefined, 'id')
-            //     .subscribe(() => {}, () => fail('Observable should have resolved'));
-            //     tick();
-            //     expect(service.getActivePage).toHaveBeenCalledWith();
-            //     expect(service.listItem.editorTabStates.tab.entityIRI).toEqual(this.newId);
-            //     expect(service.setEntityUsages).toHaveBeenCalledWith(this.newId);
-            //     expect(service.setSelected).toHaveBeenCalledWith(this.newId, false, service.listItem, 'id');
-            // });
+            it('and a component is provided',  fakeAsync(function() {
+                const el = new MockElementRef();
+                service.selectItem(classId, false, el)
+                    .subscribe(() => {}, () => fail('Observable should have resolved'));
+                tick();
+                expect(service.getActivePage).toHaveBeenCalledWith();
+                expect(service.listItem.editorTabStates.classes.entityIRI).toEqual(classId);
+                expect(service.setEntityUsages).not.toHaveBeenCalled();
+                expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem, el);
+            }));
         });
     });
     it('unSelectItem sets all the variables appropriately', function() {
@@ -2637,11 +2637,10 @@ describe('Ontology State Service', function() {
     it('joinPath joins the provided array correctly', function() {
         expect(service.joinPath(['a', 'b', 'c'])).toBe('a.b.c');
     });
-    // TODO address spinnerId
     describe('goTo calls the proper manager functions with correct parameters when it is', function() {
         beforeEach(function() {
-            spyOn(service, 'getActivePage').and.returnValue({entityIRI: '', vocabularySpinnerId: 'spinner'});
-            spyOn(service, 'setActivePage');
+            this.el = new MockElementRef();
+            spyOn(service, 'getActivePage').and.returnValue({entityIRI: '', component: this.el});
             spyOn(service, 'selectItem').and.returnValue(of(null));
             spyOn(service, 'openAt');
             spyOn(service, 'areParentsOpen').and.returnValue(true);
@@ -2832,21 +2831,21 @@ describe('Ontology State Service', function() {
         });
         it('an ontology', function() {
             service.goTo('ontologyId');
-            expect(service.setActivePage).toHaveBeenCalledWith('project');
-            expect(service.selectItem).toHaveBeenCalledWith('ontologyId', undefined/* , 'spinner' */);
+            expect(listItem.tabIndex).toEqual(OntologyListItem.PROJECT_TAB);
+            expect(service.selectItem).toHaveBeenCalledWith('ontologyId', undefined, this.el);
         });
         it('a class', function() {
             service.goTo('class1');
-            expect(service.setActivePage).toHaveBeenCalledWith('classes');
-            expect(service.selectItem).toHaveBeenCalledWith('class1', undefined/* , 'spinner' */);
+            expect(listItem.tabIndex).toEqual(OntologyListItem.CLASSES_TAB);
+            expect(service.selectItem).toHaveBeenCalledWith('class1', undefined, this.el);
             expect(service.openAt).toHaveBeenCalledWith(service.listItem.classes.flat, 'class1');
             expect(service.listItem.editorTabStates.classes.index).toEqual(1);
         });
         it('a datatype property', function() {
             spyOn(service, 'setDataPropertiesOpened');
             service.goTo('dataProp2');
-            expect(service.setActivePage).toHaveBeenCalledWith('properties');
-            expect(service.selectItem).toHaveBeenCalledWith('dataProp2', undefined/* , 'spinner' */);
+            expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
+            expect(service.selectItem).toHaveBeenCalledWith('dataProp2', undefined, this.el);
             expect(service.openAt).toHaveBeenCalledWith(service.listItem.dataProperties.flat, 'dataProp2');
             expect(service.setDataPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
             expect(service.listItem.editorTabStates.properties.index).toEqual(2);
@@ -2855,8 +2854,8 @@ describe('Ontology State Service', function() {
             it('with datatype properties in the ontology', function() {
                 spyOn(service, 'setObjectPropertiesOpened');
                 service.goTo('objectProp1');
-                expect(service.setActivePage).toHaveBeenCalledWith('properties');
-                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined/* , 'spinner' */);
+                expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
+                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined, this.el);
                 expect(service.openAt).toHaveBeenCalledWith(service.listItem.objectProperties.flat, 'objectProp1');
                 expect(service.setObjectPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
                 expect(service.listItem.editorTabStates.properties.index).toEqual(4);
@@ -2865,8 +2864,8 @@ describe('Ontology State Service', function() {
                 service.listItem.dataProperties.flat = [];
                 spyOn(service, 'setObjectPropertiesOpened');
                 service.goTo('objectProp1');
-                expect(service.setActivePage).toHaveBeenCalledWith('properties');
-                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined/* , 'spinner' */);
+                expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
+                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined, this.el);
                 expect(service.openAt).toHaveBeenCalledWith(service.listItem.objectProperties.flat, 'objectProp1');
                 expect(service.setObjectPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
                 expect(service.listItem.editorTabStates.properties.index).toEqual(1);
@@ -2877,8 +2876,8 @@ describe('Ontology State Service', function() {
                 it('with object properties in the ontology', function() {
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
-                    expect(service.setActivePage).toHaveBeenCalledWith('properties');
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined/* , 'spinner' */);
+                    expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
                     expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
                     expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(6);
@@ -2887,8 +2886,8 @@ describe('Ontology State Service', function() {
                     service.listItem.objectProperties.flat = [];
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
-                    expect(service.setActivePage).toHaveBeenCalledWith('properties');
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined/* , 'spinner' */);
+                    expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
                     expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
                     expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(4);
@@ -2901,8 +2900,8 @@ describe('Ontology State Service', function() {
                 it('with object properties in the ontology', function() {
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
-                    expect(service.setActivePage).toHaveBeenCalledWith('properties');
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined/* , 'spinner' */);
+                    expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
                     expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
                     expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(3);
@@ -2911,8 +2910,8 @@ describe('Ontology State Service', function() {
                     service.listItem.objectProperties.flat = [];
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
-                    expect(service.setActivePage).toHaveBeenCalledWith('properties');
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined/* , 'spinner' */);
+                    expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
                     expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
                     expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(1);
@@ -2921,22 +2920,22 @@ describe('Ontology State Service', function() {
         });
         it('a concept', function() {
             service.goTo('concept1');
-            expect(service.setActivePage).toHaveBeenCalledWith('concepts');
-            expect(service.selectItem).toHaveBeenCalledWith('concept1', undefined/* , 'spinner' */);
+            expect(listItem.tabIndex).toEqual(OntologyListItem.CONCEPTS_TAB);
+            expect(service.selectItem).toHaveBeenCalledWith('concept1', undefined, this.el);
             expect(service.openAt).toHaveBeenCalledWith(service.listItem.concepts.flat, 'concept1');
             expect(service.listItem.editorTabStates.concepts.index).toEqual(1);
         });
         it('a conceptScheme', function() {
             service.goTo('scheme1');
-            expect(service.setActivePage).toHaveBeenCalledWith('schemes');
-            expect(service.selectItem).toHaveBeenCalledWith('scheme1', undefined/* , 'spinner' */);
+            expect(listItem.tabIndex).toEqual(OntologyListItem.CONCEPTS_SCHEMES_TAB);
+            expect(service.selectItem).toHaveBeenCalledWith('scheme1', undefined, this.el);
             expect(service.openAt).toHaveBeenCalledWith(service.listItem.conceptSchemes.flat, 'scheme1');
             expect(service.listItem.editorTabStates.schemes.index).toEqual(1);
         });
         it('an individual', function() {
             service.goTo('individual1');
-            expect(service.setActivePage).toHaveBeenCalledWith('individuals');
-            expect(service.selectItem).toHaveBeenCalledWith('individual1', undefined/* , 'spinner' */);
+            expect(listItem.tabIndex).toEqual(OntologyListItem.INDIVIDUALS_TAB);
+            expect(service.selectItem).toHaveBeenCalledWith('individual1', undefined, this.el);
             expect(service.openAt).toHaveBeenCalledWith(service.listItem.individuals.flat, 'individual1');
             expect(service.listItem.editorTabStates.individuals.index).toEqual(3);
         });
@@ -4057,7 +4056,7 @@ describe('Ontology State Service', function() {
         spyOn(service, 'flattenHierarchy').and.returnValue([hierarchyNode]);
         spyOn(service, 'handleDeletedProperty');
         spyOn(service, 'deleteEntityFromHierarchy');
-        spyOn(service, 'commonDelete');
+        spyOn(service, 'commonDelete').and.returnValue(of(null));
         spyOn(service, 'getActiveEntityIRI').and.returnValue('iri');
         service.listItem.dataProperties.iris = {iri: 'ontology'};
         service.deleteDataTypeProperty();
@@ -4073,7 +4072,7 @@ describe('Ontology State Service', function() {
         service.listItem = listItem;
         spyOn(service, 'flattenHierarchy').and.returnValue([hierarchyNode]);
         spyOn(service, 'deleteEntityFromHierarchy');
-        spyOn(service, 'commonDelete');
+        spyOn(service, 'commonDelete').and.returnValue(of(null));
         spyOn(service, 'getActiveEntityIRI').and.returnValue('iri');
         service.listItem.annotations.iris = {iri: 'ontology'};
         service.deleteAnnotationProperty();
@@ -4099,7 +4098,7 @@ describe('Ontology State Service', function() {
                 '@type': ['ClassB']
             };
             spyOn(service, 'createFlatIndividualTree').and.returnValue([hierarchyNode]);
-            spyOn(service, 'commonDelete');
+            spyOn(service, 'commonDelete').and.returnValue(of(null));
             spyOn(service, 'deleteEntityFromHierarchy');
             spyOn(service, 'flattenHierarchy').and.returnValue([hierarchyNode]);
             spyOn(service, 'getActiveEntityIRI').and.returnValue(this.entityIRI);
@@ -4163,7 +4162,7 @@ describe('Ontology State Service', function() {
     it('deleteConcept should call the proper methods', function() {
         service.listItem = listItem;
         const entityIRI = 'iri';
-        spyOn(service, 'commonDelete');
+        spyOn(service, 'commonDelete').and.returnValue(of(null));
         spyOn(service, 'deleteEntityFromHierarchy');
         spyOn(service, 'getActiveEntityIRI').and.returnValue(entityIRI);
         spyOn(service, 'getIndividualsParentPath').and.returnValue(['ClassA', 'ClassB']);
@@ -4201,7 +4200,7 @@ describe('Ontology State Service', function() {
     it('deleteConceptScheme should call the proper methods', function() {
         service.listItem = listItem;
         const entityIRI = 'iri';
-        spyOn(service, 'commonDelete');
+        spyOn(service, 'commonDelete').and.returnValue(of(null));
         spyOn(service, 'deleteEntityFromHierarchy');
         spyOn(service, 'getActiveEntityIRI').and.returnValue(entityIRI);
         spyOn(service, 'getIndividualsParentPath').and.returnValue(['ClassA', 'ClassB']);
@@ -4355,9 +4354,9 @@ describe('Ontology State Service', function() {
                             fail('Observable should have resolved');
                         });
                     tick();
-                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith();
-                    expect(service.setEntityUsages).toHaveBeenCalledWith(id);
-                    expect(service.afterSave).toHaveBeenCalledWith();
+                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
+                    expect(service.setEntityUsages).toHaveBeenCalledWith(id, service.listItem);
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4369,9 +4368,9 @@ describe('Ontology State Service', function() {
                             fail('Observable should have resolved');
                         });
                     tick();
-                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith();
+                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
                     expect(service.setEntityUsages).not.toHaveBeenCalled();
-                    expect(service.afterSave).toHaveBeenCalledWith();
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4383,9 +4382,9 @@ describe('Ontology State Service', function() {
                             fail('Observable should have resolved');
                         });
                     tick();
-                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith();
+                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
                     expect(service.setEntityUsages).not.toHaveBeenCalled();
-                    expect(service.afterSave).toHaveBeenCalledWith();
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4396,9 +4395,9 @@ describe('Ontology State Service', function() {
                             fail('Observable should have resolved');
                         });
                     tick();
-                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith();
+                    expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
                     expect(service.setEntityUsages).not.toHaveBeenCalled();
-                    expect(service.afterSave).toHaveBeenCalledWith();
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4412,7 +4411,7 @@ describe('Ontology State Service', function() {
                         expect(response).toEqual(error);
                     });
                 tick();
-                expect(service.afterSave).toHaveBeenCalledWith();
+                expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
                 expect(service.listItem.isSaved).toEqual(false);
             }));
@@ -4630,6 +4629,39 @@ describe('Ontology State Service', function() {
             expect(getName).toHaveBeenCalledWith('second');
         });
     });
+    describe('getGroupedSelectList should return the correct value when getName is', function() {
+        beforeEach(function() {
+            utilStub.getIRINamespace.and.callFake(a => a[0]);
+        });
+        it('not provided', function() {
+            spyOn(service, 'getEntityNameByListItem').and.callFake(a => a);
+            expect(service.getGroupedSelectList(['Asecond', 'Bitem1', 'Bitem2', 'Afirst', 'Cwow'], 'I')).toEqual([
+                { namespace: 'A', options: [
+                    {item: 'Afirst', name: 'Afirst'},
+                ] },
+                { namespace: 'B', options: [
+                    {item: 'Bitem1', name: 'Bitem1'},
+                    {item: 'Bitem2', name: 'Bitem2'},
+                ] },
+            ]);
+            expect(service.getEntityNameByListItem).toHaveBeenCalledWith(jasmine.any(String));
+        });
+        it('provided', function() {
+            spyOn(service, 'getEntityNameByListItem')
+            const getName = jasmine.createSpy('getName').and.callFake(a => a);
+            expect(service.getGroupedSelectList(['Asecond', 'Bitem1', 'Bitem2', 'Afirst', 'Cwow'], 'I', getName)).toEqual([
+                { namespace: 'A', options: [
+                    {item: 'Afirst', name: 'Afirst'},
+                ] },
+                { namespace: 'B', options: [
+                    {item: 'Bitem1', name: 'Bitem1'},
+                    {item: 'Bitem2', name: 'Bitem2'},
+                ] },
+            ]);
+            expect(getName).toHaveBeenCalledWith(jasmine.any(String));
+            expect(service.getEntityNameByListItem).not.toHaveBeenCalled();
+        });
+    });
     it('getRemovePropOverlayMessage should create the HTML for confirming a removal of a property value', function() {
         service.listItem = listItem;
         listItem.selected = {'@id': ''};
@@ -4820,4 +4852,16 @@ describe('Ontology State Service', function() {
             }));
         });
     });
+    it('openSnackbar should open a snackbar for the provided entity IRI', fakeAsync(function() {
+        spyOn(service, 'goTo');
+        spyOn(service, 'getEntityNameByListItem').and.returnValue('Name');
+        service.listItem = new OntologyListItem();
+        service.openSnackbar('iri');
+        tick();
+        expect(snackBarStub.open).toHaveBeenCalledWith('Name successfully created', 'Open', { duration: 5500 });
+        expect(onActionSpy).toHaveBeenCalledWith();
+        expect(afterDismissedSpy).toHaveBeenCalledWith();
+        expect(service.goTo).toHaveBeenCalledWith('iri');
+        expect(service.listItem.openSnackbar).toBeUndefined();
+    }));
 });

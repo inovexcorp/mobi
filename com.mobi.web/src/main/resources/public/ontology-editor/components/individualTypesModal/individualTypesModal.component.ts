@@ -20,172 +20,155 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { difference, forEach, get, remove, set, pull, unset, some } from 'lodash';
+import { Component, OnInit } from '@angular/core';
+import { MatDialogRef } from '@angular/material';
+import { difference, get, remove, set, pull, unset, some } from 'lodash';
+import { OWL } from '../../../prefixes';
 
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
-const template = require('./individualTypesModal.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:individualTypesModal
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
+ * @class ontology-editor.IndividualTypesModalComponent
  *
- * @description
- * `individualTypesModal` is a component that creates content for a modal that edits the types of the selected
- * individual in the current {@link shared.service:ontologyStateService selected ontology}. The form in
- * the modal contains a 'ui-select' for the classes this individual will be an instance of. Meant to be used in
- * conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that edits the types of the selected individual in the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a 'mat-autocomplete'
+ * for the classes this individual will be an instance of. Meant to be used in conjunction with the `MatDialog` service.
  */
-const individualTypesModalComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: individualTypesModalComponentCtrl
-};
+@Component({
+    selector: 'individual-types-modal',
+    templateUrl: './individualTypesModal.component.html'
+})
+export class IndividualTypesModalComponent implements OnInit {
+    entityName = '';
+    types = [];
+    error = '';
+    namedIndividualIri = OWL + 'NamedIndividual';
 
-individualTypesModalComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'prefixes'];
-
-function individualTypesModalComponentCtrl(ontologyManagerService, ontologyStateService: OntologyStateService, prefixes) {
-    const dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.om = ontologyManagerService;
-    dvm.prefixes = prefixes;
-    dvm.types = [];
-
-    dvm.$onInit = function() {
-        dvm.types = angular.copy(dvm.os.listItem.selected['@type']);
-    };
-    dvm.submit = function() {
+    constructor(private matDialogRef: MatDialogRef<IndividualTypesModalComponent>, public om: OntologyManagerService,
+        public os: OntologyStateService) {}
+    
+    ngOnInit(): void {
+        this.entityName = this.om.getEntityName(this.os.listItem.selected);
+        this.types = Object.assign([], this.os.listItem.selected['@type']);
+    }
+    submit(): void {
         // Ensure the Individual has at least type that's an actual class so it doesn't disappear from the UI
-        if (!some(dvm.types, type => type in dvm.os.listItem.classes.iris)) {
-            dvm.error = 'Types must include at least one defined Class';
+        if (!some(this.types, type => type in this.os.listItem.classes.iris)) {
+            this.error = 'Types must include at least one defined Class';
             return;
         }
-        const originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
+        const originalTypes = Object.assign([], this.os.listItem.selected['@type']);
         
         // Handle vocabulary stuff
-        let wasConcept = dvm.os.containsDerivedConcept(originalTypes);
-        let isConcept = dvm.os.containsDerivedConcept(dvm.types);
-        let wasConceptScheme = dvm.os.containsDerivedConceptScheme(originalTypes);
-        let isConceptScheme = dvm.os.containsDerivedConceptScheme(dvm.types);
+        let wasConcept = this.os.containsDerivedConcept(originalTypes);
+        let isConcept = this.os.containsDerivedConcept(this.types);
+        let wasConceptScheme = this.os.containsDerivedConceptScheme(originalTypes);
+        let isConceptScheme = this.os.containsDerivedConceptScheme(this.types);
 
         if (isConcept && isConceptScheme) {
-            dvm.error = 'Individual cannot be both a Concept and Concept Scheme';
+            this.error = 'Individual cannot be both a Concept and Concept Scheme';
             return;
         }
 
-        dvm.os.listItem.selected['@type'] = dvm.types;
+        this.os.listItem.selected['@type'] = this.types;
         
-        const addedTypes = difference(dvm.types, originalTypes);
-        const removedTypes = difference(originalTypes, dvm.types);
+        const addedTypes = difference(this.types, originalTypes);
+        const removedTypes = difference(originalTypes, this.types);
 
         if (addedTypes.length || removedTypes.length) {
             let unselect = false;
 
             // Handle vocabulary stuff
-            wasConcept = dvm.os.containsDerivedConcept(originalTypes);
-            isConcept = dvm.os.containsDerivedConcept(dvm.types);
-            wasConceptScheme = dvm.os.containsDerivedConceptScheme(originalTypes);
-            isConceptScheme = dvm.os.containsDerivedConceptScheme(dvm.types);
+            wasConcept = this.os.containsDerivedConcept(originalTypes);
+            isConcept = this.os.containsDerivedConcept(this.types);
+            wasConceptScheme = this.os.containsDerivedConceptScheme(originalTypes);
+            isConceptScheme = this.os.containsDerivedConceptScheme(this.types);
 
             // Handle added types
-            forEach(addedTypes, (type:any) => {
-                const indivs = get(dvm.os.listItem.classesAndIndividuals, type, []);
-                indivs.push(dvm.os.listItem.selected['@id']);
-                dvm.os.listItem.classesAndIndividuals[type] = indivs;
+            addedTypes.forEach((type: string) => {
+                const indivs = get(this.os.listItem.classesAndIndividuals, type, []);
+                indivs.push(this.os.listItem.selected['@id']);
+                this.os.listItem.classesAndIndividuals[type] = indivs;
             });
 
             // Handle removed types
-            forEach(removedTypes, ( type:any ) => {
-                const parentAndIndivs = get(dvm.os.listItem.classesAndIndividuals, '[\'' + type + '\']', []);
+            removedTypes.forEach((type: string ) => {
+                const parentAndIndivs = get(this.os.listItem.classesAndIndividuals, '[\'' + type + '\']', []);
                 if (parentAndIndivs.length) {
-                    remove(parentAndIndivs, item => item === dvm.os.listItem.selected['@id']);
+                    remove(parentAndIndivs, item => item === this.os.listItem.selected['@id']);
                     if (!parentAndIndivs.length) {
-                        delete dvm.os.listItem.classesAndIndividuals[type];
+                        delete this.os.listItem.classesAndIndividuals[type];
                     }
                 }
             });
 
-            set(dvm.os.listItem, 'classesWithIndividuals', Object.keys(dvm.os.listItem.classesAndIndividuals));
-            dvm.os.listItem.individualsParentPath = dvm.os.getIndividualsParentPath(dvm.os.listItem);
-            dvm.os.listItem.individuals.flat = dvm.os.createFlatIndividualTree(dvm.os.listItem);
+            set(this.os.listItem, 'classesWithIndividuals', Object.keys(this.os.listItem.classesAndIndividuals));
+            this.os.listItem.individualsParentPath = this.os.getIndividualsParentPath(this.os.listItem);
+            this.os.listItem.individuals.flat = this.os.createFlatIndividualTree(this.os.listItem);
 
             // Made into a Concept
             if (!wasConcept && isConcept) {
-                dvm.os.addConcept(dvm.os.listItem.selected);
-                forEach(pull(Object.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
-                    dvm.os.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
+                this.os.addConcept(this.os.listItem.selected);
+                pull(Object.keys(this.os.listItem.selected), '@id', '@type').forEach(key => {
+                    this.os.updateVocabularyHierarchies(key, this.os.listItem.selected[key]);
                 });
             }
             // No longer a Concept
             if (!isConcept && wasConcept) {
-                delete dvm.os.listItem.concepts.iris[dvm.os.listItem.selected['@id']];                                
-                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.concepts, dvm.os.listItem.selected['@id']);
-                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes, dvm.os.listItem.selected['@id']);
-                dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(dvm.os.listItem.concepts);
-                dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
-                if (dvm.os.listItem.editorTabStates.concepts.entityIRI === dvm.os.listItem.selected['@id']) {
-                    unset(dvm.os.listItem.editorTabStates.concepts, 'entityIRI');
-                    unset(dvm.os.listItem.editorTabStates.concepts, 'usages');
-                    if (dvm.os.getActiveKey() === 'concepts') {
+                delete this.os.listItem.concepts.iris[this.os.listItem.selected['@id']];                                
+                this.os.deleteEntityFromHierarchy(this.os.listItem.concepts, this.os.listItem.selected['@id']);
+                this.os.deleteEntityFromHierarchy(this.os.listItem.conceptSchemes, this.os.listItem.selected['@id']);
+                this.os.listItem.concepts.flat = this.os.flattenHierarchy(this.os.listItem.concepts);
+                this.os.listItem.conceptSchemes.flat = this.os.flattenHierarchy(this.os.listItem.conceptSchemes);
+                if (this.os.listItem.editorTabStates.concepts.entityIRI === this.os.listItem.selected['@id']) {
+                    unset(this.os.listItem.editorTabStates.concepts, 'entityIRI');
+                    unset(this.os.listItem.editorTabStates.concepts, 'usages');
+                    if (this.os.getActiveKey() === 'concepts') {
                         unselect = true;
                     }
                 }
-                if (dvm.os.listItem.editorTabStates.schemes.entityIRI === dvm.os.listItem.selected['@id']) {
-                    unset(dvm.os.listItem.editorTabStates.schemes, 'entityIRI');
-                    unset(dvm.os.listItem.editorTabStates.schemes, 'usages');
-                    if (dvm.os.getActiveKey() === 'schemes') {
+                if (this.os.listItem.editorTabStates.schemes.entityIRI === this.os.listItem.selected['@id']) {
+                    unset(this.os.listItem.editorTabStates.schemes, 'entityIRI');
+                    unset(this.os.listItem.editorTabStates.schemes, 'usages');
+                    if (this.os.getActiveKey() === 'schemes') {
                         unselect = true;
                     }
                 }
             }
             // Made into a Concept Scheme
             if (!wasConceptScheme && isConceptScheme) {
-                dvm.os.addConceptScheme(dvm.os.listItem.selected);
-                forEach(pull(Object.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
-                    dvm.os.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
+                this.os.addConceptScheme(this.os.listItem.selected);
+                pull(Object.keys(this.os.listItem.selected), '@id', '@type').forEach(key => {
+                    this.os.updateVocabularyHierarchies(key, this.os.listItem.selected[key]);
                 });
             }
             // No longer a Concept Scheme
             if (!isConceptScheme && wasConceptScheme) {
-                delete dvm.os.listItem.conceptSchemes.iris[dvm.os.listItem.selected['@id']];                                
-                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes, dvm.os.listItem.selected['@id']);
-                dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
-                if (dvm.os.listItem.editorTabStates.schemes.entityIRI === dvm.os.listItem.selected['@id']) {
-                    unset(dvm.os.listItem.editorTabStates.schemes, 'entityIRI');
-                    unset(dvm.os.listItem.editorTabStates.schemes, 'usages');
-                    if (dvm.os.getActiveKey() === 'schemes') {
+                delete this.os.listItem.conceptSchemes.iris[this.os.listItem.selected['@id']];                                
+                this.os.deleteEntityFromHierarchy(this.os.listItem.conceptSchemes, this.os.listItem.selected['@id']);
+                this.os.listItem.conceptSchemes.flat = this.os.flattenHierarchy(this.os.listItem.conceptSchemes);
+                if (this.os.listItem.editorTabStates.schemes.entityIRI === this.os.listItem.selected['@id']) {
+                    unset(this.os.listItem.editorTabStates.schemes, 'entityIRI');
+                    unset(this.os.listItem.editorTabStates.schemes, 'usages');
+                    if (this.os.getActiveKey() === 'schemes') {
                         unselect = true;
                     }
                 }
             }
             if (addedTypes.length) {
-                dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': addedTypes});
+                this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, {'@id': this.os.listItem.selected['@id'], '@type': addedTypes});
             }
             if (removedTypes.length) {
-                dvm.os.addToDeletions(dvm.os.listItem.versionedRdfRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': removedTypes});
+                this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, {'@id': this.os.listItem.selected['@id'], '@type': removedTypes});
             }
             if (unselect) {
-                dvm.os.unSelectItem();
+                this.os.unSelectItem();
             }
-            dvm.os.saveCurrentChanges().subscribe();
-            dvm.close();
+            this.os.saveCurrentChanges().subscribe();
+            this.matDialogRef.close();
         } else {
-            dvm.close();
+            this.matDialogRef.close();
         }
-    };
-    dvm.cancel = function() {
-        dvm.dismiss();
-    };
+    }
 }
-
-export default individualTypesModalComponent;

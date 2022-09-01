@@ -30,9 +30,8 @@ import './ontologyEditorPage.component.scss';
  * @class ontology-editor.OntologyEditorPageComponent
  *
  * A component that creates a `div` containing the main components of the Ontology Editor.
- * These components are {@link ontology-editor.OntologySidebarComponent},
- * {@link ontology-editor.component:ontologyTab} with the
- * {@link shared.OntologyStateService#listItem currently selected open ontology}, and
+ * These components are {@link ontology-editor.OntologySidebarComponent}, {@link ontology-editor.OntologyTabComponent} 
+ * with the {@link shared.OntologyStateService#listItem currently selected open ontology}, and
  * {@link ontology-editor.OpenOntologyTabComponent}.
  */
 @Component({

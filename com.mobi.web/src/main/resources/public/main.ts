@@ -29,6 +29,16 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { setAngularLib } from '@angular/upgrade/static';
 import { NgZone } from '@angular/core';
 
+import 'codemirror-no-newlines/no-newlines.js';
+import 'codemirror/mode/sparql/sparql.js';
+import 'codemirror/mode/turtle/turtle.js';
+import 'codemirror/mode/xml/xml.js';
+import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/addon/edit/matchbrackets.js';
+import './vendor/manchestersyntax.js';
+
+import 'codemirror/lib/codemirror.css';
+
 import { AppModule } from './app.module';
 
 setAngularLib(angular);

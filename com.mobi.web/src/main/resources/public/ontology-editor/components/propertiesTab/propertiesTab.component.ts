@@ -20,56 +20,53 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * #L%
 */
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material';
 
-const template = require('./propertiesTab.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import {OntologyManagerService} from '../../../shared/services/ontologyManager.service';
+import {ConfirmModalComponent} from '../../../shared/components/confirmModal/confirmModal.component';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:propertiesTab
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:modalService
+ * @class ontology-editor.PropertiesTabComponent
  *
- * @description
- * `propertiesTab` is a component that creates a page containing the
- * {@link ontology-editor.component:propertyHierarchyBlock} of the current
- * {@link shared.service:ontologyStateService selected ontology} and information about a selected
- * property from that list. The selected property display includes a
- * {@link ontology-editor.component:selectedDetails}, a button to delete the property, an
- * {@link ontology-editor.component:annotationBlock}, an {@link ontology-editor.component:axiomBlock}, a
- * {@link ontology-editor.component:characteristicsRow}, and a {@link ontology-editor.component:usagesBlock}.
- * The component houses the method for opening a modal for deleting properties.
+ * A component that creates a page containing the {@link ontology-editor.PropertyHierarchyBlockComponent} of the current
+ * {@link shared.OntologyStateService#listItem selected ontology} and information about a selected property from that
+ * list. The selected property display includes a {@link ontology-editor.SelectedDetailsComponent}, a button to delete
+ * the property, an {@link ontology-editor.AnnotationBlockComponent}, an {@link ontology-editor.AxiomBlockComponent}, a
+ * {@link ontology-editor.CharacteristicsRowComponent}, and a {@link ontology-editor.UsagesBlockComponent}. The
+ * component houses the method for opening a modal for deleting properties.
  */
-const propertiesTabComponent = {
-    template,
-    scope: {},
-    controllerAs: 'dvm',
-    controller: propertiesTabComponentCtrl
-};
+@Component({
+    selector: 'properties-tab',
+    templateUrl: './propertiesTab.component.html'
+})
 
-propertiesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'modalService'];
+export class PropertiesTabComponent {
 
-function propertiesTabComponentCtrl(ontologyManagerService, ontologyStateService: OntologyStateService, modalService) {
-    var dvm = this;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
 
-    dvm.showDeleteConfirmation = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteProperty);
+    showDeleteConfirmation(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>'
+            }
+        }).afterClosed().subscribe((result) => {
+            if (result) {
+                this.deleteProperty();
+            }
+        });
     }
-    dvm.deleteProperty = function() {
-        if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
-            dvm.os.deleteObjectProperty();
-        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
-            dvm.os.deleteDataTypeProperty();
-        } else if (dvm.om.isAnnotation(dvm.os.listItem.selected)) {
-            dvm.os.deleteAnnotationProperty();
+    deleteProperty(): void {
+        if (this.om.isObjectProperty(this.os.listItem.selected)) {
+            this.os.deleteObjectProperty();
+        } else if (this.om.isDataTypeProperty(this.os.listItem.selected)) {
+            this.os.deleteDataTypeProperty();
+        } else if (this.om.isAnnotation(this.os.listItem.selected)) {
+            this.os.deleteAnnotationProperty();
         }
     }
-    dvm.seeHistory = function() {
-        dvm.os.listItem.seeHistory = true;
+    seeHistory(): void {
+        this.os.listItem.seeHistory = true;
     }
 }
-
-export default propertiesTabComponent;

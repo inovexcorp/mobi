@@ -21,6 +21,10 @@
   #L%
   -->
 <div class="individual-hierarchy-block h-100 py-1">
-    <info-message ng-if="!dvm.os.listItem.individuals.flat.length">(No individuals defined)</info-message>
-    <individual-tree ng-if="dvm.os.listItem.individuals.flat.length" hierarchy="dvm.os.listItem.individuals.flat" update-search="dvm.updateSearch(value)" index="dvm.os.listItem.editorTabStates.individuals.index" branch-id="dvm.os.listItem.versionedRdfRecord.branchId"></individual-tree>
+    <info-message *ngIf="!os.listItem.individuals.flat.length">(No individuals defined)</info-message>
+    <individual-tree *ngIf="os.listItem.individuals.flat.length" 
+    [hierarchy]="os.listItem.individuals.flat" 
+    (updateSearch)="updateSearch($event)"
+    [index]="os.listItem.editorTabStates.individuals.index" 
+    [branchId]="os.listItem.versionedRdfRecord.branchId"></individual-tree>
 </div>

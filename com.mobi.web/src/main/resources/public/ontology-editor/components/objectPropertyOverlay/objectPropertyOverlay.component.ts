@@ -20,76 +20,99 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import {cloneDeep, includes} from 'lodash';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { debounceTime, startWith, map } from 'rxjs/operators';
 
+import { ObjectPropertyBlockComponent } from '../objectPropertyBlock/objectPropertyBlock.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './objectPropertyOverlay.component.scss';
 
-const template = require('./objectPropertyOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:objectPropertyOverlay
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
- * @requires shared.service:propertyManagerService
+ * @class ontology-editor.ObjectPropertyOverlayComponent
  *
- * @description
- * `objectPropertyOverlay` is a component that creates content for a modal that adds an object property value to the
- * {@link shared.service:ontologyStateService selected individual}. The form in the modal contains a `ui-select` of
- * all the object properties in the ontology and an {@link ontology-editor.component:iriSelectOntology} of all the
- * valid individuals for the object property value based on the range of the selected property. Meant to be used in
- * conjunction with the {@link shared.service:modalService}.
+ * A component that creates content for a modal that adds an object property value to the
+ * {@link shared.OntologyStateService#listItem selected individual}. The form in the modal contains a `mat-autocomplete`
+ * of all the object properties in the ontology and an {@link ontology-editor.IriSelectOntologyComponent} of all the
+ * valid individuals for the object property value based on the range of the selected property. 
  *
  * @param {Function} close A function that closes the modal
  * @param {Function} dismiss A function that dismisses the modal
  */
-const objectPropertyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: objectPropertyOverlayComponentCtrl
-};
+@Component({
+    templateUrl: './objectPropertyOverlay.component.html',
+    selector: 'object-property-overlay'
+})
+export class ObjectPropertyOverlayComponent implements OnInit {
+    individuals = {};
+    valueList;
+    objectPropertyForm = this.fb.group({
+        propertySelect: [{ value: '', disabled: false }],
+        propertyValue: [{ value: '', disabled: false }]
+    })
+    filteredIriList: Observable<[]>;
+    constructor(public os:OntologyStateService,
+                @Inject('utilService') private util,
+                @Inject('propertyManagerService') private pm,
+                private fb: FormBuilder,
+                private dialogRef: MatDialogRef<ObjectPropertyBlockComponent>,
+                @Inject(MAT_DIALOG_DATA) public data: {
+                            editingProperty: boolean,
+                            propertySelect: string,
+                            propertyValue: string,
+                            propertyIndex: number
+                        }){}
 
-objectPropertyOverlayComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'propertyManagerService'];
-
-function objectPropertyOverlayComponentCtrl(ontologyStateService: OntologyStateService, utilService, propertyManagerService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.individuals = {};
-
-    dvm.$onInit = function() {
-        dvm.individuals = angular.copy(dvm.os.listItem.individuals.iris);
-        delete dvm.individuals[dvm.os.getActiveEntityIRI()];
+    ngOnInit(): void {
+        this.valueList = this.os.getSelectList(Object.keys(this.os.listItem.objectProperties.iris), '', iri => this.os.getEntityNameByListItem(iri));
+        this.filteredIriList = this.objectPropertyForm.controls.propertySelect.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string>(''),
+                map(val => {
+                    if (!this.valueList) {
+                        return [];
+                    }
+                    const searchText = typeof val === 'string' ?
+                        val : val ? val : '';
+                    const filtereList = this.valueList.filter(iri => includes(this.os.getEntityNameByListItem(iri).toLowerCase(), searchText.toLowerCase()));
+                    filtereList.sort((val1, val2) => this.os.getEntityNameByListItem(val1).localeCompare(this.os.getEntityNameByListItem(val2)));
+                    return filtereList;
+                })
+            );
+        this.individuals = cloneDeep(this.os.listItem.individuals.iris);
+        delete this.individuals[this.os.getActiveEntityIRI()];
     }
-    dvm.addProperty = function(select, value) {
-        var valueObj = {'@id': value};
-        var added = pm.addId(dvm.os.listItem.selected, select, value);
-        
+    addProperty(): void {
+        const select = this.objectPropertyForm.controls.propertySelect.value;
+        const value = this.objectPropertyForm.controls.propertyValue.value;
+        const valueObj = {'@id': value};
+        const added = this.pm.addId(this.os.listItem.selected, select, value);
+
         if (added) {
-            dvm.os.addToAdditions(dvm.os.listItem.versionedRdfRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
-            dvm.os.saveCurrentChanges().subscribe();
+            this.os.addToAdditions(
+                this.os.listItem.versionedRdfRecord.recordId,
+                this.util.createJson(
+                    this.os.listItem.selected['@id'],
+                    select,
+                    valueObj
+                )
+            );
+            this.os.saveCurrentChanges().subscribe();
         } else {
-            dvm.util.createWarningToast('Duplicate property values not allowed');
+            this.util.createWarningToast('Duplicate property values not allowed');
         }
-        var types = dvm.os.listItem.selected['@type'];
-        if (dvm.os.containsDerivedConcept(types) || dvm.os.containsDerivedConceptScheme(types)) {
-            dvm.os.updateVocabularyHierarchies(select, [valueObj]);
+        const types = this.os.listItem.selected['@type'];
+        if (this.os.containsDerivedConcept(types) || this.os.containsDerivedConceptScheme(types)) {
+            this.os.updateVocabularyHierarchies(select, [valueObj]);
         }
-        dvm.close();
+        this.dialogRef.close();
     }
-    dvm.getValues = function(searchText) {
-        dvm.values = dvm.os.getSelectList(Object.keys(dvm.os.listItem.objectProperties.iris), searchText, iri => dvm.os.getEntityNameByListItem(iri));
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    cancel(): void {
+        this.dialogRef.close();
     }
 }
-
-export default objectPropertyOverlayComponent;

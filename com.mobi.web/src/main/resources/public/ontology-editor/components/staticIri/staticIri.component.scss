@@ -31,6 +31,7 @@
         word-break: break-all;
 
         a {
+            margin-left: .20rem;
             white-space: nowrap;
         }
     }
@@ -38,7 +39,7 @@
         border-bottom: solid red 1px;
     }
 
-    .ui-select-highlight {
+    .highlight-text {
         background-color: var(--yellow);
     }
 }

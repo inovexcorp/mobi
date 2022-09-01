@@ -20,10 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<span uib-dropdown class="hierarchy-filter w-100 h-100 d-block" is-open="dvm.dropdownOpen" on-toggle="dvm.dropdownToggled(open)">
-    <a uib-dropdown-toggle class="h-100 w-100"><span ng-class="{'disappear': !dvm.numFilters }" class="badge fa-stack fa" data-count="{{dvm.numFilters}}"><i class="fa fa-filter fa-stack-1x xfa-inverse"></i></span></a>
-    <ul uib-dropdown-menu ng-click="$event.stopPropagation()">
-        <checkbox ng-repeat="filter in dvm.filters" class="dropdown-item" [display-text]="filter.name" [(model)]="filter.checked"></checkbox>
-        <div class="modal-footer"><button class="btn btn-primary float-right" ng-click="dvm.apply()" data-toggle="dropdown">Apply</button></div>
-    </ul>
+<span class="hierarchy-filter w-100 h-100 d-block">
+    <a mat-icon-button class="h-100 w-100" [matMenuTriggerFor]="hierarchyFilterForm" #trigger="matMenuTrigger"><span [ngClass]="{'disappear': !numFilters }" class="badge fa-stack fa" [attr.data-count]="numFilters"><i class="fa fa-filter fa-stack-1x xfa-inverse"></i></span></a>
+    <mat-menu #hierarchyFilterForm="matMenu" class="menu-form-wrapper" hasBackdrop="false" (closed)="dropdownClosed()">
+        <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <div *ngFor="let filter of filters" class="dropdown-item">
+                <mat-checkbox [(ngModel)]="filter.checked" [ngModelOptions]="{standalone: true}">{{filter.name}}</mat-checkbox>
+            </div>
+            <div class="modal-footer">
+                <button mat-raised-button color="primary" class="float-right" (click)="apply()">Apply</button>
+            </div>
+        </div>
+    </mat-menu>
 </span>

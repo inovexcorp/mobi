@@ -20,11 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="serialization-select form-group">
-    <select class="form-control" ng-model="dvm.bindModel" ng-change="dvm.onChange()">
-        <option value="">Select a format</option>
-        <option value="turtle">Turtle</option>
-        <option value="rdf/xml">RDF/XML</option>
-        <option value="jsonld">JSON-LD</option>
-    </select>
+<div class="serialization-select" [formGroup]="parentForm">
+    <mat-form-field class="w-100">
+        <mat-label>Select a Format</mat-label>
+        <mat-select formControlName="serialization">
+            <mat-option value="turtle">Turtle</mat-option>
+            <mat-option value="rdf/xml">RDF/XML</mat-option>
+            <mat-option value="jsonld">JSON-LD</mat-option>
+        </mat-select>
+    </mat-form-field>
 </div>

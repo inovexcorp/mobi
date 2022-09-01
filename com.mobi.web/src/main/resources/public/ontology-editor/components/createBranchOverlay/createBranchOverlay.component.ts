@@ -20,83 +20,72 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { unset, get } from 'lodash';
-import { first } from 'rxjs/operators';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
+import { Observable } from 'rxjs';
+import { get } from 'lodash';
+import { switchMap } from 'rxjs/operators';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-const template = require('./createBranchOverlay.component.html');
+import { CATALOG } from '../../../prefixes';
+import { NewConfig } from '../../../shared/models/newConfig.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:createBranchOverlay
- * @requires shared.service:catalogManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
+ * @class ontology-editor.CreateBranchOverlayComponent
  *
- * @description
- * `createBranchOverlay` is a component that creates content for a modal that creates a branch in the current
- * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
- * {@link shared.component:textInput} for the branch title and a {@link shared.component:textArea} for the
- * branch description. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that creates a branch in the current
+ * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a field for the branch
+ * title and a field for the branch description. Meant to be used in conjunction with the `MatDialog` service.
  */
-const createBranchOverlayComponent = {
-    template,
-    bindings: {
-        dismiss: '&',
-        close: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createBranchOverlayComponentCtrl
-};
+@Component({
+    selector: 'create-branch-overlay',
+    templateUrl: './createBranchOverlay.component.html',
+})
+export class CreateBranchOverlayComponent implements OnInit {
+    error: string;
+    catalogId: string;
+    
+    createForm = this.fb.group({
+        title: ['', Validators.required],
+        description: [''],
+    });
+    
+    constructor(private fb: FormBuilder,
+        private dialogRef: MatDialogRef<CreateBranchOverlayComponent>, 
+        private os: OntologyStateService, 
+        private cm: CatalogManagerService) {}
 
-createBranchOverlayComponentCtrl.$inject = ['$q', 'catalogManagerService', 'ontologyStateService', 'prefixes'];
-
-function createBranchOverlayComponentCtrl($q, catalogManagerService: CatalogManagerService, ontologyStateService: OntologyStateService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var catalogId = get(cm.localCatalog, '@id', '');
-
-    dvm.os = ontologyStateService;
-    dvm.error = '';
-    dvm.branchConfig = {
-        title: '',
-        description: ''
-    };
-
-    dvm.create = function() {
-        if (dvm.branchConfig.description === '') {
-            unset(dvm.branchConfig, 'description');
-        }
-        var commitId;
-        cm.createRecordBranch(dvm.os.listItem.versionedRdfRecord.recordId, catalogId, dvm.branchConfig, dvm.os.listItem.versionedRdfRecord.commitId).pipe(first()).toPromise()
-            .then((branchId: string) => cm.getRecordBranch(branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise(), $q.reject)
-            .then((branch: JSONLDObject) => {
-                dvm.os.listItem.branches.push(branch);
-                dvm.os.listItem.versionedRdfRecord.branchId = branch['@id'];
-                commitId = branch[prefixes.catalog + 'head'][0]['@id'];
-                dvm.os.collapseFlatLists();
-                dvm.os.listItem.upToDate = true;
-                dvm.os.resetStateTabs();
-                return dvm.os.updateState({recordId: dvm.os.listItem.versionedRdfRecord.recordId, commitId, branchId: dvm.os.listItem.versionedRdfRecord.branchId}).pipe(first()).toPromise();
-            }, $q.reject)
-            .then(() => {
-                dvm.close();
-                dvm.os.resetStateTabs();
-            }, onError);
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    create(): void  {
+        const branchConfig: NewConfig = this.createForm.value;
+        this.cm.createRecordBranch(this.os.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig, this.os.listItem.versionedRdfRecord.commitId)
+            .pipe(
+                switchMap((branchId: string) => this.cm.getRecordBranch(branchId, this.os.listItem.versionedRdfRecord.recordId, this.catalogId)),
+                switchMap((branch: JSONLDObject) => { 
+                    this.os.listItem.branches.push(branch);
+                    this.os.listItem.versionedRdfRecord.branchId = branch['@id'];
+                    const commitId = branch[CATALOG + 'head'][0]['@id'];
+                    this.os.collapseFlatLists();
+                    this.os.listItem.upToDate = true;
+                    this.os.resetStateTabs();
+                    return this.os.updateState({
+                        recordId: this.os.listItem.versionedRdfRecord.recordId, 
+                        commitId, 
+                        branchId: this.os.listItem.versionedRdfRecord.branchId
+                    });
+                })
+            ).subscribe(() => {
+                this.dialogRef.close(true);
+                this.os.resetStateTabs();
+            }, error => this.onError(error));
     }
-
-    function onError(errorMessage) {
-        dvm.error = errorMessage;
+    onError(errorMessage: string): void {
+        this.error = errorMessage;
     }
 }
-
-export default createBranchOverlayComponent;

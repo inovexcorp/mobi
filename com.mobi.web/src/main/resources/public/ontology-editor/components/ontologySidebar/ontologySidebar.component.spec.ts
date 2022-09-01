@@ -78,6 +78,8 @@ describe('Ontology Sidebar component', function() {
         listItemA.ontologyId = 'A';
         listItemA.versionedRdfRecord.recordId = 'A';
         listItemA.versionedRdfRecord.title = 'A';
+        listItemA.editorTabStates.project.component = 'test';
+        listItemA.editorTabStates.classes.component = undefined;
 
         listItemB = new OntologyListItem();
         listItemB.ontologyId = 'B';
@@ -103,15 +105,20 @@ describe('Ontology Sidebar component', function() {
             ontologyStateStub.listItem = listItemA;
         });
         describe('should close a tab', function() {
+            beforeEach(function() {
+                listItemA.openSnackbar = jasmine.createSpyObj('MatSnackBar', ['dismiss']);
+            });
             it('if it has changes', function() {
                 ontologyStateStub.hasChanges.and.returnValue(true);
                 component.onClose(listItemA);
+                expect(listItemA.openSnackbar.dismiss).toHaveBeenCalledWith();
                 expect(matDialog.open).toHaveBeenCalledWith(OntologyCloseOverlayComponent, {data: {listItem: listItemA}});
                 expect(ontologyStateStub.closeOntology).not.toHaveBeenCalled();
             });
             it('if it has no changes', function() {
                 ontologyStateStub.hasChanges.and.returnValue(false);
                 component.onClose(listItemA);
+                expect(listItemA.openSnackbar.dismiss).toHaveBeenCalledWith();
                 expect(matDialog.open).not.toHaveBeenCalled();
                 expect(ontologyStateStub.closeOntology).toHaveBeenCalledWith(listItemA.versionedRdfRecord.recordId);
             });
@@ -123,22 +130,26 @@ describe('Ontology Sidebar component', function() {
             });
             describe('defined', function() {
                 it('and does not have an entity snackbar open', function() {
-                    ontologyStateStub.listItem.goTo = null;
+                    ontologyStateStub.listItem.openSnackbar = null;
                     component.onClick(listItemB);
                     expect(listItemB.active).toBeTrue();
                     expect(ontologyStateStub.listItem).toEqual(listItemB);
                     expect(listItemA.active).toBeFalse();
-                    expect(listItemA.goTo).toBeNull();
+                    expect(listItemA.editorTabStates.project.component).toBeUndefined();
+                    expect(listItemA.editorTabStates.classes.component).toBeUndefined();
+                    expect(listItemA.editorTabStates.search.component).toBeUndefined();
+                    expect(listItemA.openSnackbar).toBeNull();
                 });
                 it('and does have an entity snackbar open', function() {
-                    listItemA.goTo.active = true;
-                    listItemA.goTo.entityIRI = 'entityIRI';
+                    listItemA.openSnackbar = jasmine.createSpyObj('MatSnackBar', ['dismiss']);
                     component.onClick(listItemB);
                     expect(listItemB.active).toBeTrue();
                     expect(ontologyStateStub.listItem).toEqual(listItemB);
                     expect(listItemA.active).toBeFalse();
-                    expect(listItemA.goTo.active).toBeFalse();
-                    expect(listItemA.goTo.entityIRI).toEqual('');
+                    expect(listItemA.editorTabStates.project.component).toBeUndefined();
+                    expect(listItemA.editorTabStates.classes.component).toBeUndefined();
+                    expect(listItemA.editorTabStates.search.component).toBeUndefined();
+                    expect(listItemA.openSnackbar.dismiss).toHaveBeenCalledWith();
                 });
             });
             it('undefined', function() {

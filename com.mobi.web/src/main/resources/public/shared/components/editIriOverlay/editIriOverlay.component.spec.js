@@ -26,6 +26,7 @@ import {
     injectRegexConstant
 } from '../../../../../../test/js/Shared';
 
+// TODO: upgrade this
 describe('Edit IRI Overlay component', function() {
     var $compile, scope;
 

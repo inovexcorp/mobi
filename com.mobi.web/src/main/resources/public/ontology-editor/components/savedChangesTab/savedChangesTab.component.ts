@@ -20,198 +20,187 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, chunk, intersection, find, concat, forEach, map, filter, sortBy } from 'lodash';
-import { first } from 'rxjs/operators';
+import { get, chunk, intersection, find, concat, forEach, sortBy } from 'lodash';
+import { first, switchMap } from 'rxjs/operators';
+import { Component, Inject, Input, OnChanges, OnInit } from '@angular/core';
 
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-
-import './savedChangesTab.component.scss';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { CATALOG, OWL, RDF, SKOS } from '../../../prefixes';
+import { CommitChange } from '../../../shared/models/commitChange.interface';
 
-const template = require('./savedChangesTab.component.html');
+interface ChangesItem {
+    id: string,
+    entityName: string,
+    additions: CommitChange[],
+    deletions: CommitChange[],
+    disableAll: boolean
+}
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:savedChangesTab
- * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:utilService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:prefixes
+ * @class ontology-editor.SavedChangesTabComponent
  *
- * @description
- * `savedChangesTab` is a component that creates a page that displays all the current users's saved changes
- * (aka inProgressCommit) of the current
- * {@link shared.service:ontologyStateService selected ontology and branch}. The changes are grouped by
- * subject. The display will include a button to remove all the saved changes if there are any. If there are
- * no changes, an {@link shared.component:infoMessage} is shown stating as such. If the current branch is
- * not up to date and there are changes, an {@link shared.component:errorDisplay} is shown. If there are
- * no changes and the current branch is not up to date, an `errorDisplay` is shown with a link to pull in the
- * latest changes. If there are no changes and the user is on a UserBranch then an `errorDisplay` is shown with
- * a lin to "pull changes" which will perform a merge of the UserBranch into the parent branch. If there are
- * no changes, the user is on a UserBranch, and the parent branch no longer exists, an `errorDisplay` is shown
- * with a link to restore the parent branch with the UserBranch. 
+ * A component that creates a page that displays all the current users's saved changes (aka inProgressCommit) of the
+ * current {@link shared.OntologyStateService selected ontology and branch}. The changes are grouped by subject. The
+ * display will include a button to remove all the saved changes if there are any. If there are no changes, an
+ * {@link shared.InfoMessageComponent} is shown stating as such. If the current branch is not up to date and there are
+ * changes, an {@link shared.ErrorDisplayComponent} is shown. If there are no changes and the current branch is not up
+ * to date, an `errorDisplay` is shown with a link to pull in the latest changes. If there are no changes and the user
+ * is on a UserBranch then an `errorDisplay` is shown with a link to "pull changes" which will perform a merge of the
+ * UserBranch into the parent branch. If there are no changes, the user is on a UserBranch, and the parent branch no
+ * longer exists, an `errorDisplay` is shown with a link to restore the parent branch with the UserBranch. 
  */
-const savedChangesTabComponent = {
-    template,
-    bindings: {
-        additions: '<',
-        deletions: '<'
-    },
-    controllerAs: 'dvm',
-    controller: savedChangesTabComponentCtrl
-};
+@Component({
+    selector: 'saved-changes-tab',
+    templateUrl: './savedChangesTab.component.html'
+})
+export class SavedChangesTabComponent implements OnInit, OnChanges {
+    @Input() additions: JSONLDObject[];
+    @Input() deletions: JSONLDObject[];
 
-savedChangesTabComponentCtrl.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
-
-function savedChangesTabComponentCtrl($q, ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, utilService, catalogManagerService: CatalogManagerService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var om = ontologyManagerService;
-    var catalogId = get(cm.localCatalog, '@id', '');
-    var typeIRI = prefixes.rdf + 'type';
-    var types = [prefixes.owl + 'Class', prefixes.owl + 'ObjectProperty', prefixes.owl + 'DatatypeProperty', prefixes.owl + 'AnnotationProperty', prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept', prefixes.skos + 'ConceptScheme'];
-
-    dvm.os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.list = [];
-    dvm.showList = [];
-    dvm.checkedStatements = {
+    typeIRI = RDF + 'type';
+    types = [OWL + 'Class', OWL + 'ObjectProperty', OWL + 'DatatypeProperty', OWL + 'AnnotationProperty', OWL + 'NamedIndividual', SKOS + 'Concept', SKOS + 'ConceptScheme'];
+    list: ChangesItem[] = [];
+    showList: ChangesItem[] = [];
+    checkedStatements = {
         additions: [],
         deletions: []
     };
+    index = 0;
+    size = 100;
+    catalogId = '';
+    error = '';
+    chunks = [];
 
-    dvm.index = 0;
-    dvm.size = 100;
-
-    dvm.$onChanges = function() {
-        var inProgressAdditions = map(dvm.os.listItem.inProgressCommit.additions, addition => ({
-            additions: dvm.util.getPredicatesAndObjects(addition),
+    constructor(public os: OntologyStateService, private om: OntologyManagerService, private cm: CatalogManagerService, @Inject('utilService') private util) {}
+    
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+    }
+    ngOnChanges(): void {
+        const inProgressAdditions: {additions: CommitChange[], id: string}[] = (this.os.listItem.inProgressCommit.additions as JSONLDObject[]).map(addition => ({
+            additions: this.util.getPredicatesAndObjects(addition),
             id: addition['@id']
         }));
-        var inProgressDeletions = map(dvm.os.listItem.inProgressCommit.deletions, deletion => ({
-            deletions: dvm.util.getPredicatesAndObjects(deletion),
+        const inProgressDeletions: {deletions: CommitChange[], id: string}[] = (this.os.listItem.inProgressCommit.deletions as JSONLDObject[]).map(deletion => ({
+            deletions: this.util.getPredicatesAndObjects(deletion),
             id: deletion['@id']
         }));
-        var mergedInProgressCommitsMap = [].concat(inProgressAdditions, inProgressDeletions).reduce((dict, currentItem) => {
-            var existingValue = dict[currentItem['id']] || {};
-            var mergedValue = Object.assign({ 'id' : '', 'additions' : [], 'deletions' : []}, existingValue, currentItem);
+        const mergedInProgressCommitsMap: {[key: string]: { id: string, additions: CommitChange[], deletions: CommitChange[] }} = [].concat(inProgressAdditions, inProgressDeletions).reduce((dict, currentItem) => {
+            const existingValue = dict[currentItem['id']] || {};
+            const mergedValue = Object.assign({ id: '', additions: [], deletions: []}, existingValue, currentItem);
             dict[currentItem.id] = mergedValue;
             return dict;  
         }, {});
-        var mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key => mergedInProgressCommitsMap[key]);
-        dvm.list = map(mergedInProgressCommits, inProgressItem => ({
+        const mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key => mergedInProgressCommitsMap[key]);
+        this.list = mergedInProgressCommits.map(inProgressItem => ({
                 id: inProgressItem.id,
-                additions: inProgressItem.additions,
-                deletions: inProgressItem.deletions,
-                disableAll: hasSpecificType(inProgressItem.additions) || hasSpecificType(inProgressItem.deletions)
+                entityName: this.os.getEntityNameByListItem(inProgressItem.id),
+                additions: this.util.getPredicateLocalNameOrdered(inProgressItem.additions),
+                deletions: this.util.getPredicateLocalNameOrdered(inProgressItem.deletions),
+                disableAll: this._hasSpecificType(inProgressItem.additions) || this._hasSpecificType(inProgressItem.deletions)
         }));
-        dvm.list = sortBy(dvm.list, dvm.orderByEntityName)
-        dvm.showList = getList();
+        this.list = sortBy(this.list, 'entityName');
+        this.showList = this._getList();
     }
-    dvm.go = function($event, id) {
+    go($event: Event, id: string): void {
         $event.stopPropagation();
-        dvm.os.goTo(id);
+        this.os.goTo(id);
     }
-    dvm.update = function() {
-        return cm.getBranchHeadCommit(dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
-            .then((headCommit: CommitDifference) => {
-                var commitId = get(headCommit, "commit['@id']", '');
-                return dvm.os.updateOntology(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, commitId).pipe(first()).toPromise();
-            }, $q.reject)
-            .then(() => dvm.util.createSuccessToast('Your ontology has been updated.'), dvm.util.createErrorToast);
+    update(): void {
+        this.cm.getBranchHeadCommit(this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.recordId, this.catalogId)
+            .pipe(switchMap((headCommit: CommitDifference) => {
+                const commitId = get(headCommit, 'commit[\'@id\']', '');
+                return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, commitId);
+            }))
+            .subscribe(() => this.util.createSuccessToast('Your ontology has been updated.'), error => this.util.createErrorToast(error));
     }
-    dvm.restoreBranchWithUserBranch = function() {
-        var userBranchId = dvm.os.listItem.versionedRdfRecord.branchId;
-        var userBranch = find(dvm.os.listItem.branches, {'@id': userBranchId})
-        var createdFromId = dvm.util.getPropertyId(userBranch, prefixes.catalog + 'createdFrom');
-        var branchConfig = {
-            title: dvm.util.getDctermsValue(userBranch, 'title'),
-            description: dvm.util.getDctermsValue(userBranch, 'description')
+    restoreBranchWithUserBranch(): void {
+        const userBranchId = this.os.listItem.versionedRdfRecord.branchId;
+        const userBranch = find(this.os.listItem.branches, {'@id': userBranchId});
+        const createdFromId = this.util.getPropertyId(userBranch, CATALOG + 'createdFrom');
+        const branchConfig = {
+            title: this.util.getDctermsValue(userBranch, 'title'),
+            description: this.util.getDctermsValue(userBranch, 'description')
         };
 
-        var createdBranchId;
-        return cm.createRecordBranch(dvm.os.listItem.versionedRdfRecord.recordId, catalogId, branchConfig, dvm.os.listItem.versionedRdfRecord.commitId).pipe(first()).toPromise()
-            .then((branchId: string) => {
+        let createdBranchId;
+        this.cm.createRecordBranch(this.os.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig, this.os.listItem.versionedRdfRecord.commitId)
+            .pipe(switchMap((branchId: string) => {
                 createdBranchId = branchId;
-                return cm.getRecordBranch(branchId, dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise();
-            }, $q.reject)
-            .then((branch: JSONLDObject) => {
-                dvm.os.listItem.branches.push(branch);
-                dvm.os.listItem.versionedRdfRecord.branchId = branch['@id'];
-                var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                return dvm.os.updateState({recordId: dvm.os.listItem.versionedRdfRecord.recordId, commitId, branchId: createdBranchId}).pipe(first()).toPromise();
-            }, $q.reject)
-            .then(() => om.deleteOntologyBranch(dvm.os.listItem.versionedRdfRecord.recordId, userBranchId).pipe(first()).toPromise(), $q.reject)
-            .then(() => dvm.os.deleteBranchState(dvm.os.listItem.versionedRdfRecord.recordId, userBranchId).pipe(first()).toPromise(), $q.reject)
-            .then(() => {
-                dvm.os.removeBranch(dvm.os.listItem.versionedRdfRecord.recordId, userBranchId).pipe(first()).toPromise();
-                changeUserBranchesCreatedFrom(createdFromId, createdBranchId);
-                dvm.util.createSuccessToast('Branch has been restored with changes.');
-            }, dvm.util.createErrorToast);
+                return this.cm.getRecordBranch(branchId, this.os.listItem.versionedRdfRecord.recordId, this.catalogId);
+            }),
+            switchMap((branch: JSONLDObject) => {
+                this.os.listItem.branches.push(branch);
+                this.os.listItem.versionedRdfRecord.branchId = branch['@id'];
+                const commitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                return this.os.updateState({recordId: this.os.listItem.versionedRdfRecord.recordId, commitId, branchId: createdBranchId});
+            }),
+            switchMap(() => this.om.deleteOntologyBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId)),
+            switchMap(() => this.os.deleteBranchState(this.os.listItem.versionedRdfRecord.recordId, userBranchId)))
+            .subscribe(() => {
+                this.os.removeBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId).subscribe();
+                this._changeUserBranchesCreatedFrom(createdFromId, createdBranchId);
+                this.util.createSuccessToast('Branch has been restored with changes.');
+            }, error => this.util.createErrorToast(error));
     }
-    dvm.mergeUserBranch = function() {
-        var branch = find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.versionedRdfRecord.branchId});
-        dvm.os.listItem.merge.target = find(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
-        dvm.os.listItem.merge.checkbox = true;
-        dvm.os.checkConflicts().pipe(first()).toPromise()
-            .then(() => {
-                dvm.os.merge().pipe(first()).toPromise()
-                    .then(() => {
-                        dvm.os.resetStateTabs();
-                        dvm.util.createSuccessToast('Changes have been pulled successfully');
-                        dvm.os.cancelMerge();
+    mergeUserBranch(): void {
+        const branch = find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
+        this.os.listItem.merge.target = find(this.os.listItem.branches, {'@id': this.util.getPropertyId(branch, CATALOG + 'createdFrom')});
+        this.os.listItem.merge.checkbox = true;
+        this.os.checkConflicts()
+            .subscribe(() => {
+                this.os.merge()
+                    .subscribe(() => {
+                        this.os.resetStateTabs();
+                        this.util.createSuccessToast('Changes have been pulled successfully');
+                        this.os.cancelMerge();
                     }, () => {
-                        dvm.util.createErrorToast('Pulling changes failed');
-                        dvm.os.cancelMerge();
+                        this.util.createErrorToast('Pulling changes failed');
+                        this.os.cancelMerge();
                     });
-            }, () => dvm.os.listItem.merge.active = true);
+            }, () => this.os.listItem.merge.active = true);
     }
-    dvm.removeChanges = function() {
-        return cm.deleteInProgressCommit(dvm.os.listItem.versionedRdfRecord.recordId, catalogId).pipe(first()).toPromise()
-            .then(() => {
-                dvm.os.resetStateTabs();
-                return dvm.os.updateOntology(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, dvm.os.listItem.upToDate).pipe(first()).toPromise();
-            }, $q.reject)
-            .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
+    removeChanges(): void {
+        this.cm.deleteInProgressCommit(this.os.listItem.versionedRdfRecord.recordId, this.catalogId)
+            .pipe(switchMap(() => {
+                this.os.resetStateTabs();
+                return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.upToDate).pipe(first()).toPromise();
+            }))
+            .subscribe(() => this.os.clearInProgressCommit(), errorMessage => this.util.createErrorToast(errorMessage));
     }
-    dvm.orderByEntityName = function(item) {
-        return dvm.os.getEntityNameByListItem(item.id);
+    getMoreResults(): void {
+        this.index++;
+        const currChunk = get(this.chunks, this.index, []);
+        this.showList = concat(this.showList, currChunk);
     }
-    dvm.getMoreResults = function() {
-        dvm.index++;
-        var currChunk = get(dvm.chunks, dvm.index, []);
-        dvm.showList = concat(dvm.showList, currChunk);
+    getEntityName(entityIRI: string): string {
+        return this.os.getEntityNameByListItem(entityIRI);
     }
-    dvm.getEntityName = function(entityIRI) {
-        return dvm.os.getEntityNameByListItem(entityIRI).bind(dvm.os);
-    };
 
-    function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
-        forEach(dvm.os.listItem.branches, branch => {
-            if (cm.isUserBranch(branch)) {
-                var currentCreatedFromId = dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom');
+    private _changeUserBranchesCreatedFrom(oldCreatedFromId: string, newCreatedFromId: string): void {
+        forEach(this.os.listItem.branches, branch => {
+            if (this.cm.isUserBranch(branch)) {
+                const currentCreatedFromId = this.util.getPropertyId(branch, CATALOG + 'createdFrom');
                 if (currentCreatedFromId === oldCreatedFromId) {
-                    dvm.util.replacePropertyId(branch, prefixes.catalog + 'createdFrom', dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom'), newCreatedFromId);
-                    cm.updateRecordBranch(branch['@id'], dvm.os.listItem.versionedRdfRecord.recordId, catalogId, branch).pipe(first()).toPromise()
-                        .then(() => dvm.util.createSuccessToast('Updated referenced branch.'), dvm.util.createErrorToast);
+                    this.util.replacePropertyId(branch, CATALOG + 'createdFrom', this.util.getPropertyId(branch, CATALOG + 'createdFrom'), newCreatedFromId);
+                    this.cm.updateRecordBranch(branch['@id'], this.os.listItem.versionedRdfRecord.recordId, this.catalogId, branch)
+                        .subscribe(() => this.util.createSuccessToast('Updated referenced branch.'), error => this.util.createErrorToast(error));
                 }
             }
         });
-        dvm.os.listItem.upToDate = true;
-        dvm.os.listItem.userBranch = false;
-        dvm.os.listItem.createdFromExists = true;
+        this.os.listItem.upToDate = true;
+        this.os.listItem.userBranch = false;
+        this.os.listItem.createdFromExists = true;
     }
-    function hasSpecificType(array) {
-        return !!intersection(map(filter(array, {p: typeIRI}), 'o'), types).length;
+    private _hasSpecificType(array: CommitChange[]): boolean {
+        return !!intersection(array.filter(change => change.p === this.typeIRI).map(change => change.o), this.types).length;
     }
-    function getList() {
-        dvm.chunks = chunk(dvm.list, dvm.size);
-        return get(dvm.chunks, dvm.index, []);
+    private _getList() {
+        this.chunks = chunk(this.list, this.size);
+        return get(this.chunks, this.index, []);
     }
 }
-
-export default savedChangesTabComponent;

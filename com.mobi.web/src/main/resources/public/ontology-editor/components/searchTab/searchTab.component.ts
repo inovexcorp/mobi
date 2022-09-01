@@ -20,59 +20,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { forEach, isEmpty, omit } from 'lodash';
-import { first } from 'rxjs/operators';
+import { forEach, isEmpty, omit, cloneDeep } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 import './searchTab.component.scss';
 
-const template = require('./searchTab.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:searchTab
+ * @class ontology-editor.SearchTabComponentComponent
  *
- * @description
  * `searchTab` is a component that creates a page containing a form for searching for entities in the current
- * {@link shared.service:ontologyStateService selected ontology}. The display includes a search input,
- * a manual 'tree' of the results grouped by entity type, and a display of the matching properties on the
- * selected search result. The search input performs a case-insensitive search among the property values on
- * entities in the ontology. A search result item can be doubled clicked to open it in its appropriate tab
- * in the {@link ontology-editor.component:ontologyTab}.
+ * {@link shared.OntologyStateService#listItem selected ontology}. The display includes a search input, a manual 'tree'
+ * of the results grouped by entity type, and a display of the matching properties on the selected search result. The
+ * search input performs a case-insensitive search among the property values on entities in the ontology. A search
+ * result item can be doubled clicked to open it in its appropriate tab in the
+ * {@link ontology-editor.OntologyTabComponent}.
  */
-const searchTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: searchTabComponentCtrl
-};
+@Component({
+    selector: 'search-tab',
+    templateUrl: './searchTab.component.html'
+})
+export class SearchTabComponent implements OnInit {
+    constructor(public os: OntologyStateService, public om: OntologyManagerService) {}
 
-searchTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'httpService'];
-
-function searchTabComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, httpService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.om = ontologyManagerService;
-
-    dvm.$onInit = function() {
-        dvm.os.listItem.editorTabStates.search.id = 'search-' + dvm.os.listItem.versionedRdfRecord.recordId;
+    ngOnInit(): void {
+        this.os.listItem.editorTabStates.search.id = 'search-' + this.os.listItem.versionedRdfRecord.recordId; // TODO: May need at some point
     }
-    dvm.onKeyup = function() {
-        if (dvm.os.listItem.editorTabStates.search.searchText) {
-            httpService.cancel(dvm.os.listItem.editorTabStates.search.id);
-            dvm.unselectItem();
-            var state = dvm.os.listItem.editorTabStates;
-            dvm.om.getSearchResults(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.versionedRdfRecord.branchId, dvm.os.listItem.versionedRdfRecord.commitId, dvm.os.listItem.editorTabStates.search.searchText, dvm.os.listItem.editorTabStates.search.id).pipe(first()).toPromise()
-                .then(results => {
+    onKeyup(): void {
+        if (this.os.listItem.editorTabStates.search.searchText) {
+            this.unselectItem();
+            const state = this.os.listItem.editorTabStates;
+            this.om.getSearchResults(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.editorTabStates.search.searchText)
+                .subscribe(results => {
                     state.search.errorMessage = '';
                     forEach(results, arr => {
-                        arr.sort((iri1, iri2) => dvm.os.getEntityNameByListItem(iri1, dvm.os.listItem).localeCompare(dvm.os.getEntityNameByListItem(iri2, dvm.os.listItem)));
+                        arr.sort((iri1, iri2) => this.os.getEntityNameByListItem(iri1, this.os.listItem).localeCompare(this.os.getEntityNameByListItem(iri2, this.os.listItem)));
                     });
                     state.search.results = results;
-                    countResults();
+                    this.countResults();
                     state.search.infoMessage = !isEmpty(results) ? '' : 'There were no results for your search text.';
                     state.search.highlightText = state.search.searchText;
                 }, errorMessage => {
@@ -81,34 +68,41 @@ function searchTabComponentCtrl(ontologyStateService: OntologyStateService, onto
                     state.search.warningMessage = '';
                 });
         } else {
-            dvm.os.resetSearchTab();
+            this.os.resetSearchTab();
         }
     }
-    dvm.canGoTo = function() {
-        return !!dvm.os.listItem.editorTabStates.search.entityIRI && !(dvm.om.isOntology(dvm.os.listItem.selected) && dvm.os.listItem.editorTabStates.search.entityIRI !== dvm.os.listItem.ontologyId);
+    canGoTo(): boolean {
+        return !!this.os.listItem.editorTabStates.search.entityIRI && !(this.om.isOntology(this.os.listItem.selected) && this.os.listItem.editorTabStates.search.entityIRI !== this.os.listItem.ontologyId);
     }
-    dvm.goToIfYouCan = function(item) {
-        if (dvm.canGoTo()) {
-            dvm.os.goTo(item);
+    goToIfYouCan(item: string): void {
+        if (this.canGoTo()) {
+            this.os.goTo(item);
         }
     }
-    dvm.selectItem = function(item) {
-        dvm.os.selectItem(item, false).toPromise()
-            .then(() => {
-                dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
+    selectItem(item: string): void {
+        this.os.selectItem(item, false)
+            .subscribe(() => {
+                this.os.listItem.editorTabStates.search.selected = omit(cloneDeep(this.os.listItem.selected), '@id', '@type', 'mobi');
             });
     }
-    dvm.unselectItem = function() {
-        dvm.os.unSelectItem();
-        dvm.os.listItem.editorTabStates.search.selected = undefined;
+    unselectItem(): void {
+        this.os.unSelectItem();
+        this.os.listItem.editorTabStates.search.selected = undefined;
     }
-    function countResults() {
+    searchChanged(value): void {
+        this.os.listItem.editorTabStates.search.searchText = value;
+    }
+    trackByIndex = (index: number): number => {
+        return index;
+    };
+    trackByKey = (index: number, item: any): string => {
+        return item.key;
+    };
+    private countResults(): void {
         let count = 0;
-        for (let key of Object.keys(dvm.os.listItem.editorTabStates.search.results)) {
-            count += dvm.os.listItem.editorTabStates.search.results[key].length;
+        for (const key of Object.keys(this.os.listItem.editorTabStates.search.results)) {
+            count += this.os.listItem.editorTabStates.search.results[key].length;
         }
-        dvm.os.listItem.editorTabStates.search.warningMessage = (count === 500) ? 'Search results truncated because they exceeded 500 items.' : '';
+        this.os.listItem.editorTabStates.search.warningMessage = (count === 500) ? 'Search results truncated because they exceeded 500 items.' : '';
     }
 }
-
-export default searchTabComponent;

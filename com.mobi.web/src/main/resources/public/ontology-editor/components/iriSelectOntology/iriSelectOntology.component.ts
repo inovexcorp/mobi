@@ -20,69 +20,207 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, isUndefined } from 'lodash';
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { FormControl, Validators } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatChipInputEvent } from '@angular/material';
+import { get, groupBy, includes, sortBy } from 'lodash';
+import { Observable } from 'rxjs';
+import { map, startWith, debounceTime } from 'rxjs/operators';
 
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
-const template = require('./iriSelectOntology.component.html');
-
-/**
- * @ngdoc component
- * @name ontology-editor.component:iriSelectOntology
- * @requires shared.service:ontologyStateService
- *
- * @description
- * `objectPropertyOverlay` is a component that creates a `ui-select` for select a specific IRI from the provided
- * `selectList`. The value of the `ui-select` is bound to `bindModel`, but only one way. The provided `changeEvent`
- * function is expected to update the value of `bindModel`. Can optionally specify whether the `ui-select` binds
- * one or more values, when it should be required, and when it should be disabled. Can also provide display and
- * muted text for a label for the select.
- *
- * @param {*} bindModel The variable to bind the selected IRIs to. Either an array of strings or a single one
- * @param {string[]} selectList The list of IRI strings to select from
- * @param {string} [displayText=''] An optional display name for the `ui-select`
- * @param {string} [mutedText=''] An optional string of text to display muted next to the label
- * @param {boolean} [isDisabledWhen=false] An optional expression denoting when the `ui-select` should be disabled
- * @param {boolean} [isRequiredWhen=false] An optional expression denoting when the `ui-select` should be required
- * @param {boolean} [multiSelect=true] Whether the `ui-select` should bind multiple values
- * @param {Function} changeEvent A function that will be called when the value of the `ui-select` changes. Should
- * update the value of `bindModel`. Expects an argument called `values`.
- */
-const iriSelectOntologyComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        selectList: '<',
-        displayText: '<',
-        mutedText: '<',
-        isDisabledWhen: '<',
-        isRequiredWhen: '<',
-        multiSelect: '<?',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: iriSelectOntologyComponentCtrl
-};
-
-iriSelectOntologyComponentCtrl.$inject = ['ontologyStateService'];
-
-function iriSelectOntologyComponentCtrl(ontologyStateService: OntologyStateService) {
-    var dvm = this;
-    dvm.os = ontologyStateService;
-    dvm.values = [];
-
-    dvm.$onChanges = function() {
-        dvm.isMultiSelect = !isUndefined(dvm.multiSelect) ? dvm.multiSelect : true;
-    }
-    dvm.onChange = function() {
-        dvm.changeEvent({value: dvm.bindModel});
-    }
-    dvm.getOntologyIri = function(iri) {
-        return get(dvm.selectList, "['" + iri + "']", dvm.os.listItem.ontologyId);
-    }
-    dvm.getValues = function(searchText) {
-        dvm.values = dvm.os.getSelectList(Object.keys(dvm.selectList), searchText, iri => dvm.os.getEntityNameByListItem(iri));
-    }
+interface IriGrouping {
+    namespace: string,
+    options: IriOption[]
 }
 
-export default iriSelectOntologyComponent;
+interface IriOption {
+    item: string,
+    name: string,
+    isBlankNode: boolean
+}
+
+/**
+ * @class ontology-editor.IriSelectOntologyComponent
+ *
+ * A component that creates a `mat-autocomplete` for select a specific IRI listed in the provided {@link Hierarchy}. The
+ * value of the select is bound to `selected`. Can optionally specify whether the select binds one or more values, when
+ * it should be required, and when it should be disabled. Can also provide display and muted text for a label for the
+ * select.
+ *
+ * @param {string[]} selected The variable to bind the selected IRIs to. Uses an array of values even if singleSelect
+ * @param {{[key: string]: string}} selectList On object of IRI string keys to ontology IRIs to select from
+ * @param {string} [displayText=''] An optional display name for the select
+ * @param {string} [mutedText=''] An optional string of text to display muted next to the label
+ * @param {boolean} [isDisabledWhen=false] An optional expression denoting when the select should be disabled
+ * @param {boolean} [isRequiredWhen=false] An optional expression denoting when the select should be required
+ * @param {boolean} [singleSelect=true] Whether the `mat-autocomplete` should bind a single value. The default is false.
+ * Presence alone is enough to set it to true.
+ */
+@Component({
+    selector: 'iri-select-ontology',
+    templateUrl: './iriSelectOntology.component.html'
+})
+export class IriSelectOntologyComponent implements OnInit, OnChanges {
+    @Input() selected: string[] = [];
+    @Input() selectList: {[key: string]: string};
+    @Input() displayText = '';
+    @Input() mutedText = '';
+    @Input() isDisabledWhen = false;
+    @Input() isRequiredWhen = false;
+    @Input() singleSelect = false;
+
+    @Output() selectedChange = new EventEmitter<string[]>();
+
+    selectedOptions: IriOption[] = [];
+    separatorKeysCodes: number[] = [ENTER];
+    filteredIris: Observable<IriGrouping[]>;
+
+    singleControl: FormControl = new FormControl();
+    multiControl: FormControl = new FormControl();
+
+    @ViewChild('multiInput') multiInput: ElementRef;
+
+    constructor(public os: OntologyStateService, private om: OntologyManagerService) {}
+
+    ngOnInit(): void {
+        this.singleSelect = !(this.singleSelect === false);
+        if (this.singleSelect) {
+            this.filteredIris = this.singleControl.valueChanges
+                .pipe(
+                    debounceTime(500),
+                    startWith(''),
+                    map(val => {
+                        const searchText = typeof val === 'string' ? val : '';
+                        return this.filter(searchText);
+                    }),
+                );
+        } else {
+            this.filteredIris = this.multiControl.valueChanges
+                .pipe(
+                    debounceTime(500),
+                    startWith(''),
+                    map(val => {
+                        const searchText = typeof val === 'string' ? val : '';
+                        return this.filter(searchText);
+                    }),
+                );
+        }
+        this.setDisabled(this.isDisabledWhen);
+        this.setRequired(this.isRequiredWhen);
+    }
+    ngOnChanges(changes: SimpleChanges): void {
+        this.setDisabled(this.isDisabledWhen);
+        this.setRequired(this.isRequiredWhen);
+        if (changes.selected && changes.selected.currentValue  && changes.selected.currentValue.length === 0) {
+            this.selectedOptions = [];
+            if (this.singleSelect) {
+                this.singleControl.setValue('');
+            } else {
+                this.multiControl.setValue('');
+                if (this.multiInput) {
+                    this.multiInput.nativeElement.value = '';
+                }
+            }
+        }
+    }
+    setDisabled(val: boolean): void {
+        if (val) {
+            if (this.singleSelect) {
+                this.singleControl.disable();
+            } else {
+                this.multiControl.disable();
+            }
+        } else {
+            if (this.singleSelect) {
+                this.singleControl.enable();
+            } else {
+                this.multiControl.enable();
+            }
+        }
+    }
+    setRequired(val: boolean): void {
+        if (val) {
+            if (this.singleSelect) {
+                this.singleControl.setValidators([Validators.required]);
+            } else {
+                this.multiControl.setValidators([Validators.required]);
+            }
+        } else {
+            if (this.singleSelect) {
+                this.singleControl.clearValidators();
+            } else {
+                this.multiControl.clearValidators();
+            }
+        }
+    }
+    filter(searchText: string): IriGrouping[] {
+        const array: IriOption[] = [];
+        const mapped: IriOption[] = Object.keys(this.selectList).map(item => {
+            const isBlankNode = this.om.isBlankNodeId(item);
+            return {
+                item,
+                isBlankNode,
+                name: this.getName(item, isBlankNode)
+            };
+        });
+        mapped.forEach(item => {
+            if (array.length === 100) {
+                return;
+            } else if (includes(item.name.trim().toUpperCase(), searchText.trim().toUpperCase()) && !this.selected.includes(item.item)) {
+                array.push(item);
+            }
+        });
+        const grouped: {[key: string]: IriOption[]} = groupBy(array, item => this.getOntologyIri(item.item));
+        return sortBy(Object.keys(grouped).map(namespace => ({
+            namespace,
+            options: sortBy(grouped[namespace], item => item.name.trim().toUpperCase())
+        })), group => group.namespace.toUpperCase());
+    }
+    getName(value: string, isBlankNode: boolean): string {
+        return isBlankNode ? this.os.getBlankNodeValue(value) : this.os.getEntityNameByListItem(value);
+    }
+    getOntologyIri(iri: string): string {
+        return get(this.selectList, `['${iri}']`, this.os.listItem.ontologyId);
+    }
+    add(event: MatChipInputEvent): void {
+        const input = event.input;
+        const value = event.value;
+    
+        if (value) {
+            const isBlankNode = this.om.isBlankNodeId(value);
+            this.selectedOptions.push({ item: value, name: this.getName(value, isBlankNode), isBlankNode });
+            this.selected.push(value);
+            this.selectedChange.emit(this.selected);
+        }
+    
+        // Reset the input value
+        if (input) {
+            input.value = '';
+        }
+    
+        this.multiControl.setValue(null);
+    }
+    remove(option: IriOption): void {
+        const index = this.selected.indexOf(option.item);
+    
+        if (index >= 0) {
+            this.selectedOptions.splice(index, 1); // TODO: Should be at the same position but test this
+            this.selected.splice(index, 1);
+            this.selectedChange.emit(this.selected);
+        }
+    }
+    select(event: MatAutocompleteSelectedEvent): void {
+        if (this.singleSelect) {
+            this.selected = [event.option.value.item];
+        } else {
+            this.selectedOptions.push(event.option.value);
+            this.selected.push(event.option.value.item);
+            this.multiInput.nativeElement.value = '';
+            this.multiControl.setValue(null);
+        }
+        this.selectedChange.emit(this.selected);
+    }
+}

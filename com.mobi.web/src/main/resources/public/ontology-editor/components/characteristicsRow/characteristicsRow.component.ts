@@ -20,42 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
 import './characteristicsRow.component.scss';
 
-const template = require('./characteristicsRow.component.html');
-
 /**
- * @ngdoc component
- * @name ontology-editor.component:characteristicsRow
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.CharacteristicsRowComponent
  *
- * @description
- * `characteristicsRow` is a component that creates a Bootstrap `.row` that displays the
- * {@link ontology-editor.component:characteristicsBlock} depending on whether the
- * {@link shared.service:ontologyStateService selected entity} is a object or data property.
+ * A component that creates a Bootstrap `.row` that displays the {@link ontology-editor.CharacteristicsBlockComponent}
+ * depending on whether the {@link shared.OntologyStateServiceService selected entity} is a object or data property.
  */
-const characteristicsRowComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: characteristicsRowComponentCtrl
-};
+@Component({
+    selector: 'characteristics-row',
+    templateUrl: './characteristicsRow.component.html'
+})
+export class CharacteristicsRowComponent {
+    constructor(public om: OntologyManagerService, public os: OntologyStateService) {}
 
-characteristicsRowComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService'];
-
-function characteristicsRowComponentCtrl(ontologyManagerService, ontologyStateService) {
-    var dvm = this;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-
-    dvm.updateTypes = function(types) {
-        dvm.os.listItem.selected['@types'] = types;
-        // TODO: Remove when the full RDF list is removed
-        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.versionedRdfRecord.recordId, dvm.os.listItem.selected['@id']);
-        entityFromFullList['@types'] = types; 
-
-    }
+    // TODO: Determine whether this is needed. getEntityByRecordId returns a names item, not a JSONLDObject
+    // updateTypes(types: string[]): void {
+    //     this.os.listItem.selected['@types'] = types;
+        // const entityFromFullList = this.os.getEntityByRecordId(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.selected['@id']);
+        // entityFromFullList['@types'] = types; 
+    // }
 }
-
-export default characteristicsRowComponent;

@@ -21,5 +21,9 @@
   #L%
   -->
 <div class="object-property-axioms">
-    <property-values ng-repeat="axiom in dvm.os.listItem.selected | showProperties:dvm.getAxioms() | orderBy:dvm.orderByEntityName" property="axiom" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
+    <property-values *ngFor="let axiom of this.axioms"
+                     [property]="axiom"
+                     [entity]="this.os.listItem.selected"
+                     (remove)="this.openRemoveOverlay($event)">\
+    </property-values>
 </div>

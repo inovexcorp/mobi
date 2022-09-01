@@ -21,81 +21,92 @@
  * #L%
  */
 import { includes } from 'lodash';
+import { Component, Inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-
-const template = require('./axiomBlock.component.html');
+import { AxiomOverlayComponent } from '../axiomOverlay/axiomOverlay.component';
+import { RDFS } from '../../../prefixes';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:axiomBlock
- * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:modalService
- * @requires shared.service:prefixes
+ * @class ontology-editor.AxiomBlockComponent
  *
- * @description
- * `axiomBlock` is a component that creates a section that displays the appropriate axioms on the
- * {@link shared.service:ontologyStateService selected entity} based on its type. The components used for display
- * are {@link ontology-editor.component:classAxioms}, {@link ontology-editor.component:objectPropertyAxioms}, and
- * {@link ontology-editor.component:datatypePropertyAxioms}. The section header contains a button for adding
- * an axiom. The component houses the methods for opening the modal for
- * {@link ontology-editor.component:axiomOverlay adding} and removing axioms. 
+ * A component that creates a section that displays the appropriate axioms on the
+ * {@link shared.OntologyStateService#listItem selected entity} based on its type. The components used for display
+ * are {@link ontology-editor.ClassAxiomsComponent}, {@link ontology-editor.ObjectPropertyAxiomsComponent}, and
+ * {@link ontology-editor.DatatypePropertyAxiomsComponent}. The section header contains a button for adding an axiom.
+ * The component houses the methods for opening the modal for {@link ontology-editor.AxiomOverlayComponent adding} and
+ * removing axioms. 
  */
-const axiomBlockComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: axiomBlockComponentCtrl        
-};
 
-axiomBlockComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'propertyManagerService', 'modalService', 'prefixes'];
+@Component({
+    selector: ' axiom-block',
+    templateUrl: './axiomBlock.component.html'
+})
+export class AxiomBlockComponent {
+    constructor(public om: OntologyManagerService, public os: OntologyStateService, private dialog: MatDialog,
+                @Inject('propertyManagerService') public pm) {}
 
-function axiomBlockComponentCtrl(ontologyStateService: OntologyStateService, ontologyManagerService: OntologyManagerService, propertyManagerService, modalService, prefixes) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    dvm.om = ontologyManagerService;
-    dvm.os = ontologyStateService;
-
-    dvm.showAxiomOverlay = function() {
-        if (dvm.om.isClass(dvm.os.listItem.selected)) {
-            modalService.openModal('axiomOverlay', {axiomList: pm.classAxiomList}, dvm.updateClassHierarchy);
-        } else if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
-            modalService.openModal('axiomOverlay', {axiomList: pm.objectAxiomList}, dvm.updateObjectPropHierarchy);
-        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
-            modalService.openModal('axiomOverlay', {axiomList: pm.datatypeAxiomList}, dvm.updateDataPropHierarchy);
+    showAxiomOverlay(): void {
+        if (this.om.isClass(this.os.listItem.selected)) {
+            this.dialog.open(AxiomOverlayComponent, {
+                data: {
+                    axiomList: this.pm.classAxiomList
+                }
+            }).afterClosed().subscribe(result => {
+                if (result) {
+                    this.updateClassHierarchy(result);
+                }
+            });
+        } else if (this.om.isObjectProperty(this.os.listItem.selected)) {
+            this.dialog.open(AxiomOverlayComponent, {
+                data: {
+                    axiomList: this.pm.objectAxiomList
+                }
+            }).afterClosed().subscribe(result => {
+                if (result) {
+                    this.updateObjectPropHierarchy(result);
+                }
+            });
+        } else if (this.om.isDataTypeProperty(this.os.listItem.selected)) {
+            this.dialog.open(AxiomOverlayComponent, {
+                data: {
+                    axiomList: this.pm.datatypeAxiomList
+                }
+            }).afterClosed().subscribe(result => {
+                if (result) {
+                    this.updateDataPropHierarchy(result);
+                }
+            });
         }
     }
-    dvm.updateClassHierarchy = function(updatedAxiomObj) {
-        if (updatedAxiomObj.axiom === prefixes.rdfs + 'subClassOf' && updatedAxiomObj.values.length) {
-            dvm.os.setSuperClasses(dvm.os.listItem.selected['@id'], updatedAxiomObj.values);
-            if (includes(dvm.os.listItem.individualsParentPath, dvm.os.listItem.selected['@id'])) {
-                dvm.os.updateFlatIndividualsHierarchy(updatedAxiomObj.values);
+    updateClassHierarchy(updatedAxiomObj): void {
+        if (updatedAxiomObj.axiom === RDFS + 'subClassOf' && updatedAxiomObj.values.length) {
+            this.os.setSuperClasses(this.os.listItem.selected['@id'], updatedAxiomObj.values);
+            if (includes(this.os.listItem.individualsParentPath, this.os.listItem.selected['@id'])) {
+                this.os.updateFlatIndividualsHierarchy(updatedAxiomObj.values);
             }
-            dvm.os.setVocabularyStuff();
+            this.os.setVocabularyStuff();
         }
     }
-    dvm.updateDataPropHierarchy = function(updatedAxiomObj) {
-        if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
-            dvm.os.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
-        } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
-            dvm.os.addPropertyToClasses(dvm.os.listItem.selected['@id'], updatedAxiomObj.values);
-            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
+    updateDataPropHierarchy(updatedAxiomObj): void {
+        if (updatedAxiomObj.axiom === RDFS + 'subPropertyOf' && updatedAxiomObj.values.length) {
+            this.os.setSuperProperties(this.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
+        } else if (updatedAxiomObj.axiom === RDFS + 'domain' && updatedAxiomObj.values.length) {
+            this.os.addPropertyToClasses(this.os.listItem.selected['@id'], updatedAxiomObj.values);
+            this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
         }
     }
-    dvm.updateObjectPropHierarchy = function(updatedAxiomObj) {
-        if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
-            dvm.os.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'objectProperties');
-            if (dvm.os.containsDerivedSemanticRelation(updatedAxiomObj.values)) {
-                dvm.os.setVocabularyStuff();
+    updateObjectPropHierarchy(updatedAxiomObj): void {
+        if (updatedAxiomObj.axiom === RDFS + 'subPropertyOf' && updatedAxiomObj.values.length) {
+            this.os.setSuperProperties(this.os.listItem.selected['@id'], updatedAxiomObj.values, 'objectProperties');
+            if (this.os.containsDerivedSemanticRelation(updatedAxiomObj.values)) {
+                this.os.setVocabularyStuff();
             }
-        } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
-            dvm.os.addPropertyToClasses(dvm.os.listItem.selected['@id'], updatedAxiomObj.values);
-            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
+        } else if (updatedAxiomObj.axiom === RDFS + 'domain' && updatedAxiomObj.values.length) {
+            this.os.addPropertyToClasses(this.os.listItem.selected['@id'], updatedAxiomObj.values);
+            this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
         }
     }
 }
-
-export default axiomBlockComponent;

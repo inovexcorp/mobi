@@ -1,3 +1,5 @@
+import { Component } from "@angular/core";
+
 /*-
  * #%L
  * com.mobi.web
@@ -21,8 +23,6 @@
  * #L%
  */
 
-const template = require('./warningMessage.component.html');
-
 /**
  * @ngdoc component
  * @name shared.component:warningMessage
@@ -31,14 +31,8 @@ const template = require('./warningMessage.component.html');
  * `warningMessage` is a component that creates a styled message for displaying warning messages from the
  * transcluded content. The content will have yellow colored text and will be next to an warning icon.
  */
-const warningMessageComponent = {
-    template,
-    transclude: true,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: warningMessageComponentCtrl
-};
-
-function warningMessageComponentCtrl() {}
-
-export default warningMessageComponent;
+@Component({
+    selector: 'warning-message',
+    templateUrl: './warningMessage.component.html'
+})
+export class WarningMessageComponent {}

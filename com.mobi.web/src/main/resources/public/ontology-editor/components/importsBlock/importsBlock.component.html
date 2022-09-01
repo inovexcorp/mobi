@@ -22,21 +22,27 @@
   -->
 <div class="imports-block">
     <div class="section-header">
-        <h5>Imports</h5><a ng-if="dvm.os.canModify()" class="float-right fa fa-fw fa-plus" ng-click="dvm.showNewOverlay()"></a><a class="float-right fa fa-fw fa-refresh" ng-click="dvm.refresh()"></a>
+        <h5>Imports</h5><a *ngIf="os.canModify()" class="float-right fa fa-fw fa-plus" (click)="showNewOverlay()"></a><a class="float-right fa fa-fw fa-refresh" (click)="refresh()"></a>
     </div>
-    <p ng-if="dvm.listItem.selected[dvm.prefixes.owl + 'imports'].length" ng-repeat="imported in dvm.listItem.selected[dvm.prefixes.owl + 'imports'] | orderBy:dvm.get track by imported['@id']" class="import">
-        <a ng-if="!dvm.failed(imported['@id'])" href="{{imported['@id']}}" target="_blank" class="import-iri text-truncate flex-1">{{imported['@id']}}</a>
-        <span ng-if="dvm.failed(imported['@id'])" class="w-100 text-truncate text-danger">{{imported['@id']}}</span>
-        <strong ng-if="dvm.failed(imported['@id'])" class="text-danger"> (failed)</strong>
-        <a ng-if="dvm.os.canModify()" class="btn-link" ng-click="dvm.setupRemove(imported['@id'])" title="Delete"><i class="fa fa-times fa-fw"></i></a>
-    </p>
-    <div ng-if="dvm.indirectImports.length" class="indirect-import-container">
-        <p ng-repeat="iri in dvm.indirectImports track by $index" class="indirect import">
-            <span class="font-italic mr-1">Indirect:</span>
-            <a ng-if="!dvm.failed(iri)" href="{{iri}}" target="_blank" class="import-iri text-truncate flex-1">{{iri}}</a>
-            <span ng-if="dvm.failed(iri)" class="text-danger text-truncate flex-1">{{iri}}</span>
-            <strong ng-if="dvm.failed(iri)" class="text-danger"> (failed)</strong>
+    <div *ngIf="imports.length" class="direct-imports-container">
+        <p *ngFor="let imported of imports" class="import">
+            <a *ngIf="!failed(imported['@id']); else failedImport" [href]="imported['@id']" target="_blank" class="import-iri text-truncate flex-1">{{imported['@id']}}</a>
+            <ng-template #failedImport>
+                <span class="w-100 text-truncate text-danger">{{imported['@id']}}</span>
+                <strong class="text-danger"> (failed)</strong>
+            </ng-template>
+            <a mat-icon-button color="primary" *ngIf="os.canModify()" (click)="setupRemove(imported['@id'])" title="Delete"><mat-icon>delete</mat-icon></a>
         </p>
     </div>
-    <info-message ng-if="!dvm.listItem.selected[dvm.prefixes.owl + 'imports'].length">This ontology does not have any imports.</info-message>
+    <div *ngIf="indirectImports.length" class="indirect-import-container">
+        <p *ngFor="let iri of indirectImports" class="indirect import">
+            <span class="font-italic mr-1">Indirect:</span>
+            <a *ngIf="!failed(iri); else failedIndirectImport" [href]="iri" target="_blank" class="import-iri text-truncate flex-1">{{iri}}</a>
+            <ng-template #failedIndirectImport>
+                <span class="text-danger text-truncate flex-1">{{iri}}</span>
+                <strong class="text-danger"> (failed)</strong>
+            </ng-template>
+        </p>
+    </div>
+    <info-message *ngIf="!imports.length">This ontology does not have any imports.</info-message>
 </div>

@@ -1,0 +1,408 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+import { DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent, MatButtonModule, MatDialogModule, MatDialogRef, MatFormFieldModule, MatIconModule, MatInputModule, MatRadioModule, MAT_DIALOG_DATA } from '@angular/material';
+import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { configureTestSuite } from 'ng-bullet';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { cleanStylesFromDOM, mockPropertyManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { OWL, XSD } from '../../../prefixes';
+import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyPropertyOverlayComponent } from './ontologyPropertyOverlay.component';
+
+describe('Ontology Property Overlay component', function() {
+    let component: OntologyPropertyOverlayComponent;
+    let element: DebugElement;
+    let fixture: ComponentFixture<OntologyPropertyOverlayComponent>;
+    let matDialogRef: jasmine.SpyObj<MatDialogRef<OntologyPropertyOverlayComponent>>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let propertyManagerStub;
+    let utilStub;
+
+    const property = 'property1';
+    const entityIRI = 'entity';
+
+    configureTestSuite(function() {
+        TestBed.configureTestingModule({
+            imports: [
+                NoopAnimationsModule,
+                ReactiveFormsModule,
+                FormsModule,
+                MatAutocompleteModule,
+                MatInputModule,
+                MatFormFieldModule,
+                MatRadioModule,
+                MatDialogModule,
+                MatButtonModule,
+                MatIconModule
+            ],
+            declarations: [
+                OntologyPropertyOverlayComponent,
+                MockComponent(LanguageSelectComponent),
+            ],
+            providers: [
+                MockProvider(OntologyStateService),
+                { provide: 'propertyManagerService', useClass: mockPropertyManager },
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: MAT_DIALOG_DATA, useValue: { editing: false } },
+                { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
+            ]
+        });
+    });
+
+    beforeEach(function() {
+        fixture = TestBed.createComponent(OntologyPropertyOverlayComponent);
+        component = fixture.componentInstance;
+        element = fixture.debugElement;
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        matDialogRef = TestBed.get(MatDialogRef);
+        propertyManagerStub = TestBed.get('propertyManagerService');
+        utilStub = TestBed.get('utilService');
+
+        ontologyStateStub.listItem = new OntologyListItem();
+        ontologyStateStub.listItem.selected = {'@id': entityIRI};
+    });
+
+    afterEach(function() {
+        cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
+        matDialogRef = null;
+        ontologyStateStub = null;
+        propertyManagerStub = null;
+        utilStub = null;
+    });
+
+    describe('initializes with the correct data', function() {
+        beforeEach(function() {
+            ontologyStateStub.listItem.annotations.iris = {[property]: '', 'default2': '', 'owl2': ''};
+            propertyManagerStub.ontologyProperties = ['ont1', 'ont2'];
+            propertyManagerStub.defaultAnnotations = ['default1', 'default2'];
+            propertyManagerStub.owlAnnotations = ['owl1', 'owl2'];
+        });
+        it('if an property is being edited', function() {
+            component.data.editing = true;
+            component.data.property = property;
+            component.data.value = 'value';
+            component.data.type = 'type';
+            component.data.language = 'en';
+            component.ngOnInit();
+            expect(component.annotations).toEqual(['default1', 'default2', 'owl1', 'owl2', property]);
+            expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
+            expect(component.propertyForm.controls.property.value).toEqual(property);
+            expect(component.propertyForm.controls.property.disabled).toBeTrue();
+            expect(component.propertyForm.controls.value.value).toEqual('value');
+            expect(component.propertyForm.controls.type.value).toEqual('type');
+            expect(component.propertyForm.controls.language.value).toEqual('en');
+        });
+        it('if a new property is being added', function() {
+            component.data.editing = false;
+            component.ngOnInit();
+            expect(component.annotations).toEqual(['default1', 'default2', 'owl1', 'owl2', property]);
+            expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
+            expect(component.propertyForm.controls.property.value).toEqual('');
+            expect(component.propertyForm.controls.property.disabled).toBeFalse();
+            expect(component.propertyForm.controls.value.value).toEqual('');
+            expect(component.propertyForm.controls.type.value).toEqual('');
+            expect(component.propertyForm.controls.language.value).toEqual('');
+        });
+    });
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(element.queryAll(By.css('h1[mat-dialog-title]')).length).toEqual(1);
+            expect(element.queryAll(By.css('form[mat-dialog-content]')).length).toEqual(1);
+            expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
+        });
+        ['input[aria-label="Property"]', 'mat-autocomplete'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(element.queryAll(By.css(test)).length).toEqual(1);
+            });
+        });
+        it('depending on whether a property is being edited', function() {
+            [
+                {
+                    value: true,
+                    heading: 'Edit Property',
+                },
+                {
+                    value: false,
+                    heading: 'Add Property',
+                }
+            ].forEach(function(test) {
+                component.data.editing = test.value;
+                component.ngOnInit();
+                fixture.detectChanges();
+
+                const header = element.queryAll(By.css('h1'))[0];
+                expect(header).toBeTruthy();
+                expect(header.nativeElement.textContent.trim()).toEqual(test.heading);
+                const input = element.queryAll(By.css('input[aria-label="Property"]'))[0];
+                expect(input).toBeTruthy();
+                if (test.value) {
+                    expect(input.properties['disabled']).toBeTruthy();
+                } else {
+                    expect(input.properties['disabled']).toBeFalsy();
+                }
+            });
+        });
+        it('depending on whether owl:deprecated is selected', function() {
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('textarea')).length).toEqual(1);
+            expect(element.queryAll(By.css('language-select')).length).toEqual(1);
+            expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(0);
+            
+            component.propertyForm.controls.property.setValue(OWL + 'deprecated');
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('textarea')).length).toEqual(0);
+            expect(element.queryAll(By.css('language-select')).length).toEqual(0);
+            expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(1);
+        });
+        it('depending on whether it is an ontology property', function() {
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('input[aria-label="Value"]')).length).toEqual(0);
+
+            component.isOntologyProperty = true;
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('input[aria-label="Value"]')).length).toEqual(1);
+        });
+        it('with buttons to cancel and submit', function() {
+            const buttons = element.queryAll(By.css('.mat-dialog-actions button'));
+            expect(buttons.length).toEqual(2);
+            expect(['Cancel', 'Submit']).toContain(buttons[0].nativeElement.textContent.trim());
+            expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
+        });
+        it('depending on the validity of the form', function() {
+            fixture.detectChanges();
+            const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
+            expect(button).not.toBeNull();
+            expect(button.properties['disabled']).toBeTruthy();
+            
+            component.propertyForm.controls.property.setValue('test');
+            component.propertyForm.controls.value.setValue('test');
+            fixture.detectChanges();
+            expect(button.properties['disabled']).toBeFalsy();
+        });
+    });
+    describe('controller methods', function() {
+        it('should correctly group and filter the list of annotations', function() {
+            utilStub.getIRINamespace.and.callFake(a => a[0]);
+            ontologyStateStub.getEntityNameByListItem.and.callFake(a => a);
+            component.properties = ['Aprop1', 'Bprop3', 'Aprop2', 'Cother'];
+            expect(component.filter('PROP')).toEqual([
+                { namespace: 'A', options: [
+                    { property: 'Aprop1', name: 'Aprop1' },
+                    { property: 'Aprop2', name: 'Aprop2' },
+                ]},
+                { namespace: 'B', options: [
+                    { property: 'Bprop3', name: 'Bprop3' },
+                ]}
+            ]);
+        });
+        describe('should submit the modal if the annotation is being', function() {
+            beforeEach(function() {
+                spyOn(component, 'addProperty');
+                spyOn(component, 'editProperty');
+            });
+            it('added', function() {
+                component.data.editing = false;
+                component.submit();
+                expect(component.addProperty).toHaveBeenCalledWith();
+                expect(component.editProperty).not.toHaveBeenCalled();
+            });
+            it('edited', function() {
+                component.data.editing = true;
+                component.submit();
+                expect(component.addProperty).not.toHaveBeenCalled();
+                expect(component.editProperty).toHaveBeenCalledWith();
+            });
+        });
+        describe('selectProp should set the correct state if it is', function() {
+            it('owl:deprecated', function() {
+                const event: MatAutocompleteSelectedEvent = {
+                    option: {
+                        value: OWL + 'deprecated'
+                    }
+                } as MatAutocompleteSelectedEvent;
+                component.selectProp(event);
+                expect(component.isOntologyProperty).toBeFalse();
+                expect(component.propertyForm.controls.type.value).toEqual(XSD + 'boolean');
+                expect(component.propertyForm.controls.language.value).toEqual('');
+            });
+            it('not owl:deprecated and is an ontology property', function() {
+                const event: MatAutocompleteSelectedEvent = {
+                    option: {
+                        value: 'test'
+                    }
+                } as MatAutocompleteSelectedEvent;
+                propertyManagerStub.ontologyProperties = ['test'];
+                component.selectProp(event);
+                expect(component.isOntologyProperty).toBeTrue();
+                expect(component.propertyForm.controls.type.value).toEqual('');
+                expect(component.propertyForm.controls.language.value).toEqual('en');
+            });
+        });
+        describe('addProperty calls the correct manager functions', function() {
+            beforeEach(function() {
+                ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
+                component.propertyForm.controls.property.setValue(property);
+                component.propertyForm.controls.value.setValue('value');
+                component.propertyForm.controls.type.setValue(XSD + 'string');
+                propertyManagerStub.addValue.and.returnValue(true);
+            });
+            describe('when isOntologyProperty is true', function() {
+                beforeEach(function() {
+                    component.isOntologyProperty = true;
+                });
+                it('unless it is a duplicate value', function() {
+                    propertyManagerStub.addId.and.returnValue(false);
+                    component.addProperty();
+                    expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, 'value');
+                    expect(propertyManagerStub.addValue).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
+                    expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(matDialogRef.close).toHaveBeenCalledWith(false);
+                });
+                it('successfully', function() {
+                    propertyManagerStub.addId.and.returnValue(true);
+                    component.addProperty();
+                    expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, 'value');
+                    expect(propertyManagerStub.addValue).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(matDialogRef.close).toHaveBeenCalledWith(true);
+                });
+            });
+            describe('when isOntologyProperty is false', function() {
+                beforeEach(function() {
+                    component.isOntologyProperty = false;
+                });
+                it('unless it is a duplicate value', function() {
+                    propertyManagerStub.addValue.and.returnValue(false);
+                    component.addProperty();
+                    expect(propertyManagerStub.addId).not.toHaveBeenCalled();
+                    expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, 'value', XSD + 'string', '');
+                    expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
+                    expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(matDialogRef.close).toHaveBeenCalledWith(false);
+                });
+                it('successfully', function() {
+                    propertyManagerStub.addValue.and.returnValue(true);
+                    component.addProperty();
+                    expect(propertyManagerStub.addId).not.toHaveBeenCalled();
+                    expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, 'value', XSD + 'string', '');
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(matDialogRef.close).toHaveBeenCalledWith(true);
+                });
+            });
+        });
+        describe('editProperty calls the correct manager functions', function() {
+            beforeEach(function() {
+                ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
+                component.propertyForm.controls.property.setValue(property);
+                component.propertyForm.controls.value.setValue('value');
+                component.propertyForm.controls.type.setValue(XSD + 'string');
+            });
+            describe('when isOntologyProperty is true', function() {
+                beforeEach(function() {
+                    component.isOntologyProperty = true;
+                });
+                it('unless it is a duplicate value', function() {
+                    propertyManagerStub.editId.and.returnValue(false);
+                    component.editProperty();
+                    expect(propertyManagerStub.editId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, component.data.index, 'value');
+                    expect(propertyManagerStub.editValue).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addToDeletions).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
+                    expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(matDialogRef.close).toHaveBeenCalledWith(false);
+                });
+                it('successfully', function() {
+                    propertyManagerStub.editId.and.returnValue(true);
+                    component.editProperty();
+                    expect(propertyManagerStub.editId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, component.data.index, 'value');
+                    expect(propertyManagerStub.editValue).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(matDialogRef.close).toHaveBeenCalledWith(true);
+                });
+            });
+            describe('when isOntologyProperty is false', function() {
+                beforeEach(function() {
+                    component.isOntologyProperty = false;
+                });
+                it('unless it is a duplicate value', function() {
+                    propertyManagerStub.editValue.and.returnValue(false);
+                    component.editProperty();
+                    expect(propertyManagerStub.editId).not.toHaveBeenCalled();
+                    expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, component.data.index, 'value', XSD + 'string', '');
+                    expect(ontologyStateStub.addToDeletions).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
+                    expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(matDialogRef.close).toHaveBeenCalledWith(false);
+                });
+                it('successfully', function() {
+                    propertyManagerStub.editValue.and.returnValue(true);
+                    component.editProperty();
+                    expect(propertyManagerStub.editId).not.toHaveBeenCalled();
+                    expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, component.data.index, 'value', XSD + 'string', '');
+                    expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(matDialogRef.close).toHaveBeenCalledWith(true);
+                });
+            });
+        });
+    });
+    it('should call cancel when the button is clicked', function() {
+        const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
+        cancelButton.triggerEventHandler('click', null);
+        fixture.detectChanges();
+        expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
+    });
+    it('should call download when the button is clicked', function() {
+        spyOn(component, 'submit');
+        const submitButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
+        submitButton.triggerEventHandler('click', null);
+        fixture.detectChanges();
+        expect(component.submit).toHaveBeenCalledWith();
+    });
+});
