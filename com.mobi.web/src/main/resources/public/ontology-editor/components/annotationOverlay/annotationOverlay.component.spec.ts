@@ -196,6 +196,7 @@ describe('Annotation Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
         });
         it('depending on the validity of the form', function() {
+            component.data.editing = false;
             fixture.detectChanges();
             const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
             expect(button).not.toBeNull();

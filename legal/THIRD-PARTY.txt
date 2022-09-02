@@ -189,7 +189,7 @@ Lists of 416 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: hamcrest-all (org.apache.servicemix.bundles:org.apache.servicemix.bundles.hamcrest:1.3_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.hamcrest/)
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: json-lib (org.apache.servicemix.bundles:org.apache.servicemix.bundles.json-lib:2.4_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.json-lib/)
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: poi (org.apache.servicemix.bundles:org.apache.servicemix.bundles.poi:3.14_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.poi/)
-     (The Apache Software License, Version 2.0) Apache ServiceMix :: Specs :: Activation API 1.2.1 (org.apache.servicemix.specs:org.apache.servicemix.specs.activation-api-1.2.1:1.2.1_4-MOBI - http://servicemix.apache.org/specs-pom/org.apache.servicemix.specs.activation-api-1.2.1/)
+     (Unknown license) org.apache.servicemix.specs.activation-api-1.2.1 (org.apache.servicemix.specs:org.apache.servicemix.specs.activation-api-1.2.1:1.2.1_4-MOBI - no url defined)
      (The Apache Software License, Version 2.0) Apache Solr Solrj (org.apache.solr:solr-solrj:8.4.1 - https://lucene.apache.org/solr-parent/solr-solrj)
      (The Apache Software License, Version 2.0) Apache Mina SSHD :: OSGi (org.apache.sshd:sshd-osgi:2.8.0 - https://www.apache.org/sshd/sshd-osgi/)
      (The Apache Software License, Version 2.0) XmlSchema Core (org.apache.ws.xmlschema:xmlschema-core:2.2.5 - https://ws.apache.org/commons/xmlschema20/xmlschema-core/)

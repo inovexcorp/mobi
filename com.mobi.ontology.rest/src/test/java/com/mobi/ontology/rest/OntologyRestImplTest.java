@@ -139,7 +139,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -457,8 +456,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
         when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class))).thenReturn(record);
 
-        when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
-        when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntologyByCommit(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
@@ -1160,7 +1157,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(engineManager, times(0)).retrieveUser(anyString());
         verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
         verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
-        verify(ontologyManager, times(0)).createOntology(any(Model.class));
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
     }
 
@@ -2075,7 +2071,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(engineManager, times(0)).retrieveUser(anyString());
         verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
         verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
-        verify(ontologyManager, times(0)).createOntology(any(Model.class));
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
     }
 
@@ -3375,7 +3370,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(engineManager, times(0)).retrieveUser(anyString());
         verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
         verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
-        verify(ontologyManager, times(0)).createOntology(any(Model.class));
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
         assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
     }

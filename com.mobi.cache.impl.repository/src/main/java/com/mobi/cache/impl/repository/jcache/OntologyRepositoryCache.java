@@ -24,11 +24,14 @@ package com.mobi.cache.impl.repository.jcache;
  */
 
 import com.google.common.collect.Maps;
+import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.Ontology;
-import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.OntologyCreationService;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.persistence.utils.ResourceUtils;
@@ -46,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
@@ -61,27 +65,29 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     private final Logger LOG = LoggerFactory.getLogger(OntologyRepositoryCache.class);
 
-    private OntologyManager ontologyManager;
     private final String name;
     private final CacheManager cacheManager;
     private final Configuration configuration;
+    private final CatalogConfigProvider configProvider;
+    private final CatalogUtilsService utilsService;
+    private final OntologyRecordFactory ontologyRecordFactory;
+    private final OntologyCreationService ontologyCreationService;
 
     private volatile boolean closed;
 
     public OntologyRepositoryCache(String name, OsgiRepository repository, CacheManager cacheManager,
-                                   Configuration configuration) {
+                                   Configuration configuration, CatalogConfigProvider configProvider,
+                                   CatalogUtilsService utilsService, OntologyRecordFactory ontologyRecordFactory,
+                                   DatasetManager datasetManager, OntologyCreationService ontologyCreationService) {
         this.name = name;
         this.repository = repository;
         this.cacheManager = cacheManager;
         this.configuration = configuration;
-    }
-
-    public void setOntologyManager(OntologyManager ontologyManager) {
-        this.ontologyManager = ontologyManager;
-    }
-
-    public void setDatasetManager(DatasetManager datasetManager) {
+        this.configProvider = configProvider;
+        this.utilsService = utilsService;
+        this.ontologyRecordFactory = ontologyRecordFactory;
         this.datasetManager = datasetManager;
+        this.ontologyCreationService = ontologyCreationService;
     }
 
     /**
@@ -346,8 +352,27 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     private Ontology getValueFromRepo(DatasetConnection dsConn, String key) {
         updateDatasetTimestamp(dsConn);
         String[] ids = key.split(OntologyDatasets.CACHE_KEY_SEPARATOR);
-        return ontologyManager.retrieveOntologyByCommit(vf.createIRI(ids[0]), vf.createIRI(ids[1]))
+        return retrieveOntologyByCommit(vf.createIRI(ids[0]), vf.createIRI(ids[1]))
                 .orElseThrow(() -> new IllegalStateException("Ontology must exist in cache repository"));
+    }
+
+    private Optional<Ontology> retrieveOntologyByCommit(Resource recordId, Resource commitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utilsService.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    ontologyRecordFactory.getTypeIRI(), conn);
+            if (utilsService.commitInRecord(recordId, commitId, conn)) {
+                return getOntology(recordId, commitId);
+            }
+            return Optional.empty();
+        }
+    }
+
+    private Optional<Ontology> getOntology(Resource recordId, Resource commitId) {
+        if (containsKey(String.format("%s&%s", recordId, commitId))) {
+            return Optional.of(ontologyCreationService.createOntology(recordId, commitId));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {

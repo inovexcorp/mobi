@@ -30,30 +30,10 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 
-import java.io.InputStream;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public interface OntologyManager {
-
-    /**
-     * Creates a new Ontology Object using the provided InputStream.
-     *
-     * @param inputStream the InputStream which contains the ontology data.
-     * @param resolveImports Whether or not imports should be resolved when creating this ontology
-     * @return an Ontology created with the provided InputStream.
-     * @throws MobiOntologyCreationException If the ontology can't be created.
-     */
-    Ontology createOntology(InputStream inputStream, boolean resolveImports);
-
-    /**
-     * Creates a new Ontology Object using the provided Model.
-     *
-     * @param model the Model of the ontology you want to create.
-     * @return an Ontology created with the provided Model.
-     * @throws MobiOntologyCreationException If the ontology can't be created.
-     */
-    Ontology createOntology(Model model);
 
     /**
      * Applies the Difference to the provided Ontology and returns a new Ontology object.
