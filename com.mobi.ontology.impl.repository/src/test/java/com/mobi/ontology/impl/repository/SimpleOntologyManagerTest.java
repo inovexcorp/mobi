@@ -57,17 +57,14 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.ontology.utils.imports.ImportsResolver;
-import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.OsgiRepository;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.impl.core.SimpleRepositoryManager;
-import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -120,12 +117,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private RepositoryManager mockRepoManager;
-
-    @Mock
-    private BNodeService bNodeService;
-
-    @Mock
-    private ImportsResolver importsResolver;
 
     @Mock
     private DatasetManager datasetManager;
@@ -267,15 +258,10 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setConfigProvider(configProvider);
-        manager.setCatalogManager(catalogManager);
-        manager.setUtilsService(catalogUtilsService);
-        manager.setRepositoryManager(mockRepoManager);
-        manager.addOntologyCache(ontologyCache);
-        manager.setbNodeService(bNodeService);
-        manager.setImportsResolver(importsResolver);
-        manager.setDatasetManager(datasetManager);
-        manager.setRDFImportService(importService);
+        manager.configProvider = configProvider;
+        manager.catalogManager = catalogManager;
+        manager.utilsService = catalogUtilsService;
+        manager.ontologyCache = ontologyCache;
         manager.activate();
     }
 
@@ -645,17 +631,5 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.deleteOntologyBranch(recordIRI, branchIRI);
         verify(catalogManager).removeBranch(catalogIRI, recordIRI, branchIRI);
         verify(ontologyCache).removeFromCache(recordIRI.stringValue(), commitIRI.stringValue());
-    }
-
-    /* createOntology */
-
-    @Test(expected = NotImplementedException.class)
-    public void testCreateOntologyWithModel() throws Exception {
-        manager.createOntology(model);
-    }
-
-    @Test(expected = NotImplementedException.class)
-    public void testCreateOntologyWithStream() throws Exception {
-        manager.createOntology(getClass().getResourceAsStream("/test-ontology.ttl"), false);
     }
 }

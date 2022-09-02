@@ -35,13 +35,17 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyCreationService;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
@@ -157,6 +161,18 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     private DatasetManager datasetManager;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
+    private CatalogUtilsService utilsService;
+
+    @Mock
+    private OntologyRecordFactory ontologyRecordFactory;
+
+    @Mock
+    private OntologyCreationService ontologyCreationService;
+
+    @Mock
     private Configuration configuration;
 
     @Before
@@ -250,10 +266,8 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             return true;
         });
 
-        cache = new OntologyRepositoryCache("Ontology Repository Cache", repo, cacheManager, configuration);
+        cache = new OntologyRepositoryCache("Ontology Repository Cache", repo, cacheManager, configuration, configProvider, utilsService, ontologyRecordFactory, datasetManager, ontologyCreationService);
         injectOrmFactoryReferencesIntoService(cache);
-        cache.setOntologyManager(ontologyManager);
-        cache.setDatasetManager(datasetManager);
     }
 
     @After

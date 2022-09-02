@@ -36,8 +36,6 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -49,6 +47,7 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -60,14 +59,19 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
     protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
     protected final ModelFactory modelFactory = new DynamicModelFactory();
-    protected OntologyRecordFactory ontologyRecordFactory;
-    protected RepositoryManager repositoryManager;
-    protected BranchFactory branchFactory;
-    protected OntologyCache ontologyCache;
-    protected CatalogConfigProvider configProvider;
-    protected CatalogManager catalogManager;
-    protected CatalogUtilsService utilsService;
-    protected BNodeService bNodeService;
+
+    @Reference
+    public OntologyRecordFactory ontologyRecordFactory;
+    @Reference
+    public BranchFactory branchFactory;
+    @Reference
+    public OntologyCache ontologyCache;
+    @Reference
+    public CatalogConfigProvider configProvider;
+    @Reference
+    public CatalogManager catalogManager;
+    @Reference
+    public CatalogUtilsService utilsService;
 
     protected static final String FIND_ONTOLOGY;
     protected static final String ONTOLOGY_IRI = "ontologyIRI";
