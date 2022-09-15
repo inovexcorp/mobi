@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { MatDialog, PageEvent } from '@angular/material';
 import { get, map, find } from 'lodash';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -34,6 +34,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { EditDatasetOverlayComponent } from '../editDatasetOverlay/editDatasetOverlay.component';
 import { NewDatasetOverlayComponent } from '../newDatasetOverlay/newDatasetOverlay.component';
 import { UploadDataOverlayComponent } from '../uploadDataOverlay/uploadDataOverlay.component';
@@ -71,8 +73,8 @@ export class DatasetsListComponent implements OnInit {
     @ViewChild('datasetsList') datasetsList: ElementRef;
     
     constructor(public dm: DatasetManagerService, public state: DatasetStateService, public cm: CatalogManagerService, 
-        private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService,
-        @Inject('policyEnforcementService') private pep, @Inject('utilService') public util) {}
+        private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, private pep: PolicyEnforcementService, 
+        public util: UtilService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -156,7 +158,7 @@ export class DatasetsListComponent implements OnInit {
             actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.state.selectedDataset = dataset;
@@ -174,7 +176,7 @@ export class DatasetsListComponent implements OnInit {
             actionId: POLICY + 'Update'
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.state.selectedDataset = dataset;
@@ -203,7 +205,7 @@ export class DatasetsListComponent implements OnInit {
             actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.dialog.open(ConfirmModalComponent, {
@@ -226,7 +228,7 @@ export class DatasetsListComponent implements OnInit {
             actionId: POLICY + 'Delete'
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.dialog.open(ConfirmModalComponent, {

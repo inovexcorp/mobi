@@ -28,9 +28,9 @@ import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EntityPublisherComponent } from './entityPublisher.component';
 
@@ -39,7 +39,7 @@ describe('Entity Publisher component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<EntityPublisherComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const userId = 'userId';
     const username = 'user';
@@ -52,7 +52,7 @@ describe('Entity Publisher component', function() {
             ],
             providers: [
                 MockProvider(UserManagerService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ],
         });
     });
@@ -62,7 +62,7 @@ describe('Entity Publisher component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.get(UserManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         
         utilStub.getDctermsId.and.returnValue(userId);
         userManagerStub.users = [{iri: userId, username, external: false, firstName: '', lastName: '', email: '', roles: []}];

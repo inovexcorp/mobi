@@ -21,27 +21,28 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialog } from '@angular/material';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { find, forEach, get, remove } from 'lodash';
+import { find, forEach, get, remove, isEmpty } from 'lodash';
 import { Observable, from, of, throwError } from 'rxjs';
-import { map, startWith, switchMap, catchError } from 'rxjs/operators';
+import { map, startWith, switchMap, catchError, finalize } from 'rxjs/operators';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+import { XACMLDecision } from '../../../shared/models/XACMLDecision.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
-import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { DCTERMS, SHAPESGRAPHEDITOR, POLICY } from '../../../prefixes';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
-import _ = require('lodash');
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface OptionGroup {
     title: string,
@@ -85,11 +86,11 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
    
     constructor(private dialog: MatDialog,
                 private state: ShapesGraphStateService,
-                @Inject('utilService') private util,
+                private util: UtilService,
                 private spinnerSrv: ProgressSpinnerService,
                 private cm: CatalogManagerService,
                 private pm: PolicyManagerService,
-                @Inject('policyEnforcementService') protected pep) {}
+                protected pep: PolicyEnforcementService) {}
 
     ngOnInit(): void {
         this.retrieveShapesGraphRecords();
@@ -155,29 +156,30 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                     this.unopened = unopenedTmp;
                     if (this.unopened.length !== 0) {
                         const deleteRequest: any = {
-                            resourceId: _.map(this.unopened, 'recordId'),
+                            resourceId: this.unopened.map(record => record['recordId']),
                             actionId: [this.pm.actionDelete]
                         };
-                        return from(this.pep.evaluateMultiDecisionRequest(deleteRequest, this.spinnerId));
+                        return from(this.pep.evaluateMultiDecisionRequest(deleteRequest, true));
                     } else {
                         return of(null);
                     }
                 }),
                 catchError(errorMessage => {
                     this.util.createErrorToast(errorMessage);
-                    this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
                     return throwError(errorMessage);
+                }),
+                finalize(() => {
+                    this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
                 }))
-            .subscribe(decisions => {
-                if (decisions !== undefined) {
-                    const recordsForbiddenToDelete = _.map(_.filter(decisions, {'decision': this.pep.deny}), 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource');
+            .subscribe((decisions: XACMLDecision[]) => {
+                if (!isEmpty(decisions)) {
+                    const recordsForbiddenToDelete = decisions.filter(decision => decision.decision === this.pep.deny).map(decision => decision['urn:oasis:names:tc:xacml:3.0:attribute-category:resource']);
                     this.unopened.filter(item => recordsForbiddenToDelete.includes(item.recordId)).map((canNotDelete: RecordSelectFiltered) => {
                         return canNotDelete.canNotDelete = true;
                     });
                 }
                 this.checkRecordDeleted();
                 this.setFilteredOptions();
-                this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
             });
     }
     closeShapesGraphRecord(recordIri: string): void {
@@ -237,8 +239,11 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     }
     private permissionCheck(): void {
         const pepRequest = this.createPepRequest();
-        this.pep.evaluateRequest(pepRequest, this.spinnerId)
-            .then(response => {
+        this.spinnerSrv.startLoadingForComponent(this.editorRecordSelectSpinner, 15);
+        this.pep.evaluateRequest(pepRequest, true).pipe(finalize(() => {
+            this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
+        }))
+            .subscribe(response => {
                 const canRead = response !== this.pep.deny;
                 if (!canRead) {
                     this.disabledFlag = true;

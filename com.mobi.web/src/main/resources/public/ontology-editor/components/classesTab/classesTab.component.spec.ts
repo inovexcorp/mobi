@@ -20,23 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ClassesTabComponent } from './classesTab.component';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ClassHierarchyBlockComponent } from '../classHierarchyBlock/classHierarchyBlock.component';
+import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { mockOntologyState, cleanStylesFromDOM, mockOntologyManager } from '../../../../../../test/ts/Shared';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { MatDialog } from '@angular/material';
+
+import { ClassHierarchyBlockComponent } from '../classHierarchyBlock/classHierarchyBlock.component';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { AnnotationBlockComponent } from '../annotationBlock/annotationBlock.component';
 import { AxiomBlockComponent } from '../axiomBlock/axiomBlock.component';
 import { UsagesBlockComponent } from '../usagesBlock/usagesBlock.component';
 import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
-import { of } from 'rxjs';
-import { By } from '@angular/platform-browser';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { ClassesTabComponent } from './classesTab.component';
 
 describe('Classes Tab component', function() {
     let component: ClassesTabComponent;
@@ -57,8 +59,8 @@ describe('Classes Tab component', function() {
                 MockComponent(UsagesBlockComponent),
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
+                MockProvider(OntologyStateService),
+                MockProvider(OntologyManagerService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 })}
@@ -74,6 +76,7 @@ describe('Classes Tab component', function() {
         ontologyStateStub = TestBed.get(OntologyStateService);
         matDialog = TestBed.get(MatDialog);
 
+        ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = { '@id': 'iri' };
 
         fixture.detectChanges();
@@ -88,6 +91,15 @@ describe('Classes Tab component', function() {
         fixture = null;
     });
 
+    it('should initialize correctly', function() {
+        component.ngOnInit();
+        expect(ontologyStateStub.listItem.editorTabStates.classes.element).toEqual(component.classesTab);
+    });
+    it('should tear down correctly', function() {
+        ontologyStateStub.listItem.editorTabStates.classes.element = component.classesTab;
+        component.ngOnDestroy();
+        expect(ontologyStateStub.listItem.editorTabStates.classes.element).toBeUndefined();
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.classes-tab.row')).length).toEqual(1);
@@ -100,17 +112,17 @@ describe('Classes Tab component', function() {
         it('with a button to delete a class if the user can modify', function() {
             ontologyStateStub.canModify.and.returnValue(true);
             fixture.detectChanges();
-            const button = element.queryAll(By.css('.selected-header button.btn-danger'));
+            const button = element.queryAll(By.css('.selected-header button[color="warn"]'));
             expect(button.length).toEqual(1);
             expect(button[0].nativeElement.textContent.trim()).toEqual('Delete');
         });
         it('with no button to delete a class if the user cannot modify', function() {
             ontologyStateStub.canModify.and.returnValue(false);
             fixture.detectChanges();
-            expect(element.queryAll(By.css('.selected-header button.btn-danger')).length).toEqual(0);
+            expect(element.queryAll(By.css('.selected-header button[color="warn"]')).length).toEqual(0);
         });
         it('with a button to see the class history', function() {
-            const button = element.queryAll(By.css('.selected-header button.btn-primary'));
+            const button = element.queryAll(By.css('.selected-header button[color="primary"]'));
             expect(button.length).toEqual(1);
             expect(button[0].nativeElement.textContent.trim()).toEqual('See History');
         });
@@ -124,8 +136,8 @@ describe('Classes Tab component', function() {
         it('depending on whether the selected class is imported', function() {
             ontologyStateStub.canModify.and.returnValue(true);
             fixture.detectChanges();
-            const historyButton = element.queryAll(By.css('.selected-header button.btn-primary'))[0];
-            const deleteButton = element.queryAll(By.css('.selected-header button.btn-danger'))[0];
+            const historyButton = element.queryAll(By.css('.selected-header button[color="primary"]'))[0];
+            const deleteButton = element.queryAll(By.css('.selected-header button[color="warn"]'))[0];
             expect(historyButton.properties['disabled']).toBeFalsy();
             expect(deleteButton.properties['disabled']).toBeFalsy();
 
@@ -150,14 +162,14 @@ describe('Classes Tab component', function() {
         ontologyStateStub.canModify.and.returnValue(true);
         fixture.detectChanges();
         spyOn(component, 'showDeleteConfirmation');
-        const button = element.queryAll(By.css('.selected-header button.btn-danger'))[0];
+        const button = element.queryAll(By.css('.selected-header button[color="warn"]'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.showDeleteConfirmation).toHaveBeenCalled();
+        expect(component.showDeleteConfirmation).toHaveBeenCalledWith();
     });
     it('should call seeHistory when the see history button is clicked', function() {
         spyOn(component, 'seeHistory');
-        const button = element.queryAll(By.css('.selected-header button.btn-primary'))[0];
+        const button = element.queryAll(By.css('.selected-header button[color="primary"]'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.seeHistory).toHaveBeenCalled();
+        expect(component.seeHistory).toHaveBeenCalledWith();
     });
 });

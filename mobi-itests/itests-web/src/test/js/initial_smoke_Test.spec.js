@@ -55,9 +55,6 @@ module.exports = {
                     browser.useXpath()
                     browser.waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
                     browser.click("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
-                    .useCss()
-//                    browser.waitForElementNotVisible('.spinner')
-                    .useXpath()
                     switch (pages[i]) {
                         case "Home":
                             browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Search the Catalog')]]");
@@ -75,7 +72,7 @@ module.exports = {
                             browser.waitForElementVisible('//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button');
                             browser
                                 .useCss()
-                                .waitForElementVisible("open-ontology-tab input.ontology-search");
+                                .waitForElementVisible("open-ontology-tab search-bar input");
                             browser
                                 .useXpath()
                                 .waitForElementVisible("//span[text()[contains(.,'New Ontology')]]/parent::button")
@@ -106,12 +103,12 @@ module.exports = {
 
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
         browser
-            .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
-            .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
+            .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
     },
 
     'Step 4: The user clicks logout' : function(browser) {
         browser
-            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
     }
 }

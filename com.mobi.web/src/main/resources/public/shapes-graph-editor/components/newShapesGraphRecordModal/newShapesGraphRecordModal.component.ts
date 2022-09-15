@@ -21,9 +21,10 @@
  * #L%
  */
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormArray, FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
+
 import { MatChipInputEvent } from '@angular/material/chips';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -54,7 +55,7 @@ export class NewShapesGraphRecordModalComponent {
     readonly separatorKeysCodes = [ENTER, COMMA] as const;
 
     constructor(private dialogRef: MatDialogRef<NewShapesGraphRecordModalComponent>, private fb: FormBuilder,
-                private state: ShapesGraphStateService, @Inject('utilService') private util) {}
+                private state: ShapesGraphStateService) {}
 
     create(): void {
         this.error = '';

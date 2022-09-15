@@ -20,16 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnChanges, Input} from '@angular/core';
+import { Component, OnChanges, Input} from '@angular/core';
 import { has, map, sortBy } from 'lodash';
 import { first } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { MatDialog } from '@angular/material/dialog';
 import { RDFS } from '../../../prefixes';
-import {ConfirmModalComponent} from '../../../shared/components/confirmModal/confirmModal.component';
-import {JSONLDObject} from '../../../shared/models/JSONLDObject.interface';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 
 /**
  * @class ontology-editor.ClassAxiomsComponent
@@ -44,11 +46,12 @@ import {JSONLDObject} from '../../../shared/models/JSONLDObject.interface';
     templateUrl: './classAxioms.component.html'
 })
 export class ClassAxiomsComponent implements OnChanges {
-    @Input() selected: JSONLDObject;
-    key = '';
-    axioms = []
+    @Input() selected: JSONLDObject; // Here to trigger on changes
+    
+    axioms: string[] = []
+
     constructor(private om: OntologyManagerService, private os: OntologyStateService, private dialog: MatDialog,
-                @Inject('propertyManagerService') private pm) {}
+                private pm: PropertyManagerService) {}
 
     ngOnChanges(): void {
         this.updateAxioms();
@@ -58,7 +61,6 @@ export class ClassAxiomsComponent implements OnChanges {
         this.axioms = sortBy(axioms.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
     }
     openRemoveOverlay(event: {iri: string, index: number}): void {
-        this.key = event.iri;
         this.dialog.open(ConfirmModalComponent, {
             data: { content: this.os.getRemovePropOverlayMessage(event.iri, event.index) }
         }).afterClosed().subscribe(result => {
@@ -67,13 +69,13 @@ export class ClassAxiomsComponent implements OnChanges {
                     .pipe(first())
                     .subscribe( (res) => {
                         this.updateAxioms();
-                        this.removeFromHierarchy(res);
+                        this.removeFromHierarchy(event.iri, res as JSONLDId);
                     });
             }
         });
     }
-    removeFromHierarchy(axiomObject): void {
-        if (RDFS + 'subClassOf' === this.key && !this.om.isBlankNodeId(axiomObject['@id'])) {
+    removeFromHierarchy(axiom: string, axiomObject: JSONLDId): void {
+        if (RDFS + 'subClassOf' === axiom && !this.om.isBlankNodeId(axiomObject['@id'])) {
             this.os.deleteEntityFromParentInHierarchy(this.os.listItem.classes, this.os.listItem.selected['@id'], axiomObject['@id']);
             this.os.listItem.classes.flat = this.os.flattenHierarchy(this.os.listItem.classes);
             this.os.listItem.individualsParentPath = this.os.getIndividualsParentPath(this.os.listItem);

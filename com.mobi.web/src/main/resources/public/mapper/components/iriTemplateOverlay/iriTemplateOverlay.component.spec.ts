@@ -28,7 +28,6 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 
 import {
-    mockUtil,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { DELIM } from '../../../prefixes';
@@ -38,6 +37,7 @@ import { Mapping } from '../../../shared/models/mapping.class';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { IriTemplateOverlayComponent } from './iriTemplateOverlay.component';
 
@@ -49,7 +49,7 @@ describe('IRI Template Overlay component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const begin = 'http://test';
     const then = '/';
@@ -74,7 +74,7 @@ describe('IRI Template Overlay component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(MappingManagerService),
                 MockProvider(DelimitedManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -88,7 +88,7 @@ describe('IRI Template Overlay component', function() {
         mappingManagerStub = TestBed.get(MappingManagerService);
         delimitedManagerStub = TestBed.get(DelimitedManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         mapperStateStub.selectedClassMappingId = 'classMapping';
         mappingStub = jasmine.createSpyObj('Mapping', [

@@ -23,24 +23,25 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { throwError } from 'rxjs';
+import { HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { MockProvider } from 'ng-mocks';
 
 import {
-    mockUtil,
     cleanStylesFromDOM
 } from '../../../../../test/ts/Shared';
 import { Group } from '../models/group.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { User } from '../models/user.interface';
 import { ADMIN_USER_IRI } from '../../constants';
-import { HelperService } from './helper.service';
 import { DCTERMS, FOAF, ROLES, USER } from '../../prefixes';
 import { UserManagerService } from './userManager.service';
+import { UtilService } from './util.service';
 
 describe('User Manager service', function() {
     let service: UserManagerService;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
-    let helper: HelperService;
     let user: User;
     let group: Group;
     let userRdf: JSONLDObject;
@@ -53,21 +54,42 @@ describe('User Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 UserManagerService,
-                HelperService,
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
 
     beforeEach(function() {
         service = TestBed.get(UserManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         httpMock = TestBed.get(HttpTestingController);
-        helper = TestBed.get(HelperService);
 
-        spyOn(helper, 'createHttpParams').and.callThrough();
         utilStub.rejectError.and.callFake(() => Promise.reject(error));
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
         
+            return httpParams;
+        });
+
         user = {
             external: false,
             iri: 'urn:userIri',
@@ -139,7 +161,6 @@ describe('User Manager service', function() {
         service = null;
         utilStub = null;
         httpMock = null;
-        helper = null;
         user = null;
         group = null;
         userRdf = null;
@@ -175,13 +196,14 @@ describe('User Manager service', function() {
             expect(service.groups).toEqual([group]);
         }));
         it('unless there is an error', fakeAsync(function() {
-            spyOn(service, 'getUsers').and.rejectWith(error);
+            const errorResp = new HttpErrorResponse({statusText: error});
+            spyOn(service, 'getUsers').and.rejectWith(errorResp);
             spyOn(service, 'getGroups').and.resolveTo([groupRdf]);
             service.initialize();
             tick();
-            expect(service.getUsers).toHaveBeenCalled();
+            expect(service.getUsers).toHaveBeenCalledWith();
             expect(service.getGroups).not.toHaveBeenCalled();
-            expect(utilStub.getErrorMessage).toHaveBeenCalledWith(error);
+            expect(utilStub.getErrorMessage).toHaveBeenCalledWith(errorResp);
         }));
     });
     describe('should get users', function() {
@@ -189,16 +211,15 @@ describe('User Manager service', function() {
             service.getUsers().then(response => {
                 expect(response).toEqual([userRdf]);
                 done();
-            }, () => fail('Promise should have resolved'));
+            }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix, method: 'GET'});
             request.flush([userRdf]);
         });
         it('unless an error occurs', function(done) {
             service.getUsers().then(() => fail('Promise should have rejected'), response => {
                 expect(response).toEqual(error);
-                expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                 done();
-            });
+            }).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -208,16 +229,15 @@ describe('User Manager service', function() {
             service.getGroups().then(response => {
                 expect(response).toEqual([groupRdf]);
                 done();
-            }, () => fail('Promise should have resolved'));
+            }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix, method: 'GET'});
             request.flush([groupRdf]);
         });
         it('unless an error occurs', function(done) {
             service.getGroups().then(() => fail('Promise should have rejected'), response => {
                 expect(response).toEqual(error);
-                expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                 done();
-            });
+            }).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -237,10 +257,9 @@ describe('User Manager service', function() {
                 service.getUsername('iri')
                     .then(() => fail('Promise should have rejected'), response => {
                         expect(response).toEqual(error);
-                        expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                        expect(helper.createHttpParams).toHaveBeenCalled();
+                        expect(utilStub.createHttpParams).toHaveBeenCalled();
                         done();
-                    });
+                    }).catch(done.fail);
                 const request = httpMock.expectOne(req => req.url === service.userPrefix + '/username' && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual('iri');
                 request.flush('flush', { status: 400, statusText: error });
@@ -253,9 +272,9 @@ describe('User Manager service', function() {
                     .then(response => {
                         expect(response).toEqual(user.username);
                         expect(user.iri).toEqual(iri);
-                        expect(helper.createHttpParams).toHaveBeenCalled();
+                        expect(utilStub.createHttpParams).toHaveBeenCalled();
                         done();
-                    }, () => fail('Promise should have resolved'));
+                    }, () => fail('Promise should have resolved')).catch(done.fail);
                 const request = httpMock.expectOne(req => req.url === service.userPrefix + '/username' && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual(iri);
                 request.flush(user.username);
@@ -270,9 +289,8 @@ describe('User Manager service', function() {
             service.addUser(user, 'pw')
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
             request.flush('flush', { status: 400, statusText: error });
@@ -282,7 +300,7 @@ describe('User Manager service', function() {
                 .then(() => {
                     expect(service.getUser).toHaveBeenCalledWith(user.username);
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
             request.flush(200);
@@ -293,9 +311,8 @@ describe('User Manager service', function() {
             service.getUser('user')
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix + '/user', method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -313,7 +330,7 @@ describe('User Manager service', function() {
                         expect(service.users.length).toEqual(1);
                         expect(service.users[0]).toEqual(user);
                         done();
-                    }, () => fail('Promise should have resolved'));
+                    }, () => fail('Promise should have resolved')).catch(done.fail);
                 const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'GET'});
                 request.flush(userRdf);
             });
@@ -324,7 +341,7 @@ describe('User Manager service', function() {
                         expect(service.users.length).toEqual(1);
                         expect(service.users[0]).toEqual(user);
                         done();
-                    }, () => fail('Promise should have resolved'));
+                    }, () => fail('Promise should have resolved')).catch(done.fail);
                 const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'GET'});
                 request.flush(userRdf);
             });
@@ -340,9 +357,8 @@ describe('User Manager service', function() {
             service.updateUser(user.username, this.newUser)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'PUT'});
             expect(request.request.body).toEqual(this.newUser.jsonld);
             request.flush('flush', { status: 400, statusText: error });
@@ -352,7 +368,7 @@ describe('User Manager service', function() {
                 .then(() => {
                     expect(service.users).toContain(this.newUser);
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'PUT'});
             expect(request.request.body).toEqual(this.newUser.jsonld);
             request.flush(200);
@@ -363,10 +379,9 @@ describe('User Manager service', function() {
             service.changePassword(user.username, 'currentPassword', 'newPassword')
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'POST');
             expect(request.request.params.get('currentPassword')).toEqual('currentPassword');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
@@ -375,9 +390,9 @@ describe('User Manager service', function() {
         it('successfully', function(done) {
             service.changePassword(user.username, 'currentPassword', 'newPassword')
                 .then(() => {
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'POST');
             expect(request.request.params.get('currentPassword')).toEqual('currentPassword');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
@@ -389,10 +404,9 @@ describe('User Manager service', function() {
             service.resetPassword(user.username, 'newPassword')
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'PUT');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
             request.flush('flush', { status: 400, statusText: error });
@@ -400,9 +414,9 @@ describe('User Manager service', function() {
         it('successfully', function(done) {
             service.resetPassword(user.username, 'newPassword')
                 .then(() => {
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'PUT');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
             request.flush(200);
@@ -417,9 +431,8 @@ describe('User Manager service', function() {
             service.deleteUser(user.username)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'DELETE'});
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -429,7 +442,7 @@ describe('User Manager service', function() {
                     expect(service.users).not.toContain(user);
                     expect(group.members).not.toContain(user.username);
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'DELETE'});
             request.flush(200);
         });
@@ -443,10 +456,9 @@ describe('User Manager service', function() {
             service.addUserRoles(user.username, this.roles)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(this.roles);
             request.flush('flush', { status: 400, statusText: error });
@@ -456,9 +468,9 @@ describe('User Manager service', function() {
             service.addUserRoles(user.username, this.roles)
                 .then(() => {
                     expect(user.roles).toEqual(originalRoles.concat(this.roles));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(this.roles);
             request.flush(200);
@@ -473,10 +485,9 @@ describe('User Manager service', function() {
             service.deleteUserRole(user.username, 'role')
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush('flush', { status: 400, statusText: error });
@@ -485,9 +496,9 @@ describe('User Manager service', function() {
             service.deleteUserRole(user.username, 'role')
                 .then(() => {
                     expect(user.roles).toEqual([]);
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush(200);
@@ -503,10 +514,9 @@ describe('User Manager service', function() {
             service.addUserGroup(user.username, group.title)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'PUT');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush('flush', { status: 400, statusText: error });
@@ -515,9 +525,9 @@ describe('User Manager service', function() {
             service.addUserGroup(user.username, group.title)
                 .then(() => {
                     expect(group.members).toContain(user.username);
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'PUT');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush(200);
@@ -532,10 +542,9 @@ describe('User Manager service', function() {
             service.deleteUserGroup(user.username, group.title)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'DELETE');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush('flush', { status: 400, statusText: error });
@@ -544,9 +553,9 @@ describe('User Manager service', function() {
             service.deleteUserGroup(user.username, group.title)
                 .then(() => {
                     expect(group.members).not.toContain(user.username);
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'DELETE');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush(200);
@@ -560,9 +569,8 @@ describe('User Manager service', function() {
             service.addGroup(group)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
             request.flush('flush', { status: 400, statusText: error });
@@ -572,7 +580,7 @@ describe('User Manager service', function() {
                 .then(() => {
                     expect(service.getGroup).toHaveBeenCalledWith(group.title);
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
             request.flush(200);
@@ -583,9 +591,8 @@ describe('User Manager service', function() {
             service.getGroup(group.title)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -603,7 +610,7 @@ describe('User Manager service', function() {
                         expect(service.groups.length).toEqual(1);
                         expect(service.groups[0]).toEqual(group);
                         done();
-                    }, () => fail('Promise should have resolved'));
+                    }, () => fail('Promise should have resolved')).catch(done.fail);
                 const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'GET'});
                 request.flush(groupRdf);
             });
@@ -614,7 +621,7 @@ describe('User Manager service', function() {
                         expect(service.groups.length).toEqual(1);
                         expect(service.groups[0]).toEqual(group);
                         done();
-                    }, () => fail('Promise should have resolved'));
+                    }, () => fail('Promise should have resolved')).catch(done.fail);
                 const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'GET'});
                 request.flush(groupRdf);
             });
@@ -630,9 +637,8 @@ describe('User Manager service', function() {
             service.updateGroup(group.title, this.newGroup)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'PUT'});
             expect(request.request.body).toEqual(this.newGroup.jsonld);
             request.flush('flush', { status: 400, statusText: error });
@@ -642,7 +648,7 @@ describe('User Manager service', function() {
                 .then(() => {
                     expect(service.groups).toContain(this.newGroup);
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'PUT'});
             expect(request.request.body).toEqual(this.newGroup.jsonld);
             request.flush(200);
@@ -656,9 +662,8 @@ describe('User Manager service', function() {
             service.deleteGroup(group.title)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'DELETE'});
             request.flush('flush', { status: 400, statusText: error });
     });
@@ -667,7 +672,7 @@ describe('User Manager service', function() {
                 .then(() => {
                     expect(service.groups).not.toContain(group);
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'DELETE'});
             request.flush(200);
         });
@@ -681,10 +686,9 @@ describe('User Manager service', function() {
             service.addGroupRoles(group.title, this.roles)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(this.roles);
             request.flush('flush', { status: 400, statusText: error });
@@ -694,9 +698,9 @@ describe('User Manager service', function() {
             service.addGroupRoles(group.title, this.roles)
                 .then(() => {
                     expect(group.roles).toEqual(originalRoles.concat(this.roles));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(this.roles);
             request.flush(200);
@@ -711,10 +715,9 @@ describe('User Manager service', function() {
             service.deleteGroupRole(group.title, 'role')
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush('flush', { status: 400, statusText: error });
@@ -723,9 +726,9 @@ describe('User Manager service', function() {
             service.deleteGroupRole(group.title, 'role')
                 .then(() => {
                     expect(group.roles).toEqual([]);
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush(200);
@@ -736,9 +739,8 @@ describe('User Manager service', function() {
             service.getGroupUsers(group.title)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title + '/users', method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -747,7 +749,7 @@ describe('User Manager service', function() {
                 .then(response => {
                     expect(response).toEqual([userRdf]);
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title + '/users', method: 'GET'});
             request.flush([userRdf]);
         });
@@ -761,10 +763,9 @@ describe('User Manager service', function() {
             service.addGroupUsers(group.title, this.users)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'PUT');
             expect(request.request.params.getAll('users')).toEqual(this.users);
             request.flush('flush', { status: 400, statusText: error });
@@ -774,9 +775,9 @@ describe('User Manager service', function() {
             service.addGroupUsers(group.title, this.users)
                 .then(() => {
                     expect(group.members).toEqual(originalMembers.concat(this.users));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'PUT');
             expect(request.request.params.getAll('users')).toEqual(this.users);
             request.flush(200);
@@ -790,10 +791,9 @@ describe('User Manager service', function() {
             service.deleteGroupUser(group.title, user.username)
                 .then(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                });
+                }).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'DELETE');
             expect(request.request.params.get('user')).toEqual(user.username);
             request.flush('flush', { status: 400, statusText: error });
@@ -802,9 +802,9 @@ describe('User Manager service', function() {
             service.deleteGroupUser(group.title, user.username)
                 .then(() => {
                     expect(group.members).toEqual([]);
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
-                }, () => fail('Promise should have resolved'));
+                }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'DELETE');
             expect(request.request.params.get('user')).toEqual(user.username);
             request.flush(200);

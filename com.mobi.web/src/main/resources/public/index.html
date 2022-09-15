@@ -21,28 +21,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<html>
+<html class="h-100">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="icon" href="images/favicon.ico">
         <link href="css/Material_Icons/css2.css" rel="stylesheet">
-        <title ng-bind="$state.current.data.title + ' | Mobi'"></title>
+        <title>Mobi</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ace.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.6/marked.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
     </head>
-    <body ng-class="{'collapsed-nav': $root.collapsedNav}" class="h-100">
-        <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="container-fluid h-100">
-            <div class="row flex-nowrap h-100">
-                <sidebar></sidebar>
-                <section ui-view="container" class="col app-container h-100"></section>
-            </div>
-        </div>
-        <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container h-100"></section>
-        <footer ui-view="footer"></footer>
-        <progress-spinner></progress-spinner>
+    <body class="h-100">
         <mobi-app></mobi-app>
     </body>
 </html>

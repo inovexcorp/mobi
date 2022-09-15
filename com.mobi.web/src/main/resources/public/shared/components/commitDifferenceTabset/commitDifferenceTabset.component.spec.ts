@@ -51,7 +51,7 @@ describe('Commit Difference Tabset component', function() {
                  CommitDifferenceTabsetComponent,
                  MockComponent(CommitChangesDisplayComponent),
                  MockComponent(CommitHistoryTableComponent),
-                 MockComponent(InfoMessageComponent)
+                 MockComponent(InfoMessageComponent),
              ],
              providers: []
          });

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { find, get } from 'lodash';
 
@@ -30,6 +30,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { IriTemplateOverlayComponent } from '../iriTemplateOverlay/iriTemplateOverlay.component';
 import { PropMappingOverlayComponent } from '../propMappingOverlay/propMappingOverlay.component';
 
@@ -92,8 +94,7 @@ export class ClassMappingDetailsComponent {
     @Output() updateClassMappings = new EventEmitter<void>();
     
     constructor(private dialog: MatDialog, private mm: MappingManagerService, public state: MapperStateService,
-        private dm: DelimitedManagerService, @Inject('propertyManagerService') private pm,
-        @Inject('utilService') private util) {}
+        private dm: DelimitedManagerService, private pm: PropertyManagerService, private util: UtilService) {}
 
     editIriTemplate(): void {
         this.dialog.open(IriTemplateOverlayComponent).afterClosed().subscribe(() => {

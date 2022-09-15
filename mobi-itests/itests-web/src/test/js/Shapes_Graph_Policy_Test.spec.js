@@ -49,7 +49,7 @@ module.exports = {
             .waitForElementVisible('shapes-graph-details')
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
-            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
             .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
             .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
@@ -73,8 +73,8 @@ module.exports = {
     'Step 7: The admin user clicks on the Administration sidebar link' : function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
-            .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
+            .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
     },
 
     'Step 8: A new user is created' : function(browser) {

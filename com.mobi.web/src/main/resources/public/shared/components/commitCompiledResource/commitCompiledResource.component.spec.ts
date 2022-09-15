@@ -28,13 +28,15 @@ import { By } from '@angular/platform-browser';
 import { of, throwError} from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 
-import { CommitCompiledResourceComponent } from './commitCompiledResource.component';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { SharedModule } from '../../shared.module';
 import { CatalogManagerService } from '../../services/catalogManager.service';
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
-import {CommitDifference} from '../../models/commitDifference.interface';
+import { CommitDifference } from '../../models/commitDifference.interface';
+import { UtilService } from '../../services/util.service';
+import { CommitCompiledResourceComponent } from './commitCompiledResource.component';
+import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 
 describe('Commit Compiled Resource component', function() {
     let component: CommitCompiledResourceComponent;
@@ -43,23 +45,24 @@ describe('Commit Compiled Resource component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const commitDifference: CommitDifference = new CommitDifference();
     commitDifference.commit = {'@id': '', '@type': []};
 
     configureTestSuite((function() {
         TestBed.configureTestingModule({
-            imports : [ SharedModule ],
+            imports: [ SharedModule ],
             declarations: [],
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
+                MockProvider(ProgressSpinnerService)
             ]
-        })
-    }))
+        });
+    }));
 
     beforeEach(function() {
         fixture = TestBed.createComponent(CommitCompiledResourceComponent);
@@ -68,13 +71,13 @@ describe('Commit Compiled Resource component', function() {
         ontologyStateStub = TestBed.get(OntologyStateService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         this.error = 'error';
         this.commitId = 'commit';
         this.entityId = 'entity';
         this.resource = {
-            '@id': "www.test.com",
+            '@id': 'www.test.com',
             '@type': ['commit'],
             'extraProp': ['test']
         };
@@ -143,7 +146,7 @@ describe('Commit Compiled Resource component', function() {
                 expect(component.resource).toBeUndefined();
             });
             it('unless getCompiledResource rejects', function() {
-                catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'))
+                catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
                 component.setResource();
                 fixture.detectChanges();
                 //expect(httpSvc.cancel).toHaveBeenCalledWith(component.id);
@@ -152,7 +155,7 @@ describe('Commit Compiled Resource component', function() {
                 expect(component.error).toEqual('Error Message');
             });
             it('unless getDifference rejects', function() {
-                catalogManagerStub.getDifferenceForSubject.and.returnValue(throwError('Error Message'))
+                catalogManagerStub.getDifferenceForSubject.and.returnValue(throwError('Error Message'));
                 component.setResource();
                 fixture.detectChanges();
                 //expect(httpSvc.cancel).toHaveBeenCalledWith(component.id);

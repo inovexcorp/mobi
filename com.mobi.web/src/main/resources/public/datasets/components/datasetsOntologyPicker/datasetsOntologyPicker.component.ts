@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, EventEmitter, Inject, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatSelectionListChange } from '@angular/material';
 import { find, get, remove, some, sortBy } from 'lodash';
 import { finalize } from 'rxjs/operators';
@@ -31,6 +31,7 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { OntologyDetails } from '../../models/ontologyDetails.interface';
 
 import './datasetsOntologyPicker.component.scss';
@@ -65,7 +66,7 @@ export class DatasetsOntologyPickerComponent implements OnInit {
 
     @ViewChild('datasetOntologies') datasetOntologies: ElementRef;
 
-    constructor(public cm: CatalogManagerService, @Inject('utilService') public util, 
+    constructor(public cm: CatalogManagerService, public util: UtilService, 
         private spinnerSvc: ProgressSpinnerService) {}
 
     ngOnInit(): void {

@@ -25,22 +25,22 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { ShowdownComponent } from 'ngx-showdown';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { MarkdownEditorComponent } from '../../../shared/components/markdownEditor/markdownEditor.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
 import { RecordMarkdownComponent } from './recordMarkdown.component';
 
 describe('Record Markdown component', function() {
     let component: RecordMarkdownComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<RecordMarkdownComponent>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const recordId = 'recordId';
     const abstract = '#Test';
@@ -58,7 +58,7 @@ describe('Record Markdown component', function() {
                 MockComponent(MarkdownEditorComponent)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ],
         });
     });
@@ -67,7 +67,7 @@ describe('Record Markdown component', function() {
         fixture = TestBed.createComponent(RecordMarkdownComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getDctermsValue.and.callFake((obj, propId) => propId === 'abstract' ? abstract : '');
     });

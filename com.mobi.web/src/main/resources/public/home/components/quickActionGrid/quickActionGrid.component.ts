@@ -21,15 +21,14 @@
  * #L%
  */
 import { chunk, isEmpty } from 'lodash';
-import { Component, Inject, OnInit } from '@angular/core';
-import { StateService } from '@uirouter/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { WindowRef } from '../../../shared/services/windowRef.service';
-
-import './quickActionGrid.component.scss';
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+
+import './quickActionGrid.component.scss';
 
 /**
  * @class home.QuickActionGridComponent
@@ -45,7 +44,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 export class QuickActionGridComponent implements OnInit {
     actions = [];
 
-    constructor(private windowRef: WindowRef, private $state: StateService, private os: OntologyStateService,
+    constructor(private windowRef: WindowRef, private router: Router, private os: OntologyStateService,
                 private ds: DiscoverStateService) {}
     
     ngOnInit(): void {
@@ -84,27 +83,27 @@ export class QuickActionGridComponent implements OnInit {
         this.actions = chunk(actions, 3);
     }
     searchTheCatalog(): void {
-        this.$state.go('root.catalog', null, { reload: true });
+        this.router.navigate(['/catalog']);
     }
     openAnOntology(): void {
         if (!isEmpty(this.os.listItem)) {
             this.os.listItem.active = false;
         }
         this.os.listItem = undefined;
-        this.$state.go('root.ontology-editor', null, { reload: true });
+        this.router.navigate(['/ontology-editor']);
     }
     readTheDocumentation(): void {
         this.windowRef.getNativeWindow().open('https://mobi.inovexcorp.com/docs/', '_blank');
     }
     exploreData(): void {
         this.ds.tabIndex = 0;
-        this.$state.go('root.discover', null, { reload: true });
+        this.router.navigate(['/discover']);
     }
     queryData(): void {
         this.ds.tabIndex = 2;
-        this.$state.go('root.discover', null, { reload: true });
+        this.router.navigate(['/discover']);
     }
     ingestData(): void {
-        this.$state.go('root.mapper', null, { reload: true });
+        this.router.navigate(['/mapper']);
     }
 }

@@ -28,17 +28,16 @@ import { MatInputModule, MatFormFieldModule, MatButtonModule, MatIconModule, Mat
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
+import { MockComponent } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockPropertyManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
 import { AdvancedLanguageSelectComponent } from './advancedLanguageSelect.component';
 
 describe('Advanced Language Select component', function() {
     let component: AdvancedLanguageSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<AdvancedLanguageSelectComponent>;
-    let propertyManagerStub;
-
-    const language = {label: 'English', value: 'en'};
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -54,10 +53,8 @@ describe('Advanced Language Select component', function() {
             ],
             declarations: [
                 AdvancedLanguageSelectComponent,
+                MockComponent(LanguageSelectComponent)
             ],
-            providers: [
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-            ]
         });
     });
 
@@ -65,9 +62,7 @@ describe('Advanced Language Select component', function() {
         fixture = TestBed.createComponent(AdvancedLanguageSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        propertyManagerStub = TestBed.get('propertyManagerService');
 
-        propertyManagerStub.languageList = [language];
         component.parentForm = new FormGroup({
             language: new FormControl('')
         });
@@ -78,13 +73,8 @@ describe('Advanced Language Select component', function() {
         component = null;
         element = null;
         fixture = null;
-        propertyManagerStub = null;
     });
 
-    it('should initialize with the correct values', function() {
-        component.ngOnInit();
-        expect(component.languages).toEqual([language]);
-    });
     describe('controller methods', function() {
         it('show sets the proper variables', function() {
             component.show();
@@ -105,11 +95,11 @@ describe('Advanced Language Select component', function() {
             expect(element.queryAll(By.css('.advanced-language-select')).length).toEqual(1);
         });
         it('depending on whether the select is expanded', function() {
-            expect(element.queryAll(By.css('mat-form-field')).length).toEqual(0);
+            expect(element.queryAll(By.css('language-select')).length).toEqual(0);
 
             component.isShown = true;
             fixture.detectChanges();
-            expect(element.queryAll(By.css('mat-form-field')).length).toEqual(1);
+            expect(element.queryAll(By.css('language-select')).length).toEqual(1);
         });
         it('for correct links', function() {
             expect(element.queryAll(By.css('button .fa-plus')).length).toEqual(1);

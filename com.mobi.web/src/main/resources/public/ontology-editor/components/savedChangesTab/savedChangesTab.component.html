@@ -37,10 +37,11 @@
                 <mat-accordion *ngFor="let item of showList">
                     <mat-expansion-panel class="my-2">
                         <mat-expansion-panel-header>
-                            <!-- TODO: Figure out why ellipsis isn't showing -->
-                            <mat-panel-title class="remove-min-width text-truncate" title="{{item.entityName}}">{{item.entityName}}</mat-panel-title>
+                            <mat-panel-title class="col-4 remove-min-width text-truncate" title="{{item.entityName}}">
+                                <div class="text-truncate">{{item.entityName}}</div>
+                            </mat-panel-title>
                             <mat-panel-description class="remove-min-width text-truncate" title="{{item.id}}">
-                                <small><a (click)="go($event, item.id)">{{item.id}}</a></small>
+                                <small class="text-truncate"><a (click)="go($event, item.id)">{{item.id}}</a></small>
                             </mat-panel-description>
                         </mat-expansion-panel-header>
                         <ng-template matExpansionPanelContent>

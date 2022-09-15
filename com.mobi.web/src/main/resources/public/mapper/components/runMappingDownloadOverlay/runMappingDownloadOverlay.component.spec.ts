@@ -32,13 +32,13 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { MapperSerializationSelectComponent } from '../mapperSerializationSelect/mapperSerializationSelect.component';
 import { RunMappingDownloadOverlayComponent } from './runMappingDownloadOverlay.component';
 
@@ -50,7 +50,7 @@ describe('Run Mapping Download Overlay component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error message';
 
@@ -75,7 +75,7 @@ describe('Run Mapping Download Overlay component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
                 { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -89,7 +89,7 @@ describe('Run Mapping Download Overlay component', function() {
         mapperStateStub = TestBed.get(MapperStateService);
         delimitedManagerStub = TestBed.get(DelimitedManagerService);
         camelCaseStub = TestBed.get(CamelCasePipe);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         camelCaseStub.transform.and.callFake(a => a);
         mapperStateStub.selected = {

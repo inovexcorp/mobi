@@ -21,7 +21,9 @@
  * #L%
  */
 
-import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+import { UtilService } from '../../services/util.service';
 
 import './inlineEdit.component.scss';
 
@@ -64,7 +66,7 @@ export class InlineEditComponent {
     @Input() placeholder: string;
     @Output() saveEvent = new EventEmitter<string>();
 
-    constructor(@Inject('utilService') public util) {}
+    constructor(public util: UtilService) {}
     
     saveChanges(): void {
         if (this.required && this.editedText === '') {

@@ -20,24 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, find, chain, sortBy, isNull, forEach, some } from 'lodash';
+import { map, find, chain, sortBy, isNull, some } from 'lodash';
+import { Component, Input, OnInit, Output } from '@angular/core';
 
-import './recordPermissionView.component.scss';
-
-import { Policy } from '../../../shared/models/policy.interface';
-import { Group } from '../../../shared/models/group.interface';
-import { User } from '../../../shared/models/user.interface';
-import { Component, Inject, Input, OnInit, Output } from '@angular/core';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { Policy } from '../../../shared/models/policy.interface';
+import { RecordPermissionsManagerService } from '../../../shared/services/recordPermissionsManager.service';
+
+import './recordPermissionView.component.scss';
+import { RecordPermissions } from '../../../shared/models/recordPermissions.interface';
 
 /**
- * @ngdoc component
- * @name recordPermissionView.component:recordPermissionView
- * @requires shared.service:catalogStateService
- * @requires shared.service:utilService
- * @requires shared.service:userManagerService
- * @requires shared.service:recordPermissionsManagerService
+ * @class catalog.RecordPermissionViewComponent
  *
  * @description
  * `recordPermissionView` is a component that creates a form to contain a `userAccessControls` module that will
@@ -57,30 +53,28 @@ export class RecordPermissionViewComponent implements OnInit {
 
     constructor(public state: CatalogStateService,
         public ums: UserManagerService,
-        @Inject('recordPermissionsManagerService') public rps, 
-        @Inject('utilService') public utilService){}
+        public rps: RecordPermissionsManagerService, 
+        public util: UtilService) {}
 
-    ngOnInit() {
-        this.title = this.utilService.getDctermsValue(this.state.selectedRecord, 'title');
+    ngOnInit(): void {
+        this.title = this.util.getDctermsValue(this.state.selectedRecord, 'title');
         this.getPolicy(this.state.selectedRecord['@id']);
     }
 
-    getPolicy(recordId: string) {
+    getPolicy(recordId: string): void {
         this.rps.getRecordPolicy(recordId)
-            .then(responsePolicy => {
+            .subscribe(responsePolicy => {
                 this.recordId = recordId;
-                return this.convertResponsePolicy(responsePolicy);
-            }, this.utilService.createErrorToast).then(policies => {
-                this.policies = policies;
-            });
+                this.policies = this.convertResponsePolicy(responsePolicy);
+            }, error => this.util.createErrorToast(error));
     }
-    public hasChanges() {
+    public hasChanges(): boolean {
         return some(this.policies, 'changed');
     }
-    public save() {
+    public save(): void {
         if (this.hasChanges()) {
-            const recordPolicyObject = {}
-            forEach(this.policies, currentPolicy =>{
+            const recordPolicyObject: RecordPermissions = {};
+            this.policies.forEach(currentPolicy =>{
                 recordPolicyObject[currentPolicy.id] = {
                     everyone: currentPolicy.everyone,
                     users: map(currentPolicy.selectedUsers, user => user.iri),
@@ -88,20 +82,20 @@ export class RecordPermissionViewComponent implements OnInit {
                 };
             });
             this.rps.updateRecordPolicy(this.recordId, recordPolicyObject)
-                .then(() => {
+                .subscribe(() => {
                     this.policies = map(this.policies, policyItem => {
                         policyItem.changed = false;
                         return policyItem;
                     });
-                    this.utilService.createSuccessToast('Permissions updated');
-                }, this.utilService.createErrorToast);
+                    this.util.createSuccessToast('Permissions updated');
+                }, error => this.util.createErrorToast(error));
         }
     }
-    goBack() {
+    goBack(): void {
         this.state.editPermissionSelectedRecord = false;
     }
-    private convertResponsePolicy(responsePolicy: [any]) {
-        const policies = [];
+    private convertResponsePolicy(responsePolicy: RecordPermissions): Policy[] {
+        const policies: Policy[] = [];
         Object.keys(responsePolicy).forEach(key => {
             const ruleTitle = this.getRuleTitle(key);
             const ruleInfo = responsePolicy[key];
@@ -145,7 +139,7 @@ export class RecordPermissionViewComponent implements OnInit {
             case 'urn:delete':  
                 return 'Delete Record';
             case 'urn:update':
-                return 'Manage Record'
+                return 'Manage Record';
             case 'urn:modify':
                 return 'Modify Record';
             case 'urn:modifyMaster':

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material';
 
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
@@ -28,6 +28,7 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { Commit } from '../../../shared/models/commit.interface';
 
 import './createRequest.component.scss';
+import { UtilService } from '../../../shared/services/util.service';
 
 
 /**
@@ -43,16 +44,18 @@ import './createRequest.component.scss';
 })
 export class CreateRequestComponent implements OnInit, OnDestroy {
     commits:Commit[];
+    isCompleted = false;
     isDisabled:boolean;
 
     @ViewChild('requestStepper') requestStepper: MatStepper;
 
-    constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, @Inject('utilService') public util) {}
+    constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, public util: UtilService) {}
 
     // TODO: Come Angular 7, replace with binding on stepper in template 
     ngOnInit(): void {
         this.requestStepper.selectedIndex = this.state.createRequestStep;
         this.updateIsDisableValue();
+        this.isCompleted = !!this.state.requestConfig.title;
     }
     ngOnDestroy(): void {
         this.state.createRequestStep = this.requestStepper.selectedIndex;

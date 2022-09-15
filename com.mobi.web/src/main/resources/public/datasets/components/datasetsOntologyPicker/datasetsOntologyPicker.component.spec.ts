@@ -34,7 +34,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS, ONTOLOGYEDITOR, XSD } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -43,6 +42,7 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { DatasetsOntologyPickerComponent } from './datasetsOntologyPicker.component';
 
 describe('Datasets Ontology Picker component', function() {
@@ -50,7 +50,7 @@ describe('Datasets Ontology Picker component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<DatasetsOntologyPickerComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'http://mobi.com/catalog-local';
     const ontology1Id = 'ontology1Record';
@@ -82,7 +82,7 @@ describe('Datasets Ontology Picker component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -92,7 +92,7 @@ describe('Datasets Ontology Picker component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontology1Record = {
                 '@id': ontology1Id,

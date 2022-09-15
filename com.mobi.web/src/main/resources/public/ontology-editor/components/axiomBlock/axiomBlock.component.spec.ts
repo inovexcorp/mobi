@@ -28,10 +28,9 @@ import { DebugElement } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { of } from 'rxjs';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM, mockPropertyManager } from '../../../../../../test/ts/Shared';
 
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
-import { AxiomBlockComponent } from './axiomBlock.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { DatatypePropertyAxiomsComponent } from '../datatypePropertyAxioms/datatypePropertyAxioms.component';
@@ -40,6 +39,8 @@ import { ObjectPropertyAxiomsComponent } from '../objectPropertyAxioms/objectPro
 import { RDFS } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { AxiomOverlayComponent } from '../axiomOverlay/axiomOverlay.component';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { AxiomBlockComponent } from './axiomBlock.component';
 
 describe('Axiom Block component', function() {
     let component: AxiomBlockComponent;
@@ -48,7 +49,7 @@ describe('Axiom Block component', function() {
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
     let dialogStub : jasmine.SpyObj<MatDialog>;
-    let propertyServiceStub;
+    let propertyServiceStub: jasmine.SpyObj<PropertyManagerService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -63,7 +64,7 @@ describe('Axiom Block component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(MatDialog),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
+                MockProvider(PropertyManagerService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -78,7 +79,7 @@ describe('Axiom Block component', function() {
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.get(OntologyStateService);
         ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
-        propertyServiceStub = TestBed.get('propertyManagerService');
+        propertyServiceStub = TestBed.get(PropertyManagerService);
         dialogStub = TestBed.get(MatDialog);
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
@@ -104,22 +105,22 @@ describe('Axiom Block component', function() {
     describe('controller methods', function() {
         describe('should open the correct modal if the selected entity is a', function() {
             it('class', function() {
-                propertyServiceStub.classAxiomList = [{iri: 'axiom1'}];
+                propertyServiceStub.classAxiomList = [{iri: 'axiom1', valuesKey: ''}];
                 ontologyManagerServiceStub.isClass.and.returnValue(true);
                 component.showAxiomOverlay();
-                expect(dialogStub.open).toHaveBeenCalledWith(AxiomOverlayComponent, {data: {axiomList: [{iri: 'axiom1'}]}});
+                expect(dialogStub.open).toHaveBeenCalledWith(AxiomOverlayComponent, {data: {axiomList: [{iri: 'axiom1', valuesKey: ''}]}});
             });
             it('data property', function() {
-                propertyServiceStub.datatypeAxiomList = [{iri: 'axiom1'}];
+                propertyServiceStub.datatypeAxiomList = [{iri: 'axiom1', valuesKey: ''}];
                 ontologyManagerServiceStub.isDataTypeProperty.and.returnValue(true);
                 component.showAxiomOverlay();
-                expect(dialogStub.open).toHaveBeenCalledWith(AxiomOverlayComponent, {data: {axiomList: [{iri: 'axiom1'}]}});
+                expect(dialogStub.open).toHaveBeenCalledWith(AxiomOverlayComponent, {data: {axiomList: [{iri: 'axiom1', valuesKey: ''}]}});
             });
             it('object property', function() {
-                propertyServiceStub.objectAxiomList = [{iri: 'axiom1'}];
+                propertyServiceStub.objectAxiomList = [{iri: 'axiom1', valuesKey: ''}];
                 ontologyManagerServiceStub.isObjectProperty.and.returnValue(true);
                 component.showAxiomOverlay();
-                expect(dialogStub.open).toHaveBeenCalledWith(AxiomOverlayComponent, {data: { axiomList: [{iri: 'axiom1'}]}});
+                expect(dialogStub.open).toHaveBeenCalledWith(AxiomOverlayComponent, {data: { axiomList: [{iri: 'axiom1', valuesKey: ''}]}});
             });
         });
         describe('should update the class hierarchy', function() {
@@ -146,13 +147,13 @@ describe('Axiom Block component', function() {
                     component.updateClassHierarchy({axiom: this.axiom, values: this.values});
                     expect(ontologyStateServiceStub.setSuperClasses).toHaveBeenCalledWith('axiom1', this.values);
                     expect(ontologyStateServiceStub.updateFlatIndividualsHierarchy).toHaveBeenCalledWith(this.values);
-                    expect(ontologyStateServiceStub.setVocabularyStuff).toHaveBeenCalled();
+                    expect(ontologyStateServiceStub.setVocabularyStuff).toHaveBeenCalledWith();
                 });
                 it('and is not present in the individual hierarchy', function () {
                     component.updateClassHierarchy({axiom: this.axiom, values: this.values});
                     expect(ontologyStateServiceStub.setSuperClasses).toHaveBeenCalledWith('axiom1', this.values);
                     expect(ontologyStateServiceStub.updateFlatIndividualsHierarchy).not.toHaveBeenCalled();
-                    expect(ontologyStateServiceStub.setVocabularyStuff).toHaveBeenCalled();
+                    expect(ontologyStateServiceStub.setVocabularyStuff).toHaveBeenCalledWith();
                 });
             });
         });
@@ -231,7 +232,7 @@ describe('Axiom Block component', function() {
                     ontologyStateServiceStub.containsDerivedSemanticRelation.and.returnValue(true);
                     component.updateObjectPropHierarchy({axiom: this.axiom, values: this.values});
                     expect(ontologyStateServiceStub.setSuperProperties).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected['@id'], this.values, 'objectProperties');
-                    expect(ontologyStateServiceStub.setVocabularyStuff).toHaveBeenCalled();
+                    expect(ontologyStateServiceStub.setVocabularyStuff).toHaveBeenCalledWith();
                 });
                 it('and is not a derived semanticRelation', function() {
                     this.axiom = RDFS + 'subPropertyOf';
@@ -328,6 +329,6 @@ describe('Axiom Block component', function() {
         spyOn(component, 'showAxiomOverlay');
         const link = element.queryAll(By.css('.section-header a'))[0];
         link.triggerEventHandler('click', null);
-        expect(component.showAxiomOverlay).toHaveBeenCalled();
+        expect(component.showAxiomOverlay).toHaveBeenCalledWith();
     });
 });

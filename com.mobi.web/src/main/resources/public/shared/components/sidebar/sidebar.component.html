@@ -20,45 +20,45 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="sidebar py-2 h-100 d-flex flex-column" ng-class="$root.collapsedNav ? 'collapsed' : 'open'">
+<div class="sidebar py-2 h-100 d-flex flex-column" [ngClass]="collapsedNav ? 'collapsed' : 'open'">
     <div class="image-container text-center pb-2">
-        <a class="d-block" ui-sref="root.home"><img ng-src="{{$root.collapsedNav ? 'images/mobi-alternate-logo-icon.png' : 'images/mobi-alternate-logo.svg'}}" alt="Mobi Logo"></a>
+        <a class="d-block" [routerLink]="['/home']"><img src="{{collapsedNav ? 'images/mobi-alternate-logo-icon.png' : 'images/mobi-alternate-logo.svg'}}" alt="Mobi Logo"></a>
     </div>
-    <a class="current-user-box p-2 my-2 d-flex align-items-center" ng-class="{'active': $state.is('root.settings'), 'text-truncate': !$root.collapsedNav}" ui-sref-active="active" ui-sref="root.settings">
+    <a class="current-user-box p-2 my-2 d-flex align-items-center" [ngClass]="{'active': router.isActive('/settings', false), 'text-truncate': !collapsedNav}" [routerLink]="['/settings']" [routerLinkActive]="'active'">
         <div class="avatar-box rounded-circle align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
-        <div class="user-title flex-1 remove-min-width text-truncate ml-1 align-middle collapsed-hide" ng-if="!$root.collapsedNav">{{dvm.getUserDisplay()}}</div>
+        <div class="user-title flex-1 remove-min-width text-truncate ml-1 align-middle collapsed-hide" *ngIf="!collapsedNav">{{getUserDisplay()}}</div>
     </a>
     <ul class="main-nav nav flex-column flex-grow-1">
-        <li class="nav-item" ng-repeat="per in dvm.perspectives" ng-class="{'active': per.isActive}" ui-sref-active="active">
-            <a class="nav-link" ui-sref="{{per.sref}}">
-                <i ng-if="!per.mat" class="fa fa-{{per.icon}}"></i>
-                <md-icon ng-if="per.mat">{{per.icon}}</md-icon>
-                <span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">{{per.name}}
-                    <span class="badge badge-pill badge-beta" ng-if="per.name == 'Shapes Editor'">Beta</span>
+        <li class="nav-item" *ngFor="let per of perspectives" [ngClass]="{'active': per.isActive}" [routerLinkActive]="'active'">
+            <a class="nav-link" [routerLink]="[per.route]">
+                <i *ngIf="!per.mat" class="fa fa-{{per.icon}}"></i>
+                <mat-icon *ngIf="per.mat">{{per.icon}}</mat-icon>
+                <span class="collapsed-hide ml-1" *ngIf="!collapsedNav">{{per.name}}
+                    <span class="badge badge-pill badge-beta" *ngIf="per.name == 'Shapes Editor'">Beta</span>
                 </span>
             </a>
         </li>
     </ul>
     <div>
         <ul class="nav flex-column">
-            <li class="nav-item" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)" ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active">
-                <a class="nav-link" ui-sref="root.user-management"><i class="fa fa-cog"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">Administration</span></a>
+            <li class="nav-item" *ngIf="um.isAdmin(lm.currentUser)" [ngClass]="{'active': router.isActive('/user-management', false)}" [routerLinkActive]="'active'">
+                <a class="nav-link" [routerLink]="['/user-management']"><i class="fa fa-cog"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Administration</span></a>
             </li>
-            <li class="nav-item help dropright" uib-dropdown>
-                <a uib-dropdown-toggle class="nav-link"><i class="fa fa-question-circle"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">Help</span></a>
-                <ul uib-dropdown-menu>
-                    <a class="dropdown-item" href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a>
-                    <li role="separator" class="dropdown-divider"></li>
-                    <a class="dropdown-item" href="https://inovexirad.atlassian.net/servicedesk" target="_blank">Support</a>
-                </ul>
+            <li class="nav-item help">
+                <a class="nav-link" [matMenuTriggerFor]="helpMenu"><i class="fa fa-question-circle"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Help</span></a>
+                <mat-menu #helpMenu="matMenu" [overlapTrigger]="false">
+                    <a mat-menu-item href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a>
+                    <mat-divider></mat-divider>
+                    <a mat-menu-item href="https://inovexirad.atlassian.net/servicedesk" target="_blank">Support</a>
+                </mat-menu>
             </li>
-            <li class="nav-item"><a class="nav-link" ng-click="dvm.lm.logout()"><i class="fa fa-sign-out fa-fw"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">Logout</span></a></li>
+            <li class="nav-item"><a class="nav-link" (click)="lm.logout()"><i class="fa fa-sign-out fa-fw"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Logout</span></a></li>
         </ul>
         <div class="version collapsed-hide text-center text-nowrap mt-2">
-            <small class="collapsed-hide" ng-class="$root.collapsedNav ? 'hidden' : 'shown'">v${project.version}</small>
+            <small class="collapsed-hide" [ngClass]="collapsedNav ? 'hidden' : 'shown'">v${project.version}</small>
         </div>
     </div>
     <div class="hover-box">
-        <button class="btn btn-link" ng-click="dvm.toggle()"><i class="fa fa-chevron-left"></i></button>
+        <button class="btn btn-link" (click)="toggle()"><i class="fa fa-chevron-left"></i></button>
     </div>
 </div>

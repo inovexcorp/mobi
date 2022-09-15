@@ -21,13 +21,15 @@
  * #L%
  */
 import { Datasource, IDatasource } from 'ngx-ui-scroll';
-import {first} from 'rxjs/operators';
-import { every, filter, some, has, concat, map, merge } from 'lodash';
-import { Component, EventEmitter, Inject, Input, OnInit, OnChanges, Output, OnDestroy, SimpleChanges } from '@angular/core';
+import { first } from 'rxjs/operators';
+import {every, filter, some, has, concat, map, merge, findIndex} from 'lodash';
+import { Component, EventEmitter, Input, OnInit, OnChanges, Output, OnDestroy, SimpleChanges } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { INDENT } from '../../../constants';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 /**
  * @class ontology-editor.PropertyTreeComponent
@@ -79,9 +81,10 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
     deprecatedEntityFilter;
     chunks = [];
 
-    constructor(public os: OntologyStateService, @Inject('utilService') private util) {}
+    constructor(public os: OntologyStateService, private util: UtilService) {}
 
     ngOnInit(): void {
+
         this.activeEntityFilter = {
             name: 'Hide unused imports',
             checked: false,
@@ -111,7 +114,9 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.dropdownFilters = [Object.assign({}, this.activeEntityFilter), Object.assign({}, this.deprecatedEntityFilter)];
         this.activeTab = this.os.getActiveKey();
         this.flatPropertyTree = this.constructFlatPropertyTree();
-        this.update();
+        setTimeout( () => {
+            this.update();
+        }, 500);
     }
     ngOnChanges(changesObj: SimpleChanges): void {
         if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
@@ -119,7 +124,9 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
                 this.removeFilters();
             }
             this.flatPropertyTree = this.constructFlatPropertyTree();
-            this.update();
+            setTimeout( () => {
+                this.update();
+            }, 500);
         }
     }
     ngOnDestroy(): void {
@@ -133,14 +140,16 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
     onKeyup(): void {
         this.filterText = this.searchText;
         this.dropdownFilterActive = some(this.dropdownFilters, 'flag');
-        this.update();
+        setTimeout( () => {
+            this.update();
+        }, 500);
     }
     toggleOpen(node: HierarchyNode): void {
         node.isOpened = !node.isOpened;
         if (!node.title) {
             this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = node.isOpened;
         } else {
-            node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened);
+            node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened, OntologyListItem.PROPERTIES_TAB);
             this.os.listItem.editorTabStates[this.activeTab].open[node.title] = node.isOpened;
         }
         this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this));
@@ -149,7 +158,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
     matchesSearchFilter(node: HierarchyNode): boolean {
         let searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
-        some(node.entityInfo.names, name => {
+        some(node.entityInfo?.names, name => {
             if (name.toLowerCase().includes(this.filterText.toLowerCase())) {
                 searchMatch = true;
             }
@@ -183,7 +192,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
             if (toOpen) {
                 if (!node.isOpened) {
                     node.isOpened = true;
-                    node.set(this.os.listItem.versionedRdfRecord.recordId, true);
+                    node.set(this.os.listItem.versionedRdfRecord.recordId, true, OntologyListItem.PROPERTIES_TAB);
                 }
                 node.displayNode = true;
             }
@@ -205,7 +214,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
         delete node.displayNode;
 
         if (node.title) {
-            node.isOpened = node.get(this.os.listItem.versionedRdfRecord.recordId);
+            node.isOpened = node.get(this.os.listItem.versionedRdfRecord.recordId, OntologyListItem.PROPERTIES_TAB);
             if (this.filterText || this.dropdownFilterActive) {
                 node.parentNoMatch = true;
             } else {
@@ -245,7 +254,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
         return every(this.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     isShown(node: HierarchyNode): boolean {
-        const displayNode = !has(node, 'entityIRI') || (this.os.areParentsOpen(node, this.activeTab) && node.get(this.os.listItem.versionedRdfRecord.recordId));
+        const displayNode = !has(node, 'entityIRI') || (this.os.areParentsOpen(node, this.activeTab) && node.get(this.os.listItem.versionedRdfRecord.recordId, OntologyListItem.PROPERTIES_TAB));
         if ((this.filterText || this.dropdownFilterActive)&& node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
@@ -264,7 +273,19 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.preFilteredHierarchy = this.flatPropertyTree.filter(this.searchFilter.bind(this));
         this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
         this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
-        this.datasource.adapter.reload(this.index);
+        let selectedIndex;
+        if (this.os.listItem.selected) {
+            selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
+                if (entity.entityIRI === this.os.listItem.selected['@id']) {
+                    return true
+                } else {
+                    return false;
+                }
+            });
+            selectedIndex < 0 ? this.datasource.adapter.reload(0) : this.datasource.adapter.reload(selectedIndex);
+        } else {
+            this.datasource.adapter.reload(this.index);
+        }
     }
     private addGetToArrayItems(array, get) {
         return map(array, item => merge(item, {get}));

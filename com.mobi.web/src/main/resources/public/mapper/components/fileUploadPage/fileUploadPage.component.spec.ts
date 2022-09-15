@@ -206,6 +206,7 @@ describe('File Upload Page component', function() {
             expect(element.queryAll(By.css('.continue-btn')).length).toEqual(0);
 
             mapperStateStub.editMapping = true;
+            component.ngOnInit();
             fixture.detectChanges();
             expect(element.queryAll(By.css('mapping-preview')).length).toEqual(0);
             expect(element.queryAll(By.css('.run-btn')).length).toEqual(0);

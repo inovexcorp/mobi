@@ -97,6 +97,9 @@ describe('IRI Select Ontology component', function() {
         beforeEach(function() {
             this.group = { namespace: 'namespace', options: [iriOption] };
             spyOn(component, 'filter').and.returnValue([this.group]);
+            ontologyManagerStub.isBlankNodeId.and.returnValue(false);
+            spyOn(component, 'getName').and.returnValue('Name');
+            component.selected = ['test'];
         });
         it('when singleSelect is true', fakeAsync(function() {
             component.singleSelect = true;
@@ -105,6 +108,11 @@ describe('IRI Select Ontology component', function() {
                 expect(result).toEqual([this.group]);
             });
             tick();
+            expect(component.singleControl.value).toEqual({
+                item: 'test',
+                isBlankNode: false,
+                name: 'Name'
+            });
         }));
         it('when singleSelect is false', fakeAsync(function() {
             component.ngOnInit();
@@ -112,6 +120,11 @@ describe('IRI Select Ontology component', function() {
                 expect(result).toEqual([this.group]);
             });
             tick();
+            expect(component.selectedOptions).toEqual([{
+                item: 'test',
+                isBlankNode: false,
+                name: 'Name'
+            }]);
         }));
     });
     describe('contains the correct html', function() {
@@ -262,7 +275,7 @@ describe('IRI Select Ontology component', function() {
                 } as MatAutocompleteSelectedEvent;
                 component.select(event);
                 expect(component.selected).toEqual(['previous', iriOption.item]);
-                expect(component.selectedOptions).toEqual([iriOption]);
+                expect(component.selectedOptions).toEqual([{item: 'previous', isBlankNode: undefined, name: undefined}, iriOption]);
                 expect(component.selectedChange.emit).toHaveBeenCalledWith(['previous', iriOption.item]);
                 expect(component.multiInput.nativeElement.value).toEqual('');
                 expect(component.multiControl.value).toEqual(null);

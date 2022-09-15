@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialogRef } from '@angular/material';
 import { find, get } from 'lodash';
@@ -33,10 +33,11 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-
-import './runMappingOntologyOverlay.component.scss';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+
+import './runMappingOntologyOverlay.component.scss';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface OntologyPreview {
     id: string,
@@ -71,8 +72,8 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
     filteredOntologies: Observable<OntologyPreview[]>;
 
     constructor(private dialogRef: MatDialogRef<RunMappingOntologyOverlayComponent>, private state: MapperStateService,
-        private dm: DelimitedManagerService, private cm: CatalogManagerService,
-        private os: OntologyStateService, @Inject('utilService') private util) {}
+        private dm: DelimitedManagerService, private cm: CatalogManagerService, private os: OntologyStateService, 
+        private util: UtilService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');

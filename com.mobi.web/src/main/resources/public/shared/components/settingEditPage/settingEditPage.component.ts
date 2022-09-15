@@ -20,11 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { OnInit, Inject, Component, Input } from '@angular/core';
-
-import { forEach, isEqual } from 'lodash';
+import { OnInit, Component, Input } from '@angular/core';
+import { isEqual } from 'lodash';
 
 import { RDFS } from '../../../prefixes';
+import { SettingManagerService } from '../../services/settingManager.service';
+import { UtilService } from '../../services/util.service';
 
 import './settingEditPage.component.scss';
 
@@ -49,7 +50,7 @@ export class SettingEditPageComponent implements OnInit {
     @Input() settingType;
     tabs: TabType[] = [];
     
-    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util) {}
+    constructor(private sm: SettingManagerService, private util: UtilService) {}
     
     ngOnInit(): void {
         this.setSettingTabs();
@@ -68,7 +69,7 @@ export class SettingEditPageComponent implements OnInit {
     }
 
     selectTab(selectedTab: TabType): void {
-        forEach(this.tabs, tab => {
+        this.tabs.forEach(tab => {
             if (tab.active && !isEqual(tab, selectedTab)) {
                 tab.active = false;
             }
@@ -78,9 +79,9 @@ export class SettingEditPageComponent implements OnInit {
 
     setSettingTabs(): void {
         this.sm.getSettingGroups(this.settingType.iri)
-            .then(response => {
+            .subscribe(response => {
                 this.tabs = [];
-                forEach(response.data, settingGroup => {
+                response.forEach(settingGroup => {
                     this.addTab(settingGroup);
                 });
                 if (this.tabs.length) {

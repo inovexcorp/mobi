@@ -21,29 +21,31 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { MergeBlockComponent } from './mergeBlock.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { cleanStylesFromDOM, mockOntologyState, mockUtil } from '../../../../../../test/ts/Shared';
-import _ = require('lodash');
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { CommitDifferenceTabsetComponent } from '../../../shared/components/commitDifferenceTabset/commitDifferenceTabset.component';
-import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material';
 
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { CommitDifferenceTabsetComponent } from '../../../shared/components/commitDifferenceTabset/commitDifferenceTabset.component';
+import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
+import { UtilService } from '../../../shared/services/util.service';
+import { MergeBlockComponent } from './mergeBlock.component';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+
 describe('Merge Block component', function() {
     let component: MergeBlockComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<MergeBlockComponent>;
-    let ontologyStateStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -60,8 +62,8 @@ describe('Merge Block component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(OntologyStateService),
+                MockProvider(UtilService)
             ]
         });
     });
@@ -72,8 +74,9 @@ describe('Merge Block component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
+        ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.versionedRdfRecord.branchId = 'branchId';
         ontologyStateStub.listItem.branches = [{'@id': 'branchId'}];
         ontologyStateStub.listItem.merge.checkbox = false;
@@ -94,7 +97,7 @@ describe('Merge Block component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.merge-block')).length).toEqual(1);
         });
-        _.forEach(['branch-select', 'mat-checkbox'], item => {
+        ['branch-select', 'mat-checkbox'].forEach(item => {
             it('with a ' + item, function() {
                 expect(element.queryAll(By.css(item)).length).toEqual(1);
             });
@@ -133,7 +136,7 @@ describe('Merge Block component', function() {
             expect(element.queryAll(By.css('.btn-container .btn-primary[disabled]')).length).toEqual(1);
             expect(element.queryAll(By.css('commit-difference-tabset')).length).toEqual(0);
 
-            ontologyStateStub.listItem.merge.target = {};
+            ontologyStateStub.listItem.merge.target = {'@id': ''};
             component.commits = ['1'];
             fixture.detectChanges();
             expect(element.queryAll(By.css('commit-difference-tabset')).length).toEqual(1);
@@ -144,6 +147,7 @@ describe('Merge Block component', function() {
         describe('should collect differences when changing the target branch', function() {
             beforeEach(function() {
                 ontologyStateStub.listItem.merge.difference = {};
+                utilStub.getPropertyId.and.returnValue('');
             });
             it('unless the target is empty', function() {
                 component.changeTarget(undefined);
@@ -169,6 +173,7 @@ describe('Merge Block component', function() {
                 });
                 it('successfully', function() {
                     catalogManagerStub.getRecordBranch.and.returnValue(of({'@id': 'branch1', 'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
+                    ontologyStateStub.getMergeDifferences.and.returnValue(of(null));
                     component.changeTarget(this.branch);
                     fixture.detectChanges();
                     expect(ontologyStateStub.listItem.merge.target).toEqual(this.branch);
@@ -183,19 +188,20 @@ describe('Merge Block component', function() {
                 ontologyStateStub.attemptMerge.and.returnValue(throwError('Error message'));
                 component.submit();
                 fixture.detectChanges();
-                expect(ontologyStateStub.attemptMerge).toHaveBeenCalled();
+                expect(ontologyStateStub.attemptMerge).toHaveBeenCalledWith();
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(ontologyStateStub.cancelMerge).not.toHaveBeenCalled();
                 expect(component.error).toEqual('Error message');
             });
             it('if attemptMerge resolves', function() {
+                ontologyStateStub.attemptMerge.and.returnValue(of(null));
                 component.submit();
                 fixture.detectChanges();
-                expect(ontologyStateStub.attemptMerge).toHaveBeenCalled();
-                expect(ontologyStateStub.resetStateTabs).toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
-                expect(ontologyStateStub.cancelMerge).toHaveBeenCalled();
+                expect(ontologyStateStub.attemptMerge).toHaveBeenCalledWith();
+                expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
                 expect(component.error).toEqual('');
             });
         });
@@ -205,12 +211,12 @@ describe('Merge Block component', function() {
         const button = element.queryAll(By.css('.btn-container .btn-primary'))[0];
 
         button.triggerEventHandler('click', null);
-        expect(component.submit).toHaveBeenCalled();
+        expect(component.submit).toHaveBeenCalledWith();
     });
     it('should call the correct method when the button is clicked', function() {
         const button = element.queryAll(By.css('.btn-container .btn:not(.btn-primary)'))[0];
 
         button.triggerEventHandler('click', null);
-        expect(ontologyStateStub.cancelMerge).toHaveBeenCalled();
+        expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
     });
 });

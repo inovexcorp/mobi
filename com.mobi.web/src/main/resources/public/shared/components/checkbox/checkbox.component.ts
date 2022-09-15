@@ -26,7 +26,7 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 
 /**
  * @ngdoc component
- * @name shared.component:checkbox
+ * @class shared.CheckboxComponent
  * @requires $timeout
  *
  * @description 

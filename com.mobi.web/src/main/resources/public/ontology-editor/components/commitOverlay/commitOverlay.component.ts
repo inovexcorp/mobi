@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { get, find } from 'lodash';
@@ -28,6 +28,7 @@ import { switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class ontology-editor.CommitOverlayComponent
@@ -49,7 +50,7 @@ export class CommitOverlayComponent implements OnInit {
     });
 
     constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<CommitOverlayComponent>,
-        public os: OntologyStateService, private cm: CatalogManagerService, @Inject('utilService') private util) {}
+        public os: OntologyStateService, private cm: CatalogManagerService, private util: UtilService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');

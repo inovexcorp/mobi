@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { downgradeComponent } from '@angular/upgrade/static';
 import { NgModule } from '@angular/core';
 
 import { ActivityCardComponent } from './components/activityCard/activityCard.component';
@@ -29,6 +27,7 @@ import { ActivityTitleComponent } from './components/activityTitle/activityTitle
 import { HomePageComponent } from './components/homePage/homePage.component';
 import { QuickActionGridComponent } from './components/quickActionGrid/quickActionGrid.component';
 import { SharedModule } from '../shared/shared.module';
+import { RouterModule } from '@angular/router';
 
 /**
  * @namspace home
@@ -37,6 +36,7 @@ import { SharedModule } from '../shared/shared.module';
  */
 @NgModule({
     imports: [
+        RouterModule,
         SharedModule
     ],
     declarations: [
@@ -56,9 +56,3 @@ import { SharedModule } from '../shared/shared.module';
     ]
 })
 export class HomeModule {}
-
-angular.module('home', [])
-    .directive('activityCard', downgradeComponent({component: ActivityCardComponent}) as angular.IDirectiveFactory)
-    .directive('activityTitle', downgradeComponent({component: ActivityTitleComponent}) as angular.IDirectiveFactory)
-    .directive('homePage', downgradeComponent({component: HomePageComponent}) as angular.IDirectiveFactory)
-    .directive('quickActionGrid', downgradeComponent({component: QuickActionGridComponent}) as angular.IDirectiveFactory);

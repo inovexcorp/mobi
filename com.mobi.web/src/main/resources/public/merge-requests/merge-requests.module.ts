@@ -21,8 +21,6 @@
  * #L%
  */
 import { NgModule } from '@angular/core';
-import * as angular from 'angular';
-import { downgradeComponent } from '@angular/upgrade/static';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -68,18 +66,3 @@ import { RequestRecordSelectComponent } from './components/requestRecordSelect/r
     ]
 })
 export class MergeRequestsModule {}
-
-angular.module('merge-requests', [])
-    .directive('assigneeInput', downgradeComponent({component: AssigneeInputComponent}) as angular.IDirectiveFactory)
-    .directive('commentDisplay', downgradeComponent({component: CommentDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('createRequest', downgradeComponent({component: CreateRequestComponent}) as angular.IDirectiveFactory)
-    .directive('editRequestOverlay', downgradeComponent({component: EditRequestOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('mergeRequestDiscussion', downgradeComponent({component: MergeRequestDiscussionComponent}) as angular.IDirectiveFactory)
-    .directive('mergeRequestList', downgradeComponent({component: MergeRequestListComponent}) as angular.IDirectiveFactory)
-    .directive('mergeRequestsPage', downgradeComponent({component: MergeRequestsPageComponent}) as angular.IDirectiveFactory)
-    .directive('mergeRequestTabset', downgradeComponent({component: MergeRequestTabsetComponent}) as angular.IDirectiveFactory)
-    .directive('mergeRequestView', downgradeComponent({component: MergeRequestViewComponent}) as angular.IDirectiveFactory)
-    .directive('replyComment', downgradeComponent({component: ReplyCommentComponent}) as angular.IDirectiveFactory)
-    .directive('requestBranchSelect', downgradeComponent({component: RequestBranchSelectComponent}) as angular.IDirectiveFactory)
-    .directive('requestDetailsForm', downgradeComponent({component: RequestDetailsFormComponent}) as angular.IDirectiveFactory)
-    .directive('requestRecordSelect', downgradeComponent({component: RequestRecordSelectComponent}) as angular.IDirectiveFactory);

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { merge } from 'lodash';
 import * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
 import { PersistedJson } from '@triply/yasgui/build/ts/src/PersistentConfig';
@@ -33,6 +33,7 @@ import { hasClass } from '../../vendor/YASGUI/plugins/utils/yasguiUtil';
 import { REST_PREFIX } from '../../constants';
 import { DiscoverStateService } from './discoverState.service';
 import { DownloadQueryOverlayComponent } from '../../discover/query/components/downloadQueryOverlay/downloadQueryOverlay.component';
+import { UtilService } from './util.service';
 
 /**
  * @class shared.YasguiService
@@ -57,9 +58,9 @@ export class YasguiService {
     yasrRootElement : HTMLElement = <any>{};
     hasInitialized = false;
 
-    constructor(private matDialog: MatDialog, private state: DiscoverStateService, @Inject('utilService') private util) {}
+    constructor(private matDialog: MatDialog, private state: DiscoverStateService, private util: UtilService) {}
 
-    initYasgui(element: HTMLElement, config :any = {}) : void{
+    initYasgui(element: HTMLElement, config: any = {}) : void{
         const localConfig = this._getDefaultConfig();
         config.name = 'mobiQuery';
         config.tabName = 'mobiQuery';
@@ -377,6 +378,7 @@ export class YasguiService {
         };
 
         yasr.plugins['table'].getUriLinkFromBinding = function(binding, prefixes?: { [key: string]: string }) {
+            const prefixed = false;
             const href = binding.value;
             let visibleString = href;
             if (prefixes) {
@@ -387,7 +389,13 @@ export class YasguiService {
                     }
                 }
             }
-            return `${visibleString}`;
+            // Hide brackets when prefixed or compact
+            const hideBrackets = prefixed || this.persistentConfig.compact;
+            return `${hideBrackets ? '': '&lt;'}<a class='iri' target='${
+                this.config.openIriInNewWindow ? '_blank' : '_self'
+            }'${this.config.openIriInNewWindow ? `ref='noopener noreferrer'` : ''} href='${href}'>${visibleString}</a>${
+                hideBrackets ? '' : '&gt;'
+            }`;
         };
 
         // dont show response plugin

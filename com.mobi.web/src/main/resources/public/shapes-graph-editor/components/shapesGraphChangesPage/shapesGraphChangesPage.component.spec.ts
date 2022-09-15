@@ -29,7 +29,7 @@ import { range, map, forEach } from 'lodash';
 import { MatExpansionModule, MatTooltipModule } from '@angular/material';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -41,6 +41,7 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OWL, RDF } from '../../../prefixes';
 import { ShapesGraphChangesPageComponent } from './shapesGraphChangesPage.component';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface PredicateObject {
     p: string,
@@ -58,7 +59,7 @@ describe('Shapes Graph Changes Page component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphChangesPageComponent>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     const commitChanges: CommitChanges = {id: 'test', additions: [], deletions: [], disableAll: false};
 
@@ -76,7 +77,7 @@ describe('Shapes Graph Changes Page component', function() {
                 ShapesGraphChangesPageComponent
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphStateService)
             ]
@@ -93,7 +94,7 @@ describe('Shapes Graph Changes Page component', function() {
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
         shapesGraphStateStub.listItem.inProgressCommit = new Difference();
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         utilStub.getPredicatesAndObjects.and.returnValue([{p: '', o: ''}]);
         utilStub.condenseCommitId.and.returnValue('test');
     });
@@ -108,7 +109,7 @@ describe('Shapes Graph Changes Page component', function() {
     });
     describe('should update the list of changes when additions/deletions change', function() {
         beforeEach(function() {
-            utilStub.getChangesById.and.returnValue([{}]);
+            utilStub.getChangesById.and.returnValue([{p: '', o: ''}]);
         });
         it('if there are less than 100 changes', function() {
             component.additions = [{'@id': '1', 'value': ['stuff']}];
@@ -126,7 +127,7 @@ describe('Shapes Graph Changes Page component', function() {
             ]);
         });
         it('if there are more than 100 changes', function() {
-            let ids = range(102);
+            const ids = range(102);
             component.additions = map(ids, id => ({'@id': '' + id}));
             component.ngOnChanges();
             forEach(shapesGraphStateStub.listItem.inProgressCommit.additions as JSONLDObject[], change => {
@@ -144,13 +145,13 @@ describe('Shapes Graph Changes Page component', function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
 
-                expect(shapesGraphStateStub.clearInProgressCommit).toHaveBeenCalled();
+                expect(shapesGraphStateStub.clearInProgressCommit).toHaveBeenCalledWith();
                 expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless an error occurs', async function() {
                 catalogManagerStub.deleteInProgressCommit.and.returnValue(throwError(''));
-                let diff = new Difference();
+                const diff = new Difference();
                 diff.additions = [{'@id': '12345', '@type': []}];
                 shapesGraphStateStub.listItem.inProgressCommit = diff;
                 component.removeChanges();
@@ -249,6 +250,6 @@ describe('Shapes Graph Changes Page component', function() {
         const setButton = element.queryAll(By.css('button'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.removeChanges).toHaveBeenCalled();
+        expect(component.removeChanges).toHaveBeenCalledWith();
     });
 });

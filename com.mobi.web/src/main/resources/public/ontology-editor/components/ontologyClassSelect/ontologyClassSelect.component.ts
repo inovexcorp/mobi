@@ -117,7 +117,7 @@ export class OntologyClassSelectComponent implements OnInit {
         const index = this.selected.indexOf(option.item);
     
         if (index >= 0) {
-            this.selectedOptions.splice(index, 1); // TODO: Should be at the same position but test this
+            this.selectedOptions.splice(index, 1);
             this.selected.splice(index, 1);
             this.selectedChange.emit(this.selected);
         }

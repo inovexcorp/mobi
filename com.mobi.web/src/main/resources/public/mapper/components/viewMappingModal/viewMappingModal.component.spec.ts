@@ -27,12 +27,13 @@ import { MatButtonModule, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from 
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MappingState } from '../../../shared/models/mappingState.interface';
+import { UtilService } from '../../../shared/services/util.service';
 import { MappingPreviewComponent } from '../mappingPreview/mappingPreview.component';
 import { ViewMappingModalComponent } from './viewMappingModal.component';
 
@@ -41,7 +42,7 @@ describe('View Mapping Modal component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ViewMappingModalComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<ViewMappingModalComponent>>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const ontology: JSONLDObject = { '@id': 'ontology' };
     const state: MappingState = {
@@ -73,7 +74,7 @@ describe('View Mapping Modal component', function() {
             ],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { state } },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -84,7 +85,7 @@ describe('View Mapping Modal component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {

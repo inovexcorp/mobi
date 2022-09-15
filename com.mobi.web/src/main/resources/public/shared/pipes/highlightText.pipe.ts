@@ -26,7 +26,7 @@ import { Pipe, PipeTransform } from '@angular/core';
   name: 'highlightText',
 })
 export class HighlightTextPipe implements PipeTransform {
-  transform(value: any, args: any, background = false): any {
+  transform(value: string, args: string, background = false): string {
     if (!args) {
       return value;
     }

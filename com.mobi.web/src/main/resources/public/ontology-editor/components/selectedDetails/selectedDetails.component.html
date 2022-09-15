@@ -22,9 +22,13 @@
   -->
 <div class="selected-details">
     <div class="selected-heading" *ngIf="os.listItem.selected">
-        <!-- TODO: fix spacing between name and IRI -->
         <span class="entity-name">{{om.getEntityName(os.listItem.selected)}}</span>
-        <static-iri class="editable-iri" [readOnly]="readOnly" [iri]="os.listItem.selected['@id']" (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)" [highlightText]="highlightText"></static-iri>
+        <static-iri class="editable-iri"
+                    [readOnly]="readOnly"
+                    [iri]="os.listItem.selected['@id']"
+                    (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)"
+                    [highlightText]="highlightText">
+        </static-iri>
     </div>
     <p *ngIf="isFromImportedOntology()" class="type-wrapper is-imported-ontology">
         <span class="type-label">Ontology:</span>

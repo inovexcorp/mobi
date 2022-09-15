@@ -21,10 +21,11 @@
  * #L%
  */
 import { filter, includes } from 'lodash';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { Group } from '../../../shared/models/group.interface';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 import './groupTab.component.scss';
 
@@ -40,7 +41,7 @@ import './groupTab.component.scss';
 export class GroupTabComponent implements OnInit {
     groups: Group[] = [];
 
-    constructor(private um: UserManagerService, @Inject('loginManagerService') private lm) {}
+    constructor(private um: UserManagerService, private lm: LoginManagerService) {}
 
     ngOnInit(): void {
         this.groups = filter(this.um.groups, (group: Group) => includes(group.members, this.lm.currentUser));

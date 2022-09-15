@@ -25,18 +25,20 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
+import { throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM
 } from '../../../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { UtilService } from './util.service';
 import { DelimitedManagerService } from './delimitedManager.service';
-import { HelperService } from './helper.service';
 
 describe('Delimited Manager service', function() {
     let service: DelimitedManagerService;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const mappingRecordIRI = 'http://test.org/mapping';
@@ -49,7 +51,7 @@ describe('Delimited Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 DelimitedManagerService,
-                HelperService,
+                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService),
             ]
         });
@@ -59,11 +61,36 @@ describe('Delimited Manager service', function() {
         service = TestBed.get(DelimitedManagerService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         httpMock = TestBed.get(HttpTestingController);
+        utilStub = TestBed.get(UtilService);
         
         service.fileName = 'test';
         service.separator = ',';
         service.containsHeaders = true;
         progressSpinnerStub.track.and.callFake((ob) => ob);
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
     });
 
     afterEach(function() {
@@ -71,6 +98,7 @@ describe('Delimited Manager service', function() {
         service = null;
         httpMock = null;
         progressSpinnerStub = null;
+        utilStub = null;
     });
 
     describe('should upload a delimited file', function() {

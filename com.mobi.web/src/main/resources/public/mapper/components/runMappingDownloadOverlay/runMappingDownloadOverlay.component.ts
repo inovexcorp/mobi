@@ -21,13 +21,14 @@
  * #L%
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class mapper.component:runMappingDownloadOverlay
@@ -51,7 +52,7 @@ export class RunMappingDownloadOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<RunMappingDownloadOverlayComponent>, private fb: FormBuilder,
         private state: MapperStateService, private dm: DelimitedManagerService,
-        private camelCasePipe: CamelCasePipe, @Inject('utilService') private util) {}
+        private camelCasePipe: CamelCasePipe, private util: UtilService) {}
 
     ngOnInit(): void {
         const title = this.state.selected.record ? this.state.selected.record.title : this.state.selected.config.title;

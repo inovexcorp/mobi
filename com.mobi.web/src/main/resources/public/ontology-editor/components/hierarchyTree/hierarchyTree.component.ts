@@ -21,14 +21,15 @@
  * #L%
  */
 import { first } from 'rxjs/operators';
-import { filter, some, every } from 'lodash';
-import { Component, Inject, OnInit, OnChanges, Input, EventEmitter, Output, OnDestroy } from '@angular/core';
+import {filter, some, every, findIndex} from 'lodash';
+import { Component, OnInit, OnChanges, Input, EventEmitter, Output, OnDestroy, SimpleChanges } from '@angular/core';
 import { Datasource, IDatasource } from 'ngx-ui-scroll';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { INDENT } from '../../../constants';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './hierarchyTree.component.scss';
 
@@ -42,6 +43,13 @@ import './hierarchyTree.component.scss';
  * @param {HierarchyNode[]} hierarchy An array which represents a flattened hierarchy
  * @param {Function} updateSearch A function to update the state variable used to track the search filter text
  */
+
+interface HierarchyFilterI{
+    name: string,
+    checked: boolean,
+    flag: boolean,
+    filter(node: HierarchyNode): boolean;
+}
 
 @Component({
     selector: 'hierarchy-tree',
@@ -76,12 +84,12 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
     midFilteredHierarchy = [];
     activeTab = '';
     dropdownFilterActive = false;
-    dropdownFilters = [];
-    activeEntityFilter;
-    deprecatedEntityFilter;
+    dropdownFilters: HierarchyFilterI[] = [];
+    activeEntityFilter: HierarchyFilterI;
+    deprecatedEntityFilter: HierarchyFilterI;
     chunks = [];
 
-    constructor(public os: OntologyStateService, public om: OntologyManagerService, @Inject('utilService') private util) {}
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, private util: UtilService) {}
 
     ngOnInit(): void {
         this.activeEntityFilter = {
@@ -110,7 +118,9 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         };
         this.dropdownFilters = [Object.assign({}, this.activeEntityFilter), Object.assign({}, this.deprecatedEntityFilter)];
         this.activeTab = this.os.getActiveKey();
-        this.update();
+        setTimeout( () => {
+            this.update();
+        }, 500);
     }
     private removeFilters(): void {
         this.dropdownFilterActive = false;
@@ -118,12 +128,14 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.searchText = '';
         this.filterText = '';
     }
-    ngOnChanges(changesObj: any): void {
+    ngOnChanges(changesObj: SimpleChanges): void {
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             if (changesObj.branchId) {
                 this.removeFilters();
             }
-            this.update();
+            setTimeout( () => {
+                this.update();
+            }, 500);
         }
     }
     ngOnDestroy(): void {
@@ -137,7 +149,9 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
     onKeyup(): void {
         this.filterText = this.searchText;
         this.dropdownFilterActive = some(this.dropdownFilters, 'flag');
-        this.update();
+        setTimeout( () => {
+            this.update();
+        }, 500);
     }
     toggleOpen(node: HierarchyNode): void {
         node.isOpened = !node.isOpened;
@@ -235,7 +249,19 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.preFilteredHierarchy = this.hierarchy.filter(this.searchFilter.bind(this));
         this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
         this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
-        this.datasource.adapter.reload(this.index);
+        let selectedIndex;
+        if (this.os.listItem.selected) {
+            selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
+                if (entity.entityIRI === this.os.listItem.selected['@id']) {
+                    return true
+                } else {
+                    return false;
+                }
+            });
+            selectedIndex < 0 ? this.datasource.adapter.reload(0) : this.datasource.adapter.reload(selectedIndex);
+        } else {
+            this.datasource.adapter.reload(this.index);
+        }
     }
 
     updateDropdownFilters(value): void {

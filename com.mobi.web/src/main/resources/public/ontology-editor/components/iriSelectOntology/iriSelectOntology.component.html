@@ -43,7 +43,7 @@
                     (matChipInputTokenEnd)="add($event)"/>
             </mat-chip-list>
         </ng-template>
-        <mat-autocomplete #iriAutocomplete="matAutocomplete" (optionSelected)="select($event)">
+        <mat-autocomplete #iriAutocomplete="matAutocomplete" (optionSelected)="select($event)" [displayWith]="displayFn.bind(this)">
             <mat-optgroup *ngFor="let group of filteredIris | async" [label]="group.namespace">
                 <mat-option *ngFor="let iriObj of group.options" [value]="iriObj" [title]="iriObj.iri" [disabled]="iriObj.isBlankNode">
                     {{iriObj.name}}

@@ -23,12 +23,27 @@
 import 'hammerjs';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { UpgradeModule } from '@angular/upgrade/static';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
+import { ToastrModule } from 'ngx-toastr';
 
-import { MODULE_NAME } from './app.module.ajs';
+import 'snapsvg';
+import 'chroma-js';
+import 'lodash';
+import 'jquery';
+import 'popper.js';
+import 'daemonite-material';
+import 'sparqljs';
+import 'bootstrap';
+import 'reflect-metadata';
+import 'font-awesome/css/font-awesome.min.css';
+import './css/angular-material.scss';
+import './css/customMaterial.scss';
+import './css/manchestersyntax.scss';
+import './css/styles.scss';
+import '@triply/yasgui/build/yasgui.min.css';
+import './css/yasgui.scss';
+import 'gridjs/dist/theme/mermaid.min.css';
 
 import { SharedModule } from './shared/shared.module';
 import { ShapesGraphEditorModule } from './shapes-graph-editor/shapes-graph-editor.module';
@@ -44,14 +59,17 @@ import { MergeRequestsModule } from './merge-requests/merge-requests.module';
 import { MapperModule } from './mapper/mapper.module';
 import { DiscoverModule } from './discover/discover.module';
 import { OntologyEditorModule } from './ontology-editor/ontology-editor.module';
+import { AppRoutingModule } from './app-routing.module';
+import { LoginLayoutComponent } from './layouts/login-layout.component';
+import { MainLayoutComponent } from './layouts/main-layout.component';
 
 @NgModule({
     imports: [
+        AppRoutingModule,
         BrowserModule,
-        UpgradeModule,
         HttpClientModule,
         BrowserAnimationsModule,
-        UIRouterUpgradeModule.forRoot(),
+        ToastrModule.forRoot(),
         SharedModule,
         CatalogModule,
         DatasetsModule,
@@ -64,22 +82,19 @@ import { OntologyEditorModule } from './ontology-editor/ontology-editor.module';
         MergeRequestsModule,
         SettingsModule,
         ShapesGraphEditorModule,
-        UserManagementModule
+        UserManagementModule,
     ],
     declarations: [
-        AppComponent
+        AppComponent,
+        LoginLayoutComponent,
+        MainLayoutComponent
     ],
     entryComponents: [
         AppComponent
     ],
-    providers: []
+    providers: [],
+    bootstrap: [ AppComponent ]
 })
 export class AppModule {
-    constructor(private upgrade: UpgradeModule) {
-
-    }
-
-    ngDoBootstrap(): void {
-        this.upgrade.bootstrap(document.documentElement, [MODULE_NAME], { strictDi: true });
-    }
+    constructor() {}
 }

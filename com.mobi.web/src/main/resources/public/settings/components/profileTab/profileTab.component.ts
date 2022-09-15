@@ -21,12 +21,13 @@
  * #L%
  */
 import { find, cloneDeep, replace } from 'lodash';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.interface';
 import { FOAF } from '../../../prefixes';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
  * @name settings.ProfileTabComponent
@@ -48,7 +49,7 @@ export class ProfileTabComponent implements OnInit {
         email: ['', [ Validators.email ]]
     });
 
-    constructor(private um: UserManagerService, @Inject('loginManagerService') private lm,
+    constructor(private um: UserManagerService, private lm: LoginManagerService,
         private fb: FormBuilder) {}
 
     ngOnInit(): void {

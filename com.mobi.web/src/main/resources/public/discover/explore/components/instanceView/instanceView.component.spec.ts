@@ -26,29 +26,29 @@ import { MatDialog } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
-
 import { isEqual } from 'lodash';
+import { of } from 'rxjs';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
-import { InstanceViewComponent } from './instanceView.component';
-import { JSONLDValue } from '../../../../shared/models/JSONLDValue.interface';
 import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
-import { RDF } from '../../../../prefixes';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
+import { InstanceViewComponent } from './instanceView.component';
 
 describe('Instance View component', function() {
     let component: InstanceViewComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<InstanceViewComponent>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let exploreUtilsStub: jasmine.SpyObj<ExploreUtilsService>
-    let policyEnforcementStub;
-    let utilStub;
+    let exploreUtilsStub: jasmine.SpyObj<ExploreUtilsService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
     const jsonLdObj = {
         '@id': 'id',
         '@type': ['string'],
@@ -64,12 +64,10 @@ describe('Instance View component', function() {
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                MockProvider('prefixes', 'prefixes'),
             ]
         });
     });
@@ -79,9 +77,12 @@ describe('Instance View component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         discoverStateStub = TestBed.get(DiscoverStateService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        utilStub = TestBed.get(UtilService);
         exploreUtilsStub = TestBed.get(ExploreUtilsService);
+
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
         discoverStateStub.getInstance.and.returnValue({
             '@id': 'ignored',
             '@type': ['ignored'],
@@ -132,15 +133,6 @@ describe('Instance View component', function() {
             hasPermissionError: false
         };
 
-        const sub = 'subject';
-        const pred = 'predicate';
-        const value: JSONLDValue = {'@value': 'value'};
-        const array: JSONLDObject[] = [
-            {'@id': 'id', '@type': [RDF + 'Statement']},
-            {'@id': 'id', '@type': [RDF + 'Statement']},
-            {'@id': 'id', '@type': [RDF + 'Statement']},
-            {'@id': 'id', '@type': [RDF + 'Statement']}
-        ];
         exploreUtilsStub.getReification.and.callFake(function(array, sub, pred, value) : JSONLDObject {
 
             if (isEqual(value, {'@value': 'value1'})) {
@@ -222,7 +214,7 @@ describe('Instance View component', function() {
             component.ngOnInit();
             fixture.detectChanges();
             await fixture.whenStable();
-            let link = element.queryAll(By.css('.link'))[0];
+            const link = element.queryAll(By.css('.link'))[0];
             link.nativeNode.click();
             fixture.detectChanges();
             expect(element.queryAll(By.css('.values.show-more')).length).toBe(1);
@@ -268,30 +260,30 @@ describe('Instance View component', function() {
             });
         });
         it('edit sets the correct state and has modify permission', fakeAsync(function() {
-            policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
             discoverStateStub.explore.editing = false;
             discoverStateStub.explore.instance.original = [];
             component.edit();
-            fixture.detectChanges(); // scope.$digest();
+            fixture.detectChanges();
             tick();
             expect(discoverStateStub.explore.editing).toBe(true);
             expect(discoverStateStub.explore.instance.original).toEqual(discoverStateStub.explore.instance.entity);
         }));
         it('edit and does not have modify permission', fakeAsync( function() {
-            policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
             discoverStateStub.explore.editing = false;
             discoverStateStub.explore.instance.original = [];
             component.edit();
-            fixture.detectChanges(); // scope.$digest();
-            tick()
+            fixture.detectChanges();
+            tick();
             expect(discoverStateStub.explore.editing).toBe(false);
-            expect(utilStub.createErrorToast).toHaveBeenCalled();
+            expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
         }));
     });
     it('should call edit when the edit button is clicked', function() {
         spyOn(component, 'edit');
-        let btn = element.queryAll(By.css('.float-right.edit-button'))[0];
+        const btn = element.queryAll(By.css('.float-right.edit-button'))[0];
         btn.nativeNode.click();
-        expect(component.edit).toHaveBeenCalled();
+        expect(component.edit).toHaveBeenCalledWith();
     });
 });

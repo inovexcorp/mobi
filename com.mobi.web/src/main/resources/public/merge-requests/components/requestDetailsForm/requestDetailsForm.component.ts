@@ -22,7 +22,7 @@
  */
 
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { get } from 'lodash';
 
@@ -30,6 +30,7 @@ import { CATALOG } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './requestDetailsForm.component.scss';
 
@@ -56,8 +57,8 @@ export class RequestDetailsFormComponent implements OnInit, OnDestroy {
 
     @ViewChild('assigneeInput') assigneeInput: ElementRef;
 
-    constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService,
-        private fb: FormBuilder, @Inject('utilService') public util) {}
+    constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService, private fb: FormBuilder, 
+        public util: UtilService) {}
 
     ngOnInit(): void {
         this.state.clearDifference();

@@ -24,22 +24,24 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError} from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { last } from 'lodash';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { InstanceFormComponent } from '../instanceForm/instanceForm.component';
-import { InstanceCreatorComponent } from './instanceCreator.component';
-import { HttpResponse } from '@angular/common/http';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { RDFS, DCTERMS } from '../../../../prefixes';
-import _ = require('lodash');
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
+import { InstanceCreatorComponent } from './instanceCreator.component';
 
 describe('Instance Creator component', function() {
     let component: InstanceCreatorComponent;
@@ -48,8 +50,8 @@ describe('Instance Creator component', function() {
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
-    let policyEnforcementStub;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -63,8 +65,8 @@ describe('Instance Creator component', function() {
                 MockProvider(ExploreUtilsService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
             ]
         });
     });
@@ -76,8 +78,12 @@ describe('Instance Creator component', function() {
         discoverStateStub = TestBed.get(DiscoverStateService);
         exploreServiceStub = TestBed.get(ExploreService);
         exploreUtilsServiceStub = TestBed.get(ExploreUtilsService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -117,7 +123,7 @@ describe('Instance Creator component', function() {
         exploreServiceStub = null;
         exploreUtilsServiceStub = null;
         utilStub = null;
-
+        policyEnforcementStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -163,7 +169,7 @@ describe('Instance Creator component', function() {
                     beforeEach(function () {
                         this.resultsObject = {data: [{ instanceIRI: 'id2' }], links: {next: 'next', prev: 'prev'}};
                         discoverStateStub.explore.breadcrumbs = ['old title'];
-                        exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse<InstanceDetails[]>({body:[]})));
+                        exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse<InstanceDetails[]>({body: []})));
                         exploreServiceStub.createPagedResultsObject.and.returnValue(this.resultsObject);
                     });
                     it('resolved', fakeAsync(function() {
@@ -171,15 +177,15 @@ describe('Instance Creator component', function() {
                         component.save();
                         fixture.detectChanges();
                         tick();
-                        expect(discoverStateStub.getInstance).toHaveBeenCalled();
+                        expect(discoverStateStub.getInstance).toHaveBeenCalledWith();
                         expect(exploreUtilsServiceStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                         expect(discoverStateStub.explore.instance.entity).toEqual(this.cleanEntity);
                         expect(exploreServiceStub.createInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity);
                         expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
-                        expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: 0, limit: 1});
+                        expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: 1, limit: 1});
                         expect(discoverStateStub.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                         expect(discoverStateStub.explore.instance.metadata).toEqual({instanceIRI: this.instance['@id'], title: 'title', description: 'comment'});
-                        expect(_.last(discoverStateStub.explore.breadcrumbs)).toBe('title');
+                        expect(last(discoverStateStub.explore.breadcrumbs)).toBe('title');
                         expect(discoverStateStub.explore.creating).toEqual(false);
                         expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                         expect(discoverStateStub.explore.classDetails).toEqual([]);
@@ -189,21 +195,21 @@ describe('Instance Creator component', function() {
                         component.save();
                         fixture.detectChanges();
                         tick();
-                        expect(discoverStateStub.getInstance).toHaveBeenCalled();
-                        exploreServiceStub.createInstance(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity).subscribe(result => {
+                        expect(discoverStateStub.getInstance).toHaveBeenCalledWith();
+                        exploreServiceStub.createInstance(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity).subscribe(() => {
                             expect(exploreUtilsServiceStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                             expect(discoverStateStub.explore.instance.entity).toEqual(this.cleanEntity);
                             expect(exploreServiceStub.createInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity);
                             expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
-                            expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: 0, limit: 1});
+                            expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: 1, limit: 1});
                             expect(discoverStateStub.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                             expect(discoverStateStub.explore.instance.metadata).toEqual({instanceIRI: this.instance['@id'], title: 'title', description: 'comment'});
-                            expect(_.last(discoverStateStub.explore.breadcrumbs)).toBe('title');
+                            expect(last(discoverStateStub.explore.breadcrumbs)).toBe('title');
                             expect(discoverStateStub.explore.creating).toEqual(false);
                             expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                             expect(discoverStateStub.explore.classDetails).toEqual([]);
                             expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
-                        })
+                        });
                     }));
                 });
                 it('rejected', fakeAsync(function() {
@@ -211,16 +217,16 @@ describe('Instance Creator component', function() {
                     component.save();
                     fixture.detectChanges();
                     tick();
-                    exploreServiceStub.createInstance(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity).subscribe(result => {
-                        expect(discoverStateStub.getInstance).toHaveBeenCalled();
+                    exploreServiceStub.createInstance(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity).subscribe(() => {
+                        expect(discoverStateStub.getInstance).toHaveBeenCalledWith();
                         expect(exploreUtilsServiceStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                         expect(discoverStateStub.explore.instance.entity).toEqual(this.cleanEntity);
                         expect(exploreServiceStub.createInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity);
                         expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
-                        expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: 0, limit: 1});
+                        expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: 1, limit: 1});
                         expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                         expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
-                    })
+                    });
                 }));
             });
             it('rejected', fakeAsync(function() {
@@ -228,7 +234,7 @@ describe('Instance Creator component', function() {
                 component.save();
                 fixture.detectChanges();
                 tick();
-                expect(discoverStateStub.getInstance).toHaveBeenCalled();
+                expect(discoverStateStub.getInstance).toHaveBeenCalledWith();
                 expect(exploreUtilsServiceStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                 expect(discoverStateStub.explore.instance.entity).toEqual(this.cleanEntity);
                 expect(exploreServiceStub.createInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.entity);

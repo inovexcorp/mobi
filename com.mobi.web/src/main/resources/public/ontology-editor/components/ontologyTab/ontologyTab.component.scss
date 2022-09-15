@@ -26,7 +26,7 @@
 .ontology-tab {
     .selected-header {
         .btn-container {
-            .btn.btn-primary {
+            button[color='primary'] {
                 margin-right: .25rem;
               }
         }

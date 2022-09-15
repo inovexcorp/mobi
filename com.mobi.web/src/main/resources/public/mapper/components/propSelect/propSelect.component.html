@@ -24,12 +24,11 @@
     <mat-form-field class="w-100">
         <mat-label>Property</mat-label>
         <input type="text" matInput
-            placeholder="Select a property..."
-            aria-label="Property"
-            formControlName="prop"
-            [matAutocomplete]="propAuto"
-            [readonly]="isReadOnly"
-            [disabled]="parentForm.get('prop').disabled">
+               placeholder="Select a property..."
+               aria-label="Property"
+               formControlName="prop"
+               [matAutocomplete]="propAuto"
+               [readonly]="isReadOnly">
         <mat-autocomplete #propAuto="matAutocomplete" (optionSelected)="selectProp($event)" [displayWith]="getDisplayText.bind(this)">
             <mat-optgroup *ngFor="let group of filteredProperties | async" [label]="group.ontologyId">
                 <mat-option *ngFor="let mappingProperty of group.properties" [value]="mappingProperty" [title]="mappingProperty.propObj['@id']" [disabled]="mappingProperty.isDeprecated">

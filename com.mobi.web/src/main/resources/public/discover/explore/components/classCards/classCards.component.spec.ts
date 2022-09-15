@@ -25,19 +25,20 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError} from 'rxjs';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { InstanceFormComponent } from '../instanceForm/instanceForm.component';
-import { ClassCardsComponent } from './classCards.component';
-import { of, throwError} from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
-
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
+import { ClassCardsComponent } from './classCards.component';
 
 describe('Class Cards component', function() {
     let component: ClassCardsComponent;
@@ -45,8 +46,8 @@ describe('Class Cards component', function() {
     let fixture: ComponentFixture<ClassCardsComponent>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let policyEnforcementStub;
-    let utilStub;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -58,8 +59,8 @@ describe('Class Cards component', function() {
             providers: [
                 MockProvider(DiscoverStateService),
                 MockProvider(ExploreService),
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PolicyEnforcementService),
+                MockProvider(UtilService),
             ]
         });
     });
@@ -70,8 +71,11 @@ describe('Class Cards component', function() {
         element = fixture.debugElement;
         exploreServiceStub = TestBed.get(ExploreService);
         discoverStateStub = TestBed.get(DiscoverStateService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        utilStub = TestBed.get(UtilService);
+
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -140,7 +144,7 @@ describe('Class Cards component', function() {
 
     describe('initializes with the correct values', function() {
         it('for chunks', function() {
-            let expected = [[
+            const expected = [[
                 {
                     classIRI: 'www.test2.com',
                     classDescription: 'test 2 desc',
@@ -189,14 +193,14 @@ describe('Class Cards component', function() {
     describe('controller methods', function() {
         describe('exploreData should set the correct variables', function() {
             it('when user has read access and getClassInstances is resolved', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 const classIRI = 'www.test.com';
                 discoverStateStub.explore.recordId = 'www.record.com';
                 const data : InstanceDetails[] = [{instanceIRI: 'www.newClass.com', title: 'newClass', description: 'new class desc'}];
-                let nextLink = 'http://example.com/next';
-                let prevLink = 'http://example.com/prev';
+                // const nextLink = 'http://example.com/next';
+                // const prevLink = 'http://example.com/prev';
                 const headers = {'x-total-count': '' + 10, link: 'link'};
-                utilStub.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+                // utilStub.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
                 discoverStateStub.explore.breadcrumbs = [''];
                 discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'www.oldClass.com', title: 'oldClass', description: 'old class desc'}];
                 exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse<InstanceDetails[]>({body: data, headers: new HttpHeaders(headers)})));
@@ -212,7 +216,7 @@ describe('Class Cards component', function() {
                 fixture.detectChanges();
                 tick(100);
                 exploreServiceStub.getClassInstanceDetails(discoverStateStub.explore.recordId, classIRI,
-                    {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit}).subscribe(result => {
+                    {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit}).subscribe(() => {
 
                     expect(discoverStateStub.explore.classId).toBe('www.test.com');
                     expect(discoverStateStub.explore.classDeprecated).toBe(false);
@@ -221,17 +225,17 @@ describe('Class Cards component', function() {
                         limit: discoverStateStub.explore.instanceDetails.limit
                     });
 
-                    expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalled();
+                    expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                     expect(discoverStateStub.explore.breadcrumbs).toEqual(['', 'test']);
                     expect(discoverStateStub.explore.instanceDetails).toEqual(jasmine.objectContaining({
                         data: [{instanceIRI: 'instance', title: 'test', description: 'desc'}]
                     }));
-                })
+                });
             }));
             it('when user has read access and getClassInstances is rejected', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
-                let classDetails = {
+                const classDetails = {
                     classIRI: 'class',
                     classTitle: 'new class',
                     classDescription: 'desc',
@@ -239,7 +243,7 @@ describe('Class Cards component', function() {
                     classExamples: ['www.class1.com'],
                     ontologyRecordTitle: 'test ontology',
                     deprecated: false
-                }
+                };
                 component.exploreData(classDetails);
                 fixture.detectChanges();
                 tick(100);
@@ -247,9 +251,9 @@ describe('Class Cards component', function() {
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
             }));
             it('when user does not have read access', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
-                let classDetails = {
+                const classDetails = {
                     classIRI: 'class',
                     classTitle: 'new class',
                     classDescription: 'desc',
@@ -257,12 +261,12 @@ describe('Class Cards component', function() {
                     classExamples: ['www.class1.com'],
                     ontologyRecordTitle: 'test ontology',
                     deprecated: false
-                }
+                };
                 component.exploreData(classDetails);
                 fixture.detectChanges();
                 tick(100);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
-                expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalled();
+                expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                 expect(discoverStateStub.explore.classDetails).toEqual([]);
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
             }));

@@ -76,7 +76,8 @@ export class DragFileDirective implements OnInit {
 
         this.renderer.appendChild(this.el.nativeElement, this.hoverArea);
     }
-    @HostListener('dragover', ['$event']) onDragOver(event: Event): void {
+
+    @HostListener('dragover', ['$event']) public onDragOver(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
         this.renderer.removeClass(this.hoverArea, 'fade-out');

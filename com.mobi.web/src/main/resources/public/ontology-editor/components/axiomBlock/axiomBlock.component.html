@@ -26,6 +26,6 @@
         <a *ngIf="os.listItem.selected && !os.isSelectedImported() && os.canModify()" class="float-right fa fa-fw fa-plus" (click)="this.showAxiomOverlay()"></a>
     </div>
     <class-axioms *ngIf="om.isClass(os.listItem.selected)" [selected]="os.listItem.selected"></class-axioms>
-    <object-property-axioms *ngIf="om.isObjectProperty(os.listItem.selected)"></object-property-axioms>
-    <datatype-property-axioms *ngIf="om.isDataTypeProperty(os.listItem.selected)"></datatype-property-axioms>
+    <object-property-axioms *ngIf="om.isObjectProperty(os.listItem.selected)" [selected]="os.listItem.selected"></object-property-axioms>
+    <datatype-property-axioms *ngIf="om.isDataTypeProperty(os.listItem.selected)" [selected]="os.listItem.selected"></datatype-property-axioms>
 </div>

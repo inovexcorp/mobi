@@ -22,29 +22,22 @@
  */
 import { Component } from '@angular/core';
 
-import { OntologyStateService } from "../../../shared/services/ontologyState.service";
-
-const template = require('./individualHierarchyBlock.component.html');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
- * @ngdoc component
  * @class ontology-editor.IndividualHierarchyBlockComponent
- * @requires shared.service:ontologyStateService
  *
- * @description
- * `individualHierarchyBlock` is a component that creates a section that displays a
- * {@link ontology-editor.IndividualTreeComponent} of the individuals in the current
- * {@link shared.OntologyStateService#listItem selected ontology} underneath their class types.
+ * A component that creates a section that displays a {@link ontology-editor.IndividualTreeComponent} of the individuals
+ * in the current {@link shared.OntologyStateService#listItem selected ontology} underneath their class types.
  */
 @Component({
     templateUrl: './individualHierarchyBlock.component.html',
     selector: 'individual-hierarchy-block'
 })
 export class IndividualHierarchyBlockComponent {
-    constructor(public os:OntologyStateService) {
-    }
+    constructor(public os:OntologyStateService) {}
 
-    updateSearch (value:string): void {
+    updateSearch(value: string): void {
         this.os.listItem.editorTabStates.individuals.searchText = value;
     }
 }

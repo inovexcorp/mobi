@@ -22,9 +22,14 @@
  */
 /* Core variables */
 @import "./variables";
+// regular style toast
+@import '~ngx-toastr/toastr';
 
 .highlight-text {
     font-weight: bold;
+    mark { // Highlight background style already comes with this tag
+        padding: 0;
+    }
 }
 .copyClipboard:hover {
     cursor: pointer;
@@ -164,7 +169,7 @@ body {
         padding: 0;
         width: calc(100% - #{$sidebar-open-width});
     }
-    &.collapsed-nav .app-container {
+    .collapsed-nav .app-container {
         max-width: calc(100% - #{$sidebar-closed-width});
     }
 
@@ -189,7 +194,7 @@ body {
     }
 
     /* view container spacing with extra on the bottom for the icon buttons */
-    > .view-container {
+    .view-container {
         padding: 52px 15px 15px 15px;
 
         /* removes top margin from page headers */
@@ -197,8 +202,6 @@ body {
             margin-top: 0;
         }
     }
-}
-body {
     .main-page {
         height: 100%;
         margin-left: 200px;
@@ -233,7 +236,7 @@ ul {
     }
 
     /* adds margin depending on which way the button is pulled */
-    .btn {
+    button {
         &.pull-left {
             margin-right: 10px;
         }

@@ -28,11 +28,12 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { EditGroupInfoOverlayComponent } from './editGroupInfoOverlay.component';
 
 describe('Edit Group Info Overlay component', function() {
@@ -42,7 +43,7 @@ describe('Edit Group Info Overlay component', function() {
     let userStateStub: jasmine.SpyObj<UserStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<EditGroupInfoOverlayComponent>>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -61,7 +62,7 @@ describe('Edit Group Info Overlay component', function() {
             providers: [
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -71,7 +72,7 @@ describe('Edit Group Info Overlay component', function() {
         userStateStub = TestBed.get(UserStateService);
         userManagerStub = TestBed.get(UserManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         userStateStub.selectedGroup = {
             jsonld: {
                 '@id': 'id',

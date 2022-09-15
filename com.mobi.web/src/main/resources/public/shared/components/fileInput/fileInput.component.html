@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<custom-label *ngIf="displayText">{{displayText}}</custom-label>
+<div *ngIf="displayText" class="field-label">{{displayText}}</div>
 <div class="file-input mt-2">
     <input style="display: none" type="file" (change)="update($event)" accept="{{accept}}" required="{{isRequired}}" multiple="{{isMultiple ? 'multiple' : ''}}" #hiddenfileinput>
     <button (click)="hiddenfileinput.click()" class="btn">Choose File</button>

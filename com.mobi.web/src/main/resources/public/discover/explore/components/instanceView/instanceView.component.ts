@@ -20,30 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { omit, cloneDeep } from 'lodash';
-import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { cloneDeep, omit } from 'lodash';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 
-import './instanceView.component.scss';
-import { Component, Inject, Input, OnChanges, OnInit } from '@angular/core';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { CATALOG } from '../../../../prefixes';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 
-import policyEnforcementService from '../../../../shared/services/policyEnforcement.service';
+import './instanceView.component.scss';
 
 /**
- * @ngdoc component
- * @name explore.component:instanceView
- * @requires shared.service:discoverStateService
- * @requires shared.service:utilService
- * @requires explore.service:exploreUtilsService
- * @requires shared.service:prefixes
- * @requires shared.service:policyEnforcementService
+ * @class explore.InstanceViewComponent
  *
- * @description
- * `instanceView` is a component that displays {@link shared.component:breadCrumbs} to the class of the instance
- * being viewed. It shows the complete list of properties associated with the selected instance. If a property value
- * is reified, a toggleable dropdown display is included.
+ * A component that displays {@link shared.BreadCrumbsComponent} to the class of the instance being viewed. It shows the
+ * complete list of properties associated with the selected instance. If a property value is reified, a toggleable
+ * dropdown display is included.
  *
  * @param {Object} entity The instance entity to view
  */
@@ -55,27 +48,26 @@ import policyEnforcementService from '../../../../shared/services/policyEnforcem
 export class InstanceViewComponent implements OnInit, OnChanges {
     @Input() entity: any = {};
 
-    constructor(public ds: DiscoverStateService, private eu: ExploreUtilsService,
-                @Inject('policyEnforcementService') private pep, @Inject('utilService') private util) {
-    }
+    constructor(public ds: DiscoverStateService, private eu: ExploreUtilsService, private pep: PolicyEnforcementService,
+        private util: UtilService) {}
 
     ngOnInit(): void {
         this.entity = this.getEntity();
     }
-    ngOnChanges() {
+    ngOnChanges(): void {
         this.entity = this.getEntity();
     }
-    getLimit = function(array, limit) {
-        let len = array.length;
+    getLimit(array: any[], limit: number): number {
+        const len = array.length;
         return len === limit ? 1 : len;
     }
-    edit() {
+    edit(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
             actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canModify = response !== this.pep.deny;
                 if (canModify) {
                     this.ds.explore.editing = true;
@@ -92,4 +84,3 @@ export class InstanceViewComponent implements OnInit, OnChanges {
         return omit(this.ds.getInstance(), ['@id', '@type']);
     }
 }
-

@@ -30,11 +30,12 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockLoginManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { USER, XSD } from '../../../prefixes';
 import { Group } from '../../models/group.interface';
 import { Policy } from '../../models/policy.interface';
 import { User } from '../../models/user.interface';
+import { LoginManagerService } from '../../services/loginManager.service';
 import { PolicyManagerService } from '../../services/policyManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { UserAccessControlsComponent } from './userAccessControls.component';
@@ -45,7 +46,7 @@ describe('User Access Controls component', function() {
     let fixture: ComponentFixture<UserAccessControlsComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
-    let loginManagerStub;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
     let everyoneMatch;
     let userMatch;
     let groupMatch;
@@ -70,7 +71,7 @@ describe('User Access Controls component', function() {
             providers: [
                 MockProvider(PolicyManagerService),
                 MockProvider(UserManagerService),
-                { provide: 'loginManagerService', useClass: mockLoginManager }
+                MockProvider(LoginManagerService)
             ]
         });
     });
@@ -81,7 +82,7 @@ describe('User Access Controls component', function() {
         element = fixture.debugElement;
         policyManagerStub = TestBed.get(PolicyManagerService);
         userManagerStub = TestBed.get(UserManagerService);
-        loginManagerStub = TestBed.get('loginManagerService');
+        loginManagerStub = TestBed.get(LoginManagerService);
 
         everyoneMatch = {
             AttributeDesignator: {
@@ -192,8 +193,8 @@ describe('User Access Controls component', function() {
             component.filteredAvailableGroups.subscribe(response => {
                 expect(response).toEqual([group]);
             });
-            expect(component.setUsers).toHaveBeenCalled();
-            expect(component.setGroups).toHaveBeenCalled();
+            expect(component.setUsers).toHaveBeenCalledWith();
+            expect(component.setGroups).toHaveBeenCalledWith();
         });
         it('if the rule is not for everyone', function() {
             component.ngOnInit();
@@ -207,8 +208,8 @@ describe('User Access Controls component', function() {
             component.filteredAvailableGroups.subscribe(response => {
                 expect(response).toEqual([group]);
             });
-            expect(component.setUsers).toHaveBeenCalled();
-            expect(component.setGroups).toHaveBeenCalled();
+            expect(component.setUsers).toHaveBeenCalledWith();
+            expect(component.setGroups).toHaveBeenCalledWith();
         });
     });
     describe('controller methods', function() {
@@ -298,7 +299,7 @@ describe('User Access Controls component', function() {
                 component.ruleId = policy.id;
                 component.removeUser(user);
                 expect(policy.selectedUsers).toEqual([]);
-                expect(component.setUsers).toHaveBeenCalled();
+                expect(component.setUsers).toHaveBeenCalledWith();
                 expect(policy.policy).toEqual({});
                 expect(policy.changed).toBeTrue();
             });
@@ -308,7 +309,7 @@ describe('User Access Controls component', function() {
                 };
                 component.removeUser(user);
                 expect(policy.selectedUsers).toEqual([]);
-                expect(component.setUsers).toHaveBeenCalled();
+                expect(component.setUsers).toHaveBeenCalledWith();
                 expect(policy.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([]);
                 expect(policy.changed).toBeTrue();
             });
@@ -330,9 +331,9 @@ describe('User Access Controls component', function() {
             (option[0] as HTMLElement).click();
             fixture.whenStable().then(() => {
                 expect(component.addGroup).toHaveBeenCalledWith(group);
-                expect(component.setGroups).toHaveBeenCalled();
+                expect(component.setGroups).toHaveBeenCalledWith();
                 expect(component.groupSearchControl.value).toEqual('');
-                expect(component.groupTrigger.openPanel).toHaveBeenCalled();
+                expect(component.groupTrigger.openPanel).toHaveBeenCalledWith();
             });
         });
         describe('should add a group to a policy', function() {
@@ -366,7 +367,7 @@ describe('User Access Controls component', function() {
                 component.ruleId = policy.id;
                 component.removeGroup(group);
                 expect(policy.selectedGroups).toEqual([]);
-                expect(component.setGroups).toHaveBeenCalled();
+                expect(component.setGroups).toHaveBeenCalledWith();
                 expect(policy.policy).toEqual({});
                 expect(policy.changed).toBeTrue();
             });
@@ -376,7 +377,7 @@ describe('User Access Controls component', function() {
                 };
                 component.removeGroup(group);
                 expect(policy.selectedGroups).toEqual([]);
-                expect(component.setGroups).toHaveBeenCalled();
+                expect(component.setGroups).toHaveBeenCalledWith();
                 expect(policy.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([]);
                 expect(policy.changed).toBeTrue();
             });
@@ -404,8 +405,8 @@ describe('User Access Controls component', function() {
                     expect(component.groupSearchControl.disabled).toBeTrue();
                     expect(component.item.selectedUsers).toEqual([]);
                     expect(component.item.selectedGroups).toEqual([]);
-                    expect(component.setUsers).toHaveBeenCalled();
-                    expect(component.setGroups).toHaveBeenCalled();
+                    expect(component.setUsers).toHaveBeenCalledWith();
+                    expect(component.setGroups).toHaveBeenCalledWith();
                     expect(policy.policy).toEqual({});
                     expect(policy.changed).toBeTrue();
                 });
@@ -420,8 +421,8 @@ describe('User Access Controls component', function() {
                     expect(component.groupSearchControl.disabled).toBeTrue();
                     expect(component.item.selectedUsers).toEqual([]);
                     expect(component.item.selectedGroups).toEqual([]);
-                    expect(component.setUsers).toHaveBeenCalled();
-                    expect(component.setGroups).toHaveBeenCalled();
+                    expect(component.setUsers).toHaveBeenCalledWith();
+                    expect(component.setGroups).toHaveBeenCalledWith();
                     expect(policy.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([{Match: [everyoneMatch]}]);
                     expect(policy.changed).toBeTrue();
                 });
@@ -440,7 +441,7 @@ describe('User Access Controls component', function() {
                     expect(component.groupSearchControl.value).toEqual('');
                     expect(component.groupSearchControl.disabled).toBeFalse();
                     expect(component.addUser).toHaveBeenCalledWith(user);
-                    expect(component.setUsers).toHaveBeenCalled();
+                    expect(component.setUsers).toHaveBeenCalledWith();
                     expect(policy.policy).toEqual({});
                     expect(policy.changed).toBeTrue();
                 });
@@ -454,7 +455,7 @@ describe('User Access Controls component', function() {
                     expect(component.groupSearchControl.value).toEqual('');
                     expect(component.groupSearchControl.disabled).toBeFalse();
                     expect(component.addUser).toHaveBeenCalledWith(user);
-                    expect(component.setUsers).toHaveBeenCalled();
+                    expect(component.setUsers).toHaveBeenCalledWith();
                     expect(policy.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([]);
                     expect(policy.changed).toBeTrue();
                 });

@@ -39,11 +39,4 @@ import './characteristicsRow.component.scss';
 })
 export class CharacteristicsRowComponent {
     constructor(public om: OntologyManagerService, public os: OntologyStateService) {}
-
-    // TODO: Determine whether this is needed. getEntityByRecordId returns a names item, not a JSONLDObject
-    // updateTypes(types: string[]): void {
-    //     this.os.listItem.selected['@types'] = types;
-        // const entityFromFullList = this.os.getEntityByRecordId(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.selected['@id']);
-        // entityFromFullList['@types'] = types; 
-    // }
 }

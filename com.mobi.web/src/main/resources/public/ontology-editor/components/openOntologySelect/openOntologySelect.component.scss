@@ -23,7 +23,6 @@
 /* Core variables */
 @import "../../../css/variables";
 
-// TODO: Clean Up
 .open-ontology-select {
     padding: 0 1rem;
 }
@@ -33,7 +32,7 @@
             font-weight: bold;
         }
         .fa-fw:hover {
-            color: var(--grey) !important;
+            color: grey !important;
         }
         .fa-fw-red {
             color: var(--danger);

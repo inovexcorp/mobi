@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { get, map, uniq, noop, forEach, filter, find, union, concat, merge } from 'lodash';
 import { forkJoin, from, Observable, of, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -38,6 +38,7 @@ import { CatalogManagerService } from './catalogManager.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { UserManagerService } from './userManager.service';
+import { UtilService } from './util.service';
 
 /**
  * @class shared.MergeRequestsStateService
@@ -45,12 +46,12 @@ import { UserManagerService } from './userManager.service';
  * A service which contains various variables to hold the state of the Merge Requests page and utility functions to
  * update those variables.
  */
+@Injectable()
 export class MergeRequestsStateService {
     catalogId = '';
 
     constructor(private mm: MergeRequestManagerService, private cm: CatalogManagerService,
-        private um: UserManagerService, private om: OntologyManagerService,
-        @Inject('utilService') private util) {}
+        private um: UserManagerService, private om: OntologyManagerService, private util: UtilService) {}
 
     /**
      * Contains an object representing the currently selected request.
@@ -362,7 +363,7 @@ export class MergeRequestsStateService {
         }
         const difference = diffResponse.body;
         const diffIris = union(map(difference.additions as JSONLDObject[], '@id'), map(difference.deletions as JSONLDObject[], '@id'));
-        const iris = union(diffIris, this.util.getObjIrisFromDifference(difference.additions), this.util.getObjIrisFromDifference(difference.deletions));
+        const iris = union(diffIris, this.util.getObjIrisFromDifference(difference.additions as JSONLDObject[]), this.util.getObjIrisFromDifference(difference.deletions as JSONLDObject[]));
 
         if (iris.length > 0) {
             return from(this.om.getOntologyEntityNames(recordId, sourceBranchId, commitId, false, false, iris))

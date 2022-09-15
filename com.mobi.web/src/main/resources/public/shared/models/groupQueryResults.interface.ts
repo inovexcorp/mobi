@@ -26,5 +26,5 @@ import { SPARQLSelectResults } from './sparqlSelectResults.interface';
  * Represents the results of the retrieveClasses ontology manager method.
  */
 export interface GroupQueryResults {
-    [key: string]: SPARQLSelectResults
+    [key: string]: SPARQLSelectResults | string[]
 }

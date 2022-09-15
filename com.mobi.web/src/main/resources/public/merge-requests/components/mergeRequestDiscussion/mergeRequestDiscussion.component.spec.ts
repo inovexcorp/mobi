@@ -29,12 +29,12 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { MarkdownEditorComponent } from '../../../shared/components/markdownEditor/markdownEditor.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { CommentDisplayComponent } from '../commentDisplay/commentDisplay.component';
 import { ReplyCommentComponent } from '../replyComment/replyComment.component';
 import { MergeRequestDiscussionComponent } from './mergeRequestDiscussion.component';
@@ -44,7 +44,7 @@ describe('Merge Request Discussion component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<MergeRequestDiscussionComponent>;
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const request: MergeRequest = {
         jsonld: {'@id': 'request', '@type': []},
@@ -67,7 +67,7 @@ describe('Merge Request Discussion component', function() {
             ],
             providers: [
                 MockProvider(MergeRequestManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -77,7 +77,7 @@ describe('Merge Request Discussion component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mergeRequestManagerStub = TestBed.get(MergeRequestManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {

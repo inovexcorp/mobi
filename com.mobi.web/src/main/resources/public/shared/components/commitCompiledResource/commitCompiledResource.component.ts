@@ -22,28 +22,25 @@
  */
 
 import { has, head, map, get, forEach, omit, find, mergeWith, isArray } from 'lodash';
-import {first, switchMap} from 'rxjs/operators';
-import { Component, Inject, OnChanges, Input } from '@angular/core';
+import { first, switchMap, finalize } from 'rxjs/operators';
+import { Component, OnChanges, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+
 import { CommitDifference } from '../../models/commitDifference.interface';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { UtilService } from '../../services/util.service';
+import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 
 import './commitCompiledResource.component.scss';
-import {OntologyStateService} from '../../services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name shared.component:commitCompiledResource
- * @requires shared.service:httpService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
+ * @class shared.CommitCompiledResourceComponent
  *
- * @description
- * `commitCompiledResource` is a component that displays the compiled resource of the entity identified by the
- * provided `commitId` starting at the commit identified by the provided `commitId`. The display will include all
- * deleted statements from the commit styled to be easily identified. All added statements in the commit will also
- * be styled to be easily identified.
+ * A component that displays the compiled resource of the entity identified by the provided `commitId` starting at the
+ * commit identified by the provided `commitId`. The display will include all deleted statements from the commit styled
+ * to be easily identified. All added statements in the commit will also be styled to be easily identified.
  *
  * @param {string} commitId The IRI string of a commit in the local catalog
  * @param {string} entityId entityId The IRI string of the entity to display
@@ -53,7 +50,6 @@ import {OntologyStateService} from '../../services/ontologyState.service';
     selector: 'commit-compiled-resource',
     templateUrl: './commitCompiledResource.component.html'
 })
-
 export class CommitCompiledResourceComponent implements OnChanges {
     @Input() commitId;
     @Input() entityId;
@@ -61,21 +57,25 @@ export class CommitCompiledResourceComponent implements OnChanges {
     error = '';
     resource = undefined;
     types = [];
-    id = 'commit-compiled-resource';
+
+    @ViewChild('compiledResource') compiledResource: ElementRef;
     
     constructor(public cm: CatalogManagerService, public om: OntologyManagerService,
-                public os: OntologyStateService, @Inject('utilService') public util) {}
+                public os: OntologyStateService, public util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
 
-    ngOnChanges(changes) {
+    ngOnChanges(changes: SimpleChanges): void {
         if (has(changes, 'commitId') || has(changes, 'entityId')) {
             this.setResource();
         }
     }
-    setResource() {
+    setResource(): void {
         if (this.commitId) {
-            // httpService.cancel(this.id);
+            this.spinnerSvc.startLoadingForComponent(this.compiledResource);
             this.cm.getCompiledResource(this.commitId, this.entityId, true)
                 .pipe(
+                    finalize(() => {
+                        this.spinnerSvc.finishLoadingForComponent(this.compiledResource);
+                    }),
                     first(),
                     switchMap( (resources: JSONLDObject[]) => {
                         const resource : any = head(resources) || {};
@@ -88,7 +88,7 @@ export class CommitCompiledResourceComponent implements OnChanges {
                     const additionsObj = find(response.additions as JSONLDObject[], {'@id': this.entityId});
                     const deletionsObj = find(response.deletions as JSONLDObject[], {'@id': this.entityId});
                     forEach(get(additionsObj, '@type'), addedType => {
-                        let typeObj = find(this.types, {type: addedType});
+                        const typeObj = find(this.types, {type: addedType});
                         typeObj.add = true;
                     });
                     this.types = this.types.concat(map(get(deletionsObj, '@type', []), type => ({type, del: true})));
@@ -96,14 +96,16 @@ export class CommitCompiledResourceComponent implements OnChanges {
                     const deletions = omit(deletionsObj, ['@id', '@type']);
                     forEach(additions, (values, prop) => {
                         forEach(values, value => {
-                            let resourceVal: any = find(this.resource[prop], value);
+                            const resourceVal: any = find(this.resource[prop], value);
                             if (resourceVal) {
                                 resourceVal.add = true;
                             }
                         });
                     });
                     forEach(deletions, (values, prop) => {
-                        forEach(values, value => { value.del = true });
+                        forEach(values, value => {
+                            value.del = true;
+                        });
                     });
                     mergeWith(this.resource, deletions, (objValue, srcValue) => {
                         if (isArray(objValue)) {

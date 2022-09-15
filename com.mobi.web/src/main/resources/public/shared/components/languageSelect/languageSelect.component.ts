@@ -21,8 +21,10 @@
  * #L%
  */
 
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+
+import { PropertyManagerService } from '../../services/propertyManager.service';
 
 import './languageSelect.component.scss';
 
@@ -47,7 +49,7 @@ export class LanguageSelectComponent implements OnInit {
     
     languages: {label: string, value: string}[] = [];
 
-    constructor(@Inject('propertyManagerService') private pm) {}
+    constructor(private pm: PropertyManagerService) {}
 
     ngOnInit(): void {
         this.languages = this.pm.languageList;

@@ -28,10 +28,10 @@ import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { CATALOG } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { RecordTypeComponent } from './recordType.component';
 
@@ -40,7 +40,7 @@ describe('Record Type component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<RecordTypeComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -50,7 +50,7 @@ describe('Record Type component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -60,7 +60,7 @@ describe('Record Type component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         catalogManagerStub.coreRecordTypes = ['core'];
         catalogManagerStub.recordTypes = ['core', 'typeA', 'typeB'];

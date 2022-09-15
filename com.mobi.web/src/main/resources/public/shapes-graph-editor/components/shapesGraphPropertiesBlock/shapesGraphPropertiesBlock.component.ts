@@ -20,21 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { union } from 'lodash';
-import { Component, OnChanges, Input, Inject } from '@angular/core';
+import { Component, OnChanges, Input } from '@angular/core';
+
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 
 /**
- * @ngdoc component
- * @name shapes-graph-editor.component:shapesGraphPropertiesBlock
- * @requires shared.service:shapesGraphStateService
- * @requires shared.service:shapesGraphManagerService
- * @requires shared.service:propertyManagerService
+ * @class shapes-graph-editor.ShapesGraphPropertiesBlockComponent
  *
- * @description
- * `shapesGraphPropertiesBlock` is a component that creates a section that displays the shapesGraph properties (and
- * annotations) on the provided shapesGraph using {@link shapes-graph-editor.component:shapesGraphPropertyValues}.
+ * A component that creates a section that displays the shapesGraph properties (and
+ * annotations) on the provided shapesGraph using {@link shapes-graph-editor.ShapesGraphPropertyValuesComponent}.
  * 
  * @param {Object} shapesGraph A JSON-LD object representing a shapesGraph 
  */
@@ -46,7 +41,7 @@ export class ShapesGraphPropertiesBlockComponent implements OnChanges {
     @Input() shapesGraph;
     properties: Array<string> = [];
 
-    constructor(public state: ShapesGraphStateService, public sm: ShapesGraphManagerService, @Inject('propertyManagerService') private pm) {}
+    constructor(public state: ShapesGraphStateService, public sm: ShapesGraphManagerService) {}
     
     ngOnChanges(): void {
         this.properties = Object.keys(this.shapesGraph).filter(property => property.charAt(0) !== '@');

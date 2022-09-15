@@ -28,7 +28,7 @@ import { catchError, map } from 'rxjs/operators';
 import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { HelperService } from './helper.service';
+import { UtilService } from './util.service';
 
 /**
  * @class shared.SparqlManagerService
@@ -40,7 +40,7 @@ import { HelperService } from './helper.service';
 export class SparqlManagerService {
     prefix = REST_PREFIX + 'sparql';
 
-    constructor(private http: HttpClient, private helper: HelperService, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * Calls the GET /sparql REST endpoint to conduct a SPARQL query using the provided query
@@ -57,9 +57,9 @@ export class SparqlManagerService {
         if (datasetRecordIRI) {
             params.dataset = datasetRecordIRI;
         }
-        const request = this.http.get(this.prefix, {params: this.helper.createHttpParams(params), responseType: 'text', observe: 'response'})
+        const request = this.http.get(this.prefix, {params: this.util.createHttpParams(params), responseType: 'text', observe: 'response'})
             .pipe(
-                catchError(this.helper.handleError),
+                catchError(this.util.handleError),
                 map((response: HttpResponse<string>) => {
                     const contentType = response.headers.get('Content-Type');
                     if (contentType === 'application/json') {
@@ -87,9 +87,9 @@ export class SparqlManagerService {
         if (datasetRecordIRI) {
             params.dataset = datasetRecordIRI;
         }
-        const request = this.http.post(this.prefix, query, {params: this.helper.createHttpParams(params), responseType: 'text', observe: 'response'})
+        const request = this.http.post(this.prefix, query, {params: this.util.createHttpParams(params), responseType: 'text', observe: 'response'})
             .pipe(
-                catchError(this.helper.handleError),
+                catchError(this.util.handleError),
                 map((response: HttpResponse<string>) => {
                     const contentType = response.headers.get('Content-Type');
                     if (contentType === 'application/json') {
@@ -123,7 +123,7 @@ export class SparqlManagerService {
         if (datasetRecordIRI) {
             paramsObj.dataset = datasetRecordIRI;
         }
-        window.open(this.prefix + '?' + this.helper.createHttpParams(paramsObj).toString());
+        window.open(this.prefix + '?' + this.util.createHttpParams(paramsObj).toString());
     }
 
     /**
@@ -146,9 +146,9 @@ export class SparqlManagerService {
             params.dataset = datasetRecordIRI;
         }
         
-        return this.http.post(this.prefix, query, {headers, params: this.helper.createHttpParams(params), responseType: 'arraybuffer', observe: 'response'})
+        return this.http.post(this.prefix, query, {headers, params: this.util.createHttpParams(params), responseType: 'arraybuffer', observe: 'response'})
             .pipe(
-                catchError(this.helper.handleError),
+                catchError(this.util.handleError),
                 map((response: HttpResponse<any>) => {
                     const file = new Blob([response.body], {
                         type: response.headers.get('Content-Type')
@@ -157,12 +157,23 @@ export class SparqlManagerService {
                     const a = document.createElement('a');
                     a.href = fileURL;
                     a.target = '_blank';
-                    a.download = fileName;
+                    const respFilename = this._getFileName(response);
+                    a.download = respFilename ? respFilename : fileName;
                     document.body.appendChild(a); //create the link "a"
                     a.click(); //click the link "a"
                     document.body.removeChild(a); //remove the link "a"
                     return response.body;
                 }));
+    }
+
+    _getFileName(response: HttpResponse<any>) {
+        try {
+            const contentDisposition: string = response.headers.get('content-disposition');
+            const matches = /filename=([^;]+)/ig.exec(contentDisposition);
+            return (matches[1] || 'untitled').trim();
+        } catch (e) {
+            return null;
+        }
     }
 
     private _trackedRequest(request, tracked) {

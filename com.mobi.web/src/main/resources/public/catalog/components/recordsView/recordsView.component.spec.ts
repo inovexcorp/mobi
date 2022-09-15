@@ -34,7 +34,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
@@ -42,6 +41,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { RecordCardComponent } from '../recordCard/recordCard.component';
 import { RecordFiltersComponent } from '../recordFilters/recordFilters.component';
 import { RecordsViewComponent } from './recordsView.component';
@@ -52,7 +52,7 @@ describe('Records View component', function() {
     let fixture: ComponentFixture<RecordsViewComponent>;
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
@@ -88,7 +88,7 @@ describe('Records View component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ],
         });
     });
@@ -99,7 +99,7 @@ describe('Records View component', function() {
         element = fixture.debugElement;
         catalogStateStub = TestBed.get(CatalogStateService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         this.records = [record];
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};

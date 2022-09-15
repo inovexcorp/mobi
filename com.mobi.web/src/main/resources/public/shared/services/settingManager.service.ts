@@ -21,103 +21,101 @@
  * #L%
  */
 
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { has } from 'lodash';
-import { SettingConstants } from '../models/settingConstants.class';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 
-settingManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'prefixes', 'utilService', 'httpService'];
+import { REST_PREFIX } from '../../constants';
+import { SETTING, SHACL } from '../../prefixes';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { SettingConstants } from '../models/settingConstants.class';
+import { UtilService } from './util.service';
 
 /**
- * @ngdoc service
- * @name shared.service:settingManagerService
- * @requires $http
- * @requires $q
- * @requires shared.service:utilService
- * @requires shared.service:httpService
+ * @class shared.service:settingManagerService
  *
- * @description
- * `settingManagerService` is a service that provides access to the Mobi Settings REST endpoints and variables
+ * A service that provides access to the Mobi Settings REST endpoints and variables
  * to hold information about the different types of settings.
  */
-function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, httpService) {
-    const self = this;
-    const util = utilService;
-    const prefix = `${REST_PREFIX}settings`;
+@Injectable()
+export class SettingManagerService {
+    prefix = `${REST_PREFIX}settings`;
+    prefSettingType = { iri: `${SETTING}Preference`, userText: 'Preferences'};
+    appSettingType = { iri: `${SETTING}ApplicationSetting`, userText: 'Application Settings'};
+    
+    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
 
-    self.prefSettingType = { iri: `${prefixes.setting}Preference`, userText: 'Preferences'};
-    self.appSettingType = { iri: `${prefixes.setting}ApplicationSetting`, userText: 'Application Settings'};
-
-    self.getDefaultNamespace = function() {
-        return this.getApplicationSettingByType('http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSetting').then(response => {
-            const applicationSetting = response.data;
-            if (applicationSetting.length > 1) {
-                util.createErrorToast('Too many values present for application setting');
-            } else if (applicationSetting.length === 1) {
-                const defaultNamespace = applicationSetting[0];
-                if (has(defaultNamespace, SettingConstants.HAS_DATA_VALUE)) {
-                    return util.getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE);
-                }
-                return applicationSetting;
-            } else {
-                util.createErrorToast('No values found for application setting. For some reason, endpoint did not return error.');
-            }
-        }, () => {
-            return this.getApplicationSettingDefinitions('http://mobi.com/ontologies/namespace#NamespaceApplicationSettingGroup').then(response => {
-                const newArray = response.data.filter(function (el) {
-                    return el['@id'] === 'http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSettingPropertyShape';
-                });
-                if (newArray.length !== 1) {
-                    util.createErrorToast(`Number of matching property shapes must be one, not ${newArray.length}`);
-                    return;
-                }
-                const defaultNamespacePropertyShape = newArray[0];
-                if (has(defaultNamespacePropertyShape, `${prefixes.shacl}defaultValue`)) {
-                    return util.getPropertyValue(defaultNamespacePropertyShape, `${prefixes.shacl}defaultValue`);
+    getDefaultNamespace(): Observable<string> {
+        return this.getApplicationSettingByType('http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSetting').pipe(
+            switchMap(response => {
+                const applicationSetting = response;
+                if (applicationSetting.length > 1) {
+                    this.util.createErrorToast('Too many values present for application setting');
+                    return throwError('');
+                } else if (applicationSetting.length === 1) {
+                    const defaultNamespace = applicationSetting[0];
+                    if (has(defaultNamespace, SettingConstants.HAS_DATA_VALUE)) {
+                        return of(this.util.getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE));
+                    }
+                    return throwError('');
                 } else {
-                    util.createErrorToast('No default value found for default namespace');
+                    this.util.createErrorToast('No values found for application setting. For some reason, endpoint did not return error.');
+                    return throwError('');
                 }
-            }, () => {
-                util.createErrorToast('Could not retrieve setting definitions');
-            });
-        });
-    };
+            }),
+            catchError(() => {
+                return this.getApplicationSettingDefinitions('http://mobi.com/ontologies/namespace#NamespaceApplicationSettingGroup').pipe(
+                    switchMap(response => {
+                        const newArray = response.filter(el =>{
+                            return el['@id'] === 'http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSettingPropertyShape';
+                        });
+                        if (newArray.length !== 1) {
+                            this.util.createErrorToast(`Number of matching property shapes must be one, not ${newArray.length}`);
+                            return throwError('');
+                        }
+                        const defaultNamespacePropertyShape = newArray[0];
+                        if (has(defaultNamespacePropertyShape, `${SHACL}defaultValue`)) {
+                            return of(this.util.getPropertyValue(defaultNamespacePropertyShape, `${SHACL}defaultValue`));
+                        } else {
+                            this.util.createErrorToast('No default value found for default namespace');
+                            return throwError('');
+                        }
+                    }),
+                    catchError(() => {
+                        this.util.createErrorToast('Could not retrieve setting definitions');
+                        return throwError('');
+                    })
+                );
+            }),
+        );
+    }
 
     /**
-     * @ngdoc method
-     * @name getUserPreferences
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Retrieve all user preferences for active user
      *
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the GET settings endpoint or is
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the GET settings endpoint or is
      * rejected with an error message
      */
-    self.getUserPreferences = function(id = '') {
-        return self.getSettings(self.prefSettingType.iri, id);
-    };
+    getUserPreferences(isTracked = false): Observable<{ [key: string]: JSONLDObject[] }> {
+        return this.getSettings(this.prefSettingType.iri, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getApplicationSettings
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Retrieve all application settings in the system
      *
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the GET settings endpoint or is
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the GET settings endpoint or is
      * rejected with an error message
      */
-    self.getApplicationSettings = function(id = '') {
-        return self.getSettings(self.appSettingType.iri, id);
-    };
+    getApplicationSettings(isTracked = false): Observable<{ [key: string]: JSONLDObject[] }> {
+        return this.getSettings(this.appSettingType.iri, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getSettings
-     * @methodOf shared.service:settingManagerService
-     *
      * @description
      * Makes a call to GET /mobirest/settings to get a JSON object of all settings and
      * referenced entities of the passed in setting type. The return object will have a
@@ -126,325 +124,221 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * they have previously created for that type.
      * 
      * @param {string} type The setting type to get settings for
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getSettings = function(type, id = '') {
-        const config = {
-            params: {
-                type
-            }
-        };
-        const promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
-        return promise.then($q.when, util.rejectError);
-    };
+    getSettings(type: string, isTracked = false): Observable<{ [key: string]: JSONLDObject[] }> {
+        const params = { type };
+        const request = this.http.get<{ [key: string]: JSONLDObject[] }>(this.prefix, { params: this.util.createHttpParams(params) });
+        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+    }
 
     /**
-     * @ngdoc method
-     * @name getApplicationSettingByType
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Get the specific application setting in the repo for the given application setting type.
      *
      * @param {string} applicationSettingType The specific type of application setting to retrieve
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getApplicationSettingByType = function(applicationSettingType, id = '') {
-        return self.getSettingByType(self.appSettingType.iri, applicationSettingType, id);
-    };
+    getApplicationSettingByType(applicationSettingType: string, isTracked = false): Observable<JSONLDObject[]> {
+        return this.getSettingByType(this.appSettingType.iri, applicationSettingType, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getUserPreferenceByType
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Get the specific application setting in the repo for the given user preference type.
      *
      * @param {string} preferenceType The specific type of user preference to retrieve
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getUserPreferenceByType = function(preferenceType, id = '') {
-        return self.getSettingByType(self.prefSettingType.iri, preferenceType, id);
-    };
+    getUserPreferenceByType(preferenceType: string, isTracked = false): Observable<JSONLDObject[]> {
+        return this.getSettingByType(this.prefSettingType.iri, preferenceType, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getSettingByType
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Makes a call to GET /mobirest/settings/types/{settingSubType} to get a JSON array consisting of the json-ld 
      * representation of the current value of the setting for the given setting subType and setting type as well as
      * all referenced entities.
      *
      * @param {string} type The setting type to retrieve a setting for
      * @param {string} settingSubType The specific setting subType to retrieve
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getSettingByType = function(type, settingSubType, id = '') {
-        const config = {
-            params: {
-                type
-            }
-        };
-        const promise = id ? httpService.get(`${prefix}/types/${encodeURIComponent(settingSubType)}`, config, id) : $http.get(`${prefix}/types/${encodeURIComponent(settingSubType)}`, config);
-        return promise.then($q.when, util.rejectError);
-    };
+    getSettingByType(type: string, settingSubType: string, isTracked = false): Observable<JSONLDObject[]> {
+        const params = { type };
+        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/types/${encodeURIComponent(settingSubType)}`, 
+            {params: this.util.createHttpParams(params)});
+        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+    }
 
     /**
-     * @ngdoc method
-     * @name updateUserPreference
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Updates the existing user preference identified by the preferenceId with the passed in user preference.
      *
      * @param {string} preferenceId The id of the user preference that will be updated 
      * @param {string} preferenceType The type of user preference being updated
-     * @param {Object} userPreference The JSON-LD containing the new user preference values and referenced entities
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new user preference values and referenced entities
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.updateUserPreference = function(preferenceId, preferenceType, userPreference, id = '') {
-        return self.updateSetting(self.prefSettingType.iri, preferenceId, preferenceType, userPreference, id);
-    };
+    updateUserPreference(preferenceId: string, preferenceType: string, userPreference: JSONLDObject[], isTracked = false): Observable<null> {
+        return this.updateSetting(this.prefSettingType.iri, preferenceId, preferenceType, userPreference, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name updateApplicationSetting
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Updates the existing application setting identified by the applicationSettingId with the passed in
      * applicationSetting.
      *
      * @param {string} applicationSettingId The id of the application setting that will be updated 
      * @param {string} applicationSettingType The type of application setting being updated
-     * @param {Object} applicationSetting The JSON-LD containing the new application setting values and referenced entities
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {JSONLDObject[]} applicationSetting The JSON-LD containing the new application setting values and referenced entities
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.updateApplicationSetting = function(applicationSettingId, applicationSettingType, applicationSetting, id = '') {
-        return self.updateSetting(self.appSettingType.iri, applicationSettingId, applicationSettingType, applicationSetting, id);
-    };
+    updateApplicationSetting(applicationSettingId: string, applicationSettingType: string, applicationSetting: JSONLDObject[], isTracked = false): Observable<null> {
+        return this.updateSetting(this.appSettingType.iri, applicationSettingId, applicationSettingType, applicationSetting, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name updateSetting
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Calls the PUT /mobirest/settings/{settingId} endpoint and updates the Setting with the passed in settingId
      * using the JSON-LD provided in the passed in object.
      *
      * @param {string} type The setting type of the setting to be updated
      * @param {string} settingId The id of the setting that will be updated 
      * @param {string} subType The specific subType of setting being updated
-     * @param {Object} setting The JSON-LD containing the new setting values and referenced entities
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {JSONLDObject[]} setting The JSON-LD containing the new setting values and referenced entities
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.updateSetting = function(type, settingId, subType, setting, id = '') {
-        const config = {
-            params: {
-                'subType': subType,
-                'type': type
-            }
-        };
-        const promise = id ? httpService.put(`${prefix}/${encodeURIComponent(settingId)}`, setting, config, id) 
-            : $http.put(`${prefix}/${encodeURIComponent(settingId)}`, setting, config);
-        return promise.then($q.when, util.rejectError);
-    };
+    updateSetting(type: string, settingId: string, subType: string, setting: JSONLDObject[], isTracked = false): Observable<null> {
+        const params = { subType, type };
+        const request = this.http.put(`${this.prefix}/${encodeURIComponent(settingId)}`, setting, {params: this.util.createHttpParams(params)});
+        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+    }
 
     /**
-     * @ngdoc method
-     * @name createUserPreference
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Creates a new user preference in the system using the passed in user preference.
      *
      * @param {string} preferenceType The type of user preference being created
-     * @param {Object} userPreference The JSON-LD containing the new user preference values and referenced entities
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new user preference values and referenced entities
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.createUserPreference = function(preferenceType, userPreference, id = '') {
-        return self.createSetting(self.prefSettingType.iri , preferenceType, userPreference, id)
-    };
+    createUserPreference(preferenceType: string, userPreference: JSONLDObject[], isTracked = false): Observable<null> {
+        return this.createSetting(this.prefSettingType.iri , preferenceType, userPreference, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name createApplicationSetting
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Creates a new application setting in the system using the passed in application setting.
      *
      * @param {string} applicationSettingType The type of application setting being created
-     * @param {Object} userPreference The JSON-LD containing the new application setting values and referenced entities
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new application setting values and referenced entities
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.createApplicationSetting = function(applicationSettingType, applicationSetting, id = '') {
-        return self.createSetting(self.appSettingType.iri, applicationSettingType, applicationSetting, id);
-    };
+    createApplicationSetting(applicationSettingType: string, applicationSetting: JSONLDObject[], isTracked = false): Observable<null> {
+        return this.createSetting(this.appSettingType.iri, applicationSettingType, applicationSetting, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name createSetting
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Calls the POST /mobirest/settings endpoint and creates an instance of setting as well as it's referenced entities for of the type defined by the passed in subType using the JSON-LD provided in the passed in object.
      *
      * @param {string} type The setting type being updated
      * @param {string} subType The specific subType of setting being updated
-     * @param {Object} setting The JSON-LD containing the new setting values and referenced entities
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {JSONLDObject[]} setting The JSON-LD containing the new setting values and referenced entities
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.createSetting = function(type, subType, setting, id = '') {
-        const config = {
-            params: {
-                'subType': subType,
-                'type': type
-            }
-        };
-        const promise = id ? httpService.post(prefix, setting, config, id) 
-            : $http.post(prefix, setting, config);
-        return promise.then($q.when, util.rejectError);
-    };
+    createSetting(type: string, subType: string, setting: JSONLDObject[], isTracked = false): Observable<null> {
+        const params = { subType, type };
+        const request = this.http.post(this.prefix, setting, {params: this.util.createHttpParams(params)});
+        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+    }
 
     /**
-     * @ngdoc method
-     * @name getSettingGroups
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Makes a call to GET /mobirest/settings/groups to get the JSON-LD representation of each
      * Setting Group currently defined in the repo that correspond to the passed in setting type.
      *
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getSettingGroups = function(type, id = '') {
-        const config = {
-            params: {
-                'type': type
-            }
-        };
-        const promise = id ? httpService.get(`${prefix}/groups`, config, id) : $http.get(`${prefix}/groups`, config);
-        return promise.then($q.when, util.rejectError);
-    };
+    getSettingGroups(type: string, isTracked = false): Observable<JSONLDObject[]> {
+        const params = { type };
+        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/groups`, {params: this.util.createHttpParams(params)});
+        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+    }
 
     /**
-     * @ngdoc method
-     * @name getPreferenceGroups
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Retrieve all preference groups that exist in the system.
      *
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getPreferenceGroups = function(id = '') {
-        return self.getSettingGroups(self.prefSettingType.iri, id);
-    };
+    getPreferenceGroups(isTracked = false): Observable<JSONLDObject[]> {
+        return this.getSettingGroups(this.prefSettingType.iri, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getApplicationSettingGroups
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Retrieve all application setting groups that exist in the system.
      *
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getApplicationSettingGroups = function(id = '') {
-        return self.getSettingGroups(self.appSettingType.iri, id);
-    };
+    getApplicationSettingGroups(isTracked = false): Observable<JSONLDObject[]> {
+        return this.getSettingGroups(this.appSettingType.iri, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getPreferenceDefinitions
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Retrieve all preference definitions that are part of the passed in preference group.
      * 
      * @param {string} settingGroup The preference group to retrieve preference definitions for
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getPreferenceDefinitions = function(settingGroup, id = '') {
-        return self.getSettingDefinitions(settingGroup, self.prefSettingType.iri, id);
-    };
+    getPreferenceDefinitions(settingGroup: string, isTracked = false): Observable<JSONLDObject[]> {
+        return this.getSettingDefinitions(settingGroup, this.prefSettingType.iri, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getApplicationSettingDefinitions
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Retrieve all application setting definitions that are part of the passed in application setting group.
      * 
      * @param {string} applicationSettingGroup The application setting group to retrieve application setting definitions for
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getApplicationSettingDefinitions = function(applicationSettingGroup, id = '') {
-        return self.getSettingDefinitions(applicationSettingGroup, self.appSettingType.iri, id);
-    };
+    getApplicationSettingDefinitions(applicationSettingGroup: string, isTracked = false): Observable<JSONLDObject[]> {
+        return this.getSettingDefinitions(applicationSettingGroup, this.appSettingType.iri, isTracked);
+    }
 
     /**
-     * @ngdoc method
-     * @name getSettingDefinitions
-     * @methodOf shared.service:settingManagerService
-     *
-     * @description
      * Makes a call to GET /mobirest/settings/groups/{settingGroup}/definitions to get the JSON-LD representation
      * of each setting subType defined in the repo that is declared as being part of the passed in Setting Group.
      *
      * @param {string} settingGroup The setting group to retrieve setting definitions for
      * @param {string} type The type of setting to get definitions for
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getSettingDefinitions = function(settingGroup, type, id = '') {
-        const config = {
-            params: {
-                type
-            }
-        };
-        const promise = id ? httpService.get(`${prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`, config, id)
-            : $http.get(`${prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`, config);
-        return promise.then($q.when, util.rejectError);
-    };
+    getSettingDefinitions(settingGroup: string, type: string, isTracked = false): Observable<JSONLDObject[]> {
+        const params = { type };
+        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`, 
+            {params: this.util.createHttpParams(params)});
+        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+    }
 }
-
-export default settingManagerService;

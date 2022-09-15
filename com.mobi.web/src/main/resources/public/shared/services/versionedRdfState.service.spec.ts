@@ -28,7 +28,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError, Observable } from 'rxjs';
 
-import { mockStateManager, mockUtil } from '../../../../../test/ts/Shared';
+import { mockStateManager } from '../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
@@ -36,6 +36,7 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
 import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { CatalogManagerService } from './catalogManager.service';
+import { UtilService } from './util.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 
 class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> {
@@ -74,7 +75,7 @@ describe('Versioned RDF State service', function() {
     let service: VersionedRdfStateImpl;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let stateManagerStub;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     const recordId = 'recordId';
     const branchId = 'branchId';
     const commitId = 'commitId';
@@ -84,7 +85,6 @@ describe('Versioned RDF State service', function() {
 
     let branch: JSONLDObject;
     let tag: JSONLDObject;
-    let version: JSONLDObject;
     let commit: JSONLDObject;
     let recordState: JSONLDObject;
     let versionedRdfStateModel: JSONLDObject[];
@@ -99,7 +99,7 @@ describe('Versioned RDF State service', function() {
                 VersionedRdfStateImpl,
                 MockProvider(CatalogManagerService),
                 { provide: 'stateManagerService', useClass: mockStateManager },
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
         });
     });
@@ -111,7 +111,7 @@ describe('Versioned RDF State service', function() {
 
         stateManagerStub = TestBed.get('stateManagerService');
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
             return get(entity, `['${propertyIRI}'][0]['@id']`, '');
         });
@@ -126,10 +126,6 @@ describe('Versioned RDF State service', function() {
         tag = {
             '@id': tagId,
             '@type': [VersionedRdfStateImpl.testPrefix + 'Version', VersionedRdfStateImpl.testPrefix + 'Tag']
-        };
-        version = {
-            '@id': 'version',
-            '@type': [VersionedRdfStateImpl.testPrefix + 'Version']
         };
         commit = {
             '@id': commitId,
@@ -465,7 +461,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                                 it('and getLatestMaster is rejected', async function() {
                                     this.getLatestMasterSpy.and.returnValue(throwError(this.error));
@@ -479,7 +475,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                             });
                             it('and deleteState is rejected', async function() {
@@ -494,7 +490,7 @@ describe('Versioned RDF State service', function() {
                                 expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                 expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                 expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                             });
                         });
                     });
@@ -538,7 +534,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                     it('and getLatestMaster is rejected', async function() {
                                         this.getLatestMasterSpy.and.returnValue(throwError(this.error));
@@ -552,7 +548,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
@@ -567,7 +563,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                             });
                         });
@@ -652,8 +648,8 @@ describe('Versioned RDF State service', function() {
                             expect(catalogManagerStub.getInProgressCommit).not.toHaveBeenCalled();
                             expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                             expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                            expect(utilStub.createWarningToast).toHaveBeenCalledWith('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
-                            expect(utilStub.createWarningToast).not.toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                            expect(utilStub.createWarningToast).toHaveBeenCalledWith('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                            expect(utilStub.createWarningToast).not.toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                         });
                     });
                     it('and deleteState is rejected', async function() {
@@ -896,8 +892,8 @@ describe('Versioned RDF State service', function() {
                                 expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                 expect(this.deleteStateSpy).not.toHaveBeenCalled();
                                 expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Tag ' + tagId + ' does not exist. Opening commit ' + commitId, {timeout: 5000});
-                                expect(utilStub.createWarningToast).not.toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Tag ' + tagId + ' does not exist. Opening commit ' + commitId, {timeOut: 5000});
+                                expect(utilStub.createWarningToast).not.toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                             });
                             describe('and getCommit is rejected', function() {
                                 beforeEach(function() {
@@ -921,7 +917,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                     it('and getLatestMaster is rejected', async function() {
                                         this.getLatestMasterSpy.and.returnValue(throwError(this.error));
@@ -936,7 +932,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
@@ -952,7 +948,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                             });
                         });
@@ -1423,7 +1419,7 @@ describe('Versioned RDF State service', function() {
                 startIndex: 0
             };
             service.listItem.merge.difference = new Difference();
-            let data = new CommitDifference();
+            const data = new CommitDifference();
             data.additions = [{'@id': 'iri1', '@type': []}];
             data.deletions = [{'@id': 'iri2', '@type': []}];
             data.commit = commit;
@@ -1464,8 +1460,8 @@ describe('Versioned RDF State service', function() {
                     .subscribe(noop, () => {
                         fail('Observable should have succeeded');
                     });
-                expect(service.checkConflicts).toHaveBeenCalled();
-                expect(this.mergeSpy).toHaveBeenCalled();
+                expect(service.checkConflicts).toHaveBeenCalledWith();
+                expect(this.mergeSpy).toHaveBeenCalledWith();
             });
             it('rejects', async function() {
                 this.mergeSpy.and.returnValue(throwError('Error'));
@@ -1475,8 +1471,8 @@ describe('Versioned RDF State service', function() {
                     }, response => {
                         expect(response).toEqual('Error');
                     });
-                expect(service.checkConflicts).toHaveBeenCalled();
-                expect(this.mergeSpy).toHaveBeenCalled();
+                expect(service.checkConflicts).toHaveBeenCalledWith();
+                expect(this.mergeSpy).toHaveBeenCalledWith();
             });
         });
         it('rejects', async function() {
@@ -1487,7 +1483,7 @@ describe('Versioned RDF State service', function() {
                 }, response => {
                     expect(response).toEqual('Error');
                 });
-            expect(this.checkConflictsSpy).toHaveBeenCalled();
+            expect(this.checkConflictsSpy).toHaveBeenCalledWith();
         });
     });
     describe('checkConflicts correctly returns and set variables correctly if getBranchConflicts', function() {

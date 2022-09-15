@@ -21,13 +21,14 @@
  * #L%
  */
 
-import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { UtilService } from '../../services/util.service';
 
 import './branchSelect.component.scss';
 
@@ -60,7 +61,7 @@ export class BranchSelectComponent implements OnInit, OnChanges {
     branchControl = new FormControl();
     filteredBranches: Observable<JSONLDObject[]>;
 
-    constructor(@Inject('utilService') public util) {
+    constructor(public util: UtilService) {
     }
 
     ngOnInit(): void {

@@ -29,7 +29,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
@@ -38,8 +37,9 @@ import { SharedModule } from '../../../shared/shared.module';
 import { RequestBranchSelectComponent } from '../requestBranchSelect/requestBranchSelect.component';
 import { RequestDetailsFormComponent } from '../requestDetailsForm/requestDetailsForm.component';
 import { RequestRecordSelectComponent } from '../requestRecordSelect/requestRecordSelect.component';
-import { CreateRequestComponent } from './createRequest.component';
 import { Commit } from '../../../shared/models/commit.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { CreateRequestComponent } from './createRequest.component';
 
 describe('Create Request component', function() {
     let component: CreateRequestComponent;
@@ -47,9 +47,8 @@ describe('Create Request component', function() {
     let fixture: ComponentFixture<CreateRequestComponent>;
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
-    let utilStub;
-    let commit : Commit;
-    let nativeElement: HTMLElement;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let commit: Commit;
 
     const id = 'entityId';
     const emptyObj: JSONLDObject = {'@id': id};
@@ -68,7 +67,7 @@ describe('Create Request component', function() {
             providers: [
                 MockProvider(MergeRequestManagerService),
                 MockProvider(MergeRequestsStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -77,10 +76,9 @@ describe('Create Request component', function() {
         fixture = TestBed.createComponent(CreateRequestComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        nativeElement = element.nativeElement as HTMLElement;
         mergeRequestManagerStub = TestBed.get(MergeRequestManagerService);
         mergeRequestsStateStub = TestBed.get(MergeRequestsStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         mergeRequestsStateStub.requestConfig = {
             title: '',
@@ -202,17 +200,17 @@ describe('Create Request component', function() {
                     expect(button.disabled).toBeTruthy();
                     mergeRequestsStateStub.requestConfig.sourceBranchId = 'branch';
                     mergeRequestsStateStub.requestConfig.targetBranchId = 'branch';
-                    component.updateCommits({commits:[commit]});
+                    component.updateCommits({commits: [commit]});
                     fixture.detectChanges();
                     expect(button.disabled).toBeFalsy();
-                })
+                });
             });
             it('2', function() {
                 mergeRequestsStateStub.createRequestStep = 2;
                 fixture.detectChanges();
                 expect(component.isDisabled).toEqual(true);
                 mergeRequestsStateStub.requestConfig.title = 'title';
-                component.updateCommits({ commits:[commit] });
+                component.updateCommits({ commits: [commit] });
                 fixture.detectChanges();
                 expect(component.isDisabled).toEqual(false);
             });

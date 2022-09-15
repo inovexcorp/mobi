@@ -46,9 +46,13 @@ import './fileUploadPage.component.scss';
     selector: 'file-upload-page',
     templateUrl: './fileUploadPage.component.html'
 })
-export class FileUploadPageComponent {
+export class FileUploadPageComponent implements OnInit{
+    shouldDisplayPreview = false;
     constructor(public state: MapperStateService, public dm: DelimitedManagerService, private dialog: MatDialog) {}
-    
+    ngOnInit(): void {
+       this.shouldDisplayPreview = (!this.state.editMapping) ||
+           (!this.state.editMapping && !this.state.newMapping && this.state.invalidProps.length > 0);
+    }
     runMappingDownload(): void {
         this.dialog.open(RunMappingDownloadOverlayComponent);
     }

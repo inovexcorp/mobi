@@ -33,11 +33,11 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { Commit } from '../../models/commit.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
+import { UtilService } from '../../services/util.service';
 import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
@@ -66,7 +66,7 @@ describe('Commit History Table component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(UserManagerService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })

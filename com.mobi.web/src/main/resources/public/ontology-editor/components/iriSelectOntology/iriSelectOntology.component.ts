@@ -88,6 +88,14 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         this.singleSelect = !(this.singleSelect === false);
         if (this.singleSelect) {
+            if (this.selected && this.selected.length) {
+                const isBlankNode = this.om.isBlankNodeId(this.selected[0]);
+                this.singleControl.setValue({
+                    item: this.selected[0],
+                    isBlankNode,
+                    name: this.getName(this.selected[0], isBlankNode)
+                });
+            }
             this.filteredIris = this.singleControl.valueChanges
                 .pipe(
                     debounceTime(500),
@@ -98,6 +106,16 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
                     }),
                 );
         } else {
+            if (this.selected && this.selected.length) {
+                this.selectedOptions = this.selected.map(iri => {
+                    const isBlankNode = this.om.isBlankNodeId(iri);
+                    return {
+                        item: iri,
+                        isBlankNode,
+                        name: this.getName(iri, isBlankNode)
+                    };
+                });
+            }
             this.filteredIris = this.multiControl.valueChanges
                 .pipe(
                     debounceTime(500),
@@ -114,7 +132,7 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         this.setDisabled(this.isDisabledWhen);
         this.setRequired(this.isRequiredWhen);
-        if (changes.selected && changes.selected.currentValue  && changes.selected.currentValue.length === 0) {
+        if (changes.selected && changes.selected.currentValue && changes.selected.currentValue.length === 0) {
             this.selectedOptions = [];
             if (this.singleSelect) {
                 this.singleControl.setValue('');
@@ -179,8 +197,11 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
             options: sortBy(grouped[namespace], item => item.name.trim().toUpperCase())
         })), group => group.namespace.toUpperCase());
     }
-    getName(value: string, isBlankNode: boolean): string {
+    getName(value: string, isBlankNode?: boolean): string {
         return isBlankNode ? this.os.getBlankNodeValue(value) : this.os.getEntityNameByListItem(value);
+    }
+    displayFn(iriOption: IriOption): string {
+        return iriOption ? iriOption.name : '';
     }
     getOntologyIri(iri: string): string {
         return get(this.selectList, `['${iri}']`, this.os.listItem.ontologyId);
@@ -207,7 +228,7 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
         const index = this.selected.indexOf(option.item);
     
         if (index >= 0) {
-            this.selectedOptions.splice(index, 1); // TODO: Should be at the same position but test this
+            this.selectedOptions.splice(index, 1);
             this.selected.splice(index, 1);
             this.selectedChange.emit(this.selected);
         }

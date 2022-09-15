@@ -31,6 +31,6 @@
 </form>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-    <button mat-raised-button color="primary" (click)="create()" [disabled]="createForm.invalid">Submit</button>
+    <button mat-raised-button color="primary" (click)="create()" [disabled]="createForm.invalid || !classes.length">Submit</button>
 </div>
 

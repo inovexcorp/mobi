@@ -20,9 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
 import { NgModule } from '@angular/core';
-import { downgradeComponent } from '@angular/upgrade/static';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -40,6 +38,12 @@ import { UsersListComponent } from './components/usersList/usersList.component';
 import { UsersPageComponent } from './components/usersPage/usersPage.component';
 import { AddMemberButtonComponent } from './components/addMemberButton/addMemberButton.component';
 
+/**
+ * @namespace user-management
+ *
+ * The `user-management` module provides components that make up the Administration page of Mobi for managing users,
+ * groups, and overall permissions in the application.
+ */
 @NgModule({
     imports: [
         SharedModule
@@ -69,24 +73,3 @@ import { AddMemberButtonComponent } from './components/addMemberButton/addMember
     ]
 })
 export class UserManagementModule {}
-
-/**
- * @namespace user-management
- *
- * The `user-management` module provides components that make up the Administration page of Mobi for managing users,
- * groups, and overall permissions in the application.
- */
-angular.module('user-management', [])
-    .directive('addMemberButton', downgradeComponent({component: AddMemberButtonComponent}) as angular.IDirectiveFactory)
-    .directive('createGroupOverlay', downgradeComponent({component: CreateGroupOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('createUserOverlay', downgradeComponent({component: CreateUserOverlayComponent}) as angular.IDirectiveFactory)
-    .component('editGroupInfoOverlay', downgradeComponent({component: EditGroupInfoOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('editUserProfileOverlay', downgradeComponent({component: EditUserProfileOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('groupsList', downgradeComponent({component: GroupsListComponent}) as angular.IDirectiveFactory)
-    .directive('groupsPage', downgradeComponent({component: GroupsPageComponent}) as angular.IDirectiveFactory)
-    .directive('memberTable', downgradeComponent({component: MemberTableComponent}) as angular.IDirectiveFactory)
-    .directive('permissionsPage', downgradeComponent({component: PermissionsPageComponent}) as angular.IDirectiveFactory)
-    .directive('resetPasswordOverlay', downgradeComponent({component: ResetPasswordOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('usersList', downgradeComponent({component: UsersListComponent}) as angular.IDirectiveFactory)
-    .directive('usersPage', downgradeComponent({component: UsersPageComponent}) as angular.IDirectiveFactory)
-    .directive('userManagementPage', downgradeComponent({component: UserManagementPageComponent}) as angular.IDirectiveFactory);

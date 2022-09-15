@@ -33,8 +33,8 @@ module.exports = {
   'Step 2: Navigate to administration page' : function(browser) {
     browser
       .useXpath()
-      .assert.visible('//*[@ui-sref="root.user-management"]/span[text()[contains(.,"Administration")]]')
-      .click('//*[@ui-sref="root.user-management"]/span[text()[contains(.,"Administration")]]')
+      .assert.visible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+      .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
   },
 
   'Step 3: check for and compare nav username text' : function(browser) {
@@ -47,7 +47,7 @@ module.exports = {
   'Step 4: logout' : function(browser){
     browser
       .useXpath()
-      .click('//i[@class= "fa fa-sign-out fa-fw"]/following-sibling::span[text()[contains(.,"Logout")]]')
+      .click('//li/a[@class=\'nav-link\']/span[text()[contains(.,\'Logout\')]]')
   },
 
   'Step 5: login as all caps admin' : function(browser) {
@@ -61,7 +61,7 @@ module.exports = {
 
   'Step 6: check for administration nav item' : function(browser) {
     browser
-      .assert.visible('//*[@ui-sref="root.user-management"]/span[text()[contains(.,"Administration")]]')
+      .assert.visible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
   },
 
   'Step 7: check for and compare nav username text' : function(browser) {
@@ -74,7 +74,7 @@ module.exports = {
   'Step 8: The user successfully logs out' : function(browser){
     browser
       .useXpath()
-      .click('//i[@class= "fa fa-sign-out fa-fw"]/following-sibling::span[text()[contains(.,"Logout")]]')
+      .click('//li/a[@class=\'nav-link\']/span[text()[contains(.,\'Logout\')]]')
       .assert.visible('//div[@class="form-group"]//input[@id="username"]')
       .assert.visible('//div[@class="form-group"]//input[@id="password"]')
   }

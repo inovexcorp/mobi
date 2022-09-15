@@ -29,15 +29,15 @@
                 <button class="new-button" mat-raised-button color="primary" (click)="showNew()">New Mapping</button>
             </div>
         </div>
-        <div class="results-list flex-1 remove-min-height py-2" #mappingList>
+        <div class="results-list flex-1 remove-min-height py-2 vertical-scroll" #mappingList>
             <info-message *ngIf="!results.length && submittedSearch" class="no-match">No mappings match your search text.</info-message>
             <info-message *ngIf="!results.length && !submittedSearch" class="no-results">No mappings are available.</info-message>
             <div class="w-100 mapping" *ngFor="let mappingRecord of results; last as lastMapping">
                 <div class="result-contents" class="d-flex w-100 py-2">
                     <div class="mapping-info flex-1 remove-min-width">
-                        <h3 class="text-truncate" [title]="mappingRecord.title" [innerHTML]="mappingRecord.title | highlightText:searchText"></h3>
+                        <h3 class="text-truncate" [title]="mappingRecord.title" [innerHTML]="mappingRecord.title | highlightText:state.paginationConfig.searchText"></h3>
                         <p class="text-muted">Updated {{mappingRecord.modified}}</p>
-                        <p class="description text-truncate break-word m-0" title="{{mappingRecord.description}}" [innerHTML]="mappingRecord.description | highlightText:searchText"></p>
+                        <p class="description text-truncate break-word m-0" title="{{mappingRecord.description}}" [innerHTML]="mappingRecord.description | highlightText:state.paginationConfig.searchText"></p>
                     </div>
                     <div>
                         <button class="menu-button" mat-icon-button [matMenuTriggerFor]="mappingActions"><mat-icon>more_vert</mat-icon></button>

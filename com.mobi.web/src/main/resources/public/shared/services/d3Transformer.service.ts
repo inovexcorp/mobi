@@ -20,98 +20,88 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Injectable } from '@angular/core';
 import { forEach, get, find, filter, startsWith } from 'lodash';
 
 /**
- * @ngdoc service
- * @name shared.service:d3TransformerService
+ * @class shared.D3TransformerService
  *
- * @description
  * `d3TransformerService` is a service that provides different transformers to convert json-ld
  *  to json objects used by the d3 library.
  */
-function d3TransformerService() {
-    var self = this;
+@Injectable()
+export class D3TransformerService {
+    constructor() {}
 
     /**
-     * @ngdoc method
-     * @name buildForceDirectedGraphD3Format
-     * @methodOf shared.service:d3TransformerService
-     *
-     * @description
      * Transform provided JSON-LD object to the D3 force directed graph json format
      *
-     * @param {Object} A JSON-LD array (typically contains an ontology or dataset records)
+     * @param {Object} inputData A JSON-LD array (typically contains an ontology or dataset records)
      * @return {Object} A formatted JSON object
      */
-    self.buildForceDirectedGraphD3Format = function(inputData) {
-        var jsonld = JSON.parse(inputData);
-        var allNodes: any = {};
+    buildForceDirectedGraphD3Format(inputData) {
+        const jsonld = JSON.parse(inputData);
+        const allNodes: any = {};
         allNodes.nodes = [];
         allNodes.links = [];
 
         forEach(jsonld, (jsonldNode, index) => {
-            var jsonldNodeKeys = Object.keys(jsonldNode);
-            var getValueId = get(jsonldNode, '@id');
+            const jsonldNodeKeys = Object.keys(jsonldNode);
+            const getValueId = get(jsonldNode, '@id');
 
-            buildNode(allNodes, getValueId, 1, "obj");
+            this._buildNode(allNodes, getValueId, 1, 'obj');
 
-            var filterAnnotations = filter(jsonldNodeKeys, o => !startsWith(o, '@'));
+            const filterAnnotations = filter(jsonldNodeKeys, o => !startsWith(o, '@'));
 
             forEach(filterAnnotations, (element, key) => {
-                var getValue = get(jsonldNode, element);
-                buildWithLinks(allNodes, getValueId, element, getValue);
+                const getValue = get(jsonldNode, element);
+                this._buildWithLinks(allNodes, getValueId, element, getValue);
             });
         });
         return allNodes;
     }
 
     /**
-     * @ngdoc method
-     * @name buildHierarchyD3Format
-     * @methodOf shared.service:d3TransformerService
-     *
-     * @description
      * Transform provided JSON-LD object to the D3 hierarchy json format
      *
-     * @param {Object} A JSON-LD array (typically contains an ontology or dataset records)
+     * @param {Object} jsonld A JSON-LD array (typically contains an ontology or dataset records)
      * @return {Object} A formatted JSON object
      */
-    /* self.buildHierarchyD3Format = function(jsonld) {
+    /* buildHierarchyD3Format(jsonld) {
         return '';
     } */
 
-    function buildWithLinks(allNodes, parentId, predicate, jsonld) {
+    private _buildWithLinks(allNodes, parentId, predicate, jsonld) {
         forEach(jsonld, (jsonldNode, index) => {
-            var jsonldNodeKeys = Object.keys(jsonldNode);
+            const jsonldNodeKeys = Object.keys(jsonldNode);
 
-            var link: any = {};
-            var getValueId = get(jsonldNode, '@id');
+            const link: any = {};
+            const getValueId = get(jsonldNode, '@id');
 
             if (getValueId) {
-                buildNode(allNodes, getValueId, 1, "obj");
+                this._buildNode(allNodes, getValueId, 1, 'obj');
 
                 link.source = parentId;
                 link.predicate = predicate;
                 link.target = getValueId;
-                link.edgetype = "obj";
+                link.edgetype = 'obj';
                 allNodes.links.push(link);
             }
 
             forEach(jsonldNodeKeys, (element, key) => {
-                var singleNode = {};
-                var getValue = get(jsonldNode, element);
-                var innerparentId = get(getValue, '@id');
+                const singleNode = {};
+                const getValue = get(jsonldNode, element);
+                const innerparentId = get(getValue, '@id');
 
                 if (innerparentId) {
-                    buildWithLinks(allNodes, innerparentId, element, getValue);
+                    this._buildWithLinks(allNodes, innerparentId, element, getValue);
                 }
-            })
+            });
         });
     }
 
-    function buildNode(allNodes, id, group, type) {
-        var singleNode: any = {};
+    private _buildNode(allNodes, id, group, type) {
+        const singleNode: any = {};
         if (id && group) {
             singleNode.id = id;
             singleNode.group = 1;
@@ -122,5 +112,3 @@ function d3TransformerService() {
         }
     }
 }
-
-export default d3TransformerService;

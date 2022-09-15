@@ -20,15 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { find, get, noop, reject } from 'lodash';
-import { Inject, Component, OnInit, OnDestroy } from '@angular/core';
-import { first } from 'rxjs/operators';
+import { find, get, reject } from 'lodash';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { first, switchMap } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './shapesGraphMergePage.component.scss';
 
@@ -38,8 +39,8 @@ import './shapesGraphMergePage.component.scss';
  * A component that creates a page that displays all the current users's saved changes
  * (aka inProgressCommit) of the current ShapesGraphRecord. The changes are grouped by
  * subject. The display will include a button to remove all the saved changes if there are any. If there are
- * no changes, an {@link shared.component:infoMessage} is shown stating as such. If the current branch is
- * not up to date and there are changes, an {@link shared.component:errorDisplay} is shown. If there are
+ * no changes, an {@link shared.InfoMessageComponent} is shown stating as such. If the current branch is
+ * not up to date and there are changes, an {@link shared.ErrorDisplayComponent} is shown. If there are
  * no changes and the current branch is not up to date, an `errorDisplay` is shown with a link to pull in the
  * latest changes. If there are no changes and the user is on a UserBranch then an `errorDisplay` is shown with
  * a link to "pull changes" which will perform a merge of the UserBranch into the parent branch. If there are
@@ -51,9 +52,7 @@ import './shapesGraphMergePage.component.scss';
     templateUrl: './shapesGraphMergePage.component.html'
 })
 export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
-    constructor(private cm: CatalogManagerService, @Inject('utilService') private util,
-                public state: ShapesGraphStateService) {
-    }
+    constructor(private cm: CatalogManagerService, private util: UtilService, public state: ShapesGraphStateService) {}
 
     catalogId = '';
     error = '';
@@ -84,12 +83,12 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
         this.state.listItem.merge.startIndex = 0;
         this.state.listItem.merge.target = value;
         if (this.state.listItem.merge.target) {
-            this.cm.getRecordBranch(this.state.listItem.merge.target['@id'], this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise()
-                .then((target: JSONLDObject) => {
+            this.cm.getRecordBranch(this.state.listItem.merge.target['@id'], this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
+                switchMap((target: JSONLDObject) => {
                     this.targetHeadCommitId = this.util.getPropertyId(target, CATALOG + 'head');
-                    return this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0).pipe(first()).toPromise();
-                }, error => Promise.reject(error))
-                .then(noop, errorMessage => {
+                    return this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0);
+                }))
+                .subscribe(() => {}, errorMessage => {
                     this.util.createErrorToast(errorMessage);
                     this.state.listItem.merge.difference = undefined;
                 });
@@ -99,7 +98,7 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
     }
     retrieveMoreResults(limit: number, offset: number): void {
         this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, limit, offset)
-            .subscribe(noop, this.util.createErrorToast);
+            .subscribe(() => {}, this.util.createErrorToast);
     }
     submit(): void {
         this.state.attemptMerge()

@@ -31,13 +31,14 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { EditBranchOverlayComponent } from './editBranchOverlay.component';
 
 describe('Edit Branch Overlay component', function() {
@@ -47,7 +48,7 @@ describe('Edit Branch Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<EditBranchOverlayComponent>>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
@@ -79,7 +80,7 @@ describe('Edit Branch Overlay component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MAT_DIALOG_DATA, useValue: { branch } },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -93,7 +94,7 @@ describe('Edit Branch Overlay component', function() {
         ontologyStateStub = TestBed.get(OntologyStateService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = listItem;
         catalogManagerStub.localCatalog = {'@id': catalogId};

@@ -35,7 +35,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
@@ -45,6 +45,7 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { Difference } from '../../../shared/models/difference.class';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Upload Record Modal component', function() {
     let component: UploadRecordModalComponent;
@@ -53,7 +54,7 @@ describe('Upload Record Modal component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<UploadRecordModalComponent>>;
     let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     const uploadResponse = {
         status: 200
@@ -91,7 +92,7 @@ describe('Upload Record Modal component', function() {
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 { provide: MAT_DIALOG_DATA, useValue: {} },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphManagerService),
                 MockProvider(ShapesGraphStateService)
@@ -115,10 +116,10 @@ describe('Upload Record Modal component', function() {
             title: 'title'
         };
 
-        shapesGraphManagerStub.uploadChanges.and.returnValue(Promise.resolve(uploadResponse));
+        shapesGraphManagerStub.uploadChanges.and.resolveTo(uploadResponse);
         catalogManagerStub = TestBed.get(CatalogManagerService);
         catalogManagerStub.getInProgressCommit.and.returnValue(of(inProgressCommit));
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {
@@ -144,12 +145,12 @@ describe('Upload Record Modal component', function() {
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(inProgressCommit);
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith(true);
             });
             it('unless an error occurs', async function() {
                 component.selectedFile = file;
-                shapesGraphManagerStub.uploadChanges.and.returnValue(Promise.reject(''));
+                shapesGraphManagerStub.uploadChanges.and.rejectWith('');
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
                 component.uploadChanges();
                 fixture.detectChanges();
@@ -162,7 +163,7 @@ describe('Upload Record Modal component', function() {
             });
             it('unless there are no changes in the uploaded file', async function() {
                 component.selectedFile = file;
-                shapesGraphManagerStub.uploadChanges.and.returnValue(Promise.resolve({status: 204}));
+                shapesGraphManagerStub.uploadChanges.and.resolveTo({status: 204});
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
                 component.uploadChanges();
                 fixture.detectChanges();
@@ -170,7 +171,7 @@ describe('Upload Record Modal component', function() {
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
-                expect(utilStub.createWarningToast).toHaveBeenCalled();
+                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             });
@@ -194,6 +195,6 @@ describe('Upload Record Modal component', function() {
         const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.uploadChanges).toHaveBeenCalled();
+        expect(component.uploadChanges).toHaveBeenCalledWith();
     });
 });

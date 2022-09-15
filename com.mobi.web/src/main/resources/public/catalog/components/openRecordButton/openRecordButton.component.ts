@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { find, noop, isEmpty } from 'lodash';
-import { StateService } from '@uirouter/core';
+import { Router } from '@angular/router';
 
 import { RecordSelectFiltered } from '../../../shapes-graph-editor/models/recordSelectFiltered.interface';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
@@ -32,6 +32,9 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
 import { DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -64,10 +67,10 @@ export class OpenRecordButtonComponent {
     @Input() flat: boolean;
     @Input() stopProp: boolean;
 
-    constructor(public $state: StateService, public cs: CatalogStateService, public ms: MapperStateService,
-        public os: OntologyStateService, @Inject('policyEnforcementService') public pe,
-        @Inject('policyManagerService') public pm, public sgs: ShapesGraphStateService,
-        @Inject('utilService') public util) {}
+    constructor(public router: Router, public cs: CatalogStateService, public ms: MapperStateService,
+        public os: OntologyStateService, public pep: PolicyEnforcementService,
+        public pm: PolicyManagerService, public sgs: ShapesGraphStateService,
+        public util: UtilService) {}
 
     openRecord(event: MouseEvent): void {
         if (this.stopProp) {
@@ -91,7 +94,7 @@ export class OpenRecordButtonComponent {
         }
     }
     openOntology(): void {
-        this.$state.go('root.ontology-editor', null, { reload: true });
+        this.router.navigate(['/ontology-editor']);
         if (!isEmpty(this.os.listItem)) {
             this.os.listItem.active = false;
         }
@@ -106,10 +109,10 @@ export class OpenRecordButtonComponent {
     }
     openMapping(): void {
         this.ms.paginationConfig.searchText = this.util.getDctermsValue(this.record, 'title');
-        this.$state.go('root.mapper', null, { reload: true });
+        this.router.navigate(['/mapper']);
     }
     openDataset(): void {
-        this.$state.go('root.datasets', null, { reload: true });
+        this.router.navigate(['/datasets']);
     }
     openShapesGraph(): void {
         const recordSelect: RecordSelectFiltered = {
@@ -117,7 +120,7 @@ export class OpenRecordButtonComponent {
             title: this.util.getDctermsValue(this.record, 'title'),
             description: this.util.getDctermsValue(this.record, 'description')
         };
-        this.$state.go('root.shapes-graph-editor', null, { reload: true });
+        this.router.navigate(['/shapes-graph-editor']);
         this.sgs.openShapesGraph(recordSelect).then(noop, this.util.createErrorToast);
     }
     update(): void {
@@ -128,8 +131,8 @@ export class OpenRecordButtonComponent {
                 resourceId: this.record['@id'],
                 actionId: this.pm.actionRead
             };
-            this.pe.evaluateRequest(request).then(decision => {
-                this.showButton = decision !== this.pe.deny;
+            this.pep.evaluateRequest(request).subscribe(decision => {
+                this.showButton = decision !== this.pep.deny;
             });
         } else {
             this.showButton = true;

@@ -26,14 +26,14 @@ import { MatCardModule, MatDividerModule, MatTooltipModule } from '@angular/mate
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
 import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalogRecordKeywords.component';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.component';
@@ -45,7 +45,7 @@ describe('Record Card component', function() {
     let component: RecordCardComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<RecordCardComponent>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const record: JSONLDObject = {
         '@id': '',
@@ -70,7 +70,7 @@ describe('Record Card component', function() {
                 MockDirective(CopyClipboardDirective)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ],
         });
     });
@@ -79,7 +79,7 @@ describe('Record Card component', function() {
         fixture = TestBed.createComponent(RecordCardComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
         utilStub.getDate.and.returnValue('date');

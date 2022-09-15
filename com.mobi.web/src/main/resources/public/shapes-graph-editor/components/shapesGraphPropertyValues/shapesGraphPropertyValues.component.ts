@@ -20,18 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './shapesGraphPropertyValues.component.scss';
 
 /**
- * @ngdoc component
- * @name shapes-graph-editor.component:shapesGraphPropertyValues
- * @requires shared.service:utilService
- * @requires shared.service:ontologyManagerService
+ * @class shapes-graph-editor.ShapesGraphPropertyValuesComponent
  *
- * @description
- * `shapesGraphPropertyValues` is a component that creates a display of the values of the provided `property` on the provided
+ * A component that creates a display of the values of the provided `property` on the provided
  * JSON-LD `entity`. Display includes the property as a header and the individual values displayed using a
  * {@link shared.component:valueDisplay}.
  *
@@ -46,5 +43,5 @@ export class ShapesGraphPropertyValuesComponent {
     @Input() property;
     @Input() entity;
     
-    constructor(@Inject('utilService') public util) {}
+    constructor(public util: UtilService) {}
 }

@@ -33,7 +33,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { DCTERMS, MERGEREQ, XSD } from '../../../prefixes';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
@@ -44,6 +43,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { AssigneeInputComponent } from '../assigneeInput/assigneeInput.component';
 import { EditRequestOverlayComponent } from './editRequestOverlay.component';
 
@@ -56,7 +56,7 @@ describe('Edit Request Overlay Component', function() {
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     
     const catalogId = 'catalogId';
     const requestId = 'urn://test/merge-request/1';
@@ -100,7 +100,7 @@ describe('Edit Request Overlay Component', function() {
                 MockProvider(MergeRequestManagerService),
                 MockProvider(MergeRequestsStateService),
                 MockProvider(UserManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -115,7 +115,7 @@ describe('Edit Request Overlay Component', function() {
         mergeRequestManagerStub = TestBed.get(MergeRequestManagerService);
         mergeRequestsStateStub = TestBed.get(MergeRequestsStateService);
         userManagerStub = TestBed.get(UserManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         mergeRequestsStateStub.selected = {
             recordIri: recordId,
@@ -229,7 +229,7 @@ describe('Edit Request Overlay Component', function() {
                 component.submit();
                 tick();
                 expect(mergeRequestManagerStub.updateRequest).toHaveBeenCalledWith(requestId, this.expectedJsonld);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalledWith();
+                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(mergeRequestsStateStub.getRequestObj).not.toHaveBeenCalled();
                 expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();

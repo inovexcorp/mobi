@@ -39,7 +39,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
@@ -47,6 +46,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { EditorBranchSelectComponent } from './editorBranchSelect.component';
 
 interface Option {
@@ -64,7 +64,7 @@ describe('Editor Branch Select component', function() {
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     let branch1Rdf: JSONLDObject;
     let branch2Rdf: JSONLDObject;
@@ -124,7 +124,7 @@ describe('Editor Branch Select component', function() {
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 MockProvider(CatalogManagerService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
@@ -176,7 +176,7 @@ describe('Editor Branch Select component', function() {
             '@type': []
         }));
 
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
         });

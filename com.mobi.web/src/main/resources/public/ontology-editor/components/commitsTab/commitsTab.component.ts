@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { find } from 'lodash';
 
 import { ONTOLOGYSTATE } from '../../../prefixes';
 import { Commit } from '../../../shared/models/commit.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './commitsTab.component.scss';
 
@@ -43,7 +44,7 @@ import './commitsTab.component.scss';
 export class CommitsTabComponent {
     commits: Commit[] = [];
     
-    constructor(public os: OntologyStateService, @Inject('utilService') public util) {}
+    constructor(public os: OntologyStateService, public util: UtilService) {}
 
     getHeadTitle(): string {
         if (this.os.listItem.versionedRdfRecord.branchId) {

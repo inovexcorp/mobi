@@ -116,7 +116,8 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.web.security.util,
-                            com.mobi.web.security.util.api
+                            com.mobi.web.security.util.api,
+                            com.mobi.web.security.resources
                         </Export-Package>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

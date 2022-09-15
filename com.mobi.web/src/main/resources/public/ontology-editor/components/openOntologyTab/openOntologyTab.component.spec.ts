@@ -31,11 +31,12 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockSettingManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
@@ -43,6 +44,8 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOverlay.component';
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
 import { UploadSnackbarComponent } from '../uploadSnackbar/uploadSnackbar.component';
@@ -58,8 +61,8 @@ describe('Open Ontology Tab component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let settingManagerStub;
-    let utilStub;
+    let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const recordId = 'recordId';
@@ -92,6 +95,7 @@ describe('Open Ontology Tab component', function() {
             ],
             declarations: [
                 OpenOntologyTabComponent,
+                MockComponent(SearchBarComponent),
                 MockComponent(UploadOntologyOverlayComponent),
                 MockComponent(NewOntologyOverlayComponent),
                 MockComponent(ConfirmModalComponent),
@@ -105,8 +109,8 @@ describe('Open Ontology Tab component', function() {
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
                 MockProvider(MapperStateService),
-                { provide: 'settingManagerService', useClass: mockSettingManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(SettingManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -124,8 +128,8 @@ describe('Open Ontology Tab component', function() {
         ontologyStateStub = TestBed.get(OntologyStateService);
         mapperStateStub = TestBed.get(MapperStateService);
         matDialog = TestBed.get(MatDialog);
-        settingManagerStub = TestBed.get('settingManagerService');
-        utilStub = TestBed.get('utilService');
+        settingManagerStub = TestBed.get(SettingManagerService);
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {
@@ -239,7 +243,7 @@ describe('Open Ontology Tab component', function() {
         });
         it('should set the correct state for creating a new ontology', fakeAsync(function() {
             const namespace = 'https://mobi.com/ontologies/';
-            settingManagerStub.getDefaultNamespace.and.resolveTo(namespace);
+            settingManagerStub.getDefaultNamespace.and.returnValue(of(namespace));
             component.newOntology();
             tick();
             expect(matDialog.open).toHaveBeenCalledWith(NewOntologyOverlayComponent, {autoFocus: false, data: { defaultNamespace: namespace}});
@@ -344,7 +348,7 @@ describe('Open Ontology Tab component', function() {
         }));
         it('should perform a search', function() {
             spyOn(component, 'setPageOntologyRecords');
-            component.filterText = 'searchText'; 
+            component.searchBindModel = 'searchText'; 
             component.search();
             expect(component.setPageOntologyRecords).toHaveBeenCalledWith(0 , 'searchText');
         });
@@ -356,7 +360,7 @@ describe('Open Ontology Tab component', function() {
             expect(element.queryAll(By.css('.search-form')).length).toEqual(1);
             expect(element.queryAll(By.css('.ontologies')).length).toEqual(1);
         });
-        ['mat-form-field', 'input[type="file"].hide', 'input.ontology-search', '.ontologies', 'mat-paginator'].forEach(item => {
+        ['search-bar', 'input[type="file"].hide', '.ontologies', 'mat-paginator'].forEach(item => {
             it('with a ' + item, function() {
                 expect(element.queryAll(By.css(item)).length).toEqual(1);
             });

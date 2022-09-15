@@ -22,7 +22,7 @@
  */
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material';
 import { map, get } from 'lodash';
 
@@ -95,7 +95,7 @@ export class CatalogRecordKeywordsComponent {
     }
     cancelChanges(): void {
         this.editedKeywords = this.keywords;
-        this.addKeywordsForm.controls.keywords.setValue(this.keywords)
+        this.addKeywordsForm.controls.keywords.setValue(this.keywords);
         this.edit = false;
     }
 

@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 /*-
  * #%L
@@ -24,12 +24,10 @@ import { Component } from "@angular/core";
  */
 
 /**
- * @ngdoc component
- * @name shared.component:warningMessage
+ * @class shared.WarningMessageComponent
  *
- * @description
- * `warningMessage` is a component that creates a styled message for displaying warning messages from the
- * transcluded content. The content will have yellow colored text and will be next to an warning icon.
+ * A component that creates a styled message for displaying warning messages from the transcluded content. The content
+ * will have yellow colored text and will be next to an warning icon.
  */
 @Component({
     selector: 'warning-message',

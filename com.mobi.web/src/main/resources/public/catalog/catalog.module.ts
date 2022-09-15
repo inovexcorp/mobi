@@ -21,8 +21,6 @@
  * #L%
  */
 import { NgModule } from '@angular/core';
-import { downgradeComponent } from '@angular/upgrade/static';
-import * as angular from 'angular';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -42,6 +40,11 @@ import { RecordViewComponent } from './components/recordView/recordView.componen
 import { RecordViewTabsetComponent } from './components/recordViewTabset/recordViewTabset.component';
 import { RecordTypeComponent } from './components/recordType/recordType.component';
 
+/**
+ * @namespace catalog
+ *
+ * The `catalog` module provides components that make up the Catalog module in the Mobi application.
+ */
 @NgModule({
     imports: [
         SharedModule
@@ -68,25 +71,3 @@ import { RecordTypeComponent } from './components/recordType/recordType.componen
     ]
 })
 export class CatalogModule {}
-
-/**
- * @namespace catalog
- *
- * The `catalog` module provides components that make up the Catalog module in the Mobi application.
- */
-angular.module('catalog', [])
-    .directive('branchList', downgradeComponent({component: BranchListComponent}) as angular.IDirectiveFactory)
-    .directive('catalogPage', downgradeComponent({component: CatalogPageComponent}) as angular.IDirectiveFactory)
-    .directive('catalogRecordKeywords', downgradeComponent({component: CatalogRecordKeywordsComponent}) as angular.IDirectiveFactory)
-    .directive('entityPublisher', downgradeComponent({component: EntityPublisherComponent}) as angular.IDirectiveFactory)
-    .directive('openRecordButton', downgradeComponent({component: OpenRecordButtonComponent}) as angular.IDirectiveFactory)
-    .directive('manageRecordButton', downgradeComponent({component: ManageRecordButtonComponent}) as angular.IDirectiveFactory)
-    .directive('manageRecordButton', downgradeComponent({component: RecordPermissionViewComponent}) as angular.IDirectiveFactory)
-    .directive('recordCard', downgradeComponent({component: RecordCardComponent}) as angular.IDirectiveFactory)
-    .directive('recordFilters', downgradeComponent({component: RecordFiltersComponent}) as angular.IDirectiveFactory)
-    .directive('recordIcon', downgradeComponent({component: RecordIconComponent}) as angular.IDirectiveFactory)
-    .directive('recordMarkdown', downgradeComponent({component: RecordMarkdownComponent}) as angular.IDirectiveFactory)
-    .directive('recordsView', downgradeComponent({component: RecordsViewComponent}) as angular.IDirectiveFactory)
-    .directive('recordView', downgradeComponent({component: RecordViewComponent}) as angular.IDirectiveFactory)
-    .directive('recordViewTabset', downgradeComponent({component: RecordViewTabsetComponent}) as angular.IDirectiveFactory)
-    .directive('recordType', downgradeComponent({component: RecordTypeComponent}) as angular.IDirectiveFactory);

@@ -31,12 +31,14 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockPropertyManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { DCTERMS, OWL, XSD } from '../../../prefixes';
 import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { AnnotationOverlayComponent } from './annotationOverlay.component';
 
 describe('Annotation Overlay component', function() {
@@ -46,8 +48,8 @@ describe('Annotation Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<AnnotationOverlayComponent>>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let propertyManagerStub;
-    let utilStub;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const annotation = 'annotation1';
     const entityIRI = 'entity';
@@ -73,8 +75,8 @@ describe('Annotation Overlay component', function() {
             providers: [
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
                 { provide: MAT_DIALOG_DATA, useValue: { editing: false } },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -88,8 +90,8 @@ describe('Annotation Overlay component', function() {
         ontologyManagerStub = TestBed.get(OntologyManagerService);
         ontologyStateStub = TestBed.get(OntologyStateService);
         matDialogRef = TestBed.get(MatDialogRef);
-        propertyManagerStub = TestBed.get('propertyManagerService');
-        utilStub = TestBed.get('utilService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
+        utilStub = TestBed.get(UtilService);
         
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = {'@id': entityIRI};
@@ -276,6 +278,7 @@ describe('Annotation Overlay component', function() {
                 ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
                 component.annotationForm.controls.value.setValue('value');
                 component.annotationForm.controls.type.setValue(XSD + 'string');
+                utilStub.createJson.and.returnValue({'@id': ''});
             });
             describe('the value was added successfully', function() {
                 beforeEach(function() {
@@ -324,6 +327,7 @@ describe('Annotation Overlay component', function() {
                 component.annotationForm.controls.value.setValue('value');
                 component.annotationForm.controls.type.setValue(XSD + 'string');
                 component.data.index = 0;
+                utilStub.createJson.and.returnValue({'@id': ''});
             });
             describe('if the value was edited successfully', function() {
                 beforeEach(function() {

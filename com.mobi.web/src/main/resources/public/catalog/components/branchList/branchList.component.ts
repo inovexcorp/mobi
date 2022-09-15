@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { isEmpty, find, filter } from 'lodash';
 
 import { CATALOG, DCTERMS } from '../../../prefixes';
@@ -29,6 +29,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './branchList.component.scss';
 
@@ -67,8 +68,7 @@ export class BranchListComponent {
     get record(): JSONLDObject {
         return this._record;
     }
-    constructor(public cm: CatalogManagerService, public om: OntologyManagerService, 
-        @Inject('utilService') public util) {}
+    constructor(public cm: CatalogManagerService, public om: OntologyManagerService, public util: UtilService) {}
 
     loadMore(): void {
         this.limit += this.increment;

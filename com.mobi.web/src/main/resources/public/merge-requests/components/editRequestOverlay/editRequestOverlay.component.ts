@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { get } from 'lodash';
@@ -32,6 +32,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './editRequestOverlay.component.scss';
 
@@ -56,8 +57,7 @@ export class EditRequestOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<EditRequestOverlayComponent>, private fb: FormBuilder,
         public state: MergeRequestsStateService, public mm: MergeRequestManagerService,
-        public cm: CatalogManagerService, public um: UserManagerService,
-        @Inject('utilService') public util) {}
+        public cm: CatalogManagerService, public um: UserManagerService, public util: UtilService) {}
     
     ngOnInit(): void {
         this._initRequestConfig();

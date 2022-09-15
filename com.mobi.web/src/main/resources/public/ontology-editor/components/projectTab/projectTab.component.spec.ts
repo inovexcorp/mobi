@@ -76,12 +76,12 @@ describe('Project Tab component', function() {
 
     it('should initialize correctly', function() {
         component.ngOnInit();
-        expect(ontologyStateStub.listItem.editorTabStates.project.component).toEqual(component.projectTab);
+        expect(ontologyStateStub.listItem.editorTabStates.project.element).toEqual(component.projectTab);
     });
     it('should tear down correctly', function() {
-        ontologyStateStub.listItem.editorTabStates.project.component = component.projectTab;
+        ontologyStateStub.listItem.editorTabStates.project.element = component.projectTab;
         component.ngOnDestroy();
-        expect(ontologyStateStub.listItem.editorTabStates.project.component).toBeUndefined();
+        expect(ontologyStateStub.listItem.editorTabStates.project.element).toBeUndefined();
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

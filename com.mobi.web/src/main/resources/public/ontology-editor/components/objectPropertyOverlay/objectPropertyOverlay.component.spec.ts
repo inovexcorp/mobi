@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {DebugElement} from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -35,21 +35,21 @@ import {
     MAT_DIALOG_DATA
 } from '@angular/material';
 import { configureTestSuite } from 'ng-bullet';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import {
-    mockUtil,
-    mockPropertyManager,
     cleanStylesFromDOM,
 } from '../../../../../../test/ts/Shared';
-
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { ObjectPropertyOverlayComponent } from './objectPropertyOverlay.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import {OWL} from '../../../prefixes';
-import {MatAutocompleteModule} from '@angular/material/autocomplete';
+import { OWL } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
 import { By } from '@angular/platform-browser';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { ObjectPropertyOverlayComponent } from './objectPropertyOverlay.component';
+import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
 
 describe('Object Property Overlay component', function() {
     let element: DebugElement;
@@ -58,8 +58,8 @@ describe('Object Property Overlay component', function() {
     let fixture:ComponentFixture<ObjectPropertyOverlayComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<ObjectPropertyOverlayComponent>>;
-    let utilStub;
-    let propertyManagerStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
     const type = [OWL + 'NamedIndividual', 'type1', 'type2'];
     const listItem = new OntologyListItem();
     const entityIRI = 'entity';
@@ -70,6 +70,7 @@ describe('Object Property Overlay component', function() {
         propertyIndex: 0,
     };
     let property, value;
+
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [
@@ -86,12 +87,13 @@ describe('Object Property Overlay component', function() {
             ],
             declarations: [
                 ObjectPropertyOverlayComponent,
+                MockComponent(IriSelectOntologyComponent)
             ],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 MockProvider(OntologyStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
+                MockProvider(UtilService),
+                MockProvider(PropertyManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -103,15 +105,16 @@ describe('Object Property Overlay component', function() {
         element = fixture.debugElement;
         nativeElement = element.nativeElement;
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
-        propertyManagerStub = TestBed.get('propertyManagerService');
+        utilStub = TestBed.get(UtilService);
+        propertyManagerStub = TestBed.get(PropertyManagerService);
         ontologyStateStub = TestBed.get(OntologyStateService);
+
         ontologyStateStub.getActiveEntityIRI.and.returnValue('active');
         ontologyStateStub.listItem = listItem;        
         ontologyStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
         ontologyStateStub.listItem.individuals.iris = {active: 'ontology', indiv: 'ontology'};
         ontologyStateStub.listItem.selected = {'@id': entityIRI};
-        component.data.propertyValue = 'indiv';
+        component.propertyValue = ['indiv'];
         fixture.detectChanges();
     });
 
@@ -129,24 +132,24 @@ describe('Object Property Overlay component', function() {
         component.ngOnInit();
         fixture.detectChanges();
         expect(component.individuals).toEqual({indiv: 'ontology'});
+        // TODO expand this
     });
    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(nativeElement.querySelectorAll('.object-property-overlay').length).toEqual(1);
-            expect(nativeElement.querySelectorAll('form').length).toEqual(1);
-            expect(nativeElement.querySelectorAll('.object-property-overlay-actions').length).toEqual(1);
+            expect(element.queryAll(By.css('h1[mat-dialog-title]')).length).toEqual(1);
+            expect(element.queryAll(By.css('form[mat-dialog-content]')).length).toEqual(1);
+            expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
         });
-        ['h1', 'mat-autocomplete'].forEach(selector => {
+        ['mat-form-field', 'mat-autocomplete', 'iri-select-ontology'].forEach(selector => {
             it('with a ' + selector, function() {
                 expect(nativeElement.querySelectorAll(selector).length).toEqual(1);
             });
         });
-        it('with buttons to submit and cancel', function() {
-            const buttons = nativeElement.querySelectorAll('.object-property-overlay-actions button');
-            fixture.detectChanges();
+        it('with buttons to cancel and submit', function() {
+            const buttons = element.queryAll(By.css('.mat-dialog-actions button'));
             expect(buttons.length).toEqual(2);
-            expect(['Cancel', 'Submit'].indexOf(buttons[0].textContent.trim()) >= 0).toEqual(true);
-            expect(['Cancel', 'Submit'].indexOf(buttons[1].textContent.trim()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit']).toContain(buttons[0].nativeElement.textContent.trim());
+            expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
         });
     });
     describe('controller methods', function() {
@@ -160,9 +163,10 @@ describe('Object Property Overlay component', function() {
                 value = 'value';
                 property = 'prop';
                 propertyManagerStub.addId.and.returnValue(true);
-                component.objectPropertyForm.controls.propertyValue.setValue('value');
+                component.propertyValue = [value];
                 component.objectPropertyForm.controls.propertySelect.setValue('prop');
                 ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
+                utilStub.createJson.and.returnValue({'@id': ''});
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerStub.addId.and.returnValue(false);
@@ -170,8 +174,8 @@ describe('Object Property Overlay component', function() {
                 expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
-                expect(utilStub.createWarningToast).toHaveBeenCalled();
-                expect(matDialogRef.close).toHaveBeenCalled();
+                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             describe('if the selected entity is', function() {
                 it('a derived Concept or ConceptScheme', function() {
@@ -179,9 +183,9 @@ describe('Object Property Overlay component', function() {
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(utilStub.createWarningToast).not.toHaveBeenCalled();
-                    expect(matDialogRef.close).toHaveBeenCalled();
+                    expect(matDialogRef.close).toHaveBeenCalledWith();
                     expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith(type);
                     expect(ontologyStateStub.updateVocabularyHierarchies).toHaveBeenCalledWith(property, [{'@id': value}]);
                 });
@@ -190,9 +194,9 @@ describe('Object Property Overlay component', function() {
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property,  value);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(utilStub.createWarningToast).not.toHaveBeenCalled();
-                    expect(matDialogRef.close).toHaveBeenCalled();
+                    expect(matDialogRef.close).toHaveBeenCalledWith();
                     expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith(type);
                     expect(ontologyStateStub.updateVocabularyHierarchies).toHaveBeenCalledWith(property, [{'@id': value}]);
                 });
@@ -200,37 +204,27 @@ describe('Object Property Overlay component', function() {
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(utilStub.createWarningToast).not.toHaveBeenCalled();
-                    expect(matDialogRef.close).toHaveBeenCalled();
+                    expect(matDialogRef.close).toHaveBeenCalledWith();
                     expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith(type);
                     expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith(type);
                     expect(ontologyStateStub.updateVocabularyHierarchies).not.toHaveBeenCalled();
                 });
             });
         });
-        // it('getValues should call the correct method', function() {
-        //    /// ontologyStateStub.listItem = { objectProperties: { iris: {test: 'ontology'} } };
-        //     ontologyStateStub.getSelectList.and.returnValue(['list']);
-        //     //component.getValues('text');
-        //     //expect(ontologyStateStub.getSelectList).toHaveBeenCalledWith(['test'], 'text', ontologyStateStub.getDropDownText);
-        //     expect(component.valueList).toEqual(['list']);
-        // });
-        it('should cancel the overlay', function() {
-            component.cancel();
-            expect(matDialogRef.close).toHaveBeenCalled();
-        });
+        // TODO add test for filter, getName
     });
     it('should call addProperty when the button is clicked', function() {
         spyOn(component, 'addProperty');
         const button = element.queryAll(By.css('div[mat-dialog-actions] button[color="primary"]'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.addProperty).toHaveBeenCalled();
+        expect(component.addProperty).toHaveBeenCalledWith();
     });
     it('should call cancel when the button is clicked', function() {
-        spyOn(component, 'cancel');
         const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
         cancelButton.triggerEventHandler('click', null);
-        expect(component.cancel).toHaveBeenCalled();
+        fixture.detectChanges();
+        expect(matDialogRef.close).toHaveBeenCalledWith(false);
     });
 });

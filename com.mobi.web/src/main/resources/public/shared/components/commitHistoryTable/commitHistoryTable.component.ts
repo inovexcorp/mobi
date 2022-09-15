@@ -25,7 +25,6 @@ import {
     Component,
     ElementRef,
     EventEmitter,
-    Inject,
     Input,
     OnChanges,
     OnDestroy,
@@ -46,25 +45,18 @@ import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
+import { UtilService } from '../../services/util.service';
 
 import './commitHistoryTable.component.scss';
 
 /**
- * @ngdoc component
- * @name shared.component:commitHistoryTable
- * @scope
- * @restrict E
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:userManagerService
- * @requires shared.service:modalService
+ * @class shared.CommitHistoryTableComponent
  *
- * @description
- * `commitHistoryTable` is a directive that creates a table containing the commit chain of the provided commit.
- * Can optionally also display a SVG graph generated using Snap.svg showing the network of the commits along
- * with an optional title for the top commit. Clicking on a commit id or its corresponding circle in the graph
- * will open up a {@link shared.component:commitInfoOverlay commit info overlay}. Can optionally
- * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
+ * A directive that creates a table containing the commit chain of the provided commit. Can optionally also display a
+ * SVG graph generated using Snap.svg showing the network of the commits along with an optional title for the top
+ * commit. Clicking on a commit id or its corresponding circle in the graph will open up a
+ * {@link shared.CommitInfoOverlayComponent commit info overlay}. Can optionally provide a variable to bind the
+ * retrieved commits to. The directive is replaced by the content of the template.
  *
  * @param {string} commitId The IRI string of a commit in the local catalog
  * @param {string} [headTitle=''] headTitle The optional title to put on the top commit
@@ -73,7 +65,7 @@ import './commitHistoryTable.component.scss';
  * @param {string} [entityId=''] entityId The optional IRI string of an entity whose history is to be displayed
  * @param {string} [recordId=''] recordId The optional IRI string of an OntologyRecord associated with the commit
  * @param {Function} [receiveCommits=undefined] receiveCommits The optional function receive more commits
- * @param {string} graph A string that if present, shows graph data of the commits
+ * @param {boolean} graph A string that if present, shows graph data of the commits
  */
 @Component({
     selector: 'commit-history-table',
@@ -91,7 +83,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
 
     @ViewChild('commitHistoryTable') commitHistoryTable: ElementRef;
 
-    constructor(@Inject('utilService') private util, private cm: CatalogManagerService, private um: UserManagerService,
+    constructor(private util: UtilService, private cm: CatalogManagerService, private um: UserManagerService,
         private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService) {
     }
     
@@ -191,7 +183,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             // Update deltaX based on how many columns there are or the minimum width
             this.deltaX = Math.max(this.deltaX + this.xI * this.columnSpacing, this.titleWidth + 10 + this.circleRadius);
             // Shift the x and y coordinates of everything using deltaX and deltaY
-            forEach(this.graphCommits, (c, idx) => c.circle.attr({cx: c.circle.asPX('cx') + this.deltaX, cy: c.circle.asPX('cy') + this.deltaY}));
+            forEach(this.graphCommits, (c) => c.circle.attr({cx: c.circle.asPX('cx') + this.deltaX, cy: c.circle.asPX('cy') + this.deltaY}));
             forEach(this.wrapper.selectAll('path'), path => {
                 const points = map(split(path.attr('d'), ' '), s => {
                     let sections;

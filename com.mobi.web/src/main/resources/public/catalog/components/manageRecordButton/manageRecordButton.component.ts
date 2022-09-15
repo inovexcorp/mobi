@@ -21,17 +21,15 @@
  * #L%
  */
 
-import { Component, Inject, Input, OnChanges, OnInit, Output, SimpleChanges, EventEmitter } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, Output, EventEmitter } from '@angular/core';
+
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 
 /**
- * @ngdoc component
- * @name catalog.component:manageRecordButton
- * @requires shared.service:policyEnforcementService
- * @requires shared.service:policyManagerService
+ * @class catalog.ManageRecordButtonComponent
  *
- * @description
- * `manageRecordButton` is a component which creates an Open Record button that will open the provided record in the
+ * A component which creates an Open Record button that will open the provided record in the
  * appropriate module.
  * 
  * @param {Object} record The record to open
@@ -54,17 +52,16 @@ export class ManageRecordButtonComponent implements OnInit, OnChanges {
     isFlat = false;
     showButton = false;
 
-    constructor(public pm: PolicyManagerService, @Inject('policyEnforcementService') public pe) {}
+    constructor(public pm: PolicyManagerService, public pep: PolicyEnforcementService) {}
 
     ngOnInit():void {
         this.update();
     }
-
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.update();
     }
 
-    public manageRecord(event):void {
+    public manageRecord(event): void {
         if (this.stopPropagation) {
             event.stopPropagation();
         }
@@ -82,10 +79,10 @@ export class ManageRecordButtonComponent implements OnInit, OnChanges {
             const managePermissionRequest = {
                 resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(this.record['@id']),
                 actionId: this.pm.actionUpdate
-            }
+            };
 
-            this.pe.evaluateRequest(managePermissionRequest).then(decision => {
-                this.showButton = decision === this.pe.permit;
+            this.pep.evaluateRequest(managePermissionRequest).subscribe(decision => {
+                this.showButton = decision === this.pep.permit;
             }, () => { 
                 this.showButton = false;
             });

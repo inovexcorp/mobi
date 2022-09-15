@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { some } from 'lodash';
 
 import { DELIM } from '../../../prefixes';
@@ -28,6 +28,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { MappingInvalidProp } from '../../../shared/models/mappingInvalidProp.interface';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './mappingPreview.component.scss';
 
@@ -55,7 +56,7 @@ interface ClassMappingPreview {
     selector: 'mapping-preview',
     templateUrl: './mappingPreview.component.html'
 })
-export class MappingPreviewComponent {
+export class MappingPreviewComponent implements OnChanges {
     classMappings: ClassMappingPreview[] = [];
 
     private _mapping: Mapping;
@@ -70,7 +71,11 @@ export class MappingPreviewComponent {
         return this._mapping;
     }
     
-    constructor(private mm: MappingManagerService, @Inject('utilService') public util) {}
+    constructor(private mm: MappingManagerService, public util: UtilService) {}
+
+    ngOnChanges(changes: SimpleChanges): void {
+        this.udateInvalidList();
+    }
 
     getIriTemplate(classMapping: JSONLDObject): string {
         const prefix = this.util.getPropertyValue(classMapping, DELIM + 'hasPrefix');
@@ -100,5 +105,8 @@ export class MappingPreviewComponent {
                     value: this.getPropValue(originalPropMapping)
             })).sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title))
         })).sort((classMapping1, classMapping2) => classMapping1.title.localeCompare(classMapping2.title));
+    }
+    private udateInvalidList() {
+        this.setClassMappings();
     }
 }

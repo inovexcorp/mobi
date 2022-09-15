@@ -30,13 +30,14 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ONTOLOGYSTATE } from '../../../prefixes';
 import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
 import { Commit } from '../../../shared/models/commit.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { CommitsTabComponent } from './commitsTab.component';
 
 describe('Commits Tab component', function() {
@@ -44,7 +45,7 @@ describe('Commits Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CommitsTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const commit: Commit = {
         id: 'commit',
@@ -68,7 +69,7 @@ describe('Commits Tab component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -78,7 +79,7 @@ describe('Commits Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.updateOntologyWithCommit.and.returnValue(of(null));

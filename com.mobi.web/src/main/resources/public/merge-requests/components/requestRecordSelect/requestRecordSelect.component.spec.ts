@@ -33,7 +33,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -41,6 +40,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { RequestRecordSelectComponent } from './requestRecordSelect.component';
 
 describe('Request Record Select component', function() {
@@ -50,7 +50,7 @@ describe('Request Record Select component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
@@ -82,7 +82,7 @@ describe('Request Record Select component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(MergeRequestsStateService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -94,7 +94,7 @@ describe('Request Record Select component', function() {
         catalogManagerStub = TestBed.get(CatalogManagerService);
         mergeRequestsStateStub = TestBed.get(MergeRequestsStateService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [record], headers: new HttpHeaders(headers)})));

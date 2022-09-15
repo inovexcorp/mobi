@@ -22,7 +22,7 @@
  */
 import { find, get } from 'lodash';
 import { switchMap } from 'rxjs/operators';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -31,6 +31,7 @@ import { ONTOLOGYSTATE } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 import './ontologyTab.component.scss';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class ontology-editor.OntologyTabComponent
@@ -49,7 +50,7 @@ import './ontologyTab.component.scss';
     templateUrl: './ontologyTab.component.html'
 })
 export class OntologyTabComponent implements OnInit, OnDestroy {
-    constructor(public os: OntologyStateService, private cm: CatalogManagerService, @Inject('utilService') private util) {}
+    constructor(public os: OntologyStateService, private cm: CatalogManagerService, private util: UtilService) {}
     
     ngOnInit(): void {
         this._checkBranchExists();
@@ -62,25 +63,25 @@ export class OntologyTabComponent implements OnInit, OnDestroy {
     onTabChanged(event: MatTabChangeEvent): void {
         switch (event.index) {
             case OntologyListItem.PROJECT_TAB:
-                this.os.setSelected(this.os.listItem.editorTabStates.project.entityIRI, false, this.os.listItem, this.os.listItem.editorTabStates.project.component).subscribe();
+                this.os.setSelected(this.os.listItem.editorTabStates.project.entityIRI, false, this.os.listItem, this.os.listItem.editorTabStates.project.element).subscribe();
                 break;
             case OntologyListItem.OVERVIEW_TAB:
-                this.os.setSelected(this.os.listItem.editorTabStates.overview.entityIRI, true).subscribe();
+                this.os.setSelected(this.os.listItem.editorTabStates.overview.entityIRI, true, this.os.listItem, this.os.listItem.editorTabStates.overview.element).subscribe();
                 break;
             case OntologyListItem.CLASSES_TAB:
-                this.os.setSelected(this.os.listItem.editorTabStates.classes.entityIRI, true).subscribe();
+                this.os.setSelected(this.os.listItem.editorTabStates.classes.entityIRI, true, this.os.listItem, this.os.listItem.editorTabStates.classes.element).subscribe();
                 break;
             case OntologyListItem.PROPERTIES_TAB:
-                this.os.setSelected(this.os.listItem.editorTabStates.properties.entityIRI, true).subscribe();
+                this.os.setSelected(this.os.listItem.editorTabStates.properties.entityIRI, true, this.os.listItem, this.os.listItem.editorTabStates.properties.element).subscribe();
                 break;
             case OntologyListItem.INDIVIDUALS_TAB:
-                this.os.setSelected(this.os.listItem.editorTabStates.individuals.entityIRI, false).subscribe();
+                this.os.setSelected(this.os.listItem.editorTabStates.individuals.entityIRI, false, this.os.listItem, this.os.listItem.editorTabStates.individuals.element).subscribe();
                 break;
             case OntologyListItem.CONCEPTS_SCHEMES_TAB:
-                this.os.setSelected(this.os.listItem.editorTabStates.schemes.entityIRI, false).subscribe();
+                this.os.setSelected(this.os.listItem.editorTabStates.schemes.entityIRI, false, this.os.listItem, this.os.listItem.editorTabStates.schemes.element).subscribe();
                 break;
             case OntologyListItem.CONCEPTS_TAB:
-                this.os.setSelected(this.os.listItem.editorTabStates.concepts.entityIRI, false).subscribe();
+                this.os.setSelected(this.os.listItem.editorTabStates.concepts.entityIRI, false, this.os.listItem, this.os.listItem.editorTabStates.concepts.element).subscribe();
                 break;
             case OntologyListItem.SEARCH_TAB:
                 this.os.setSelected(this.os.listItem.editorTabStates.search.entityIRI, false).subscribe();

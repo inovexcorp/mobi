@@ -23,23 +23,21 @@
 import {cloneDeep, forEach} from 'lodash';
 import { DebugElement } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 
+import {
+    cleanStylesFromDOM
+} from '../../../../../../test/ts/Shared';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserAccessControlsComponent } from '../../../shared/components/userAccessControls/userAccessControls.component';
+import { UtilService } from '../../../shared/services/util.service';
+import { RecordPermissionsManagerService } from '../../../shared/services/recordPermissionsManager.service';
 import { RecordPermissionViewComponent } from './recordPermissionView.component';
-
-import {
-    mockUtil,
-    mockRecordPermissionsManager,
-    cleanStylesFromDOM
-} from '../../../../../../test/ts/Shared';
-
-import { MatButtonModule } from "@angular/material/button";
-import { MatTooltipModule } from "@angular/material/tooltip";
 
 describe('Record Permission View component', () => {
     let component: RecordPermissionViewComponent;
@@ -48,8 +46,8 @@ describe('Record Permission View component', () => {
     let fixture: ComponentFixture<RecordPermissionViewComponent>;
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let utilStub;
-    let recordPermissionsStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let recordPermissionsStub: jasmine.SpyObj<RecordPermissionsManagerService>;
     let policyItemsArray = [];
     let policyRecordId;
     let typePolicy;
@@ -67,8 +65,8 @@ describe('Record Permission View component', () => {
             providers: [
                 MockProvider(UserManagerService),
                 MockProvider(CatalogStateService),
-                { provide: 'recordPermissionsManagerService', useClass: mockRecordPermissionsManager },
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(RecordPermissionsManagerService),
+                MockProvider(UtilService)
             ],
         });
     });
@@ -80,8 +78,8 @@ describe('Record Permission View component', () => {
         nativeElement = element.nativeElement;
         catalogStateStub = TestBed.get(CatalogStateService);
         userManagerStub = TestBed.get(UserManagerService);
-        utilStub = TestBed.get('utilService');
-        recordPermissionsStub = TestBed.get('recordPermissionsManagerService');
+        utilStub = TestBed.get(UtilService);
+        recordPermissionsStub = TestBed.get(RecordPermissionsManagerService);
 
         userManagerStub.users = [
             {
@@ -227,13 +225,13 @@ describe('Record Permission View component', () => {
             }
         ];
         policyRecordId= 'urn:resource';
-        recordPermissionsStub.getRecordPolicy.and.returnValue(Promise.resolve(cloneDeep(typePolicy)));
+        recordPermissionsStub.getRecordPolicy.and.returnValue(of(cloneDeep(typePolicy)));
         catalogStateStub.selectedRecord = {
-            '@id' : policyRecordId,
-            'http://purl.org/dc/terms/title' : [ {
-                '@value' : 'title.ttl'
+            '@id': policyRecordId,
+            'http://purl.org/dc/terms/title': [ {
+                '@value': 'title.ttl'
             } ]
-        }
+        };
         utilStub.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('title.ttl');
         catalogStateStub.editPermissionSelectedRecord = true;
 
@@ -248,9 +246,9 @@ describe('Record Permission View component', () => {
         catalogStateStub = null;
         userManagerStub = null;
         recordPermissionsStub = null;
-        let policyItemsArray = [];
-        let policyRecordId = {};
-        let typePolicy = null;
+        policyItemsArray = [];
+        policyRecordId = {};
+        typePolicy = null;
     });
 
    describe('initializes policy correctly when getRecordPolicy', function() {
@@ -262,8 +260,8 @@ describe('Record Permission View component', () => {
             expect(component.title).toEqual('title.ttl');
         });
         it('rejects', async function() {
-            recordPermissionsStub.getRecordPolicy.and.returnValue(Promise.reject('Error Message'));
-            recordPermissionsStub.getRecordPolicy();
+            recordPermissionsStub.getRecordPolicy.and.returnValue(throwError('Error Message'));
+            recordPermissionsStub.getRecordPolicy('');
             component.ngOnInit();
             fixture.detectChanges();
             await fixture.whenStable();
@@ -283,7 +281,7 @@ describe('Record Permission View component', () => {
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
             });
             it('successfully with changes', async function() {
-
+                recordPermissionsStub.updateRecordPolicy.and.returnValue(of(null));
                 component.recordId = policyRecordId;
                 component.policies = policyItemsArray;
                 fixture.detectChanges();
@@ -294,7 +292,7 @@ describe('Record Permission View component', () => {
                 await fixture.whenStable();
                 expect(recordPermissionsStub.updateRecordPolicy).toHaveBeenCalledWith(policyRecordId, typePolicy);
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(component.hasChanges()).toEqual(false);
             });
         });
@@ -322,7 +320,7 @@ describe('Record Permission View component', () => {
         spyOn(component, 'save');
         const button = nativeElement.querySelectorAll('.record-permission-view .save-container .save-button')[0] as HTMLElement;
         button.click();
-        expect(component.save).toHaveBeenCalled();
+        expect(component.save).toHaveBeenCalledWith();
     });
     it('should call goBack when the back button is clicked',  () => {
         spyOn(component, 'goBack');
@@ -330,6 +328,6 @@ describe('Record Permission View component', () => {
         fixture.detectChanges();
         const button = nativeElement.querySelectorAll('.record-permission-view .back-column .back-button')[0] as HTMLElement;
         button.click();
-        expect(component.goBack).toHaveBeenCalled();
+        expect(component.goBack).toHaveBeenCalledWith();
     });
 });

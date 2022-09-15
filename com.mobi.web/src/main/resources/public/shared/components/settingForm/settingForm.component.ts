@@ -21,12 +21,13 @@
  * #L%
  */
 
-import { Component, Input, EventEmitter, Output, OnChanges, Inject } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
 import { filter } from 'lodash';
 
 import { SHACL } from '../../../prefixes';
 import { Setting } from '../../models/setting.interface';
+import { UtilService } from '../../services/util.service';
 
 /**
  * @class shared.SettingFormComponent
@@ -49,7 +50,7 @@ export class SettingFormComponent implements OnChanges {
         formBlocks: new FormArray([])
     });
         
-    constructor(@Inject('utilService') private util) {}
+    constructor(private util: UtilService) {}
 
     ngOnChanges(): void {
         if (this.setting.requiredPropertyShape[SHACL + 'maxCount']) {

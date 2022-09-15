@@ -20,10 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { downgradeComponent } from '@angular/upgrade/static';
 import { OntologyVisualization } from './components/visualization/ontologyVisualization.component';
 import { VisualizationSidebar } from './components/visualizationSidebar/visualizationSidebar.component';
 
@@ -59,7 +57,3 @@ import { MatExpansionModule } from "@angular/material/expansion";
 })
 
 export class OntologyVisualizationModule {}
-
-angular.module('visualization', [])
-    .directive('ontologyVisualization', downgradeComponent({component: OntologyVisualization}) as angular.IDirectiveFactory)
-    .directive('visualizationSidebar', downgradeComponent({component: VisualizationSidebar}) as angular.IDirectiveFactory);

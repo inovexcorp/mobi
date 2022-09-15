@@ -20,278 +20,206 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { formatDate } from '@angular/common';
+import { HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { get, isArray, isEqual, unionWith, forEach, has, find, forOwn, replace, set, some, remove } from 'lodash';
+import { ToastrService } from 'ngx-toastr';
+import { Observable, throwError } from 'rxjs';
+import { v4 } from 'uuid';
 
-utilService.$inject = ['$filter', '$http', '$q', '$window', '$rootScope', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
+import { REGEX } from '../../constants';
+import { DCTERMS, RDF, XSD } from '../../prefixes';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { CommitChange } from '../models/commitChange.interface';
+import { ErrorResponse } from '../models/errorResponse.interface';
+import { JSONLDId } from '../models/JSONLDId.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
+import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { BeautifyPipe } from '../pipes/beautify.pipe';
+import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 
 /**
- * @ngdoc service
- * @name shared.service:utilService
- * @requires $filter
- * @requires $http
- * @requires $q
- * @requires uuid
- * @requires toastr
- * @requires shared.service:prefixes
- * @requires shared.service:httpService
+ * @class shared.UtilService
  *
- * @description
  * `utilService` is a service that provides various utility methods for use across Mobi.
  */
-function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, prefixes, httpService, REGEX) {
-    var self = this;
+@Injectable()
+export class UtilService {
+    constructor(private toastr: ToastrService, private beautify: BeautifyPipe, private splitIRI: SplitIRIPipe, 
+        private spinnerSrv: ProgressSpinnerService) {}
 
     /**
-     * @ngdoc method
-     * @name getBeautifulIRI
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the "beautified" IRI representation for the iri passed. Returns the modified IRI.
      *
      * @param {string} iri The IRI string that you want to beautify.
      * @returns {string} The beautified IRI string.
      */
-    self.getBeautifulIRI = function(iri) {
-        var splitEnd = $filter('splitIRI')(iri).end;
+    getBeautifulIRI(iri: string): string {
+        const splitEnd = this.splitIRI.transform(iri).end;
         if (splitEnd) {
-            return splitEnd.match(REGEX.UUID) ? splitEnd : $filter('beautify')(splitEnd);
+            return splitEnd.match(REGEX.UUID) ? splitEnd : this.beautify.transform(splitEnd);
         }
         return iri;
     }
     /**
-     * @ngdoc method
-     * @name getPropertyValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the first value of the specified property from the passed entity. Returns an empty
      * string if not found.
      *
-     * @param {Object} entity The entity to retrieve the property value from
+     * @param {JSONLDObject} entity The entity to retrieve the property value from
      * @param {string} propertyIRI The IRI of a property
      * @return {string} The first value of the property if found; empty string otherwise
      */
-    self.getPropertyValue = function(entity, propertyIRI) {
-        return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+    getPropertyValue(entity: JSONLDObject, propertyIRI: string): string {
+        return get(entity, `['${propertyIRI}'][0]['@value']`, '');
     }
     /**
-     * @ngdoc method
-     * @name setPropertyValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Sets the first or appends to the existing value of the specified property of the passed entity to the
      * passed value.
      *
-     * @param {Object} entity The entity to set the property value of
+     * @param {JSONLDObject} entity The entity to set the property value of
      * @param {string} propertyIRI The IRI of a property
      * @param {string} value The new value for the property
      */
-    self.setPropertyValue = function(entity, propertyIRI, value) {
-        setValue(entity, propertyIRI, {'@value': value});
+    setPropertyValue(entity: JSONLDObject, propertyIRI: string, value): void {
+        this._setValue(entity, propertyIRI, {'@value': value});
     }
     /**
-     * @ngdoc method
-     * @name hasPropertyValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Tests whether or not the passed entity contains the passed value for the passed property.
      *
-     * @param {Object} entity The entity to look for the property value in
+     * @param {JSONLDObject} entity The entity to look for the property value in
      * @param {string} propertyIRI The IRI of a property
      * @param {string} value The value to search for
      * @return {boolean} True if the entity has the property value; false otherwise
      */
-    self.hasPropertyValue = function(entity, propertyIRI, value) {
-        return hasValue(entity, propertyIRI, {'@value': value});
+    hasPropertyValue(entity: JSONLDObject, propertyIRI: string, value): boolean {
+        return this._hasValue(entity, propertyIRI, {'@value': value});
     }
     /**
-     * @ngdoc method
-     * @name removePropertyValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Remove the passed value of the passed property from the passed entity.
      *
-     * @param {Object} entity The entity to remove the property value from
+     * @param {JSONLDObject} entity The entity to remove the property value from
      * @param {string} propertyIRI The IRI of a property
      * @param {string} value The value to remove
      */
-    self.removePropertyValue = function(entity, propertyIRI, value) {
-        removeValue(entity, propertyIRI, {'@value': value});
+    removePropertyValue(entity: JSONLDObject, propertyIRI: string, value): void {
+        this._removeValue(entity, propertyIRI, {'@value': value});
     }
     /**
-     * @ngdoc method
-     * @name replacePropertyValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Remove the passed valueToRemove value of the property from the passed entity and replace with
      * the provided valueToAdd value.
      *
-     * @param {Object} entity The entity to remove the property id value from
+     * @param {JSONLDObject} entity The entity to remove the property id value from
      * @param {string} propertyIRI The IRI of a property
      * @param {string} valueToRemove The value to remove
      * @param {string} valueToAdd The value to Add
      */
-    self.replacePropertyValue = function(entity, propertyIRI, valueToRemove, valueToAdd) {
-        self.removePropertyValue(entity, propertyIRI, valueToRemove);
-        self.setPropertyValue(entity, propertyIRI, valueToAdd);
+    replacePropertyValue(entity: JSONLDObject, propertyIRI: string, valueToRemove: string, valueToAdd: string): void {
+        this.removePropertyValue(entity, propertyIRI, valueToRemove);
+        this.setPropertyValue(entity, propertyIRI, valueToAdd);
     }
     /**
-     * @ngdoc method
-     * @name getPropertyId
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the first id value of the specified property from the passed entity. Returns an empty
      * string if not found.
      *
-     * @param {Object} entity The entity to retrieve the property id value from
+     * @param {JSONLDObject} entity The entity to retrieve the property id value from
      * @param {string} propertyIRI The IRI of a property
      * @return {string} The first id value of the property if found; empty string otherwise
      */
-    self.getPropertyId = function(entity, propertyIRI) {
-        return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+    getPropertyId(entity: JSONLDObject, propertyIRI: string): string {
+        return get(entity, `['${propertyIRI}'][0]['@id']`, '');
     }
     /**
-     * @ngdoc method
-     * @name setPropertyId
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Sets the first or appends to the existing id of the specified property of the passed entity to the passed
      * id.
      *
-     * @param {Object} entity The entity to set the property value of
+     * @param {JSONLDObject} entity The entity to set the property value of
      * @param {string} propertyIRI The IRI of a property
      * @param {string} id The new id value for the property
      */
-    self.setPropertyId = function(entity, propertyIRI, id) {
-        setValue(entity, propertyIRI, {'@id': id});
+    setPropertyId(entity: JSONLDObject, propertyIRI: string, id): void {
+        this._setValue(entity, propertyIRI, {'@id': id});
     }
     /**
-     * @ngdoc method
-     * @name hasPropertyId
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Tests whether or not the passed entity contains the passed id value for the passed property.
      *
-     * @param {Object} entity The entity to look for the property id value in
+     * @param {JSONLDObject} entity The entity to look for the property id value in
      * @param {string} propertyIRI The IRI of a property
      * @param {string} id The id value to search for
      * @return {boolean} True if the entity has the property id value; false otherwise
      */
-    self.hasPropertyId = function(entity, propertyIRI, id) {
-        return hasValue(entity, propertyIRI, {'@id': id});
+    hasPropertyId(entity: JSONLDObject, propertyIRI: string, id: string): boolean {
+        return this._hasValue(entity, propertyIRI, {'@id': id});
     }
     /**
-     * @ngdoc method
-     * @name removePropertyId
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Remove the passed id value of the passed property from the passed entity.
      *
-     * @param {Object} entity The entity to remove the property id value from
+     * @param {JSONLDObject} entity The entity to remove the property id value from
      * @param {string} propertyIRI The IRI of a property
      * @param {string} id The id value to remove
      */
-    self.removePropertyId = function(entity, propertyIRI, id) {
-        removeValue(entity, propertyIRI, {'@id': id});
+    removePropertyId(entity: JSONLDObject, propertyIRI: string, id: string): void {
+        this._removeValue(entity, propertyIRI, {'@id': id});
     }
     /**
-     * @ngdoc method
-     * @name replacePropertyId
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Remove the passed idToRemove value of the passed property from the passed entity and replace with
      * the provided idToAdd value.
      *
-     * @param {Object} entity The entity to remove the property id value from
+     * @param {JSONLDObject} entity The entity to remove the property id value from
      * @param {string} propertyIRI The IRI of a property
      * @param {string} idToRemove The id value to remove
      * @param {string} idToAdd The id value to Add
      */
-    self.replacePropertyId = function(entity, propertyIRI, idToRemove, idToAdd) {
-        self.removePropertyId(entity, propertyIRI, idToRemove);
-        self.setPropertyId(entity, propertyIRI, idToAdd);
+    replacePropertyId(entity: JSONLDObject, propertyIRI: string, idToRemove, idToAdd): void {
+        this.removePropertyId(entity, propertyIRI, idToRemove);
+        this.setPropertyId(entity, propertyIRI, idToAdd);
     }
     /**
-     * @ngdoc method
-     * @name getDctermsValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the first value of the specified dcterms property from the passed entity. Returns an empty
      * string if not found.
      *
-     * @param {Object} entity The entity to retrieve the property value from
+     * @param {JSONLDObject} entity The entity to retrieve the property value from
      * @param {string} property The local name of a dcterms property IRI
      * @return {string} The first value of the dcterms property if found; empty string otherwise
      */
-    self.getDctermsValue = function(entity, property) {
-        return self.getPropertyValue(entity, prefixes.dcterms + property);
+    getDctermsValue(entity: JSONLDObject, property: string): string {
+        return this.getPropertyValue(entity, DCTERMS + property);
     }
     /**
-     * @ngdoc method
-     * @name removeDctermsValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Remove the passed value of the specified dcterms property from the passed entity.
      *
-     * @param {Object} entity The entity to remove the property value from
+     * @param {JSONLDObject} entity The entity to remove the property value from
      * @param {string} property The local name of a dcterms property IRI
      * @param {string} value The value to remove
      */
-    self.removeDctermsValue = function(entity, property, value) {
-        self.removePropertyValue(entity, prefixes.dcterms + property, value);
+    removeDctermsValue(entity: JSONLDObject, property: string, value: string): void {
+        this.removePropertyValue(entity, DCTERMS + property, value);
     }
     /**
-     * @ngdoc method
-     * @name setDctermsValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Sets the first value or appends to the values of the specified dcterms property of the passed entity
      * with the passed value.
      *
-     * @param {Object} entity The entity to set the property value of
+     * @param {JSONLDObject} entity The entity to set the property value of
      * @param {string} property The local name of a dcterms property IRI
      * @param {string} value The new value for the property
      */
-    self.setDctermsValue = function(entity, property, value) {
-        self.setPropertyValue(entity, prefixes.dcterms + property, value);
+    setDctermsValue(entity: JSONLDObject, property: string, value: string): void {
+        this.setPropertyValue(entity, DCTERMS + property, value);
     }
     /**
-     * @ngdoc method
-     * @name updateDctermsValue
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Removes the first value of the specified dcterms property and appends the provided value to the specified
      * dcterms property of the passed entity
      *
-     * @param {Object} entity The entity to update the property value of
+     * @param {JSONLDObject} entity The entity to update the property value of
      * @param {string} property The local name of a dcterms property IRI
      * @param {string} value The new value for the property
      */
-    self.updateDctermsValue = function(entity, property, value) {
-        var valueToRemove = self.getPropertyValue(entity, prefixes.dcterms + property);
-        self.replacePropertyValue(entity, prefixes.dcterms + property, valueToRemove, value);
+    updateDctermsValue(entity: JSONLDObject, property: string, value: string): void {
+        const valueToRemove = this.getPropertyValue(entity, DCTERMS + property);
+        this.replacePropertyValue(entity, DCTERMS + property, valueToRemove, value);
     }
     /**
-     * @ngdoc method
-     * @name mergingArrays
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Merges two arrays together using the Lodash isEqual function and returns the merged
      * array.
      *
@@ -299,165 +227,88 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @param {*[]} srcValue An array
      * @return {*[]} The result of merging the two arrays using Lodash's isEqual
      */
-    self.mergingArrays = function(objValue, srcValue) {
+    mergingArrays(objValue: any[], srcValue: any[]): any[] {
         if (isArray(objValue)) {
             return unionWith(objValue, srcValue, isEqual);
         }
     }
     /**
-     * @ngdoc method
-     * @name getDctermsId
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the first id value of the specified dcterms property from the passed entity. Returns an
      * empty string if not found.
      *
-     * @param {Object} entity The entity to retrieve the property id value from
+     * @param {JSONLDObject} entity The entity to retrieve the property id value from
      * @param {string} property The local name of a dcterms property IRI
      * @return {string} The first id value of the dcterms property if found; empty string otherwise
      */
-    self.getDctermsId = function(entity, property) {
-        return get(entity, "['" + prefixes.dcterms + property + "'][0]['@id']", '');
+    getDctermsId(entity: JSONLDObject, property: string): string {
+        return get(entity, `['${DCTERMS + property}'][0]['@id']`, '');
     }
     /**
-     * @ngdoc method
-     * @name parseLinks
-     * @methodOf shared.service:utilService
-     *
-     * @description
-     * Parses through the passed "link" header string to retrieve each individual link and its rel label.
-     * Return an object with keys of the link rel labels and values of the link URLs.
-     *
-     * @param {string} header A "link" header string from an HTTP response
-     * @return {Object} An object with keys of the rel labels and values of URLs
-     */
-    self.parseLinks = function(header) {
-        // Split parts by comma
-        var parts = header.split(',');
-        var links = {};
-        // Parse each part into a named link
-        forEach(parts, p => {
-            var section = p.split(';');
-            if (section.length === 2) {
-                var url = section[0].replace(/<(.*)>/, '$1').trim();
-                var name = section[1].replace(/rel="(.*)"/, '$1').trim();
-                links[name] = url;
-            }
-        });
-        return links;
-    }
-    /**
-     * @ngdoc method
-     * @name createErrorToast
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Creates an error toast with the passed error text that will disappear after 3 seconds
      *
      * @param {string} text The text for the body of the error toast
      */
-    self.createErrorToast = function(text) {
-        toastr.error(text, 'Error', {timeOut: 3000});
+    createErrorToast(text: string, config = {timeOut: 3000}): void {
+        this.toastr.error(text, 'Error', config);
     }
     /**
-     * @ngdoc method
-     * @name createSuccessToast
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Creates a success toast with the passed success text that will disappear after 3 seconds
      *
      * @param {string} text The text for the body of the success toast
      */
-    self.createSuccessToast = function(text) {
-        toastr.success(text, 'Success', {timeOut: 3000});
+    createSuccessToast(text: string, config = {timeOut: 3000}): void {
+        this.toastr.success(text, 'Success', config);
     }
     /**
-     * @ngdoc method
-     * @name createWarningToast
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Creates a warning toast with the passed success text that will disappear after 3 seconds
      *
      * @param {string} text The text for the body of the warning toast
      * @param {Object} config The configuration for the toast. Defaults to a timeout of 3 seconds
      */
-    self.createWarningToast = function(text, config = {timeOut: 3000}) {
-        toastr.warning(text, 'Warning', config);
+    createWarningToast(text: string, config = {timeOut: 3000}): void {
+        this.toastr.warning(text, 'Warning', config);
     }
     /**
-     * @ngdoc method
-     * @name clearToast
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Close open toastr
-     *
      */
-    self.clearToast = function(id) {
-        if (id) {
-            toastr.clear(id);
-        } else {
-            toastr.clear();
-        }
-    };
+    clearToast(): void {
+        this.toastr.clear();
+    }
     /**
-     * @ngdoc method
-     * @name getIRINamespace
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the namespace of an IRI string.
      *
      * @param {string} iri An IRI string.
      * @return {string} The namespace of the IRI
      */
-    self.getIRINamespace = function(iri) {
-        var split = $filter('splitIRI')(iri);
+    getIRINamespace(iri: string): string {
+        const split = this.splitIRI.transform(iri);
         return split.begin + split.then;
     }
     /**
-     * @ngdoc method
-     * @name getIRINamespace
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the namespace of an IRI string.
      *
-     * @param {Object} iri An IRI string
+     * @param {string} iri An IRI string
      * @return {string} The namespace of the IRI
      */
-    self.getIRILocalName = function(iri) {
-        return $filter('splitIRI')(iri).end;
+    getIRILocalName(iri: string): string {
+        return this.splitIRI.transform(iri).end;
     }
     /**
-     * @ngdoc method
-     * @name createJson
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Creates an initial JSON-LD object with the passed id and starting property IRI with initial value
      * object.
      *
      * @param {string} id An IRI for the new object
      * @param {string} property A property IRI
-     * @param {Object} valueObj A value object in JSON-LD. Must contain either a `@value` or a `@id` key
-     * @return {Object} A JSON-LD object with an id and property with a starting value
+     * @param {JSONLDId|JSONLDValue} valueObj A value object in JSON-LD. Must contain either a `@value` or a `@id` key
+     * @return {JSONLDObject} A JSON-LD object with an id and property with a starting value
      */
-    self.createJson = function(id, property, valueObj) {
+    createJson(id: string, property: string, valueObj: JSONLDId|JSONLDValue): JSONLDObject {
         return {
             '@id': id,
             [property]: [valueObj]
-        }
+        };
     }
     /**
-     * @ngdoc method
-     * @name getDate
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Creates a new Date string in the specified format from the passed date string. Used when converting
      * date strings from the backend into other date strings.
      *
@@ -465,44 +316,29 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @param {string} format A string representing a format for the new date string (See MDN spec for Date)
      * @return {string} A newly formatted date string from the original date string
      */
-    self.getDate = function(dateStr, format) {
-            return dateStr ? $filter('date')(new Date(dateStr), format) : '(No Date Specified)';
+    getDate(dateStr: string, format: string): string {
+        return dateStr ? formatDate(new Date(dateStr), format, 'en-US') : '(No Date Specified)';
     }
     /**
-     * @ngdoc method
-     * @name condenseCommitId
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Retrieves a shortened id for from an IRI for a commit.
      *
      * @param {string} id The IRI of a commit
      * @return {string} A shortened id from the commit IRI
      */
-    self.condenseCommitId = function(id) {
-        return $filter('splitIRI')(id).end.substr(0, 10);
+    condenseCommitId(id: string): string {
+        return this.splitIRI.transform(id).end.substring(0, 10);
     }
     /**
-     * @ngdoc method
-     * @name paginatedConfigToParams
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Converts a common paginated configuration object into a $http query parameter object with
      * common query parameters for pagination. These query parameters are: sort, ascending, limit,
      * and offset.
      *
-     * @param {Object} paginatedConfig A configuration object for paginated requests
-     * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
-     * @param {number} paginatedConfig.limit The number of results per page
-     * @param {Object} paginatedConfig.sortOption A sort option object
-     * @param {string} paginatedConfig.sortOption.field A property IRI
-     * @param {boolean} paginatedConfig.sortOption.asc Whether the sort should be ascending or descending
+     * @param {PaginatedConfig} paginatedConfig A configuration object for paginated requests
      * @return {Object} An object with converted query parameters if present in original configuration.
      */
-    self.paginatedConfigToParams = function(paginatedConfig) {
-        var params: any = {};
-        if (has(paginatedConfig, 'sortOption.field')) {
+    paginatedConfigToParams(paginatedConfig: PaginatedConfig): any {
+        const params: {sort?: string, ascending?: boolean, limit?: number, offset?: number} = {};
+        if (has(paginatedConfig, 'sortOption.field') && paginatedConfig.sortOption.field) {
             params.sort = paginatedConfig.sortOption.field;
         }
         if (has(paginatedConfig, 'sortOption.asc')) {
@@ -512,71 +348,48 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
             params.limit = paginatedConfig.limit;
             if (has(paginatedConfig, 'offset')) {
                 params.offset = paginatedConfig.offset;
-            }
-            else if (has(paginatedConfig, 'pageIndex') && !has(paginatedConfig, 'offset')) {
+            } else if (has(paginatedConfig, 'pageIndex') && !has(paginatedConfig, 'offset')) {
                 params.offset = paginatedConfig.pageIndex * paginatedConfig.limit;
             }
         }
         return params;
     }
     /**
-     * @ngdoc method
-     * @name getResultsPage
-     * @methodOf shared.service:utilService
-     *
-     * @description
-     * Calls the passed URL which repesents a call to get paginated results and returns a Promise
-     * that resolves to the HTTP response if successful and calls the provided function if it
-     * failed. Can optionally be cancel-able if provided a request id.
-     *
-     * @param {string} url The URL to make a GET call to. Expects the response to be paginated
-     * @param {Function} errorFunction The optional function to call if the request fails. Default
-     * function rejects with the error message from the response.
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A Promise that resolves to the HTTP response if successful
-     */
-    self.getResultsPage = function(url, errorFunction = self.rejectError, id = '') {
-        var promise = id ? httpService.get(url, undefined, id) : $http.get(url);
-        return promise.then($q.when, errorFunction);
-    }
-    /**
-     * @ngdoc method
-     * @name onError
-     * @methodOf shared.service:utilService
-     *
-     * @description
-     * Rejects the provided deferred promise with the status text of the passed HTTP response object
-     * if present, otherwise uses the passed default message.
-     *
-     * @param {Object} error A HTTP response object
-     * @param {?} deferred A deferred promise created by $q.defer()
-     * @param {string} defaultMessage The optional default error text for the rejection
-     */
-    self.onError = function(error, deferred, defaultMessage) {
-        deferred.reject(get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
-    }
-    /**
-     * @ngdoc method
-     * @name rejectError
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Returns a rejected promise with the status text of the passed HTTP response object if present,
      * otherwise uses the passed default message.
      *
-     * @param {Object} error A HTTP response object
+     * @param {HttpErrorResponse} error A HTTP response object
      * @param {string} defaultMessage The optional default error text for the rejection
      * @return {Promise} A Promise that rejects with an error message
      */
-    self.rejectError = function(error, defaultMessage) {
-        return $q.reject(get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
+    rejectError(error: HttpErrorResponse, defaultMessage = ''): Promise<any> {
+        return Promise.reject(get(error, 'status') === -1 ? '' : this.getErrorMessage(error, defaultMessage));
     }
     /**
-     * @ngdoc method
-     * @name getErrorMessage
-     * @methodOf shared.service:utilService
+     * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
+     * message.
      *
-     * @description
+     * @param {HttpErrorResponse} error A response from a HTTP calls
+     * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional message
+     * to use if the response doesn't have an error message
+     * @return {string} An error message for the passed HTTP response
+     */
+    getErrorMessage(error: HttpErrorResponse, defaultMessage = 'Something went wrong. Please try again later.'): string {
+        const statusText = get(error, 'statusText');
+        return statusText === 'Unknown Error' ? defaultMessage : get(error, 'statusText') || defaultMessage;
+    }
+    /**
+     * Returns a rejected promise with the status text of the passed HTTP response object if present,
+     * otherwise uses the passed default message.
+     *
+     * @param {HttpErrorResponse} error A HTTP response object
+     * @param {string} defaultMessage The optional default error text for the rejection
+     * @return {Promise} A Promise that rejects with an error message
+     */
+    rejectErrorObject(error: HttpErrorResponse, defaultMessage = ''): Promise<any> {
+        return Promise.reject(get(error, 'status') === -1 ? {'errorMessage': '', 'errorDetails': []} : this.getErrorDataObject(error, defaultMessage));
+    }
+    /**
      * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
      * message.
      *
@@ -585,70 +398,96 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * to use if the response doesn't have an error message
      * @return {string} An error message for the passed HTTP response
      */
-    self.getErrorMessage = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
-        return get(error, 'statusText') || defaultMessage;
-    }
-    /**
-     * @ngdoc method
-     * @name rejectError
-     * @methodOf shared.service:utilService
-     *
-     * @description
-     * Returns a rejected promise with the status text of the passed HTTP response object if present,
-     * otherwise uses the passed default message.
-     *
-     * @param {Object} error A HTTP response object
-     * @param {string} defaultMessage The optional default error text for the rejection
-     * @return {Promise} A Promise that rejects with an error message
-     */
-    self.rejectErrorObject = function(error, defaultMessage) {
-        return $q.reject(get(error, 'status') === -1 ? {'errorMessage': '', 'errorDetails': []} : self.getErrorDataObject(error, defaultMessage));
-    }
-    /**
-     * @ngdoc method
-     * @name getErrorMessage
-     * @methodOf shared.service:utilService
-     *
-     * @description
-     * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
-     * message.
-     *
-     * @param {Object} error A response from a HTTP calls
-     * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional message
-     * to use if the response doesn't have an error message
-     * @return {string} An error message for the passed HTTP response
-     */
-    self.getErrorDataObject = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
+    getErrorDataObject(error: HttpErrorResponse, defaultMessage = 'Something went wrong. Please try again later.'): ErrorResponse {
+        const statusText = get(error, 'statusText');
         return {
-            'errorMessage': get(error, 'data.errorMessage') || get(error, 'error.errorMessage') || error.statusText || defaultMessage,
-            'errorDetails': get(error, 'data.errorDetails') || get(error, 'error.errorDetails') || []
+            'errorMessage': get(error, 'error.errorMessage') || (statusText === 'Unknown Error' ? '': statusText) || defaultMessage,
+            'errorDetails': get(error, 'error.errorDetails') || []
+        };
+    }
+    /**
+     * Creates an instance of {@link HttpParams} based on the provided object. Each key will become a query param and
+     * the values will be converted to compatible strings. If the value is an array, individual elements will be added
+     * as separate param values.
+     * 
+     * @param params An object to convert to an instance of HttpParams
+     * @returns An HttpParams instance with params for each key
+     */
+     createHttpParams(params: any): HttpParams {
+        let httpParams: HttpParams = new HttpParams();
+        Object.keys(params).forEach(param => {
+            if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                if (Array.isArray(params[param])) {
+                    params[param].forEach(el => {
+                        httpParams = httpParams.append(param, this.convertToString(el));
+                    });
+                } else {
+                    httpParams = httpParams.append(param, this.convertToString(params[param]));
+                }
+            }
+        });
+    
+        return httpParams;
+    }
+    /**
+     * 
+     * @param error 
+     * @returns 
+     */
+    handleError(error: HttpErrorResponse): Observable<any> {
+        if (error.status === 0) {
+            return throwError('');
+        } else {
+            return throwError(error.statusText || 'Something went wrong. Please try again later.');
         }
     }
     /**
-     * @ngdoc method
-     * @name getChangesById
-     * @methodOf shared.service:utilService
-     *
-     * @description
+     * 
+     * @param error 
+     * @returns 
+     */
+    handleErrorObject(error: HttpErrorResponse): Observable<ErrorResponse> {
+        if (error.status === 0) {
+            return throwError({'errorMessage': '', 'errorDetails': []});
+        } else {
+            return throwError(this.getErrorDataObject(error));
+        }
+    }
+    /**
+     * Tracks the provided observable with the {@link shared.ProgressSpinnerService} based on the value of the provided
+     * `isTracked` boolean which indicates whether the observable is being tracked otherwise.
+     * 
+     * @param {Observable} request The observable to track
+     * @param {boolean} tracked Whether the observable is being tracked otherwise
+     * @returns The Observable tracked or plain
+     */
+    trackedRequest<T>(request: Observable<T>, tracked: boolean): Observable<T> {
+        if (tracked) {
+            return request;
+        } else {
+            return this.spinnerSrv.track(request);
+        }
+    }
+    /**
      * Gets the list of individual statements from the provided array which have a subject matching the provided
      * id.
      *
      * @param {string} id The id which should match the subject of the statements you are looking for.
-     * @param {Object[]} array The array of JSON-LD statements that you are iterating through.
-     * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
+     * @param {JSONLDObject[]} array The array of JSON-LD statements that you are iterating through.
+     * @return {CommitChange[]} An array of Objects, {p: string, o: string} which are the predicate and object for
      * statements which have the provided id as a subject.
      */
-    self.getChangesById = function(id, array) {
-        var results = [];
-        var entity = angular.copy(find(array, {'@id': id}));
+    getChangesById(id: string, array: JSONLDObject[]): CommitChange[] {
+        const results = [];
+        const entity = Object.assign({}, find(array, {'@id': id}));
         forOwn(entity, (value, key) => {
             if (key !== '@id') {
-                var actualKey = key;
+                let actualKey = key;
                 if (key === '@type') {
-                    actualKey = prefixes.rdf + 'type';
+                    actualKey = RDF + 'type';
                 }
                 if (isArray(value)) {
-                    forEach(value, item => results.push({p: actualKey, o: item}));
+                    value.forEach(item => results.push({p: actualKey, o: item}));
                 } else {
                     results.push({p: actualKey, o: value});
                 }
@@ -657,24 +496,19 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         return results;
     }
     /**
-     * @ngdoc method
-     * @name getPredicatesAndObjects
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Transforms an object containing addition or deletion information into an array of subject, predicate, object triples.
      *
-     * @param {Object} additionOrDeletion An object containing the addition or deletion.
-     * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
+     * @param {JSONLDObject} additionOrDeletion An object containing the addition or deletion.
+     * @return {CommitChange[]} An array of Objects, {p: string, o: string} which are the predicate and object for
      * statements which have the provided id as a subject.
      */
-    self.getPredicatesAndObjects = function(additionOrDeletion) {
-        var results = [];
+    getPredicatesAndObjects(additionOrDeletion: JSONLDObject): CommitChange[] {
+        const results = [];
         forOwn(additionOrDeletion, (value, key) => {
             if (key !== '@id') {
-                var actualKey = key;
+                let actualKey = key;
                 if (key === '@type') {
-                    actualKey = prefixes.rdf + 'type';
+                    actualKey = RDF + 'type';
                 }
                 if (isArray(value)) {
                     forEach(value, item => results.push({p: actualKey, o: item}));
@@ -686,22 +520,17 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         return results;
     }
     /**
-     * @ngdoc method
-     * @name getObjIrisFromDifference
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Transforms an array of additions or deletions into an array of object IRIs.
      *
-     * @param additionsOrDeletionsArr {Object[]} An array of additions or deletions
+     * @param {JSONLDObject[]} additionsOrDeletionsArr An array of additions or deletions
      * @return {string[]} An array of the IRIs in the objects of the addition or deletion statements
      */
-    self.getObjIrisFromDifference = function(additionsOrDeletionsArr) {
-        var objIris = [];
-        forEach(additionsOrDeletionsArr, change => {
-            forOwn(change, (value, key) => {
+    getObjIrisFromDifference(additionsOrDeletionsArr: JSONLDObject[]): string[] {
+        const objIris = [];
+        additionsOrDeletionsArr.forEach(change => {
+            forOwn(change, (value) => {
                 if (isArray(value)) {
-                    forEach(value, item => {
+                    value.forEach(item => {
                         if (has(item, '@id')) {
                             objIris.push(item['@id']);
                         }
@@ -712,38 +541,28 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         return objIris;
     }
     /**
-     * @ngdoc method
-     * @name getPredicateLocalName
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the localname for the provided partialStatement Object, {p: predicateIRI}.
      *
-     * @param {Object} partialStatement The partial statement that should contain, at minimum, a `p` property
+     * @param {CommitChange} partialStatement The partial statement that should contain, at minimum, a `p` property
      * with a value of the predicate IRI whose localname you want.
      * @return {string} The localname for the predicate provided in the partialStatement.
      */
-    self.getPredicateLocalName = function(partialStatement) {
-        return $filter('splitIRI')(get(partialStatement, 'p', '')).end;
+    getPredicateLocalName(partialStatement: CommitChange): string {
+        return this.splitIRI.transform(get(partialStatement, 'p', '')).end;
     }
     /**
-     * @ngdoc method
-     * @name getPredicateLocalNameOrdered
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Sorts the partialStatementArray by the localname of the partialStatement Object, {p: predicateIRI}.
      *
-     * @param {Object} partialStatementArray An array of partial statements that should contain, at minimum, a `p` property
+     * @param {CommitChange[]} partialStatementArray An array of partial statements that should contain, at minimum, a `p` property
      * with a value of the predicate IRI whose localname you want.
-     * @return {string} The partial statement array sorted by localname for the predicate provided in the partialStatement.
+     * @return {CommitChange[]} The partial statement array sorted by localname for the predicate provided in the partialStatement.
      */
-    self.getPredicateLocalNameOrdered = function(partialStatementArray) {
+    getPredicateLocalNameOrdered(partialStatementArray: CommitChange[]): CommitChange[] {
         return partialStatementArray
             .slice(0)
             .sort((a, b) => {
-                const aLocal = self.getPredicateLocalName(a);
-                const bLocal = self.getPredicateLocalName(b);
+                const aLocal = this.getPredicateLocalName(a);
+                const bLocal = this.getPredicateLocalName(b);
 
                 if (aLocal < bLocal) {
                     return -1;
@@ -753,46 +572,31 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
                     return 0;
                 }
         });
-    };
+    }
     /**
-     * @ngdoc method
-     * @name getIdForBlankNode
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Generates a blank node IRI using a random V4 UUID.
      *
      * @return {string} A blank node IRI that should be unique.
      */
-    self.getIdForBlankNode = function() {
-        return '_:mobi-bnode-' + uuid.v4();
+    getIdForBlankNode(): string {
+        return '_:mobi-bnode-' + v4();
     }
     /**
-     * @ngdoc method
-     * @name getSkolemizedIRI
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Generates a skolemized IRI using a random V4 UUID.
      *
      * @return {string} A skolemized IRI that should be unique.
      */
-    self.getSkolemizedIRI = function() {
-        return 'http://mobi.com/.well-known/genid/' + uuid.v4();
+    getSkolemizedIRI(): string {
+        return 'http://mobi.com/.well-known/genid/' + v4();
     }
     /**
-     * @ngdoc method
-     * @name getInputType
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the input type associated with the property in the properties list provided.
      *
      * @param {string} typeIRI The IRI of the type
      * @returns {string} A string identifying the input type that should be used for the provided property.
      */
-    self.getInputType = function(typeIRI) {
-        switch (replace(typeIRI, prefixes.xsd, '')) {
+    getInputType(typeIRI: string): string {
+        switch (replace(typeIRI, XSD, '')) {
             case 'dateTime':
             case 'dateTimeStamp':
                 return 'datetime-local';
@@ -810,18 +614,13 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         }
     }
     /**
-     * @ngdoc method
-     * @name getPattern
-     * @methodOf shared.service:utilService
-     *
-     * @description
      * Gets the pattern type associated with the property in the properties list provided.
      *
      * @param {string} typeIRI The IRI of the type
      * @returns {RegEx} A Regular Expression identifying the acceptable values for the provided property.
      */
-    self.getPattern = function(typeIRI) {
-        switch (replace(typeIRI, prefixes.xsd, '')) {
+    getPattern(typeIRI: string): RegExp {
+        switch (replace(typeIRI, XSD, '')) {
             case 'dateTime':
             case 'dateTimeStamp':
                 return REGEX.DATETIME;
@@ -839,39 +638,26 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
                 return REGEX.ANYTHING;
         }
     }
-    /**
-     * @ngdoc method
-     * @name startDownload
-     * @methodOf shared.service:utilService
-     *
-     * @description
-     * Starts a download of the resource at the provided URL by setting the `$window.location`.
-     *
-     * @param {string} url The URL to start a download from
-     */
-    self.startDownload = function(url) {
-        $rootScope.isDownloading = true;
-        $window.location = url;
-    }
 
-    function setValue(entity, propertyIRI, valueObj) {
-        if (has(entity, "['" + propertyIRI + "']")) {
+    private convertToString(param: any): string {
+        return typeof param === 'string' ? param : '' + param;
+    }
+    private _setValue(entity: JSONLDObject, propertyIRI: string, valueObj: JSONLDId|JSONLDValue): void {
+        if (has(entity, `['${propertyIRI}']`)) {
             entity[propertyIRI].push(valueObj);
         } else {
-            set(entity, "['" + propertyIRI + "'][0]", valueObj);
+            set(entity, `['${propertyIRI}'][0]`, valueObj);
         }
     }
-    function hasValue(entity, propertyIRI, valueObj) {
-        return some(get(entity, "['" + propertyIRI + "']", []), valueObj);
+    private _hasValue(entity: JSONLDObject, propertyIRI: string, valueObj: JSONLDId|JSONLDValue): boolean {
+        return some(get(entity, `['${propertyIRI}']`, []), valueObj);
     }
-    function removeValue(entity, propertyIRI, valueObj) {
-        if (has(entity, "['" + propertyIRI + "']")) {
-            remove(entity[propertyIRI], valueObj);
+    private _removeValue(entity: JSONLDObject, propertyIRI: string, valueObj: JSONLDId|JSONLDValue): void {
+        if (has(entity, `['${propertyIRI}']`)) {
+            remove(entity[propertyIRI], obj => isEqual(obj, valueObj));
             if (entity[propertyIRI].length === 0) {
                 delete entity[propertyIRI];
             }
         }
     }
 }
-
-export default utilService;

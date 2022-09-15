@@ -32,7 +32,6 @@ import { delay } from 'rxjs/operators';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
@@ -40,6 +39,7 @@ import { SpinnerComponent } from '../../../shared/components/progress-spinner/co
 import { Dataset } from '../../../shared/models/dataset.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { UploadDataOverlayComponent } from './uploadDataOverlay.component';
 
 describe('Upload Data Overlay component', function() {
@@ -49,7 +49,7 @@ describe('Upload Data Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<UploadDataOverlayComponent>>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
     let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const recordId = 'recordId';
     const record = {'@id': recordId};
@@ -71,7 +71,7 @@ describe('Upload Data Overlay component', function() {
             providers: [
                 MockProvider(DatasetManagerService),
                 MockProvider(DatasetStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -84,7 +84,7 @@ describe('Upload Data Overlay component', function() {
         matDialogRef = TestBed.get(MatDialogRef);
         datasetManagerStub = TestBed.get(DatasetManagerService);
         datasetStateStub = TestBed.get(DatasetStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         datasetStateStub.selectedDataset = dataset;
         utilStub.getDctermsValue.and.returnValue('Test');

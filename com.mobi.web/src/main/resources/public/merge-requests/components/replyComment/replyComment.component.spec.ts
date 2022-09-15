@@ -29,12 +29,12 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { MarkdownEditorComponent } from '../../../shared/components/markdownEditor/markdownEditor.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { ReplyCommentComponent } from './replyComment.component';
 
 describe('Reply Comment component', function() {
@@ -42,7 +42,7 @@ describe('Reply Comment component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ReplyCommentComponent>;
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const request: MergeRequest = {
         jsonld: {'@id': 'request', '@type': []},
@@ -63,7 +63,7 @@ describe('Reply Comment component', function() {
             ],
             providers: [
                 MockProvider(MergeRequestManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -74,7 +74,7 @@ describe('Reply Comment component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mergeRequestManagerStub = TestBed.get(MergeRequestManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {

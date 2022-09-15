@@ -20,13 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 
-import { downgradeComponent } from '@angular/upgrade/static';
-
 import { SharedModule } from '../shared/shared.module';
-
 import { LoginPageComponent } from './components/loginPage/loginPage.component';
 
 /**
@@ -46,6 +42,3 @@ import { LoginPageComponent } from './components/loginPage/loginPage.component';
     ]
 })
 export class LoginModule {}
-
-angular.module('login', [])
-    .directive('loginPage', downgradeComponent({component: LoginPageComponent}) as angular.IDirectiveFactory);

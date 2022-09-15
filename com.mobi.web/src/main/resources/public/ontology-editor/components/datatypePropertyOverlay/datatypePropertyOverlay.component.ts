@@ -25,12 +25,22 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { map, startWith } from 'rxjs/operators';
-import { Observable } from 'rxjs';
 
 import { XSD, RDF } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { Observable } from 'rxjs';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 
-import './datatypePropertyOverlay.component.scss';
+interface PropGrouping {
+    namespace: string,
+    options: PropOption[]
+}
+
+interface PropOption {
+    item: string,
+    name: string
+}
 
 /**
  * @class ontology-editor.DatatypePropertyOverlayComponent
@@ -46,18 +56,21 @@ import './datatypePropertyOverlay.component.scss';
     templateUrl: './datatypePropertyOverlay.component.html'
 })
 export class DatatypePropertyOverlayComponent implements OnInit {
-    dataProperties = [];
-    dataPropertiesFiltered:Observable<any>;
+    dataProperties: string[] = [];
+    dataPropertiesFiltered: Observable<PropGrouping[]>;
     propertyForm = this.fb.group({
         propertySelect: ['', Validators.required],
         propertyValue: ['', Validators.required],
+        language: ['']
     })
+    propertyType: string[] = []; // Array but only expect one value
+
     constructor(private dialogRef: MatDialogRef<DatatypePropertyOverlayComponent>,
                 public os: OntologyStateService,
-                @Inject('propertyManagerService') private pm,
+                private pm: PropertyManagerService,
                 private fb: FormBuilder,
-                @Inject('utilService') public util,
-                @Inject(MAT_DIALOG_DATA) public data:  { editingProperty: boolean,
+                public util: UtilService,
+                @Inject(MAT_DIALOG_DATA) public data: { editingProperty: boolean,
                     propertySelect: string,
                     propertyValue: string, 
                     propertyType: string, 
@@ -69,24 +82,24 @@ export class DatatypePropertyOverlayComponent implements OnInit {
         this.dataProperties = Object.keys(this.os.listItem.dataProperties.iris);
         this.dataPropertiesFiltered =  this.propertyForm.controls.propertySelect.valueChanges.pipe(
             startWith(''),
-            map(value => this.filter(value))
+            map(value => this.filter(value || ''))
         );
         if (this.data.editingProperty) {
             this.propertyForm.controls.propertySelect.setValue(this.data.propertySelect);
+            this.propertyForm.controls.propertySelect.disable();
             this.propertyForm.controls.propertyValue.setValue(this.data.propertyValue);
+            this.propertyForm.controls.language.setValue(this.data.propertyLanguage);
+            this.propertyType = [this.data.propertyType];
+        } else {
+            // Should already be enabled on startup, mostly here for test purposes
+            this.propertyForm.controls.propertySelect.enable();
         }
     }
-    filter(val: string) {
-        return this.dataProperties.filter(prop => prop.toLowerCase().includes(val.toLowerCase()))
-            .sort(prop => prop.orderByEntityName());
-    }
-
-    isDisabled(): boolean {
-        let isDisabled = this.propertyForm.invalid || !this.data.propertyValue;
-        if (!this.data.editingProperty) {
-            isDisabled = isDisabled || this.data.propertySelect === undefined;
+    filter(val: string): PropGrouping[] {
+        if (!this.dataProperties || !this.dataProperties.length) {
+            return [];
         }
-        return isDisabled;
+        return this.os.getGroupedSelectList(this.dataProperties, val, iri => this.os.getEntityNameByListItem(iri));
     }
     submit(): void {
         if (this.data.editingProperty) {
@@ -98,8 +111,8 @@ export class DatatypePropertyOverlayComponent implements OnInit {
     addProperty (): void {
         const selectedValue = this.propertyForm.controls.propertySelect.value;
         const propertyValue = this.propertyForm.controls.propertyValue.value;
-        const lang = this.getLang(this.data.propertyLanguage);
-        const realType = this.getType(lang, this.data.propertyType);
+        const lang = this.getLang(this.propertyForm.controls.language.value);
+        const realType = this.getType(lang, this.propertyType[0]);
         const added = this.pm.addValue(this.os.listItem.selected, selectedValue, propertyValue, realType, lang);
         if (added) {
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this.util.createJson(this.os.listItem.selected['@id'], selectedValue, this.pm.createValueObj(propertyValue, realType, lang)));
@@ -112,8 +125,8 @@ export class DatatypePropertyOverlayComponent implements OnInit {
     editProperty(): void {
         const selectedValue = this.propertyForm.controls.propertySelect.value;
         const propertyValue = this.propertyForm.controls.propertyValue.value;
-        const lang = this.getLang(this.data.propertyLanguage);
-        const realType = this.getType(lang, this.data.propertyType);
+        const lang = this.getLang(this.propertyForm.controls.language.value);
+        const realType = this.getType(lang, this.propertyType[0]);
         const oldObj = cloneDeep(this.os.listItem.selected[selectedValue][this.data.propertyIndex]);
         const edited = this.pm.editValue(this.os.listItem.selected, selectedValue, this.data.propertyIndex, propertyValue, realType, lang);
         if (edited) {
@@ -126,15 +139,15 @@ export class DatatypePropertyOverlayComponent implements OnInit {
         this.dialogRef.close();
     }
     isLangString(): boolean {
-        return RDF + 'langString' === this.data.propertyType;
+        return RDF + 'langString' === (this.propertyType ? this.propertyType[0]: '');
     }
-    orderByEntityName(iri: string): string {
-        return this.os.getEntityNameByListItem(iri);
+    getLang(language: string): string {
+        return language && this.isLangString() ? language : '';
     }
     getType(language: string, type: string):string {
         return language ? '' : type || XSD + 'string';
     }
-    getLang(language: string): string {
-        return language && this.isLangString() ? language : '';
+    getName(val: string): string {
+        return val ? this.os.getEntityNameByListItem(val) : '';
     }
 }

@@ -22,9 +22,10 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { cloneDeep, concat, find, get, head, includes, isEmpty, remove } from 'lodash';
-import { from, Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { v4 } from 'uuid';
+
 import { CATALOG } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Conflict } from '../models/conflict.interface';
@@ -35,6 +36,7 @@ import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { StateManagerService } from './stateManager.service';
+import { UtilService } from './util.service';
 
 /**
  * Service for common VersionedRdfState methods to be used in the ontology-editor or shapes-graph-editor.
@@ -42,7 +44,7 @@ import { StateManagerService } from './stateManager.service';
 export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     protected sm: StateManagerService;
     protected cm: CatalogManagerService;
-    protected util: any;
+    protected util: UtilService;
     protected statePrefix: string;
     protected branchStateNamespace: string;
     protected tagStateNamespace: string;
@@ -285,7 +287,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
                 ob = this.cm.getRecordBranch(branchId, recordId, this.catalogId)
                     .pipe(
                         catchError(error => {
-                            this.util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                            this.util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                             branchToastShown = true;
                             return throwError(error);
                         }),
@@ -299,7 +301,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
                 ob = this.cm.getRecordVersion(tagId, recordId, this.catalogId)
                     .pipe(
                         catchError(() => {
-                            this.util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + this.util.condenseCommitId(commitId), {timeout: 5000});
+                            this.util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + this.util.condenseCommitId(commitId), {timeOut: 5000});
                             return this.updateState({recordId, commitId});
                         }),
                         switchMap(() => this.cm.getInProgressCommit(recordId, this.catalogId))
@@ -323,7 +325,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
                     }),
                     catchError(() => {
                         if (!branchToastShown) {
-                            this.util.createWarningToast('Commit ' + this.util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                            this.util.createWarningToast('Commit ' + this.util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                         }
                         return this.deleteState(recordId).pipe(switchMap(() => this.getLatestMaster(recordId)));
                     })

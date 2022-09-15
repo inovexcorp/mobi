@@ -31,7 +31,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -40,6 +39,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { ClassMappingDetailsComponent } from '../classMappingDetails/classMappingDetails.component';
 import { ClassMappingOverlayComponent } from '../classMappingOverlay/classMappingOverlay.component';
 import { ClassMappingSelectComponent } from '../classMappingSelect/classMappingSelect.component';
@@ -89,7 +89,7 @@ describe('Edit Mapping Tab component', function() {
             providers: [
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(classMapping)}
                 }) }

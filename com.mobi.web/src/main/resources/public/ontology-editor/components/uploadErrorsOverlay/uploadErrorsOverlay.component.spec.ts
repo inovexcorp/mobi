@@ -37,7 +37,7 @@ describe('Upload Errors Overlay component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<UploadErrorsOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<UploadErrorsOverlayComponent>>;
-
+    
     const uploadItem: OntologyUploadItem = {
         id: 'id',
         title: 'Title',

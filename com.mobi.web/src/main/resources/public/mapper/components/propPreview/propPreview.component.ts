@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { find } from 'lodash';
 
 import { RDFS } from '../../../prefixes';
@@ -28,6 +28,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class mapper.PropPreviewComponent
@@ -77,5 +78,5 @@ export class PropPreviewComponent {
     }
 
     constructor(private state: MapperStateService, private split: SplitIRIPipe, 
-        private om: OntologyManagerService, @Inject('utilService') private util) {}
+        private om: OntologyManagerService, private util: UtilService) {}
 }

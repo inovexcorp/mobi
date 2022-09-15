@@ -64,8 +64,8 @@ module.exports = {
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
-            .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
+            .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
     },
 
     'Step 4: A new user is created' : function(browser) {
@@ -94,8 +94,7 @@ module.exports = {
 
     'Step 6: The user clicks logout' : function(browser) {
         browser
-            .pause(2000)
-            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
     },
 
@@ -177,7 +176,6 @@ module.exports = {
         browser
             .useXpath()
             .click('//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-            .useCss();
         browser.globals.wait_for_no_spinners(browser);
         browser
             .useXpath()

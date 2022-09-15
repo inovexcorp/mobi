@@ -27,7 +27,7 @@ import { filter, isArray, has } from 'lodash';
 })
 export class ShowPropertiesPipe implements PipeTransform {
 
-    public transform(entity: any, properties: Array<string>): Array<string> {
+    public transform(entity: any, properties: Array<string> | any): Array<string> {
         let arr = [];
         if (isArray(properties)) {
             arr = filter(properties, property => has(entity, property));

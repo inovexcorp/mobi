@@ -22,36 +22,35 @@
   -->
 <div class="properties-tab row h-100 m-0">
     <property-hierarchy-block class="col-3 h-100"></property-hierarchy-block>
-    <div class="selected-property col-9 h-100 pt-2" targeted-spinner="this.os.listItem.editorTabStates.properties.targetedSpinnerId">
-        <div class="h-100 w-100 d-flex flex-column" *ngIf="this.os.listItem.selected">
+    <div class="selected-property col-9 h-100 pt-2" #propertiesTab>
+        <div class="h-100 w-100 d-flex flex-column" *ngIf="os.listItem.selected">
             <div class="selected-header d-flex">
-                <selected-details class="flex-1" [highlightText]="this.os.listItem.editorTabStates.properties.searchText"></selected-details>
+                <selected-details class="flex-1" [highlightText]="highlightText"></selected-details>
                 <div class="btn-container">
-                    <button class="btn btn-primary" [disabled]="!this.os.listItem.selected || this.os.isSelectedImported()" (click)="this.seeHistory()">See History</button>
-                    <button *ngIf="this.os.canModify()" class="btn btn-danger" [disabled]="this.os.isSelectedImported()" (click)="this.showDeleteConfirmation()">Delete</button>
+                    <button mat-raised-button color="primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
+                    <button mat-raised-button *ngIf="os.canModify()" color="warn" [disabled]="os.isSelectedImported()" (click)="showDeleteConfirmation()">Delete</button>
                 </div>
             </div>
             <div class="row flex-1 remove-min-height">
                 <div class="col-7 vertical-scroll h-100">
                     <div class="row py-2">
-                        <annotation-block [selected]="this.os.listItem.selected"
-                                          [highlightIris]="this.om.entityNameProps"
-                                          [highlightText]="this.os.listItem.editorTabStates.properties.searchText"
+                        <annotation-block [selected]="os.listItem.selected"
+                                          [highlightIris]="om.entityNameProps"
+                                          [highlightText]="highlightText"
                                           class="col">
                         </annotation-block>
                     </div>
-                    <div *ngIf="!this.om.isAnnotation(this.os.listItem.selected)" class="row py-2">
+                    <div *ngIf="!om.isAnnotation(os.listItem.selected)" class="row py-2">
                         <axiom-block class="col"></axiom-block>
                     </div>
                 </div>
                 <div class="col-5 vertical-scroll characteristics-usages-wrapper h-100">
                     <characteristics-row></characteristics-row>
                     <div class="row py-2">
-                        <usages-block class="col" [usages]="this.os.listItem.editorTabStates.properties.usages"></usages-block>
+                        <usages-block class="col" [usages]="os.listItem.editorTabStates.properties.usages"></usages-block>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!---->

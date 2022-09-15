@@ -30,11 +30,13 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider, MockPipe } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockManchesterConverter, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
+import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { IndividualTypesModalComponent } from '../individualTypesModal/individualTypesModal.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { SelectedDetailsComponent } from './selectedDetails.component';
@@ -47,8 +49,8 @@ describe('Selected Details component', function() {
     let matDialog: jasmine.SpyObj<MatDialog>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let manchesterConverterStub;
-    let utilStub;
+    let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const iri = 'iri';
     
@@ -67,8 +69,8 @@ describe('Selected Details component', function() {
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
                 { provide: PrefixationPipe, useClass: MockPipe(PrefixationPipe) },
-                { provide: 'manchesterConverterService', useClass: mockManchesterConverter },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(ManchesterConverterService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -84,8 +86,8 @@ describe('Selected Details component', function() {
         ontologyStateStub = TestBed.get(OntologyStateService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
         prefixationStub = TestBed.get(PrefixationPipe);
-        manchesterConverterStub = TestBed.get('manchesterConverterService');
-        utilStub = TestBed.get('utilService');
+        manchesterConverterStub = TestBed.get(ManchesterConverterService);
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = { '@id': iri };

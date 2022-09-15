@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -29,7 +29,7 @@ import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
-import { HelperService } from '../../shared/services/helper.service';
+import { UtilService } from '../../shared/services/util.service';
 import { ClassDetails } from '../models/classDetails.interface';
 import { InstanceDetails } from '../models/instanceDetails.interface';
 import { PropertyDetails } from '../models/propertyDetails.interface';
@@ -45,8 +45,7 @@ import { PropertyDetails } from '../models/propertyDetails.interface';
 export class ExploreService {
     prefix = REST_PREFIX + 'explorable-datasets/';
     
-    constructor(private http: HttpClient, private helper: HelperService, private spinnerSvc: ProgressSpinnerService, 
-        @Inject('utilService') private util) {}
+    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService, private util: UtilService) {}
 
     /**
      * Calls the GET /mobirest/explorable-datasets/{recordId}/class-details endpoint and returns the array of class
@@ -58,7 +57,7 @@ export class ExploreService {
     getClassDetails(recordId: string): Observable<ClassDetails[]> {
         const url = this.prefix + encodeURIComponent(recordId) + '/class-details';
         return this.spinnerSvc.track(this.http.get<ClassDetails[]>(url, {observe: 'body'}))
-            .pipe(catchError(this.helper.handleError));
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
@@ -78,7 +77,7 @@ export class ExploreService {
         const url = this.prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) 
         + '/instance-details';
         return this._trackedRequest(this.http.get<InstanceDetails[]>(url, { params, observe: 'response' }), isTracked)
-            .pipe(catchError(this.helper.handleError));
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
@@ -94,11 +93,11 @@ export class ExploreService {
         const url = this.prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) 
         + '/property-details';
         return this.spinnerSvc.track(this.http.get<PropertyDetails[]>(url))
-            .pipe(catchError(this.helper.handleError));
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
-     * Calls the POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint and returns the
+     * Calls the POST /mobirest/explorable-datasets/{recordId}/instances endpoint and returns the
      * instance IRI.
      *
      * @param {string} recordId The id of the Record
@@ -108,11 +107,11 @@ export class ExploreService {
     createInstance(recordId: string, json: JSONLDObject[]): Observable<string> {
         const url = this.prefix + encodeURIComponent(recordId) + '/instances';
         return this.spinnerSvc.track(this.http.post(url, json, {responseType: 'text'}))
-            .pipe(catchError(this.helper.handleError));
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
-     * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint and
+     * Calls the GET /mobirest/explorable-datasets/{recordId}/instances/{instanceId} endpoint and
      * returns the instance.
      *
      * @param {string} recordId The id of the Record
@@ -123,11 +122,11 @@ export class ExploreService {
     getInstance(recordId: string, instanceId: string): Observable<JSONLDObject[]> {
         const url = this.prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId);
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(url))
-            .pipe(catchError(this.helper.handleError));
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
-     * Calls the PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint and 
+     * Calls the PUT /mobirest/explorable-datasets/{recordId}/instances/{instanceId} endpoint and
      * identifies if the instance was updated.
      *
      * @param {string} recordId The id of the Record
@@ -138,7 +137,7 @@ export class ExploreService {
     updateInstance(recordId: string, instanceId: string, json: JSONLDObject[]): Observable<string> {
         const url = this.prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId);
         return this.spinnerSvc.track(this.http.put(url, json))
-            .pipe(catchError(this.helper.handleError));
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
@@ -152,20 +151,15 @@ export class ExploreService {
     deleteInstance(recordId: string, instanceId: string): Observable<null> {
         const url = this.prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId);
         return this.spinnerSvc.track(this.http.delete(url))
-            .pipe(catchError(this.helper.handleError));
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
-     * TODO
-     * @ngdoc method
-     * @name createPagedResultsObject
-     * @methodOf discover.service:exploreService
-     *
-     * @description
      * Creates an object which contains all of the paginated details from the provided response in the expected format.
      *
-     * @param {Object} response The response of an $http call which should contain paginated details in the header.
-     * @returns {Object} An object which contains all of the paginated details in the expected format.
+     * @param {HttpResponse} response The response of an HttpClient call which should contain paginated details in the
+     * header.
+     * @returns An object which contains all of the paginated details in the expected format.
      */
     createPagedResultsObject<Type>(response: HttpResponse<Type>): { data: Type, total: number } {
         return {

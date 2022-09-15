@@ -26,16 +26,16 @@ import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import 'ng-mocks/dist/jasmine'; // Ensures every method in Mocked Components are Jasmine spies
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { GroupTabComponent } from '../groupTab/groupTab.component';
 import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
 import { ProfileTabComponent } from '../profileTab/profileTab.component';
-import { SettingsPageComponent } from './settingsPage.component';
 import { SettingEditPageComponent } from '../../../shared/components/settingEditPage/settingEditPage.component';
-import { of } from 'rxjs';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
+import { SettingsPageComponent } from './settingsPage.component';
 
 describe('Settings Page component', function() {
     let component: SettingsPageComponent;
@@ -56,9 +56,7 @@ describe('Settings Page component', function() {
                 MockComponent(SettingEditPageComponent)
             ],
             providers: [
-                { provide: 'settingManagerService', useFactory: () => jasmine.createSpyObj('settingManagerService', {
-                    open: { afterClosed: () => of(true)}
-                }) }
+                MockProvider(SettingManagerService)
             ]
         });
     });
@@ -82,7 +80,7 @@ describe('Settings Page component', function() {
                 const event = new MatTabChangeEvent();
                 event.index = 0;
                 component.onTabChanged(event);
-                expect(component.profileTab.reset).toHaveBeenCalled();
+                expect(component.profileTab.reset).toHaveBeenCalledWith();
                 expect(component.passwordTab.reset).not.toHaveBeenCalled();
             });
             it('to the groups tab', function() {
@@ -97,7 +95,7 @@ describe('Settings Page component', function() {
                 event.index = 2;
                 component.onTabChanged(event);
                 expect(component.profileTab.reset).not.toHaveBeenCalled();
-                expect(component.passwordTab.reset).toHaveBeenCalled();
+                expect(component.passwordTab.reset).toHaveBeenCalledWith();
             });
             it('to the settings tab', function() {
                 const event = new MatTabChangeEvent();

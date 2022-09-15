@@ -28,8 +28,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockOntologyManager,
-    mockUtil,
 } from '../../../../../test/ts/Shared';
 import { DCTERMS, DELIM } from '../../prefixes';
 import { Difference } from '../models/difference.class';
@@ -42,9 +40,10 @@ import { MappingRecord } from '../models/mappingRecord.interface';
 import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
-import { MapperStateService } from './mapperState.service';
 import { MappingManagerService } from './mappingManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
+import { UtilService } from './util.service';
+import { MapperStateService } from './mapperState.service';
 
 describe('Mapper State service', function() {
     let service: MapperStateService;
@@ -52,8 +51,8 @@ describe('Mapper State service', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
-    let ontologyManagerStub;
-    let utilStub;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     let mappingStub: jasmine.SpyObj<Mapping>;
     const error = 'Error message';
@@ -99,8 +98,8 @@ describe('Mapper State service', function() {
                 MockProvider(MappingManagerService),
                 MockProvider(DelimitedManagerService),
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyManagerService),
+                MockProvider(UtilService),
             ]
         });
     });
@@ -111,7 +110,7 @@ describe('Mapper State service', function() {
         mappingManagerStub = TestBed.get(MappingManagerService);
         delimitedManagerStub = TestBed.get(DelimitedManagerService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         splitIRIStub = TestBed.get(SplitIRIPipe);
 
         catalogManagerStub.localCatalog = {'@id': catalogId};

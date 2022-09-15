@@ -21,9 +21,6 @@
  * #L%
  */
 import { NgModule } from '@angular/core';
-import * as angular from 'angular';
-import { downgradeComponent } from '@angular/upgrade/static';
-
 import { SharedModule } from '../shared/shared.module';
 
 import { DatasetsListComponent } from './components/datasetsList/datasetsList.component';
@@ -56,11 +53,3 @@ import { UploadDataOverlayComponent } from './components/uploadDataOverlay/uploa
     ]
 })
 export class DatasetsModule {}
-
-angular.module('datasets', [])
-    .directive('datasetsList', downgradeComponent({component: DatasetsListComponent}) as angular.IDirectiveFactory)
-    .directive('datasetsOntologyPicker', downgradeComponent({component: DatasetsOntologyPickerComponent}) as angular.IDirectiveFactory)
-    .directive('datasetsPage', downgradeComponent({component: DatasetsPageComponent}) as angular.IDirectiveFactory)
-    .directive('editDatasetOverlay', downgradeComponent({component: EditDatasetOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('newDatasetOverlay', downgradeComponent({component: NewDatasetOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('uploadDataOverlay', downgradeComponent({component: UploadDataOverlayComponent}) as angular.IDirectiveFactory);

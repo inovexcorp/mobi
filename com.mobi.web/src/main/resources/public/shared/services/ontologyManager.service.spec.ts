@@ -21,43 +21,84 @@
  * #L%
  */
 import { noop } from 'lodash';
-import { OntologyManagerService } from './ontologyManager.service';
 import { TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
-import { CatalogManagerService } from './catalogManager.service';
-import { HelperService } from './helper.service';
 import { MockProvider } from 'ng-mocks';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { OWL, ONTOLOGYEDITOR, SKOS, RDFS, DCTERMS, DC, SKOSXL } from '../../prefixes';
-import { mockUtil, cleanStylesFromDOM } from '../../../../../test/ts/Shared';
-import { throwError } from 'rxjs';
 import { HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { throwError } from 'rxjs';
+
+import { OWL, ONTOLOGYEDITOR, SKOS, RDFS, DCTERMS, DC, SKOSXL } from '../../prefixes';
+import { cleanStylesFromDOM } from '../../../../../test/ts/Shared';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { PropertyToRanges } from '../models/propertyToRanges.interface';
 import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { CatalogManagerService } from './catalogManager.service';
+import { OntologyManagerService } from './ontologyManager.service';
+import { UtilService } from './util.service';
+import { GroupQueryResults } from '../models/groupQueryResults.interface';
 
 describe('Ontology Manager service', function() {
     let service: OntologyManagerService;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
     let vocabularyStuffObj: VocabularyStuff;
     let ontologyStuffObj: OntologyStuff;
     let propertyToRangesObj: PropertyToRanges;
+
     const emptyObj: JSONLDObject = {'@id': 'test'};
+
+    let recordId: string;
+    let ontologyId: string;
+    let branchId: string;
+    let commitId: string;
+    let catalogId: string;
+    let format: string;
+    let file: any;
+    let title: string;
+    let description: string;
+    let keywords: string[];
+    let error: string;
+    let errorObject: any = {'errorMessage': 'error', 'errorDetails': []};
+
+    let records: any;
+    let anonymous: string;
+    let classId: string;
+    let objectPropertyId: string;
+    let dataPropertyId: string;
+    let annotationId: string;
+    let individualId: string;
+    let restrictionId: string;
+    let blankNodeId: string;
+    let blankNodeObj;
+    let usages;
+    let conceptId: string;
+    let schemeId: string;
+    let derivedConceptType: any;
+    let derivedConceptSchemeType: any;
+    let derivedSemanticRelation: any;
+    let importedClassId: string;
+    let importedDataPropertyId: string;
+    let importedObjectPropertyId: string;
+    let importedAnnotationId: string;
+    let importedIndividualId: string;
+    let importedRestrictionId: string;
+    let importedConceptId: string;
+    let importedSchemeId: string;
+    let importedOntologyId: string
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [ HttpClientTestingModule ],
             providers: [
                 OntologyManagerService,
-                HelperService,
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
         });
     });
@@ -65,149 +106,149 @@ describe('Ontology Manager service', function() {
     beforeEach(function() {
         service = TestBed.get(OntologyManagerService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         httpMock = TestBed.get(HttpTestingController);
 
-        this.recordId = 'recordId';
-        this.ontologyId = 'ontologyId';
-        this.branchId = 'branchId';
-        this.commitId = 'commitId';
-        this.catalogId = 'catalogId';
-        this.format = 'jsonld';
-        this.file = {name: 'title'};
-        this.title = 'title';
-        this.description = 'description';
-        this.keywords = ['keyword1', 'keyword2'];
-        this.error = 'error';
-        this.errorObject = {'errorMessage': 'error', 'errorDetails': []};
+        recordId = 'recordId';
+        ontologyId = 'ontologyId';
+        branchId = 'branchId';
+        commitId = 'commitId';
+        catalogId = 'catalogId';
+        format = 'jsonld';
+        file = {name: 'title'};
+        title = 'title';
+        description = 'description';
+        keywords = ['keyword1', 'keyword2'];
+        error = 'error';
+        errorObject = {'errorMessage': 'error', 'errorDetails': []};
 
-        this.records = {
+        records = {
             data: [{
                 'dcterms:identifier': 'id1'
             }, {
                 'dcterms:identifier': 'id2'
             }]
         };
-        this.anonymous = 'anonymous';
-        this.classId = 'classId';
-        this.objectPropertyId = 'objectPropertyId';
-        this.dataPropertyId = 'dataPropertyId';
-        this.annotationId = 'annotationId';
-        this.individualId = 'individualId';
-        this.restrictionId = 'restrictionId';
-        this.blankNodeId = '_:genid0';
-        this.blankNodeObj = {
-            '@id': this.blankNodeId
+        anonymous = 'anonymous';
+        classId = 'classId';
+        objectPropertyId = 'objectPropertyId';
+        dataPropertyId = 'dataPropertyId';
+        annotationId = 'annotationId';
+        individualId = 'individualId';
+        restrictionId = 'restrictionId';
+        blankNodeId = '_:genid0';
+        blankNodeObj = {
+            '@id': blankNodeId
         };
-        this.usages = {
+        usages = {
             results: {
                 bindings: []
             }
         };
-        this.conceptId = 'conceptId';
-        this.schemeId = 'schemeId';
-        this.derivedConceptType = ['derivedConcept'];
-        this.derivedConceptSchemeType = ['derivedConceptScheme'];
-        this.derivedSemanticRelation = ['derivedSemanticRelation'];
-        this.importedClassId = 'importedClassId';
-        this.importedDataPropertyId = 'importedDataPropertyId';
-        this.importedDataPropertyId = 'importedObjectPropertyId';
-        this.importedAnnotationId = 'importedAnnotationId';
-        this.importedIndividualId = 'importedIndividualId';
-        this.importedRestrictionId = 'importedRestrictionId';
-        this.importedConceptId = 'importedConceptId';
-        this.importedSchemeId = 'importedSchemeId';
-        this.importedOntologyId = 'importedOntologyId';
-        catalogManagerStub.localCatalog = {'@id': this.catalogId};
+        conceptId = 'conceptId';
+        schemeId = 'schemeId';
+        derivedConceptType = ['derivedConcept'];
+        derivedConceptSchemeType = ['derivedConceptScheme'];
+        derivedSemanticRelation = ['derivedSemanticRelation'];
+        importedClassId = 'importedClassId';
+        importedDataPropertyId = 'importedDataPropertyId';
+        importedObjectPropertyId = 'importedObjectPropertyId';
+        importedAnnotationId = 'importedAnnotationId';
+        importedIndividualId = 'importedIndividualId';
+        importedRestrictionId = 'importedRestrictionId';
+        importedConceptId = 'importedConceptId';
+        importedSchemeId = 'importedSchemeId';
+        importedOntologyId = 'importedOntologyId';
+        catalogManagerStub.localCatalog = {'@id': catalogId};
         service.initialize();
         this.ontologyObj = {
-            '@id': this.ontologyId,
+            '@id': ontologyId,
             '@type': [OWL + 'Ontology', ONTOLOGYEDITOR + 'OntologyRecord']
         };
         this.classObj = {
-            '@id': this.classId,
+            '@id': classId,
             '@type': [OWL + 'Class']
         };
         this.objectPropertyObj = {
-            '@id': this.objectPropertyId,
+            '@id': objectPropertyId,
             '@type': [OWL + 'ObjectProperty']
         };
-        this.objectPropertyObj[RDFS + 'domain'] = [{'@id': this.classId}];
+        this.objectPropertyObj[RDFS + 'domain'] = [{'@id': classId}];
         this.dataPropertyObj = {
-            '@id': this.dataPropertyId,
+            '@id': dataPropertyId,
             '@type': [OWL + 'DatatypeProperty']
         };
         this.annotationObj = {
-            '@id': this.annotationId,
+            '@id': annotationId,
             '@type': [OWL + 'AnnotationProperty']
         };
         this.individualObj = {
-            '@id': this.individualId,
-            '@type': [OWL + 'NamedIndividual', this.classId]
+            '@id': individualId,
+            '@type': [OWL + 'NamedIndividual', classId]
         };
         this.restrictionObj = {
-            '@id': this.restrictionId,
+            '@id': restrictionId,
             '@type': [OWL + 'Restriction']
         };
         this.conceptObj = {
-            '@id': this.conceptId,
+            '@id': conceptId,
             '@type': [SKOS + 'Concept']
         };
         this.derivedConceptObj = {
-            '@id': this.conceptId,
-            '@type': [this.derivedConceptType]
+            '@id': conceptId,
+            '@type': [derivedConceptType]
         };
         this.schemeObj = {
-            '@id': this.schemeId,
+            '@id': schemeId,
             '@type': [SKOS + 'ConceptScheme']
         };
         this.derivedConceptSchemeObj = {
-            '@id': this.schemeId,
-            '@type': [this.derivedConceptSchemeType]
+            '@id': schemeId,
+            '@type': [derivedConceptSchemeType]
         };
         this.ontology = [this.ontologyObj, this.classObj, this.dataPropertyObj];
         this.importedOntObj = {
-            '@id': this.importedOntologyId,
+            '@id': importedOntologyId,
             '@type': [OWL + 'Ontology']
         };
         this.importedClassObj = {
-            '@id': this.importedClassId,
+            '@id': importedClassId,
             '@type': [OWL + 'Class']
         };
         this.importedDataPropertyObj = {
-            '@id': this.importedDataPropertyId,
+            '@id': importedDataPropertyId,
             '@type': [OWL + 'DatatypeProperty']
         };
         this.importedObjectPropertyObj = {
-            '@id': this.importedDataPropertyId,
+            '@id': importedDataPropertyId,
             '@type': [OWL + 'ObjectProperty']
         };
-        this.importedObjectPropertyObj[RDFS + 'domain'] = [{'@id': this.importedClassId}];
+        this.importedObjectPropertyObj[RDFS + 'domain'] = [{'@id': importedClassId}];
         this.importedAnnotationObj = {
-            '@id': this.importedAnnotationId,
+            '@id': importedAnnotationId,
             '@type': [OWL + 'AnnotationProperty']
         };
         this.importedIndividualObj = {
-            '@id': this.importedIndividualId,
-            '@type': [OWL + 'NamedIndividual', this.importedClassId]
+            '@id': importedIndividualId,
+            '@type': [OWL + 'NamedIndividual', importedClassId]
         };
         this.importedRestrictionObj = {
-            '@id': this.importedRestrictionId,
+            '@id': importedRestrictionId,
             '@type': [OWL + 'Restriction']
         };
         this.importedConceptObj = {
-            '@id': this.importedConceptId,
+            '@id': importedConceptId,
             '@type': [SKOS + 'Concept']
         };
         this.importedSchemeObj = {
-            '@id': this.importedSchemeId,
+            '@id': importedSchemeId,
             '@type': [SKOS + 'ConceptScheme']
         };
 
         propertyToRangesObj = {
             'propertyToRanges': {
-                'urn:hasTopping':['urn:PizzaTopping']
+                'urn:hasTopping': ['urn:PizzaTopping']
             }
         };
 
@@ -233,7 +274,7 @@ describe('Ontology Manager service', function() {
         };
 
         ontologyStuffObj = {
-            ontologyIRI: this.ontologyId,
+            ontologyIRI: ontologyId,
             propertyToRanges: propertyToRangesObj.propertyToRanges,
             iriList: this.emptyIriList,
             importedOntologies: [{ontologyId: this.ontologyId2, id: 'id'}],
@@ -263,9 +304,32 @@ describe('Ontology Manager service', function() {
             conceptSchemeHierarchy: this.emptyHierarchyResponse
         };
 
-        utilStub.rejectError.and.returnValue(throwError(this.error));
-        utilStub.rejectErrorObject.and.returnValue(throwError(this.errorObject));
         progressSpinnerStub.track.and.callFake(ob => ob);
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
+        utilStub.handleErrorObject.and.returnValue(throwError(errorObject));
     });
 
     afterEach(function() {
@@ -281,63 +345,62 @@ describe('Ontology Manager service', function() {
         describe('with a file', function() {
             beforeEach(function() {
                 this.recordConfig = {
-                    file: this.file, 
-                    title: this.title, 
-                    description: this.description, 
-                    keywords: this.keywords
+                    file: file, 
+                    title: title, 
+                    description: description, 
+                    keywords: keywords
                 };
             });
             it('with description and keywords', function() {
                 service.uploadOntology(this.recordConfig)
                     .subscribe(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                        expect(response).toEqual({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
                     }, () => fail('Observable should have succeeded'));
                 const request = httpMock.expectOne({url: '/mobirest/ontologies', method: 'POST'});
                 expect(request.request.body instanceof FormData).toBeTrue();
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
                 expect((request.request.body).get('description')).toEqual(this.recordConfig.description);
                 expect((request.request.body).getAll('keywords')).toEqual(this.recordConfig.keywords);
-                request.flush({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                request.flush({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
             });
             it('with no description or keywords', function() {
-                service.uploadOntology({file: this.file, title: this.title})
+                service.uploadOntology({file: file, title: title})
                     .subscribe(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                        expect(response).toEqual({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
                     }, () => fail('Observable should have succeeded'));
                 const request = httpMock.expectOne({url: '/mobirest/ontologies', method: 'POST'});
                 expect(request.request.body instanceof FormData).toBeTrue();
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
                 expect((request.request.body).get('description')).toEqual(null);
                 expect((request.request.body).getAll('keywords')).toEqual([]);
-                request.flush({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                request.flush({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
             });
             it('unless an error occurs', function() {
                 service.uploadOntology(this.recordConfig)
                     .subscribe(() => fail('Observable should have errored'), response => {
-                        expect(response).toEqual(this.errorObject);
+                        expect(response).toEqual(errorObject);
                     });
-
                 const request = httpMock.expectOne({url: '/mobirest/ontologies', method: 'POST'});
                 expect(request.request.body instanceof FormData).toBeTrue();
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
                 expect((request.request.body).get('description')).toEqual(this.recordConfig.description);
                 expect((request.request.body).getAll('keywords')).toEqual(this.recordConfig.keywords);
-                request.flush('flush', { status: 400, statusText: this.error });
+                request.flush('flush', { status: 400, statusText: error });
             });
         });
         describe('with JSON-LD', function() {
             beforeEach(function() {
                 this.recordConfig = {
                     jsonld: this.ontologyObj, 
-                    title: this.title, 
-                    description: this.description, 
-                    keywords: this.keywords
+                    title: title, 
+                    description: description, 
+                    keywords: keywords
                 };
             });
             it('with description and keywords', function() {
                 service.uploadOntology(this.recordConfig)
                     .subscribe(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                        expect(response).toEqual({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
                     }, () => fail('Observable should have succeeded'));
 
                 const request = httpMock.expectOne({url: '/mobirest/ontologies', method: 'POST'});
@@ -345,12 +408,12 @@ describe('Ontology Manager service', function() {
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
                 expect((request.request.body).get('description')).toEqual(this.recordConfig.description);
                 expect((request.request.body).getAll('keywords')).toEqual(this.recordConfig.keywords);
-                request.flush({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                request.flush({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
             });
             it('with no description or keywords', function() {
-                service.uploadOntology({jsonld: this.ontologyObj, title: this.title})
+                service.uploadOntology({jsonld: this.ontologyObj, title: title})
                     .subscribe(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                        expect(response).toEqual({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
                     }, () => fail('Observable should have succeeded'));
 
                 const request = httpMock.expectOne({url: '/mobirest/ontologies', method: 'POST'});
@@ -358,24 +421,24 @@ describe('Ontology Manager service', function() {
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
                 expect((request.request.body).get('description')).toEqual(null);
                 expect((request.request.body).getAll('keywords')).toEqual([]);
-                request.flush({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
+                request.flush({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
             });
             it('unless an error occurs', function() {
-                service.uploadOntology({jsonld: this.ontologyObj, title: this.title})
+                service.uploadOntology({jsonld: this.ontologyObj, title: title})
                     .subscribe(() => fail('Observable should have errored'), response => {
-                        expect(response).toEqual(this.errorObject);
+                        expect(response).toEqual(errorObject);
                     });
 
                 const request = httpMock.expectOne({url: '/mobirest/ontologies', method: 'POST'});
                 expect(request.request.body instanceof FormData).toBeTrue();
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
-                request.flush('flush', { status: 400, statusText: this.error });
+                request.flush('flush', { status: 400, statusText: error });
             });
         });
     });
     describe('uploadOntology file not supported', function() {
          it('trig with title, description and keywords', function() {
-            service.uploadOntology({file: this.file, title: 'title.trig', description: this.description, keywords: this.keywords})
+            service.uploadOntology({file: file, title: 'title.trig', description: description, keywords: keywords})
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, errorObject => {
@@ -383,7 +446,7 @@ describe('Ontology Manager service', function() {
                 });
         });
         it('trig.zip with title, description and keywords', function() {
-            service.uploadOntology({file: this.file, title: 'title.trig.zip', description: this.description, keywords: this.keywords})
+            service.uploadOntology({file: file, title: 'title.trig.zip', description: description, keywords: keywords})
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, errorObject => {
@@ -391,7 +454,7 @@ describe('Ontology Manager service', function() {
                 });
         });
         it('trig.gzip with title, description and keywords', function() {
-            service.uploadOntology({file: this.file, title: 'title.trig.gzip', description: this.description, keywords: this.keywords})
+            service.uploadOntology({file: file, title: 'title.trig.gzip', description: description, keywords: keywords})
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, errorObject => {
@@ -401,96 +464,96 @@ describe('Ontology Manager service', function() {
     });
     describe('deleteOntology hits the proper endpoint', function() {
         it('successfully', function() {
-            service.deleteOntology(this.recordId)
+            service.deleteOntology(recordId)
                 .subscribe(() => {}, () => fail('Observable should have succeeded'));
-            const request = httpMock.expectOne({url: '/mobirest/ontologies/' + encodeURIComponent(this.recordId), method: 'DELETE'});
+            const request = httpMock.expectOne({url: '/mobirest/ontologies/' + encodeURIComponent(recordId), method: 'DELETE'});
             request.flush(200);
         });
         it('unless an error occurs', function() {
-            service.deleteOntology(this.recordId)
+            service.deleteOntology(recordId)
                 .subscribe(() => fail('Observable should have errored'), response => {
-                    expect(response).toBe(this.error);
+                    expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne({url: '/mobirest/ontologies/' + encodeURIComponent(this.recordId), method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne({url: '/mobirest/ontologies/' + encodeURIComponent(recordId), method: 'DELETE'});
+            request.flush('flush', { status: 400, statusText: error });
         });
     });
     describe('downloadOntology should call the window.open method properly', function() {
         beforeEach(function () {
-            this.url = '/mobirest/ontologies/' + encodeURIComponent(this.recordId);
+            this.url = '/mobirest/ontologies/' + encodeURIComponent(recordId);
             spyOn(window, 'open');
         });
         it('with a format and no fileName', function() {
             const params = new HttpParams({
                 fromObject: {
-                    branchId: this.branchId,
-                    commitId: this.commitId,
+                    branchId: branchId,
+                    commitId: commitId,
                     rdfFormat: 'turtle',
                     fileName: 'ontology'
                 }
             });
-            service.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle');
+            service.downloadOntology(recordId, branchId, commitId, 'turtle');
             expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
         });
         it('without a format or a fileName', function() {
             const params = new HttpParams({
                 fromObject: {
-                    branchId: this.branchId,
-                    commitId: this.commitId,
+                    branchId: branchId,
+                    commitId: commitId,
                     rdfFormat: 'jsonld',
                     fileName: 'ontology'
                 }
             });
-            service.downloadOntology(this.recordId, this.branchId, this.commitId);
+            service.downloadOntology(recordId, branchId, commitId);
             expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
         });
         it('with a format and fileName', function() {
             const params = new HttpParams({
                 fromObject: {
-                    branchId: this.branchId,
-                    commitId: this.commitId,
+                    branchId: branchId,
+                    commitId: commitId,
                     rdfFormat: 'turtle',
                     fileName: 'fileName'
                 }
             });
-            service.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle', 'fileName');
+            service.downloadOntology(recordId, branchId, commitId, 'turtle', 'fileName');
             expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
         });
         it('without a format and with a fileName', function() {
             const params = new HttpParams({
                 fromObject: {
-                    branchId: this.branchId,
-                    commitId: this.commitId,
+                    branchId: branchId,
+                    commitId: commitId,
                     rdfFormat: 'jsonld',
                     fileName: 'fileName'
                 }
             });
-            service.downloadOntology(this.recordId, this.branchId, this.commitId, undefined, 'fileName');
+            service.downloadOntology(recordId, branchId, commitId, undefined, 'fileName');
             expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
         });
     });
     describe('getOntology hits the proper endpoint', function() {
         it('unless an error occurs', function() {
-            service.getOntology(this.recordId, this.branchId, this.commitId, this.format, false, false, true)
+            service.getOntology(recordId, branchId, commitId, format, false, false, true)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(this.error);
+                    expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === '/mobirest/ontologies/' + encodeURIComponent(this.recordId) && req.method === 'GET');
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === '/mobirest/ontologies/' + encodeURIComponent(recordId) && req.method === 'GET');
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getOntology(this.recordId, this.branchId, this.commitId, this.format, false, false, true)
+            service.getOntology(recordId, branchId, commitId, format, false, false, true)
                 .subscribe(data => {
                     expect(data).toEqual(this.ontology);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === '/mobirest/ontologies/' + encodeURIComponent(this.recordId) && req.method === 'GET');
-            expect((request.request.params).get('branchId').toString()).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            expect((request.request.params).get('rdfFormat')).toEqual(this.format);
+            const request = httpMock.expectOne(req => req.url === '/mobirest/ontologies/' + encodeURIComponent(recordId) && req.method === 'GET');
+            expect((request.request.params).get('branchId').toString()).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            expect((request.request.params).get('rdfFormat')).toEqual(format);
             expect((request.request.params).get('clearCache').toString()).toEqual('false');
             expect((request.request.params).get('skolemize').toString()).toEqual('true');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
@@ -502,46 +565,46 @@ describe('Ontology Manager service', function() {
     });
     describe('deleteOntologyBranch hits the proper endpoint', function() {
         it('successfully', function() {
-            service.deleteOntologyBranch(this.recordId, this.branchId)
+            service.deleteOntologyBranch(recordId, branchId)
                 .subscribe(noop, () => fail('Observable should have succeeded'));
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId)) && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)) && req.method === 'DELETE');
             request.flush(200);
         });
         it('unless an error occurs', function() {
-            service.deleteOntologyBranch(this.recordId, this.branchId)
+            service.deleteOntologyBranch(recordId, branchId)
                 .subscribe(() => fail('Observable should have errored'), response => {
-                    expect(response).toBe(this.error);
+                    expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId)) && req.method === 'DELETE');
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)) && req.method === 'DELETE');
+            request.flush('flush', { status: 400, statusText: error });
         });
     });
     describe('getVocabularyStuff retrieves information about skos:Concepts and skos:ConceptSchemes in an ontology', function() {
         describe('with no id set', function() {
             it('unless an error occurs', function() {
-                service.getVocabularyStuff(this.recordId, this.branchId, this.commitId)
+                service.getVocabularyStuff(recordId, branchId, commitId)
                     .subscribe(() => fail('Observable should have errored'), response => {
-                        expect(response).toEqual(this.error);
+                        expect(response).toEqual(error);
                     });
 
-                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/vocabulary-stuff') && req.method === 'GET');
+                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/vocabulary-stuff') && req.method === 'GET');
 
-                expect((request.request.params).get('branchId').toString()).toEqual(this.branchId);
-                expect((request.request.params).get('commitId')).toEqual(this.commitId);
-                request.flush('flush', { status: 400, statusText: this.error });    
+                expect((request.request.params).get('branchId').toString()).toEqual(branchId);
+                expect((request.request.params).get('commitId')).toEqual(commitId);
+                request.flush('flush', { status: 400, statusText: error });    
             });
             it('successfully', function() {
-                service.getVocabularyStuff(this.recordId, this.branchId, this.commitId)
+                service.getVocabularyStuff(recordId, branchId, commitId)
                     .subscribe((response: VocabularyStuff) => {
                         expect(response).toEqual(vocabularyStuffObj);
                     }, () => {
                         fail('Observable should have succeeded');
                     });
 
-                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/vocabulary-stuff') && req.method === 'GET');
+                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/vocabulary-stuff') && req.method === 'GET');
 
-                expect((request.request.params).get('branchId')).toEqual(this.branchId);
-                expect((request.request.params).get('commitId')).toEqual(this.commitId);
+                expect(request.request.params.get('branchId')).toEqual(branchId);
+                expect((request.request.params).get('commitId')).toEqual(commitId);
                 request.flush(vocabularyStuffObj);
             });
         });
@@ -549,474 +612,474 @@ describe('Ontology Manager service', function() {
     describe('getOntologyStuff retrieves information about ontology', function() {
         describe('with no id set', function() {
             it('unless an error occurs', function() {
-                service.getOntologyStuff(this.recordId, this.branchId, this.commitId, false)
+                service.getOntologyStuff(recordId, branchId, commitId, false)
                     .subscribe(() => {
                         fail('Observable should have errored');
                     }, response => {
-                        expect(response).toBe(this.error);
+                        expect(response).toBe(error);
                     });
-                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/ontology-stuff') && req.method === 'GET');
-                expect((request.request.params).get('branchId')).toEqual(this.branchId);
-                expect((request.request.params).get('commitId')).toEqual(this.commitId);
-                request.flush('flush', { status: 400, statusText: this.error });
+                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/ontology-stuff') && req.method === 'GET');
+                expect(request.request.params.get('branchId')).toEqual(branchId);
+                expect((request.request.params).get('commitId')).toEqual(commitId);
+                request.flush('flush', { status: 400, statusText: error });
             });
             it('successfully clearing the cache', function() {
-                service.getOntologyStuff(this.recordId, this.branchId, this.commitId, true)
+                service.getOntologyStuff(recordId, branchId, commitId, true)
                     .subscribe(response => {
                         expect(response).toEqual(ontologyStuffObj);
                     }, () => {
                         fail('Observable should have succeeded');
                     });
-                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/ontology-stuff') && req.method === 'GET');
-                expect((request.request.params).get('branchId')).toEqual(this.branchId);
-                expect((request.request.params).get('commitId')).toEqual(this.commitId);
+                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/ontology-stuff') && req.method === 'GET');
+                expect(request.request.params.get('branchId')).toEqual(branchId);
+                expect((request.request.params).get('commitId')).toEqual(commitId);
                 expect((request.request.params).get('clearCache').toString()).toEqual('true');
                 request.flush(ontologyStuffObj);
             });
             it('successfully', function() {
-                service.getOntologyStuff(this.recordId, this.branchId, this.commitId, false)
+                service.getOntologyStuff(recordId, branchId, commitId, false)
                     .subscribe(response => {
                     expect(response).toEqual(ontologyStuffObj);
                     }, () => {
                         fail('Observable should have succeeded');
                     });
-                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/ontology-stuff') && req.method === 'GET');
-                expect((request.request.params).get('branchId')).toEqual(this.branchId);
-                expect((request.request.params).get('commitId')).toEqual(this.commitId);
+                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/ontology-stuff') && req.method === 'GET');
+                expect(request.request.params.get('branchId')).toEqual(branchId);
+                expect((request.request.params).get('commitId')).toEqual(commitId);
                 request.flush(ontologyStuffObj);
             });
         });
     });
     describe('getPropertyToRange retrieves all propertyRanges in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getPropertyToRange(this.recordId, this.branchId, this.commitId, false)
+            service.getPropertyToRange(recordId, branchId, commitId, false)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/property-ranges') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/property-ranges') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getPropertyToRange(this.recordId, this.branchId, this.commitId, false)
+            service.getPropertyToRange(recordId, branchId, commitId, false)
                 .subscribe((response: PropertyToRanges) => {
                     expect(response).toEqual(propertyToRangesObj);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/property-ranges') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/property-ranges') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             request.flush(propertyToRangesObj);
         });
     });
     describe('getIris retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getIris(this.recordId, this.branchId, this.commitId)
+            service.getIris(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/iris') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/iris') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getIris(this.recordId, this.branchId, this.commitId)
+            service.getIris(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(this.emptyIriList);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/iris') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/iris') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush(this.emptyIriList);
         });
     });
     describe('getOntologyClasses retrieves all classes in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getOntologyClasses(this.recordId, this.branchId, this.commitId, false)
+            service.getOntologyClasses(recordId, branchId, commitId, false)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/classes') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/classes') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getOntologyClasses(this.recordId, this.branchId, this.commitId, false)
+            service.getOntologyClasses(recordId, branchId, commitId, false)
                 .subscribe(response => {
                     expect(response).toEqual([emptyObj]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/classes') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/classes') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             request.flush([emptyObj]);
         });
     });
     describe('getDataProperties retrieves all data properties in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getDataProperties(this.recordId, this.branchId, this.commitId)
+            service.getDataProperties(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/data-properties') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/data-properties') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getDataProperties(this.recordId, this.branchId, this.commitId)
+            service.getDataProperties(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual([emptyObj]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/data-properties') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/data-properties') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush([emptyObj]);
         });
     });
     describe('getObjProperties retrieves all data properties in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getObjProperties(this.recordId, this.branchId, this.commitId)
+            service.getObjProperties(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/object-properties') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/object-properties') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getObjProperties(this.recordId, this.branchId, this.commitId)
+            service.getObjProperties(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual([emptyObj]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/object-properties') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/object-properties') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush([emptyObj]);
         });
     });
     describe('getImportedIris retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getImportedIris(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
+            service.getImportedIris(recordId, branchId, commitId, this.applyInProgressCommit)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-iris') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-iris') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
-        it('unless there are none', function() { // TODO: Should this be removed?
-            service.getImportedIris(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
+        it('unless there are none', function() {
+            service.getImportedIris(recordId, branchId, commitId, this.applyInProgressCommit)
                 .subscribe(response => {
                     expect(response).toEqual([]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-iris') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-iris') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             request.flush([], { status: 204, statusText: 'No Data' });
         });
         it('successfully', function() {
-            service.getImportedIris(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit )
+            service.getImportedIris(recordId, branchId, commitId, this.applyInProgressCommit )
                 .subscribe(response => {
                     expect(response).toEqual([this.emptyIriList]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-iris') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-iris') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             request.flush([this.emptyIriList]);
         });
     });
     describe('getClassHierarchies retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getClassHierarchies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
+            service.getClassHierarchies(recordId, branchId, commitId, this.applyInProgressCommit)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/class-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/class-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getClassHierarchies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
+            service.getClassHierarchies(recordId, branchId, commitId, this.applyInProgressCommit)
                 .subscribe(response => {
                     expect(response).toEqual(this.emptyHierarchyResponse);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/class-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/class-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             request.flush(this.emptyHierarchyResponse);
         });
     });
     describe('getClassesWithIndividuals retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getClassesWithIndividuals(this.recordId, this.branchId, this.commitId)
+            service.getClassesWithIndividuals(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/classes-with-individuals') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/classes-with-individuals') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getClassesWithIndividuals(this.recordId, this.branchId, this.commitId)
+            service.getClassesWithIndividuals(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(emptyObj);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/classes-with-individuals') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/classes-with-individuals') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush(emptyObj);
         });
     });
     describe('getDataPropertyHierarchies retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getDataPropertyHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getDataPropertyHierarchies(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/data-property-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/data-property-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getDataPropertyHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getDataPropertyHierarchies(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(this.emptyHierarchyResponse);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/data-property-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/data-property-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush(this.emptyHierarchyResponse);
         });
     });
     describe('getObjectPropertyHierarchies retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getObjectPropertyHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getObjectPropertyHierarchies(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/object-property-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/object-property-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getObjectPropertyHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getObjectPropertyHierarchies(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(this.emptyHierarchyResponse);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/object-property-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush(this.emptyHierarchyResponse)
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/object-property-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush(this.emptyHierarchyResponse);
         });
     });
     describe('getAnnotationPropertyHierarchies retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getAnnotationPropertyHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/annotation-property-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getAnnotationPropertyHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(this.emptyHierarchyResponse);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/annotation-property-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush(this.emptyHierarchyResponse)
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush(this.emptyHierarchyResponse);
         });
     });
     describe('getConceptHierarchies retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getConceptHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getConceptHierarchies(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/concept-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/concept-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getConceptHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getConceptHierarchies(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(this.emptyHierarchyResponse);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/concept-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/concept-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush(this.emptyHierarchyResponse);
         });
     });
     describe('getConceptSchemeHierarchies retrieves all IRIs in an ontology', function() {
         it('unless an error occurs', function() {
-            service.getConceptSchemeHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getConceptSchemeHierarchies(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/concept-scheme-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.getConceptSchemeHierarchies(this.recordId, this.branchId, this.commitId)
+            service.getConceptSchemeHierarchies(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(this.emptyHierarchyResponse);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/concept-scheme-hierarchies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush(this.emptyHierarchyResponse);
         });
     });
     describe('getImportedOntologies should call the proper functions', function() {
         it('when get succeeds', function() {
-            service.getImportedOntologies(this.recordId, this.branchId, this.commitId, 'jsonld', true)
+            service.getImportedOntologies(recordId, branchId, commitId, 'jsonld', true)
                 .subscribe(response => {
                     expect(response).toEqual([this.ontology]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-ontologies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-ontologies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('rdfFormat')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             request.flush([this.ontology]);
         });
         it('when get is empty', function() {
-            service.getImportedOntologies(this.recordId, this.branchId, this.commitId, 'jsonld', true)
+            service.getImportedOntologies(recordId, branchId, commitId, 'jsonld', true)
                 .subscribe(response => {
                     expect(response).toEqual([]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-ontologies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-ontologies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('rdfFormat')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             request.flush('', { status: 204, statusText: 'No Content' });
         });
         it('when another success response', function() {
-            service.getImportedOntologies(this.recordId, this.branchId, this.commitId, 'jsonld', true)
+            service.getImportedOntologies(recordId, branchId, commitId, 'jsonld', true)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(new Error(this.error));
+                    expect(response).toEqual(new Error(error));
                 });
             
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-ontologies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-ontologies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('rdfFormat')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
-            request.flush('flush', { status: 201, statusText: this.error });
+            request.flush('flush', { status: 201, statusText: error });
         });
         it('when get fails', function() {
-            service.getImportedOntologies(this.recordId, this.branchId, this.commitId, 'jsonld', true)
+            service.getImportedOntologies(recordId, branchId, commitId, 'jsonld', true)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
                 
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-ontologies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-ontologies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('rdfFormat')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
 
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
         it('when apply-in-progress is not passed in', function () {
-            service.getImportedOntologies(this.recordId, this.branchId, this.commitId)
+            service.getImportedOntologies(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual([this.ontology]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
 
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/imported-ontologies') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/imported-ontologies') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('rdfFormat')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             request.flush([this.ontology]);
@@ -1026,64 +1089,64 @@ describe('Ontology Manager service', function() {
         describe('when get succeeds', function() {
             describe('with no id set', function() {
                 it('and queryType is select', function() {
-                    service.getEntityUsages(this.recordId, this.branchId, this.commitId, this.classId, 'select')
+                    service.getEntityUsages(recordId, branchId, commitId, classId, 'select')
                         .subscribe(response => {
-                            expect(response).toEqual(this.usages.results.bindings);
+                            expect(response).toEqual(usages.results.bindings);
                         }, () => {
                             fail('Observable should have succeeded');
                         });
-                    const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entity-usages/classId') && req.method === 'GET');
-                    expect((request.request.params).get('branchId')).toEqual(this.branchId);
-                    expect((request.request.params).get('commitId')).toEqual(this.commitId);
+                    const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entity-usages/classId') && req.method === 'GET');
+                    expect(request.request.params.get('branchId')).toEqual(branchId);
+                    expect((request.request.params).get('commitId')).toEqual(commitId);
                     expect((request.request.params).get('queryType')).toEqual('select');
-                    request.flush(this.usages);
+                    request.flush(usages);
                 });
                 it('and queryType is construct', function() {
-                    service.getEntityUsages(this.recordId, this.branchId, this.commitId, this.classId, 'construct')
+                    service.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
                         .subscribe(response => {
-                            expect(response).toEqual(this.usages);
+                            expect(response).toEqual(usages);
                         }, () => {
                             fail('Observable should have succeeded');
                         });
-                    const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entity-usages/classId') && req.method === 'GET');
-                    expect((request.request.params).get('branchId')).toEqual(this.branchId);
-                    expect((request.request.params).get('commitId')).toEqual(this.commitId);
+                    const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entity-usages/classId') && req.method === 'GET');
+                    expect(request.request.params.get('branchId')).toEqual(branchId);
+                    expect((request.request.params).get('commitId')).toEqual(commitId);
                     expect((request.request.params).get('queryType')).toEqual('construct');
-                    request.flush(this.usages);
+                    request.flush(usages);
                 });
             });
         });
         describe('when get fails', function() {
             it('when id is not set', function() {
-                service.getEntityUsages(this.recordId, this.branchId, this.commitId, this.classId)
+                service.getEntityUsages(recordId, branchId, commitId, classId)
                     .subscribe(() => {
                         fail('Observable should have errored');
                     }, response => {
-                        expect(response).toBe(this.error);
+                        expect(response).toBe(error);
                     });
-                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entity-usages/classId') && req.method === 'GET');
-                expect((request.request.params).get('branchId')).toEqual(this.branchId);
-                expect((request.request.params).get('commitId')).toEqual(this.commitId);
+                const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entity-usages/classId') && req.method === 'GET');
+                expect(request.request.params.get('branchId')).toEqual(branchId);
+                expect((request.request.params).get('commitId')).toEqual(commitId);
                 expect((request.request.params).get('queryType')).toEqual('select');
                 
-                request.flush('flush', { status: 400, statusText: this.error });
+                request.flush('flush', { status: 400, statusText: error });
             });
         });
     });
     describe('getOntologyEntityNames calls the correct functions when POST /mobirest/ontologies/{recordId}/entity-names', function() {
         it('successfully', function() {
-            service.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
+            service.getOntologyEntityNames(recordId, branchId, commitId, false, false)
                 .subscribe(response => {
                     expect(response).toEqual({});
                 }, () => {
                     fail('Observable should have succeeded');
                 });
 
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entity-names') && req.method === 'POST');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entity-names') && req.method === 'POST');
 
             expect(request.request.body).toEqual({'filterResources': []});
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('includeImports').toString()).toEqual('false');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             expect((request.request.headers).get('Content-Type')).toEqual('application/json');
@@ -1091,23 +1154,23 @@ describe('Ontology Manager service', function() {
             request.flush({});
         });
         it('unless an error occurs', function() {
-            service.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
+            service.getOntologyEntityNames(recordId, branchId, commitId, false, false)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
                 
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entity-names') && req.method === 'POST');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entity-names') && req.method === 'POST');
 
             expect(request.request.body).toEqual({'filterResources': []});
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('includeImports').toString()).toEqual('false');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             expect((request.request.headers).get('Content-Type')).toEqual('application/json');
     
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
     });
     describe('getSearchResults should call the correct functions', function() {
@@ -1115,61 +1178,61 @@ describe('Ontology Manager service', function() {
             this.searchText = 'searchText';
         });
         it('when get succeeds', function() {
-            service.getSearchResults(this.recordId, this.branchId, this.commitId, 'searchText')
+            service.getSearchResults(recordId, branchId, commitId, 'searchText')
                 .subscribe(function(response) {
                     expect(response).toEqual({});
                 }, function() {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/search-results') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/search-results') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('searchText')).toEqual('searchText');
 
             request.flush({});
         });
         it('when get is empty', function() {
-            service.getSearchResults(this.recordId, this.branchId, this.commitId, 'searchText')
+            service.getSearchResults(recordId, branchId, commitId, 'searchText')
             .subscribe(response => {
                 expect(response).toEqual({});
             }, () => {
                 fail('Observable should have succeeded');
             });
 
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/search-results') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/search-results') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('searchText')).toEqual('searchText');
 
             request.flush('', { status: 204, statusText: 'No Data' });
         });
         it('when get succeeds with different code', function() {
-            service.getSearchResults(this.recordId, this.branchId, this.commitId, 'searchText')
+            service.getSearchResults(recordId, branchId, commitId, 'searchText')
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
                     expect(response).toEqual(new Error('An error has occurred with your search.'));
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/search-results') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/search-results') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('searchText')).toEqual('searchText');
 
-            request.flush('flush', { status: 201, statusText: this.error });
+            request.flush('flush', { status: 201, statusText: error });
         });
         it('when get fails', function() {
-            service.getSearchResults(this.recordId, this.branchId, this.commitId, 'searchText')
+            service.getSearchResults(recordId, branchId, commitId, 'searchText')
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/search-results') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/search-results') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('searchText')).toEqual('searchText');
     
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
     });
     describe('getQueryResults calls the correct functions when GET /mobirest/ontologies/{recordId}/query', function() {
@@ -1177,76 +1240,76 @@ describe('Ontology Manager service', function() {
             this.query = 'select * where {?s ?p ?o}';
         });
         it('succeeds', function() {
-            service.getQueryResults(this.recordId, this.branchId, this.commitId, this.query, this.format)
-                .subscribe(response => expect(response).toEqual([{}]),
+            service.getQueryResults(recordId, branchId, commitId, this.query, format)
+                .subscribe(response => expect(response).toEqual([{'@id': 'id'}]),
                     () => fail('Observable should have succeeded'));
 
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/query') && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/query') && req.method === 'GET');
             expect((request.request.params).get('query')).toEqual(this.query);
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             expect((request.request.params).get('includeImports').toString()).toEqual('true');
             expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
-            request.flush([{}], {
+            request.flush([{'@id': 'id'}], {
                 headers: new HttpHeaders({'Content-Type': 'application/json'})
             });
         });
         it('fails', function() {
-            service.getQueryResults(this.recordId, this.branchId, this.commitId, this.query, this.format)
+            service.getQueryResults(recordId, branchId, commitId, this.query, format)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(this.error);
+                    expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/query') && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/query') && req.method === 'GET');
             expect((request.request.params).get('query')).toEqual(this.query);
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             expect((request.request.params).get('includeImports').toString()).toEqual('true');
             expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
     
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
     });
     describe('getFailedImports calls the correct functions when GET /mobirest/ontologies/{recordId}/failed-imports', function() {
         it('succeeds', function() {
-            service.getFailedImports(this.recordId, this.branchId, this.commitId)
+            service.getFailedImports(recordId, branchId, commitId)
                 .subscribe(response => {
                     expect(response).toEqual(['failedId']);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/failed-imports') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/failed-imports') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             request.flush(['failedId']);
         });
         it('fails', function() {
-            service.getFailedImports(this.recordId, this.branchId, this.commitId)
+            service.getFailedImports(recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(this.error);
+                    expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/failed-imports') && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
-            request.flush('flush', { status: 400, statusText: this.error });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/failed-imports') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
         });
     });
     describe('getEntityAndBlankNodes retrieves entity and blank node RDF', function() {
         it('successfully with defaults', function() {
-            service.getEntityAndBlankNodes(this.recordId, this.branchId, this.commitId, this.classId)
+            service.getEntityAndBlankNodes(recordId, branchId, commitId, classId)
                 .subscribe(response => {
                     expect(response).toEqual([emptyObj]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entities/' + this.classId) && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entities/' + classId) && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('format')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             expect((request.request.params).get('includeImports').toString()).toEqual('true');
@@ -1254,15 +1317,15 @@ describe('Ontology Manager service', function() {
             request.flush([emptyObj]);
         });
         it('successfully with specified params', function() {                
-            service.getEntityAndBlankNodes(this.recordId, this.branchId, this.commitId, this.classId, 'turtle', false, false)
+            service.getEntityAndBlankNodes(recordId, branchId, commitId, classId, 'turtle', false, false)
                 .subscribe(response => {
                     expect(response).toEqual([emptyObj]);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entities/' + this.classId) && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entities/' + classId) && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('format')).toEqual('turtle');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             expect((request.request.params).get('includeImports').toString()).toEqual('false');
@@ -1270,20 +1333,20 @@ describe('Ontology Manager service', function() {
             request.flush([emptyObj]);
         });
         it('unless an error occurs', function() {
-            service.getEntityAndBlankNodes(this.recordId, this.branchId, this.commitId, this.classId)
+            service.getEntityAndBlankNodes(recordId, branchId, commitId, classId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(this.error);
+                    expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId + '/entities/' + this.classId) && req.method === 'GET');
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/entities/' + classId) && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('format')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             expect((request.request.params).get('includeImports').toString()).toEqual('true');
             
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: error });
         });
     });
     describe('isOntology should return', function() {
@@ -1320,7 +1383,7 @@ describe('Ontology Manager service', function() {
     });
     describe('getOntologyIRI should return', function() {
         it('@id if there is an ontology entity in the ontology with @id', function() {
-            expect(service.getOntologyIRI([this.ontologyObj])).toBe(this.ontologyId);
+            expect(service.getOntologyIRI([this.ontologyObj])).toBe(ontologyId);
         });
         it('"" if none are present or no ontology entity', function() {
             expect(service.getOntologyIRI([])).toBe('');
@@ -1373,18 +1436,33 @@ describe('Ontology Manager service', function() {
             expect(service.getClasses([[this.ontologyObj],[this.importedOntObj]])).toEqual([]);
         });
     });
+    describe('retrieveClasses should return', function() {
+        it('valid', function() {
+            service.retrieveClasses(recordId, branchId, commitId, '0')
+                .subscribe((groupQueryResults: GroupQueryResults) => {
+                    expect(groupQueryResults).toEqual({});
+                }, () => {
+                    fail('Observable should have succeeded');
+                });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/group-query') && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect(request.request.params.get('commitId')).toEqual(commitId);
+            expect(request.request.params.get('limit')).toEqual('0');
+            request.flush({});
+        });
+    });
     describe('getClassIRIs should return', function() {
         it('classId if there are classes in the ontology', function() {
-            expect(service.getClassIRIs([[this.ontologyObj, this.classObj],[this.importedOntObj, this.importedClassObj]])).toEqual([this.classId, this.importedClassId]);
+            expect(service.getClassIRIs([[this.ontologyObj, this.classObj],[this.importedOntObj, this.importedClassObj]])).toEqual([classId, importedClassId]);
         });
         it('classId if there are classes only in the ontology', function() {
-            expect(service.getClassIRIs([[this.ontologyObj, this.classObj],[this.importedOntObj]])).toEqual([this.classId]);
+            expect(service.getClassIRIs([[this.ontologyObj, this.classObj],[this.importedOntObj]])).toEqual([classId]);
         });
         it('classId if there are classes only in the imported ontology', function() {
-            expect(service.getClassIRIs([[this.ontologyObj],[this.importedOntObj, this.importedClassObj]])).toEqual([this.importedClassId]);
+            expect(service.getClassIRIs([[this.ontologyObj],[this.importedOntObj, this.importedClassObj]])).toEqual([importedClassId]);
         });
         it('classId if there are duplicates', function() {
-            expect(service.getClassIRIs([[this.ontologyObj, this.classObj],[this.importedOntObj, this.classObj]])).toEqual([this.classId]);
+            expect(service.getClassIRIs([[this.ontologyObj, this.classObj],[this.importedOntObj, this.classObj]])).toEqual([classId]);
         });
         it('[] if there are no classes in the ontology', function() {
             expect(service.getClassIRIs([[this.ontologyObj],[this.importedOntObj]])).toEqual([]);
@@ -1392,41 +1470,41 @@ describe('Ontology Manager service', function() {
     });
     describe('hasClassProperties should return', function() {
         it('true if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(service.hasClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.classId)).toBe(true);
+            expect(service.hasClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], classId)).toBe(true);
         });
         it('true if there are any entities with a domain of the provided class in the imported ontology', function() {
-            expect(service.hasClassProperties([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.importedClassId)).toBe(true);
+            expect(service.hasClassProperties([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], importedClassId)).toBe(true);
         });
         it('false if there is not an ontology entity in the ontology', function() {
-            expect(service.hasClassProperties([[this.classObj, this.ontologyObj],[this.importedClassObj, this.importedOntObj]], this.classId)).toBe(false);
+            expect(service.hasClassProperties([[this.classObj, this.ontologyObj],[this.importedClassObj, this.importedOntObj]], classId)).toBe(false);
         });
     });
     describe('getClassProperties should return', function() {
         it('correct objects if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(service.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.classId)).toEqual([this.objectPropertyObj]);
+            expect(service.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], classId)).toEqual([this.objectPropertyObj]);
         });
         it('correct objects if there are any entities with a domain of the provided class in the imported ontology', function() {
-            expect(service.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.importedClassId)).toEqual([this.importedObjectPropertyObj]);
+            expect(service.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], importedClassId)).toEqual([this.importedObjectPropertyObj]);
         });
         it('correct objects if there are duplicates', function() {
-            expect(service.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.classObj, this.importedOntObj, this.objectPropertyObj]], this.classId)).toEqual([this.objectPropertyObj]);
+            expect(service.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.classObj, this.importedOntObj, this.objectPropertyObj]], classId)).toEqual([this.objectPropertyObj]);
         });
         it('[] if there are no entities with a domain of the provided class in the ontology', function() {
-            expect(service.getClassProperties([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], this.classId)).toEqual([]);
+            expect(service.getClassProperties([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], classId)).toEqual([]);
         });
     });
     describe('getClassPropertyIRIs should return', function() {
         it('correct IRIs if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.classId)).toEqual([this.objectPropertyId]);
+            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], classId)).toEqual([objectPropertyId]);
         });
         it('correct IRIs if there are any entities with a domain of the provided class in the imported ontology', function() {
-            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.importedClassId)).toEqual([this.importedDataPropertyId]);
+            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], importedClassId)).toEqual([importedDataPropertyId]);
         });
         it('correct IRIs if there are duplicates', function() {
-            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.classObj, this.importedOntObj, this.objectPropertyObj]], this.classId)).toEqual([this.objectPropertyId]);
+            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.classObj, this.importedOntObj, this.objectPropertyObj]], classId)).toEqual([objectPropertyId]);
         });
         it('[] if there are not any entities with a domain of the provided class in the ontology', function() {
-            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], this.classId)).toEqual([]);
+            expect(service.getClassPropertyIRIs([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], classId)).toEqual([]);
         });
     });
     describe('isObjectProperty should return', function() {
@@ -1495,16 +1573,16 @@ describe('Ontology Manager service', function() {
     });
     describe('getNoDomainPropertyIRIs should return', function() {
         it('correct IRI if the ontology contains a property without the rdfs:domain set', function() {
-            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedOntObj, this.importedDataPropertyObj]])).toEqual([this.dataPropertyId, this.importedDataPropertyId]);
+            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedOntObj, this.importedDataPropertyObj]])).toEqual([dataPropertyId, importedDataPropertyId]);
         });
         it('correct IRI if only the ontology contains a property without the rdfs:domain set', function() {
-            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedOntObj, this.importedObjectPropertyObj]])).toEqual([this.dataPropertyId]);
+            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedOntObj, this.importedObjectPropertyObj]])).toEqual([dataPropertyId]);
         });
         it('correct IRI if only the imported ontology contains a property without the rdfs:domain set', function() {
-            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.importedOntObj, this.importedDataPropertyObj]])).toEqual([this.importedDataPropertyId]);
+            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.importedOntObj, this.importedDataPropertyObj]])).toEqual([importedDataPropertyId]);
         });
         it('correct IRI if there are duplicates', function() {
-            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([this.dataPropertyId]);
+            expect(service.getNoDomainPropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([dataPropertyId]);
         });
         it('[] if the ontology does not contain any properties', function() {
             expect(service.getNoDomainPropertyIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1546,16 +1624,16 @@ describe('Ontology Manager service', function() {
     });
     describe('getObjectPropertyIRIs should return', function() {
         it('objectPropertyId if there are object properties in the ontology', function() {
-            expect(service.getObjectPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.importedObjectPropertyObj, this.importedOntObj]])).toEqual([this.objectPropertyId, this.importedDataPropertyId]);
+            expect(service.getObjectPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.importedObjectPropertyObj, this.importedOntObj]])).toEqual([objectPropertyId, importedDataPropertyId]);
         });
         it('objectPropertyId if there are object properties only in the ontology', function() {
-            expect(service.getObjectPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.importedOntObj]])).toEqual([this.objectPropertyId]);
+            expect(service.getObjectPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.importedOntObj]])).toEqual([objectPropertyId]);
         });
         it('objectPropertyId if there are object properties only in the imported ontology', function() {
-            expect(service.getObjectPropertyIRIs([[this.ontologyObj], [this.importedObjectPropertyObj, this.importedOntObj]])).toEqual([this.importedDataPropertyId]);
+            expect(service.getObjectPropertyIRIs([[this.ontologyObj], [this.importedObjectPropertyObj, this.importedOntObj]])).toEqual([importedDataPropertyId]);
         });
         it('objectPropertyId if there are duplicates', function() {
-            expect(service.getObjectPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.objectPropertyObj, this.importedOntObj]])).toEqual([this.objectPropertyId]);
+            expect(service.getObjectPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.objectPropertyObj, this.importedOntObj]])).toEqual([objectPropertyId]);
         });
         it('[] if there are no object properties in the ontology', function() {
             expect(service.getObjectPropertyIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1594,16 +1672,16 @@ describe('Ontology Manager service', function() {
     });
     describe('getDataTypePropertyIRIs should return', function() {
         it('dataPropertyId if there are data properties in the ontology', function() {
-            expect(service.getDataTypePropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedDataPropertyObj, this.importedOntObj]])).toEqual([this.dataPropertyId, this.importedDataPropertyId]);
+            expect(service.getDataTypePropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedDataPropertyObj, this.importedOntObj]])).toEqual([dataPropertyId, importedDataPropertyId]);
         });
         it('dataPropertyId if there are data properties in only the ontology', function() {
-            expect(service.getDataTypePropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedOntObj]])).toEqual([this.dataPropertyId]);
+            expect(service.getDataTypePropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.importedOntObj]])).toEqual([dataPropertyId]);
         });
         it('dataPropertyId if there are data properties in only the imported ontology', function() {
-            expect(service.getDataTypePropertyIRIs([[this.ontologyObj], [this.importedDataPropertyObj, this.importedOntObj]])).toEqual([this.importedDataPropertyId]);
+            expect(service.getDataTypePropertyIRIs([[this.ontologyObj], [this.importedDataPropertyObj, this.importedOntObj]])).toEqual([importedDataPropertyId]);
         });
         it('dataPropertyId if there are duplicates', function() {
-            expect(service.getDataTypePropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([this.dataPropertyId]);
+            expect(service.getDataTypePropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([dataPropertyId]);
         });
         it('[] if there are no data properties in the ontology', function() {
             expect(service.getDataTypePropertyIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1650,16 +1728,16 @@ describe('Ontology Manager service', function() {
     });
     describe('getAnnotationIRIs should return', function() {
         it('annotationId if there are annotations in the ontology', function() {
-            expect(service.getAnnotationIRIs([[this.ontologyObj, this.annotationObj], [this.importedAnnotationObj, this.importedOntObj]])).toEqual([this.annotationId, this.importedAnnotationId]);
+            expect(service.getAnnotationIRIs([[this.ontologyObj, this.annotationObj], [this.importedAnnotationObj, this.importedOntObj]])).toEqual([annotationId, importedAnnotationId]);
         });
         it('annotationId if there are annotations in only the ontology', function() {
-            expect(service.getAnnotationIRIs([[this.ontologyObj, this.annotationObj], [this.importedOntObj]])).toEqual([this.annotationId]);
+            expect(service.getAnnotationIRIs([[this.ontologyObj, this.annotationObj], [this.importedOntObj]])).toEqual([annotationId]);
         });
         it('annotationId if there are annotations in only the imported ontology', function() {
-            expect(service.getAnnotationIRIs([[this.ontologyObj], [this.importedAnnotationObj, this.importedOntObj]])).toEqual([this.importedAnnotationId]);
+            expect(service.getAnnotationIRIs([[this.ontologyObj], [this.importedAnnotationObj, this.importedOntObj]])).toEqual([importedAnnotationId]);
         });
         it('annotationId if there are duplicates', function() {
-            expect(service.getAnnotationIRIs([[this.ontologyObj, this.annotationObj], [this.annotationObj, this.importedOntObj]])).toEqual([this.annotationId]);
+            expect(service.getAnnotationIRIs([[this.ontologyObj, this.annotationObj], [this.annotationObj, this.importedOntObj]])).toEqual([annotationId]);
         });
         it('[] if there are no annotations in the ontology', function() {
             expect(service.getAnnotationIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1723,8 +1801,8 @@ describe('Ontology Manager service', function() {
     });
     describe('hasNoTypeIndividuals should return', function() {
         it('true if there are any in the ontology with no other @type', function() {
-            var diffIndividualObj = {
-                '@id': this.individualId,
+            const diffIndividualObj = {
+                '@id': individualId,
                 '@type': [OWL + 'NamedIndividual']
             };
             expect(service.hasNoTypeIndividuals([[diffIndividualObj, this.ontologyObj]])).toBe(true);
@@ -1738,15 +1816,15 @@ describe('Ontology Manager service', function() {
     });
     describe('getNoTypeIndividuals should return', function() {
         it('correct individual objects if there are any in the ontology with no other @type', function() {
-            var diffIndividualObj = {
-                '@id': this.individualId,
+            const diffIndividualObj = {
+                '@id': individualId,
                 '@type': [OWL + 'NamedIndividual']
             };
             expect(service.getNoTypeIndividuals([[diffIndividualObj, this.ontologyObj]])).toEqual([diffIndividualObj]);
         });
         it('correct individual objects if there are duplicates', function() {
-            var diffIndividualObj = {
-                '@id': this.individualId,
+            const diffIndividualObj = {
+                '@id': individualId,
                 '@type': [OWL + 'NamedIndividual']
             };
             expect(service.getNoTypeIndividuals([[diffIndividualObj, this.ontologyObj], [diffIndividualObj, this.importedOntObj]])).toEqual([diffIndividualObj]);
@@ -1760,24 +1838,24 @@ describe('Ontology Manager service', function() {
     });
     describe('hasClassIndividuals should return', function() {
         it('true if there are any entities with a type of the provided class in the ontology', function() {
-            expect(service.hasClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], this.classId)).toBe(true);
+            expect(service.hasClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], classId)).toBe(true);
         });
         it('true if there are any entities with a type of the provided class in the imported ontology', function() {
-            expect(service.hasClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], this.importedClassId)).toBe(true);
+            expect(service.hasClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], importedClassId)).toBe(true);
         });
         it('false if there are no entities with a type of the provided class in the ontology', function() {
-            expect(service.hasClassIndividuals([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], this.classId)).toBe(false);
+            expect(service.hasClassIndividuals([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], classId)).toBe(false);
         });
     });
     describe('getClassIndividuals should return', function() {
         it('correct object if there are any entities with a type of the provided class in the ontology', function() {
-            expect(service.getClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], this.classId)).toEqual([this.individualObj]);
+            expect(service.getClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], classId)).toEqual([this.individualObj]);
         });
         it('correct object if there are any entities with a type of the provided class in the imported ontology', function() {
-            expect(service.getClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], this.importedClassId)).toEqual([this.importedIndividualObj]);
+            expect(service.getClassIndividuals([[this.individualObj, this.ontologyObj, this.objectPropertyObj], [this.importedIndividualObj, this.importedOntObj, this.importedObjectPropertyObj]], importedClassId)).toEqual([this.importedIndividualObj]);
         });
         it('[] if there are no entities with a type of the provided class in the ontology', function() {
-            expect(service.getClassIndividuals([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], this.classId)).toEqual([]);
+            expect(service.getClassIndividuals([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], classId)).toEqual([]);
         });
     });
     describe('isRestriction should return', function() {
@@ -1807,7 +1885,7 @@ describe('Ontology Manager service', function() {
     });
     describe('isBlankNode should return', function() {
         it('true if the entity contains a blank node id', function() {
-            expect(service.isBlankNode(this.blankNodeObj)).toBe(true);
+            expect(service.isBlankNode(blankNodeObj)).toBe(true);
         });
         it('false if the entity does not contain a blank node id', function() {
             expect(service.isBlankNode(emptyObj)).toBe(false);
@@ -1827,10 +1905,10 @@ describe('Ontology Manager service', function() {
     });
     describe('getBlankNodes should return', function() {
         it('correct blank node objects if there are any in the ontology', function() {
-            expect(service.getBlankNodes([[this.blankNodeObj, this.ontologyObj]])).toEqual([this.blankNodeObj]);
+            expect(service.getBlankNodes([[blankNodeObj, this.ontologyObj]])).toEqual([blankNodeObj]);
         });
         it('correct blank node objects if there are duplicates', function() {
-            expect(service.getBlankNodes([[this.blankNodeObj, this.ontologyObj], [this.blankNodeObj, this.importedOntObj]])).toEqual([this.blankNodeObj]);
+            expect(service.getBlankNodes([[blankNodeObj, this.ontologyObj], [blankNodeObj, this.importedOntObj]])).toEqual([blankNodeObj]);
         });
         it('undefined if there are no blank nodes in the ontology', function() {
             expect(service.getBlankNodes([[this.ontologyObj]])).toEqual([]);
@@ -1838,17 +1916,17 @@ describe('Ontology Manager service', function() {
     });
     describe('getEntity returns', function() {
         it('object when present', function() {
-            expect(service.getEntity([[this.classObj, this.ontologyObj]], this.classId)).toEqual(this.classObj);
+            expect(service.getEntity([[this.classObj, this.ontologyObj]], classId)).toEqual(this.classObj);
         });
         it('undefined when not present', function() {
-            expect(service.getEntity([], this.classId)).toBe(undefined);
+            expect(service.getEntity([], classId)).toBe(undefined);
         });
     });
     describe('getEntityName should return', function() {
         beforeEach(function () {
             this.entity = {};
             this.presentProp = '';
-            utilStub.getPropertyValue.and.callFake((entity, property) => (property === this.presentProp) ? this.title : '');
+            utilStub.getPropertyValue.and.callFake((entity, property) => (property === this.presentProp) ? title : '');
         });
         describe('returns the rdfs:label if present', function() {
             it('and in english', function() {
@@ -1863,7 +1941,7 @@ describe('Ontology Manager service', function() {
             });
             it('and there is no english version', function() {
                 this.presentProp = RDFS + 'label';
-                expect(service.getEntityName(this.entity)).toEqual(this.title);
+                expect(service.getEntityName(this.entity)).toEqual(title);
                 expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, RDFS + 'label');
                 expect(utilStub.getPropertyValue).not.toHaveBeenCalledWith(this.entity, DCTERMS + 'title');
                 expect(utilStub.getPropertyValue).not.toHaveBeenCalledWith(this.entity, DC + 'title');
@@ -1885,7 +1963,7 @@ describe('Ontology Manager service', function() {
             });
             it('and there is no english version', function() {
                 this.presentProp = DCTERMS + 'title';
-                expect(service.getEntityName(this.entity)).toEqual(this.title);
+                expect(service.getEntityName(this.entity)).toEqual(title);
                 expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, RDFS + 'label');
                 expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, DCTERMS + 'title');
                 expect(utilStub.getPropertyValue).not.toHaveBeenCalledWith(this.entity, DC + 'title');
@@ -1907,7 +1985,7 @@ describe('Ontology Manager service', function() {
             });
             it('and there is no english version', function() {
                 this.presentProp = DC + 'title';
-                expect(service.getEntityName(this.entity)).toEqual(this.title);
+                expect(service.getEntityName(this.entity)).toEqual(title);
                 expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, RDFS + 'label');
                 expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, DCTERMS +'title');
                 expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, DC + 'title');
@@ -1985,34 +2063,34 @@ describe('Ontology Manager service', function() {
             });
         });
         it('returns the @id if present and nothing else', function() {
-            utilStub.getBeautifulIRI.and.returnValue(this.ontologyId);
-            this.entity['@id'] = this.ontologyId;
-            expect(service.getEntityName(this.entity)).toEqual(this.ontologyId);
+            utilStub.getBeautifulIRI.and.returnValue(ontologyId);
+            this.entity['@id'] = ontologyId;
+            expect(service.getEntityName(this.entity)).toEqual(ontologyId);
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, RDFS + 'label');
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, DCTERMS + 'title');
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, DC + 'title');
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, SKOS + 'prefLabel');
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(this.entity, SKOS + 'altLabel');
-            expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith(this.ontologyId);
+            expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith(ontologyId);
         });
     });
     describe('getEntityDescription should return', function() {
         it('rdfs:comment if present', function() {
-            utilStub.getPropertyValue.and.returnValue(this.description);
-            expect(service.getEntityDescription(emptyObj)).toEqual(this.description);
+            utilStub.getPropertyValue.and.returnValue(description);
+            expect(service.getEntityDescription(emptyObj)).toEqual(description);
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(emptyObj, RDFS + 'comment');
         });
         it('dcterms:description if present and no rdfs:comment', function() {
             utilStub.getPropertyValue.and.returnValue('');
-            utilStub.getDctermsValue.and.returnValue(this.description);
-            expect(service.getEntityDescription(emptyObj)).toEqual(this.description);
+            utilStub.getDctermsValue.and.returnValue(description);
+            expect(service.getEntityDescription(emptyObj)).toEqual(description);
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(emptyObj, RDFS + 'comment');
             expect(utilStub.getDctermsValue).toHaveBeenCalledWith(emptyObj, 'description');
         });
         it('dc:description if present and no rdfs:comment or dcterms:description', function() {
-            utilStub.getPropertyValue.and.callFake((entity, property) => (property === DC + 'description') ? this.description : '');
+            utilStub.getPropertyValue.and.callFake((entity, property) => (property === DC + 'description') ? description : '');
             utilStub.getDctermsValue.and.returnValue('');
-            expect(service.getEntityDescription(emptyObj)).toEqual(this.description);
+            expect(service.getEntityDescription(emptyObj)).toEqual(description);
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(emptyObj, RDFS + 'comment');
             expect(utilStub.getDctermsValue).toHaveBeenCalledWith(emptyObj, 'description');
             expect(utilStub.getPropertyValue).toHaveBeenCalledWith(emptyObj, DC + 'description');
@@ -2031,7 +2109,7 @@ describe('Ontology Manager service', function() {
             expect(service.isConcept(this.conceptObj)).toEqual(true);
         });
         it('true if the entity contains a derived concept type', function() {
-            expect(service.isConcept(this.derivedConceptObj, [this.derivedConceptType])).toEqual(true);
+            expect(service.isConcept(this.derivedConceptObj, [derivedConceptType])).toEqual(true);
         });
         it('false if the entity does not contain the concept type', function() {
             expect(service.isConcept(emptyObj)).toEqual(false);
@@ -2048,7 +2126,7 @@ describe('Ontology Manager service', function() {
             expect(service.hasConcepts([[this.ontologyObj], [this.importedConceptObj, this.importedOntObj]], [])).toBe(true);
         });
         it('true if there are any derived concept entities in the ontology', function() {
-            expect(service.hasConcepts([[this.derivedConceptObj]], [this.derivedConceptType])).toEqual(true);
+            expect(service.hasConcepts([[this.derivedConceptObj]], [derivedConceptType])).toEqual(true);
         });
         it('false if there are not any concept entities in the ontology', function() {
             expect(service.hasConcepts([[this.ontologyObj], [this.importedOntObj]], [])).toBe(false);
@@ -2065,7 +2143,7 @@ describe('Ontology Manager service', function() {
             expect(service.getConcepts([[this.ontologyObj], [this.importedConceptObj, this.importedOntObj]], [])).toEqual([this.importedConceptObj]);
         });
         it('correct concept objects if there are any derived concepts', function() {
-            expect(service.getConcepts([[this.derivedConceptObj]], [this.derivedConceptType])).toEqual([this.derivedConceptObj]);
+            expect(service.getConcepts([[this.derivedConceptObj]], [derivedConceptType])).toEqual([this.derivedConceptObj]);
         });
         it('correct concept objects if there are duplicates', function() {
             expect(service.getConcepts([[this.conceptObj, this.ontologyObj], [this.conceptObj, this.importedOntObj]], [])).toEqual([this.conceptObj]);
@@ -2076,16 +2154,16 @@ describe('Ontology Manager service', function() {
     });
     describe('getConceptIRIs should return', function() {
         it('conceptId if there are concepts in the ontology', function() {
-            expect(service.getConceptIRIs([[this.ontologyObj, this.conceptObj], [this.importedOntObj, this.importedConceptObj]], [])).toEqual([this.conceptId, this.importedConceptId]);
+            expect(service.getConceptIRIs([[this.ontologyObj, this.conceptObj], [this.importedOntObj, this.importedConceptObj]], [])).toEqual([conceptId, importedConceptId]);
         });
         it('conceptId if there are concepts in only the ontology', function() {
-            expect(service.getConceptIRIs([[this.ontologyObj, this.conceptObj], [this.importedOntObj]], [])).toEqual([this.conceptId]);
+            expect(service.getConceptIRIs([[this.ontologyObj, this.conceptObj], [this.importedOntObj]], [])).toEqual([conceptId]);
         });
         it('conceptId if there are concepts in only the imported ontology', function() {
-            expect(service.getConceptIRIs([[this.ontologyObj], [this.importedOntObj, this.importedConceptObj]], [])).toEqual([this.importedConceptId]);
+            expect(service.getConceptIRIs([[this.ontologyObj], [this.importedOntObj, this.importedConceptObj]], [])).toEqual([importedConceptId]);
         });
         it('conceptId if there are derived concepts', function() {
-            expect(service.getConceptIRIs([[this.derivedConceptObj]], [this.derivedConceptType])).toEqual([this.conceptId]);
+            expect(service.getConceptIRIs([[this.derivedConceptObj]], [derivedConceptType])).toEqual([conceptId]);
         });
         it('[] if there are no concepts in the ontology', function() {
             expect(service.getConceptIRIs([[this.ontologyObj], [this.importedOntObj]], [])).toEqual([]);
@@ -2096,7 +2174,7 @@ describe('Ontology Manager service', function() {
             expect(service.isConceptScheme(this.schemeObj)).toBe(true);
         });
         it('true if the entity contains a derived concept scheme type', function() {
-            expect(service.isConceptScheme(this.derivedConceptSchemeObj, [this.derivedConceptSchemeType])).toEqual(true);
+            expect(service.isConceptScheme(this.derivedConceptSchemeObj, [derivedConceptSchemeType])).toEqual(true);
         });
         it('false if the entity does not contain the concept scheme type', function() {
             expect(service.isConceptScheme(emptyObj)).toBe(false);
@@ -2113,7 +2191,7 @@ describe('Ontology Manager service', function() {
             expect(service.hasConceptSchemes([[this.ontologyObj], [this.importedSchemeObj, this.importedOntObj]], [])).toBe(true);
         });
         it('true if there are any derived concept scheme entities in the ontology', function() {
-            expect(service.hasConceptSchemes([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual(true);
+            expect(service.hasConceptSchemes([[this.derivedConceptSchemeObj]], [derivedConceptSchemeType])).toEqual(true);
         });
         it('false if there are not any concept scheme entities in the ontology', function() {
             expect(service.hasConceptSchemes([[this.ontologyObj], [this.importedOntObj]], [])).toBe(false);
@@ -2130,7 +2208,7 @@ describe('Ontology Manager service', function() {
             expect(service.getConceptSchemes([[this.ontologyObj], [this.importedSchemeObj, this.importedOntObj]], [])).toEqual([this.importedSchemeObj]);
         });
         it('correct concept scheme objects if there are any derived concept schemes', function() {
-            expect(service.getConceptSchemes([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual([this.derivedConceptSchemeObj]);
+            expect(service.getConceptSchemes([[this.derivedConceptSchemeObj]], [derivedConceptSchemeType])).toEqual([this.derivedConceptSchemeObj]);
         });
         it('correct concept schemes if there are duplicates', function() {
             expect(service.getConceptSchemes([[this.schemeObj, this.ontologyObj], [this.schemeObj, this.importedOntObj]], [])).toEqual([this.schemeObj]);
@@ -2141,19 +2219,19 @@ describe('Ontology Manager service', function() {
     });
     describe('getConceptSchemeIRIs should return', function() {
         it('schemeId if there are concept schemes in the ontology', function() {
-            expect(service.getConceptSchemeIRIs([[this.ontologyObj, this.schemeObj], [this.importedOntObj, this.importedSchemeObj]], [])).toEqual([this.schemeId, this.importedSchemeId]);
+            expect(service.getConceptSchemeIRIs([[this.ontologyObj, this.schemeObj], [this.importedOntObj, this.importedSchemeObj]], [])).toEqual([schemeId, importedSchemeId]);
         });
         it('schemeId if there are concept schemes in only the ontology', function() {
-            expect(service.getConceptSchemeIRIs([[this.ontologyObj, this.schemeObj], [this.importedOntObj]], [])).toEqual([this.schemeId]);
+            expect(service.getConceptSchemeIRIs([[this.ontologyObj, this.schemeObj], [this.importedOntObj]], [])).toEqual([schemeId]);
         });
         it('schemeId if there are concept schemes in only the imported ontology', function() {
-            expect(service.getConceptSchemeIRIs([[this.ontologyObj], [this.importedOntObj, this.importedSchemeObj]], [])).toEqual([this.importedSchemeId]);
+            expect(service.getConceptSchemeIRIs([[this.ontologyObj], [this.importedOntObj, this.importedSchemeObj]], [])).toEqual([importedSchemeId]);
         });
         it('schemeId if there are derived concepts', function() {
-            expect(service.getConceptSchemeIRIs([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual([this.schemeId]);
+            expect(service.getConceptSchemeIRIs([[this.derivedConceptSchemeObj]], [derivedConceptSchemeType])).toEqual([schemeId]);
         });
         it('schemeId if there are duplicates', function() {
-            expect(service.getConceptSchemeIRIs([[this.ontologyObj, this.schemeObj], [this.importedOntObj, this.schemeObj]], [])).toEqual([this.schemeId]);
+            expect(service.getConceptSchemeIRIs([[this.ontologyObj, this.schemeObj], [this.importedOntObj, this.schemeObj]], [])).toEqual([schemeId]);
         });
         it('[] if there are no concept schemes in the ontology', function() {
             expect(service.getConceptSchemeIRIs([[this.ontologyObj], [this.importedOntObj]], [])).toEqual([]);
@@ -2161,50 +2239,50 @@ describe('Ontology Manager service', function() {
     });
     describe('uploadChangesFile hits the proper endpoint', function() {
         it('with recordId, branchId and commitId', function() {
-            service.uploadChangesFile(this.file, this.recordId, this.branchId, this.commitId)
+            service.uploadChangesFile(file, recordId, branchId, commitId)
                 .subscribe(noop, () => {
                     fail('Observable should have succeeded');
                 });
             
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId) && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId) && req.method === 'PUT');
             expect(request.request.body instanceof FormData).toBeTrue();
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect(request.request.headers.get('Content-Type')).toEqual(null);
             expect(request.request.headers.get('Accept')).toEqual('application/json');
     
             request.flush({ additions: [], deletions: [] });
         });
         it('with no branchId', function() {
-            service.uploadChangesFile(this.file, this.recordId, undefined, this.commitId)
+            service.uploadChangesFile(file, recordId, undefined, commitId)
                 .subscribe(noop, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId) && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId) && req.method === 'PUT');
             expect(request.request.body instanceof FormData).toBeTrue();
-            expect((request.request.params).get('branchId')).toEqual(null);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            expect(request.request.params.get('branchId')).toEqual(null);
+            expect((request.request.params).get('commitId')).toEqual(commitId);
             expect(request.request.headers.get('Content-Type')).toEqual(null);
             expect(request.request.headers.get('Accept')).toEqual('application/json');
     
             request.flush({ additions: [], deletions: [] });
         });
         it('unless an error occurs', function() {
-            service.uploadChangesFile(this.file, this.recordId, this.branchId, this.commitId)
+            service.uploadChangesFile(file, recordId, branchId, commitId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(this.errorObject);
+                    expect(response).toEqual(errorObject);
                 });
 
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + this.recordId) && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId) && req.method === 'PUT');
             expect(request.request.body instanceof FormData).toBeTrue();
-            expect((request.request.params).get('branchId')).toEqual(this.branchId);
-            expect((request.request.params).get('commitId')).toEqual(this.commitId);
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect(request.request.params.get('commitId')).toEqual(commitId);
             expect(request.request.headers.get('Content-Type')).toEqual(null);
             expect(request.request.headers.get('Accept')).toEqual('application/json');
 
-            request.flush('flush', { status: 400, statusText: this.error });
+            request.flush('flush', { status: 400, statusText: errorObject });
         });
     });
 });

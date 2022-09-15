@@ -28,29 +28,26 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of, throwError, noop } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
-import {
-    cleanStylesFromDOM,
-    mockOntologyManager,
-    mockUtil
-} from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { CopyClipboardDirective } from '../../directives/copyClipboard/copyClipboard.directive';
 import { CommitDifference } from '../../models/commitDifference.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { CommitChangesDisplayComponent } from '../commitChangesDisplay/commitChangesDisplay.component';
-import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { UtilService } from '../../services/util.service';
+import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
 
 describe('Commit Info Overlay component', function() {
     let component: CommitInfoOverlayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommitInfoOverlayComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let ontologyManagerStub;
-    let utilStub;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let difference: CommitDifference;
     let headers;
     
@@ -76,8 +73,9 @@ describe('Commit Info Overlay component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyManagerService),
+                // { provide: OntologyManagerService, useClass: mockOntologyManager },
+                MockProvider(UtilService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 MockProvider(UserManagerService)
@@ -93,7 +91,7 @@ describe('Commit Info Overlay component', function() {
         headers = {'has-more-results': 'false'};
         catalogManagerStub = TestBed.get(CatalogManagerService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
     });
@@ -104,6 +102,8 @@ describe('Commit Info Overlay component', function() {
         element = null;
         fixture = null;
         catalogManagerStub = null;
+        ontologyManagerStub = null;
+        utilStub = null;
     });
 
     describe('should initialize with the correct value for', function() {
@@ -160,7 +160,7 @@ describe('Commit Info Overlay component', function() {
             describe('if getDifference resolves', function() {
                 beforeEach(function() {
                     headers = {'has-more-results': 'true'};
-                    let data = new CommitDifference();
+                    const data = new CommitDifference();
                     data.additions = [{'@id': 'iri1', '@type': []}];
                     data.commit = {'@id': commitId, '@type': []};
                     catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: data, headers: new HttpHeaders(headers)})));
@@ -177,7 +177,7 @@ describe('Commit Info Overlay component', function() {
                     });
                     describe('and getOntologyEntityNames', function() {
                         it('resolves', async function() {
-                            ontologyManagerStub.getOntologyEntityNames.and.returnValue(of({'iri1': {label: 'label'}}));
+                            ontologyManagerStub.getOntologyEntityNames.and.returnValue(of({'iri1': {label: 'label', names: []}}));
                             await component.retrieveMoreResults(100, 0);
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
@@ -185,7 +185,7 @@ describe('Commit Info Overlay component', function() {
                             expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}]);
                             expect(component.deletions).toEqual([]);
                             expect(component.hasMoreResults).toEqual(true);
-                            expect(component.entityNames).toEqual({'iri1': {label: 'label'}});
+                            expect(component.entityNames).toEqual({'iri1': {label: 'label', names: []}});
                         });
                         it('rejects', async function() {
                             ontologyManagerStub.getOntologyEntityNames.and.returnValue(throwError('Error Message'));

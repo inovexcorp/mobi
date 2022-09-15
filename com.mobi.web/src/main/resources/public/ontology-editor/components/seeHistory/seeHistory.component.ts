@@ -21,24 +21,19 @@
  * #L%
  */
 import { findIndex } from 'lodash';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
+import { UtilService } from '../../../shared/services/util.service';
+import { Commit } from '../../../shared/models/commit.interface';
 
 /**
- * @ngdoc component
  * @class ontology-editor.SeeHistoryComponent
- * @requires shared.service:catalogManagerService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
  *
- * @description
- * The `seeHistory` component creates a page for viewing the addition and deletion history of commits on a
- * particular entity in an ontology. If no commitId is selected, no compiled resource will be shown.
+ * A component that creates a page for viewing the addition and deletion history of commits on a particular entity in an
+ * ontology. If no commitId is selected, no compiled resource will be shown.
  */
 @Component({
     selector: 'see-history',
@@ -46,31 +41,31 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 })
 
 export class SeeHistoryComponent{
-    commits = [];
+    commits: Commit[] = [];
     selectedCommit;
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService, public cm: CatalogManagerService,
-                @Inject('utilService') private util) {}
+                private util: UtilService) {}
 
-    goBack() {
+    goBack(): void {
         this.os.listItem.seeHistory = undefined;
         this.os.listItem['selectedCommit'] = undefined;
         this.selectedCommit = undefined;
     }
-    prev() {
+    prev(): void {
         const index = findIndex(this.commits, this.os.listItem.selectedCommit);
         this.os.listItem['selectedCommit'] = this.commits[index + 1];
         this.selectedCommit = this.commits[index + 1];
     }
-    next() {
+    next(): void {
         const index = this.commits.indexOf(this.os.listItem.selectedCommit);
         this.os.listItem['selectedCommit'] = this.commits[index - 1];
         this.selectedCommit = this.commits[index - 1];
     }
-    getEntityNameDisplay(iri) {
+    getEntityNameDisplay(iri: string): string {
         return this.om.isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityNameByListItem(iri);
     }
-    receiveCommits(commits) {
+    receiveCommits(commits: Commit[]): void {
         this.commits = commits;
         if (this.commits[0]) {
             this.os.listItem.selectedCommit = this.commits[0];
@@ -78,14 +73,14 @@ export class SeeHistoryComponent{
             this.selectCommit();
         }
     }
-    createLabel(commitId) {
+    createLabel(commitId: string): string {
         let label = this.util.condenseCommitId(commitId);
-        if (commitId == this.commits[0].id) {
+        if (commitId === this.commits[0].id) {
             label = label + ' (latest)';
         }
         return label;
     }
-    selectCommit() {
+    selectCommit(): void {
         this.os.listItem.selectedCommit = this.selectedCommit;
     }
 }

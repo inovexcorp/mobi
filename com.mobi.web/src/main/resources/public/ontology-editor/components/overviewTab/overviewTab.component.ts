@@ -20,7 +20,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * #L%
 */
-import { Component } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -43,9 +43,21 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
     selector: 'overview-tab',
     templateUrl: './overviewTab.component.html'
 })
-export class OverviewTabComponent {
+export class OverviewTabComponent implements OnInit, OnDestroy {
+    highlightText = '';
+    @ViewChild('overviewTab') overviewTab: ElementRef;
+    
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
-
+    
+    ngOnInit(): void {
+        this.os.listItem.editorTabStates.overview.element = this.overviewTab;
+        this.highlightText = this.os.listItem.editorTabStates.overview.searchText;
+    }
+    ngOnDestroy(): void {
+        if (this.os.listItem) {
+            this.os.listItem.editorTabStates.overview.element = undefined;
+        }
+    }
     showDeleteConfirmation(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {

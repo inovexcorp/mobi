@@ -25,7 +25,14 @@
         <merge-request-discussion [(request)]="request"></merge-request-discussion>
     </mat-tab>
     <mat-tab label="Changes">
-        <commit-changes-display *ngIf="state.difference?.additions.length || state.difference?.deletions.length; else noChangesBlock" [additions]="state.difference?.additions" [deletions]="state.difference?.deletions" [entityNameFunc]="getEntityName.bind(this)" (showMoreResultsFunc)="state.retrieveMoreResults($event)" [hasMoreResults]="state.difference?.hasMoreResults" [startIndex]="state.startIndex"></commit-changes-display>
+        <commit-changes-display
+                *ngIf="state.difference?.additions.length || state.difference?.deletions.length; else noChangesBlock"
+                [additions]="state.difference?.additions"
+                [deletions]="state.difference?.deletions"
+                [entityNameFunc]="getEntityName.bind(this)"
+                (showMoreResultsFunc)="state.retrieveMoreResults($event)"
+                [hasMoreResults]="state.difference?.hasMoreResults"
+                [startIndex]="state.startIndex"></commit-changes-display>
         <ng-template #noChangesBlock><info-message>No changes to display</info-message></ng-template>
     </mat-tab>
     <mat-tab label="Commits">

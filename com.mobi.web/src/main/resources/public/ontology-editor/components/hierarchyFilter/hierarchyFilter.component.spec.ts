@@ -68,26 +68,6 @@ describe('Hierarchy Filter component', function() {
         fixture = null;
     });
 
-    describe('controller bound variable', function() {
-        // TODO: Having a weird interaction with upgraded checkbox component. Uncomment out when hierarchyFilter is
-        // upgraded to Angular.
-        // it('filters should be one way bound', function() {
-        //     this.controller.filters = ['test'];
-        //     scope.$digest();
-        //     expect(scope.filters).toEqual([]);
-        // });
-        it('should handle an update to the filters', function() {
-            component.filters = [{checked: true, flag: false}];
-            spyOn(component.updateFilters, 'emit');
-            component.apply();
-            expect(component.updateFilters.emit).toHaveBeenCalledWith([{checked: true, flag: true}]);
-        });
-        it('should perform a filter', function() {
-            spyOn(component.submitEvent, 'emit');
-            component.apply();
-            expect(component.submitEvent.emit).toHaveBeenCalledWith();
-        });
-    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.hierarchy-filter')).length).toEqual(1);
@@ -144,11 +124,5 @@ describe('Hierarchy Filter component', function() {
             component.dropdownClosed();
             expect(component.filters).toEqual([{checked: false, flag: false}]);
         });
-        // TODO: I don't think we need to test this anymore
-        // it('should not change checked values when dropdown is opened', function() {
-        //     component.filters = [{checked: true, flag: false}];
-        //     component.dropdownToggled(true);
-        //     expect(component.filters).toEqual([{checked: true, flag: false}]);
-        // });
     });
 });

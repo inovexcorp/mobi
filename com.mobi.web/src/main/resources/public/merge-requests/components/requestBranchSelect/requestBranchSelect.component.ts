@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { get } from 'lodash';
 
 import { CATALOG } from '../../../prefixes';
@@ -30,6 +30,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { Commit } from '../../../shared/models/commit.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './requestBranchSelect.component.scss';
 
@@ -39,7 +40,7 @@ import './requestBranchSelect.component.scss';
  *
  * A component which creates a div containing a form with selects to choose the source and target Branch for a new
  * MergeRequest. The Branch list is derived from the previously selected VersionedRDFRecord for the MergeRequest. The
- * div also contains a {@link shared.component:commitDifferenceTabset} to display the changes and commits between the
+ * div also contains a {@link shared.CommitDifferenceTabsetComponent} to display the changes and commits between the
  * selected branches.
  */
 @Component({
@@ -59,7 +60,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
     @ViewChild('commitDifferenceTabset') commitDifferenceTabset: ElementRef;
 
     constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService,
-        private spinnerSvc: ProgressSpinnerService, @Inject('utilService') public util) {}
+        private spinnerSvc: ProgressSpinnerService, public util: UtilService) {}
 
     ngOnInit(): void {
         this.recordTitle = this.util.getDctermsValue(this.state.selectedRecord, 'title');

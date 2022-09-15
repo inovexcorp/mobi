@@ -35,12 +35,13 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from './createBranchModal.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Create branch component', function() {
     let component: CreateBranchModal;
@@ -49,7 +50,7 @@ describe('Create branch component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateBranchModal>>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -72,7 +73,7 @@ describe('Create branch component', function() {
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 MockProvider(ShapesGraphStateService)
             ]
         });
@@ -89,11 +90,11 @@ describe('Create branch component', function() {
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
         shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'commitId';
-        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
+        shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
 
         catalogManagerStub.createRecordBranch.and.returnValue(of('newBranchId'));
 
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {

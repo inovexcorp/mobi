@@ -29,6 +29,7 @@ import { DCTERMS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class ontology-editor.EditBranchOverlayComponent
@@ -53,7 +54,7 @@ export class EditBranchOverlayComponent implements OnInit {
 
     constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<EditBranchOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: {branch: JSONLDObject},
-        private cm: CatalogManagerService, private os: OntologyStateService, @Inject('utilService') public util) {}
+        private cm: CatalogManagerService, private os: OntologyStateService, public util: UtilService) {}
         
     ngOnInit(): void {
         this.editBranchForm.controls.title.setValue(this.util.getDctermsValue(this.data.branch, 'title'));

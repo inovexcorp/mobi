@@ -21,11 +21,14 @@
  * #L%
  */
 import { get } from 'lodash';
-import { Component, Inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.interface';
 import { PROV } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
+import { ProvManagerService } from '../../../shared/services/provManager.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 import './activityTitle.component.scss';
 
@@ -52,8 +55,7 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
     public word = 'affected';
     public entitiesStr = '(None)';
 
-    constructor(@Inject('provManagerService') private pm, @Inject('utilService') private util,
-                private um: UserManagerService) {}
+    constructor(private pm: ProvManagerService, private util: UtilService, private um: UserManagerService) {}
     
     ngOnInit(): void {
         this.setUsername(this.util.getPropertyId(this.activity, PROV + 'wasAssociatedWith'));
@@ -67,7 +69,7 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
             this.setEntities(changes.activity.currentValue);
         }
     }
-    setEntities(activity): void {
+    setEntities(activity: JSONLDObject): void {
         const types = get(activity, '@type', []);
         let pred = '';
         this.pm.activityTypes.forEach(obj => {
@@ -82,14 +84,14 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
         });
         this.entitiesStr = entityTitles.join(', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }
-    setUsername(iri): void {
+    setUsername(iri: string): void {
         if (iri) {
             this.username = get(this.um.users.find((user: User) => user.iri === iri), 'username', '(None)');
         } else {
             this.username = '(None)';
         }
     }
-    setWord(activity): void {
+    setWord(activity: JSONLDObject): void {
         const types = get(activity, '@type', []);
         this.pm.activityTypes.forEach(obj => {
             if (types.includes(obj.type)) {

@@ -249,13 +249,13 @@ module.exports = {
     },
 
     'Step 3: Switch to catalog page' : function(browser) {
-        browser.globals.switchToPage(browser, 'catalog', this.recordsViewCssSelector);
-        catalogPage.verifyRecordFilters(browser, true);
+        browser.globals.switchToPage(browser, 'catalog', this.recordsViewCssSelector)
+        catalogPage.verifyRecordFilters(browser, true)
         catalogPage.verifyRecordList(browser);
     },
 
     'Step 4: Search catalog page Empty' : function(browser) {
-        catalogPage.searchRecords(browser, { searchText : 'does-not-exist-record', order: 'Title (asc)'});
+        catalogPage.searchRecords(browser, { searchText : 'does-not-exist-record', order: 'Title (asc)'})
         catalogPage.assertRecordList(browser, null);
     },
 
@@ -289,15 +289,13 @@ module.exports = {
     },
 
     'Step 9: Check metadata of z-catalog-ontology-1' : function(browser) {
-        browser.waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+        // browser.waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
-        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4,z-catalog-ontology-3,z-catalog-ontology-2,z-catalog-ontology-1');
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4,z-catalog-ontology-3,z-catalog-ontology-2,z-catalog-ontology-1')
         catalogPage.openRecordItem(browser, 'z-catalog-ontology-1');
 
-        browser
-            .useCss()
-            .expect.element('catalog-page record-view div.record-sidebar manage-record-button button').to.be.present;
-
+        browser.useCss()
+        browser.expect.element('catalog-page record-view div.record-sidebar manage-record-button button').to.be.present;
         browser
             .useXpath()
             .click('//record-view-tabset//mat-tab-header//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Branches")]]')
@@ -318,8 +316,8 @@ module.exports = {
     'Step 11: The user clicks on the Administration sidebar link' : function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
-            .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
+            .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
     },
 
     'Step 12: A new user is created' : function(browser) {
@@ -342,7 +340,7 @@ module.exports = {
     'Step 13: The user successfully logs out' : function(browser) {
         browser
             .useXpath()
-            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
             .assert.visible('//div[@class="form-group"]//input[@id="username"]')
             .assert.visible('//div[@class="form-group"]//input[@id="password"]')
     },

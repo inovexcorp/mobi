@@ -92,12 +92,12 @@ describe('Assignee Input component', function() {
             expect(component.parentForm.controls.assignees.value).toEqual(null);
         });
         it('should handle removing a user', function() {
-            component.remove('user');
+            component.removeAssignee('user');
             expect(component.selected).toEqual([]);
             expect(component.selectedChange.emit).not.toHaveBeenCalled();
 
             component.selected = ['user'];
-            component.remove('user');
+            component.removeAssignee('user');
             expect(component.selected).toEqual([]);
             expect(component.selectedChange.emit).toHaveBeenCalledWith([]);
         });

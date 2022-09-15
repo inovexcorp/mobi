@@ -30,6 +30,8 @@ import { map, startWith } from 'rxjs/operators';
 import { REGEX } from '../../../constants';
 import { OWL, XSD } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface PropertyGroup {
     namespace: string,
@@ -81,7 +83,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
 
     constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<OntologyPropertyOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: { editing: boolean, property?: string, value?: string, type?: string, index?: number, language?: string},
-        public os: OntologyStateService, @Inject('propertyManagerService') public pm, @Inject('utilService') public util) {}
+        public os: OntologyStateService, public pm: PropertyManagerService, public util: UtilService) {}
     
     ngOnInit(): void {
         this.annotations = union(this.pm.defaultAnnotations, this.pm.owlAnnotations, Object.keys(this.os.listItem.annotations.iris));

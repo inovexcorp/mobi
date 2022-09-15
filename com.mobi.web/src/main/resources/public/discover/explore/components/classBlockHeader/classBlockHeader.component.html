@@ -21,12 +21,11 @@
   #L%
   -->
 <form class="class-block-header">
-    <div class="form-group float-left d-flex">
-        <custom-label>Dataset</custom-label>
+    <div class="float-left d-flex">
         <dataset-select [recordId]="ds.explore.recordId" change-event="onSelect(value)"></dataset-select>
     </div>
-    <button [disabled]="!ds.explore.recordId" class="btn btn-primary remove-min-width"
+    <button mat-raised-button color="primary" [disabled]="!ds.explore.recordId" class="refresh-button remove-min-width"
             (click)="refresh()"><i class="fa fa-refresh"></i></button>
-    <button [disabled]="!ds.explore.recordId" class="btn btn-link float-right create-button"
+    <button mat-button color="primary" [disabled]="!ds.explore.recordId" class="float-right create-button"
             (click)="showCreate()"><i class="fa fa-plus"></i>Create Instance</button>
 </form>

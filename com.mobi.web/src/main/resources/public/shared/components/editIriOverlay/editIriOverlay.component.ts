@@ -57,10 +57,6 @@ export class EditIriOverlayComponent implements OnInit {
                 @Inject(MAT_DIALOG_DATA) public data: { iriBegin: string, iriThen: string, iriEnd: string, validator?: ValidatorFn, validatorMsg?: string, validatorKey?: string},
                 private fb: FormBuilder) {}
 
-    iriBegin = '';
-    iriThen = '';
-    iriEnd = '';
-
     namespacePattern = REGEX.IRI;
     localNamePattern = REGEX.LOCALNAME;
     endsWithPattern = /^[\w\-\._~:/?[\]@!\$&'\(\)\*\+,;=.]+$/;
@@ -93,8 +89,5 @@ export class EditIriOverlayComponent implements OnInit {
         this.iriFormControl.controls.beginsWith.setValue(this.data.iriBegin);
         this.iriFormControl.controls.then.setValue(this.data.iriThen);
         this.iriFormControl.controls.endsWith.setValue(this.data.iriEnd);
-    }
-    cancel(): void {
-        this.dialogRef.close(false);
     }
 }

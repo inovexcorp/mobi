@@ -29,15 +29,17 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
-import { IndividualTreeComponent } from './individualTree.component';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { HierarchyFilterComponent } from '../hierarchyFilter/hierarchyFilter.component';
 import { TreeItemComponent } from '../treeItem/treeItem.component';
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 import { DCTERMS } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { IndividualTreeComponent } from './individualTree.component';
 
 describe('Individual Tree component', function() {
     let component: IndividualTreeComponent;
@@ -45,7 +47,7 @@ describe('Individual Tree component', function() {
     let fixture: ComponentFixture<IndividualTreeComponent>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -58,7 +60,7 @@ describe('Individual Tree component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
         });
     });
@@ -69,7 +71,7 @@ describe('Individual Tree component', function() {
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.get(OntologyStateService);
         ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
 
@@ -81,8 +83,10 @@ describe('Individual Tree component', function() {
             isClass: true,
             entityInfo: {
                 names: ['Title'],
-                imported: false
-            }
+                imported: false,
+                label: 'Title'
+            },
+            joinedPath: ''
         }, {
             entityIRI: 'Individual A1',
             hasChildren: false,
@@ -90,8 +94,10 @@ describe('Individual Tree component', function() {
             indent: 1,
             entityInfo: {
                 names: ['Title'],
-                imported: false
-            }
+                imported: false,
+                label: 'Title'
+            },
+            joinedPath: ''
         }, {
             entityIRI: 'Individual A2',
             hasChildren: false,
@@ -99,8 +105,10 @@ describe('Individual Tree component', function() {
             indent: 1,
             entityInfo: {
                 names: ['Title'],
-                imported: false
-            }
+                imported: false,
+                label: 'Title'
+            },
+            joinedPath: ''
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
@@ -109,8 +117,10 @@ describe('Individual Tree component', function() {
             isClass: true,
             entityInfo: {
                 names: ['Title'],
-                imported: false
-            }
+                imported: false,
+                label: 'Title'
+            },
+            joinedPath: ''
         }, {
             entityIRI: 'Class B1',
             hasChildren: false,
@@ -119,8 +129,10 @@ describe('Individual Tree component', function() {
             isClass: true,
             entityInfo: {
                 names: ['Title'],
-                imported: false
-            }
+                imported: false,
+                label: 'Title'
+            },
+            joinedPath: ''
         }, {
             entityIRI: 'Individual B1',
             hasChildren: false,
@@ -128,8 +140,10 @@ describe('Individual Tree component', function() {
             indent: 2,
             entityInfo: {
                 names: ['Title'],
-                imported: false
-            }
+                imported: false,
+                label: 'Title'
+            },
+            joinedPath: ''
         }];
         component.index = 4;
         ontologyStateServiceStub.getActiveKey.and.returnValue('individuals');
@@ -147,23 +161,6 @@ describe('Individual Tree component', function() {
         utilStub = null;
     });
 
-    describe('controller bound variable', function() {
-        it('hierarchy should be one way bound', function() {
-            component.hierarchy = [];
-            fixture.detectChanges();
-            expect(component.hierarchy).toEqual([]);
-        });
-        it('index should be one way bound', function() {
-            component.index = 0;
-            fixture.detectChanges();
-            expect(component.index).toEqual(0);
-        });
-        it('updateSearch is one way bound', function() {
-            component.filterText = 'value';
-            component.update();
-            expect(component.updateSearch.emit).toHaveBeenCalledWith({value: 'value'});
-        });
-    });
     describe('contains the correct html', function() {
         beforeEach(function() {
             spyOn(component, 'isShown').and.returnValue(true);
@@ -179,7 +176,7 @@ describe('Individual Tree component', function() {
         it('with tree-items', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(element.queryAll(By.css('.tree-item')).length).toEqual(2);
+            expect(element.queryAll(By.css('.tree-item')).length).toEqual(1);
         });
         it('with a .tree-item-wrapper', async function() {
             fixture.detectChanges();
@@ -195,7 +192,14 @@ describe('Individual Tree component', function() {
         });
         it('toggleOpen should set the correct values', function() {
             spyOn(component, 'isShown').and.returnValue(false);
-            var node = {isOpened: false, path: ['a', 'b'], joinedPath: 'a.b'};
+            component.preFilteredHierarchy = component.hierarchy;
+            const node: HierarchyNode = {
+                isOpened: false, path: ['a', 'b'], joinedPath: 'a.b',
+                entityIRI: '',
+                hasChildren: false,
+                indent: 0,
+                entityInfo: undefined
+            };
             component.toggleOpen(node);
             expect(node.isOpened).toEqual(true);
             expect(ontologyStateServiceStub.listItem.editorTabStates[component.activeTab].open[node.joinedPath]).toEqual(true);

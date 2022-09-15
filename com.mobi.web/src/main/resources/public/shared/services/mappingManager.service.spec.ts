@@ -29,8 +29,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockOntologyManager,
-    mockUtil,
 } from '../../../../../test/ts/Shared';
 import { DATA, DELIM, MAPPINGS, RDFS } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
@@ -40,15 +38,15 @@ import { MappingOntology } from '../models/mappingOntology.interface';
 import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
 import { CamelCasePipe } from '../pipes/camelCase.pipe';
 import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
-import { HelperService } from './helper.service';
-import { MappingManagerService } from './mappingManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
+import { UtilService } from './util.service';
+import { MappingManagerService } from './mappingManager.service';
 
 describe('Mapping Manager service', function() {
     let service: MappingManagerService;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub;
-    let ontologyManagerStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
     let httpMock: HttpTestingController;
@@ -74,12 +72,11 @@ describe('Mapping Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 MappingManagerService,
-                HelperService,
                 MockProvider(ProgressSpinnerService),
                 {provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe)},
                 {provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe)},
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyManagerService),
+                MockProvider(UtilService),
             ]
         });
     });
@@ -87,7 +84,7 @@ describe('Mapping Manager service', function() {
     beforeEach(function() {
         service = TestBed.get(MappingManagerService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         camelCaseStub = TestBed.get(CamelCasePipe);
         splitIRIStub = TestBed.get(SplitIRIPipe);
@@ -110,6 +107,30 @@ describe('Mapping Manager service', function() {
         progressSpinnerStub.track.and.callFake(ob => ob);
         ontologyManagerStub.getEntity.and.returnValue(emptyObj);
         ontologyManagerStub.getOntologyIRI.and.returnValue('ontology');
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
     });
 
     afterEach(function() {
@@ -366,63 +387,33 @@ describe('Mapping Manager service', function() {
         }));
     });
     describe('should get the list of source ontologies from the imports closure of the specified ontology', function() {
-        describe('if the ontology is open', function() {
-            beforeEach(function() {
-                ontologyManagerStub.list = [{ontologyId: ontologyId, recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId, ontology: []}];
-                spyOn(service, 'getOntology').and.returnValue(of(mappingOntology));
-            });
-            it('unless an error occurs', fakeAsync(function() {
-                ontologyManagerStub.getImportedOntologies.and.returnValue(throwError(error));
-                service.getSourceOntologies(ontologyInfo)
-                    .subscribe(() => fail('The observable should have errored'), response => {
-                        expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
-                        expect(response).toBe(error);
-                    });
-                tick();
-            }));
-            it('successfully', fakeAsync(function() {
-                ontologyManagerStub.getImportedOntologies.and.returnValue(of([{ontologyId: 'imported', ontology: []}]));
-                service.getSourceOntologies(ontologyInfo)
-                    .subscribe(response => {
-                        expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
-                        expect(response).toContain(mappingOntology);
-                        expect(response).toContain({
-                            id: 'imported',
-                            entities: []
-                        });
-                    }, () => fail('Observable should have rejected'));
-                tick();
-            }));
+        beforeEach(function() {
+            ontologyManagerStub.getImportedOntologies.and.returnValue(of([{ontologyId: 'imported', ontology: [], documentFormat: '', id: ''}]));
         });
-        describe('if the ontology is not open', function() {
-            beforeEach(function() {
-                ontologyManagerStub.getImportedOntologies.and.returnValue(of([{ontologyId: 'imported', ontology: []}]));
-            });
-            it('unless an error occurs', fakeAsync(function() {
-                spyOn(service, 'getOntology').and.returnValue(throwError(error));
-                service.getSourceOntologies(ontologyInfo)
-                    .subscribe(() => fail('The promise should have rejected'), response => {
-                        expect(service.getOntology).toHaveBeenCalledWith(ontologyInfo);
-                        expect(ontologyManagerStub.getImportedOntologies).not.toHaveBeenCalled();
-                        expect(response).toBe(error);
+        it('unless an error occurs', fakeAsync(function() {
+            spyOn(service, 'getOntology').and.returnValue(throwError(error));
+            service.getSourceOntologies(ontologyInfo)
+                .subscribe(() => fail('The promise should have rejected'), response => {
+                    expect(service.getOntology).toHaveBeenCalledWith(ontologyInfo);
+                    expect(ontologyManagerStub.getImportedOntologies).not.toHaveBeenCalled();
+                    expect(response).toBe(error);
+                });
+            tick();
+        }));
+        it('successfully', fakeAsync(function() {
+            spyOn(service, 'getOntology').and.returnValue(of(mappingOntology));
+            service.getSourceOntologies(ontologyInfo)
+                .subscribe(response => {
+                    expect(service.getOntology).toHaveBeenCalledWith(ontologyInfo);
+                    expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
+                    expect(response).toContain(mappingOntology);
+                    expect(response).toContain({
+                        id: 'imported',
+                        entities: []
                     });
-                tick();
-            }));
-            it('successfully', fakeAsync(function() {
-                spyOn(service, 'getOntology').and.returnValue(of(mappingOntology));
-                service.getSourceOntologies(ontologyInfo)
-                    .subscribe(response => {
-                        expect(service.getOntology).toHaveBeenCalledWith(ontologyInfo);
-                        expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
-                        expect(response).toContain(mappingOntology);
-                        expect(response).toContain({
-                            id: 'imported',
-                            entities: []
-                        });
-                    }, () => fail('Observable should have rejected'));
-                tick();
-            }));
-        });
+                }, () => fail('Observable should have rejected'));
+            tick();
+        }));
     });
     it('should find the source ontology with a certain class', function() {
         ontologyManagerStub.getClasses.and.returnValue([{'@id': 'class'}]);

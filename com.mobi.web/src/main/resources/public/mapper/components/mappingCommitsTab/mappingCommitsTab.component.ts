@@ -21,10 +21,11 @@
  * #L%
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { CATALOG } from '../../../prefixes';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class mapper.MappingCommitsTabComponent
@@ -40,7 +41,7 @@ export class MappingCommitsTabComponent implements OnInit {
     commitId = '';
     branchTitle = '';
 
-    constructor(public state: MapperStateService, @Inject('utilService') private util) {}
+    constructor(public state: MapperStateService, private util: UtilService) {}
 
     ngOnInit(): void {
         if (!this.state.newMapping) {

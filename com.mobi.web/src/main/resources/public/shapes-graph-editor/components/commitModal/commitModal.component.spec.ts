@@ -36,13 +36,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
 import { CommitModalComponent } from './commitModal.component';
 
 describe('Commit Modal component', function() {
@@ -52,7 +53,7 @@ describe('Commit Modal component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CommitModalComponent>>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -75,7 +76,7 @@ describe('Commit Modal component', function() {
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 MockProvider(ShapesGraphStateService)
             ]
         });
@@ -104,7 +105,7 @@ describe('Commit Modal component', function() {
                 '@type': [],
                 [CATALOG + 'head']: [{'@id': 'commit1'}]
             } as JSONLDObject));
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         utilStub.getPropertyId.and.callFake((obj, prop) => get(obj, '[\'' + prop + '\'][0][\'@id\']'));
     });
 

@@ -20,45 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Injectable } from '@angular/core';
 import { forOwn, isString, isEmpty, has, indexOf, isPlainObject, forEach, unset, isArray, remove } from 'lodash';
 
-updateRefsService.$inject = ['$filter'];
-
 /**
- * @ngdoc service
- * @name shared.service:updateRefsService
- * @requires $filter
+ * @class shared.UpdateRefsService
  *
- * @description
- * `updateRefsService` is a service that provides functionality to uypdate references
- * in an object from {@link ontologyManager.service:ontologyManager ontologyManager}.
+ * `updateRefsService` is a service that provides functionality to update references in an object from
+ * {@link shared.OntologyManagerService}.
  */
-function updateRefsService($filter) {
-    var self = this;
-    var exclude = [
-            '$$hashKey'
-        ];
+@Injectable()
+export class UpdateRefsService {
+    exclude = [
+        '$$hashKey'
+    ];
+
+    constructor() {}
 
     /**
-     * @ngdoc method
-     * @name update
-     * @methodOf shared.service:updateRefsService
-     *
-     * @description
-     * Changes every instance of a specific key in an object from
-     * {@link ontologyManager.service:ontologyManager ontologyManager} to a new string.
+     * Changes every instance of a specific key in an object from {@link shared.OntologyManagerService} to a new string.
      * It directly affects the passed in object instead of creating a new copy.
      *
-     * @param {Object} obj An object from {@link ontologyManager.service:ontologyManager ontologyManager}.
-     * Presumedly it is an ontology object.
+     * @param {Object} obj An object from {@link shared.OntologyManagerService}. Assumed to be an ontology object.
      * @param {string} old The original key string that will be updated
      * @param {string} fresh The new string to change the old key into
      */
-    self.update = function(obj, old, fresh) {
-        var freshSplit = $filter('splitIRI')(fresh);
+    update(obj: any, old: string, fresh: string): void {
         // iterates over all of the properties of the object
         forOwn(obj, (value, key) => {
-            var excluded = indexOf(exclude, key);
+            const excluded = indexOf(this.exclude, key);
             // replaces the key if it is the old value
             if (key === old && excluded === -1) {
                 delete obj[key];
@@ -72,54 +62,42 @@ function updateRefsService($filter) {
                         // checks to see if it contains the old value
                         if (item === old) {
                             obj[key][index] = fresh;
-                        }
-                        // not a string, so update it
-                        else if (typeof item !== 'string') {
-                            self.update(obj[key][index], old, fresh);
+                        } else if (typeof item !== 'string') { // not a string, so update it
+                            this.update(obj[key][index], old, fresh);
                         }
                     });
-                }
-                // objects need to be updated
-                else if (typeof value === 'object') {
-                    self.update(obj[key], old, fresh);
-                }
-                // change string value if it matches
-                else if (value === old) {
+                } else if (typeof value === 'object') { // objects need to be updated
+                    this.update(obj[key], old, fresh);
+                } else if (value === old) { // change string value if it matches
                     obj[key] = fresh;
                 }
             }
         });
     }
     /**
-     * @ngdoc method
-     * @name remove
-     * @methodOf shared.service:updateRefsService
-     *
-     * @description
      * Removes every instance of a specific key in an object from
-     * {@link ontologyManager.service:ontologyManager ontologyManager}. It directly
+     * {@link shared.OntologyManagerService}. It directly
      * affects the passed in object instead of creating a new copy.
      *
-     * @param {Object} obj An object from {@link ontologyManager.service:ontologyManager ontologyManager}.
-     * Presumably it is an ontology object.
+     * @param {Object} obj An object from {@link shared.OntologyManagerService}. Assumed to be an ontology object.
      * @param {string} word The original string that will be removed
      */
-    self.remove = function(obj, word) {
+    remove(obj: any, word: string): void {
         forOwn(obj, (value, key) => {
             if (isArray(value)) {
                 remove(value, item => item === word);
-                forEach(value, (item, index) => {
+                forEach(value, (item) => {
                     if (!isString(item)) {
-                        self.remove(item, word);
+                        this.remove(item, word);
                     }
                 });
-                remove(value, item => checkValue(item));
+                remove(value, item => this._checkValue(item));
                 if (!value.length) {
                     unset(obj, key);
                 }
             } else if (isPlainObject(value)) {
-                self.remove(value, word);
-                if (checkValue(value)) {
+                this.remove(value, word);
+                if (this._checkValue(value)) {
                     unset(obj, key);
                 }
             } else if (value === word) {
@@ -127,9 +105,7 @@ function updateRefsService($filter) {
             }
         });
     }
-    function checkValue(value) {
+    private _checkValue(value) {
         return isEmpty(value) || (Object.keys(value).length === 1 && has(value, '$$hashKey'));
     }
 }
-
-export default updateRefsService;

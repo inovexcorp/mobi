@@ -5,7 +5,7 @@ module.exports = {
     // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
     // expect assertions
     waitForConditionTimeout : 20000,
-    retryAssertionTimeout: 15000,
+    retryAssertionTimeout: 20000,
     create_shapes_graph_branch_button: {
         css: 'shapes-graph-editor-page button.create-branch'
     },
@@ -77,24 +77,24 @@ module.exports = {
           .assert.not.elementPresent('upload-ontology-overlay');
       for (var j = 0; j < args.length; j++) {
           browser
-            .clearValue('open-ontology-tab input.ontology-search')
-            .setValue('open-ontology-tab input.ontology-search', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, ''))
-            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER)
+            .clearValue('open-ontology-tab search-bar input')
+            .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, ''))
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
             .pause(1000) // TODO: Remove!
           browser.globals.wait_for_no_spinners(browser);
           browser
-            .waitForElementVisible('open-ontology-tab input.ontology-search')
+            .waitForElementVisible('open-ontology-tab search-bar input')
             .useXpath()
             .assert.visible('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
             .useCss()
       }
       browser
-          .clearValue('open-ontology-tab input.ontology-search')
-          .setValue('open-ontology-tab input.ontology-search', '')
-          .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+          .clearValue('open-ontology-tab search-bar input')
+          // .setValue('open-ontology-tab search-bar input', '')
+          .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
       browser.globals.wait_for_no_spinners(browser);
       browser
-          .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+          // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
           .waitForElementNotPresent('div.fade')
 
     },
@@ -102,12 +102,12 @@ module.exports = {
     'search_for_ontology': function (browser, ontology) {
         browser
               .useCss()
-              .setValue('open-ontology-tab input.ontology-search', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, ''))
-              .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+              .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, ''))
+              .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
         browser.globals.wait_for_no_spinners(browser);
         browser
-              .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-              .waitForElementNotPresent('div.fade')
+              // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            .pause(1000)
               .useXpath()
               .waitForElementVisible('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
         },
@@ -117,7 +117,7 @@ module.exports = {
         browser
           .click('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
           .useCss()
-          .waitForElementVisible('div.material-tabset li.nav-item') // ensures that project tab is showing
+          .waitForElementVisible('mat-tab-header div.mat-tab-label-content') // ensures that project tab is showing
     },
 
     'create_shapes_graph': function (browser, title, shapes_file) {
@@ -153,7 +153,7 @@ module.exports = {
               .waitForElementVisible('shapes-graph-details')
               .waitForElementVisible('shapes-graph-properties-block')
               .waitForElementVisible('div.yate')
-              .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+              // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
         },
 
     'create_shapes_graph_branch': function (browser, branch_title) {
@@ -179,7 +179,8 @@ module.exports = {
             .waitForElementVisible('css selector', 'confirm-modal .mat-dialog-actions button.mat-primary')
             .click('css selector', 'confirm-modal .mat-dialog-actions button.mat-primary')
             .waitForElementVisible('xpath', '//div[@id="toast-container"]')
-            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            .pause(1000)
             .click('css selector', 'shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
             .assert.not.elementPresent('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]')
             .useCss()
@@ -188,8 +189,8 @@ module.exports = {
     'add_new_user' : function(browser, newUser) {
             browser
                 .useXpath()
-                .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
-                .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
+                .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+                .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
                 .waitForElementVisible("//button/span[text() [contains(., 'Create User')]]")
                 .click("//button/span[text() [contains(., 'Create User')]]")
                 .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
@@ -213,7 +214,8 @@ module.exports = {
         browser
             .useCss()
             .waitForElementNotPresent('#spinner-full', t)
-            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]', t)
+            //TODO make sure toaster containers are being removed
+            // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]', t)
             .waitForElementNotPresent('div.fade', t)
     },
 

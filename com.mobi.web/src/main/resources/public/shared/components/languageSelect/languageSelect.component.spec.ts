@@ -28,15 +28,17 @@ import { MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, Mat
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
+import { MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockPropertyManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { PropertyManagerService } from '../../services/propertyManager.service';
 import { LanguageSelectComponent } from './languageSelect.component';
 
 describe('Language Select component', function() {
     let component: LanguageSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<LanguageSelectComponent>;
-    let propertyManagerStub;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
     
     const language = {label: 'English', value: 'en'};
 
@@ -56,7 +58,7 @@ describe('Language Select component', function() {
                 LanguageSelectComponent,
             ],
             providers: [
-                { provide: 'propertyManagerService', useClass: mockPropertyManager }
+                MockProvider(PropertyManagerService)
             ]
         });
     });
@@ -65,7 +67,7 @@ describe('Language Select component', function() {
         fixture = TestBed.createComponent(LanguageSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        propertyManagerStub = TestBed.get('propertyManagerService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
 
         propertyManagerStub.languageList = [language];
         component.parentForm = new FormGroup({

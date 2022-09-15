@@ -44,10 +44,10 @@ export class ProjectTabComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         if (this.os.listItem) {
-            this.os.listItem.editorTabStates.project.component = undefined;
+            this.os.listItem.editorTabStates.project.element = undefined;
         }
     }
     ngOnInit(): void {
-        this.os.listItem.editorTabStates.project.component = this.projectTab;
+        this.os.listItem.editorTabStates.project.element = this.projectTab;
     }
 }

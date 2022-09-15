@@ -20,12 +20,12 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * #L%
 */
-import { Component } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import {OntologyManagerService} from '../../../shared/services/ontologyManager.service';
-import {ConfirmModalComponent} from '../../../shared/components/confirmModal/confirmModal.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 
 /**
  * @class ontology-editor.PropertiesTabComponent
@@ -42,10 +42,21 @@ import {ConfirmModalComponent} from '../../../shared/components/confirmModal/con
     templateUrl: './propertiesTab.component.html'
 })
 
-export class PropertiesTabComponent {
+export class PropertiesTabComponent implements OnInit, OnDestroy {
+    highlightText = '';
+    @ViewChild('propertiesTab') propertiesTab: ElementRef;
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
-
+    
+    ngOnInit(): void {
+        this.os.listItem.editorTabStates.properties.element = this.propertiesTab;
+        this.highlightText = this.os.listItem.editorTabStates.properties.searchText;
+    }
+    ngOnDestroy(): void {
+        if (this.os.listItem) {
+            this.os.listItem.editorTabStates.properties.element = undefined;
+        }
+    }
     showDeleteConfirmation(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {

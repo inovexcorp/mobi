@@ -32,11 +32,11 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { DatasetsOntologyPickerComponent } from '../datasetsOntologyPicker/datasetsOntologyPicker.component';
 import { NewDatasetOverlayComponent } from './newDatasetOverlay.component';
 
@@ -46,7 +46,7 @@ describe('New Dataset Overlay component', function() {
     let fixture: ComponentFixture<NewDatasetOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<NewDatasetOverlayComponent>>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -68,7 +68,7 @@ describe('New Dataset Overlay component', function() {
             ],
             providers: [
                 MockProvider(DatasetManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -80,7 +80,7 @@ describe('New Dataset Overlay component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
         datasetManagerStub = TestBed.get(DatasetManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {

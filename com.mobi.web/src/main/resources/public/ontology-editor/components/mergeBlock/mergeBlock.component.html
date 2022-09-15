@@ -37,7 +37,7 @@
                                   [commitId]="os.listItem.versionedRdfRecord.commitId"
                                   [targetId]="targetHeadCommitId"
                                   [difference]="os.listItem.merge.difference"
-                                  [entityNameFunc]="getEntityName"
+                                  [entityNameFunc]="getEntityName.bind(this)"
                                   (showMoreResultsFunc)="retrieveMoreResults.bind(this)"
                                   [startIndex]="os.listItem.merge.startIndex"
                                   [recordId]="os.listItem.versionedRdfRecord.recordId"

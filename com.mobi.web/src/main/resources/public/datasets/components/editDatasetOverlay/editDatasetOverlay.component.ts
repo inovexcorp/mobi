@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { map, get, sortBy, remove, difference, includes, forEach, concat, find } from 'lodash';
@@ -32,6 +32,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { OntologyDetails } from '../../models/ontologyDetails.interface';
 
 import './editDatasetOverlay.component.scss';
@@ -59,7 +60,7 @@ export class EditDatasetOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<EditDatasetOverlayComponent>, private fb: FormBuilder,
         public state: DatasetStateService, public dm: DatasetManagerService, public cm: CatalogManagerService, 
-        @Inject('utilService') public util) {}
+        public util: UtilService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');

@@ -28,8 +28,7 @@
                placeholder="Select a class mapping..."
                aria-label="Class Mapping"
                [formControl]="classMappingControl"
-               [matAutocomplete]="classMappingAuto"
-               [disabled]="!classMappings || !classMappings.length">
+               [matAutocomplete]="classMappingAuto">
         <mat-autocomplete #classMappingAuto="matAutocomplete"
                           (optionSelected)="selectClassMapping($event)"
                           (opened)="showClassMappings()"

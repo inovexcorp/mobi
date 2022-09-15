@@ -21,27 +21,23 @@
  * #L%
  */
 import { find } from 'lodash';
-import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { switchMap } from 'rxjs/operators';
+import { Component } from '@angular/core';
 
-import './instanceEditor.component.scss';
-import { Component, Inject } from '@angular/core';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { CATALOG } from '../../../../prefixes';
-import { switchMap } from "rxjs/operators";
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+
+import './instanceEditor.component.scss';
+import { UtilService } from '../../../../shared/services/util.service';
 
 /**
- * @ngdoc component
- * @name explore.component:instanceEditor
- * @requires $q
- * @requires shared.service:discoverStateService
- * @requires shared.service:utilService
- * @requires discover.service:exploreService
- * @requires explore.service:exploreUtilsService
+ * @class explore.InstanceEditorComponent
  *
- * @description
- * `instanceEditor` is a component that displays {@link shared.component:breadCrumbs} to the class of the instance being edited.
- * It also provides an {@link explore.component:instanceForm} to show the complete list of properties
+ * A component that displays {@link shared.BreadCrumbsComponent} to the class of the instance being edited.
+ * It also provides an {@link explore.InstanceFormComponent} to show the complete list of properties
  * available for the new instance in an editable format along with save and cancel buttons for the editing.
  */
 
@@ -53,7 +49,7 @@ export class InstanceEditorComponent {
     isValid = true;
 
     constructor(public ds: DiscoverStateService, private es: ExploreService, private eu: ExploreUtilsService,
-                @Inject('utilService') private util, @Inject('policyEnforcementService') private pep) {
+                private util: UtilService, private pep: PolicyEnforcementService) {
     }
 
     save(): void {
@@ -62,7 +58,7 @@ export class InstanceEditorComponent {
             actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canModify = response !== this.pep.deny;
                 
                 if (canModify) {
@@ -71,7 +67,7 @@ export class InstanceEditorComponent {
 
                     this.es.updateInstance(this.ds.explore.recordId, this.ds.explore.instance.metadata.instanceIRI, this.ds.explore.instance.entity)
                         .pipe(switchMap(() => {
-                            return this.es.getClassInstanceDetails(this.ds.explore.recordId, this.ds.explore.classId, {offset: (this.ds.explore.instanceDetails.currentPage - 1) * this.ds.explore.instanceDetails.limit, limit: this.ds.explore.instanceDetails.limit})
+                            return this.es.getClassInstanceDetails(this.ds.explore.recordId, this.ds.explore.classId, {offset: this.ds.explore.instanceDetails.currentPage * this.ds.explore.instanceDetails.limit, limit: this.ds.explore.instanceDetails.limit})
                         }))
                         .subscribe((response) => {
                             this.ds.explore.instanceDetails.data = response.body;
@@ -95,5 +91,3 @@ export class InstanceEditorComponent {
         this.isValid = event.value;
     }
 }
-
-

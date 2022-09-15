@@ -21,31 +21,26 @@
  * #L%
  */
 import { initial, find, get } from 'lodash';
-import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { switchMap } from 'rxjs/operators';
+import { Component } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 
-import './instanceCreator.component.scss';
-import { Component, Inject } from '@angular/core';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
-import { DCTERMS, OWL, RDFS, RDF, CATALOG } from '../../../../prefixes';
-import { HttpResponse } from '@angular/common/http';
+import { DCTERMS, RDFS, CATALOG } from '../../../../prefixes';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
-import { switchMap } from 'rxjs/operators';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+
+import './instanceCreator.component.scss';
+import { UtilService } from '../../../../shared/services/util.service';
 
 /**
- * @ngdoc component
- * @name explore.component:instanceCreator
- * @requires $q
- * @requires shared.service:discoverStateService
- * @requires shared.service:utilService
- * @requires discover.service:exploreService
- * @requires explore.service:exploreUtilsService
- * @requires shared.service:prefixes
+ * @class explore.InstanceCreatorComponent
  *
- * @description
- * `instanceCreator` is a component that displays {@link shared.component:breadCrumbs} to the class of the instance being created.
- * It also provides an {@link explore.component:instanceForm} to show the complete list of properties
- * available for the new instance in an editable format along with save and cancel buttons for the editing.
+ * A component that displays {@link shared.BreadCrumbsComponent} to the class of the instance being created. It also
+ * provides an {@link explore.InstanceFormComponent} to show the complete list of properties available for the new
+ * instance in an editable format along with save and cancel buttons for the editing.
  */
 
 @Component({
@@ -57,16 +52,16 @@ export class InstanceCreatorComponent {
     isValid = true;
 
     constructor(private es: ExploreService, private eu: ExploreUtilsService, public ds: DiscoverStateService,
-                @Inject('utilService') private util, @Inject('policyEnforcementService') private pep) {
+                private util: UtilService, private pep: PolicyEnforcementService) {
     }
 
-    save() {
+    save(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
             actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canModify = response !== this.pep.deny;
                 if (canModify) {
                     this.ds.explore.instance.entity = this.eu.removeEmptyPropertiesFromArray(this.ds.explore.instance.entity);
@@ -74,7 +69,7 @@ export class InstanceCreatorComponent {
                     this.es.createInstance(this.ds.explore.recordId, this.ds.explore.instance.entity)
                         .pipe(switchMap(() => {
                             this.ds.explore.instanceDetails.total++;
-                            const offset = (this.ds.explore.instanceDetails.currentPage - 1) * this.ds.explore.instanceDetails.limit;
+                            const offset = this.ds.explore.instanceDetails.currentPage * this.ds.explore.instanceDetails.limit;
                             return this.es.getClassInstanceDetails(this.ds.explore.recordId, this.ds.explore.classId, {offset, limit: this.ds.explore.instanceDetails.limit});
                         }), switchMap(response => {
                             const resultsObject = this.es.createPagedResultsObject(response as HttpResponse<InstanceDetails[]>);
@@ -98,7 +93,7 @@ export class InstanceCreatorComponent {
                 this.util.createWarningToast('Could not retrieve record permissions');
             });
     }
-    cancel() {
+    cancel(): void {
         this.ds.explore.instance.entity = [];
         this.ds.explore.creating = false;
         this.ds.explore.breadcrumbs = initial(this.ds.explore.breadcrumbs);

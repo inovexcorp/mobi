@@ -20,8 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 import './loginPage.component.scss';
 
@@ -42,11 +44,11 @@ export class LoginPageComponent {
     });
     errorMessage = '';
 
-    constructor(@Inject('loginManagerService') private loginManagerService, private fb: FormBuilder) {}
+    constructor(private loginManagerService: LoginManagerService, private fb: FormBuilder) {}
 
     login(): void {
         this.loginManagerService.login(this.loginForm.controls.username.value, this.loginForm.controls.password.value)
-            .then(() => {
+            .subscribe(() => {
                 this.errorMessage = '';
             }, errorMessage => {
                 this.errorMessage = errorMessage;

@@ -33,7 +33,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { CATALOG, DATASET, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -42,6 +41,7 @@ import { Dataset } from '../../../shared/models/dataset.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { DatasetsOntologyPickerComponent } from '../datasetsOntologyPicker/datasetsOntologyPicker.component';
 import { EditDatasetOverlayComponent } from './editDatasetOverlay.component';
 
@@ -53,7 +53,7 @@ describe('Edit Dataset Overlay component', function() {
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
     let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalog';
     const recordId = 'recordId';
@@ -85,7 +85,7 @@ describe('Edit Dataset Overlay component', function() {
                 MockProvider(DatasetManagerService),
                 MockProvider(DatasetStateService),
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -99,7 +99,7 @@ describe('Edit Dataset Overlay component', function() {
         datasetManagerStub = TestBed.get(DatasetManagerService);
         datasetStateStub = TestBed.get(DatasetStateService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getSkolemizedIRI.and.returnValue(bnodeId);
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {

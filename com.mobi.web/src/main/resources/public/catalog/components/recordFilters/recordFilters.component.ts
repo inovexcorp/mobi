@@ -21,13 +21,14 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { forEach, map, filter, includes} from 'lodash';
 
 import { CATALOG } from '../../../prefixes';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { FilterItem } from '../../models/filterItem.interface';
 import { RecordFilter } from '../../models/recordFilter.interface';
 import { SearchableRecordFilter } from '../../models/searchableRecordFilter.interface';
@@ -64,7 +65,7 @@ export class RecordFiltersComponent implements OnInit {
     @Input() keywordFilterList: string[];
     @Output() changeFilter = new EventEmitter<{recordType: string, keywordFilterList: string[]}>();
 
-    constructor(public state: CatalogStateService, public cm: CatalogManagerService, @Inject('utilService') public util) {}
+    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public util: UtilService) {}
 
     ngOnInit(): void {
         const componentContext = this;

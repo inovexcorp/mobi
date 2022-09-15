@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './recordCard.component.scss';
 
@@ -51,7 +52,7 @@ export class RecordCardComponent implements OnInit {
     description = '';
     modified = '';
 
-    constructor(@Inject('utilService') public util) {}
+    constructor(public util: UtilService) {}
 
     ngOnInit(): void {
         this.title = this.util.getDctermsValue(this.record, 'title');

@@ -21,15 +21,17 @@
  * #L%
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialogRef } from '@angular/material';
 import { Observable } from 'rxjs';
 import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
+
 import { DCTERMS } from '../../../prefixes';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface DatasetPreview {
     id: string,
@@ -60,7 +62,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<RunMappingDatasetOverlayComponent>, private fb: FormBuilder,
         private state: MapperStateService, private dm: DelimitedManagerService, private dam: DatasetManagerService,
-        @Inject('utilService') private util) {}
+        private util: UtilService) {}
 
     ngOnInit(): void {
         this.filteredDatasets = this.runMappingDatasetForm.controls.datasetSelect.valueChanges

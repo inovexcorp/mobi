@@ -27,19 +27,20 @@ import { MatButtonModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError} from 'rxjs';
 
 import { 
     cleanStylesFromDOM,
-    mockUtil,
-    mockPolicyEnforcement
 } from '../../../../../../../test/ts/Shared';
 import { POLICY } from '../../../../prefixes';
 import { ErrorDisplayComponent } from '../../../../shared/components/errorDisplay/errorDisplay.component';
 import { ProgressSpinnerService } from '../../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 import { YasguiService } from '../../../../shared/services/yasgui.service';
-import { DiscoverDatasetSelectComponent} from "../../../components/discoverDatasetSelect/discoverDatasetSelect.component";
+import { DiscoverDatasetSelectComponent} from '../../../components/discoverDatasetSelect/discoverDatasetSelect.component';
 import { QueryTabComponent } from './queryTab.component';
 
 describe('Query Tab component', function() {
@@ -49,8 +50,8 @@ describe('Query Tab component', function() {
     let yasguiStub: jasmine.SpyObj<YasguiService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub;
-    let policyEnforcementStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     let yasguiInstance;
     let tab;
@@ -81,8 +82,8 @@ describe('Query Tab component', function() {
                 MockProvider(DiscoverStateService),
                 MockProvider(YasguiService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
             ]
         });
     });
@@ -94,8 +95,10 @@ describe('Query Tab component', function() {
         discoverStateStub = TestBed.get(DiscoverStateService);
         yasguiStub = TestBed.get(YasguiService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        utilStub = TestBed.get(UtilService);
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
 
         discoverStateStub.query = {
             response: {},
@@ -194,7 +197,7 @@ describe('Query Tab component', function() {
                     discoverStateStub.query.datasetRecordId = datasetRecordIRI;
                 });
                 it('unless an error occurs', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.rejectWith(error);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(throwError(error));
                     component.submitQuery();
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
@@ -207,7 +210,7 @@ describe('Query Tab component', function() {
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('unless a deny is returned', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     component.submitQuery();
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
@@ -220,7 +223,7 @@ describe('Query Tab component', function() {
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('if a permit is returned', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                     component.submitQuery();
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
@@ -234,7 +237,7 @@ describe('Query Tab component', function() {
                 }));
             });
             it('when a dataset is not selected', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 component.submitQuery();
                 tick();
                 expect(component.createPepReadRequest).not.toHaveBeenCalled();
@@ -252,7 +255,7 @@ describe('Query Tab component', function() {
             });
             describe('if a dataset is selected', function() {
                 it('unless an error occurs', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.rejectWith(error);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(throwError(error));
                     component.permissionCheck(datasetRecordIRI);
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
@@ -262,7 +265,7 @@ describe('Query Tab component', function() {
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('unless a deny is returned', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     component.permissionCheck(datasetRecordIRI);
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
@@ -272,7 +275,7 @@ describe('Query Tab component', function() {
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('if a permit is returned', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                     component.permissionCheck(datasetRecordIRI);
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
@@ -283,11 +286,10 @@ describe('Query Tab component', function() {
                 }));
             });
             it('unless a dataset is not selected', async () => {
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 component.permissionCheck(undefined);
                 fixture.detectChanges();
                 await fixture.whenStable();
-                //@todo re-visit this test.
-                // logic for this test needed to be fixed
                 expect(component.createPepReadRequest).toHaveBeenCalled();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalled();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();

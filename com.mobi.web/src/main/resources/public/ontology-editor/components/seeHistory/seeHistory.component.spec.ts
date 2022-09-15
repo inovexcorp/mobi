@@ -30,17 +30,17 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { SeeHistoryComponent } from './seeHistory.component';
 import { SharedModule} from '../../../shared/shared.module';
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import {StaticIriComponent} from '../staticIri/staticIri.component';
+import { StaticIriComponent } from '../staticIri/staticIri.component';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('See History component', function() {
     let component: SeeHistoryComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SeeHistoryComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -52,23 +52,22 @@ describe('See History component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService)
             ]
-        })
-    })
+        });
+    });
 
     beforeEach(function() {
         fixture = TestBed.createComponent(SeeHistoryComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
-        ontologyManagerStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = {
             '@id': 'www.test.com',
-        }
+        };
 
         this.commits = [{id: 'commit1'}, {id: 'commit2'}];
         fixture.detectChanges();
@@ -79,7 +78,6 @@ describe('See History component', function() {
         fixture = null;
         component = null;
         element = null;
-        ontologyStateStub = null;
         utilStub = null;
     });
 
@@ -104,7 +102,7 @@ describe('See History component', function() {
         it('should assign the correct label for each commit', function() {
             component.commits = this.commits;
             utilStub.condenseCommitId.and.returnValue('1234');
-            var labels = component.commits.map(commit => component.createLabel(commit.id));
+            const labels = component.commits.map(commit => component.createLabel(commit.id));
             labels.forEach((label, idx) => {
                 if (idx === 0) {
                     expect(label).toEqual('1234 (latest)');
@@ -140,20 +138,20 @@ describe('See History component', function() {
     });
     it('should call goBack when the button is clicked', function() {
         spyOn(component, 'goBack');
-        var button = element.queryAll(By.css('.back-column button'))[0];
+        const button = element.queryAll(By.css('.back-column button'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.goBack).toHaveBeenCalled();
+        expect(component.goBack).toHaveBeenCalledWith();
     });
     it('should call prev when the previous button is clicked', function() {
         spyOn(component, 'prev');
-        var button = element.queryAll(By.css('button.previous-btn'))[0];
+        const button = element.queryAll(By.css('button.previous-btn'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.prev).toHaveBeenCalled();
+        expect(component.prev).toHaveBeenCalledWith();
     });
     it('should call next when the next button is clicked', function() {
         spyOn(component, 'next');
-        var button = element.queryAll(By.css('button.next-btn'))[0];
+        const button = element.queryAll(By.css('button.next-btn'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.next).toHaveBeenCalled();
+        expect(component.next).toHaveBeenCalledWith();
     });
 });

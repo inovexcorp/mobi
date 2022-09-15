@@ -45,7 +45,7 @@
     </mat-form-field>
 </form>
 <div mat-dialog-actions>
-    <button mat-raised-button [mat-dialog-close]="false" (click)="this.cancel()">Cancel</button>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
     <button mat-raised-button (click)="this.resetVariables()"><i class="fa fa-refresh"></i></button>
     <button mat-raised-button color="primary" (click)="this.submit()"  [disabled]="iriFormControl.invalid">Submit</button>
 </div>

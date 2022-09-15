@@ -27,9 +27,7 @@ import { has, sortBy } from 'lodash';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import {
-    ObjectPropertyOverlayComponent as ObjectPropertyOverlay
-} from '../objectPropertyOverlay/objectPropertyOverlay.component';
+import { ObjectPropertyOverlayComponent } from '../objectPropertyOverlay/objectPropertyOverlay.component';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 
 /**
@@ -39,7 +37,7 @@ import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
  * {@link shared.OntologyStateService#listItem selected individual} using
  * {@link ontology-editor.PropertyValuesComponent}. The section header contains a button for adding an object property.
  * The component houses the methods for opening the modal for
- * {@link ontology-editor.component:objectPropertyOverlay adding} and removing object property values.
+ * {@link ontology-editor.ObjectPropertyOverlayComponent adding} and removing object property values.
  */
 
 @Component({
@@ -48,12 +46,12 @@ import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 })
 export class ObjectPropertyBlockComponent implements OnChanges {
     @Input() selected;
-    objectProperties = [];
-    objectPropertiesFiltered = [];
-    key = undefined;
+
+    objectProperties: string[] = [];
+    objectPropertiesFiltered: string[] = [];
+
     constructor(public os: OntologyStateService,
-                private dialog: MatDialog,
-    ) {}
+                private dialog: MatDialog) {}
 
     ngOnChanges(): void {
         this.updatePropertiesFiltered();
@@ -63,35 +61,28 @@ export class ObjectPropertyBlockComponent implements OnChanges {
         this.objectPropertiesFiltered = sortBy(this.objectProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
     }
     openAddObjectPropOverlay(): void {
-        const data = {
-            editingProperty: false,
-            propertySelect: undefined,
-            propertyValue: '',
-            propertyIndex: 0
-        };
-        this.dialog.open(ObjectPropertyOverlay, {data: data}).afterClosed().subscribe( (result) => {
+        this.dialog.open(ObjectPropertyOverlayComponent).afterClosed().subscribe(() => {
             this.updatePropertiesFiltered();
         });
     }
-    showRemovePropertyOverlay(key, index): void {
-        this.key = key;
+    showRemovePropertyOverlay(input: {iri: string, index: number}): void {
         this.dialog.open(ConfirmModalComponent,{
             data: {
-                content: this.os.getRemovePropOverlayMessage(key, index) + '</strong>?'
+                content: this.os.getRemovePropOverlayMessage(input.iri, input.index) + '</strong>?'
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
-                this.os.removeProperty(key, index).subscribe((res) => {
-                    this.removeObjectProperty(res as JSONLDId);
+                this.os.removeProperty(input.iri, input.index).subscribe((res) => {
+                    this.removeObjectProperty(input.iri, res as JSONLDId);
+                    this.updatePropertiesFiltered();
                 });
-                this.updatePropertiesFiltered();
             }
         });
     }
-    removeObjectProperty(axiomObject: JSONLDId): void {
+    removeObjectProperty(axiom: string, axiomObject: JSONLDId): void {
         const types = this.os.listItem.selected['@type'];
         if (this.os.containsDerivedConcept(types) || this.os.containsDerivedConceptScheme(types)) {
-            this.os.removeFromVocabularyHierarchies(this.key, axiomObject);
+            this.os.removeFromVocabularyHierarchies(axiom, axiomObject);
             this.updatePropertiesFiltered();
         }
     }

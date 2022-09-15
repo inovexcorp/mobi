@@ -26,10 +26,10 @@ import { MatTabChangeEvent, MatTabsModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import {Mock, MockComponent, MockProvider} from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -43,15 +43,16 @@ import { ProjectTabComponent } from '../projectTab/projectTab.component';
 import { SavedChangesTabComponent } from '../savedChangesTab/savedChangesTab.component';
 import { SearchTabComponent } from '../searchTab/searchTab.component';
 import { VisualizationTabComponent } from '../visualizationTab/visualizationTab.component';
-import { OntologyTabComponent } from './ontologyTab.component';
 import { ClassesTabComponent } from '../classesTab/classesTab.component';
 import { MergeTabComponent } from '../mergeTab/mergeTab.component';
 import { PropertiesTabComponent } from '../propertiesTab/propertiesTab.component';
 import { OverviewTabComponent } from '../overviewTab/overviewTab.component';
 import { ConceptSchemesTabComponent } from '../conceptSchemesTab/conceptSchemesTab.component';
 import { ConceptsTabComponent } from '../conceptsTab/conceptsTab.component';
-import {SeeHistoryComponent} from '../seeHistory/seeHistory.component';
-import { IndividualsTabComponent } from "../individualsTab/individualsTab.component";
+import { SeeHistoryComponent } from '../seeHistory/seeHistory.component';
+import { IndividualsTabComponent } from '../individualsTab/individualsTab.component';
+import { UtilService } from '../../../shared/services/util.service';
+import { OntologyTabComponent } from './ontologyTab.component';
 
 describe('Ontology Tab component', function() {
     let component: OntologyTabComponent;
@@ -59,7 +60,7 @@ describe('Ontology Tab component', function() {
     let fixture: ComponentFixture<OntologyTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'error message';
     const catalogId = 'catalogId';
@@ -112,7 +113,7 @@ describe('Ontology Tab component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -123,7 +124,7 @@ describe('Ontology Tab component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.branches = [branch];
@@ -229,12 +230,12 @@ describe('Ontology Tab component', function() {
             ontologyStateStub.setSelected.and.returnValue(of(null));
             [
                 { index: 0, key: 'project', bool: false, comp: true }, 
-                { index: 1, key: 'overview', bool: true }, 
-                { index: 2, key: 'classes', bool: true }, 
-                { index: 3, key: 'properties', bool: true }, 
-                { index: 4, key: 'individuals', bool: false }, 
-                { index: 5, key: 'schemes', bool: false }, 
-                { index: 6, key: 'concepts', bool: false }, 
+                { index: 1, key: 'overview', bool: true, comp: true }, 
+                { index: 2, key: 'classes', bool: true, comp: true }, 
+                { index: 3, key: 'properties', bool: true, comp: true }, 
+                { index: 4, key: 'individuals', bool: false, comp: true }, 
+                { index: 5, key: 'schemes', bool: false, comp: true }, 
+                { index: 6, key: 'concepts', bool: false, comp: true }, 
                 { index: 7, key: 'search', bool: false }, 
                 { index: 8 }, 
                 { index: 9 }, 
@@ -273,7 +274,6 @@ describe('Ontology Tab component', function() {
         it('with tabs', function() {
             expect(element.queryAll(By.css('mat-tab-body')).length).toEqual(11);
         });
-        // TODO: Uncomment these as the components are upgraded
         it('with a tab for project-tab', function() {
             expect(element.queryAll(By.css('project-tab')).length).toBe(1);
         });
@@ -295,12 +295,12 @@ describe('Ontology Tab component', function() {
             await fixture.isStable();
             expect(element.queryAll(By.css('properties-tab')).length).toBe(1);
         });
-        // it('with a tab for individuals-tab', async function() {
-        //     ontologyStateStub.listItem.tabIndex = 4;
-        //     fixture.detectChanges();
-        //     await fixture.isStable();
-        //     expect(element.queryAll(By.css('individuals-tab')).length).toBe(1);
-        // });
+        it('with a tab for individuals-tab', async function() {
+            ontologyStateStub.listItem.tabIndex = 4;
+            fixture.detectChanges();
+            await fixture.isStable();
+            expect(element.queryAll(By.css('individuals-tab')).length).toBe(1);
+        });
         it('with a tab for concept-schemes-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 5;
             ontologyStateStub.listItem.isVocabulary = true;

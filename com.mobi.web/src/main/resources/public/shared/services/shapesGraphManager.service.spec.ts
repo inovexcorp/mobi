@@ -20,26 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HelperService } from './helper.service';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed } from '@angular/core/testing';
+import { MockProvider } from 'ng-mocks';
+import { throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../test/ts/Shared';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
-import { MockProvider } from 'ng-mocks';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { UtilService } from './util.service';
+import { ShapesGraphManagerService } from './shapesGraphManager.service';
+import { HttpParams } from '@angular/common/http';
 
 describe('Shapes Graph Manager service', function() {
     let service: ShapesGraphManagerService;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
-    let helper: HelperService;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+
     const error = 'Error Message';
     const file: File = new File([''], 'filename', { type: 'text/html' });
     const rdfUpload: RdfUpload = {
@@ -69,23 +71,45 @@ describe('Shapes Graph Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 ShapesGraphManagerService,
-                HelperService,
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
         });
     });
 
     beforeEach(function() {
         service = TestBed.get(ShapesGraphManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         httpMock = TestBed.get(HttpTestingController);
-        helper = TestBed.get(HelperService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
 
-        spyOn(helper, 'createHttpParams').and.callThrough();
+        utilStub.createHttpParams.and.callThrough();
         utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
         utilStub.rejectError.and.callFake(() => Promise.reject(error));
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
         rdfDownload = {
             recordId: 'record1',
             branchId: 'branch1',
@@ -108,7 +132,6 @@ describe('Shapes Graph Manager service', function() {
         service = null;
         utilStub = null;
         httpMock = null;
-        helper = null;
         progressSpinnerStub = null;
     });
 
@@ -209,11 +232,14 @@ describe('Shapes Graph Manager service', function() {
     });
 
     describe('should download a shapes graph record', function() {
+        beforeEach(function() {
+            spyOn(window, 'open');
+        });
         it('with all fields set', function() {
             service.downloadShapesGraph(rdfDownload);
 
-            expect(helper.createHttpParams).toHaveBeenCalledWith(downloadParams);
-            expect(utilStub.startDownload).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
+            expect(utilStub.createHttpParams).toHaveBeenCalledWith(downloadParams);
+            expect(window.open).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
                 + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=filename&applyInProgressCommit=false');
         });
 
@@ -222,8 +248,8 @@ describe('Shapes Graph Manager service', function() {
             downloadParams.rdfFormat = 'jsonld';
             service.downloadShapesGraph(rdfDownload);
 
-            expect(helper.createHttpParams).toHaveBeenCalledWith(downloadParams);
-            expect(utilStub.startDownload).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
+            expect(utilStub.createHttpParams).toHaveBeenCalledWith(downloadParams);
+            expect(window.open).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
                 + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=jsonld&fileName=filename&applyInProgressCommit=false');
         });
 
@@ -232,8 +258,8 @@ describe('Shapes Graph Manager service', function() {
             downloadParams.fileName = 'shapesGraph';
             service.downloadShapesGraph(rdfDownload);
 
-            expect(helper.createHttpParams).toHaveBeenCalledWith(downloadParams);
-            expect(utilStub.startDownload).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
+            expect(utilStub.createHttpParams).toHaveBeenCalledWith(downloadParams);
+            expect(window.open).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
                 + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=shapesGraph&applyInProgressCommit=false');
         });
     });

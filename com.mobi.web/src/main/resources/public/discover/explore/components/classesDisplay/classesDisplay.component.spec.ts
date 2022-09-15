@@ -25,12 +25,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
@@ -43,7 +45,6 @@ describe('Classes Display component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ClassesDisplayComponent>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let policyEnforcementStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -56,11 +57,10 @@ describe('Classes Display component', function() {
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                MockProvider('prefixes', 'prefixes'),
             ]
         });
     });
@@ -70,7 +70,6 @@ describe('Classes Display component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         discoverStateStub = TestBed.get(DiscoverStateService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],

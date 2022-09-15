@@ -21,12 +21,13 @@
  * #L%
  */
 
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class user-management.ResetPasswordOverlayComponent
@@ -46,8 +47,7 @@ export class ResetPasswordOverlayComponent {
     });
 
     constructor(private dialogRef: MatDialogRef<ResetPasswordOverlayComponent>, private fb: FormBuilder,
-        private state: UserStateService, private um: UserManagerService, 
-        @Inject('utilService') private util) {}
+        private state: UserStateService, private um: UserManagerService, private util: UtilService) {}
 
     set(): void {
         this.um.resetPassword(this.state.selectedUser.username, this.resetPasswordForm.controls.unmaskPassword.value)

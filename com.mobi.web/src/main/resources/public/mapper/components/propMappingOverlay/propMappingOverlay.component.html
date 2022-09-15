@@ -22,7 +22,11 @@
   -->
 <h1 mat-dialog-title>{{state.newProp ? 'Add' : 'Edit'}} Property</h1>
 <form mat-dialog-content [formGroup]="propMappingForm">
-    <prop-select [parentForm]="propMappingForm" [selectedProp]="selectedProp" (selectedPropChange)="selectProp($event)" [properties]="availableProps" [isReadOnly]="!state.newProp"></prop-select>
+    <prop-select [parentForm]="propMappingForm"
+                 [selectedProp]="selectedProp"
+                 (selectedPropChange)="selectProp($event)"
+                 [properties]="availableProps"
+                 [isReadOnly]="!state.newProp"></prop-select>
     <prop-preview *ngIf="selectedProp" [propObj]="selectedProp.propObj"></prop-preview>
     <mat-form-field class="range-class-select-container w-100" *ngIf="selectedProp && selectedProp.isObjectProperty">
         <mat-label>Link To</mat-label>
@@ -37,7 +41,6 @@
         <column-select [parentForm]="propMappingForm"></column-select>
         <div class="datatype-select-container">
             <button mat-button color="primary" (click)="showDatatype()"><i class="fa fa-fw" [ngClass]="showDatatypeSelect ? 'fa-times' : 'fa-plus'"></i>{{showDatatypeSelect ? 'Remove Datatype Override' : 'Override Datatype'}}</button>
-            <!-- TODO: Swap back to iri-select once upgraded -->
             <mat-form-field *ngIf="showDatatypeSelect" class="datatype-select w-100">
                 <mat-label>Override Datatype</mat-label>
                 <input type="text" matInput
@@ -53,20 +56,11 @@
                     </mat-optgroup>
                 </mat-autocomplete>
             </mat-form-field>
-            <!-- TODO: Circle back after updating with master. Swap back to language-select once upgraded -->
-            <mat-form-field *ngIf="langString && showDatatypeSelect" class="language-select w-100">
-                <mat-label>Language</mat-label>
-                <mat-select placeholder="Select Language..." formControlName="language">
-                    <mat-option *ngFor="let languageOption of languages" [value]="languageOption.value">
-                        <span>{{languageOption.label}} <small class="text-muted">@{{languageOption.label}}</small></span>
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
+            <language-select *ngIf="langString && showDatatypeSelect" [parentForm]="propMappingForm" [disableClear]="true"></language-select>
         </div>
     </div>
 </form>
 <div mat-dialog-actions>
     <button mat-raised-button (click)="cancel()">Cancel</button>
-    <!-- TODO: Getting expression changed after it was checked -->
     <button mat-raised-button color="primary" (click)="addProp()" [disabled]="!selectedProp || propMappingForm.pristine || propMappingForm.invalid">Submit</button>
 </div>

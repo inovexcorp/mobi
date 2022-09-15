@@ -22,7 +22,7 @@
  */
 import { map, get, concat, reject, includes, findIndex, sortBy, pick } from 'lodash';
 import { switchMap } from 'rxjs/operators';
-import { Component, Inject, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -31,6 +31,8 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
+import { UtilService } from '../../../shared/services/util.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 
 import './importsBlock.component.scss';
 
@@ -55,8 +57,8 @@ export class ImportsBlockComponent implements OnChanges {
 
     @Input() listItem: OntologyListItem;
 
-    constructor(private dialog: MatDialog, public os: OntologyStateService, @Inject('utilService') private util, 
-        @Inject('propertyManagerService') private pm) {}
+    constructor(private dialog: MatDialog, public os: OntologyStateService, private util: UtilService, 
+        private pm: PropertyManagerService) {}
 
     ngOnChanges(): void {
         this.setImports();

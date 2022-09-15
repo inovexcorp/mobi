@@ -21,13 +21,13 @@
   #L%
   -->
 <div class="property-hierarchy-block h-100 py-1">
-    <info-message *ngIf="!this.os.listItem.dataProperties.flat.length && !this.os.listItem.objectProperties.flat.length && !this.os.listItem.annotations.flat.length">(No properties defined)</info-message>
-    <property-tree *ngIf="this.os.listItem.dataProperties.flat.length || this.os.listItem.objectProperties.flat.length || this.os.listItem.annotations.flat.length"
-                   [datatypeProps]="this.os.listItem.dataProperties.flat"
-                   [objectProps]="this.os.listItem.objectProperties.flat"
-                   [annotationProps]="this.os.listItem.annotations.flat"
-                   [index]="this.os.listItem.editorTabStates.properties.index"
-                   (updateSearch)="this.updateSearch(value)"
-                   [branchId]="this.os.listItem.versionedRdfRecord.branchId">
+    <info-message *ngIf="!os.listItem.dataProperties.flat.length && !os.listItem.objectProperties.flat.length && !os.listItem.annotations.flat.length">(No properties defined)</info-message>
+    <property-tree *ngIf="os.listItem.dataProperties.flat.length || os.listItem.objectProperties.flat.length || os.listItem.annotations.flat.length"
+                   [datatypeProps]="os.listItem.dataProperties.flat"
+                   [objectProps]="os.listItem.objectProperties.flat"
+                   [annotationProps]="os.listItem.annotations.flat"
+                   [index]="os.listItem.editorTabStates.properties.index"
+                   (updateSearch)="updateSearch(value)"
+                   [branchId]="os.listItem.versionedRdfRecord.branchId">
     </property-tree>
 </div>

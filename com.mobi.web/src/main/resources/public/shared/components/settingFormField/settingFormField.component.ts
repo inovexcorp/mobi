@@ -20,10 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnChanges, Inject } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Validators, ValidatorFn, FormControl, FormGroup } from '@angular/forms';
 
 import { SETTING, SHACL, XSD } from '../../../prefixes';
+import { UtilService } from '../../services/util.service';
 
 /**
  * @class shared.SettingFormFieldComponent
@@ -44,7 +45,7 @@ export class SettingFormFieldComponent implements OnChanges {
     validators: Array<ValidatorFn> = [];
     label = '';
         
-    constructor(@Inject('utilService') private util) {}
+    constructor(private util: UtilService) {}
 
     ngOnChanges(): void {
         this.label = this.util.getPropertyValue(this.shaclShape, SHACL + 'name');

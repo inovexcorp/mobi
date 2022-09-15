@@ -25,19 +25,21 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatDialog } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError} from 'rxjs';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
-import { CustomLabelComponent } from '../../../../shared/components/customLabel/customLabel.component';
 import { DatasetSelectComponent } from '../../../../shared/components/datasetSelect/datasetSelect.component';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/newInstanceClassOverlay.component';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 import { ClassBlockHeaderComponent } from './classBlockHeader.component';
-import { of, throwError} from 'rxjs';
+import { ProgressSpinnerService } from '../../../../shared/components/progress-spinner/services/progressSpinner.service';
 
 describe('Class Block Header component', function() {
     let component: ClassBlockHeaderComponent;
@@ -46,9 +48,9 @@ describe('Class Block Header component', function() {
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
-    let policyEnforcementStub;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -56,15 +58,14 @@ describe('Class Block Header component', function() {
             declarations: [
                 ClassBlockHeaderComponent,
                 MockComponent(DatasetSelectComponent),
-                MockComponent(CustomLabelComponent)
             ],
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
                 MockProvider(ExploreUtilsService),
-                MockProvider('prefixes', 'prefixes'),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
+                MockProvider(ProgressSpinnerService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     }) }
@@ -79,9 +80,11 @@ describe('Class Block Header component', function() {
         discoverStateStub = TestBed.get(DiscoverStateService);
         exploreServiceStub = TestBed.get(ExploreService);
         exploreUtilsServiceStub = TestBed.get(ExploreUtilsService);
-        utilStub = TestBed.get('utilService');
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
+        utilStub = TestBed.get(UtilService);
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
         matDialog = TestBed.get(MatDialog);
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -109,7 +112,7 @@ describe('Class Block Header component', function() {
             recordId: '',
             recordTitle: '',
             hasPermissionError: false
-        }
+        };
     });
 
     afterEach(function() {
@@ -128,31 +131,15 @@ describe('Class Block Header component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('form.class-block-header')).length).toEqual(1);
         });
-        it('with a .form-group', function() {
-            expect(element.queryAll(By.css('.form-group')).length).toBe(1);
-        });
-        it('with a custom-label', function() {
-            expect(element.queryAll(By.css('custom-label')).length).toBe(1);
-        });
-        it('with a dataset-select', function() {
-            expect(element.queryAll(By.css('dataset-select')).length).toBe(1);
-        });
-        it('with a .btn.btn-primary', function() {
-            expect(element.queryAll(By.css('.btn.btn-primary')).length).toBe(1);
-        });
-        it('with a .fa.fa-refresh', function() {
-            expect(element.queryAll(By.css('.fa.fa-refresh')).length).toBe(1);
-        });
-        it('with a .btn.btn-link', function() {
-            expect(element.queryAll(By.css('.btn.btn-link')).length).toBe(1);
-        });
-        it('with a .fa.fa-plus', function() {
-            expect(element.queryAll(By.css('.fa.fa-plus')).length).toBe(1);
+        ['dataset-select', 'button.refresh-button', '.fa.fa-refresh', 'button.create-button', '.fa.fa-plus'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(element.queryAll(By.css(test)).length).toBe(1);
+            });
         });
         it('depending on whether a dataset is selected', function() {
             fixture.detectChanges();
-            let refreshButton = element.queryAll(By.css('.btn.btn-primary'))[0];
-            let createButton = element.queryAll(By.css('.btn.btn-link'))[0];
+            const refreshButton = element.queryAll(By.css('button.refresh-button'))[0];
+            const createButton = element.queryAll(By.css('button.create-button'))[0];
 
             expect(refreshButton.nativeElement.disabled).withContext('refreshButton toBeTruthy').toBeTruthy();
             expect(createButton.nativeElement.disabled).withContext('createButton toBeTruthy').toBeTruthy();
@@ -170,28 +157,28 @@ describe('Class Block Header component', function() {
                 discoverStateStub.explore.recordId = 'recordId';
             });
             it('resolves', fakeAsync (function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 exploreUtilsServiceStub.getClasses.and.returnValue(of([{id: '', title: '', deprecated: false}]));
                 component.showCreate();
                 fixture.detectChanges();
                 tick();
-                exploreUtilsServiceStub.getClasses(discoverStateStub.explore.recordId).subscribe(result => {
+                exploreUtilsServiceStub.getClasses(discoverStateStub.explore.recordId).subscribe(() => {
                     expect(matDialog.open).toHaveBeenCalledWith(NewInstanceClassOverlayComponent,
                 {data: { content: [{id: '', title: '', deprecated: false}]}
                     });
-                })
+                });
             }));
             it('rejects', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 exploreUtilsServiceStub.getClasses.and.returnValue(throwError('Error message'));
                 component.showCreate();
                 fixture.detectChanges();
-                tick()
-                expect(utilStub.createErrorToast).toHaveBeenCalled();
+                tick();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialog.open).not.toHaveBeenCalled();
             }));
             it('no modify permission', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 // policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.showCreate();
                 fixture.detectChanges();
@@ -206,7 +193,7 @@ describe('Class Block Header component', function() {
                 component.onSelect('recordId');
                 fixture.detectChanges();
                 expect(discoverStateStub.explore.recordId).toEqual('recordId');
-                expect(component.refresh).toHaveBeenCalled();
+                expect(component.refresh).toHaveBeenCalledWith();
             });
             it('when value parameter is an empty string', function() {
                 spyOn(component, 'refresh');
@@ -222,7 +209,7 @@ describe('Class Block Header component', function() {
                 discoverStateStub.explore.recordId = 'recordId';
             });
             it('resolves and user have permissions to read', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 exploreServiceStub.getClassDetails.and.returnValue(of([{
                     classIRI: 'www.test.com',
                     classTitle: 'test',
@@ -235,7 +222,7 @@ describe('Class Block Header component', function() {
                 component.refresh();
                 fixture.detectChanges();
                 tick();
-                exploreServiceStub.getClassDetails(discoverStateStub.explore.recordId).subscribe(result => {
+                exploreServiceStub.getClassDetails(discoverStateStub.explore.recordId).subscribe(() => {
                     expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith('recordId');
                     expect(discoverStateStub.explore.classDetails).toEqual([{
                         classIRI: 'www.test.com',
@@ -250,7 +237,7 @@ describe('Class Block Header component', function() {
                 });
             }));
             it('rejects and user have permissions to read', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
                 component.refresh();
                 fixture.detectChanges();
@@ -261,7 +248,7 @@ describe('Class Block Header component', function() {
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(false);
             }));
             it('rejects and user does not have permission to read', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
                 component.refresh();
                 fixture.detectChanges();

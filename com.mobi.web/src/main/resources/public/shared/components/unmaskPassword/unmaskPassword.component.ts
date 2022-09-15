@@ -24,7 +24,7 @@ import { Component, Input } from "@angular/core";
 import { AbstractControl, FormBuilder, FormGroup } from "@angular/forms";
 
 /**
- * @name shared.component:unmaskPassword
+ * @class shared.UnmaskPasswordComponent
  *
  * @description
  * `unmask-password` is a component which creates password input with a button to unmask the value for a user to

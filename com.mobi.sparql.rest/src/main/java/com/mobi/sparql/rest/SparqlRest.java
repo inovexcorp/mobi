@@ -65,6 +65,7 @@ import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.impl.MutableTupleQueryResult;
 import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
 import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
@@ -1025,14 +1026,14 @@ public class SparqlRest {
 
             try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
-                queryResults = query.evaluate(); // TODO: NOT SURE evaluateAndReturn
+                queryResults = new MutableTupleQueryResult(query.evaluate());
             }
         } else {
             OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                     ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
             try (RepositoryConnection conn = repository.getConnection()) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
-                queryResults = query.evaluate(); // TODO: NOT SURE evaluateAndReturn
+                queryResults = new MutableTupleQueryResult(query.evaluate());
             }
         }
 

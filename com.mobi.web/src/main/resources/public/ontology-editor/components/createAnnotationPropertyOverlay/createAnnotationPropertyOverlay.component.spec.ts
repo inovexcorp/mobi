@@ -35,7 +35,6 @@ import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
-import { CustomLabelComponent } from '../../../shared/components/customLabel/customLabel.component';
 import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
@@ -71,7 +70,6 @@ describe('Create Annotation Overlay component', function() {
                 CreateAnnotationPropertyOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(StaticIriComponent),
-                MockComponent(CustomLabelComponent),
                 MockComponent(AdvancedLanguageSelectComponent)
             ],
             providers: [

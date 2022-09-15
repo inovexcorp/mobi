@@ -20,22 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ClassHierarchyBlockComponent } from './classHierarchyBlock.component';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { HierarchyTreeComponent } from '../hierarchyTree/hierarchyTree.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { cleanStylesFromDOM, mockOntologyState } from '../../../../../../test/ts/Shared';
-import { By } from '@angular/platform-browser';
+import { ClassHierarchyBlockComponent } from './classHierarchyBlock.component';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 describe('Class Hierarchy Block component', function() {
     let component: ClassHierarchyBlockComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ClassHierarchyBlockComponent>;
-    let ontologyStateStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -46,7 +48,8 @@ describe('Class Hierarchy Block component', function() {
                 MockComponent(InfoMessageComponent)
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState }
+                MockProvider(OntologyStateService)
+                // { provide: OntologyStateService, useClass: mockOntologyState }
             ]
         });
     });
@@ -57,6 +60,7 @@ describe('Class Hierarchy Block component', function() {
         element = fixture.debugElement;
 
         ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyStateStub.listItem = new OntologyListItem();
         fixture.detectChanges();
     });
 
@@ -88,7 +92,7 @@ describe('Class Hierarchy Block component', function() {
             expect(element.queryAll(By.css('info-message')).length).toEqual(1);
             expect(element.queryAll(By.css('hierarchy-tree')).length).toEqual(0);
 
-            ontologyStateStub.listItem.classes.flat = [{}];
+            ontologyStateStub.listItem.classes.flat = [{entityInfo: undefined, entityIRI: '', hasChildren: false, joinedPath: '', path: [], indent: 0}];
             fixture.detectChanges();
             expect(element.queryAll(By.css('info-message')).length).toEqual(0);
             expect(element.queryAll(By.css('hierarchy-tree')).length).toEqual(1);

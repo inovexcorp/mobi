@@ -22,28 +22,31 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialog } from '@angular/material';
+import { MatAutocompleteModule, MatButtonModule, MatCheckboxModule, MatChipsModule, MatDialog, MatIconModule, MatInputModule, MatTooltipModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
-import _ = require('lodash');
 import { configureTestSuite } from 'ng-bullet';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError} from 'rxjs';
-import { MatDialogRef}  from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef}  from '@angular/material/dialog';
 import { HttpHeaders, HttpResponse} from '@angular/common/http';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
 } from '../../../../../../../test/ts/Shared';
 import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
-import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
-import { InstanceFormComponent } from './instanceForm.component';
 import { EditIriOverlayComponent } from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
 import { OWL } from '../../../../prefixes';
-import NewInstancePropertyOverlayComponent from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
+import { NewInstancePropertyOverlayComponent } from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
+import { CopyClipboardDirective } from '../../../../shared/directives/copyClipboard/copyClipboard.directive';
+import { UtilService } from '../../../../shared/services/util.service';
+import { InstanceFormComponent } from './instanceForm.component';
+import { ErrorDisplayComponent } from '../../../../shared/components/errorDisplay/errorDisplay.component';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('Instance Form component', function() {
     let component: InstanceFormComponent;
@@ -52,10 +55,9 @@ describe('Instance Form component', function() {
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let dialogStub : jasmine.SpyObj<MatDialog>;
-    let policyEnforcementStub;
     let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
     let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
     const iriObj =   {
@@ -66,9 +68,23 @@ describe('Instance Form component', function() {
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ 
+                NoopAnimationsModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatTooltipModule,
+                MatCheckboxModule,
+                MatChipsModule,
+                MatInputModule,
+                MatAutocompleteModule,
+                MatIconModule,
+                MatButtonModule,
+                MatDialogModule
+             ],
             declarations: [
-                InstanceFormComponent
+                InstanceFormComponent,
+                MockDirective(CopyClipboardDirective),
+                MockComponent(ErrorDisplayComponent)
             ],
             providers: [
                 MockProvider(ExploreService),
@@ -76,9 +92,7 @@ describe('Instance Form component', function() {
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
                 MockProvider(SplitIRIPipe),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -90,10 +104,9 @@ describe('Instance Form component', function() {
         dialogStub = TestBed.get(MatDialog);
         exploreServiceStub = TestBed.get(ExploreService);
         discoverStateStub = TestBed.get(DiscoverStateService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
         exploreUtilsServiceStub = TestBed.get(ExploreUtilsService);
         splitIriStub = TestBed.get (SplitIRIPipe);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -188,6 +201,10 @@ describe('Instance Form component', function() {
         element = null;
         fixture = null;
         discoverStateStub = null;
+        exploreServiceStub = null;
+        dialogStub = null;
+        exploreUtilsServiceStub = null;
+        splitIriStub = null;
     });
 
     describe('controller bound variables', function() {
@@ -215,8 +232,8 @@ describe('Instance Form component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.form-group')).length).toBe(4);
         });
-        it('with a custom-label', function() {
-            expect(element.queryAll(By.css('custom-label')).length).toBe(0);
+        it('with a .field-label', function() {
+            expect(element.queryAll(By.css('.field-label')).length).toBe(0);
         });
         it('with a .boolean-property', async () => {
             component.ngOnInit();
@@ -249,8 +266,8 @@ describe('Instance Form component', function() {
         it('with a .btn-container.clearfix', function() {
             expect(element.queryAll(By.css('.btn-container.clearfix')).length).toBe(1);
         });
-        it('with a .btn.btn-link', function() {
-            expect(element.queryAll(By.css('.btn.btn-link')).length).toBe(1);
+        it('with a button.mat-button', function() {
+            expect(element.queryAll(By.css('button.mat-button')).length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -354,7 +371,7 @@ describe('Instance Form component', function() {
                         });
                         it('with filtering', function () {
                             exploreUtilsServiceStub.contains.and.callFake(function (string, part) {
-                                return _.includes(_.toLower(string), _.toLower(part));
+                                return string.toLowerCase().includes(part.toLowerCase());
                             });
                             component.searchText = {propertyId: '3'};
                             component.getOptions('propertyId');
@@ -456,7 +473,7 @@ describe('Instance Form component', function() {
                         'Must have at most 1 value(s) for propertyId3',
                     ];
                     expect(component.getMissingProperties()).toEqual(expected);
-                    _.forEach(['propertyId', 'propertyId2', 'propertyId3'], function(item) {
+                    ['propertyId', 'propertyId2', 'propertyId3'].forEach(function(item) {
                         expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith(item);
                     });
                     fixture.detectChanges();

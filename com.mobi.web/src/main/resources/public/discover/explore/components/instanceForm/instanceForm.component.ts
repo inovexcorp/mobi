@@ -22,11 +22,11 @@
  */
 import { MatDialog } from '@angular/material/dialog';
 import { filter, some, forEach, concat, includes, uniq, map, join, find, get, flatten, remove } from 'lodash';
-import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { MatChipInputEvent } from '@angular/material/chips';
 
-import NewInstancePropertyOverlayComponent from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
+import { NewInstancePropertyOverlayComponent } from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import { EditIriOverlayComponent } from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreService } from '../../../services/explore.service';
@@ -37,6 +37,7 @@ import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
 import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { SplitIRI } from '../../../../shared/models/splitIRI.interface';
 import { PropertyDetails } from '../../../models/propertyDetails.interface';
+import { UtilService } from '../../../../shared/services/util.service';
 
 /**
  * @class explore.InstanceFormComponent
@@ -62,7 +63,7 @@ export class InstanceFormComponent implements OnInit {
     isInstancePropertyDisabled : boolean;
 
     constructor(private es: ExploreService, public eu: ExploreUtilsService, private ds: DiscoverStateService,
-                private dialog: MatDialog, @Inject('utilService') private util, private splitIRI: SplitIRIPipe) {
+                private dialog: MatDialog, private util: UtilService, private splitIRI: SplitIRIPipe) {
     }
 
     properties: PropertyDetails[] = [{

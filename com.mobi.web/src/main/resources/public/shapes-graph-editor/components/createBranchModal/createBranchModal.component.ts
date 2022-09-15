@@ -21,13 +21,14 @@
  * #L%
  */
 import { get } from 'lodash';
-import { Inject, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
 import { FormBuilder, Validators } from '@angular/forms';
 import { first } from 'rxjs/operators';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface BranchConfig {
     title: string,
@@ -52,9 +53,8 @@ export class CreateBranchModal {
         description: ['']
     });
 
-    constructor(private state: ShapesGraphStateService, @Inject('utilService') private util,
-                private cm: CatalogManagerService, private fb: FormBuilder,
-                private dialogRef: MatDialogRef<CreateBranchModal>) {}
+    constructor(private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
+        private fb: FormBuilder, private dialogRef: MatDialogRef<CreateBranchModal>) {}
 
     createBranch(): Promise<any> {
         const branchConfig: BranchConfig = {

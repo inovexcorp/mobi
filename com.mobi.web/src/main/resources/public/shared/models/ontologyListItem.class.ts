@@ -21,7 +21,6 @@
  * #L%
  */
 import { MatSnackBarRef, SimpleSnackBar } from '@angular/material';
-import * as angular from 'angular';
 import { EntityNames } from './entityNames.interface';
 import { Hierarchy } from './hierarchy.interface';
 import { HierarchyNode } from './hierarchyNode.interface';
@@ -33,43 +32,47 @@ import { cloneDeep } from 'lodash';
 const ontologyEditorTabStates = {
     project: {
         entityIRI: '',
-        component: undefined,
-        targetedSpinnerId: 'project-entity-spinner'
+        element: undefined,
     },
     overview: {
         searchText: '',
         open: {},
-        targetedSpinnerId: 'overview-entity-spinner'
+        element: undefined,
+        usagesElement: undefined
     },
     classes: {
         searchText: '',
         index: 0,
         open: {},
-        targetedSpinnerId: 'classes-entity-spinner'
+        element: undefined,
+        usagesElement: undefined
     },
     properties: {
         searchText: '',
         index: 0,
         open: {},
-        targetedSpinnerId: 'properties-entity-spinner'
+        element: undefined,
+        usagesElement: undefined
     },
     individuals: {
         searchText: '',
         index: 0,
         open: {},
-        targetedSpinnerId: 'individuals-entity-spinner'
+        element: undefined,
     },
     concepts: {
         searchText: '',
         index: 0,
         open: {},
-        targetedSpinnerId: 'concepts-entity-spinner'
+        element: undefined,
+        usagesElement: undefined
     },
     schemes: {
         searchText: '',
         index: 0,
         open: {},
-        targetedSpinnerId: 'schemes-entity-spinner'
+        element: undefined,
+        usagesElement: undefined
     },
     search: { },
     savedChanges: { },
@@ -83,13 +86,12 @@ export class OntologyListItem extends VersionedRdfListItem {
     tabIndex: number;
     ontologyId: string
     isVocabulary: boolean
-    editorTabStates: any // TODO better typing
+    editorTabStates: any
     importedOntologies: {id: string, ontologyId: string}[]
     importedOntologyIds: string[]
     createdFromExists: boolean
     userCanModify: boolean
     userCanModifyMaster: boolean
-    // TODO figure out if this can be initialized here instead of in ontologyStateService. Do this when we upgrade property manager service.
     dataPropertyRange: {[key: string]: string}
     derivedConcepts: string[]
     derivedConceptSchemes: string[]

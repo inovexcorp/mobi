@@ -20,13 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { ClassMappingOverlayComponent } from '../classMappingOverlay/classMappingOverlay.component';
 import { MappingConfigOverlayComponent } from '../mappingConfigOverlay/mappingConfigOverlay.component';
 import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/runMappingDatasetOverlay.component';
@@ -54,7 +55,7 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
     classMappings = [];
 
     constructor(private dialog: MatDialog, public state: MapperStateService, public dm: DelimitedManagerService,
-        @Inject('utilService') public util) {}
+        public util: UtilService) {}
         
     ngOnInit(): void {
         this.setClassMappings();

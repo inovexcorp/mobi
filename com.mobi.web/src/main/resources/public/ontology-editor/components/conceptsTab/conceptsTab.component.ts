@@ -20,13 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { includes, concat, filter } from 'lodash';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 
 /**
  * @class ontology-editor.ConceptsTabComponent
@@ -42,15 +43,25 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
     selector: 'concepts-tab',
     templateUrl: './conceptsTab.component.html'
 })
-export class ConceptsTabComponent implements OnInit {
+export class ConceptsTabComponent implements OnInit, OnDestroy {
+    highlightText = '';
+    @ViewChild('conceptsTab') conceptsTab: ElementRef;
+    
     constructor(public os: OntologyStateService, public om: OntologyManagerService,
-                @Inject('propertyManagerService') public pm, private dialog: MatDialog) {}
+                public pm: PropertyManagerService, private dialog: MatDialog) {}
 
     relationshipList = [];
 
     ngOnInit(): void {
         const schemeRelationships = filter(this.pm.conceptSchemeRelationshipList, iri => includes(this.os.listItem.iriList, iri));
         this.relationshipList = concat(this.os.listItem.derivedSemanticRelations, schemeRelationships);
+        this.os.listItem.editorTabStates.concepts.element = this.conceptsTab;
+        this.highlightText = this.os.listItem.editorTabStates.classes.searchText;
+    }
+    ngOnDestroy(): void {
+        if (this.os.listItem) {
+            this.os.listItem.editorTabStates.concepts.element = undefined;
+        }
     }
     showDeleteConfirmation(): void {
         this.dialog.open(ConfirmModalComponent, {

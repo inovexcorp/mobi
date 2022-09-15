@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { Component, Inject, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material';
 import { filter, remove, set, get, find } from 'lodash';
@@ -32,6 +32,7 @@ import { FOAF, USER, XSD } from '../../../prefixes';
 import { Group } from '../../models/group.interface';
 import { Policy } from '../../models/policy.interface';
 import { User } from '../../models/user.interface';
+import { LoginManagerService } from '../../services/loginManager.service';
 import { PolicyManagerService } from '../../services/policyManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 
@@ -78,7 +79,7 @@ export class UserAccessControlsComponent implements OnInit {
     availableGroups: Group[] = [];
     filteredAvailableGroups: Observable<Group[]>;
 
-    constructor(private pm: PolicyManagerService, @Inject('loginManagerService') private lm,
+    constructor(private pm: PolicyManagerService, private lm: LoginManagerService,
         public um: UserManagerService) { }
 
     ngOnInit(): void {
@@ -119,7 +120,7 @@ export class UserAccessControlsComponent implements OnInit {
     }
     selectUser(event: MatAutocompleteSelectedEvent, auto: MatAutocomplete): void {
         this.addUser(event.option.value);
-        setTimeout(_ => {
+        setTimeout(() => {
             auto.options.forEach((item) => {
                 item.deselect();
             });
@@ -147,7 +148,7 @@ export class UserAccessControlsComponent implements OnInit {
     }
     selectGroup(event: MatAutocompleteSelectedEvent, auto: MatAutocomplete): void {
         this.addGroup(event.option.value);
-        setTimeout(_ => {
+        setTimeout(() => {
             auto.options.forEach((item) => {
                 item.deselect();
             });

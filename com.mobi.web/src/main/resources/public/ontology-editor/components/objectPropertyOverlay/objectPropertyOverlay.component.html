@@ -20,28 +20,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="object-property-overlay">
-    <h1 mat-dialog-title>Add Object Property Value</h1>
-    <form mat-dialog-content [formGroup]="objectPropertyForm" class="object-property-overlay-form">
-        <!-- object property list -->
-        <mat-form-field class="w-100">
-            <mat-label>Values</mat-label>
-            <input type="text"
-                   matInput
-                   formControlName="propertySelect"
-                   placeholder="Select values"
-                   [matAutocomplete]="autoComplete">
-            <mat-autocomplete #autoComplete>
-                <mat-option *ngFor="let value of filteredIriList | async" [value]="value">
-                    {{this.os.getEntityNameByListItem(value)}}
+<h1 mat-dialog-title>Add Object Property Value</h1>
+<form mat-dialog-content [formGroup]="objectPropertyForm" class="object-property-overlay-form">
+    <!-- object property list -->
+    <mat-form-field class="w-100">
+        <mat-label>Object Property</mat-label>
+        <input type="text"
+                matInput
+                formControlName="propertySelect"
+                placeholder="Select an object property"
+                [matAutocomplete]="autoComplete">
+        <mat-autocomplete #autoComplete="matAutocomplete" [displayWith]="getName.bind(this)">
+            <mat-optgroup *ngFor="let group of filteredIriList | async" [label]="group.namespace">
+                <mat-option *ngFor="let option of group.options" [value]="option.item" [title]="option.item">
+                    {{option.name}}
                 </mat-option>
-            </mat-autocomplete>
-        </mat-form-field>
-        <!-- value -->
-<!--    <iri-select-ontology bind-model="dvm.os.propertyValue" display-text="'Value'" select-list="dvm.individuals" multi-select="false" change-event="dvm.os.propertyValue = value"></iri-select-ontology>-->
-    </form>
-    <div mat-dialog-actions class="object-property-overlay-actions">
-        <button mat-raised-button [mat-dialog-close]="false" (click)="cancel()">Cancel</button>
-        <button mat-raised-button color="primary" (click)="addProperty()" [disabled]="!objectPropertyForm.valid">Submit</button>
-    </div>
+            </mat-optgroup>
+        </mat-autocomplete>
+    </mat-form-field>
+    <!-- value -->
+    <iri-select-ontology [(selected)]="propertyValue" [selectList]="individuals" displayText="Value" [singleSelect]="true"></iri-select-ontology>
+</form>
+<div mat-dialog-actions class="object-property-overlay-actions">
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="addProperty()" [disabled]="!objectPropertyForm.valid || !propertyValue.length">Submit</button>
 </div>

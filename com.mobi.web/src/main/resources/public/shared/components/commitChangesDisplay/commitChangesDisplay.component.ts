@@ -21,28 +21,30 @@
  * #L%
  */
 
-import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { map, forEach, filter, union, orderBy, isEmpty } from 'lodash';
 
 import { CommitChange } from '../../models/commitChange.interface';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { UtilService } from '../../services/util.service';
 
 import './commitChangesDisplay.component.scss';
+
 /**
- * @ngdoc component
- * @name shared.component:commitChangesDisplay
- * @requires shared.service:utilService
+ * @class shared.CommitChangesDisplayComponent
  *
- * @description
- * `commitChangesDisplay` is a component that creates a sequence of divs displaying the changes made to entities
- * separated by additions and deletions. Each changes display uses the `.property-values` class. The display of an
- * entity's name can be optionally controlled by the provided `entityNameFunc` function and defaults to the
- * {@link shared.service:utilService beautified local name} of the IRI.
+ * A component that creates a sequence of divs displaying the changes made to entities separated by additions and
+ * deletions. Each changes display uses the `.property-values` class. The display of an entity's name can be optionally
+ * controlled by the provided `entityNameFunc` function and defaults to the
+ * {@link shared.UtilService beautified local name} of the IRI.
  *
- * @param {Object[]} additions An array of JSON-LD objects representing statements added
- * @param {Object[]} deletions An array of JSON-LD objects representing statements deleted
- * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The component will pass the IRI of the entity as the only argument
- * @param {Function} showMoreResultsFunc A function retrieve more difference results. Will pass the limit and offset as arguments.
+ * @param {JSONLDObject[]} additions An array of JSON-LD objects representing statements added
+ * @param {JSONLDObject[]} deletions An array of JSON-LD objects representing statements deleted
+ * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The 
+ * component will pass the IRI of the entity as the only argument
+ * @param {Function} showMoreResultsFunc A function retrieve more difference results. Will pass the limit and offset as 
+ * arguments.
  * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
  * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
  */
@@ -54,7 +56,7 @@ import './commitChangesDisplay.component.scss';
 export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     @Input() additions: JSONLDObject[];
     @Input() deletions: JSONLDObject[];
-    @Input() entityNameFunc?: (args: any) => string;
+    @Input() entityNameFunc?: (entityIRI: string, os: OntologyStateService) => string;
     @Input() hasMoreResults: boolean;
     @Input() startIndex?: number;
 
@@ -67,7 +69,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     results: { [key: string]: { additions: CommitChange[], deletions: CommitChange[] } } = {};
     showMore = false;
     
-    constructor(@Inject('utilService') private util) {}
+    constructor(private util: UtilService, public os: OntologyStateService) {}
 
     ngOnInit(): void {
         if (this.startIndex) {

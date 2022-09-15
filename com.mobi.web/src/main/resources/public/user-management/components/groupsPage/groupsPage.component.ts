@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialog, MatSlideToggleChange } from '@angular/material';
 import { includes, get, noop } from 'lodash';
 
@@ -31,6 +31,8 @@ import { CreateGroupOverlayComponent } from '../createGroupOverlay/createGroupOv
 import { EditGroupInfoOverlayComponent } from '../editGroupInfoOverlay/editGroupInfoOverlay.component';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 import './groupsPage.component.scss';
 
@@ -52,9 +54,8 @@ export class GroupsPageComponent implements OnInit {
     filteredGroups: Group[] = [];
     selectedAdmin = false;
 
-    constructor(private dialog: MatDialog, public state: UserStateService,
-        private um: UserManagerService, @Inject('loginManagerService') private lm,
-        @Inject('utilService') private util) {}
+    constructor(private dialog: MatDialog, public state: UserStateService, private um: UserManagerService,
+        private lm: LoginManagerService, private util: UtilService) {}
     
     ngOnInit(): void {
         this.filteredGroups = this.um.groups;

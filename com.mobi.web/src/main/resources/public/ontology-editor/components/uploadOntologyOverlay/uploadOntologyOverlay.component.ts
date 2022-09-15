@@ -109,7 +109,7 @@ export class UploadOntologyOverlayComponent implements OnInit {
         })).subscribe(() => {
             _statusSubject.next('complete');
         }, error => {
-            _statusSubject.next('error');  // TODO this is not removing the spinner
+            _statusSubject.next('error');
             this.os.addErrorToUploadItem(id, error);
             // return a new disposable stream and keep the original stream alive.
             return of(false);
@@ -136,7 +136,7 @@ export class UploadOntologyOverlayComponent implements OnInit {
 
     private _setFormValues() {
         this.file = pullAt(this.os.uploadFiles, 0)[0];
-        this.uploadOntologyForm.controls.title.setValue(this.file.name.replace(/\.[^/.]+$/, '')); // TODO fix faultly logic `Compressed upload must only contain a single file` error
+        this.uploadOntologyForm.controls.title.setValue(this.file.name.replace(/\.[^/.]+$/, ''));
         this.uploadOntologyForm.controls.description.setValue('');
         this.uploadOntologyForm.controls.keywords.setValue([]);
     }

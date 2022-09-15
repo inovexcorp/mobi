@@ -26,9 +26,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { of, throwError } from 'rxjs';
 
 import {
-    mockOntologyState,
-    mockOntologyManager,
-    mockUtil
+    cleanStylesFromDOM
 } from '../../../../../test/ts/Shared';
 import { SharedModule } from '../../shared/shared.module';
 import { listItem, visData } from './testData';
@@ -40,13 +38,14 @@ import { HierarchyResponse } from '../../shared/models/hierarchyResponse.interfa
 import { EntityNames } from '../../shared/models/entityNames.interface';
 import { IriList } from '../../shared/models/iriList.interface';
 import { PropertyToRanges } from '../../shared/models/propertyToRanges.interface';
+import { UtilService } from '../../shared/services/util.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('OntologyVisualization Service', () => {
     let visualizationStub : OntologyVisualizationService;
     let httpMock: HttpTestingController;
-    let ontologyStateStub: mockOntologyState;
-    let ontologyManagerServiceStub: mockOntologyManager;
-    let utilStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
     let mockRequest = (obj) => of(obj);
     let inProgressCommitObj = {
         additions: [],
@@ -58,9 +57,9 @@ describe('OntologyVisualization Service', () => {
             imports: [HttpClientTestingModule, SharedModule],
             providers: [
                 { provide: 'OntologyVisualizationService' },
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyStateService),
+                MockProvider(OntologyManagerService),
+                MockProvider(UtilService),
             ]
         });
     });
@@ -70,7 +69,6 @@ describe('OntologyVisualization Service', () => {
         httpMock = TestBed.get(HttpTestingController);
         ontologyStateStub = TestBed.get(OntologyStateService);
         ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
         const listItemX: OntologyListItem = listItem;
         ontologyStateStub.listItem = Object.freeze(listItem as OntologyListItem);
         ontologyStateStub.addToClassIRIs = jasmine.createSpy('addToClassIRIs').and.callFake((items, iri) => {
@@ -124,8 +122,11 @@ describe('OntologyVisualization Service', () => {
     });
 
     afterEach(() => {
+        cleanStylesFromDOM();
         httpMock.verify();
         visualizationStub = null;
+        ontologyManagerServiceStub = null;
+        ontologyStateStub = null;
     });
 
     describe('should initialize with the correct data', function() {

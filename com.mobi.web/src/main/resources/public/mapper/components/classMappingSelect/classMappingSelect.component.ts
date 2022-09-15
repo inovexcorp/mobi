@@ -21,8 +21,8 @@
  * #L%
  */
 
-import { Component, ElementRef, EventEmitter, Inject, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { FormControl, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger, MatDialog } from '@angular/material';
 import { includes } from 'lodash';
 import { Observable } from 'rxjs';
@@ -30,6 +30,7 @@ import { map, startWith } from 'rxjs/operators';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class mapper.ClassMappingSelectComponent
@@ -49,13 +50,18 @@ export class ClassMappingSelectComponent implements OnInit {
     @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
     @ViewChild('textInput') textInput: ElementRef;
 
-    classMappingControl: FormControl = new FormControl();
+    classMappingControl: FormControl = new FormControl({value: '', disabled: true}, Validators.required)
 
     private _classMappingId: string;
 
     @Input() classMappings: JSONLDObject[];
     @Input() set classMappingId(value: string) {
         this._classMappingId = value;
+        if (!this.classMappings || !this.classMappings.length) {
+            this.classMappingControl.disable();
+        } else {
+            this.classMappingControl.enable();
+        }
         this.classMappingControl.setValue(this.classMappings.find(classMapping => classMapping['@id'] === value));
     }
 
@@ -68,7 +74,7 @@ export class ClassMappingSelectComponent implements OnInit {
 
     filteredClassMappings: Observable<JSONLDObject[]>;
 
-    constructor(private dialog: MatDialog, @Inject('utilService') private util) {}
+    constructor(private dialog: MatDialog, private util: UtilService) {}
 
     ngOnInit(): void {
         this.filteredClassMappings = this.classMappingControl.valueChanges

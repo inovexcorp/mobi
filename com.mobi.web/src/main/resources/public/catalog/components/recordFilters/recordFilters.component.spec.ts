@@ -33,13 +33,13 @@ import { of } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { RecordFiltersComponent } from './recordFilters.component';
 
 describe('Record Filters component', function() {
@@ -47,6 +47,7 @@ describe('Record Filters component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<RecordFiltersComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalogId';
     const keywordObject = function(keyword, count): KeywordCount {
@@ -72,7 +73,7 @@ describe('Record Filters component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -82,6 +83,8 @@ describe('Record Filters component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
+        utilStub = TestBed.get(UtilService);
+        utilStub.getBeautifulIRI.and.callFake(a => a);
 
         this.records = [keywordObject('keyword1', 6)];
 
@@ -100,6 +103,7 @@ describe('Record Filters component', function() {
         element = null;
         fixture = null;
         catalogManagerStub = null;
+        utilStub = null;
     });
 
     describe('initializes correctly', function() {

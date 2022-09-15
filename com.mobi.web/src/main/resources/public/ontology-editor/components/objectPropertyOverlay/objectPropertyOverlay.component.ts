@@ -20,17 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {cloneDeep, includes} from 'lodash';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import {cloneDeep} from 'lodash';
+import { MatDialogRef } from '@angular/material/dialog';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { debounceTime, startWith, map } from 'rxjs/operators';
 
 import { ObjectPropertyBlockComponent } from '../objectPropertyBlock/objectPropertyBlock.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 
-import './objectPropertyOverlay.component.scss';
+interface PropGrouping {
+    namespace: string,
+    options: PropOption[]
+}
+
+interface PropOption {
+    item: string,
+    name: string
+}
 
 /**
  * @class ontology-editor.ObjectPropertyOverlayComponent
@@ -39,57 +49,47 @@ import './objectPropertyOverlay.component.scss';
  * {@link shared.OntologyStateService#listItem selected individual}. The form in the modal contains a `mat-autocomplete`
  * of all the object properties in the ontology and an {@link ontology-editor.IriSelectOntologyComponent} of all the
  * valid individuals for the object property value based on the range of the selected property. 
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
  */
 @Component({
     templateUrl: './objectPropertyOverlay.component.html',
     selector: 'object-property-overlay'
 })
 export class ObjectPropertyOverlayComponent implements OnInit {
-    individuals = {};
-    valueList;
+    individuals: {[key: string]: string} = {};
+    objectProperties: string[] = [];
+    filteredIriList: Observable<PropGrouping[]>;
+    propertyValue: string[] = []; // Array but only expect one value
+
     objectPropertyForm = this.fb.group({
-        propertySelect: [{ value: '', disabled: false }],
-        propertyValue: [{ value: '', disabled: false }]
-    })
-    filteredIriList: Observable<[]>;
+        propertySelect: ['', [Validators.required]],
+    });
+
     constructor(public os:OntologyStateService,
-                @Inject('utilService') private util,
-                @Inject('propertyManagerService') private pm,
+                private util: UtilService,
+                private pm: PropertyManagerService,
                 private fb: FormBuilder,
-                private dialogRef: MatDialogRef<ObjectPropertyBlockComponent>,
-                @Inject(MAT_DIALOG_DATA) public data: {
-                            editingProperty: boolean,
-                            propertySelect: string,
-                            propertyValue: string,
-                            propertyIndex: number
-                        }){}
+                private dialogRef: MatDialogRef<ObjectPropertyBlockComponent>) {}
 
     ngOnInit(): void {
-        this.valueList = this.os.getSelectList(Object.keys(this.os.listItem.objectProperties.iris), '', iri => this.os.getEntityNameByListItem(iri));
+        this.objectProperties = Object.keys(this.os.listItem.objectProperties.iris);
         this.filteredIriList = this.objectPropertyForm.controls.propertySelect.valueChanges
             .pipe(
                 debounceTime(500),
-                startWith<string>(''),
-                map(val => {
-                    if (!this.valueList) {
-                        return [];
-                    }
-                    const searchText = typeof val === 'string' ?
-                        val : val ? val : '';
-                    const filtereList = this.valueList.filter(iri => includes(this.os.getEntityNameByListItem(iri).toLowerCase(), searchText.toLowerCase()));
-                    filtereList.sort((val1, val2) => this.os.getEntityNameByListItem(val1).localeCompare(this.os.getEntityNameByListItem(val2)));
-                    return filtereList;
-                })
+                startWith(''),
+                map(val => this.filter(val || ''))
             );
         this.individuals = cloneDeep(this.os.listItem.individuals.iris);
         delete this.individuals[this.os.getActiveEntityIRI()];
     }
+    filter(val: string): PropGrouping[] {
+        if (!this.objectProperties || !this.objectProperties.length) {
+            return [];
+        }
+        return this.os.getGroupedSelectList(this.objectProperties, val, iri => this.os.getEntityNameByListItem(iri));
+    }
     addProperty(): void {
         const select = this.objectPropertyForm.controls.propertySelect.value;
-        const value = this.objectPropertyForm.controls.propertyValue.value;
+        const value = this.propertyValue[0];
         const valueObj = {'@id': value};
         const added = this.pm.addId(this.os.listItem.selected, select, value);
 
@@ -112,7 +112,7 @@ export class ObjectPropertyOverlayComponent implements OnInit {
         }
         this.dialogRef.close();
     }
-    cancel(): void {
-        this.dialogRef.close();
+    getName(val: string): string {
+        return val ? this.os.getEntityNameByListItem(val) : '';
     }
 }

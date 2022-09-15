@@ -30,7 +30,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockOntologyManager, mockPropertyManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { DELIM, RDF, RDFS, XSD } from '../../../prefixes';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -41,8 +41,11 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
 import { ColumnSelectComponent } from '../columnSelect/columnSelect.component';
 import { PropPreviewComponent } from '../propPreview/propPreview.component';
 import { PropSelectComponent } from '../propSelect/propSelect.component';
-import { PropMappingOverlayComponent } from './propMappingOverlay.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { PropMappingOverlayComponent } from './propMappingOverlay.component';
+import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
 
 describe('Prop Mapping Overlay component', function() {
     let component: PropMappingOverlayComponent;
@@ -51,11 +54,10 @@ describe('Prop Mapping Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<PropMappingOverlayComponent>>;
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let ontologyManagerStub;
-    let propertyManagerStub;
-    let utilStub;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
-    const language = {label: 'English', value: 'en'};
     const datatypeMap = {
         'boolean': XSD
     };
@@ -99,33 +101,33 @@ describe('Prop Mapping Overlay component', function() {
                 PropMappingOverlayComponent,
                 MockComponent(PropSelectComponent),
                 MockComponent(PropPreviewComponent),
-                MockComponent(ColumnSelectComponent)
+                MockComponent(ColumnSelectComponent),
+                MockComponent(LanguageSelectComponent)
             ],
             providers: [
                 MockProvider(MappingManagerService),
                 MockProvider(MapperStateService),
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyManagerService),
+                MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         }).overrideComponent(PropMappingOverlayComponent, {
             set: { changeDetection: ChangeDetectionStrategy.Default }
-        })
+        });
     });
 
     beforeEach(function() {
-        fixture = TestBed.createComponent(PropMappingOverlayComponent)
+        fixture = TestBed.createComponent(PropMappingOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mapperStateStub = TestBed.get(MapperStateService);
         mappingManagerStub = TestBed.get(MappingManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        propertyManagerStub = TestBed.get('propertyManagerService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
 
-        propertyManagerStub.languageList = [language];
         propertyManagerStub.getDatatypeMap.and.returnValue(datatypeMap);
         utilStub.getBeautifulIRI.and.callFake(a => a);
     });
@@ -151,7 +153,6 @@ describe('Prop Mapping Overlay component', function() {
         it('if a new property mapping is being created', function() {
             mapperStateStub.newProp = true;
             component.ngOnInit();
-            expect(component.languages).toEqual([language]);
             expect(component.datatypeMap).toEqual(datatypeMap);
             expect(component.availableProps).toEqual([]);
             expect(component.setupEditProperty).not.toHaveBeenCalled();
@@ -160,7 +161,6 @@ describe('Prop Mapping Overlay component', function() {
             mapperStateStub.newProp = false;
             mapperStateStub.selectedPropMappingId = propMappingId;
             component.ngOnInit();
-            expect(component.languages).toEqual([language]);
             expect(component.datatypeMap).toEqual(datatypeMap);
             expect(component.availableProps).toEqual([]);
             expect(component.setupEditProperty).toHaveBeenCalledWith();
@@ -576,6 +576,7 @@ describe('Prop Mapping Overlay component', function() {
                     });
                 });
                 it('and it does not have a datatype set', function() {
+                    utilStub.getPropertyId.and.returnValue('');
                     component.setupEditProperty();
                     expect(this.mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
                     expect(component.selectedPropMapping).toEqual(propMapping);
@@ -662,7 +663,7 @@ describe('Prop Mapping Overlay component', function() {
                         expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
                         expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(1);
                         expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(1);
-                        expect(element.queryAll(By.css('.language-select')).length).toBe(0);
+                        expect(element.queryAll(By.css('language-select')).length).toBe(0);
                     });
                     it('and is a lang string', function () {
                         component.langString = true;
@@ -672,7 +673,7 @@ describe('Prop Mapping Overlay component', function() {
                         expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
                         expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(1);
                         expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(1);
-                        expect(element.queryAll(By.css('.language-select')).length).toBe(1);
+                        expect(element.queryAll(By.css('language-select')).length).toBe(1);
                     });
                 });
             });

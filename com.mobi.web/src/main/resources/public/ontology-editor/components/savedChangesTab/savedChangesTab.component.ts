@@ -22,7 +22,7 @@
  */
 import { get, chunk, intersection, find, concat, forEach, sortBy } from 'lodash';
 import { first, switchMap } from 'rxjs/operators';
-import { Component, Inject, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -31,6 +31,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { CATALOG, OWL, RDF, SKOS } from '../../../prefixes';
 import { CommitChange } from '../../../shared/models/commitChange.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface ChangesItem {
     id: string,
@@ -62,7 +63,15 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
     @Input() deletions: JSONLDObject[];
 
     typeIRI = RDF + 'type';
-    types = [OWL + 'Class', OWL + 'ObjectProperty', OWL + 'DatatypeProperty', OWL + 'AnnotationProperty', OWL + 'NamedIndividual', SKOS + 'Concept', SKOS + 'ConceptScheme'];
+    types = [
+        OWL + 'Class',
+        OWL + 'ObjectProperty',
+        OWL + 'DatatypeProperty',
+        OWL + 'AnnotationProperty',
+        OWL + 'NamedIndividual',
+        SKOS + 'Concept',
+        SKOS + 'ConceptScheme'
+    ];
     list: ChangesItem[] = [];
     showList: ChangesItem[] = [];
     checkedStatements = {
@@ -75,7 +84,8 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
     error = '';
     chunks = [];
 
-    constructor(public os: OntologyStateService, private om: OntologyManagerService, private cm: CatalogManagerService, @Inject('utilService') private util) {}
+    constructor(public os: OntologyStateService, private om: OntologyManagerService, private cm: CatalogManagerService,
+        private util: UtilService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');

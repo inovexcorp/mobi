@@ -32,6 +32,9 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { RDFS } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
+import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 
 import './axiomOverlay.component.scss';
 
@@ -80,8 +83,8 @@ export class AxiomOverlayComponent implements OnInit {
     axiomChoice = new FormControl('');
 
     constructor( private os: OntologyStateService, private om: OntologyManagerService, private splitIRI: SplitIRIPipe,
-                 private dialogRef: MatDialogRef<AxiomOverlayComponent>, @Inject('utilService') private util,
-                 @Inject('manchesterConverterService') private mc, @Inject('propertyManagerService') private pm,
+                 private dialogRef: MatDialogRef<AxiomOverlayComponent>, private util: UtilService,
+                 private mc: ManchesterConverterService, private pm: PropertyManagerService,
                  @Inject(MAT_DIALOG_DATA) public data: {axiomList: {iri: string, valuesKey: string}[]} ) {
     }
 

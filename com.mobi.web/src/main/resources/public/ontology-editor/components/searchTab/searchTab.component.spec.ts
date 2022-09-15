@@ -20,14 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { SearchTabComponent } from './searchTab.component';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
-import { mockOntologyState, mockOntologyManager, mockHttpService, cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { By } from '@angular/platform-browser';
+import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { TreeItemComponent } from '../treeItem/treeItem.component';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
@@ -37,17 +40,16 @@ import { WarningMessageComponent } from '../../../shared/components/warningMessa
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { TrustedHtmlPipe } from '../../../shared/pipes/trustedHtml.pipe';
-import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
-import { cloneDeep } from 'lodash';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { SearchTabComponent } from './searchTab.component';
 
 describe('Search Tab component', function() {
     let component: SearchTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SearchTabComponent>;
-    let ontologyStateStub;
-    let ontologyManagerStub;
-    let httpStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -65,9 +67,9 @@ describe('Search Tab component', function() {
                 MockPipe(TrustedHtmlPipe)
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'httpService', useClass: mockHttpService }
+                MockProvider(OntologyStateService),
+                MockProvider(OntologyManagerService),
+                MockProvider(ProgressSpinnerService)
             ]
         });
     });
@@ -79,7 +81,6 @@ describe('Search Tab component', function() {
 
         ontologyStateStub = TestBed.get(OntologyStateService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        httpStub = TestBed.get('httpService');
 
         this.recordId = 'recordId';
         this.branchId = 'branchId';
@@ -93,11 +94,10 @@ describe('Search Tab component', function() {
                 '@value': 'value'
             }]
         };
-        ontologyStateStub.listItem.versionedRdfRecord = {
-            recordId: this.recordId,
-            branchId: this.branchId,
-            commitId: this.commitId
-        };
+        ontologyStateStub.listItem = new OntologyListItem();
+        ontologyStateStub.listItem.versionedRdfRecord.recordId = this.recordId;
+        ontologyStateStub.listItem.versionedRdfRecord.branchId = this.branchId;
+        ontologyStateStub.listItem.versionedRdfRecord.commitId = this.commitId;
         ontologyStateStub.listItem.selected = this.selected;
         ontologyStateStub.listItem.editorTabStates.search = {
             errorMessage: 'error',
@@ -123,17 +123,11 @@ describe('Search Tab component', function() {
         cleanStylesFromDOM();
         ontologyStateStub = null;
         ontologyManagerStub = null;
-        httpStub = null;
         component = null;
         element = null;
         fixture = null;
     });
 
-    describe('should initialize with the correct values for', function() {
-        it('the id', function() {
-            expect(ontologyStateStub.listItem.editorTabStates.search.id).toEqual('search-' + this.recordId);
-        });
-    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.search-tab')).length).toEqual(1);
@@ -162,17 +156,16 @@ describe('Search Tab component', function() {
         describe('onKeyup', function() {
             beforeEach(function() {
                 spyOn(component, 'unselectItem');
-                this.id = ontologyStateStub.listItem.editorTabStates.search.id;
             });
             it('calls the correct manager function', function() {
-                ontologyManagerStub.getSearchResults.and.returnValue(of([]));
+                ontologyManagerStub.getSearchResults.and.returnValue(of({}));
                 component.onKeyup();
-                expect(component.unselectItem).toHaveBeenCalled();
+                expect(component.unselectItem).toHaveBeenCalledWith();
                 expect(ontologyManagerStub.getSearchResults).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, this.searchText);
             });
             describe('when resolved', function() {
                 it('it sets the correct variables', function() {
-                    ontologyManagerStub.getSearchResults.and.returnValue(of([]));
+                    ontologyManagerStub.getSearchResults.and.returnValue(of({}));
                     component.onKeyup();
                     fixture.detectChanges();
                     expect(ontologyStateStub.listItem.editorTabStates.search.errorMessage).toEqual('');
@@ -215,7 +208,7 @@ describe('Search Tab component', function() {
                     component.onKeyup();
                     fixture.detectChanges();
                     expect(ontologyStateStub.listItem.editorTabStates.search.results).toEqual({});
-                    expect(ontologyStateStub.listItem.editorTabStates.search.infoMessage).toEqual('There were no results for your search text.')
+                    expect(ontologyStateStub.listItem.editorTabStates.search.infoMessage).toEqual('There were no results for your search text.');
                     expect(ontologyStateStub.listItem.editorTabStates.search.warningMessage).toEqual('');
                 });
             });
@@ -259,6 +252,7 @@ describe('Search Tab component', function() {
                 '@type': ['test'],
                 prop: [{'@value': 'test'}]
             };
+            ontologyStateStub.selectItem.and.returnValue(of(null));
             component.selectItem('blah');
             fixture.detectChanges();
             expect(ontologyStateStub.selectItem).toHaveBeenCalledWith('blah', false);
@@ -266,7 +260,7 @@ describe('Search Tab component', function() {
         });
         it('should unselect an item in the list', function() {
             component.unselectItem();
-            expect(ontologyStateStub.unSelectItem).toHaveBeenCalled();
+            expect(ontologyStateStub.unSelectItem).toHaveBeenCalledWith();
             expect(ontologyStateStub.listItem.editorTabStates.search.selected).toBeUndefined();
         });
     });

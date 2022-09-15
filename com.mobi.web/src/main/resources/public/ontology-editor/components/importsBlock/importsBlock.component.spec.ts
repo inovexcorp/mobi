@@ -30,12 +30,14 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockPropertyManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OWL } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
 import { ImportsBlockComponent } from './importsBlock.component';
 
@@ -45,8 +47,8 @@ describe('Imports Block component', function() {
     let fixture: ComponentFixture<ImportsBlockComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let propertyManagerStub;
-    let utilStub;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const ontologyId = 'ontologyId';
@@ -72,8 +74,8 @@ describe('Imports Block component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -86,8 +88,8 @@ describe('Imports Block component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
-        propertyManagerStub = TestBed.get('propertyManagerService');
-        utilStub = TestBed.get('utilService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
+        utilStub = TestBed.get(UtilService);
         matDialog = TestBed.get(MatDialog);
         
         ontologyStateStub.canModify.and.returnValue(true);
@@ -208,6 +210,7 @@ describe('Imports Block component', function() {
             beforeEach(function() {
                 spyOn(component, 'setImports');
                 spyOn(component, 'setIndirectImports');
+                utilStub.createJson.and.returnValue({'@id': ''});
             });
             describe('when save changes resolves', function() {
                 beforeEach(function() {

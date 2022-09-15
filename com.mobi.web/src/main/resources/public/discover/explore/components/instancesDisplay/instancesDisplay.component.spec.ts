@@ -25,33 +25,35 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { PageEvent } from '@angular/material';
+import { last } from 'lodash';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { InstanceCardsComponent } from '../instanceCards/instanceCards.component';
-import { InstancesDisplayComponent } from './instancesDisplay.component';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
-import { PageEvent } from '@angular/material';
-import { last } from 'lodash';
 import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { InstancesDisplayComponent } from './instancesDisplay.component';
+import { UtilService } from '../../../../shared/services/util.service';
 
-describe('Instance Display component', function() {
+describe('Instances Display component', function() {
     let component: InstancesDisplayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<InstancesDisplayComponent>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let policyEnforcementStub;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
-    let page : PageEvent = new PageEvent();
+    let page: PageEvent = new PageEvent();
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
     const response = {
@@ -72,13 +74,12 @@ describe('Instance Display component', function() {
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
                 MockProvider(SplitIRIPipe),
-                MockProvider('prefixes', 'prefixes'),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -90,8 +91,12 @@ describe('Instance Display component', function() {
         discoverStateStub = TestBed.get(DiscoverStateService);
         exploreServiceStub = TestBed.get(ExploreService);
         splitIriStub = TestBed.get (SplitIRIPipe);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        utilStub = TestBed.get(UtilService);
+
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -119,7 +124,7 @@ describe('Instance Display component', function() {
             recordId: '',
             recordTitle: '',
             hasPermissionError: false
-        }
+        };
     });
 
     afterEach(function() {
@@ -128,7 +133,12 @@ describe('Instance Display component', function() {
         element = null;
         fixture = null;
         discoverStateStub = null;
+        policyEnforcementStub = null;
+        exploreServiceStub = null;
+        utilStub = null;
+        splitIriStub = null;
     });
+
     describe('contains the correct html', function() {
         it('for wrapping containers',  () => {
             fixture.detectChanges();
@@ -152,7 +162,6 @@ describe('Instance Display component', function() {
         });
         describe('setPage should call the correct methods and set variables', function() {
             beforeEach(function() {
-                //component.setPage(page)
                 page.pageIndex = totalSize;
                 const tempData = {
                     body: [
@@ -173,12 +182,12 @@ describe('Instance Display component', function() {
                         }
                     ],
                     headers: new HttpHeaders({'x-total-count': ''})
-                }
+                };
                 exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse(tempData)));
                 exploreServiceStub.createPagedResultsObject.and.returnValue(responseObj);
             });
             it('when user has read permission to dataset record', async () => {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 component.ngOnInit();
                 component.setPage(page);
                 fixture.detectChanges();
@@ -193,7 +202,7 @@ describe('Instance Display component', function() {
                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             });
             it('when user has read permission to dataset record and getClassInstanceDetails has error', async () => {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                 exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('Error'));
                 component.ngOnInit();
                 component.setPage(page);
@@ -210,7 +219,7 @@ describe('Instance Display component', function() {
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
             });
             it('when user does not have read permission to dataset record', async () =>  {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.ngOnInit();
                 component.setPage(page);
                 fixture.detectChanges();
@@ -223,9 +232,9 @@ describe('Instance Display component', function() {
             });
         });
         it('create method should set the correct variables when user has have modify permission', async function() {
-            policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
             discoverStateStub.explore.creating = false;
-            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI', title: 'title', description:'description'}];
+            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI', title: 'title', description: 'description'}];
             discoverStateStub.explore.classId = 'classId';
             component.create();
             component.ngOnInit();
@@ -239,9 +248,9 @@ describe('Instance Display component', function() {
             expect(discoverStateStub.explore.instance.metadata.instanceIRI).toContain('beginthen');
         });
         it('create method when user does not have modify permission', async () => {
-            policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
             discoverStateStub.explore.creating = false;
-            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI', title: 'title', description:'description'}];
+            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI', title: 'title', description: 'description'}];
             discoverStateStub.explore.classId = 'classId';
             component.create();
             component.ngOnInit();
@@ -249,7 +258,7 @@ describe('Instance Display component', function() {
             await fixture.whenStable();
             expect(discoverStateStub.explore.creating).toBe(false);
             expect(splitIriStub.transform).not.toHaveBeenCalledWith('instanceIRI');
-            expect(utilStub.createErrorToast).toHaveBeenCalled();
+            expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             expect(discoverStateStub.explore.instance.metadata).toBeUndefined();
         });
         it('button should say [Deprecated] if the class is deprecated', function() {

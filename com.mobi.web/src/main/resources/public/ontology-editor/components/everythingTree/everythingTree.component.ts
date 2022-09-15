@@ -22,11 +22,12 @@
  */
 import { Datasource, IDatasource } from 'ngx-ui-scroll';
 import { filter, has, findIndex, some, get, every, cloneDeep } from 'lodash';
-import { Component, EventEmitter, Inject, Input, OnInit, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { INDENT } from '../../../constants';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class ontology-editor.EverythingTreeComponent
@@ -72,7 +73,7 @@ export class EverythingTreeComponent implements OnInit, OnChanges {
     deprecatedEntityFilter;
     chunks = [];
     
-    constructor(public os: OntologyStateService, @Inject('utilService') private util) {}
+    constructor(public os: OntologyStateService, private util: UtilService) {}
 
     ngOnInit(): void {
         this.activeEntityFilter = {
@@ -134,8 +135,9 @@ export class EverythingTreeComponent implements OnInit, OnChanges {
         let searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
         some(node.entityInfo.names, name => {
-            if (name.toLowerCase().includes(this.filterText.toLowerCase()))
+            if (name.toLowerCase().includes(this.filterText.toLowerCase())) {
                 searchMatch = true;
+            }
         });
 
         if (searchMatch) {

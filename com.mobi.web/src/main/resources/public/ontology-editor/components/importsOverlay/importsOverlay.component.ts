@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MatSelectionListChange, MatTabChangeEvent } from '@angular/material';
 import { get, find, remove, sortBy, map, filter, some, includes } from 'lodash';
@@ -35,6 +35,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './importsOverlay.component.scss';
 
@@ -76,7 +78,7 @@ export class ImportsOverlayComponent implements OnInit {
     
     constructor(private fb: FormBuilder, private http: HttpClient, private dialogRef: MatDialogRef<ImportsOverlayComponent>,
         private os: OntologyStateService, private spinnerSvc: ProgressSpinnerService, private cm: CatalogManagerService,
-        @Inject('utilService') public util, @Inject('propertyManagerService') private pm) {}
+        public util: UtilService, private pm: PropertyManagerService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');

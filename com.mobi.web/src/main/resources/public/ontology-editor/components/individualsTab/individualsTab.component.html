@@ -22,13 +22,13 @@
   -->
 <div class="individuals-tab h-100 row m-0">
     <individual-hierarchy-block class="col-3 h-100"></individual-hierarchy-block>
-    <div class="selected-individual col-9 h-100 pt-2" targeted-spinner="os.listItem.editorTabStates.individuals.targetedSpinnerId">
+    <div class="selected-individual col-9 h-100 pt-2" #individualsTab>
         <div class="h-100 w-100 d-flex flex-column" *ngIf="os.listItem.selected">
             <div class="selected-header d-flex">
-                <selected-details class="flex-1" [highlightText]="os.listItem.editorTabStates.individuals.searchText"></selected-details>
+                <selected-details class="flex-1" [highlightText]="highlightText"></selected-details>
                 <div class="btn-container">
-                    <button class="btn btn-primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
-                    <button *ngIf="os.canModify()" class="btn btn-danger" [disabled]="os.isSelectedImported()" (click)="showDeleteConfirmation()"><span>Delete</span></button>
+                    <button mat-raised-button color="primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
+                    <button mat-raised-button *ngIf="os.canModify()" color="warn" [disabled]="os.isSelectedImported()" (click)="showDeleteConfirmation()"><span>Delete</span></button>
                 </div>
             </div>
             <div class="row flex-1 remove-min-height">
@@ -40,7 +40,11 @@
                         <object-property-block [selected]="os.listItem.selected" class="col"></object-property-block>
                     </div>
                 </div>
-                <annotation-block [selected]="os.listItem.selected" class="col-5 pt-2 vertical-scroll h-100" [highlightIris]="om.entityNameProps" [highlightText]="os.listItem.editorTabStates.individuals.searchText"></annotation-block>
+                <annotation-block
+                    [selected]="os.listItem.selected"
+                    class="col-5 pt-2 vertical-scroll h-100"
+                    [highlightIris]="om.entityNameProps"
+                    [highlightText]="highlightText"></annotation-block>
             </div>
         </div>
         </div>

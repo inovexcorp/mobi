@@ -1,8 +1,6 @@
-import { Chunk } from 'antlr4ts/tree/pattern/Chunk';
-
 /*-
- * #%L
- * com.mobi.web
+* #%L
+* com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -21,9 +19,9 @@ import { Chunk } from 'antlr4ts/tree/pattern/Chunk';
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+*/
 import { initial, chunk, orderBy, has, forEach, last } from 'lodash';
-import { Component, Inject, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { switchMap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material';
@@ -36,6 +34,8 @@ import { POLICY } from '../../../../prefixes';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { ClassDetails } from '../../../models/classDetails.interface';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 
 import './instanceCards.component.scss';
 
@@ -66,8 +66,7 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
     @Input() instanceData: InstanceDetails[];
 
     constructor(private ds: DiscoverStateService, private es: ExploreService, private eu: ExploreUtilsService,
-                private dialog: MatDialog, @Inject('utilService') private util, 
-                @Inject('policyEnforcementService') private pep) {
+                private dialog: MatDialog, private util: UtilService, private pep: PolicyEnforcementService) {
     }
 
     ngOnInit(): void {
@@ -85,7 +84,7 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
             actionId: POLICY + 'Read'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canRead = response && (response!== this.pep.deny);
                 if (canRead) {
                     this.es.getInstance(this.ds.explore.recordId, item.instanceIRI)

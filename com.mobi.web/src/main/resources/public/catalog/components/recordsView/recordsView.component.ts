@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material';
 import { get } from 'lodash';
 
@@ -30,6 +30,7 @@ import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interfac
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './recordsView.component.scss';
 
@@ -50,7 +51,7 @@ export class RecordsViewComponent implements OnInit {
     records = [];
     catalogId = '';
 
-    constructor(public state: CatalogStateService, public cm: CatalogManagerService, @Inject('utilService') public util) {}
+    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public util: UtilService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');

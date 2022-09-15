@@ -30,13 +30,13 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule, MatFormFieldModule, MatInputModule } from '@angular/material';
 
 import {
-    mockLoginManager,
-    mockUtil,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { PasswordTabComponent } from './passwordTab.component';
 
 describe('Password Tab component', function() {
@@ -44,8 +44,8 @@ describe('Password Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<PasswordTabComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let loginManagerStub;
-    let utilStub;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -62,9 +62,9 @@ describe('Password Tab component', function() {
                 MockComponent(UnmaskPasswordComponent)
             ],
             providers: [
-                { provide: 'loginManagerService', useClass: mockLoginManager },
+                MockProvider(LoginManagerService),
                 MockProvider(UserManagerService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
         });
     });
@@ -73,9 +73,9 @@ describe('Password Tab component', function() {
         fixture = TestBed.createComponent(PasswordTabComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        loginManagerStub = TestBed.get('loginManagerService');
+        loginManagerStub = TestBed.get(LoginManagerService);
         userManagerStub = TestBed.get(UserManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         loginManagerStub.currentUser = 'user';
         userManagerStub.users = [{ external: false, firstName: 'John', lastName: 'Doe', email: '', roles: [], username: 'user' }];
@@ -130,20 +130,20 @@ describe('Password Tab component', function() {
                 component.passwordForm.controls.unmaskPassword.setValue('new');
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.changePassword.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.changePassword.and.rejectWith('Error message');
                 component.save();
                 tick();
                 expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, component.passwordForm.controls.currentPassword.value, component.passwordForm.controls.unmaskPassword.value);
                 expect(component.errorMessage).toEqual('Error message');
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.changePassword.and.returnValue(Promise.resolve());
+                userManagerStub.changePassword.and.resolveTo();
                 const currentPassword = component.passwordForm.controls.currentPassword.value;
                 const password = component.passwordForm.controls.unmaskPassword.value;
                 component.save();
                 tick();
                 expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, currentPassword, password);
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(component.errorMessage).toEqual('');
                 expect(component.passwordForm.controls.currentPassword.value).toBeFalsy();
                 expect(component.passwordForm.controls.unmaskPassword.value).toBeFalsy();
@@ -193,6 +193,6 @@ describe('Password Tab component', function() {
         const button = element.query(By.css('form'));
         button.triggerEventHandler('ngSubmit', null);
         fixture.detectChanges();
-        expect(component.save).toHaveBeenCalled();
+        expect(component.save).toHaveBeenCalledWith();
     });
 });

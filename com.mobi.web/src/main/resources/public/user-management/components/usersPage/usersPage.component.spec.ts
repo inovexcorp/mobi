@@ -31,12 +31,14 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockLoginManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { CreateUserOverlayComponent } from '../createUserOverlay/createUserOverlay.component';
 import { EditUserProfileOverlayComponent } from '../editUserProfileOverlay/editUserProfileOverlay.component';
 import { ResetPasswordOverlayComponent } from '../resetPasswordOverlay/resetPasswordOverlay.component';
@@ -50,8 +52,8 @@ describe('Users Page component', function() {
     let userStateStub: jasmine.SpyObj<UserStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let loginManagerStub;
-    let utilStub;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let user: User;
 
     configureTestSuite(function() {
@@ -72,8 +74,8 @@ describe('Users Page component', function() {
             providers: [
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
-                { provide: 'loginManagerService', useClass: mockLoginManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(LoginManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -88,8 +90,8 @@ describe('Users Page component', function() {
         userStateStub = TestBed.get(UserStateService);
         userManagerStub = TestBed.get(UserManagerService);
         matDialog = TestBed.get(MatDialog);
-        loginManagerStub = TestBed.get('loginManagerService');
-        utilStub = TestBed.get('utilService');
+        loginManagerStub = TestBed.get(LoginManagerService);
+        utilStub = TestBed.get(UtilService);
 
         user = {
             username: 'batman',
@@ -124,7 +126,7 @@ describe('Users Page component', function() {
         userManagerStub.filterUsers.and.returnValue([user]);
         component.ngOnInit();
         expect(component.filteredUsers).toEqual([user]);
-        expect(component.setAdmin).toHaveBeenCalled();
+        expect(component.setAdmin).toHaveBeenCalledWith();
         expect(userManagerStub.isAdminUser).toHaveBeenCalledWith(loginManagerStub.currentUserIRI);
         expect(userManagerStub.isAdmin).toHaveBeenCalledWith(loginManagerStub.currentUser);
     });
@@ -140,8 +142,8 @@ describe('Users Page component', function() {
                 expect(userStateStub.selectedUser).toEqual(user);
                 expect(component.selectedCurrentUser).toBeTruthy();
                 expect(component.selectedAdminUser).toBeFalsy();
-                expect(component.setAdmin).toHaveBeenCalled();
-                expect(component.setUserGroups).toHaveBeenCalled();
+                expect(component.setAdmin).toHaveBeenCalledWith();
+                expect(component.setUserGroups).toHaveBeenCalledWith();
             });
             it('when it is the admin user', function() {
                 userManagerStub.isAdminUser.and.returnValue(true);
@@ -149,16 +151,16 @@ describe('Users Page component', function() {
                 expect(userStateStub.selectedUser).toEqual(user);
                 expect(component.selectedCurrentUser).toBeFalsy();
                 expect(component.selectedAdminUser).toBeTruthy();
-                expect(component.setAdmin).toHaveBeenCalled();
-                expect(component.setUserGroups).toHaveBeenCalled();
+                expect(component.setAdmin).toHaveBeenCalledWith();
+                expect(component.setUserGroups).toHaveBeenCalledWith();
             });
             it('when it is any old user', function() {
                 component.selectUser(user);
                 expect(userStateStub.selectedUser).toEqual(user);
                 expect(component.selectedCurrentUser).toBeFalsy();
                 expect(component.selectedAdminUser).toBeFalsy();
-                expect(component.setAdmin).toHaveBeenCalled();
-                expect(component.setUserGroups).toHaveBeenCalled();
+                expect(component.setAdmin).toHaveBeenCalledWith();
+                expect(component.setUserGroups).toHaveBeenCalledWith();
             });
         });
         it('should open a modal for deleting a user', function() {
@@ -166,7 +168,7 @@ describe('Users Page component', function() {
             spyOn(component, 'deleteUser');
             component.confirmDeleteUser();
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to remove')}});
-            expect(component.deleteUser).toHaveBeenCalled();
+            expect(component.deleteUser).toHaveBeenCalledWith();
         });
         it('should open a modal for creating a user', function() {
             component.createUser();
@@ -189,7 +191,7 @@ describe('Users Page component', function() {
                 component.selectedAdminUser = true;
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.deleteUser.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.deleteUser.and.rejectWith('Error message');
                 component.deleteUser();
                 tick();
                 expect(userManagerStub.deleteUser).toHaveBeenCalledWith(user.username);
@@ -202,16 +204,16 @@ describe('Users Page component', function() {
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.deleteUser.and.returnValue(Promise.resolve());
+                userManagerStub.deleteUser.and.resolveTo();
                 component.deleteUser();
                 tick();
                 expect(userManagerStub.deleteUser).toHaveBeenCalledWith(user.username);
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(userStateStub.selectedUser).toBeUndefined();
                 expect(component.selectedCurrentUser).toBeFalse();
                 expect(component.selectedAdminUser).toBeFalse();
-                expect(component.setAdmin).toHaveBeenCalled();
-                expect(component.setUserGroups).toHaveBeenCalled();
+                expect(component.setAdmin).toHaveBeenCalledWith();
+                expect(component.setUserGroups).toHaveBeenCalledWith();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
@@ -227,7 +229,7 @@ describe('Users Page component', function() {
                     this.event = new MatSlideToggleChange(slider.componentInstance, true);
                 });
                 it('successfully', fakeAsync(function() {
-                    userManagerStub.addUserRoles.and.returnValue(Promise.resolve());
+                    userManagerStub.addUserRoles.and.resolveTo();
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addUserRoles).toHaveBeenCalledWith(user.username, ['admin']);
@@ -235,7 +237,7 @@ describe('Users Page component', function() {
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
-                    userManagerStub.addUserRoles.and.returnValue(Promise.reject('Error message'));
+                    userManagerStub.addUserRoles.and.rejectWith('Error message');
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addUserRoles).toHaveBeenCalledWith(user.username, ['admin']);
@@ -249,7 +251,7 @@ describe('Users Page component', function() {
                     this.event = new MatSlideToggleChange(slider.componentInstance, false);
                 });
                 it('successfully', fakeAsync(function() {
-                    userManagerStub.deleteUserRole.and.returnValue(Promise.resolve());
+                    userManagerStub.deleteUserRole.and.resolveTo();
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addUserRoles).not.toHaveBeenCalled();
@@ -257,7 +259,7 @@ describe('Users Page component', function() {
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
-                    userManagerStub.deleteUserRole.and.returnValue(Promise.reject('Error message'));
+                    userManagerStub.deleteUserRole.and.rejectWith('Error message');
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addUserRoles).not.toHaveBeenCalled();
@@ -469,7 +471,7 @@ describe('Users Page component', function() {
         spyOn(component, 'createUser');
         const createButton = element.query(By.css('.col-4 button[color="primary"]'));
         createButton.triggerEventHandler('click', null);
-        expect(component.createUser).toHaveBeenCalled();
+        expect(component.createUser).toHaveBeenCalledWith();
     });
     it('should call editProfile when the button is clicked', function() {
         userStateStub.selectedUser = user;
@@ -478,7 +480,7 @@ describe('Users Page component', function() {
         spyOn(component, 'editProfile');
         const editButton = element.query(By.css('.col-8 button.mat-icon-button[color="primary"]'));
         editButton.triggerEventHandler('click', null);
-        expect(component.editProfile).toHaveBeenCalled();
+        expect(component.editProfile).toHaveBeenCalledWith();
     });
     it('should call confirmDeleteUser when the button is clicked', function() {
         userStateStub.selectedUser = user;
@@ -487,7 +489,7 @@ describe('Users Page component', function() {
         spyOn(component, 'confirmDeleteUser');
         const deleteButton = element.query(By.css('.col-8 .user-title button[color="warn"]'));
         deleteButton.triggerEventHandler('click', null);
-        expect(component.confirmDeleteUser).toHaveBeenCalled();
+        expect(component.confirmDeleteUser).toHaveBeenCalledWith();
     });
     it('should call resetPassword when the button is clicked', function() {
         userStateStub.selectedUser = user;
@@ -496,6 +498,6 @@ describe('Users Page component', function() {
         spyOn(component, 'resetPassword');
         const resetButton = element.query(By.css('.col-8 button.mat-raised-button[color="primary"]'));
         resetButton.triggerEventHandler('click', null);
-        expect(component.resetPassword).toHaveBeenCalled();
+        expect(component.resetPassword).toHaveBeenCalledWith();
     });
 });

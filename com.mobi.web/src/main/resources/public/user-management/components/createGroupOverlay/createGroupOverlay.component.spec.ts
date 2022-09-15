@@ -31,16 +31,16 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockLoginManager,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { AddMemberButtonComponent } from '../addMemberButton/addMemberButton.component';
 import { MemberTableComponent } from '../memberTable/memberTable.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { CreateGroupOverlayComponent } from './createGroupOverlay.component';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { CreateGroupOverlayComponent } from './createGroupOverlay.component';
 
 describe('Create Group Overlay component', function() {
     let component: CreateGroupOverlayComponent;
@@ -48,7 +48,7 @@ describe('Create Group Overlay component', function() {
     let fixture: ComponentFixture<CreateGroupOverlayComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateGroupOverlayComponent>>;
-    let loginManagerStub;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
     let user: User;
     let newGroup: Group;
 
@@ -71,8 +71,8 @@ describe('Create Group Overlay component', function() {
             ],
             providers: [
                 MockProvider(UserManagerService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'loginManagerService', useClass: mockLoginManager },
+                MockProvider(UtilService),
+                MockProvider(LoginManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -83,7 +83,7 @@ describe('Create Group Overlay component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.get(UserManagerService);
-        loginManagerStub = TestBed.get('loginManagerService');
+        loginManagerStub = TestBed.get(LoginManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
 
         loginManagerStub.currentUser = 'admin';
@@ -123,7 +123,7 @@ describe('Create Group Overlay component', function() {
     describe('controller methods', function() {
         it('should get the list of used group titles', function() {
             userManagerStub.groups = [newGroup];
-            let titles = component.getTitles();
+            const titles = component.getTitles();
             expect(titles.length).toEqual(userManagerStub.groups.length);
             titles.forEach((title, idx) => {
                 expect(title).toEqual(userManagerStub.groups[idx].title);
@@ -147,7 +147,7 @@ describe('Create Group Overlay component', function() {
                 component.members.push(user.username);
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.addGroup.and.returnValue(Promise.reject('Error Message'));
+                userManagerStub.addGroup.and.rejectWith('Error Message');
                 component.add();
                 tick();
                 expect(userManagerStub.addGroup).toHaveBeenCalledWith(newGroup);
@@ -155,12 +155,12 @@ describe('Create Group Overlay component', function() {
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.addGroup.and.returnValue(Promise.resolve());
+                userManagerStub.addGroup.and.resolveTo();
                 component.add();
                 tick();
                 expect(userManagerStub.addGroup).toHaveBeenCalledWith(newGroup);
                 expect(component.errorMessage).toEqual('');
-                expect(matDialogRef.close).toHaveBeenCalled();
+                expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });
         it('should add a member to the new group', function() {
@@ -198,7 +198,7 @@ describe('Create Group Overlay component', function() {
             expect(element.queryAll(By.css('mat-error')).length).toEqual(1);
         });
         it('depending on the form validity', function() {
-            let button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
+            const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
             expect(button).not.toBeNull();
             expect(button.properties['disabled']).toBeFalsy();
 
@@ -217,23 +217,23 @@ describe('Create Group Overlay component', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
-            let buttons = element.queryAll(By.css('.mat-dialog-actions button'));
+            const buttons = element.queryAll(By.css('.mat-dialog-actions button'));
             expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(buttons[0].nativeElement.textContent.trim());
             expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
         });
     });
     it('should call cancel when the button is clicked', function() {
-        let cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
+        const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
         cancelButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(matDialogRef.close).toHaveBeenCalled();
+        expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
     });
     it('should call add when the submit button is clicked', function() {
         spyOn(component, 'add');
-        let setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
+        const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.add).toHaveBeenCalled();
+        expect(component.add).toHaveBeenCalledWith();
     });
 });

@@ -21,24 +21,21 @@
  * #L%
  */
 import { has } from 'lodash';
-import { Inject, Component, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { DiscoverStateService } from '../../services/discoverState.service';
+import { UtilService } from '../../services/util.service';
 
 import './valueDisplay.component.scss';
 
 /**
- * @ngdoc component
- * @name shared.component:valueDisplay
- * @requires shared.service:discoverStateService
- * @requires shared.service:utilService
+ * @class shared.ValueDisplayComponent
  *
- * @description
- * `valueDisplay` is a component which creates a span element for displaying json-ld values.
- * It is meant to be used to display a json-ld object in a readable format.
+ * A component which creates a span element for displaying json-ld values. It is meant to be used to display a json-ld
+ * object in a readable format.
  *
- * @param {object} value the json-ld value to display to a user.
+ * @param {JSONLDObject} value the json-ld value to display to a user.
  */
 @Component({
     selector: 'value-display',
@@ -49,9 +46,9 @@ export class ValueDisplayComponent {
     @Input() value: JSONLDObject;
     @Input() highlightText: string;
 
-    constructor(public ds: DiscoverStateService, @Inject('utilService') public util) {}
+    constructor(public ds: DiscoverStateService, public util: UtilService) {}
 
-    has(obj, key): boolean {
+    has(obj: any, key: string): boolean {
         return has(obj, key);
     }
 }

@@ -30,7 +30,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
 import { CommitDifferenceTabsetComponent } from '../../../shared/components/commitDifferenceTabset/commitDifferenceTabset.component';
@@ -40,6 +39,7 @@ import { CommitDifference } from '../../../shared/models/commitDifference.interf
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { RequestBranchSelectComponent } from './requestBranchSelect.component';
 
 describe('Request Branch Select component', function() {
@@ -49,7 +49,7 @@ describe('Request Branch Select component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
@@ -72,7 +72,7 @@ describe('Request Branch Select component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(MergeRequestsStateService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -84,7 +84,7 @@ describe('Request Branch Select component', function() {
         catalogManagerStub = TestBed.get(CatalogManagerService);
         mergeRequestsStateStub = TestBed.get(MergeRequestsStateService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
         utilStub.getPropertyId.and.returnValue(commitId);

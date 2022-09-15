@@ -26,10 +26,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../models/difference.class';
+import { UtilService } from '../../services/util.service';
 import { StatementContainerComponent } from '../statementContainer/statementContainer.component';
 import { StatementDisplayComponent } from '../statementDisplay/statementDisplay.component';
 import { ResolveConflictsFormComponent } from './resolveConflictsForm.component';
@@ -38,7 +39,7 @@ describe('Resolve Conflicts Form component', function() {
     let component: ResolveConflictsFormComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ResolveConflictsFormComponent>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -51,7 +52,7 @@ describe('Resolve Conflicts Form component', function() {
                 MockComponent(StatementContainerComponent)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ],
         });
     });
@@ -60,7 +61,7 @@ describe('Resolve Conflicts Form component', function() {
         fixture = TestBed.createComponent(ResolveConflictsFormComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         utilStub.getPredicateLocalNameOrdered.and.callFake(changes => {
             return changes;
         });
@@ -249,7 +250,7 @@ describe('Resolve Conflicts Form component', function() {
 
         const button = element.queryAll(By.css('.btn.btn-link'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.backToList).toHaveBeenCalled();
+        expect(component.backToList).toHaveBeenCalledWith();
     });
     it('should go to previous conflict when the button is clicked', async function() {
         component.index = 1;

@@ -30,14 +30,15 @@ import { configureTestSuite } from 'ng-bullet';
 import { get } from 'lodash';
 
 import {
-    cleanStylesFromDOM, mockUtil
+    cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { SettingConstants } from '../../models/settingConstants.class';
-import { CustomLabelComponent } from '../customLabel/customLabel.component';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { SETTING, SHACL, XSD } from '../../../prefixes';
+import { UtilService } from '../../services/util.service';
 import { SettingFormFieldComponent } from './settingFormField.component';
+import { MockProvider } from 'ng-mocks';
 
 describe('Setting Form Field component', function() {
     let component: SettingFormFieldComponent;
@@ -46,7 +47,7 @@ describe('Setting Form Field component', function() {
     let formGroup;
     let field;
     let shaclShape;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -72,12 +73,11 @@ describe('Setting Form Field component', function() {
             ],
             declarations: [
                 SettingFormFieldComponent,
-                CustomLabelComponent,
                 ErrorDisplayComponent,
                 InfoMessageComponent,
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -86,7 +86,7 @@ describe('Setting Form Field component', function() {
         fixture = TestBed.createComponent(SettingFormFieldComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');

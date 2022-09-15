@@ -31,16 +31,17 @@ import { OntologyVisualizationService } from '../../services/ontologyVisualizato
 import { OntologyVisualization } from './ontologyVisualization.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
-import { MockOntologyVisualizationService, mockUtil } from  '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, MockOntologyVisualizationService } from  '../../../../../../test/ts/Shared';
 import { SidePanelPayloadI }  from '../../interfaces/visualization.interfaces';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Ontology Visualization component', () => {
     let component: OntologyVisualization;
     let element: DebugElement;
     let fixture: ComponentFixture<OntologyVisualization>;
     let serviceStub: OntologyVisualizationService;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(() =>  {
         TestBed.configureTestingModule({
@@ -52,7 +53,7 @@ describe('Ontology Visualization component', () => {
             providers: [
                 MockProvider(ProgressSpinnerService),
                 { provide: OntologyVisualizationService, useClass: MockOntologyVisualizationService },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -62,11 +63,12 @@ describe('Ontology Visualization component', () => {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         serviceStub = TestBed.get(OntologyVisualizationService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         serviceStub.sidePanelActionAction$ = new Subject<SidePanelPayloadI>().asObservable();
 
     }));
     afterEach(() => {
+        cleanStylesFromDOM();
         element = null;
         fixture = null;
         component = null;

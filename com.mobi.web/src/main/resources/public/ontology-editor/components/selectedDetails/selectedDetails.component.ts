@@ -21,13 +21,15 @@
  * #L%
  */
 import { join, orderBy, map, get } from 'lodash';
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { MatDialog } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { IndividualTypesModalComponent } from '../individualTypesModal/individualTypesModal.component';
+import { UtilService } from '../../../shared/services/util.service';
+import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
 
 import './selectedDetails.component.scss';
 
@@ -52,8 +54,7 @@ export class SelectedDetailsComponent {
     @Input() highlightText: string;
 
     constructor(private prefixation: PrefixationPipe, private dialog: MatDialog, public om: OntologyManagerService, 
-        public os: OntologyStateService, @Inject('manchesterConverterService') private mc,
-        @Inject('utilService') private util) {}
+        public os: OntologyStateService, private mc: ManchesterConverterService, private util: UtilService) {}
 
     isFromImportedOntology(): boolean {
         const entity = get(this.os.listItem.entityInfo, get(this.os.listItem.selected, '@id'));

@@ -29,7 +29,7 @@ import { FOAF, USER } from '../../prefixes';
 import { Group } from '../models/group.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { User } from '../models/user.interface';
-import { HelperService } from './helper.service';
+import { UtilService } from './util.service';
 
 /**
  * @class shared.UserManagerService
@@ -42,7 +42,7 @@ export class UserManagerService {
     userPrefix = REST_PREFIX + 'users';
     groupPrefix = REST_PREFIX + 'groups';
 
-    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util) {}
+    constructor(private http: HttpClient, private util: UtilService) {}
 
     /**
      * `groups` holds a list of Group objects representing the groups in Mobi.
@@ -87,7 +87,7 @@ export class UserManagerService {
     getUsers(): Promise<JSONLDObject[]> {
         return this.http.get(this.userPrefix)
             .toPromise()
-            .then((response: JSONLDObject[]) => response, this.util.rejectError);
+            .then((response: JSONLDObject[]) => response, error => this.util.rejectError(error));
     }
     /**
      * Calls the GET /mobirest/groups endpoint which retrieves a list of Groups.
@@ -97,7 +97,7 @@ export class UserManagerService {
     getGroups(): Promise<JSONLDObject[]> {
         return this.http.get(this.groupPrefix)
             .toPromise()
-            .then((response: JSONLDObject[]) => response, this.util.rejectError);
+            .then((response: JSONLDObject[]) => response, error => this.util.rejectError(error));
     }
     /**
      * Finds the username of the user associated with the passed IRI. If it has not been found before, calls the GET
@@ -114,12 +114,12 @@ export class UserManagerService {
         if (user) {
             return Promise.resolve(user.username);
         } else {
-            return this.http.get(this.userPrefix + '/username', {params: this.helper.createHttpParams({ iri }), responseType: 'text'})
+            return this.http.get(this.userPrefix + '/username', {params: this.util.createHttpParams({ iri }), responseType: 'text'})
                 .toPromise()
                 .then((response: string) => {
                     set(find(this.users, {username: response}), 'iri', iri);
                     return response;
-                }, this.util.rejectError);
+                }, error => this.util.rejectError(error));
         }
     }
 
@@ -153,7 +153,7 @@ export class UserManagerService {
             .then(() => {
                 return this.getUser(newUser.username);
             }, error => Promise.reject(error))
-            .then(noop, this.util.rejectError);
+            .then(noop, error => this.util.rejectError(error));
     }
     /**
      * Calls the GET /mobirest/users/{username} endpoint to retrieve a Mobi user with passed username. Returns a
@@ -176,7 +176,7 @@ export class UserManagerService {
                     this.users.push(userObj);
                 }
                 return userObj;
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the PUT /mobirest/users/{username} endpoint to update a Mobi user specified by the passed username with
@@ -194,7 +194,7 @@ export class UserManagerService {
             .toPromise()
             .then(() => {
                 assign(find(this.users, {username}), newUser);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the POST /mobirest/users/{username}/password endpoint to change the password of a Mobi user specified
@@ -212,9 +212,9 @@ export class UserManagerService {
             currentPassword: password,
             newPassword
         };
-        return this.http.post(this.userPrefix + '/' + encodeURIComponent(username) + '/password', null, {params: this.helper.createHttpParams(params)})
+        return this.http.post(this.userPrefix + '/' + encodeURIComponent(username) + '/password', null, {params: this.util.createHttpParams(params)})
             .toPromise()
-            .then(noop, this.util.rejectError);
+            .then(noop, error => this.util.rejectError(error));
     }
     /**
      * Calls the PUT /mobirest/users/{username}/password endpoint to reset the password of a Mobi user specified by
@@ -227,9 +227,9 @@ export class UserManagerService {
      * otherwise
      */
     resetPassword(username: string, newPassword: string): Promise<void> {
-        return this.http.put(this.userPrefix + '/' + encodeURIComponent(username) + '/password', null, {params: this.helper.createHttpParams({ newPassword })})
+        return this.http.put(this.userPrefix + '/' + encodeURIComponent(username) + '/password', null, {params: this.util.createHttpParams({ newPassword })})
             .toPromise()
-            .then(noop, this.util.rejectError);
+            .then(noop, error => this.util.rejectError(error));
     }
     /**
      * Calls the DELETE /mobirest/users/{username} endpoint to remove the Mobi user with passed username. Returns a
@@ -246,7 +246,7 @@ export class UserManagerService {
             .then(() => {
                 remove(this.users, {username});
                 forEach(this.groups, group => pull(group.members, username));
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the PUT /mobirest/users/{username}/roles endpoint to add the passed roles to the Mobi user specified by
@@ -259,12 +259,12 @@ export class UserManagerService {
      * otherwise
      */
     addUserRoles(username: string, roles: string[]): Promise<void> {
-        return this.http.put(this.userPrefix + '/' + encodeURIComponent(username) + '/roles', null, {params: this.helper.createHttpParams({ roles })})
+        return this.http.put(this.userPrefix + '/' + encodeURIComponent(username) + '/roles', null, {params: this.util.createHttpParams({ roles })})
             .toPromise()
             .then(() => {
                 const user: User = find(this.users, {username});
                 user.roles = union(get(user, 'roles', []), roles);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the DELETE /mobirest/users/{username}/roles endpoint to remove the passed role from the Mobi user
@@ -277,11 +277,11 @@ export class UserManagerService {
      * otherwise
      */
     deleteUserRole(username: string, role: string): Promise<void> {
-        return this.http.delete(this.userPrefix + '/' + encodeURIComponent(username) + '/roles', { params: this.helper.createHttpParams({ role })})
+        return this.http.delete(this.userPrefix + '/' + encodeURIComponent(username) + '/roles', { params: this.util.createHttpParams({ role })})
             .toPromise()
             .then(() => {
                 pull(get(find(this.users, {username}), 'roles'), role);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the PUT /mobirest/users/{username}/groups endpoint to add the Mobi user specified by the passed
@@ -294,12 +294,12 @@ export class UserManagerService {
      * otherwise
      */
     addUserGroup(username: string, groupTitle: string): Promise<void> {
-        return this.http.put(this.userPrefix + '/' + encodeURIComponent(username) + '/groups', null, {params: this.helper.createHttpParams({ group: groupTitle })})
+        return this.http.put(this.userPrefix + '/' + encodeURIComponent(username) + '/groups', null, {params: this.util.createHttpParams({ group: groupTitle })})
             .toPromise()
             .then(() => {
                 const group: Group = find(this.groups, {title: groupTitle});
                 group.members = union(get(group, 'members', []), [username]);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the DELETE /mobirest/users/{username}/groups endpoint to remove the Mobi user specified by the passed
@@ -312,12 +312,12 @@ export class UserManagerService {
      * otherwise
      */
     deleteUserGroup(username: string, groupTitle: string): Promise<void> {
-        return this.http.delete(this.userPrefix + '/' + encodeURIComponent(username) + '/groups', {params: this.helper.createHttpParams({ group: groupTitle })})
+        return this.http.delete(this.userPrefix + '/' + encodeURIComponent(username) + '/groups', {params: this.util.createHttpParams({ group: groupTitle })})
             .toPromise()
             .then(() => {
                 const group: Group = find(this.groups, {title: groupTitle});
                 group.members = without(get(group, 'members'), username);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the POST /mobirest/groups endpoint to add the passed group to Mobi. Returns a Promise that resolves if
@@ -344,7 +344,7 @@ export class UserManagerService {
             .then(() => {
                 return this.getGroup(newGroup.title);
             }, error => Promise.reject(error))
-            .then(noop, this.util.rejectError);
+            .then(noop, error => this.util.rejectError(error));
     }
     /**
      * Calls the GET /mobirest/groups/{groupTitle} endpoint to retrieve a Mobi group with passed title. If the
@@ -367,7 +367,7 @@ export class UserManagerService {
                     this.groups.push(groupObj);
                 }
                 return groupObj;
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the PUT /mobirest/groups/{groupTitle} endpoint to update a Mobi group specified by the passed title
@@ -386,7 +386,7 @@ export class UserManagerService {
             .toPromise()
             .then(() => {
                 assign(find(this.groups, {title: groupTitle}), newGroup);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the DELETE /mobirest/groups/{groupTitle} endpoint to remove the Mobi group with passed title. Returns a
@@ -402,7 +402,7 @@ export class UserManagerService {
             .toPromise()
             .then(() => {
                 remove(this.groups, {title: groupTitle});
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the PUT /mobirest/groups/{groupTitle}/roles endpoint to add the passed roles to the Mobi group
@@ -415,12 +415,12 @@ export class UserManagerService {
      * otherwise
      */
     addGroupRoles(groupTitle: string, roles: string[]): Promise<void> {
-        return this.http.put(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', null, {params: this.helper.createHttpParams({ roles })})
+        return this.http.put(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', null, {params: this.util.createHttpParams({ roles })})
             .toPromise()
             .then(() => {
                 const group: Group = find(this.groups, {title: groupTitle});
                 group.roles = union(get(group, 'roles', []), roles);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the DELETE /mobirest/groups/{groupTitle}/roles endpoint to remove the passed role from the Mobi group
@@ -433,11 +433,11 @@ export class UserManagerService {
      * otherwise
      */
     deleteGroupRole(groupTitle: string, role: string): Promise<void> {
-        return this.http.delete(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', {params: this.helper.createHttpParams({ role })})
+        return this.http.delete(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', {params: this.util.createHttpParams({ role })})
             .toPromise()
             .then(() => {
                 pull(get(find(this.groups, {title: groupTitle}), 'roles'), role);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the GET /mobirest/groups/{groupTitle}/users endpoint to retrieve the list of users assigned to the
@@ -451,7 +451,7 @@ export class UserManagerService {
     getGroupUsers(groupTitle: string): Promise<JSONLDObject[]> {
         return this.http.get(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users')
             .toPromise()
-            .then((response: JSONLDObject[]) => response, this.util.rejectError);
+            .then((response: JSONLDObject[]) => response, error => this.util.rejectError(error));
     }
     /**
      * Calls the PUT /mobirest/groups/{groupTitle}/users endpoint to add the Mobi users specified by the passed
@@ -464,12 +464,12 @@ export class UserManagerService {
      * otherwise
      */
     addGroupUsers(groupTitle: string, users: string[]): Promise<void> {
-        return this.http.put(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', null, {params: this.helper.createHttpParams({ users })})
+        return this.http.put(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', null, {params: this.util.createHttpParams({ users })})
             .toPromise()
             .then(() => {
                 const group: Group = find(this.groups, {title: groupTitle});
                 group.members = union(get(group, 'members', []), users);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Calls the DELETE /mobirest/groups/{groupTitle}/users endpoint to remove the Mobi user specified by the passed
@@ -482,11 +482,11 @@ export class UserManagerService {
      * otherwise
      */
     deleteGroupUser(groupTitle: string, username: string): Promise<void> {
-        return this.http.delete(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', {params: this.helper.createHttpParams({ user: username })})
+        return this.http.delete(this.groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', {params: this.util.createHttpParams({ user: username })})
             .toPromise()
             .then(() => {
                 pull(get(find(this.groups, {title: groupTitle}), 'members'), username);
-            }, this.util.rejectError);
+            }, error => this.util.rejectError(error));
     }
     /**
      * Tests whether the user with the passed username is an admin or not by checking the roles assigned to the user

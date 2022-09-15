@@ -43,8 +43,7 @@ module.exports = {
 
     'Step 4: Click classes tab' : function (browser) {
         browser
-            .waitForElementVisible('div.material-tabset li.nav-item')
-            .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
+            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
     'Step 5: Check for Ontology classes' : function (browser) {
@@ -61,7 +60,6 @@ module.exports = {
         browser
             .useCss()
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]//parent::a')
-//            .waitForElementNotVisible('.spinner')
             .waitForElementVisible('selected-details .entity-name')
             .assert.textContains('selected-details .entity-name', 'Class 3a')
     },
@@ -70,11 +68,12 @@ module.exports = {
         browser
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')
-            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
-            .click('xpath', '//class-hierarchy-block//hierarchy-tree//hierarchy-filter//checkbox//label//span[text()[contains(., "Hide deprecated classes")]]')
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
-            .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
-            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//class-hierarchy-block//hierarchy-tree//hierarchy-filter'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-checkbox//span[text()[contains(., "Hide deprecated classes")]]'})
+            .click('xpath', '//mat-checkbox//span[text()[contains(., "Hide deprecated classes")]]')
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//button//span[text()[contains(., "Apply")]]'})
+            .click('xpath', '//button//span[text()[contains(., "Apply")]]')
+            .assert.not.elementPresent({locateStrategy: 'xpath', selector: '//span[text()[contains(., "Hide unused imports")]]'})
     },
 
     'Step 8: Ensure that correct classes are shown' : function(browser) {
@@ -89,13 +88,14 @@ module.exports = {
 
     'Step 9: Remove Deprecated Entity Filter' : function(browser) {
        browser
-            .waitForElementVisible('.hierarchy-filter a')
-            .click('.hierarchy-filter a')
-            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
-            .click('xpath', '//class-hierarchy-block//hierarchy-tree//hierarchy-filter//checkbox//label//span[text()[contains(., "Hide deprecated classes")]]')
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
-            .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
-            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
+           .waitForElementVisible('.hierarchy-filter a')
+           .click('.hierarchy-filter a')
+           .waitForElementVisible({locateStrategy: 'xpath', selector: '//class-hierarchy-block//hierarchy-tree//hierarchy-filter'})
+           .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-checkbox//span[text()[contains(., "Hide deprecated classes")]]'})
+           .click('xpath', '//mat-checkbox//span[text()[contains(., "Hide deprecated classes")]]')
+           .waitForElementVisible({locateStrategy: 'xpath', selector: '//button//span[text()[contains(., "Apply")]]'})
+           .click('xpath', '//button//span[text()[contains(., "Apply")]]')
+           .assert.not.elementPresent({locateStrategy: 'xpath', selector: '//span[text()[contains(., "Hide unused imports")]]'})
     },
 
    'Step 10: Ensure that correct classes are shown' : function(browser) {
@@ -113,12 +113,14 @@ module.exports = {
             .useCss()
             .assert.visible('search-bar input')
             .setValue('search-bar input', 'ddadf')
+            .sendKeys('search-bar input', browser.Keys.ENTER)
             .click('.hierarchy-filter a')
-            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
-            .click('xpath', '//class-hierarchy-block//hierarchy-tree//hierarchy-filter//checkbox//label//span[text()[contains(., "Hide deprecated classes")]]')
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
-            .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
-            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//class-hierarchy-block//hierarchy-tree//hierarchy-filter'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-checkbox//span[text()[contains(., "Hide deprecated classes")]]'})
+            .click('xpath', '//mat-checkbox//span[text()[contains(., "Hide deprecated classes")]]')
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//button//span[text()[contains(., "Apply")]]'})
+            .click('xpath', '//button//span[text()[contains(., "Apply")]]')
+            .assert.not.elementPresent({locateStrategy: 'xpath', selector: '//span[text()[contains(., "Hide unused imports")]]'})
             .waitForElementVisible('info-message p')
             .assert.textContains('info-message p', 'No classes match your filter.')
     }

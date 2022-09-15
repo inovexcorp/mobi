@@ -22,14 +22,16 @@
  */
 import { has, map, sortBy } from 'lodash';
 import { first } from 'rxjs/operators';
+import { Component, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { Component, Inject, OnChanges } from '@angular/core';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { MatDialog } from '@angular/material/dialog';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { RDFS } from '../../../prefixes';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
  * @class ontology-editor.ObjectPropertyAxiomsComponent
@@ -44,32 +46,32 @@ import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
     templateUrl: './objectPropertyAxioms.component.html'
 })
 export class ObjectPropertyAxiomsComponent implements OnChanges{
-    key = '';
-    axioms = [];
+    @Input() selected: JSONLDObject; // Here to trigger on changes
+
+    axioms: string[] = [];
 
     constructor(private om: OntologyManagerService, private os: OntologyStateService, private dialog: MatDialog,
-                @Inject('propertyManagerService') private pm) {}
+                private pm: PropertyManagerService) {}
 
     ngOnChanges(): void {
         const axioms = map(this.pm.objectAxiomList, 'iri');
         this.axioms = sortBy(axioms.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
     }
     openRemoveOverlay(event: {iri: string, index: number}): void {
-        this.key = event.iri;
         this.dialog.open(ConfirmModalComponent, {
             data: { content: this.os.getRemovePropOverlayMessage(event.iri, event.index) }
         }).afterClosed().subscribe(result => {
             if (result) {
                 this.os.removeProperty(event.iri, event.index)
                     .pipe(first())
-                    .subscribe( (res) => {
-                        this.removeFromHierarchy(res as JSONLDId);
+                    .subscribe((res) => {
+                        this.removeFromHierarchy(event.iri, res as JSONLDId);
                     });
             }
         });
     }
-    removeFromHierarchy(axiomObject: JSONLDId): void {
-        if (RDFS + 'subPropertyOf' === this.key && !this.om.isBlankNodeId(axiomObject['@id'])) {
+    removeFromHierarchy(axiom: string, axiomObject: JSONLDId): void {
+        if (RDFS + 'subPropertyOf' === axiom && !this.om.isBlankNodeId(axiomObject['@id'])) {
             this.os.deleteEntityFromParentInHierarchy(this.os.listItem.objectProperties, this.os.listItem.selected['@id'], axiomObject['@id']);
             this.os.listItem.objectProperties.flat = this.os.flattenHierarchy(this.os.listItem.objectProperties);
             this.os.setVocabularyStuff();
