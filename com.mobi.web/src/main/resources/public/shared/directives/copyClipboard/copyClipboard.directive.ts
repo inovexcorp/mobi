@@ -20,14 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Directive, Input, Output, EventEmitter, HostListener, Inject, HostBinding } from '@angular/core';
+import { Directive, Input, Output, EventEmitter, HostListener, HostBinding } from '@angular/core';
+import { ToastrService } from 'ngx-toastr';
 
 @Directive({ selector: '[copy-clipboard]' })
 export class CopyClipboardDirective {
 
     @HostBinding('class.copyClipboard')
     class_copyClipboard = true;
-    // elementClass = 'copy-clipboard';
 
     @Input('copy-clipboard')
     public payload: string;
@@ -35,7 +35,7 @@ export class CopyClipboardDirective {
     @Output('copied')
     public copied: EventEmitter<string> = new EventEmitter<string>();
 
-    constructor(@Inject('toastr') private toastr) {
+    constructor(private toastr: ToastrService) {
     }
 
     @HostListener('click', ['$event'])

@@ -20,13 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { get, find } from 'lodash';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './commentDisplay.component.scss';
 
@@ -73,7 +75,8 @@ export class CommentDisplayComponent {
     
     @Output() delete = new EventEmitter<string>();
 
-    constructor(private dialog: MatDialog, private um: UserManagerService, @Inject('loginManagerService') private lm, @Inject('utilService') public util) {}
+    constructor(private dialog: MatDialog, private um: UserManagerService, private lm: LoginManagerService, 
+        public util: UtilService) {}
 
     confirmDelete(): void {
         this.dialog.open(ConfirmModalComponent, {

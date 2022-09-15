@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Injectable, } from '@angular/core';
+import { Injectable, } from '@angular/core';
 import { Observable, Subject, Subscriber, from, of, forkJoin } from 'rxjs';
 import { map, tap, switchMap, catchError, shareReplay } from 'rxjs/operators';
+import { cloneDeep, forEach } from 'lodash';
 
 import { buildColorScale } from '../helpers/graphSettings';
 import { StateNode, SidebarState, StateEdge, GraphState } from '../classes/index';
@@ -45,8 +46,7 @@ import { OntologyStateService } from '../../shared/services/ontologyState.servic
 import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
 import { Hierarchy } from '../../shared/models/hierarchy.interface';
 import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
-import { HelperService } from '../../shared/services/helper.service'
-import { cloneDeep, forEach } from "lodash";
+import { UtilService } from '../../shared/services/util.service';
 
 /**
  * @class OntologyVisualization.service
@@ -79,8 +79,7 @@ export class OntologyVisualizationService {
     constructor(private os: OntologyStateService,
                 private spinnerSrv : ProgressSpinnerService,
                 private om: OntologyManagerService,
-                private helper: HelperService,
-                @Inject('utilService') private utilService) {
+                private util: UtilService) {
         if (this.os.ontologyRecordAction$) {
             this.os.ontologyRecordAction$.subscribe(record => this.removeOntologyCache(record));
         }
@@ -97,7 +96,7 @@ export class OntologyVisualizationService {
      *
      * @param action
      */
-    public emitSelectAction(action):void {
+    public emitSelectAction(action): void {
         this._ontologyClassSelectedSubject.next(action);
     }
 
@@ -105,7 +104,7 @@ export class OntologyVisualizationService {
      * Emit SidePanel events or actions
      * @param action
      */
-    public emitSidePanelAction(action:SidePanelPayloadI) {
+    public emitSidePanelAction(action:SidePanelPayloadI): void {
         this._sidePanelActionSubject.next(action);
     }
 
@@ -171,7 +170,7 @@ export class OntologyVisualizationService {
                 });
                 commitGraphState.ontologiesClassMap = ontologiesClassMap;
                 commitGraphState.isOverLimit = commitGraphState.allGraphNodes.length > commitGraphState.nodeLimit;
-                commitGraphState.getName = (iri) => this.utilService.getBeautifulIRI(iri);
+                commitGraphState.getName = (iri) => this.util.getBeautifulIRI(iri);
                 const controlRecordSearch = commitGraphState.getControlRecordSearch(0);
                 commitGraphState.emitGraphData(controlRecordSearch);
             })
@@ -229,7 +228,7 @@ export class OntologyVisualizationService {
                 this.os.listItem.versionedRdfRecord.commitId,
                 false)]
         ).pipe(
-            catchError(error => { throw 'Network Issue in Source. Details: ' + error } ),
+            catchError(error => { throw 'Network Issue in Source. Details: ' + error; } ),
             map((networkData): any =>{
                 const classHierarchy: HierarchyResponse = networkData[0];
                 const propertyRanges: {[key: string]: string[]} = networkData[1].propertyToRanges;
@@ -268,7 +267,7 @@ export class OntologyVisualizationService {
                     ranges: ranges
                 };
              })
-        )).pipe(catchError(this.helper.handleError));
+        )).pipe(catchError(this.util.handleError));
     }
 
     /**
@@ -305,7 +304,7 @@ export class OntologyVisualizationService {
                         ranges: cloneDeep(ranges)
                     };
                 })
-            )).pipe(catchError(this.helper.handleError));
+            )).pipe(catchError(this.util.handleError));
     }
 
     /**
@@ -489,7 +488,7 @@ export class OntologyVisualizationService {
             lbl = getLabel(entityInfo, propertyIri);
         }
         if (!lbl) {
-            lbl = this.utilService.getBeautifulIRI(propertyIri);
+            lbl = this.util.getBeautifulIRI(propertyIri);
         }
         return lbl;
     }

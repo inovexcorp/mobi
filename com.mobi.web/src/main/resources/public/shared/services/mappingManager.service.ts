@@ -21,24 +21,21 @@
  * #L%
  */
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
     forEach,
     get,
     concat,
-    set,
     includes,
     findIndex,
     find} from 'lodash';
-import { from, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { CamelCasePipe } from '../pipes/camelCase.pipe';
-import { HelperService } from './helper.service';
 import { DATA, DCTERMS, DELIM, MAPPINGS, RDFS } from '../../prefixes';
 import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { Mapping } from '../models/mapping.class';
@@ -46,6 +43,8 @@ import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
 import { MappingOntology } from '../models/mappingOntology.interface';
 import { RecordConfig } from '../models/recordConfig.interface';
 import { OntologyManagerService } from './ontologyManager.service';
+import { UtilService } from './util.service';
+import { OntologyDocument } from '../models/ontologyDocument.interface';
 
 /**
  * @class shared:MappingManagerService
@@ -68,9 +67,8 @@ export class MappingManagerService {
         DCTERMS + 'description'
     ];
 
-    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util,
-        private om: OntologyManagerService, private spinnerSvc: ProgressSpinnerService, 
-        private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
+    constructor(private http: HttpClient, private util: UtilService, private om: OntologyManagerService,
+        private spinnerSvc: ProgressSpinnerService, private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
 
     // REST calls
     /**
@@ -90,7 +88,7 @@ export class MappingManagerService {
         forEach(config.keywords, keyword => fd.append('keywords', keyword));
         fd.append('jsonld', JSON.stringify(jsonld));
         return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
-           .pipe(catchError(this.helper.handleError));
+           .pipe(catchError(this.util.handleError));
     }
     /**
      * Calls the GET /mobirest/mappings/{mappingName} endpoint which returns the JSONL-LD
@@ -101,7 +99,7 @@ export class MappingManagerService {
      */
     getMapping(mappingId: string): Observable<JSONLDObject[]> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(mappingId)))
-           .pipe(catchError(this.helper.handleError));
+           .pipe(catchError(this.util.handleError));
     }
     /**
      * Calls the GET /mobirest/mappings/{mappingName} endpoint using the `window.location` function
@@ -111,7 +109,7 @@ export class MappingManagerService {
      * @param {string} format the RDF serialization to retrieve the mapping in
      */
     downloadMapping(mappingId: string, format = 'jsonld'): void {
-        const params = this.helper.createHttpParams({
+        const params = this.util.createHttpParams({
             format: format || 'jsonld'
         });
         window.open(this.prefix + '/' + encodeURIComponent(mappingId) + '?' + params.toString());
@@ -125,7 +123,7 @@ export class MappingManagerService {
      */
     deleteMapping(mappingId: string): Observable<string> {
         return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(mappingId)))
-           .pipe(catchError(this.helper.handleError));
+           .pipe(catchError(this.util.handleError));
     }
 
     // Edit mapping methods
@@ -138,35 +136,6 @@ export class MappingManagerService {
     getMappingId(mappingTitle: string): string {
         return MAPPINGS + this.camelCase.transform(mappingTitle, 'class');
     }
-    /**
-     * Creates a copy of a mapping using the passed new id, updating all ids to use the new mapping id.
-     *
-     * @param {Mapping} mapping A mapping JSON-LD array
-     * @param {string} newId The id of the new mapping
-     * @returns {Mapping} A copy of the passed mapping with the new id
-     */
-    // copyMapping(mapping: Mapping, newId: string): Mapping {
-    //     const newMapping = new Mapping(mapping.getJsonld());
-    //     newMapping.getMappingEntity()['@id'] = newId;
-    //     const idTransforms = {};
-    //     newMapping.getAllClassMappings().forEach(classMapping => {
-    //         set(idTransforms, encodeURIComponent(classMapping['@id']), newId + '/' + uuidv4());
-    //         classMapping['@id'] = get(idTransforms, encodeURIComponent(classMapping['@id']));
-    //         concat(get(classMapping, '[\'' + DELIM + 'dataProperty\']', []), 
-    //             get(classMapping, '[\'' + DELIM + 'objectProperty\']', [])).forEach(propIdObj => {
-    //             set(idTransforms, encodeURIComponent(propIdObj['@id']), newId + '/' + uuidv4());
-    //             propIdObj['@id'] = get(idTransforms, encodeURIComponent(propIdObj['@id']));
-    //         });
-    //     });
-    //     concat(newMapping.getAllDataMappings(), newMapping.getAllObjectMappings()).forEach(propMapping => {
-    //         if (this.isObjectMapping(propMapping)) {
-    //             propMapping[DELIM + 'classMapping'][0]['@id'] = 
-    //                 get(idTransforms, encodeURIComponent(propMapping[DELIM + 'classMapping'][0]['@id']));
-    //         }
-    //         propMapping['@id'] = get(idTransforms, encodeURIComponent(propMapping['@id']));
-    //     });
-    //     return newMapping;
-    // }
     /**
      * Adds a class mapping to a mapping based on the given class id. The class must be present in the passed array of
      * ontology entities.
@@ -302,10 +271,10 @@ export class MappingManagerService {
                 sourceOntology = ontology;
                 return this.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
             }),
-            switchMap((imported: any[]) => {
+            switchMap((imported: OntologyDocument[]) => {
                 const importedOntologies: MappingOntology[] = imported.map(obj => ({
                     id: obj.ontologyId,
-                    entities: obj.ontology
+                    entities: obj.ontology as JSONLDObject[]
                 }));
                 return of([sourceOntology].concat(importedOntologies));
             })

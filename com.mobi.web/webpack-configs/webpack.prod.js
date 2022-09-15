@@ -66,8 +66,8 @@ module.exports = {
         new webpack.optimize.CommonsChunkPlugin({
             name: 'vendor',
             filename: '[name].[hash].js',
-            minChunks(module, count) {
-                var context = module.context;
+            minChunks(module) {
+                const context = module.context;
                 return context && context.indexOf('node_modules') >= 0;
             }
         })

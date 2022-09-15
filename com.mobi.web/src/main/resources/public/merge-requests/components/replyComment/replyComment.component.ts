@@ -21,11 +21,12 @@
  * #L%
  */
 
-import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { switchMap } from 'rxjs/operators';
-import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 
+import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class merge-requests.ReplyCommentComponent
@@ -49,7 +50,7 @@ export class ReplyCommentComponent {
     @Input() request: MergeRequest;
     @Output() requestChange = new EventEmitter<MergeRequest>();
     
-    constructor(public mm: MergeRequestManagerService, @Inject('utilService') public util) {}
+    constructor(public mm: MergeRequestManagerService, public util: UtilService) {}
 
     reply(): void {
         this.mm.createComment(this.request.jsonld['@id'], this.replyComment, this.parentId)

@@ -32,12 +32,12 @@ import { of } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockLoginManager,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { CommentDisplayComponent } from './commentDisplay.component';
 
 describe('Comment Display component', function() {
@@ -45,8 +45,8 @@ describe('Comment Display component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CommentDisplayComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let utilStub;
-    let matDialog;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let matDialog: jasmine.SpyObj<MatDialog>;
 
     const userId = 'user';
     const username = 'username';
@@ -67,8 +67,8 @@ describe('Comment Display component', function() {
             ],
             providers: [
                 MockProvider(UserManagerService),
-                { provide: 'loginManagerService', useClass: mockLoginManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(LoginManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -81,7 +81,7 @@ describe('Comment Display component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.get(UserManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         matDialog = TestBed.get(MatDialog);
         
         utilStub.getDctermsId.and.returnValue(userId);

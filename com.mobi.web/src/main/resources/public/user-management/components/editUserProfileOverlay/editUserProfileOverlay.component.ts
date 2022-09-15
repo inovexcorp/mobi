@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { find } from 'lodash';
@@ -28,6 +28,7 @@ import { find } from 'lodash';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { FOAF } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class user-management.EditUserProfileOverlayComponent
@@ -45,8 +46,7 @@ export class EditUserProfileOverlayComponent {
     editProfileForm: FormGroup;
 
     constructor(private dialogRef: MatDialogRef<EditUserProfileOverlayComponent>, private fb: FormBuilder,
-        private state: UserStateService, private um: UserManagerService,
-        @Inject('utilService') private util) {
+        private state: UserStateService, private um: UserManagerService, private util: UtilService) {
             this.editProfileForm = this.fb.group({
                 firstName: [this.state.selectedUser.firstName],
                 lastName: [this.state.selectedUser.lastName],

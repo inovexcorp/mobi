@@ -32,7 +32,7 @@
                 </div>
             </div>
         </mat-step>
-        <mat-step #secondStep label="Select Branches" [completed]="!!state.requestConfig.sourceBranchId && !!state.requestConfig.targetBranchId">
+        <mat-step #secondStep label="Select Branches" [completed]="!!state.requestConfig.sourceBranchId && !!state.requestConfig.targetBranchId && !state.sameBranch && !isDisabled">
             <div *ngIf="requestStepper.selectedIndex === 1" class="d-flex flex-column h-100">
                 <request-branch-select (emitCommits)="updateCommits($event)" class="flex-1 remove-min-height"></request-branch-select>
                 <div class="step-buttons mt-2">
@@ -44,7 +44,7 @@
                 </div>
             </div>
         </mat-step>
-        <mat-step #thirdStep label="Set Details" [completed]="!!state.requestConfig.title">
+        <mat-step #thirdStep label="Set Details" [completed]="isCompleted">
             <div *ngIf="requestStepper.selectedIndex === 2" class="d-flex flex-column h-100">
                 <request-details-form class="flex-1 remove-min-height"></request-details-form>
                 <div class="step-buttons mt-2">

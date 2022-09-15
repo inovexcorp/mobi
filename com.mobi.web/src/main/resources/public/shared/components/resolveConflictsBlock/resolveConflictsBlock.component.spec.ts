@@ -25,20 +25,22 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM, mockOntologyState, mockUtil } from '../../../../../../test/ts/Shared';
+import { of, throwError } from 'rxjs';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../services/versionedRdfState.service';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { ResolveConflictsFormComponent } from '../resolveConflictsForm/resolveConflictsForm.component';
-import { ResolveConflictsBlock } from './resolveConflictsBlock.component';
 import { OntologyStateService } from '../../services/ontologyState.service';
-import { of, throwError } from 'rxjs';
+import { UtilService } from '../../services/util.service';
+import { ResolveConflictsBlock } from './resolveConflictsBlock.component';
 
 describe('Resolve Conflicts Block component', function() {
     let component: ResolveConflictsBlock;
     let element: DebugElement;
     let fixture: ComponentFixture<ResolveConflictsBlock>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let stateStub;
 
     configureTestSuite(function() {
@@ -50,8 +52,9 @@ describe('Resolve Conflicts Block component', function() {
                 MockComponent(ResolveConflictsFormComponent)
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(OntologyStateService),
+                // { provide: OntologyStateService, useClass: mockOntologyState },
+                MockProvider(UtilService)
             ],
         });
     });
@@ -60,7 +63,7 @@ describe('Resolve Conflicts Block component', function() {
         fixture = TestBed.createComponent(ResolveConflictsBlock);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         stateStub = MockProvider(VersionedRdfState).provide;
         stateStub.listItem = new VersionedRdfListItem();
         stateStub.merge = jasmine.createSpy('merge').and.returnValue(of(null));
@@ -75,6 +78,7 @@ describe('Resolve Conflicts Block component', function() {
         fixture = null;
         element = null;
         utilStub = null;
+        stateStub = null;
     });
 
     describe('should initialize with the correct data for', function() {
@@ -92,8 +96,8 @@ describe('Resolve Conflicts Block component', function() {
         it('with buttons to submit with resolutions and cancel', function() {
             const buttons = element.queryAll(By.css('.btn-container .btn'));
             expect(buttons.length).toEqual(2);
-            expect(['Cancel', 'Submit with Resolutions'].indexOf(buttons[0].nativeElement.textContent.trim()) >= 0).toEqual(true);
-            expect(['Cancel', 'Submit with Resolutions'].indexOf(buttons[1].nativeElement.textContent.trim()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit with Resolutions'].includes(buttons[0].nativeElement.textContent.trim())).toBeTrue();
+            expect(['Cancel', 'Submit with Resolutions'].includes(buttons[1].nativeElement.textContent.trim())).toBeTrue();
         });
         it('depending on whether there is an error', async function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
@@ -121,7 +125,7 @@ describe('Resolve Conflicts Block component', function() {
             expect(button.properties['disabled']).toBeFalsy();
         });
         it('depending on whether the source branch is up to date', async function() {
-            let button = element.queryAll(By.css('.btn-container .btn-primary'))[0];
+            const button = element.queryAll(By.css('.btn-container .btn-primary'))[0];
             expect(button.properties['disabled']).toBeFalsy();
 
             stateStub.listItem.upToDate = false;
@@ -150,7 +154,7 @@ describe('Resolve Conflicts Block component', function() {
                 await component.submit();
                 expect(stateStub.listItem.merge.resolutions.additions).toEqual([]);
                 expect(stateStub.listItem.merge.resolutions.deletions).toEqual(['add-right', 'add-left']);
-                expect(stateStub.merge).toHaveBeenCalled();
+                expect(stateStub.merge).toHaveBeenCalledWith();
                 expect(stateStub.resetStateTabs).not.toHaveBeenCalled();
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(stateStub.cancelMerge).not.toHaveBeenCalled();
@@ -160,10 +164,10 @@ describe('Resolve Conflicts Block component', function() {
                 await component.submit();
                 expect(stateStub.listItem.merge.resolutions.additions).toEqual([]);
                 expect(stateStub.listItem.merge.resolutions.deletions).toEqual(['add-right', 'add-left']);
-                expect(stateStub.merge).toHaveBeenCalled();
-                expect(stateStub.resetStateTabs).toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
-                expect(stateStub.cancelMerge).toHaveBeenCalled();
+                expect(stateStub.merge).toHaveBeenCalledWith();
+                expect(stateStub.resetStateTabs).toHaveBeenCalledWith();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(stateStub.cancelMerge).toHaveBeenCalledWith();
                 expect(component.error).toEqual('');
             });
         });
@@ -172,11 +176,11 @@ describe('Resolve Conflicts Block component', function() {
         spyOn(component, 'submit');
         const button = element.queryAll(By.css('.btn-container .btn-primary'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.submit).toHaveBeenCalled();
+        expect(component.submit).toHaveBeenCalledWith();
     });
     it('should call the correct method when the button is clicked', function() {
         const button = element.queryAll(By.css('.btn-container .btn:not(.btn-primary)'))[0];
         button.triggerEventHandler('click', null);
-        expect(stateStub.cancelMerge).toHaveBeenCalled();
+        expect(stateStub.cancelMerge).toHaveBeenCalledWith();
     });
 });

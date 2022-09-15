@@ -24,6 +24,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material';
 
 import { MappingState } from '../../../shared/models/mappingState.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 @Component({
     selector: 'view-mapping-modal',
@@ -32,7 +33,7 @@ import { MappingState } from '../../../shared/models/mappingState.interface';
 export class ViewMappingModalComponent implements OnInit {
     ontologyTitle: string;
 
-    constructor(@Inject('utilService') private util, @Inject(MAT_DIALOG_DATA) public data: {state: MappingState}) {
+    constructor(private util: UtilService, @Inject(MAT_DIALOG_DATA) public data: {state: MappingState}) {
 
     }
     ngOnInit(): void {

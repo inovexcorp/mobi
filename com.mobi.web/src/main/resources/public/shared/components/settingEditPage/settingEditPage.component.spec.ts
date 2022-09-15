@@ -25,27 +25,28 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { get } from 'lodash';
+import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockSettingManager,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { SettingGroupComponent } from '../settingGroup/settingGroup.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
 import { RDFS } from '../../../prefixes';
+import { UtilService } from '../../services/util.service';
+import { SettingManagerService } from '../../services/settingManager.service';
 import { SettingEditPageComponent } from './settingEditPage.component';
 
 describe('Setting Edit Page Component', function() {
     let component: SettingEditPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SettingEditPageComponent>;
-    let utilStub;
-    let settingManagerStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
     let testGroups;
 
     configureTestSuite(function() {
@@ -61,8 +62,8 @@ describe('Setting Edit Page Component', function() {
                 TrustedHtmlPipe
             ],
             providers: [
-                { provide: 'settingManagerService', useClass: mockSettingManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(SettingManagerService),
+                MockProvider(UtilService),
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
@@ -72,8 +73,9 @@ describe('Setting Edit Page Component', function() {
         fixture = TestBed.createComponent(SettingEditPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        settingManagerStub = TestBed.get('settingManagerService');
-        utilStub = TestBed.get('utilService');
+        settingManagerStub = TestBed.get(SettingManagerService);
+        settingManagerStub.getSettingGroups.and.returnValue(of([]));
+        utilStub = TestBed.get(UtilService);
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
         });
@@ -97,7 +99,7 @@ describe('Setting Edit Page Component', function() {
             } ]
           } ];
 
-        settingManagerStub.tabs = [];
+        component.tabs = [];
 
         component.settingType = { iri: 'http://mobitest.com/Preference', userText: 'Preferences'};
     });
@@ -114,14 +116,14 @@ describe('Setting Edit Page Component', function() {
     describe('controller methods', function() {
         describe('should populate the sidebar', function() {
             it('unless an error occurs', fakeAsync(function() {
-                settingManagerStub.getSettingGroups.and.rejectWith('Error message');
+                settingManagerStub.getSettingGroups.and.returnValue(throwError('Error message'));
                 component.setSettingTabs();
                 tick();
-                expect(settingManagerStub.tabs.length).toEqual(0);
+                expect(component.tabs.length).toEqual(0);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
             it('with new values', fakeAsync(function() {
-                settingManagerStub.getSettingGroups.and.resolveTo({data: testGroups});
+                settingManagerStub.getSettingGroups.and.returnValue(of(testGroups));
                 component.setSettingTabs();
                 tick();
                 expect(component.tabs.length).toEqual(2);
@@ -182,6 +184,7 @@ describe('Setting Edit Page Component', function() {
         
     describe('contains the correct html', function() {
         beforeEach(function() {
+            fixture.detectChanges();
             component.tabs = [
                 {
                     type: 'preference:TestGroupA',

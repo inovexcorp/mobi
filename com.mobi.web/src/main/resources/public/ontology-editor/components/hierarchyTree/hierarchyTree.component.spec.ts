@@ -24,25 +24,29 @@
 import { join } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { HierarchyTreeComponent } from './hierarchyTree.component';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { mockOntologyState, mockOntologyManager, mockUtil, cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { MockComponent } from 'ng-mocks';
-import { TreeItemComponent } from '../treeItem/treeItem.component';
-import { HierarchyFilterComponent } from '../hierarchyFilter/hierarchyFilter.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { TreeItemComponent } from '../treeItem/treeItem.component';
+import { HierarchyFilterComponent } from '../hierarchyFilter/hierarchyFilter.component';
 import { SharedModule } from '../../../shared/shared.module';
 import { DCTERMS } from '../../../prefixes';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { HierarchyTreeComponent } from './hierarchyTree.component';
 
 describe('Hierarchy Tree component', function() {
     let component: HierarchyTreeComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<HierarchyTreeComponent>;
-    let ontologyStateStub;
-    let utilStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -53,9 +57,9 @@ describe('Hierarchy Tree component', function() {
                 MockComponent(HierarchyFilterComponent)
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyStateService),
+                MockProvider(OntologyManagerService),
+                MockProvider(UtilService),
             ]
         });
     });
@@ -66,33 +70,45 @@ describe('Hierarchy Tree component', function() {
         element = fixture.debugElement;
 
         ontologyStateStub = TestBed.get(OntologyStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
+        ontologyStateStub.listItem = new OntologyListItem();
         component.hierarchy = [{
             entityIRI: 'class1',
             indent: 0,
             path: [],
             hasChildren: true,
             joinedPath: '',
-            entityInfo: undefined
+            entityInfo: {
+                label: 'class1',
+                names: ['class1'],
+            }
         }, {
             entityIRI: 'class2',
             indent: 1,
             path: [],
             hasChildren: false,
             joinedPath: '',
-            entityInfo: undefined
+            entityInfo: {
+                label: 'class2',
+                names: ['class2'],
+            }
         }, {
             entityIRI: 'class3',
             indent: 0,
             path: [],
             hasChildren: false,
             joinedPath: '',
-            entityInfo: undefined
+            entityInfo: {
+                label: 'class3',
+                names: ['class3'],
+            }
         }];
         ontologyStateStub.getActiveKey.and.returnValue('classes');
-        // component.index = 4; // TODO: Don't know why this was here.
+        utilStub.getBeautifulIRI.and.returnValue('test');
         component.index = 0;
+        component.filterText = '';
+        component.searchText = '';
         spyOn(component.resetIndex, 'emit');
         component.ngOnInit();
         fixture.detectChanges();
@@ -120,29 +136,32 @@ describe('Hierarchy Tree component', function() {
         it('based on tree-items', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            // TODO: Why did it used to expect 1? expect(element.queryAll(By.css('tree-item')).length).toEqual(1);
-            expect(element.queryAll(By.css('tree-item')).length).toEqual(2);
+            expect(element.queryAll(By.css('tree-item')).length).toEqual(3);
         });
         it('based on .tree-item-wrapper', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            // TODO: Why did it used to expect 1? expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(1);
-            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(2);
+            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(3);
         });
     });
     describe('controller methods', function() {
         it('clickItem should call the correct method', function() {
+            ontologyStateStub.selectItem.and.returnValue(of(null));
             component.clickItem('iri');
             expect(ontologyStateStub.selectItem).toHaveBeenCalledWith('iri');
         });
         it('toggleOpen should set the correct values', function() {
             spyOn(component, 'isShown').and.returnValue(false);
+            component.preFilteredHierarchy = component.hierarchy;
             const node: HierarchyNode = {
                 isOpened: false, path: ['a', 'b'], joinedPath: 'a.b',
                 entityIRI: '',
                 hasChildren: false,
                 indent: 0,
-                entityInfo: undefined
+                entityInfo: {
+                    label: 'class3',
+                    names: ['class3'],
+                }
             };
             component.toggleOpen(node);
             expect(node.isOpened).toEqual(true);
@@ -198,15 +217,20 @@ describe('Hierarchy Tree component', function() {
                     indent: 0,
                     entityIRI: 'otherIri',
                     hasChildren: true,
-                    path: ['recordId', 'otherIri']
+                    path: ['recordId', 'otherIri'],
+                    entityInfo: {
+                        label: 'parent',
+                        names: ['parent'],
+                    }
                 };
                 component.hierarchy = [this.filterNodeParent, this.filterNode];
-                component.filterText = 'ti';
+                component.filterText = 'class';
                 ontologyStateStub.joinPath.and.callFake((path) => join(path, '.'));
             });
             describe('has filter text', function() {
                 describe('and the entity names', function() {
                     it('have at least one matching text value', function() {
+                        component.filterText = 'title';
                         expect(component.searchFilter(this.filterNode)).toEqual(true);
                         expect(ontologyStateStub.listItem.editorTabStates[component.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
                     });
@@ -215,10 +239,12 @@ describe('Hierarchy Tree component', function() {
                             this.filterNode.entityInfo.names = [];
                         });
                         it('and does not have a matching entity local name', function () {
+                            component.filterText = 'fail';
                             utilStub.getBeautifulIRI.and.returnValue('id');
                             expect(component.searchFilter(this.filterNode)).toEqual(false);
                         });
                         it('and does have a matching entity local name', function() {
+                            component.filterText = 'title';
                             utilStub.getBeautifulIRI.and.returnValue('title');
                             expect(component.searchFilter(this.filterNode)).toEqual(true);
                         });

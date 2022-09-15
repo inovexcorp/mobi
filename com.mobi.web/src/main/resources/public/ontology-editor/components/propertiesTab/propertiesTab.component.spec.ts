@@ -28,6 +28,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
@@ -37,18 +38,17 @@ import { CharacteristicsRowComponent } from '../characteristicsRow/characteristi
 import { UsagesBlockComponent } from '../usagesBlock/usagesBlock.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
+import { PropertyHierarchyBlockComponent } from '../propertyHierarchyBlock/propertyHierarchyBlock.component';
 import { PropertiesTabComponent } from './propertiesTab.component';
-import { PropertyHierarchyBlockComponent }from '../propertyHierarchyBlock/propertyHierarchyBlock.component';
 
 describe('Properties Tab component', function() {
     let component: PropertiesTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<PropertiesTabComponent>;
-    let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
-    let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
-    let dialogStub : jasmine.SpyObj<MatDialog>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let dialogStub: jasmine.SpyObj<MatDialog>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -69,19 +69,19 @@ describe('Properties Tab component', function() {
                         open: { afterClosed: () => of(true)}
                     }) }
             ]
-        })
-    })
+        });
+    });
     
     beforeEach(function() {
         fixture = TestBed.createComponent(PropertiesTabComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        ontologyStateServiceStub = TestBed.get(OntologyStateService);
-        ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyManagerStub = TestBed.get(OntologyManagerService);
         dialogStub = TestBed.get(MatDialog);
 
-        ontologyStateServiceStub.listItem = new OntologyListItem();
-        ontologyStateServiceStub.listItem.selected = {
+        ontologyStateStub.listItem = new OntologyListItem();
+        ontologyStateStub.listItem.selected = {
             '@id': 'axiom1',
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2', '@type': 'type', '@language': 'language'}]
@@ -94,11 +94,20 @@ describe('Properties Tab component', function() {
         fixture = null;
         component = null;
         element = null;
-        ontologyStateServiceStub = null;
-        ontologyManagerServiceStub = null;
+        ontologyStateStub = null;
+        ontologyManagerStub = null;
         dialogStub = null;
     });
 
+    it('should initialize correctly', function() {
+        component.ngOnInit();
+        expect(ontologyStateStub.listItem.editorTabStates.properties.element).toEqual(component.propertiesTab);
+    });
+    it('should tear down correctly', function() {
+        ontologyStateStub.listItem.editorTabStates.properties.element = component.propertiesTab;
+        component.ngOnDestroy();
+        expect(ontologyStateStub.listItem.editorTabStates.properties.element).toBeUndefined();
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.properties-tab.row')).length).toEqual(1);
@@ -110,43 +119,43 @@ describe('Properties Tab component', function() {
         });
         it('with an axiom-block', function() {
             expect(element.queryAll(By.css('axiom-block')).length).toEqual(1);
-            ontologyManagerServiceStub.isAnnotation.and.returnValue(true);
+            ontologyManagerStub.isAnnotation.and.returnValue(true);
             fixture.detectChanges();
             expect(element.queryAll(By.css('axiom-block')).length).toEqual(0);
         });
         it('with a button to delete a property if a user can modify', function() {
-            ontologyStateServiceStub.canModify.and.returnValue(true);
+            ontologyStateStub.canModify.and.returnValue(true);
             fixture.detectChanges();
-            const button = element.queryAll(By.css('.selected-header button.btn-danger'));
+            const button = element.queryAll(By.css('.selected-header button[color="warn"]'));
             expect(button.length).toEqual(1);
             expect(button[0].nativeElement.textContent.trim()).toContain('Delete');
         });
         it('with no button to delete a property if a user cannot modify', function() {
-            ontologyStateServiceStub.canModify.and.returnValue(false);
+            ontologyStateStub.canModify.and.returnValue(false);
             fixture.detectChanges();
-            expect(element.queryAll(By.css('.selected-header button.btn-danger')).length).toEqual(0);
+            expect(element.queryAll(By.css('.selected-header button[color="warn"]')).length).toEqual(0);
         });
         it('with a button to see the property history', function() {
-            const button = element.queryAll(By.css('.selected-header button.btn-primary'));
+            const button = element.queryAll(By.css('.selected-header button[color="primary"]'));
             expect(button.length).toEqual(1);
             expect(button[0].nativeElement.textContent.trim()).toEqual('See History');
         });
         it('depending on whether something is selected', function() {
             expect(element.queryAll(By.css('.selected-property div')).length).toBeGreaterThan(0);
 
-            ontologyStateServiceStub.listItem.selected = undefined;
+            ontologyStateStub.listItem.selected = undefined;
             fixture.detectChanges();
             expect(element.queryAll(By.css('.selected-property div')).length).toEqual(0);
         });
         it('depending on whether the selected property is imported', function() {
-            ontologyStateServiceStub.canModify.and.returnValue(true);
+            ontologyStateStub.canModify.and.returnValue(true);
             fixture.detectChanges();
-            const historyButton = element.queryAll(By.css('.selected-header button.btn-primary'))[0];
-            const deleteButton = element.queryAll(By.css('.selected-header button.btn-danger'))[0];
+            const historyButton = element.queryAll(By.css('.selected-header button[color="primary"]'))[0];
+            const deleteButton = element.queryAll(By.css('.selected-header button[color="warn"]'))[0];
             expect(historyButton.properties['disabled']).toBeFalsy();
             expect(deleteButton.properties['disabled']).toBeFalsy();
 
-            ontologyStateServiceStub.isSelectedImported.and.returnValue(true);
+            ontologyStateStub.isSelectedImported.and.returnValue(true);
             fixture.detectChanges();
             expect(historyButton.properties['disabled']).toBeTruthy();
             expect(deleteButton.properties['disabled']).toBeTruthy();
@@ -161,50 +170,50 @@ describe('Properties Tab component', function() {
         });
         it('should show a class history', function() {
             component.seeHistory();
-            expect(ontologyStateServiceStub.listItem.seeHistory).toEqual(true);
+            expect(ontologyStateStub.listItem.seeHistory).toEqual(true);
         });
         describe('should delete', function() {
             it('an object property', function() {
-                ontologyManagerServiceStub.isObjectProperty.and.returnValue(true);
+                ontologyManagerStub.isObjectProperty.and.returnValue(true);
                 component.deleteProperty();
-                expect(ontologyManagerServiceStub.isObjectProperty).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected);
-                expect(ontologyStateServiceStub.deleteDataTypeProperty).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.deleteObjectProperty).toHaveBeenCalled();
-                expect(ontologyStateServiceStub.deleteAnnotationProperty).not.toHaveBeenCalled();
+                expect(ontologyManagerStub.isObjectProperty).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
+                expect(ontologyStateStub.deleteDataTypeProperty).not.toHaveBeenCalled();
+                expect(ontologyStateStub.deleteObjectProperty).toHaveBeenCalledWith();
+                expect(ontologyStateStub.deleteAnnotationProperty).not.toHaveBeenCalled();
             });
             it('a datatype property', function() {
-                ontologyManagerServiceStub.isDataTypeProperty.and.returnValue(true);
+                ontologyManagerStub.isDataTypeProperty.and.returnValue(true);
                 component.deleteProperty();
-                expect(ontologyManagerServiceStub.isObjectProperty).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected);
-                expect(ontologyManagerServiceStub.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected);
-                expect(ontologyStateServiceStub.deleteDataTypeProperty).toHaveBeenCalled();
-                expect(ontologyStateServiceStub.deleteObjectProperty).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.deleteAnnotationProperty).not.toHaveBeenCalled();
+                expect(ontologyManagerStub.isObjectProperty).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
+                expect(ontologyManagerStub.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
+                expect(ontologyStateStub.deleteDataTypeProperty).toHaveBeenCalledWith();
+                expect(ontologyStateStub.deleteObjectProperty).not.toHaveBeenCalled();
+                expect(ontologyStateStub.deleteAnnotationProperty).not.toHaveBeenCalled();
             });
             it('an annotation property', function() {
-                ontologyManagerServiceStub.isAnnotation.and.returnValue(true);
+                ontologyManagerStub.isAnnotation.and.returnValue(true);
                 component.deleteProperty();
-                expect(ontologyManagerServiceStub.isObjectProperty).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected);
-                expect(ontologyManagerServiceStub.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected);
-                expect(ontologyManagerServiceStub.isAnnotation).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected);
-                expect(ontologyStateServiceStub.deleteDataTypeProperty).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.deleteObjectProperty).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.deleteAnnotationProperty).toHaveBeenCalled();
+                expect(ontologyManagerStub.isObjectProperty).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
+                expect(ontologyManagerStub.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
+                expect(ontologyManagerStub.isAnnotation).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
+                expect(ontologyStateStub.deleteDataTypeProperty).not.toHaveBeenCalled();
+                expect(ontologyStateStub.deleteObjectProperty).not.toHaveBeenCalled();
+                expect(ontologyStateStub.deleteAnnotationProperty).toHaveBeenCalledWith();
             });
         });
     });
     it('should call seeHistory when the see history button is clicked', function() {
         spyOn(component, 'seeHistory');
-        const button = element.queryAll(By.css('.selected-header button.btn-primary'))[0];
+        const button = element.queryAll(By.css('.selected-header button[color="primary"]'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.seeHistory).toHaveBeenCalled();
+        expect(component.seeHistory).toHaveBeenCalledWith();
     });
     it('should call showDeleteConfirmation when the delete button is clicked', function() {
-        ontologyStateServiceStub.canModify.and.returnValue(true);
+        ontologyStateStub.canModify.and.returnValue(true);
         fixture.detectChanges();
         spyOn(component, 'showDeleteConfirmation');
-        const button = element.queryAll(By.css('.selected-header button.btn-danger'))[0];
+        const button = element.queryAll(By.css('.selected-header button[color="warn"]'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.showDeleteConfirmation).toHaveBeenCalled();
+        expect(component.showDeleteConfirmation).toHaveBeenCalledWith();
     });
 });

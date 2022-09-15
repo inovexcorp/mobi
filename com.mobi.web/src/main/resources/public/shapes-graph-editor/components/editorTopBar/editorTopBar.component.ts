@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { get } from 'lodash';
 import { first } from 'rxjs/operators';
@@ -32,6 +32,7 @@ import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRec
 import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordModal.component';
 import { CommitModalComponent } from '../commitModal/commitModal.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './editorTopBar.component.scss';
 
@@ -46,8 +47,8 @@ import './editorTopBar.component.scss';
 })
 export class EditorTopBarComponent {
 
-    constructor(private dialog: MatDialog, public state: ShapesGraphStateService,
-                private cm: CatalogManagerService, @Inject('utilService') private util) {}
+    constructor(private dialog: MatDialog, public state: ShapesGraphStateService, private cm: CatalogManagerService,
+        private util: UtilService) {}
 
     createBranch(): void {
         this.dialog.open(CreateBranchModal, {});

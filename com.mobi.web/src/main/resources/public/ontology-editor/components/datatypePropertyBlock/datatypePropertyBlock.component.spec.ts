@@ -21,7 +21,7 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogModule, MatButtonModule, MatIconModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -29,7 +29,6 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { DatatypePropertyBlockComponent } from './datatypePropertyBlock.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
@@ -37,7 +36,7 @@ import { RDF, XSD } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { DatatypePropertyOverlayComponent } from '../datatypePropertyOverlay/datatypePropertyOverlay.component';
 import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
-import { DataAtomicContext } from '../../../vendor/antlr4/dist/MOSParser';
+import { DatatypePropertyBlockComponent } from './datatypePropertyBlock.component';
 
 describe('Datatype Property Block component', function() {
     let component: DatatypePropertyBlockComponent;
@@ -47,7 +46,6 @@ describe('Datatype Property Block component', function() {
     let matDialog: jasmine.SpyObj<MatDialog>;
     let propertyIRI;
     let value;
-    let nativeElement;
     let modalData = {
         editingProperty: false,
         propertySelect: undefined,
@@ -81,7 +79,6 @@ describe('Datatype Property Block component', function() {
         fixture = TestBed.createComponent(DatatypePropertyBlockComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        nativeElement = element.nativeElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
         matDialog = TestBed.get(MatDialog);
         ontologyStateStub.listItem = new OntologyListItem();
@@ -111,41 +108,40 @@ describe('Datatype Property Block component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(nativeElement.querySelectorAll('.datatype-property-block').length).toEqual(1);
-            expect(nativeElement.querySelectorAll('.annotation-block').length).toEqual(1);
+            expect(element.queryAll(By.css('.datatype-property-block')).length).toEqual(1);
         });
         it('with a .section-header', function() {
-            expect(nativeElement.querySelectorAll('.section-header').length).toEqual(1);
+            expect(element.queryAll(By.css('.section-header')).length).toEqual(1);
         });
         it('with a link to add a datatype property if the user can modify', function() {
             ontologyStateStub.canModify.and.returnValue(true);
             fixture.detectChanges();
-            expect(nativeElement.querySelectorAll('.section-header a').length).toEqual(1);
+            expect(element.queryAll(By.css('.section-header a')).length).toEqual(1);
         });
         it('with no link to add a datatype property if the user cannot modify', function() {
             ontologyStateStub.canModify.and.returnValue(false);
             fixture.detectChanges();
-            expect(nativeElement.querySelectorAll('.section-header a').length).toEqual(0);
+            expect(element.queryAll(By.css('.section-header a')).length).toEqual(0);
         });
         it('depending on whether the selected individual is imported', function() {
             ontologyStateStub.canModify.and.returnValue(true);
             fixture.detectChanges();
-            expect(nativeElement.querySelectorAll('.section-header a').length).toEqual(1);
+            expect(element.queryAll(By.css('.section-header a')).length).toEqual(1);
             ontologyStateStub.isSelectedImported.and.returnValue(true);
             fixture.detectChanges();
-            expect(nativeElement.querySelectorAll('.section-header a').length).toEqual(0);
+            expect(element.queryAll(By.css('.section-header a')).length).toEqual(0);
         });
         it('depending on how many datatype properties there are', function() {
             ontologyStateStub.listItem.dataProperties.iris = { 'prop1': 'pr', 'prop2': 'test', 'owl2': '' };
             component.updatePropertiesFiltered();
             fixture.detectChanges();
             expect(component.dataPropertiesFiltered).toEqual(['prop1', 'prop2']);
-            expect(nativeElement.querySelectorAll('property-values').length).toEqual(2);
+            expect(element.queryAll(By.css('property-values')).length).toEqual(2);
             ontologyStateStub.listItem.selected = undefined;
             component.updatePropertiesFiltered();
             fixture.detectChanges();
             expect(component.dataPropertiesFiltered).toEqual([]);
-            expect(nativeElement.querySelectorAll('property-values').length).toEqual(0);
+            expect(element.queryAll(By.css('property-values')).length).toEqual(0);
         });
     });
     describe('controller methods', function() {
@@ -166,7 +162,7 @@ describe('Datatype Property Block component', function() {
             expect(matDialog.open).toHaveBeenCalledWith(DatatypePropertyOverlayComponent, { data: data });
         });
         it('should set the correct manager values when opening the Remove Data Property Overlay', function() {
-            component.showRemovePropertyOverlay({key:'key', index:1});
+            component.showRemovePropertyOverlay({key: 'key', index: 1});
             expect(ontologyStateStub.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent,  { data: { content: 'Are you sure you want to clear <strong>' +  ontologyStateStub.getRemovePropOverlayMessage('key', 1)+ '</strong>?'}});
         });
@@ -210,8 +206,8 @@ describe('Datatype Property Block component', function() {
         ontologyStateStub.canModify.and.returnValue(true);
         fixture.detectChanges()
         spyOn(component, 'openAddDataPropOverlay');
-        const link = element.nativeElement.querySelectorAll('.section-header a')[0];
-        link.click();
-        expect(component.openAddDataPropOverlay).toHaveBeenCalled();
+        const link = element.queryAll(By.css('.section-header a'))[0];
+        link.triggerEventHandler('click', null);
+        expect(component.openAddDataPropOverlay).toHaveBeenCalledWith();
     });
 });

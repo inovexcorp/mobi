@@ -103,7 +103,7 @@ module.exports = {
         browser
             .useCss()
             .waitForElementVisible('div.material-tabset li.nav-item')
-            .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
+            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
     'Step 11: Check for Ontology classes' : function (browser) {

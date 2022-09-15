@@ -33,12 +33,12 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { CommitDifferenceTabsetComponent } from '../../../shared/components/commitDifferenceTabset/commitDifferenceTabset.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { AssigneeInputComponent } from '../assigneeInput/assigneeInput.component';
 import { RequestDetailsFormComponent } from './requestDetailsForm.component';
 
@@ -48,7 +48,7 @@ describe('Request Details Form component', function() {
     let fixture: ComponentFixture<RequestDetailsFormComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
@@ -77,7 +77,7 @@ describe('Request Details Form component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(MergeRequestsStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -88,7 +88,7 @@ describe('Request Details Form component', function() {
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
         mergeRequestsStateStub = TestBed.get(MergeRequestsStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
         utilStub.getPropertyId.and.returnValue(commitId);

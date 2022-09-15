@@ -20,175 +20,114 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Injectable } from '@angular/core';
 import { map, concat, pullAt, some, forEach, without, unset, has } from 'lodash';
 
-propertyManagerService.$inject = ['prefixes'];
+import { DC, DCTERMS, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
 
 /**
- * @ngdoc service
- * @name shared.service:propertyManagerService
- * @requires shared.service:prefixes
+ * @class shared.PropertyManagerService
  *
- * @description
- * `propertyManagerService` is a service that provides variables for commonly used property IRIs, axioms, and
- * language tags along with utility methods for adding, removing, and editing values on JSON-LD objects.
+ * A service that provides variables for commonly used property IRIs, axioms, and language tags along with utility
+ * methods for adding, removing, and editing values on JSON-LD objects.
  */
-function propertyManagerService(prefixes) {
-    var self = this;
+@Injectable()
+export class PropertyManagerService {
+    rdfsAnnotations = map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => RDFS + item);
+    dcAnnotations = map(['contributor', 'coverage', 'creator', 'date', 'description', 'format', 'identifier', 'language', 'publisher', 'relation', 'rights', 'source', 'title', 'type'], item => DCTERMS + item);
+    dcElementsAnnotations = map(['abstract' , 'accessRights' , 'accrualMethod' , 'accrualPeriodicity' , 'accrualPolicy' , 'alternative' , 'audience' , 'available' , 'bibliographicCitation' , 'conformsTo' , 'contributor' , 'coverage' , 'created' , 'creator' , 'date' , 'dateAccepted' , 'dateCopyrighted' , 'dateSubmitted' , 'description' , 'educationLevel' , 'extent' , 'format' , 'hasFormat' , 'hasPart' , 'hasVersion' , 'identifier' , 'instructionalMethod' , 'isFormatOf' , 'isPartOf' , 'isReferencedBy' , 'isReplacedBy' , 'isRequiredBy' , 'issued' , 'isVersionOf' , 'language' , 'license' , 'mediator' , 'medium' , 'modified' , 'provenance' , 'publisher' , 'references' , 'relation' , 'replaces' , 'requires' , 'rights' , 'rightsHolder' , 'source' , 'spatial' , 'subject' , 'tableOfContents' , 'temporal' , 'title' , 'type' , 'valid'], item => DC + item);
+    
+    constructor() {}
 
-    var rdfsAnnotations = map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => prefixes.rdfs + item);
-    var dcAnnotations = map(['contributor', 'coverage', 'creator', 'date', 'description', 'format', 'identifier', 'language', 'publisher', 'relation', 'rights', 'source', 'title', 'type'], item => prefixes.dcterms + item);
-    var dcElementsAnnotations = map(['abstract' , 'accessRights' , 'accrualMethod' , 'accrualPeriodicity' , 'accrualPolicy' , 'alternative' , 'audience' , 'available' , 'bibliographicCitation' , 'conformsTo' , 'contributor' , 'coverage' , 'created' , 'creator' , 'date' , 'dateAccepted' , 'dateCopyrighted' , 'dateSubmitted' , 'description' , 'educationLevel' , 'extent' , 'format' , 'hasFormat' , 'hasPart' , 'hasVersion' , 'identifier' , 'instructionalMethod' , 'isFormatOf' , 'isPartOf' , 'isReferencedBy' , 'isReplacedBy' , 'isRequiredBy' , 'issued' , 'isVersionOf' , 'language' , 'license' , 'mediator' , 'medium' , 'modified' , 'provenance' , 'publisher' , 'references' , 'relation' , 'replaces' , 'requires' , 'rights' , 'rightsHolder' , 'source' , 'spatial' , 'subject' , 'tableOfContents' , 'temporal' , 'title' , 'type' , 'valid'], item => prefixes.dc + item);
     /**
-     * @ngdoc property
-     * @name defaultAnnotations
-     * @propertyOf shared.service:propertyManagerService
-     * @type {string[]}
-     *
-     * @description
      * `defaultAnnotations` holds an array of annotations that are available by default.
-     */
-    self.defaultAnnotations = concat(rdfsAnnotations, dcAnnotations, dcElementsAnnotations);
-    /**
-     * @ngdoc property
-     * @name owlAnnotations
-     * @propertyOf shared.service:propertyManagerService
      * @type {string[]}
-     *
-     * @description
+     */
+    defaultAnnotations = concat(this.rdfsAnnotations, this.dcAnnotations, this.dcElementsAnnotations);
+    /**
      * `owlAnnotations` holds an array of OWL annotations.
-     */
-    self.owlAnnotations = [prefixes.owl + 'deprecated', prefixes.owl + 'versionInfo'];
-    /**
-     * @ngdoc property
-     * @name skosAnnotations
-     * @propertyOf shared.service:propertyManagerService
      * @type {string[]}
-     *
-     * @description
+     */
+    owlAnnotations = [OWL + 'deprecated', OWL + 'versionInfo'];
+    /**
      * `skosAnnotations` holds an array of SKOS annotations.
+     * @type {string[]}
      */
-    self.skosAnnotations = map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example', 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => prefixes.skos + item);
+    skosAnnotations = map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example', 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => SKOS + item);
 
-    var xsdDatatypes = map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => prefixes.xsd + item);
-    var rdfDatatypes = map(['langString'], item => prefixes.rdf + item);
+    xsdDatatypes = map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => XSD + item);
+    rdfDatatypes = map(['langString'], item => RDF + item);
     /**
-     * @ngdoc property
-     * @name defaultDatatypes
-     * @propertyOf shared.service:propertyManagerService
-     * @type {string[]}
-     *
-     * @description
      * `defaultDatatypes` holds an array of datatypes that are available by default.
-     */
-    self.defaultDatatypes = concat(xsdDatatypes, rdfDatatypes);
-    /**
-     * @ngdoc property
-     * @name ontologyProperties
-     * @propertyOf shared.service:propertyManagerService
      * @type {string[]}
-     *
-     * @description
+     */
+    defaultDatatypes = concat(this.xsdDatatypes, this.rdfDatatypes);
+    /**
      * `ontologyProperties` holds an array of the property types available to be added to the ontology entity
      * within an ontology.
-     */
-    self.ontologyProperties = map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith', 'versionIRI'], item => prefixes.owl + item);
-    /**
-     * @ngdoc property
-     * @name ontologyProperties
-     * @propertyOf shared.service:propertyManagerService
      * @type {string[]}
-     *
-     * @description
+     */
+    ontologyProperties = map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith', 'versionIRI'], item => OWL + item);
+    /**
      * `conceptSchemeRelationshipList` holds an array of the relationships that skos:Concepts can have with
      * skos:ConceptSchemes.
-     */
-    self.conceptSchemeRelationshipList = map(['topConceptOf', 'inScheme'], item => prefixes.skos + item);
-    /**
-     * @ngdoc property
-     * @name conceptRelationshipList
-     * @propertyOf shared.service:propertyManagerService
      * @type {string[]}
-     *
-     * @description
+     */
+    conceptSchemeRelationshipList = map(['topConceptOf', 'inScheme'], item => SKOS + item);
+    /**
      * `conceptRelationshipList` holds an array of the relationships that skos:Concepts can have with other
      * skos:Concepts.
-     */
-    self.conceptRelationshipList = map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive', 'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => prefixes.skos + item);
-    /**
-     * @ngdoc property
-     * @name schemeRelationshipList
-     * @propertyOf shared.service:propertyManagerService
      * @type {string[]}
-     *
-     * @description
+     */
+    conceptRelationshipList = map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive', 'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => SKOS + item);
+    /**
      * `schemeRelationshipList` holds an array of the relationships that skos:ConceptSchemes can have with other
      * entities.
+     * @type {string[]}
      */
-    self.schemeRelationshipList = [prefixes.skos + 'hasTopConcept'];
+    schemeRelationshipList = [SKOS + 'hasTopConcept'];
     /**
-     * @ngdoc property
-     * @name classAxiomList
-     * @propertyOf shared.service:propertyManagerService
-     * @type {Object[]}
-     *
-     * @description
      * `classAxiomList` holds an array of objects representing supported axioms on owl:Classes with the
-     * key name for the list of values from a {@link shared.service:ontologyStateService list item}.
+     * key name for the list of values from a {@link shared.OntologyStateService#listItem}.
+     * @type {{iri: string, valuesKey: string}[]}
      */
-    self.classAxiomList = [
-        {iri: prefixes.rdfs + 'subClassOf', valuesKey: 'classes'},
-        {iri: prefixes.owl + 'disjointWith', valuesKey: 'classes'},
-        {iri: prefixes.owl + 'equivalentClass', valuesKey: 'classes'}
+    classAxiomList: {iri: string, valuesKey: string}[] = [
+        {iri: RDFS + 'subClassOf', valuesKey: 'classes'},
+        {iri: OWL + 'disjointWith', valuesKey: 'classes'},
+        {iri: OWL + 'equivalentClass', valuesKey: 'classes'}
     ];
     /**
-     * @ngdoc property
-     * @name datatypeAxiomList
-     * @propertyOf shared.service:propertyManagerService
-     * @type {Object[]}
-     *
-     * @description
      * `datatypeAxiomList` holds an array of objects representing supported axioms on owl:DatatypeProperties
-     * with the key name for the list of values from a
-     * {@link shared.service:ontologyStateService list item}.
+     * with the key name for the list of values from a {@link shared.OntologyStateService#listItem}.
+     * @type {{iri: string, valuesKey: string}[]}
      */
-    self.datatypeAxiomList = [
-        {iri: prefixes.rdfs + 'domain', valuesKey: 'classes'},
-        {iri: prefixes.rdfs + 'range', valuesKey: 'dataPropertyRange'},
-        {iri: prefixes.owl + 'equivalentProperty', valuesKey: 'dataProperties'},
-        {iri: prefixes.rdfs + 'subPropertyOf', valuesKey: 'dataProperties'},
-        {iri: prefixes.owl + 'disjointWith', valuesKey: 'dataProperties'}
+    datatypeAxiomList: {iri: string, valuesKey: string}[] = [
+        {iri: RDFS + 'domain', valuesKey: 'classes'},
+        {iri: RDFS + 'range', valuesKey: 'dataPropertyRange'},
+        {iri: OWL + 'equivalentProperty', valuesKey: 'dataProperties'},
+        {iri: RDFS + 'subPropertyOf', valuesKey: 'dataProperties'},
+        {iri: OWL + 'disjointWith', valuesKey: 'dataProperties'}
     ];
     /**
-     * @ngdoc property
-     * @name objectAxiomList
-     * @propertyOf shared.service:propertyManagerService
-     * @type {Object[]}
-     *
-     * @description
      * `objectAxiomList` holds an array of objects representing supported axioms on owl:ObjectProperties
-     * with the key name for the list of values from a
-     * {@link shared.service:ontologyStateService list item}.
+     * with the key name for the list of values from a {@link shared.OntologyStateService#listItem}.
+     * @type {{iri: string, valuesKey: string}[]}
      */
-    self.objectAxiomList = [
-        {iri: prefixes.rdfs + 'domain', valuesKey: 'classes'},
-        {iri: prefixes.rdfs + 'range', valuesKey: 'classes'},
-        {iri: prefixes.owl + 'equivalentProperty', valuesKey: 'objectProperties'},
-        {iri: prefixes.rdfs + 'subPropertyOf', valuesKey: 'objectProperties'},
-        {iri: prefixes.owl + 'inverseOf', valuesKey: 'objectProperties'},
-        {iri: prefixes.owl + 'disjointWith', valuesKey: 'objectProperties'}
+    objectAxiomList: {iri: string, valuesKey: string}[] = [
+        {iri: RDFS + 'domain', valuesKey: 'classes'},
+        {iri: RDFS + 'range', valuesKey: 'classes'},
+        {iri: OWL + 'equivalentProperty', valuesKey: 'objectProperties'},
+        {iri: RDFS + 'subPropertyOf', valuesKey: 'objectProperties'},
+        {iri: OWL + 'inverseOf', valuesKey: 'objectProperties'},
+        {iri: OWL + 'disjointWith', valuesKey: 'objectProperties'}
     ];
     /**
-     * @ngdoc property
-     * @name languageList
-     * @propertyOf shared.service:propertyManagerService
-     * @type {Object[]}
-     *
-     * @description
-     * `languageList` holds an array of objects representing supported language tags and their english
-     * representations
+     * `languageList` holds an array of objects representing supported language tags and their english representations
+     * @type {{label: string, value: string}[]}
      */
-    self.languageList = [
+    languageList: {label: string, value: string}[] = [
         {label: 'Abkhazian', value: 'ab'},
         {label: 'Afar', value: 'aa'},
         {label: 'Afrikaans', value: 'af'},
@@ -383,46 +322,36 @@ function propertyManagerService(prefixes) {
     ];
 
     /**
-     * @ngdoc method
-     * @name remove
-     * @methodOf shared.service:propertyManagerService
-     *
-     * @description
      * Removes the the value at the specified index for the specified property on the provided entity.
      *
-     * @param {Object} entity A JSON-LD entity
+     * @param {JSONLDObject} entity A JSON-LD entity
      * @param {string} key The property whose value should be removed
      * @param {number} index The index of the value that should be removed
      */
-    self.remove = function(entity, key, index) {
+    remove(entity: JSONLDObject, key: string, index: number): void {
         pullAt(entity[key], index);
         if (!entity[key].length) {
             delete entity[key];
         }
     }
     /**
-     * @ngdoc method
-     * @name addValue
-     * @methodOf shared.service:propertyManagerService
-     *
-     * @description
      * Adds the provided value of the provided property to the provided entity with a type and language
      * if provided. Will not add the property value if it already exists.
      *
-     * @param {Object} entity A JSON-LD entity
+     * @param {JSONLDObject} entity A JSON-LD entity
      * @param {string} prop The property to add the value for
      * @param {string} value The property value to add
      * @param {string} type The type of the property value
      * @param {string} language The language tag for the property value
      * @return {boolean} Whether or not the value was added
      */
-    self.addValue = function(entity, prop, value, type, language) {
+    addValue(entity: JSONLDObject, prop: string, value: string, type: string, language: string): boolean {
         if (!prop) {
             return false;
         }
-        var annotation = self.createValueObj(value, type, language);
+        const annotation = this.createValueObj(value, type, language);
         if (has(entity, prop)) {
-            if (contains(entity[prop], annotation)) {
+            if (this._contains(entity[prop], annotation)) {
                 return false;
             }
             entity[prop].push(annotation);
@@ -432,26 +361,21 @@ function propertyManagerService(prefixes) {
         return true;
     }
     /**
-     * @ngdoc method
-     * @name addId
-     * @methodOf shared.service:propertyManagerService
-     *
-     * @description
      * Adds the provided ID value of the provided property to the provided entity. Will not add the property
      * value if it already exists.
      *
-     * @param {Object} entity A JSON-LD entity
+     * @param {JSONLDObject} entity A JSON-LD entity
      * @param {string} prop The property to add the value for
      * @param {string} value The property ID value to add
      * @return {boolean} Whether or not the value was added
      */
-    self.addId = function(entity, prop, value) {
+    addId(entity: JSONLDObject, prop: string, value: string): boolean {
         if (!prop) {
             return false;
         }
-        var axiom = {'@id': value};
+        const axiom = {'@id': value};
         if (has(entity, prop)) {
-            if (contains(entity[prop], axiom)) {
+            if (this._contains(entity[prop], axiom)) {
                 return false;
             }
             entity[prop].push(axiom);
@@ -461,16 +385,11 @@ function propertyManagerService(prefixes) {
         return true;
     }
     /**
-     * @ngdoc method
-     * @name editValue
-     * @methodOf shared.service:propertyManagerService
-     *
-     * @description
      * Edits the value at the specified index of the specified property on the provided entity to the
      * provided value with a type and language if provided. Will not edit the property value if the new value
      * already exists.
      *
-     * @param {Object} entity A JSON-LD entity
+     * @param {JSONLDObject} entity A JSON-LD entity
      * @param {string} prop The property to edit the value of
      * @param {string} value The new property value
      * @param {number} index The index of the value to change
@@ -478,15 +397,15 @@ function propertyManagerService(prefixes) {
      * @param {string} language The new property value language
      * @return {boolean} Whether or not the value was edited
      */
-    self.editValue = function(entity, prop, index, value, type, language) {
+    editValue(entity: JSONLDObject, prop: string, index: number, value: string, type: string, language: string): boolean {
         if (!prop) {
             return false;
         }
-        var annotation = entity[prop][index];
+        const annotation = entity[prop][index];
         if (!annotation) {
             return false;
         }
-        if (contains(without(entity[prop], annotation), self.createValueObj(value, type, language))) {
+        if (this._contains(without(entity[prop], annotation), this.createValueObj(value, type, language))) {
             return false;
         }
         annotation['@value'] = value;
@@ -503,35 +422,38 @@ function propertyManagerService(prefixes) {
         }
         return true;
     }
-    self.editId = function(entity, prop, index, value) {
+    /**
+     * 
+     * @param entity 
+     * @param prop 
+     * @param index 
+     * @param value 
+     * @returns 
+     */
+    editId(entity: JSONLDObject, prop: string, index: number, value: string): boolean {
         if (!prop) {
             return false;
         }
-        var axiom = entity[prop][index];
+        const axiom = entity[prop][index];
         if (!axiom) {
             return false;
         }
-        if (contains(without(entity[prop], axiom), {'@id': value})) {
+        if (this._contains(without(entity[prop], axiom), {'@id': value})) {
             return false;
         }
         axiom['@id'] = value;
         return true;
     }
     /**
-     * @ngdoc method
-     * @name editValue
-     * @methodOf shared.service:propertyManagerService
-     *
-     * @description
      * Creates a value object for JSON-LD with the provided value. Includes a type and language if provided.
      *
      * @param {string} value The value for the JSON-LD object
      * @param {string} type The type for the JSON-LD object
      * @param {string} language The language for the JSON-LD object
-     * @return {Object} A JSON-LD object representing a property value
+     * @return {JSONLDValue} A JSON-LD object representing a property value
      */
-    self.createValueObj = function(value, type, language) {
-        var annotation = {'@value': value};
+    createValueObj(value: string, type: string, language: string): JSONLDValue {
+        const annotation = {'@value': value};
         if (type) {
             annotation['@type'] = type;
         }
@@ -541,23 +463,18 @@ function propertyManagerService(prefixes) {
         return annotation;
     }
     /**
-     * @ngdoc method
-     * @name getDatatypeMap
-     * @methodOf shared.service:propertyManagerService
-     *
-     * @description
      * Creates a map of datatypes to their prefix
      *
-     * @return {Object} A map of datatype to prefix
+     * @return {{[key: string]: string}} A map of datatype to prefix
      */
-    self.getDatatypeMap = function() {
-        var mapObj = {};
-        forEach(xsdDatatypes, item => mapObj[item] = prefixes.xsd);
-        forEach(rdfDatatypes, item => mapObj[item] = prefixes.rdf)
+    getDatatypeMap(): {[key: string]: string} {
+        const mapObj = {};
+        forEach(this.xsdDatatypes, item => mapObj[item] = XSD);
+        forEach(this.rdfDatatypes, item => mapObj[item] = RDF);
         return mapObj;
     }
 
-    function contains(arr, valueObj) {
+    private _contains(arr, valueObj): boolean {
         return some(arr, obj => {
             return obj['@id'] === valueObj['@id']
                 && obj['@value'] === valueObj['@value']
@@ -566,5 +483,3 @@ function propertyManagerService(prefixes) {
         });
     }
 }
-
-export default propertyManagerService;

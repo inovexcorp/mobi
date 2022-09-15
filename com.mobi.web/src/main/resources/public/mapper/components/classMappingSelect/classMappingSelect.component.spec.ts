@@ -27,22 +27,22 @@ import { MatAutocompleteModule, MatAutocompleteSelectedEvent, MatButtonModule, M
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
 import { ClassMappingSelectComponent } from './classMappingSelect.component';
 
 describe('Class Mapping Select component', function() {
     let component: ClassMappingSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ClassMappingSelectComponent>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
     const classMapping: JSONLDObject = { '@id': 'classMapping' };
@@ -64,7 +64,7 @@ describe('Class Mapping Select component', function() {
                 MockComponent(ConfirmModalComponent)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -76,7 +76,7 @@ describe('Class Mapping Select component', function() {
         fixture = TestBed.createComponent(ClassMappingSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         matDialog = TestBed.get(MatDialog);
     });
 
@@ -90,7 +90,7 @@ describe('Class Mapping Select component', function() {
     });
 
     it('should handle updates to classMappingId', function() {
-        expect(component.classMappingControl.value).toBeNull();
+        expect(component.classMappingControl.value).toEqual('');
         component.classMappings = [classMapping];
         component.classMappingId = classMapping['@id'];
         expect(component.classMappingControl.value).toEqual(classMapping);

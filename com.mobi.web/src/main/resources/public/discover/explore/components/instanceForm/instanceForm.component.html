@@ -25,16 +25,18 @@
         <h2>{{header}}</h2>
         <div *ngFor="let missing of missingProperties"> <error-display>{{missing}}</error-display> </div>
         <div class="instance-iri">
-            <strong class="text-muted" click-to-copy="instance['@id']">{{instance['@id']}}</strong>
+            <strong class="text-muted" [copy-clipboard]="instance['@id']"
+                matTooltip="Copy IRI"
+                matTooltipPosition="above">{{instance['@id']}}</strong>
             <a (click)="showIriConfirm()"><i class="fa fa-pencil"></i></a>
         </div>
         <form name="form" autocomplete="off">
             <div class="form-group" *ngFor="let instanceProperty of instance | keyvalue">
                 <ng-container *ngIf="instanceProperty.key !== '@id' && instanceProperty.key !== '@type'">
-                    <custom-label [ngClass]="{'changed': isChanged(instanceProperty.key)}">
+                    <div class="field-label" [ngClass]="{'changed': isChanged(instanceProperty.key)}">
                         {{util.getBeautifulIRI(instanceProperty.key)}}
                         {{getRestrictionText(instanceProperty.key)}}
-                    </custom-label>
+                    </div>
                     <br/>
                     <div class="boolean-property" *ngIf="eu.isBoolean(instanceProperty.key, properties)">
                         <mat-checkbox [checked]="checkValue(instanceProperty.value[0]['@value'])"
@@ -80,7 +82,7 @@
             </div>
         </form>
         <div class="btn-container clearfix">
-            <button type="button" [disabled]="isInstancePropertyDisabled" (click)="newInstanceProperty()" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+            <button mat-button color="primary" [disabled]="isInstancePropertyDisabled" (click)="newInstanceProperty()" class="float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
         </div>
     </div>
 </div>

@@ -20,15 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Component, OnChanges, Input } from '@angular/core';
-import { get, map, concat, intersection, filter, chunk, noop } from 'lodash';
-import { first } from 'rxjs/operators';
-import { OWL, RDF, SKOS } from '../../../prefixes';
+import { Component, OnChanges, Input } from '@angular/core';
+import { get, map, concat, intersection, filter, chunk } from 'lodash';
 
+import { OWL, RDF, SKOS } from '../../../prefixes';
 import { CommitChange } from '../../../shared/models/commitChange.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './shapesGraphChangesPage.component.scss';
 
@@ -50,8 +50,8 @@ interface CommitChanges {
  * A component that creates a page that displays all the current users's saved changes
  * (aka inProgressCommit) of the current ShapesGraphRecord. The changes are grouped by
  * subject. The display will include a button to remove all the saved changes if there are any. If there are
- * no changes, an {@link shared.component:infoMessage} is shown stating as such. If the current branch is
- * not up to date and there are changes, an {@link shared.component:errorDisplay} is shown. If there are
+ * no changes, an {@link shared.InfoMessageComponent} is shown stating as such. If the current branch is
+ * not up to date and there are changes, an {@link shared.ErrorDisplayComponent} is shown. If there are
  * no changes and the current branch is not up to date, an `errorDisplay` is shown with a link to pull in the
  * latest changes. If there are no changes and the user is on a UserBranch then an `errorDisplay` is shown with
  * a link to "pull changes" which will perform a merge of the UserBranch into the parent branch. If there are
@@ -85,8 +85,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     index = 0;
     size = 100;
 
-    constructor(public state: ShapesGraphStateService, private cm: CatalogManagerService,
-                @Inject('utilService') private util) {}
+    constructor(public state: ShapesGraphStateService, private cm: CatalogManagerService, private util: UtilService) {}
 
     ngOnChanges(): void {
         const inProgressAdditions: Statements[] = map(this.additions, addition => ({
@@ -118,8 +117,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     }
     removeChanges(): void {
         this.cm.deleteInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
-            .pipe(first()).toPromise()
-            .then(() => {
+            .subscribe(() => {
                 this.state.clearInProgressCommit();
                 this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
                 this.util.createSuccessToast('In Progress Commit removed successfully.');
@@ -142,6 +140,6 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     }
     openCommit(commit: CommitChanges): Promise<any> {
         return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, this.util.condenseCommitId(commit.id))
-            .then(noop, error => this.util.createErrorToast(error));
+            .then(() => {}, error => this.util.createErrorToast(error));
     }
 }

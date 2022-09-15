@@ -24,7 +24,7 @@
     <div class="card-body h-100 d-flex flex-column">
         <div class="row no-gutters flex-1" *ngFor="let chunk of actions">
             <div class="col text-center" *ngFor="let action of chunk">
-                <a href="" class="d-flex flex-column h-100 w-100 align-items-center justify-content-center" (click)="action.action()">
+                <a [routerLink]="" class="d-flex flex-column h-100 w-100 align-items-center justify-content-center" (click)="action.action()">
                     <span class="icon-span"><i class="fa {{action.icon}}"></i></span>
                     <span>{{action.title}}</span>
                 </a>

@@ -24,20 +24,18 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
 
 import {
     cleanStylesFromDOM,
-    mockPolicyEnforcement,
 } from '../../../../../../test/ts/Shared';
-
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { ManageRecordButtonComponent } from './manageRecordButton.component';
-import { cloneDeep } from 'lodash';
-import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
 
 describe('Manage Record Button component', function() {
-    let policyEnforcementStub;
-    let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let fixture: ComponentFixture<ManageRecordButtonComponent>;
     let component: ManageRecordButtonComponent;
     let element: DebugElement;
@@ -50,17 +48,21 @@ describe('Manage Record Button component', function() {
             ],
             providers: [
                 MockProvider(PolicyManagerService),
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement }
+                MockProvider(PolicyEnforcementService),
             ],
-        })
+        });
     });
+
     beforeEach(function() {
         fixture = TestBed.createComponent(ManageRecordButtonComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         nativeElement = element.nativeElement as HTMLElement;
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        policyManagerStub = TestBed.get(PolicyManagerService);
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
+
         component.record = {
             '@id': 'recordId'
         };
@@ -74,13 +76,12 @@ describe('Manage Record Button component', function() {
         component = null;
         element = null;
         policyEnforcementStub = null;
-        policyManagerStub = null;
     });
+
     describe('should initialize', function() {
         describe('showButton', function() {
             describe('to true', function() {
                 it('when it is an ontology record and the user can view',  async function() {
-                    policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve(policyEnforcementStub.permit));
                     component.ngOnInit();
                     fixture.detectChanges();
                     await fixture.whenStable();
@@ -93,42 +94,23 @@ describe('Manage Record Button component', function() {
                     expect(component.showButton).toEqual(false);
                 });
                 it('when it is an ontology record and the user cannot view', async ()=> {
-                    await policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve(policyEnforcementStub.deny));
+                    await policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     fixture.detectChanges();
                     expect(component.showButton).toEqual(false);
                 });
             });
         });
     });
-    describe('controller bound variable', function() {
-        it('record is one way bound', function() {
-            let copy = cloneDeep(this.record);
-            component.record = {};
-            fixture.detectChanges();
-            expect(this.record).toEqual(copy);
-        });
-        it('flat is one way bound', function() {
-            component.flat = true;
-            fixture.detectChanges();
-            expect(component.flat).toEqual(true);
-        });
-        it('stopProp is one way bound', function() {
-            component.stopPropagation = undefined;
-            fixture.detectChanges();
-            expect(component.stopPropagation).toEqual(false);
-        });
-    });
     describe('controller methods', function() {
         describe('update set showButton variable', function() {
             it('to true when policyEnforcementService is permit', async function() {
-                policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve(policyEnforcementStub.permit));
                 component.ngOnInit();
                 fixture.detectChanges();
                 await fixture.whenStable();
                 expect(component.showButton).toEqual(true);
             });
             it('to false when policyEnforcementService is deny', async () => {
-                policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve(policyEnforcementStub.deny));
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.ngOnInit();
                 fixture.detectChanges();
                 await fixture.whenStable();
@@ -139,7 +121,7 @@ describe('Manage Record Button component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(component).toBeDefined();
-            expect( element.query(By.css('.manage-record-button'))).toBeTruthy()
+            expect( element.query(By.css('.manage-record-button'))).toBeTruthy();
         });
         it('button type depending on whether isFlat(false) is set', async () => {
             component.showButton = true;

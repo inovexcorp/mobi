@@ -39,6 +39,6 @@ export interface HierarchyNode {
     displayNode?: boolean,
     title?: string
 
-    get?: (a: string) => boolean,
-    set?: (a: string, b: boolean) => void,
+    get?: (a: string, b?: any) => boolean,
+    set?: (a: string, b: boolean, c?: any) => void,
 }

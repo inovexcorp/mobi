@@ -20,22 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { MergeTabComponent } from './mergeTab.component';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { DebugElement } from '@angular/core';
-import { cleanStylesFromDOM, mockOntologyState } from '../../../../../../test/ts/Shared';
-import { MockComponent } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
+import { MockComponent, MockProvider } from 'ng-mocks';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { MergeBlockComponent } from '../mergeBlock/mergeBlock.component';
 import { ResolveConflictsBlock } from '../../../shared/components/resolveConflictsBlock/resolveConflictsBlock.component';
-import { By } from '@angular/platform-browser';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { Difference } from '../../../shared/models/difference.class';
+import { MergeTabComponent } from './mergeTab.component';
 
 describe('Merge Tab component', function() {
     let component: MergeTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<MergeTabComponent>;
-    let ontologyStateStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -46,7 +49,8 @@ describe('Merge Tab component', function() {
                 MockComponent(ResolveConflictsBlock)
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState },
+                MockProvider(OntologyStateService)
+                // { provide: OntologyStateService, useClass: mockOntologyState },
             ],
         });
     });
@@ -56,6 +60,7 @@ describe('Merge Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyStateStub.listItem = new OntologyListItem();
         fixture.detectChanges();
     });
 
@@ -75,7 +80,7 @@ describe('Merge Tab component', function() {
             expect(element.queryAll(By.css('merge-block')).length).toEqual(1);
             expect(element.queryAll(By.css('resolve-conflicts-block')).length).toEqual(0);
 
-            ontologyStateStub.listItem.merge.conflicts = [{}];
+            ontologyStateStub.listItem.merge.conflicts = [{iri: '', left: new Difference(), right: new Difference()}];
             fixture.detectChanges();
             expect(element.queryAll(By.css('merge-block')).length).toEqual(0);
             expect(element.queryAll(By.css('resolve-conflicts-block')).length).toEqual(1);

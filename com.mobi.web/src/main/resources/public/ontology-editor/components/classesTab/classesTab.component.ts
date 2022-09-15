@@ -20,10 +20,11 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * #L%
 */
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MatDialog } from '@angular/material';
+
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { Component } from '@angular/core';
-import { MatDialog } from '@angular/material';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 
 /**
@@ -42,9 +43,20 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
     selector: 'classes-tab',
     templateUrl: './classesTab.component.html'
 })
-export class ClassesTabComponent {
-    constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
+export class ClassesTabComponent implements OnInit, OnDestroy {
+    highlightText = '';
+    @ViewChild('classesTab') classesTab: ElementRef;
 
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
+    ngOnInit(): void {
+        this.os.listItem.editorTabStates.classes.element = this.classesTab;
+        this.highlightText = this.os.listItem.editorTabStates.classes.searchText;
+    }
+    ngOnDestroy(): void {
+        if (this.os.listItem) {
+            this.os.listItem.editorTabStates.classes.element = undefined;
+        }
+    }
     showDeleteConfirmation(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {

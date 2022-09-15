@@ -20,36 +20,35 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-  <div class="datatype-property-overlay">
-    <h1 mat-dialog-title>{{this.data.editingProperty ? 'Edit' : 'Add'}} Datatype Property Value</h1>
-    <form mat-dialog-content [formGroup]="propertyForm" class="datatype-property-overlay-form">
-        <!-- data property list -->
-            <mat-form-field class="w-100">
-                <mat-label>Data Property</mat-label>
-                <input type="text" matInput formControlName="propertySelect" placeholder="Select values" [matAutocomplete]="valueAuto">
-                <mat-autocomplete #valueAuto multiple disabled="!data.editingProperty">
-                    <mat-option *ngFor="let value of dataPropertiesFiltered | async" [value]="value">
-                        {{this.os.getEntityNameByListItem(value)}}
-                    </mat-option>
-                </mat-autocomplete>
-            </mat-form-field>
-        <!-- value -->
+<h1 mat-dialog-title>{{data.editingProperty ? 'Edit' : 'Add'}} Datatype Property Value</h1>
+<form mat-dialog-content [formGroup]="propertyForm" class="datatype-property-overlay-form">
+    <!-- data property list -->
         <mat-form-field class="w-100">
-            <mat-label>Value</mat-label>
-            <textarea matInput name="propertyValue" formControlName="propertyValue"></textarea>
+            <mat-label>Data Property</mat-label>
+            <input type="text" name="dataProperty" matInput formControlName="propertySelect" placeholder="Select a data property" [matAutocomplete]="dataPropAuto">
+            <mat-autocomplete #dataPropAuto="matAutocomplete" [displayWith]="getName.bind(this)">
+                <mat-optgroup *ngFor="let group of dataPropertiesFiltered | async" [label]="group.namespace">
+                    <mat-option *ngFor="let option of group.options" [value]="option.item" [title]="option.item">
+                        {{option.name}}
+                    </mat-option>
+                </mat-optgroup>
+            </mat-autocomplete>
         </mat-form-field>
-    
-        <!-- datatype -->
-        <!-- TODO: Add back in once upgraded -->
-        <!-- <iri-select-ontology bind-model="data.propertyType" display-text="'Type'" select-list="this.os.listItem.dataPropertyRange" multi-select="false" change-event="data.propertyType = value"></iri-select-ontology> -->
-    
-        <!-- language -->
-        <language-select *ngIf="isLangString()" [parentForm]="propertyForm" [disableClear]="true">></language-select>
-    
-    </form>
-    <div mat-dialog-actions class="datatype-property-overlay-actions">
-        <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-        <button mat-raised-button color="primary" (click)="submit()" [disabled]="!propertyForm.valid">Submit</button>
-    </div>
-  </div>
 
+    <!-- value -->
+    <mat-form-field class="w-100">
+        <mat-label>Value</mat-label>
+        <textarea matInput name="propertyValue" formControlName="propertyValue"></textarea>
+    </mat-form-field>
+
+    <!-- datatype -->
+    <iri-select-ontology [(selected)]="propertyType" [selectList]="os.listItem.dataPropertyRange" displayText="Type" [singleSelect]="true"></iri-select-ontology>
+
+    <!-- language -->
+    <language-select *ngIf="isLangString()" [parentForm]="propertyForm" [disableClear]="true">></language-select>
+
+</form>
+<div mat-dialog-actions class="datatype-property-overlay-actions">
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="submit()" [disabled]="!propertyForm.valid">Submit</button>
+</div>

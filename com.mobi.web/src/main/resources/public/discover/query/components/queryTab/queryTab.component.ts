@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 
 import { POLICY } from '../../../../prefixes';
 import { ProgressSpinnerService } from '../../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { XACMLRequest } from '../../../../shared/models/XACMLRequest.interface';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 import { YasguiService } from '../../../../shared/services/yasgui.service';
 
 import './queryTab.component.scss';
@@ -52,8 +55,7 @@ export class QueryTabComponent implements OnInit {
     @ViewChild('discoverQuery') discoverQuery: ElementRef;
 
     constructor(private fb: FormBuilder, public yasgui: YasguiService, public state: DiscoverStateService, 
-        private spinnerSvc: ProgressSpinnerService, @Inject('utilService') private util,
-        @Inject('policyEnforcementService') private pep) {}
+        private spinnerSvc: ProgressSpinnerService, private util: UtilService, private pep: PolicyEnforcementService) {}
 
     ngOnInit(): void {
         this.yasgui.initYasgui(this.discoverQuery.nativeElement, {name: 'discoverQuery'});
@@ -79,7 +81,7 @@ export class QueryTabComponent implements OnInit {
             const pepRequest = this.createPepReadRequest(this.state.query.datasetRecordId);
 
             this.pep.evaluateRequest(pepRequest)
-                .then(response => {
+                .subscribe(response => {
                     const canRead = response !== this.pep.deny;
                     if (canRead) { 
                         this.spinnerSvc.startLoadingForComponent(this.discoverQuery);
@@ -103,7 +105,7 @@ export class QueryTabComponent implements OnInit {
         if (datasetRecordIRI) {
             const pepRequest = this.createPepReadRequest(datasetRecordIRI);
             this.pep.evaluateRequest(pepRequest)
-                .then(response => {
+                .subscribe(response => {
                     const canRead = response !== this.pep.deny;
                     if (!canRead) {
                         this.util.createErrorToast('You don\'t have permission to read dataset');
@@ -116,7 +118,7 @@ export class QueryTabComponent implements OnInit {
         } else {
             const pepRequest = this.createPepReadRequest('http://mobi.com/system-repo');
             this.pep.evaluateRequest(pepRequest)
-                .then(response => {
+                .subscribe(response => {
                     const canRead = response !== this.pep.deny;
                     if (!canRead) {
                         this.util.createErrorToast('You don\'t have access to query system repo');
@@ -128,7 +130,7 @@ export class QueryTabComponent implements OnInit {
                 });
         }
     }
-    createPepReadRequest(datasetRecordIRI: string): { resourceId: any; actionId: string; } {
+    createPepReadRequest(datasetRecordIRI: string): XACMLRequest {
         return {
             resourceId: datasetRecordIRI,
             actionId: POLICY + 'Read'

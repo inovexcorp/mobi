@@ -78,7 +78,7 @@ describe('Ontology Sidebar component', function() {
         listItemA.ontologyId = 'A';
         listItemA.versionedRdfRecord.recordId = 'A';
         listItemA.versionedRdfRecord.title = 'A';
-        listItemA.editorTabStates.project.component = 'test';
+        listItemA.editorTabStates.project.element = 'test';
         listItemA.editorTabStates.classes.component = undefined;
 
         listItemB = new OntologyListItem();
@@ -135,9 +135,9 @@ describe('Ontology Sidebar component', function() {
                     expect(listItemB.active).toBeTrue();
                     expect(ontologyStateStub.listItem).toEqual(listItemB);
                     expect(listItemA.active).toBeFalse();
-                    expect(listItemA.editorTabStates.project.component).toBeUndefined();
-                    expect(listItemA.editorTabStates.classes.component).toBeUndefined();
-                    expect(listItemA.editorTabStates.search.component).toBeUndefined();
+                    expect(listItemA.editorTabStates.project.element).toBeUndefined();
+                    expect(listItemA.editorTabStates.classes.element).toBeUndefined();
+                    expect(listItemA.editorTabStates.search.element).toBeUndefined();
                     expect(listItemA.openSnackbar).toBeNull();
                 });
                 it('and does have an entity snackbar open', function() {
@@ -146,9 +146,9 @@ describe('Ontology Sidebar component', function() {
                     expect(listItemB.active).toBeTrue();
                     expect(ontologyStateStub.listItem).toEqual(listItemB);
                     expect(listItemA.active).toBeFalse();
-                    expect(listItemA.editorTabStates.project.component).toBeUndefined();
-                    expect(listItemA.editorTabStates.classes.component).toBeUndefined();
-                    expect(listItemA.editorTabStates.search.component).toBeUndefined();
+                    expect(listItemA.editorTabStates.project.element).toBeUndefined();
+                    expect(listItemA.editorTabStates.classes.element).toBeUndefined();
+                    expect(listItemA.editorTabStates.search.element).toBeUndefined();
                     expect(listItemA.openSnackbar.dismiss).toHaveBeenCalledWith();
                 });
             });

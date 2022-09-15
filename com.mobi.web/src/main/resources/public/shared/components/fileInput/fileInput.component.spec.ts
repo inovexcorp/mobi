@@ -21,23 +21,23 @@
  * #L%
  */
 
-import { configureTestSuite } from "ng-bullet";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { DebugElement } from "@angular/core";
-import { FileInputComponent } from "./fileInput.component";
-import { By } from "@angular/platform-browser";
-import { CustomLabelComponent } from "../customLabel/customLabel.component";
+import { configureTestSuite } from 'ng-bullet';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+
+import { FileInputComponent } from './fileInput.component';
 
 describe('File Input component', function() {
     let component: FileInputComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<FileInputComponent>;
+
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [
                 FileInputComponent,
-                CustomLabelComponent
             ],
             providers: []
         });
@@ -78,10 +78,10 @@ describe('File Input component', function() {
             expect(element.queryAll(By.css('input[type="file"]')).length).toEqual(1);
         });
         it('if displayText was provided', function() {
-            expect(element.queryAll(By.css('custom-label')).length).toEqual(0);
+            expect(element.queryAll(By.css('.field-label')).length).toEqual(0);
             component.displayText = 'Test';
             fixture.detectChanges();
-            expect(element.queryAll(By.css('custom-label')).length).toEqual(1);
+            expect(element.queryAll(By.css('.field-label')).length).toEqual(1);
         });
         it('depending on whether the input should accept multiple', function() {
             let input = element.query(By.css('input'));

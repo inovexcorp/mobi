@@ -20,22 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
 import { ProfileTabComponent } from '../profileTab/profileTab.component';
 
 import './settingsPage.component.scss';
 
 /**
- * @ngdoc component
- * @name settings.component:settingsPage
+ * @class settings.SettingsPageComponent
  *
- * @description
- * `settingsPage` is a component which creates a `mat-tab-group` with tabs for different settings pertaining to the
- * current user. The tabs are {@link settings.component:profileTab profileTab},
- * {@link settings.component:passwordTab passwordTab}, and the {@link shared.component:settingEditPage settingEditPage}.
+ * A component which creates a `mat-tab-group` with tabs for different settings pertaining to the
+ * current user. The tabs are {@link settings.ProfileTabComponent profileTab},
+ * {@link settings.PasswordTabComponent passwordTab}, and the {@link shared.SettingEditPageComponent settingEditPage}.
  */
 @Component({
     selector: 'settings-page',
@@ -45,7 +44,7 @@ export class SettingsPageComponent {
     @ViewChild(ProfileTabComponent) profileTab: ProfileTabComponent;
     @ViewChild(PasswordTabComponent) passwordTab: PasswordTabComponent;
 
-    constructor(@Inject('settingManagerService') public sm) {}
+    constructor(public sm: SettingManagerService) {}
 
     onTabChanged(event: MatTabChangeEvent): void {
         if (event.index === 0) {

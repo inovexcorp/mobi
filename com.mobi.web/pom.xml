@@ -132,24 +132,8 @@
                             </arguments>
                         </configuration>
                     </execution>
-                    <!-- Removed execution for upgrade branches -->
-                    <!-- <execution>
-                        <id>npm run tests:ajs</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>test</phase>
-                        <configuration>
-                            <executable>npm</executable>
-                            <arguments>
-                                <argument>run</argument>
-                                <argument>test:ajs</argument>
-                            </arguments>
-                            <skip>${skipTests}</skip>
-                        </configuration>
-                    </execution> -->
                     <execution>
-                        <id>npm run tests:ng</id>
+                        <id>npm run tests</id>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -158,7 +142,7 @@
                             <executable>npm</executable>
                             <arguments>
                                 <argument>run</argument>
-                                <argument>test:ng</argument>
+                                <argument>test</argument>
                             </arguments>
                             <skip>${skipTests}</skip>
                         </configuration>

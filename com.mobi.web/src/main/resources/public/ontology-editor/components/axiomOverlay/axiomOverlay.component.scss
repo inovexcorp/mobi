@@ -31,11 +31,5 @@ axiom-overlay {
     .CodeMirror {
         border: 1px solid #ccc;
         border-radius: 4px;
-        margin-bottom: 10px;
-        font-family: inherit;
-        height: 200px;
-    }
-    .ui-select-bootstrap .ui-select-match-text {
-        @include textOverflow();
     }
 }

@@ -31,11 +31,13 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockPropertyManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OWL, XSD } from '../../../prefixes';
 import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { OntologyPropertyOverlayComponent } from './ontologyPropertyOverlay.component';
 
 describe('Ontology Property Overlay component', function() {
@@ -44,8 +46,8 @@ describe('Ontology Property Overlay component', function() {
     let fixture: ComponentFixture<OntologyPropertyOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<OntologyPropertyOverlayComponent>>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let propertyManagerStub;
-    let utilStub;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const property = 'property1';
     const entityIRI = 'entity';
@@ -70,8 +72,8 @@ describe('Ontology Property Overlay component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
                 { provide: MAT_DIALOG_DATA, useValue: { editing: false } },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -84,8 +86,8 @@ describe('Ontology Property Overlay component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
         matDialogRef = TestBed.get(MatDialogRef);
-        propertyManagerStub = TestBed.get('propertyManagerService');
-        utilStub = TestBed.get('utilService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = {'@id': entityIRI};
@@ -201,6 +203,7 @@ describe('Ontology Property Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
         });
         it('depending on the validity of the form', function() {
+            component.data.editing = false;
             fixture.detectChanges();
             const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
             expect(button).not.toBeNull();
@@ -277,6 +280,7 @@ describe('Ontology Property Overlay component', function() {
                 component.propertyForm.controls.value.setValue('value');
                 component.propertyForm.controls.type.setValue(XSD + 'string');
                 propertyManagerStub.addValue.and.returnValue(true);
+                utilStub.createJson.and.returnValue({'@id': ''});
             });
             describe('when isOntologyProperty is true', function() {
                 beforeEach(function() {
@@ -335,6 +339,7 @@ describe('Ontology Property Overlay component', function() {
                 component.propertyForm.controls.property.setValue(property);
                 component.propertyForm.controls.value.setValue('value');
                 component.propertyForm.controls.type.setValue(XSD + 'string');
+                utilStub.createJson.and.returnValue({'@id': ''});
             });
             describe('when isOntologyProperty is true', function() {
                 beforeEach(function() {

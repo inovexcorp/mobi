@@ -28,19 +28,19 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 import { Observable, of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { SortOption } from '../models/sortOption.interface';
-import { HelperService } from './helper.service';
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
+import { UtilService } from './util.service';
 
 describe('Catalog Manager service', function() {
     let service: CatalogManagerService;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -63,21 +63,44 @@ describe('Catalog Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 CatalogManagerService,
-                HelperService,
+                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil },
             ]
         });
     });
 
     beforeEach(function() {
         service = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         httpMock = TestBed.get(HttpTestingController);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
 
         utilStub.paginatedConfigToParams.and.callFake(x => Object.assign({}, x) || {});
         progressSpinnerStub.track.and.callFake((ob) => ob);
+        utilStub.trackedRequest.and.callFake((ob, tracked) => tracked ? ob : progressSpinnerStub.track(ob));
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
     });
 
     afterEach(function() {

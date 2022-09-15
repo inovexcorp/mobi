@@ -20,7 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { some } from 'lodash';
+import { filter, map } from 'rxjs/operators';
+
+import { MapperStateService } from './shared/services/mapperState.service';
+import { OntologyStateService } from './shared/services/ontologyState.service';
 
 /**
  * @class AppComponent
@@ -30,9 +37,51 @@ import { Component } from '@angular/core';
 @Component({
     selector: 'mobi-app',
     template: `
-        <div></div>
+        <router-outlet></router-outlet>
+        <progress-spinner></progress-spinner>
     `
 })
-export class AppComponent {
-    constructor() {}
+export class AppComponent implements OnInit {
+    constructor(public router: Router, private titleService: Title, private os: OntologyStateService, 
+        private ms: MapperStateService) {}
+
+    @HostListener('window:unload', [ '$event' ]) unloadHandler(event: Event): void {
+        this.handleUnload(event);
+    }
+
+    @HostListener('window:beforeunload', [ '$event' ]) beforeUnloadHandler(event: Event): void {
+        this.handleUnload(event);
+    }
+
+    ngOnInit(): void {
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                map(() => {
+                let route: ActivatedRoute = this.router.routerState.root;
+                let routeTitle = '';
+                while (route?.firstChild) {
+                    route = route.firstChild;
+                }
+                if (route.snapshot.data['title']) {
+                    routeTitle = route?.snapshot.data['title'];
+                }
+                return routeTitle;
+                })
+            )
+            .subscribe((title: string) => {
+                if (title) {
+                this.titleService.setTitle(`${title} | Mobi`);
+                }
+            });
+    }
+
+    // Throws an alert if there are unsaved changes that would be lost if you closed the page
+    handleUnload(event: Event): void {
+        const ontologyHasChanges = some(this.os.list, item => this.os.hasChanges(item));
+        const mappingHasChanges = this.ms.isMappingChanged();
+        if (ontologyHasChanges || mappingHasChanges) {
+            event.returnValue = false;
+        }
+    }
 }

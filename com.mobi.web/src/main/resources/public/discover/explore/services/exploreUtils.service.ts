@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as sparqljs from 'sparqljs';
 import {
     find,
@@ -33,12 +33,10 @@ import {
     flattenDeep,
     isEmpty,
     filter,
-    difference,
     forOwn,
-    isArray, forEach
-} from 'lodash';
+    isArray} from 'lodash';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { forkJoin, from, Observable, throwError, of } from 'rxjs';
+import { forkJoin, Observable, throwError, of } from 'rxjs';
 
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
@@ -49,6 +47,7 @@ import { SPARQLSelectResults } from '../../../shared/models/sparqlSelectResults.
 import { PropertyDetails } from '../../models/propertyDetails.interface';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class explore.ExploreUtilsService
@@ -57,8 +56,8 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
  */
 @Injectable()
 export class ExploreUtilsService {
-    constructor(private dm: DatasetManagerService, private sparql: SparqlManagerService, 
-        @Inject('utilService') private util, private om: OntologyManagerService) {}
+    constructor(private dm: DatasetManagerService, private sparql: SparqlManagerService, private util: UtilService, 
+        private om: OntologyManagerService) {}
 
     /**
      * 
@@ -273,10 +272,9 @@ export class ExploreUtilsService {
      * @param {string} subIRI The subject of the reified statement
      * @param {string} propIRI The predicate of the reified statement
      * @param {JSONLDValue} valueObj The JSON-LD object representing the object value of the reified statement
-     * TODO: Validate JSONLDValue or JSONLDID
      * @return {JSONLDObject} The reified Statement matching the provided subject, predicate, and object
      */
-    getReification(arr: JSONLDObject[], subIRI: string, propIRI: string, valueObj: JSONLDValue): JSONLDObject {
+    getReification(arr: JSONLDObject[], subIRI: string, propIRI: string, valueObj: JSONLDValue|JSONLDId): JSONLDObject {
         return find(arr, thing => {
             return includes(get(thing, '@type', []), RDF + 'Statement')
                 && isEqual(this._getRdfProperty(thing, 'subject'), [{'@id': subIRI}])

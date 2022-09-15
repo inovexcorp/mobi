@@ -34,7 +34,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
@@ -47,7 +47,6 @@ describe('New Shapes Graph Record Modal component', function() {
     let fixture: ComponentFixture<NewShapesGraphRecordModalComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<NewShapesGraphRecordModalComponent>>;
     let shapesGraphStateStub;
-    let utilStub;
     const file: File = new File([''], 'filename', { type: 'text/html' });
     const rdfUpload: RdfUpload = {
         title: 'Record Name',
@@ -77,7 +76,6 @@ describe('New Shapes Graph Record Modal component', function() {
             ],
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
-                { provide: 'utilService', useClass: mockUtil },
                 MockProvider(ShapesGraphStateService)
             ]
         });
@@ -90,7 +88,6 @@ describe('New Shapes Graph Record Modal component', function() {
         matDialogRef = TestBed.get(MatDialogRef);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
         shapesGraphStateStub.uploadShapesGraph.and.returnValue(Promise.resolve());
-        utilStub = TestBed.get('utilService');
     });
 
     afterEach(function() {
@@ -100,7 +97,6 @@ describe('New Shapes Graph Record Modal component', function() {
         fixture = null;
         matDialogRef = null;
         shapesGraphStateStub = null;
-        utilStub = null;
     });
 
     describe('controller methods', function() {
@@ -156,7 +152,6 @@ describe('New Shapes Graph Record Modal component', function() {
 
             expect(errorDisplay.length).toBe(1);
             expect(errorDisplay[0].nativeElement.innerText).toEqual('error');
-            expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
             expect(matDialogRef.close).not.toHaveBeenCalled();
         });
         it('with fields for record details',  function() {

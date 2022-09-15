@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { pull, includes, get, unset, find, isEqual, remove } from 'lodash';
 
 import { OWL } from '../../../prefixes';
@@ -50,7 +50,7 @@ interface Characteristic {
     selector: 'characteristics-block',
     templateUrl: './characteristicsBlock.component.html'
 })
-export class CharacteristicsBlockComponent implements OnInit, OnChanges {
+export class CharacteristicsBlockComponent implements OnChanges {
     characteristics: Characteristic[] = [
         {
             checked: false,
@@ -98,10 +98,6 @@ export class CharacteristicsBlockComponent implements OnInit, OnChanges {
 
     constructor(public os: OntologyStateService, private om: OntologyManagerService) {}
     
-    ngOnInit(): void {
-        // TODO: Decide whether this is needed
-        // setVariables();
-    }
     ngOnChanges(): void {
         this._setVariables();
     }

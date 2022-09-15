@@ -26,15 +26,16 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { get, merge, union } from 'lodash';
 import { catchError, map, switchMap } from 'rxjs/operators';
+import { Observable, of, throwError, noop } from 'rxjs';
 
 import { CommitDifference } from '../../models/commitDifference.interface';
 import { UserManagerService } from '../../services/userManager.service';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { UtilService } from '../../services/util.service';
 
 import './commitInfoOverlay.component.scss';
-import { OntologyManagerService } from '../../services/ontologyManager.service';
-import { Observable, of, throwError, noop } from 'rxjs';
 
 /**
  * @class shared.CommitInfoOverlayComponent
@@ -61,8 +62,8 @@ export class CommitInfoOverlayComponent implements OnInit {
     tempDeletions: JSONLDObject[] = [];
 
     constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, @Inject(MAT_DIALOG_DATA) public data: any,
-                @Inject('utilService') public util, public um: UserManagerService,
-                private cm: CatalogManagerService, private om: OntologyManagerService) {
+                public util: UtilService, public um: UserManagerService, private cm: CatalogManagerService,
+                private om: OntologyManagerService) {
     }
 
     ngOnInit(): void {

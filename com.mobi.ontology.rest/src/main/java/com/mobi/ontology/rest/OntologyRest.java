@@ -3819,6 +3819,7 @@ public class OntologyRest {
                 if (graphQueryResults != null && !graphQueryResults.isEmpty()) {
                     ObjectNode constructResults = mapper.createObjectNode();
                     ArrayNode stringResults = mapper.createArrayNode();
+                    // TODO: Make this actually create JSON-LD
                     for (Object statement: graphQueryResults.toArray()) {
                         stringResults.add(statement.toString());
                     }

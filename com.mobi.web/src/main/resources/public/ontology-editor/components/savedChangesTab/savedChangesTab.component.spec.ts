@@ -30,7 +30,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
@@ -43,6 +43,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { SavedChangesTabComponent } from './savedChangesTab.component';
 
 describe('Saved Changes Tab component', function() {
@@ -52,7 +53,7 @@ describe('Saved Changes Tab component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
@@ -91,7 +92,7 @@ describe('Saved Changes Tab component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -105,7 +106,7 @@ describe('Saved Changes Tab component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = new OntologyListItem();
     });

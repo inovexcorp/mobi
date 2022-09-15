@@ -37,7 +37,6 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
-import { CustomLabelComponent } from '../../../shared/components/customLabel/customLabel.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
@@ -74,7 +73,6 @@ describe('Create Class Overlay component', function() {
                 CreateClassOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(StaticIriComponent),
-                MockComponent(CustomLabelComponent),
                 MockComponent(AdvancedLanguageSelectComponent),
                 MockComponent(SuperClassSelectComponent)
             ],

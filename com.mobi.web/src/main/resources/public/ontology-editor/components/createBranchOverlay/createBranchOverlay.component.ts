@@ -23,7 +23,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
-import { Observable } from 'rxjs';
 import { get } from 'lodash';
 import { switchMap } from 'rxjs/operators';
 
@@ -32,7 +31,6 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { CATALOG } from '../../../prefixes';
 import { NewConfig } from '../../../shared/models/newConfig.interface';
-import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class ontology-editor.CreateBranchOverlayComponent

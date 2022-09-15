@@ -20,23 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { concat, forEach, find, some } from 'lodash';
+
 import { ShapesGraphStateService } from '../../services/shapesGraphState.service';
+import { UtilService } from '../../services/util.service';
 
 /**
- * @ngdoc component
- * @name ontology-editor.component:resolveConflictsBlock
- * @requires shared.service:utilService
- * @requires shared.service:ontologyStateService
+ * @class ontology-editor.ResolveConflictsBlockComponent
  *
- * @description
- * `resolveConflictsBlock` is a component that creates a series of displays for resolving conflicts between the
- * current branch of the opened {@link shared.service:ontologyStateService ontology} into a target
- * branch. The display includes information about the branches being merged, a
- * {@link shared.component:resolveConflictsForm}, a button to submit the merge, and a button to
- * cancel the merge. The component calls the appropriate methods to merge with the selected resolutions from
- * the `resolveConflictsForm`.
+ * A component that creates a series of displays for resolving conflicts between the current branch of the opened
+ * VersionedRDFRecord on the provided state service into a target branch. The display includes information about the
+ * branches being merged, a {@link shared.ResolveConflictsFormComponent}, a button to submit the merge, and a button to
+ * cancel the merge. The component calls the appropriate methods to merge with the selected resolutions from the
+ * `resolveConflictsForm`.
  */
 @Component({
     selector: 'resolve-conflicts-block',
@@ -49,8 +46,7 @@ export class ResolveConflictsBlock implements OnInit {
     branchTitle = '';
     targetTitle = '';
 
-    constructor(@Inject('utilService') private util) {
-    }
+    constructor(private util: UtilService) {}
 
     ngOnInit(): void {
         let branchId;
@@ -60,7 +56,7 @@ export class ResolveConflictsBlock implements OnInit {
         if (this.state.listItem?.versionedRdfRecord?.branchId) {
             branchId = this.state.listItem.versionedRdfRecord.branchId;
         }
-        var branch = find(this.state.listItem.branches, {'@id': branchId});
+        const branch = find(this.state.listItem.branches, {'@id': branchId});
         this.branchTitle = this.util.getDctermsValue(branch, 'title');
         this.targetTitle = this.util.getDctermsValue(this.state.listItem.merge.target, 'title');
     }

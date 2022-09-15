@@ -20,10 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { isEmpty } from 'lodash';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class catalog.RecordMarkdownComponent
@@ -62,7 +63,7 @@ export class RecordMarkdownComponent {
     @Input() canEdit: boolean;
     @Output() updateRecord = new EventEmitter<JSONLDObject>();
 
-    constructor(@Inject('utilService') public util) {}
+    constructor(public util: UtilService) {}
     
     showEdit(): void {
         if (this.canEdit) {

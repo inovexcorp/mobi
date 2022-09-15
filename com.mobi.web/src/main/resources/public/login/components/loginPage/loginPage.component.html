@@ -43,7 +43,7 @@
                         <input type="password" name="password" class="form-control" id="password" placeholder="Password" (change)="errorMessage = ''" formControlName="password" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" [disabled]="loginForm.invalid">Login</button>
+                <button mat-raised-button class="w-100" color="primary" type="submit" [disabled]="loginForm.invalid">Login</button>
             </form>
         </div>
     </div>

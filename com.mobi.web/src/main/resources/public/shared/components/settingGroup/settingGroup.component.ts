@@ -20,13 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Input, Component, OnChanges, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { forEach, has } from 'lodash';
 
 import { SettingUtils } from '../../models/settingUtils.class';
 import { Setting } from '../../models/setting.interface';
 import { SimpleSetting } from '../../models/simpleSetting.class';
 import { SETTING } from '../../../prefixes';
+import { UtilService } from '../../services/util.service';
+import { SettingManagerService } from '../../services/settingManager.service';
 
 /**
  * @class shared.SettingGroupComponent
@@ -46,7 +48,7 @@ export class SettingGroupComponent implements OnChanges {
     settings = {};
     settingIRIs = [];
 
-    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util, private ref: ChangeDetectorRef) {}
+    constructor(private sm: SettingManagerService, private util: UtilService, private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
         this.retrieveSettings();
@@ -54,15 +56,15 @@ export class SettingGroupComponent implements OnChanges {
 
     retrieveSettings(): void {
         this.sm.getSettings(this.settingType.iri)
-            .then(response => {
+            .subscribe(response => {
                 this.errorMessage = '';
-                const settingResponse = response.data;
+                const settingResponse = response;
                 this.sm.getSettingDefinitions(this.group, this.settingType.iri)
-                    .then(response => {
+                    .subscribe(response => {
                         this.settings = {};
                         const shapeDefinitions = {};
                         const settingObject = {};
-                        forEach(response.data, shape => {
+                        response.forEach(shape => {
                             shapeDefinitions[shape['@id']] = shape;
                             if (this.isTopLevelNodeShape(shape)) {
                                 settingObject[shape['@id']] = shape;
@@ -87,14 +89,14 @@ export class SettingGroupComponent implements OnChanges {
     updateSetting(setting: Setting): void {
         if (setting.exists()) {
             this.sm.updateSetting(this.settingType.iri, setting.topLevelSettingNodeshapeInstanceId, setting.type, setting.asJsonLD())
-                .then(() => {
+                .subscribe(() => {
                     this.errorMessage = '';
                     this.retrieveSettings();
                     this.util.createSuccessToast('Successfully updated the setting');
                 }, error => this.errorMessage = error);
         } else {
             this.sm.createSetting(this.settingType.iri, setting.type, setting.asJsonLD())
-                .then(() => {
+                .subscribe(() => {
                     this.errorMessage = '';
                     this.retrieveSettings();
                     this.util.createSuccessToast('Successfully created the setting');

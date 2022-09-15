@@ -20,24 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
+import { throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../test/ts/Shared';
 import { MERGEREQ } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { HelperService } from './helper.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { UtilService } from './util.service';
 
 describe('Merge Request Manager service', function() {
     let service: MergeRequestManagerService;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -52,21 +53,44 @@ describe('Merge Request Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 MergeRequestManagerService,
-                HelperService,
                 MockProvider(ProgressSpinnerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
 
     beforeEach(function() {
         service = TestBed.get(MergeRequestManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         httpMock = TestBed.get(HttpTestingController);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
 
         utilStub.paginatedConfigToParams.and.callFake(x => Object.assign({}, x) || {});
         progressSpinnerStub.track.and.callFake((ob) => ob);
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
     });
 
     afterEach(function() {

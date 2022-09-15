@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
 import { Subscription } from 'rxjs';
 
@@ -46,23 +46,27 @@ export class SpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
 
     @ViewChild('spinnerComponentLocal') spinnerComponent: ElementRef<HTMLElement>;
     
-    constructor( private readonly spinnerSrv: ProgressSpinnerService) {
-        this.loadingSub = this.spinnerSrv.isLoading$.subscribe(
-            state => {
-                this.isLoading = state;
-            }
-        );
-        this.diameterSub = this.spinnerSrv.diameterOb$.subscribe( val => { 
-            this.localDiameter = val;
-        });
+    constructor( private readonly spinnerSrv: ProgressSpinnerService, private cd: ChangeDetectorRef) {
+
     }
     ngAfterViewInit(): void {
         this.spinnerSrv.setSpinnerTemplate(this.spinnerComponent);
+        this.loadingSub = this.spinnerSrv.isLoading$.subscribe(
+            state => {
+                this.isLoading = state;
+                this.cd.detectChanges();
+            }
+        );
+        this.diameterSub = this.spinnerSrv.diameterOb$.subscribe( val => {
+            this.localDiameter = val;
+            this.cd.detectChanges();
+        });
     }
     ngOnInit(): void {
         this.localDiameter = 50;
         this.diameter =  this.diameter || 50;
         this.isLoading =  this.isLoading || false;
+
     }
     ngOnDestroy(): void {
         this.loadingSub.unsubscribe();

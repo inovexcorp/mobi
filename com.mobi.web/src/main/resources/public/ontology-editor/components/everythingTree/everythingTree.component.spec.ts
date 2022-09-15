@@ -20,9 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {
-    mockUtil,
-} from '../../../../../../test/ts/Shared';
 import { join } from 'lodash';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -31,16 +28,19 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 
+import {
+    cleanStylesFromDOM
+} from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { TreeItemComponent } from '../treeItem/treeItem.component';
 import { HierarchyFilterComponent } from '../hierarchyFilter/hierarchyFilter.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { DCTERMS } from '../../../prefixes';
-import { EverythingTreeComponent } from './everythingTree.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { EverythingTreeComponent } from './everythingTree.component';
 
 describe('Everything Tree component', function() {
     let component: EverythingTreeComponent;
@@ -48,7 +48,7 @@ describe('Everything Tree component', function() {
     let fixture: ComponentFixture<EverythingTreeComponent>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -61,10 +61,10 @@ describe('Everything Tree component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
-        })
-    })
+        });
+    });
 
     beforeEach(function() {
         fixture = TestBed.createComponent(EverythingTreeComponent);
@@ -72,7 +72,7 @@ describe('Everything Tree component', function() {
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.get(OntologyStateService);
         ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
         ontologyStateServiceStub.joinPath.and.callFake((path) => {
@@ -124,25 +124,6 @@ describe('Everything Tree component', function() {
         utilStub = null;
     });
 
-    describe('controller bound variable', function() {
-        it('hierarchy should be one way bound', function() {
-            component.hierarchy = [{entityIRI: 'class1', indent: 0, path: [],
-            joinedPath: '',
-            entityInfo: undefined,
-            hasChildren: true}];
-            fixture.detectChanges();
-            expect(component.hierarchy).toEqual([{entityIRI: 'class1', indent: 0, path: [],
-            joinedPath: '',
-            entityInfo: undefined,
-            hasChildren: true}]);
-        });
-        it('updateSearch should be called in the parent scope', function() {
-            component.filterText = 'value';
-            spyOn(component.updateSearch, 'emit');
-            component.onKeyup();
-            expect(component.updateSearch.emit).toHaveBeenCalled();
-        });
-    });
     describe('contains the correct html', function() {
         beforeEach(function() {
             spyOn(component, 'isShown').and.returnValue(true);
@@ -178,10 +159,10 @@ describe('Everything Tree component', function() {
                     names: ['test'],
                     label: 'test',
                     imported: false,
-                    ontologyId: "www.testontology.com"
+                    ontologyId: 'www.testontology.com'
                 },
                 joinedPath: 'www.test.com'
-            }]
+            }];
             spyOn(component, 'isShown').and.returnValue(false);
             const node: HierarchyNode = {
                 isOpened: false, path: ['a', 'b'], joinedPath: 'a.b',
@@ -284,7 +265,7 @@ describe('Everything Tree component', function() {
                 });
                 it('and the node is a folder', function() {
                     expect(component.searchFilter(this.filterNodeFolder)).toEqual(true);
-                })
+                });
             });
             it('does not have filter text', function() {
                 component.filterText = '';
@@ -447,7 +428,7 @@ describe('Everything Tree component', function() {
                     this.node = {
                         entityIRI: 'id',
                         get: jasmine.createSpy('get').and.returnValue(false)
-                    }
+                    };
                 });
                 describe('and filterText is set and node is parent node without a text match', function() {
                     beforeEach(function() {
@@ -534,7 +515,7 @@ describe('Everything Tree component', function() {
                     indent: 0,
                     path: [],
                     entityInfo: undefined,
-                    joinedPath: ''
+                    joinedPath: '',
                 };
                 component.filterText = 'text';
                 component.preFilteredHierarchy = [node];

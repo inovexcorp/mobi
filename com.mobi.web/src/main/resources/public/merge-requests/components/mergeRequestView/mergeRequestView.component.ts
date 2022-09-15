@@ -20,10 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { forEach, concat, some, isEmpty, get } from 'lodash';
-import { from, of } from 'rxjs';
+import { of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
@@ -34,9 +34,10 @@ import { MergeRequestManagerService } from '../../../shared/services/mergeReques
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './mergeRequestView.component.scss';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
  * @class merge-requests.MergeRequestViewComponent
@@ -59,8 +60,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     isAccepted = false;
 
     constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, private dialog: MatDialog,
-        @Inject('utilService') public util, public os: OntologyStateService,
-        public om: OntologyManagerService) {}
+        public util: UtilService, public os: OntologyStateService, public om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.mm.getRequest(this.state.selected.jsonld['@id'])

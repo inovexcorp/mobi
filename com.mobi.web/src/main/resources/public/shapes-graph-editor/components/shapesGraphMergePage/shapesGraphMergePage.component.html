@@ -25,11 +25,11 @@
         <div class="h-100" *ngIf="!state.listItem.merge.conflicts.length">
             <div class="merge-block h-100 d-flex flex-column">
                 <div class="row justify-content-center m-0">
-                    <form name="form" novalidate autocomplete="off">
+                    <div>
                         <span class="merge-message">Merge <strong>Branch: {{branchTitle}}</strong> into</span>
                         <branch-select [model]="state.listItem.merge.target" (modelChange)="changeTarget($event)" [required]="true" class="select-branch" [isDisabledWhen]="state.listItem.userBranch" [branches]="branches"></branch-select>
-                        <checkbox *ngIf="branchTitle !== 'MASTER' && !state.listItem.userBranch" [(model)]="state.listItem.merge.checkbox" [displayText]="'Remove Branch: ' + branchTitle + ' after merge.'"></checkbox>
-                    </form>
+                        <mat-checkbox *ngIf="branchTitle !== 'MASTER' && !state.listItem.userBranch" [(ngModel)]="state.listItem.merge.checkbox">{{'Remove Branch: ' + branchTitle + ' after merge.'}}</mat-checkbox>
+                    </div>
                 </div>
                 <div class="flex-1 vertical-scroll p-2">
                     <error-display *ngIf="error">{{error}}</error-display>

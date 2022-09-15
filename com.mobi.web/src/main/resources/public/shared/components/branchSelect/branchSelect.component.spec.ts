@@ -31,14 +31,17 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { BranchSelectComponent } from './branchSelect.component';
+import { UtilService } from '../../services/util.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('Branch Select component', function() {
     let component: BranchSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<BranchSelectComponent>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let jsonld;
 
     configureTestSuite(function() {
@@ -56,7 +59,7 @@ describe('Branch Select component', function() {
                 BranchSelectComponent
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
         });
     });
@@ -65,7 +68,7 @@ describe('Branch Select component', function() {
         fixture = TestBed.createComponent(BranchSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         jsonld = {'@id': 'thing', '@type': []};
 

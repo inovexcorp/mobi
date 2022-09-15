@@ -94,7 +94,7 @@ describe('Prop Select component', function() {
                 }
             } as MatAutocompleteSelectedEvent;
             component.selectProp(event);
-            expect(component.selectedProp).toEqual(mappingProperty);
+            expect(component.getSelectedProp()).toEqual(mappingProperty);
             expect(component.selectedPropChange.emit).toHaveBeenCalledWith(mappingProperty);
         });
         describe('should correctly filter the property list based on the input', function() {

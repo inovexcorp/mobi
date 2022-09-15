@@ -33,7 +33,7 @@ import { CatalogStateService } from '../../../shared/services/catalogState.servi
 import { SharedModule } from '../../../shared/shared.module';
 import { RecordsViewComponent } from '../recordsView/recordsView.component';
 import { RecordViewComponent } from '../recordView/recordView.component';
-import { RecordPermissionViewComponent } from "../recordPermissionView/recordPermissionView.component";
+import { RecordPermissionViewComponent } from '../recordPermissionView/recordPermissionView.component';
 import { CatalogPageComponent } from './catalogPage.component';
 
 describe('Catalog Page component', function() {

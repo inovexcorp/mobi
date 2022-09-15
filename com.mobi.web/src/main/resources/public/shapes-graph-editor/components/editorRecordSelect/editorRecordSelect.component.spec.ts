@@ -40,7 +40,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil, mockModal, mockPolicyEnforcement } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -54,6 +54,8 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { DCTERMS } from '../../../prefixes';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Editor Record Select component', function() {
     let component: EditorRecordSelectComponent;
@@ -63,8 +65,8 @@ describe('Editor Record Select component', function() {
     let shapesGraphStateStub;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let policyManagerStub;
-    let policyEnforcementStub;
-    let utilStub;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     let record1Item = new ShapesGraphListItem();
     let record2Item = new ShapesGraphListItem();
@@ -112,9 +114,8 @@ describe('Editor Record Select component', function() {
                 MockProvider(ShapesGraphManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(PolicyManagerService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'modalService', useClass: mockModal },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -133,15 +134,16 @@ describe('Editor Record Select component', function() {
         element = fixture.debugElement;
         matDialog = TestBed.get(MatDialog);
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
-        policyEnforcementStub = TestBed.get('policyEnforcementService')
-        policyEnforcementStub.evaluateMultiDecisionRequest.and.resolveTo([
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+        policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue(of([
             {
-              "urn:oasis:names:tc:xacml:3.0:attribute-category:resource": "record3",
-              "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject": "urn:testUser",
-              "urn:oasis:names:tc:xacml:3.0:attribute-category:action": "http://mobi.com/ontologies/policy#Delete",
-              "decision": "Permit"
+              'urn:oasis:names:tc:xacml:3.0:attribute-category:resource': 'record3',
+              'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject': 'urn:testUser',
+              'urn:oasis:names:tc:xacml:3.0:attribute-category:action': 'http://mobi.com/ontologies/policy#Delete',
+              'decision': 'Permit'
             }
-          ]);
+          ]));
 
         record1Item.versionedRdfRecord.recordId = record1.recordId;
         record1Item.versionedRdfRecord.title = record1.title;
@@ -153,7 +155,7 @@ describe('Editor Record Select component', function() {
         shapesGraphStateStub.openShapesGraph.and.resolveTo();
         shapesGraphStateStub.closeShapesGraph.and.callFake(ShapesGraphStateService.prototype.closeShapesGraph);
 
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         policyManagerStub = TestBed.get(PolicyManagerService);
         policyManagerStub.actionDelete = 'http://mobi.com/ontologies/policy#Delete';
@@ -174,6 +176,7 @@ describe('Editor Record Select component', function() {
             }
         });
         component.recordIri = record1.recordId;
+        policyEnforcementStub.deny = 'Deny';
     });
 
     afterEach(function() {
@@ -296,23 +299,23 @@ describe('Editor Record Select component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), true);
                 expect(shapesGraphStateStub.list).toContain(record1Item, record2Item);
                 expect(policyEnforcementStub.evaluateMultiDecisionRequest).toHaveBeenCalledWith({
-                    "resourceId": [
-                      "record3"
+                    'resourceId': [
+                      'record3'
                     ],
-                    "actionId": [
-                      "http://mobi.com/ontologies/policy#Delete"
+                    'actionId': [
+                      'http://mobi.com/ontologies/policy#Delete'
                     ]
                   }, jasmine.anything());
             });
             it('when user does not have permission to delete a record', async function() {
-                policyEnforcementStub.evaluateMultiDecisionRequest.and.resolveTo([
+                policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue(of([
                     {
-                      "urn:oasis:names:tc:xacml:3.0:attribute-category:resource": "record3",
-                      "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject": "urn:testUser",
-                      "urn:oasis:names:tc:xacml:3.0:attribute-category:action": "http://mobi.com/ontologies/policy#Delete",
-                      "decision": "Deny"
+                      'urn:oasis:names:tc:xacml:3.0:attribute-category:resource': 'record3',
+                      'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject': 'urn:testUser',
+                      'urn:oasis:names:tc:xacml:3.0:attribute-category:action': 'http://mobi.com/ontologies/policy#Delete',
+                      'decision': 'Deny'
                     }
-                  ]);
+                  ]));
 
                 await component.retrieveShapesGraphRecords();
                 fixture.detectChanges();
@@ -321,11 +324,11 @@ describe('Editor Record Select component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), true);
                 expect(shapesGraphStateStub.list).toContain(record1Item, record2Item);
                 expect(policyEnforcementStub.evaluateMultiDecisionRequest).toHaveBeenCalledWith({
-                    "resourceId": [
-                      "record3"
+                    'resourceId': [
+                      'record3'
                     ],
-                    "actionId": [
-                      "http://mobi.com/ontologies/policy#Delete"
+                    'actionId': [
+                      'http://mobi.com/ontologies/policy#Delete'
                     ]
                   }, jasmine.anything());
                 expect(component.unopened.length).toEqual(1);
@@ -338,7 +341,7 @@ describe('Editor Record Select component', function() {
                 shapesGraphStateStub.deleteShapesGraph.and.resolveTo({});
                 await component.deleteShapesGraphRecord('record1');
                 expect(shapesGraphStateStub.deleteShapesGraph).toHaveBeenCalledWith('record1');
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
             });
             it('unless an error occurs', async function() {
                 shapesGraphStateStub.deleteShapesGraph.and.rejectWith('error');

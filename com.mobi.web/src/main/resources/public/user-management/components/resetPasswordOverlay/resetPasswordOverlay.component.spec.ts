@@ -29,11 +29,12 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { ResetPasswordOverlayComponent } from './resetPasswordOverlay.component';
 
 describe('Reset Password Overlay component', function() {
@@ -60,7 +61,7 @@ describe('Reset Password Overlay component', function() {
             providers: [
                 MockProvider(UserManagerService),
                 MockProvider(UserStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -102,7 +103,7 @@ describe('Reset Password Overlay component', function() {
                 fixture.detectChanges();
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.resetPassword.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.resetPassword.and.rejectWith('Error message');
                 component.set();
                 tick();
                 expect(userManagerStub.resetPassword).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.pw);
@@ -110,12 +111,12 @@ describe('Reset Password Overlay component', function() {
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.resetPassword.and.returnValue(Promise.resolve());
+                userManagerStub.resetPassword.and.resolveTo();
                 component.set();
                 tick();
                 expect(userManagerStub.resetPassword).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.pw);
                 expect(component.errorMessage).toEqual('');
-                expect(matDialogRef.close).toHaveBeenCalled();
+                expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });
     });
@@ -158,13 +159,13 @@ describe('Reset Password Overlay component', function() {
         const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
         cancelButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(matDialogRef.close).toHaveBeenCalled();
+        expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
     });
     it('should call set when the button is clicked', function() {
         spyOn(component, 'set');
         const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.set).toHaveBeenCalled();
+        expect(component.set).toHaveBeenCalledWith();
     });
 });

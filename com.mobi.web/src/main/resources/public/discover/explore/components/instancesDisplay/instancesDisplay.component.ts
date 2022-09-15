@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material';
 import {initial, merge, head, last, set} from 'lodash';
 import { v4 } from 'uuid';
@@ -28,6 +28,8 @@ import { v4 } from 'uuid';
 import { CATALOG, POLICY } from '../../../../prefixes';
 import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 import { ExploreService } from '../../../services/explore.service';
 
 import './instancesDisplay.component.scss';
@@ -46,7 +48,7 @@ export class InstancesDisplayComponent implements OnInit {
     className = '';
 
     constructor(public state: DiscoverStateService, private es: ExploreService, private splitIRI: SplitIRIPipe,
-        @Inject('policyEnforcementService') private pep, @Inject('utilService') private util) {}
+        private pep: PolicyEnforcementService, private util: UtilService) {}
     
     ngOnInit(): void {
         this.className = last(this.state.explore.breadcrumbs);
@@ -57,7 +59,7 @@ export class InstancesDisplayComponent implements OnInit {
             actionId: POLICY + 'Read'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canRead = response !== this.pep.deny;
                 if (canRead) {
                     this.state.explore.instanceDetails.currentPage = pageEvent.pageIndex;
@@ -87,7 +89,7 @@ export class InstancesDisplayComponent implements OnInit {
             actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canModify = response !== this.pep.deny;
                 if (canModify) {
                     this.state.explore.creating = true;

@@ -72,41 +72,41 @@ module.exports = {
            .waitForElementVisible('div.ontologies')
            .assert.not.elementPresent('div.modal-header')
            .waitForElementVisible('div.ontologies')
-           .clearValue('open-ontology-tab input.ontology-search')
-           .setValue('open-ontology-tab input.ontology-search', Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
+           .clearValue('open-ontology-tab search-bar input')
+           .setValue('open-ontology-tab search-bar input', Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
            .keys(browser.Keys.ENTER)
            .useXpath()
            .assert.not.elementPresent('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h4[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
            .useCss()
-           .clearValue('open-ontology-tab input.ontology-search')
-           .setValue('open-ontology-tab input.ontology-search', Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
+           .clearValue('open-ontology-tab search-bar input')
+           .setValue('open-ontology-tab search-bar input', Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
            .keys(browser.Keys.ENTER)
            .useXpath()
            .useXpath()
            .assert.not.elementPresent('//div[contains(@class, "ontology-info")]//span[contains(@class, "header-title")]//span[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h4[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, '') + '")]]')
            .useCss()
-           .clearValue('open-ontology-tab input.ontology-search')
-           .setValue('open-ontology-tab input.ontology-search', '')
+           .clearValue('open-ontology-tab search-bar input')
+           .setValue('open-ontology-tab search-bar input', '')
            .keys(browser.Keys.ENTER)
    },
 
     'Step 6: Open an Ontology called “test-local-imports-1' : function (browser) {
         browser
-            .setValue('open-ontology-tab input.ontology-search', '')
+            .setValue('open-ontology-tab search-bar input', '')
             .globals.open_ontology(browser, Onto1)
     },
 
     'Step 7: Click classes tab' : function (browser) {
         browser
-            .waitForElementVisible('div.material-tabset li.nav-item')
-            .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
+            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
+            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
     'Step 8: Check for Ontology classes' : function (browser) {
         browser
-            .waitForElementVisible('div.tree')
+            .useCss().waitForElementVisible('div.tree')
             .useXpath()
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
@@ -126,13 +126,13 @@ module.exports = {
 
     'Step 11: Click classes tab' : function (browser) {
         browser
-            .waitForElementVisible('div.material-tabset li.nav-item')
-            .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
+            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
+            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
     'Step 12: Check for Ontology classes' : function (browser) {
         browser
-            .waitForElementVisible('div.tree')
+            .useCss().waitForElementVisible('div.tree')
             .useXpath()
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
     }

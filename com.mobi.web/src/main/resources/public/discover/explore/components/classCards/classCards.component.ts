@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { merge, chunk, orderBy } from 'lodash';
 import { Datasource, IDatasource } from 'ngx-ui-scroll';
 
@@ -28,6 +28,8 @@ import { POLICY } from '../../../../prefixes';
 import { ExploreService } from '../../../services/explore.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ClassDetails } from '../../../models/classDetails.interface';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 
 import './classCards.component.scss';
 
@@ -55,8 +57,8 @@ export class ClassCardsComponent implements OnChanges {
         }
     });
 
-    constructor(private state: DiscoverStateService, private es: ExploreService, 
-        @Inject('policyEnforcementService') private pep, @Inject('utilService') private util) {}
+    constructor(private state: DiscoverStateService, private es: ExploreService, private pep: PolicyEnforcementService,
+        private util: UtilService) {}
 
     ngOnChanges(): void {
         this.chunks = this._getChunks(this.classDetails);
@@ -69,7 +71,7 @@ export class ClassCardsComponent implements OnChanges {
             actionId: POLICY + 'Read'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canRead = response !== this.pep.deny;
                 if (canRead) {
                     this.es.getClassInstanceDetails(this.state.explore.recordId, item.classIRI, {pageIndex: 0, limit: this.state.explore.instanceDetails.limit})

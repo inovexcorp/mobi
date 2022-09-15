@@ -135,6 +135,7 @@ describe('Create Individual Overlay component', function() {
             expect(button.properties['disabled']).toBeTruthy();
 
             component.createForm.controls.title.setValue('test');
+            component.classes = ['classA'];
             fixture.detectChanges();
             expect(button.properties['disabled']).toBeFalsy();
         });

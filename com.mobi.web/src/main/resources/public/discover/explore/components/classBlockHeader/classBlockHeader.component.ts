@@ -20,48 +20,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { MatDialog } from '@angular/material/dialog';
+import { Component } from '@angular/core';
+
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
-import './classBlockHeader.component.scss';
-import { Component, Inject } from '@angular/core';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/newInstanceClassOverlay.component';
-import { MatDialog } from '@angular/material/dialog';
-import policyEnforcementService from '../../../../shared/services/policyEnforcement.service';
-import prefixes from '../../../../shared/services/prefixes.service';
+import { CATALOG, POLICY } from '../../../../prefixes';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
+
+import './classBlockHeader.component.scss';
 
 /**
- * @ngdoc component
- * @name explore.component:classBlockHeader
- * @requires shared.service:discoverStateService
- * @requires discover.service:exploreService
- * @requires explore.service:exploreUtilsService
- * @requires shared.service:utilService
- * @requires shared.service:modalService
- * @requires shared.service:prefixes
- * @requires shared.service:policyEnforcementService
+ * @class explore.ClassBlockHeaderComponent
  *
- * @description
- * `classBlockHeader` is a component that creates a {@link discover.component:datasetSelect} to select a dataset to explore.
- * It also provides buttons to refresh the view of the dataset and to create an instance.
+ * A component that creates a {@link discover.DatasetSelectComponent} to select a dataset to explore. It also provides
+ * buttons to refresh the view of the dataset and to create an instance.
  */
-
 @Component({
     selector: 'class-block-header',
     templateUrl: './classBlockHeader.component.html'
 })
 export class ClassBlockHeaderComponent {
-    constructor(private es: ExploreService, @Inject('utilService') private util,
-                @Inject('policyEnforcementService') private pep, public ds: DiscoverStateService,
-                private eu: ExploreUtilsService, @Inject('prefixes') private prefixes, private dialog: MatDialog) {}
+    constructor(private es: ExploreService, private util: UtilService, private pep: PolicyEnforcementService,
+        public ds: DiscoverStateService, private eu: ExploreUtilsService, private dialog: MatDialog) {}
 
     showCreate(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: this.prefixes.catalog + 'Modify'
+            actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canEdit = response !== this.pep.deny;
                 if (canEdit) {
                     this.eu.getClasses(this.ds.explore.recordId)
@@ -87,10 +79,10 @@ export class ClassBlockHeaderComponent {
     refresh(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: this.prefixes.policy + 'Read'
+            actionId: POLICY + 'Read'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canRead = response !== this.pep.deny;
                 if (canRead) {
                     this.ds.explore.hasPermissionError = false;

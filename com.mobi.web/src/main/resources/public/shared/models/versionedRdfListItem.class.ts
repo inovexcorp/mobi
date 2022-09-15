@@ -20,10 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Commit } from './commit.interface';
 import { Conflict } from './conflict.interface';
 import { Difference } from './difference.class';
 import { JSONLDObject } from './JSONLDObject.interface';
-import {Commit} from './commit.interface';
 
 export class VersionedRdfListItem {
     active: boolean;

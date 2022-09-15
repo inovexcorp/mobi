@@ -69,53 +69,53 @@ module.exports = {
 
     'Step 5: Create a new Class': function(browser) {
         browser
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-code-fork')
-            .click('circle-button-stack .hidden-buttons .fa-plus')
-            .waitForElementVisible('create-entity-modal .modal-header h3')
-            .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
+            .click('ontology-button-stack circle-button-stack')
+            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
+            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
             .click('create-entity-modal .create-class')
             .waitForElementNotPresent('create-entity-modal .create-class')
-            .waitForElementVisible('create-class-overlay .modal-header h3')
-            .assert.textContains('create-class-overlay .modal-header h3', 'Create New OWL Class')
+            .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
+            .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
             .useXpath()
-            .waitForElementVisible('//create-class-overlay//label[text()="Name"]/parent::custom-label/following-sibling::input')
-            .setValue('//create-class-overlay//label[text()="Name"]/parent::custom-label/following-sibling::input', 'class A')
-            .click('//create-class-overlay//button[text()="Submit"]')
+            .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')
+            .setValue('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input', 'class A')
+            .click('//create-class-overlay//span[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('create-class-overlay .modal-header h3')
+            .waitForElementNotPresent('create-class-overlay  h1.mat-dialog-title')
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 6: Verify class was created': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Classes")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useXpath()
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"class A")]]')
     },
 
     'Step 7: Commit Changes': function(browser) {
         browser
             .useCss()
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-git')
-            .click('circle-button-stack .fa-git')
-            .waitForElementVisible('commit-overlay .modal-header h3')
-            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
+            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
+            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
+            .click('ontology-button-stack circle-button-stack button.btn-info')
+            .waitForElementVisible('commit-overlay h1.mat-dialog-title')
+            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'commit123')
             .useXpath()
-            .click('//commit-overlay//button[text()="Submit"]')
+            .click('//commit-overlay//span[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('commit-overlay .modal-header h3')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title')
     },
 
     'Step 8: Verify Commit': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
             .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
@@ -125,30 +125,28 @@ module.exports = {
 
     'Step 9: Make Changes to Class': function(browser) {
         var classTitleSelector = '//value-display//div//span[text()[contains(.,"class A")]]'
-        var annotationSelector = classTitleSelector +
-            '//ancestor::value-display//parent::span[@class[contains(.,"value-display-wrapper")]]//following-sibling::div[@class[contains(.,"button-container")]]//button[@class[contains(.,"fa-pencil")]]'
+        var annotationSelector = classTitleSelector + '//ancestor::div[@class[contains(.,"prop-value-container")]]//button[@title="Edit"]'
 
         browser
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Classes")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
             .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"class A")]]')
             .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"class A")]]')
             .waitForElementVisible(classTitleSelector)
             .moveToElement(classTitleSelector, 0, 0)
             .waitForElementVisible(annotationSelector)
             .click(annotationSelector)
-            .waitForElementVisible('//annotation-overlay//div[@class="modal-body"]//text-area')
-            .clearValue('//annotation-overlay//div[@class="modal-body"]//textarea')
-            .setValue('//annotation-overlay//div[@class="modal-body"]//textarea', 'A Edited')
-            .click('//annotation-overlay//button[text()="Submit"]')
+            .waitForElementVisible('//annotation-overlay//textarea')
+            .clearValue('//annotation-overlay//textarea')
+            .setValue('//annotation-overlay//textarea', 'A Edited')
+            .click('//annotation-overlay//span[text()="Submit"]')
     },
 
     'Step 10: Verify Changes to Class': function(browser) {
         browser
             .useCss()
-            .waitForElementNotPresent('create-class-overlay .modal-header h3')
+            .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title')
             .waitForElementNotPresent('#spinner-full')
             .useXpath()
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
@@ -158,24 +156,24 @@ module.exports = {
     'Step 11: Commit Changes': function(browser) {
         browser
             .useCss()
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-git')
-            .click('circle-button-stack .fa-git')
-            .waitForElementVisible('commit-overlay .modal-header h3')
-            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
+            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
+            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
+            .click('ontology-button-stack circle-button-stack button.btn-info')
+            .waitForElementVisible('commit-overlay h1.mat-dialog-title')
+            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'commit456')
             .useXpath()
-            .click('//commit-overlay//button[text()="Submit"]')
+            .click('//commit-overlay//span[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('commit-overlay .modal-header h3')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title')
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 12: Verify Commit': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
             .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
@@ -189,14 +187,14 @@ module.exports = {
             .click('//ontology-sidebar//span[@class[contains(.,"close-icon")]]')
             .useCss()
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .clearValue('open-ontology-tab input.ontology-search')
-            .setValue('open-ontology-tab input.ontology-search', 'Metadata Test Ontology')
-            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+            .clearValue('open-ontology-tab search-bar input')
+            .setValue('open-ontology-tab search-bar input', 'Metadata Test Ontology')
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
         browser.globals.wait_for_no_spinners(browser);
         browser
             .waitForElementVisible('ontology-editor-page open-ontology-tab')
-            .setValue('open-ontology-tab input.ontology-search', 'Metadata')
-            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER)
+            .setValue('open-ontology-tab search-bar input', 'Metadata')
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
             .useXpath()
             .assert.textContains('//open-ontology-tab//small', 'MetadataTestOntology')
             .click('//open-ontology-tab//small[text()[contains(.,"MetadataTestOntology")]]')
@@ -209,9 +207,8 @@ module.exports = {
     'Step 14: Verify Presentation of Class A' : function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Classes")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
             .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .assert.visible('//value-display//div//span[text() = "A Edited"]//ancestor::property-values//p[text()[contains(.,"Title")]]')

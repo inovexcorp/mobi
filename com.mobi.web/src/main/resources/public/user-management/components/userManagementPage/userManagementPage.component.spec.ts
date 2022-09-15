@@ -22,16 +22,16 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatTabChangeEvent, MatTabsModule } from '@angular/material';
+import { MatTabsModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import 'ng-mocks/dist/jasmine'; // Ensures every method in Mocked Components are Jasmine spies
-import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil} from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM} from '../../../../../../test/ts/Shared';
 import { SettingEditPageComponent } from '../../../shared/components/settingEditPage/settingEditPage.component';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { GroupsPageComponent } from '../groupsPage/groupsPage.component';
 import { PermissionsPageComponent } from '../permissionsPage/permissionsPage.component';
@@ -59,10 +59,7 @@ describe('User Management Page component', function() {
             ],
             providers: [
                 MockProvider(UserStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'settingManagerService', useFactory: () => jasmine.createSpyObj('settingManagerService', {
-                    open: { afterClosed: () => of(true)}
-                }) }
+                MockProvider(SettingManagerService)
             ]
         });
     });
@@ -81,36 +78,7 @@ describe('User Management Page component', function() {
         fixture = null;
         userStateStub = null;
     });
-
-    describe('controller methods', function() {
-        describe('should handle when a tab changes', function() {
-            it('to the users page', function() {
-                const event = new MatTabChangeEvent();
-                event.index = 0;
-                component.onTabChanged(event);
-                expect(component.permissionsPage.reset).not.toHaveBeenCalled();
-            });
-            it('to the groups page', function() {
-                const event = new MatTabChangeEvent();
-                event.index = 1;
-                component.onTabChanged(event);
-                expect(component.permissionsPage.reset).not.toHaveBeenCalled();
-            });
-            it('to the permissions tab', function() {
-                const event = new MatTabChangeEvent();
-                event.index = 2;
-                component.onTabChanged(event);
-                expect(component.permissionsPage.reset).toHaveBeenCalledWith();
-            });
-            it('to the application settings page', function() {
-                const event = new MatTabChangeEvent();
-                event.index = 3;
-                component.onTabChanged(event);
-                expect(component.permissionsPage.reset).not.toHaveBeenCalled();
-            });
-
-        });
-    });
+    
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.user-management-page')).length).toEqual(1);

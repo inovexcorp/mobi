@@ -20,10 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get } from 'lodash';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import { PROV } from '../../../prefixes';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { ProvManagerService } from '../../../shared/services/provManager.service';
 
 /**
  * @class home.ActivityCardComponent
@@ -40,46 +45,52 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
     private increment = 10;
 
     limit = this.increment;
-    id = 'activity-log';
     activities = [];
     entities = [];
     totalSize = 0;
+
+    subscription: Subscription;
+
+    @ViewChild('cardBody') cardBody: ElementRef;
     
-    constructor(@Inject('provManagerService') public pm, @Inject('utilService') public util,
-                @Inject('httpService') private httpService) {}
+    constructor(public pm: ProvManagerService, public util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
     
     ngOnInit(): void {
         this.setPage();
     }
     ngOnDestroy(): void {
-        this.httpService.cancel(this.id);
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
     }
     loadMore(): void {
         this.limit += this.increment;
         this.setPage();
     }
     setPage(): void {
-        this.httpService.cancel(this.id);
-        this.pm.getActivities(this.getConfig(), this.id)
-            .then(response => {
-                this.activities = response.data.activities;
-                this.entities = response.data.entities;
-                const headers = response.headers();
-                this.totalSize = get(headers, 'x-total-count', 0);
+        this.spinnerSvc.startLoadingForComponent(this.cardBody);
+        this.subscription = this.pm.getActivities(this.getConfig())
+            .pipe(finalize(() => {
+                this.spinnerSvc.finishLoadingForComponent(this.cardBody);
+            }))
+            .subscribe(response => {
+                this.activities = response.body.activities;
+                this.entities = response.body.entities;
+                this.totalSize = Number(response.headers.get('x-total-count')) || 0;
             }, errorMessage => {
                 if (errorMessage) {
                     this.util.createErrorToast(errorMessage);
                 }
             });
     }
-    getTimeStamp(activity): string {
+    getTimeStamp(activity: JSONLDObject): string {
         const dateStr = this.util.getPropertyValue(activity, PROV + 'endedAtTime');
         return this.util.getDate(dateStr, 'short');
     }
     getConfig(): any {
         return {pageIndex: 0, limit: this.limit};
     }
-    trackByFn(index, item): string {
+    trackByFn(index: number, item: JSONLDObject): string {
         return item['@id'];
     }
 }

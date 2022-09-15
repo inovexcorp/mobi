@@ -23,7 +23,6 @@
 import { Component, Inject } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { FormBuilder } from '@angular/forms';
 import { get } from 'lodash';
 import { first } from 'rxjs/operators';
 
@@ -31,6 +30,7 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class shapes-graph-editor.UploadRecordModalComponent
@@ -46,10 +46,9 @@ export class UploadRecordModalComponent {
     selectedFile: File;
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
-    constructor(private dialogRef: MatDialogRef<UploadRecordModalComponent>, private fb: FormBuilder,
-                private sm: ShapesGraphManagerService, private state: ShapesGraphStateService,
-                @Inject('utilService') private util, private cm: CatalogManagerService,
-                @Inject(MAT_DIALOG_DATA) public data: any) {}
+    constructor(private dialogRef: MatDialogRef<UploadRecordModalComponent>, private sm: ShapesGraphManagerService,
+        private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
+        @Inject(MAT_DIALOG_DATA) public data: any) {}
 
     uploadChanges(): void {
         this.error = '';

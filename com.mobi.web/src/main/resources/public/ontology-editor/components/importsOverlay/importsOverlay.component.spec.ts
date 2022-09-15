@@ -33,7 +33,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockPropertyManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyDetails } from '../../../datasets/models/ontologyDetails.interface';
 import { DCTERMS, ONTOLOGYEDITOR, OWL } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -44,6 +44,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { ImportsOverlayComponent } from './importsOverlay.component';
 
 describe('Imports Overlay component', function() {
@@ -55,8 +57,8 @@ describe('Imports Overlay component', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let httpMock: HttpTestingController;
-    let propertyManagerStub;
-    let utilStub;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const url = 'http://test.com';
     const error = 'Error Message';
@@ -101,8 +103,8 @@ describe('Imports Overlay component', function() {
                 MockProvider(ProgressSpinnerService),
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -116,8 +118,8 @@ describe('Imports Overlay component', function() {
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         ontologyStateStub = TestBed.get(OntologyStateService);
         matDialogRef = TestBed.get(MatDialogRef);
-        propertyManagerStub = TestBed.get('propertyManagerService');
-        utilStub = TestBed.get('utilService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
+        utilStub = TestBed.get(UtilService);
         httpMock = TestBed.get(HttpTestingController);
 
         catalogManagerStub.localCatalog = {'@id': catalogId};

@@ -22,15 +22,16 @@
  */
 import { get, reject, find, noop } from 'lodash';
 import { flatMap } from 'rxjs/operators';
-
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-
-import './mergeBlock.component.scss';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { CATALOG } from '../../../prefixes';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { throwError } from 'rxjs';
 import { FormBuilder } from '@angular/forms';
+
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { CATALOG } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
+
+import './mergeBlock.component.scss';
 
 /**
  * @class ontology-editor.MergeBlockComponent
@@ -47,7 +48,7 @@ import { FormBuilder } from '@angular/forms';
     templateUrl: './mergeBlock.component.html'
 })
 export class MergeBlockComponent implements OnInit, OnDestroy {
-    constructor(public os: OntologyStateService, public cm: CatalogManagerService, @Inject('utilService') public util, private fb: FormBuilder) {}
+    constructor(public os: OntologyStateService, public cm: CatalogManagerService, public util: UtilService, private fb: FormBuilder) {}
 
     catalogId = '';
     error = '';
@@ -56,7 +57,6 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
     targetHeadCommitId = undefined;   
     commits = [];
     mergeRequestForm = this.fb.group({});
-
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -72,8 +72,13 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
             this.os.listItem.merge.startIndex = 0;
         }
     }
-    getEntityName(entityIRI: string): string {
-        return this.os.getEntityNameByListItem(entityIRI, this.os.listItem);
+    getEntityName(entityIRI: string, os = this.os): string {
+        if (this.os && Object.prototype.hasOwnProperty.call(this.os,'listItem')) {
+            return os.getEntityNameByListItem(entityIRI, os.listItem);
+        } else {
+            return os.getEntityNameByListItem(entityIRI);
+        }
+
     }
     changeTarget(value): void {
         this.os.listItem.merge.difference = undefined;
@@ -88,7 +93,7 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
             ).subscribe(noop, errorMessage => {
                     this.util.createErrorToast(errorMessage);
                     this.os.listItem.merge.difference = undefined;
-                    throwError(errorMessage);
+                    // throwError(errorMessage);
                     return throwError(errorMessage);
             });
         } else {

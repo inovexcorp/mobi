@@ -20,18 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
 import { NgModule } from '@angular/core';
-import { downgradeComponent, downgradeInjectable } from '@angular/upgrade/static';
-
 import { QueryModule } from './query/query.module';
 import { DiscoverSharedModule } from './discoverShared.module';
 import { SharedModule } from '../shared/shared.module';
 import { ExploreModule } from './explore/explore.module';
 import { ExploreService } from './services/explore.service';
 import { DiscoverPageComponent } from './components/discoverPage/discoverPage.component';
-
-import sparqlResultTableComponent from './components/sparqlResultTable/sparqlResultTable.component';
 
 /**
  * @namespace discover
@@ -53,11 +48,3 @@ import sparqlResultTableComponent from './components/sparqlResultTable/sparqlRes
     ]
 })
 export class DiscoverModule {}
-
-angular.module('discover', [
-        'explore',
-        'query',
-    ])
-    .component('sparqlResultTable', sparqlResultTableComponent)
-    .factory('exploreService', downgradeInjectable(ExploreService))
-    .directive('discoverPage', downgradeComponent({component: DiscoverPageComponent}) as angular.IDirectiveFactory);

@@ -41,12 +41,17 @@ module.exports = {
         browser.globals.open_ontology(browser, OntoSample)
         browser
             .waitForElementVisible('imports-block div.section-header')
-            .click('imports-block div.section-header a.float-right.fa.fa-fw.fa-plus.ng-scope')
-            .waitForElementVisible('imports-overlay form')
-            .click('xpath', '//imports-overlay//li//span[text()[contains(.,"On Server")]]')
+            .click('.imports-block a.fa-plus')
+            .waitForElementVisible('imports-overlay')
+            .useXpath().waitForElementVisible('//imports-overlay//button//span[text()[contains(.,"Submit")]]')
+            .pause(1000)
+            .click('xpath', '//imports-overlay//div[text()[contains(.,"On Server")]]')
+            .useCss().waitForElementNotVisible('div.spinner')
             .click('xpath', '//imports-overlay//h4[text()[contains(.,"skos")]]')
-            .click('imports-overlay div.modal-footer button.btn-primary')
-            .waitForElementNotPresent('imports-overlay')
+            .useXpath().waitForElementVisible('//imports-overlay//mat-chip-list//mat-chip[text()[contains(.,"skos")]]')
+            .click('//button//span[text()[contains(.,"Submit")]]')
+            .useCss().waitForElementNotPresent('imports-overlay')
+            .waitForElementVisible('.imports-block')
     },
 
     'Step 4: Navigate to datasets tab' : function (browser) {
@@ -112,7 +117,7 @@ module.exports = {
             .waitForElementNotPresent('#spinner-full')
             .waitForElementVisible('mapping-config-overlay')
             .waitForElementNotPresent('#spinner-full')
-            .setValue('div.mat-dialog-content input[name="Search"]', 'uhtc')
+            .setValue('div.mat-dialog-content input[placeholder="Search..."]', 'uhtc')
             .keys(browser.Keys.ENTER)
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-list-option//h4[text()[contains(.,"uhtc")]]'})
             .click('xpath', '//mat-list-option//h4[text()[contains(.,"uhtc")]]')

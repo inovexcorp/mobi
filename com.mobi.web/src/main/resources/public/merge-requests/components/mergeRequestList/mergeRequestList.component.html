@@ -27,7 +27,7 @@
                 <mat-option *ngFor="let option of filterOptions" [value]="option.value">{{option.label}}</mat-option>
             </mat-select>
         </mat-form-field>
-        <button mat-raised-button color="primary" class="ml-2" (click)="state.startCreate()">New Request</button>
+        <button type="button" mat-raised-button color="primary" class="ml-2" (click)="state.startCreate()">New Request</button>
     </form>
     <div class="flex-1 remove-min-height">
         <info-message *ngIf="!state.requests.length">No requests found</info-message>

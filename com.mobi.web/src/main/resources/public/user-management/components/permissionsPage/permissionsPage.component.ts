@@ -20,8 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
-import { get, map, filter, forEach, some, chain, find, sortBy, isNull, head, isUndefined} from 'lodash';
+import { Component, OnInit } from '@angular/core';
+import { get, map, filter, some, chain, find, sortBy, isNull, head, isUndefined} from 'lodash';
+import { forkJoin } from 'rxjs';
 
 import { FOAF, RDF, USER } from '../../../prefixes';
 import { Group } from '../../../shared/models/group.interface';
@@ -30,6 +31,7 @@ import { User } from '../../../shared/models/user.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './permissionsPage.component.scss';
 
@@ -53,24 +55,21 @@ export class PermissionsPageComponent implements OnInit {
     policies: Policy[] = [];
     policiesInQuestion = [];
 
-    constructor(private pm: PolicyManagerService, private cm: CatalogManagerService, 
-        @Inject('utilService') private util, private um: UserManagerService) {}
+    constructor(private pm: PolicyManagerService, private cm: CatalogManagerService, private util: UtilService,
+        private um: UserManagerService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
         this.setPoliciesInQuestion();
         this.setPolicies();
     }
-    reset(): void {
-        this.ngOnInit();
-    }
     saveChanges(): void {
         const changedPolicies = filter(this.policies, 'changed');
-        Promise.all(map(changedPolicies, item => this.pm.updatePolicy(item.policy)))
-            .then(() => {
-                forEach(changedPolicies, item => item.changed = false);
+        forkJoin(map(changedPolicies, item => this.pm.updatePolicy(item.policy)))
+            .subscribe(() => {
+                changedPolicies.forEach(item => item.changed = false);
                 this.util.createSuccessToast('Permissions updated');
-            }, this.util.createErrorToast);
+            }, error => this.util.createErrorToast(error));
     }
     hasChanges(): boolean {
         return some(this.policies, 'changed');
@@ -83,26 +82,26 @@ export class PermissionsPageComponent implements OnInit {
     }
     private setPolicies(): void {
         this.policies = [];
-        Promise.all(map(this.policiesInQuestion, policy => this.pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
-                .then(results => {
-                    results.forEach((response, idx) => {
-                        this.policies = this.policies.concat(chain(response)
-                            .map(policy => ({
-                                policy,
-                                id: policy.PolicyId,
-                                title: this.policiesInQuestion[idx].titleFunc(policy),
-                                changed: false,
-                                everyone: false,
-                                selectedUsers: [],
-                                selectedGroups: []
-                            }))
-                            .filter('title')
-                            .forEach(item => this.setInfo(item))
-                            .value());
-                    });
-                }, this.util.createErrorToast);
+        forkJoin(this.policiesInQuestion.map(policy => this.pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
+            .subscribe(results => {
+                results.forEach((response, idx) => {
+                    this.policies = this.policies.concat(chain(response)
+                        .map(policy => ({
+                            policy,
+                            id: policy.PolicyId,
+                            title: this.policiesInQuestion[idx].titleFunc(policy),
+                            changed: false,
+                            everyone: false,
+                            selectedUsers: [],
+                            selectedGroups: []
+                        }))
+                        .filter('title')
+                        .forEach(item => this.setInfo(item))
+                        .value());
+                });
+            }, error => this.util.createErrorToast(error));
     }
-    private getRecordType(policy) {
+    private getRecordType(policy): string {
         const target = get(policy, 'Target.AnyOf', []);
         const allOfMatch = chain(target)
             .map('AllOf').flatten()
@@ -110,7 +109,7 @@ export class PermissionsPageComponent implements OnInit {
             .find(['AttributeDesignator.AttributeId', RDF + 'type']).value();
         const attributeValue = get(allOfMatch, 'AttributeValue.content', []);
         const value =  head(attributeValue);
-        return value;
+        return '' + value;
     }
     private setInfo(item: Policy): void {
         const rules = get(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);

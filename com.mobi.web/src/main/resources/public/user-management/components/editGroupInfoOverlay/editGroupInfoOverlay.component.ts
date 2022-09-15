@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { find } from 'lodash';
@@ -28,6 +28,7 @@ import { find } from 'lodash';
 import { Group } from '../../../shared/models/group.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class user-management.EditGroupInfoOverlayComponent
@@ -45,8 +46,7 @@ export class EditGroupInfoOverlayComponent {
     errorMessage = '';
 
     constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, private fb: FormBuilder,
-        private state: UserStateService, private um: UserManagerService,
-        @Inject('utilService') private util) {
+        private state: UserStateService, private um: UserManagerService, private util: UtilService) {
             this.editGroupInfoForm = this.fb.group({
                 description: [this.state.selectedGroup.description]
             });

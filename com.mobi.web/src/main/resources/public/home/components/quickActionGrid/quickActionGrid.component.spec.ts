@@ -26,46 +26,41 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { By } from '@angular/platform-browser';
-import { StateService } from '@uirouter/core';
+import { RouterTestingModule } from '@angular/router/testing';
+import { Router } from '@angular/router';
+import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockWindowRef,
-    mockOntologyState,
+    mockWindowRef
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { WindowRef } from '../../../shared/services/windowRef.service';
-import { QuickActionGridComponent } from './quickActionGrid.component';
-import { MockProvider } from 'ng-mocks';
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-
-// Mocks
-class mockState {
-    go = jasmine.createSpy('go');
-}
+import { QuickActionGridComponent } from './quickActionGrid.component';
 
 describe('Quick Action Grid component', function() {
     let component: QuickActionGridComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<QuickActionGridComponent>;
-    let ontologyStateStub;
-    let discoverStateStub;
-    let $stateStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let windowRefStub;
+    let router: Router;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, RouterTestingModule.withRoutes([]) ],
             declarations: [
                 QuickActionGridComponent
             ],
             providers: [
                 MockProvider(DiscoverStateService),
-                { provide: OntologyStateService, useClass: mockOntologyState },
+                MockProvider(OntologyStateService),
+                // { provide: OntologyStateService, useClass: mockOntologyState },
                 { provide: WindowRef, useClass: mockWindowRef },
-                { provide: StateService, useClass: mockState },
             ]
         });
     });
@@ -76,8 +71,9 @@ describe('Quick Action Grid component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
         discoverStateStub = TestBed.get(DiscoverStateService);
-        $stateStub = TestBed.get(StateService);
         windowRefStub = TestBed.get(WindowRef);
+        router = TestBed.get(Router);
+        spyOn(router, 'navigate');
     });
 
     afterAll(function() {
@@ -87,8 +83,8 @@ describe('Quick Action Grid component', function() {
         fixture = null;
         ontologyStateStub = null;
         discoverStateStub = null;
-        $stateStub = null;
         windowRefStub = null;
+        router = null;
     });
 
     it('should initialize with the correct action list', function() {
@@ -99,31 +95,32 @@ describe('Quick Action Grid component', function() {
     describe('controller methods', function() {
         it('should search the catalog', function() {
             component.searchTheCatalog();
-            expect($stateStub.go).toHaveBeenCalledWith('root.catalog', null, {reload: true});
+            expect(router.navigate).toHaveBeenCalledWith(['/catalog']);
         });
         describe('should open an ontology', function() {
             it('if one is selected', function() {
-                const item = { active: true };
+                const item = new OntologyListItem();
+                item.active = true;
                 ontologyStateStub.listItem = item;
                 component.openAnOntology();
-                expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, {reload: true});
+                expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
                 expect(item.active).toEqual(false);
                 expect(ontologyStateStub.listItem).toEqual(undefined);
             });
             it('if one is not selected', function() {
                 component.openAnOntology();
-                expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, {reload: true});
+                expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
                 expect(ontologyStateStub.listItem).toEqual(undefined);
             });
         });
         it('should explore data', function() {
             component.exploreData();
-            expect($stateStub.go).toHaveBeenCalledWith('root.discover', null, {reload: true});
+            expect(router.navigate).toHaveBeenCalledWith(['/discover']);
             expect(discoverStateStub.tabIndex).toEqual(0);
         });
         it('should query data', function() {
             component.queryData();
-            expect($stateStub.go).toHaveBeenCalledWith('root.discover', null, {reload: true});
+            expect(router.navigate).toHaveBeenCalledWith(['/discover']);
             expect(discoverStateStub.tabIndex).toEqual(2);
         });
         it('should read the documentation', function() {
@@ -132,7 +129,7 @@ describe('Quick Action Grid component', function() {
         });
         it('should ingest data', function() {
             component.ingestData();
-            expect($stateStub.go).toHaveBeenCalledWith('root.mapper', null, {reload: true});
+            expect(router.navigate).toHaveBeenCalledWith(['/mapper']);
         });
     });
     describe('contains the correct html', function() {

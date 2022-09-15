@@ -5,7 +5,6 @@ const webpack = require('webpack');
 
 module.exports = {
     entry: {
-        ajs: './src/main/resources/public/app.module.ajs.ts',
         app: './src/main/resources/public/main.ts'
     },
     output: {
@@ -13,7 +12,7 @@ module.exports = {
         path: path.resolve(__dirname, '../', 'target', 'classes', 'build')
     },
     node: {
-        fs: "empty"
+        fs: 'empty'
     },
     module: {
         rules: [
@@ -69,8 +68,8 @@ module.exports = {
         new webpack.optimize.CommonsChunkPlugin({
             name: 'vendor',
             filename: '[name].bundle.js',
-            minChunks(module, count) {
-                var context = module.context;
+            minChunks(module) {
+                const context = module.context;
                 return context && context.indexOf('node_modules') >= 0;
             }
         }),

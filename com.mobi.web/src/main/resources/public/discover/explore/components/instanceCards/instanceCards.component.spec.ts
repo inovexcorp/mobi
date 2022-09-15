@@ -26,23 +26,24 @@ import { MatDialog } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { MatDialogRef } from '@angular/material/dialog';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { InstanceFormComponent } from '../instanceForm/instanceForm.component';
-import { InstanceCardsComponent } from './instanceCards.component';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
+import { InstanceCardsComponent } from './instanceCards.component';
 
 describe('Instance Cards component', function() {
     let component: InstanceCardsComponent;
@@ -50,10 +51,9 @@ describe('Instance Cards component', function() {
     let fixture: ComponentFixture<InstanceCardsComponent>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
-    let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
-    let policyEnforcementStub: jasmine.SpyObj<any>;
-    let utilServiceStub: jasmine.SpyObj<any>;
-    let dialogStub : jasmine.SpyObj<MatDialog>
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let dialogStub : jasmine.SpyObj<MatDialog>;
     const data = [
         {
             description: 'Test data 1',
@@ -93,7 +93,6 @@ describe('Instance Cards component', function() {
         total: totalCards
     };
 
-
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [ SharedModule ],
@@ -106,8 +105,8 @@ describe('Instance Cards component', function() {
                 MockProvider(ExploreService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
             ]
         });
     });
@@ -118,11 +117,12 @@ describe('Instance Cards component', function() {
         element = fixture.debugElement;
         discoverStateStub = TestBed.get(DiscoverStateService);
         exploreServiceStub = TestBed.get(ExploreService);
-        exploreUtilsServiceStub = TestBed.get(ExploreUtilsService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilServiceStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        utilStub = TestBed.get(UtilService);
         dialogStub = TestBed.get(MatDialog);
 
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
         component.instanceData  = data;
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -192,9 +192,8 @@ describe('Instance Cards component', function() {
         fixture = null;
         discoverStateStub = null;
         exploreServiceStub = null;
-        exploreUtilsServiceStub = null;
         policyEnforcementStub = null;
-        utilServiceStub = null;
+        utilStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -230,7 +229,7 @@ describe('Instance Cards component', function() {
                     exploreServiceStub.getInstance.and.returnValue(of(responseBody));
                 });
                 it('resolved', async () => {
-                    await policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve(policyEnforcementStub.permit));
+                    await policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                     component.view(record);
                     fixture.detectChanges();
                     await fixture.whenStable();
@@ -241,31 +240,31 @@ describe('Instance Cards component', function() {
                     expect(discoverStateStub.explore.breadcrumbs).toEqual(['', '', data[0].title]);
                 });
                 it('rejected', async () => {
-                    await policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve(policyEnforcementStub.deny));
+                    await policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     component.view(record);
                     fixture.detectChanges();
                     await fixture.whenStable();
                     expect(exploreServiceStub.getInstance).not.toHaveBeenCalled();
-                    expect(utilServiceStub.createErrorToast).toHaveBeenCalledWith(`You don't have permission to read dataset`);
-                    expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalled();
+                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+                    expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                     expect(discoverStateStub.explore.breadcrumbs).toEqual(['']);
                     expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
                 });
             });
             it('rejected', async function() {
-                await policyEnforcementStub.evaluateRequest.and.returnValue(Promise.reject('Error message'));
+                await policyEnforcementStub.evaluateRequest.and.returnValue(throwError('Error message'));
                 component.view(record);
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(utilServiceStub.createWarningToast).toHaveBeenCalledWith('Could not retrieve record permissions');
+                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Could not retrieve record permissions');
             });
             it('and user does not have read permission', async () => {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.view(record);
                 fixture.detectChanges();
                 await fixture.whenStable();
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
-                expect(utilServiceStub.createErrorToast).toHaveBeenCalled();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             });
 
         });
@@ -284,23 +283,23 @@ describe('Instance Cards component', function() {
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                        expect(utilServiceStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                         expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                         expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
                         expect(discoverStateStub.explore.classDetails).toEqual([]);
                         expect(discoverStateStub.clickCrumb).toHaveBeenCalledWith(0);
-                        expect(utilServiceStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                     });
                     it('rejected', function() {
                         exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                        expect(utilServiceStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                         expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                         expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
                         expect(discoverStateStub.clickCrumb).not.toHaveBeenCalled();
-                        expect(utilServiceStub.createErrorToast).toHaveBeenCalled();
+                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                     });
                 });
                 describe('there are more instances and getClassInstanceDetails is', function() {
@@ -319,27 +318,27 @@ describe('Instance Cards component', function() {
                             component.delete(data[0]);
                             fixture.detectChanges();
                             expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                            expect(utilServiceStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                            expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                             expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                             expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {pageIndex: 1, limit: 1});
                             expect(exploreServiceStub.createPagedResultsObject).toHaveBeenCalled();
                             expect(discoverStateStub.explore.instanceDetails.data).toEqual(resultsObject.data);
                             expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
                             expect(discoverStateStub.explore.instanceDetails.currentPage).toBe(1);
-                            expect(utilServiceStub.createErrorToast).not.toHaveBeenCalled();
+                            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                         });
                         it('was not the only one on the page', function() {
                             component.delete(data[1]);
                             fixture.detectChanges();
                             expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[1].instanceIRI);
-                            expect(utilServiceStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                            expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                             expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                             expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {pageIndex: 2, limit: 1});
                             expect(exploreServiceStub.createPagedResultsObject).toHaveBeenCalled();
                             expect(discoverStateStub.explore.instanceDetails.data).toEqual(resultsObject.data);
                             expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
                             expect(discoverStateStub.explore.instanceDetails.currentPage).toBe(2);
-                            expect(utilServiceStub.createErrorToast).not.toHaveBeenCalled();
+                            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                         });
                     });
                     it('rejected', function() {
@@ -348,10 +347,10 @@ describe('Instance Cards component', function() {
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                        expect(utilServiceStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                         expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                         expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {pageIndex: 2, limit: 1});
-                        expect(utilServiceStub.createErrorToast).toHaveBeenCalledWith('error');
+                        expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
                     });
                 });
             });
@@ -363,7 +362,7 @@ describe('Instance Cards component', function() {
                 expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[1].instanceIRI);
                 expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                 expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
-                expect(utilServiceStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
         it('confirmDelete should call the correct methods', function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
 */
-import { Component, ElementRef, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { find, get, noop, remove } from 'lodash';
 import { switchMap, startWith, map } from 'rxjs/operators';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger, MatDialog } from '@angular/material';
@@ -37,6 +37,7 @@ import { CATALOG, DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { EditBranchOverlayComponent } from '../editBranchOverlay/editBranchOverlay.component';
 import { OntologyAction } from '../../../shared/models/ontologyAction';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './openOntologySelect.component.scss';
 
@@ -97,7 +98,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
 
     constructor(private dialog: MatDialog, public cm: CatalogManagerService, public os: OntologyStateService, 
-        private om: OntologyManagerService, @Inject('utilService') public util) {}
+        private om: OntologyManagerService, public util: UtilService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -264,7 +265,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
         this.cm.deleteRecordVersion(tag['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId).subscribe(() => {
             remove(this.listItem.tags, {'@id': tag['@id']});
             if (!this.os.isStateTag(this.currentState)) {
-                this.cm.getCommit(this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'commit')).subscribe(noop, error => {
+                this.cm.getCommit(this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'commit')).subscribe(noop, () => {
                     this.changeToMaster();
                 });
             } else {

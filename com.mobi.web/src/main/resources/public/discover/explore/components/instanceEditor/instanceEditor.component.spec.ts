@@ -25,21 +25,23 @@ import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing'
 import { MatDialog, MatDivider } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { throwError, of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { last } from 'lodash';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { BreadcrumbsComponent } from '../../../../shared/components/breadcrumbs/breadcrumbs.component';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { InstanceFormComponent } from '../instanceForm/instanceForm.component';
-import { InstanceEditorComponent } from './instanceEditor.component';
-import { HttpResponse } from '@angular/common/http';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
-import _ = require('lodash');
+import { UtilService } from '../../../../shared/services/util.service';
+import { InstanceEditorComponent } from './instanceEditor.component';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
 
 describe('Instance Editor component', function() {
     let component: InstanceEditorComponent;
@@ -47,9 +49,9 @@ describe('Instance Editor component', function() {
     let fixture: ComponentFixture<InstanceEditorComponent>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let utilServiceStub: jasmine.SpyObj<any>;
-    let policyEnforcementStub: jasmine.SpyObj<any>;
-    let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let exploreUtilsStub: jasmine.SpyObj<ExploreUtilsService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -63,11 +65,10 @@ describe('Instance Editor component', function() {
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                MockProvider('prefixes', 'prefixes'),
+                MockProvider(PolicyEnforcementService)
             ]
         });
     });
@@ -78,9 +79,13 @@ describe('Instance Editor component', function() {
         element = fixture.debugElement;
         exploreServiceStub = TestBed.get(ExploreService);
         discoverStateStub = TestBed.get(DiscoverStateService);
-        utilServiceStub = TestBed.get('utilService');
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        exploreUtilsServiceStub = TestBed.get(ExploreUtilsService);
+        utilStub = TestBed.get(UtilService);
+        exploreUtilsStub = TestBed.get(ExploreUtilsService);
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -91,7 +96,7 @@ describe('Instance Editor component', function() {
             editing: false,
             instance: {
                 entity: [],
-                metadata:   {instanceIRI: 'instanceIRI',
+                metadata: {instanceIRI: 'instanceIRI',
                     title: 'title',
                     description: 'description'
                 },
@@ -120,6 +125,10 @@ describe('Instance Editor component', function() {
         element = null;
         fixture = null;
         discoverStateStub = null;
+        exploreServiceStub = null;
+        utilStub = null;
+        exploreUtilsStub = null;
+        policyEnforcementStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -136,7 +145,8 @@ describe('Instance Editor component', function() {
             expect(element.queryAll(By.css('.instances-editor-header button')).length).toBe(2);
         });
         it('for a divider', function() {
-            expect(element.queryAll(By.css('mat-divider')).length).toBe(1);        });
+            expect(element.queryAll(By.css('mat-divider')).length).toBe(1);
+        });
         it('for a instance-form', function() {
             expect(element.queryAll(By.css('instance-form')).length).toBe(1);
         });
@@ -147,7 +157,7 @@ describe('Instance Editor component', function() {
                 this.instance = {'@id': 'test', title: 'test title', description: 'test description'};
                 discoverStateStub.explore.instance.entity = [this.instance];
                 discoverStateStub.getInstance.and.returnValue(this.instance);
-                exploreUtilsServiceStub.removeEmptyPropertiesFromArray.and.returnValue([{'@id': 'test', '@type': ['test type']}]);
+                exploreUtilsStub.removeEmptyPropertiesFromArray.and.returnValue([{'@id': 'test', '@type': ['test type']}]);
             });
             describe('resolved and getClassInstanceDetails is', function() {
                 beforeEach(function() {
@@ -155,7 +165,7 @@ describe('Instance Editor component', function() {
                     exploreServiceStub.updateInstance.and.returnValue(of(''));
                 });
                 it('resolved', fakeAsync(function() {
-                    let data = [{
+                    const data = [{
                         instanceIRI: 'test',
                         title: 'test title',
                         description: 'test description'
@@ -169,32 +179,31 @@ describe('Instance Editor component', function() {
                     component.save();
                     fixture.detectChanges();
                     tick();
-                    expect(discoverStateStub.getInstance).toHaveBeenCalled();
+                    expect(discoverStateStub.getInstance).toHaveBeenCalledWith();
                     exploreServiceStub.updateInstance(discoverStateStub.explore.recordId,
                         discoverStateStub.explore.instance.metadata.instanceIRI,
-                        discoverStateStub.explore.instance.entity).subscribe(result =>
-                    {
-                        expect(exploreUtilsServiceStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
-                        expect(discoverStateStub.explore.instance.entity).toEqual([{'@id': 'test', '@type': ['test type']}]);
-                        expect(exploreServiceStub.updateInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, this.instanceIRI, discoverStateStub.explore.instance.entity);
-                        expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: (discoverStateStub.explore.instanceDetails.currentPage - 1) * discoverStateStub.explore.instanceDetails.limit, limit: discoverStateStub.explore.instanceDetails.limit});
-                        expect(discoverStateStub.explore.instanceDetails.data).toEqual(data);
-                        expect(discoverStateStub.explore.instance.metadata).toEqual({instanceIRI: 'test', title: 'test title', description: 'test description'});
-                        expect(_.last(discoverStateStub.explore.breadcrumbs)).toBe('test title');
-                        expect(discoverStateStub.explore.editing).toEqual(false);
-                    })
+                        discoverStateStub.explore.instance.entity).subscribe(() => {
+                            expect(exploreUtilsStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
+                            expect(discoverStateStub.explore.instance.entity).toEqual([{'@id': 'test', '@type': ['test type']}]);
+                            expect(exploreServiceStub.updateInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, this.instanceIRI, discoverStateStub.explore.instance.entity);
+                            expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: discoverStateStub.explore.instanceDetails.currentPage * discoverStateStub.explore.instanceDetails.limit, limit: discoverStateStub.explore.instanceDetails.limit});
+                            expect(discoverStateStub.explore.instanceDetails.data).toEqual(data);
+                            expect(discoverStateStub.explore.instance.metadata).toEqual({instanceIRI: 'test', title: 'test title', description: 'test description'});
+                            expect(last(discoverStateStub.explore.breadcrumbs)).toBe('test title');
+                            expect(discoverStateStub.explore.editing).toEqual(false);
+                        });
                 }));
                 it('rejected', fakeAsync(function()  {
                     exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
                     component.save();
                     fixture.detectChanges();
                     tick();
-                    expect(discoverStateStub.getInstance).toHaveBeenCalled();
-                    expect(exploreUtilsServiceStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
+                    expect(discoverStateStub.getInstance).toHaveBeenCalledWith();
+                    expect(exploreUtilsStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                     expect(discoverStateStub.explore.instance.entity).toEqual([{'@id': 'test', '@type': ['test type']}]);
                     expect(exploreServiceStub.updateInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, this.instanceIRI, discoverStateStub.explore.instance.entity);
-                    expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: (discoverStateStub.explore.instanceDetails.currentPage - 1) * discoverStateStub.explore.instanceDetails.limit, limit: discoverStateStub.explore.instanceDetails.limit});
-                    expect(utilServiceStub.createErrorToast).toHaveBeenCalledWith('error');
+                    expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: discoverStateStub.explore.instanceDetails.currentPage * discoverStateStub.explore.instanceDetails.limit, limit: discoverStateStub.explore.instanceDetails.limit});
+                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
                 }));
             });
             it('rejected', fakeAsync(function() {
@@ -202,12 +211,12 @@ describe('Instance Editor component', function() {
                 component.save();
                 fixture.detectChanges();
                 tick();
-                expect(discoverStateStub.getInstance).toHaveBeenCalled();
-                expect(exploreUtilsServiceStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
+                expect(discoverStateStub.getInstance).toHaveBeenCalledWith();
+                expect(exploreUtilsStub.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                 expect(discoverStateStub.explore.instance.entity).toEqual([{'@id': 'test', '@type': ['test type']}]);
                 expect(exploreServiceStub.updateInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.metadata.instanceIRI, discoverStateStub.explore.instance.entity);
                 expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
-                expect(utilServiceStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
             }));
         });
         it('cancel sets the correct variables', function() {

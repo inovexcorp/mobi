@@ -25,7 +25,7 @@ import { some, find, get, isEmpty } from 'lodash';
 import { finalize } from 'rxjs/operators';
 import { MatDialog, PageEvent } from '@angular/material';
 import { animateChild, query, transition, trigger } from '@angular/animations';
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -38,6 +38,8 @@ import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOverlay.component';
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
+import { UtilService } from '../../../shared/services/util.service';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 
 import './openOntologyTab.component.scss';
 
@@ -72,6 +74,7 @@ export class OpenOntologyTabComponent implements OnInit {
     limit = 10;
     totalSize = 0;
     filteredList: OntologyRecordDisplay[] = [];
+    searchBindModel = '';
     filterText = '';
     showSnackbar = false;
 
@@ -80,7 +83,7 @@ export class OpenOntologyTabComponent implements OnInit {
 
     constructor(public dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, public om: OntologyManagerService, 
         public os: OntologyStateService, public ms: MapperStateService, private cm: CatalogManagerService, 
-        @Inject('settingManagerService') private sm, @Inject('utilService') public util) {}
+        private sm: SettingManagerService, public util: UtilService) {}
 
     ngOnInit(): void {
         this.setPageOntologyRecords(0, '');
@@ -125,7 +128,7 @@ export class OpenOntologyTabComponent implements OnInit {
     }
     newOntology(): void {
         this.sm.getDefaultNamespace()
-            .then(defaultNamespace => {
+            .subscribe(defaultNamespace => {
                 this.dialog.open(NewOntologyOverlayComponent, { autoFocus: false, data: { defaultNamespace } });
             }, error => this.util.createErrorToast(error));
     }
@@ -193,6 +196,6 @@ export class OpenOntologyTabComponent implements OnInit {
             });
     }
     search(): void {
-        this.setPageOntologyRecords(0, this.filterText);
+        this.setPageOntologyRecords(0, this.searchBindModel);
     }
 }

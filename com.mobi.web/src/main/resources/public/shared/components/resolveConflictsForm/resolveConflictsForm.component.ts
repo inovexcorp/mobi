@@ -20,20 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './resolveConflictsForm.component.scss';
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
+
 import { CommitChange } from '../../models/commitChange.interface';
+import { UtilService } from '../../services/util.service';
+
+import './resolveConflictsForm.component.scss';
 
 /**
- * @ngdoc component
- * @name shared.component:resolveConflictsForm
+ * @class shared.ResolveConflictsFormComponent
  *
- * @description
- * `resolveConflictsForm` is a component that creates displays of conflicts from a merge of VersionedRDFRecord
- * branches and ways to resolve those conflicts. The initial view is a list of the conflicts displayed as the entity
- * titles and their resolution statuses. Once a conflict is selected, the view changes to a side-by-side display of
- * the changes from each branch in the conflict. Clicking on one of the displays selects which changes to keep in
- * the resolution. The conflicts should in the form:
+ * A component that creates displays of conflicts from a merge of VersionedRDFRecord branches and ways to resolve those
+ * conflicts. The initial view is a list of the conflicts displayed as the entity titles and their resolution statuses.
+ * Once a conflict is selected, the view changes to a side-by-side display of the changes from each branch in the
+ * conflict. Clicking on one of the displays selects which changes to keep in the resolution. The conflicts should in
+ * the form:
  * ```
  * {
  *     iri: '',
@@ -75,7 +76,7 @@ export class ResolveConflictsFormComponent {
         }
     } = undefined;
 
-    constructor(@Inject('utilService') private util) {
+    constructor(private util: UtilService) {
     }
 
     select(index: number): void {

@@ -30,6 +30,7 @@ import { v4 } from 'uuid';
 
 import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { UtilService } from '../../../../shared/services/util.service';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { ExploreService } from '../../../services/explore.service';
 
@@ -53,7 +54,7 @@ export class NewInstanceClassOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<NewInstanceClassOverlayComponent>,
         private state: DiscoverStateService, private es: ExploreService, 
-        private splitIRI: SplitIRIPipe, @Inject('utilService') public util,
+        private splitIRI: SplitIRIPipe, public util: UtilService,
         @Inject(MAT_DIALOG_DATA) public data: {classes: {id: string, title: string, deprecated: boolean}[]}
     ) {}
 

@@ -33,8 +33,6 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockOntologyManager,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS, DELIM, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -54,6 +52,7 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
 import { MappingConfigOverlayComponent } from './mappingConfigOverlay.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Mapping Config Overlay component', function() {
     let component: MappingConfigOverlayComponent;
@@ -64,8 +63,8 @@ describe('Mapping Config Overlay component', function() {
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let ontologyManagerStub;
-    let utilStub;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const mappingId = 'mappingId';
@@ -127,8 +126,8 @@ describe('Mapping Config Overlay component', function() {
                 MockProvider(MappingManagerService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -145,7 +144,7 @@ describe('Mapping Config Overlay component', function() {
         mapperStateStub = TestBed.get(MapperStateService);
         mappingManagerStub = TestBed.get(MappingManagerService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
 
@@ -461,7 +460,7 @@ describe('Mapping Config Overlay component', function() {
                     utilStub.getPropertyId.and.returnValue(commitId);
                     catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
                     mappingManagerStub.getOntology.and.returnValue(of(originalOntology));
-                    ontologyManagerStub.getImportedOntologies.and.rejectWith(error);
+                    ontologyManagerStub.getImportedOntologies.and.returnValue(throwError(error));
                     component.selectOntology(selectedOntology);
                     tick();
                     expect(catalogManagerStub.getRecordMasterBranch).toHaveBeenCalledWith(selectedOntology.recordId, catalogId);
@@ -490,7 +489,7 @@ describe('Mapping Config Overlay component', function() {
                     utilStub.getPropertyId.and.returnValue(commitId);
                     catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
                     mappingManagerStub.getOntology.and.returnValue(of(originalOntology));
-                    ontologyManagerStub.getImportedOntologies.and.resolveTo([{id: importedOntology.id, ontology: importedOntology.entities}]);
+                    ontologyManagerStub.getImportedOntologies.and.returnValue(of([{id: importedOntology.id, ontology: importedOntology.entities, documentFormat: '', ontologyId: ''}]));
                     mapperStateStub.getClasses.and.returnValue([mappingClass]);
                     component.selectOntology(selectedOntology);
                     tick();
@@ -541,7 +540,7 @@ describe('Mapping Config Overlay component', function() {
                         utilStub.getPropertyId.and.returnValue(commitId);
                         catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
                         mappingManagerStub.getOntology.and.returnValue(of(originalOntology));
-                        ontologyManagerStub.getImportedOntologies.and.resolveTo([{id: importedOntology.id, ontology: importedOntology.entities}]);
+                        ontologyManagerStub.getImportedOntologies.and.returnValue(of([{id: importedOntology.id, ontology: importedOntology.entities, documentFormat: '', ontologyId: ''}]));
                         mapperStateStub.getClasses.and.returnValue([mappingClass]);
                     });
                     describe('latest version has not been opened yet', function() {

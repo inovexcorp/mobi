@@ -21,27 +21,26 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatLabel, MatMenuModule, MatProgressSpinnerModule, MatSelectModule, MatSlideToggleModule, MatTableModule, MatTabsModule, MatTooltipModule } from '@angular/material';
+import { MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatMenuModule, MatProgressSpinnerModule, MatSelectModule, MatSlideToggleModule, MatTableModule, MatTabsModule, MatTooltipModule } from '@angular/material';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { FormArray, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { get, has, set } from 'lodash';
 
 import {
-    cleanStylesFromDOM, mockUtil
+    cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { SettingConstants } from '../../models/settingConstants.class';
 import { SimpleSetting } from '../../models/simpleSetting.class';
 import { Setting } from '../../models/setting.interface';
 import { SettingFormFieldComponent } from '../settingFormField/settingFormField.component';
-import { CustomLabelComponent } from '../customLabel/customLabel.component';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { OWL, RDFS, SETTING, SHACL, XSD } from '../../../prefixes';
+import { UtilService } from '../../services/util.service';
 import { SettingFormComponent } from './settingForm.component';
 
 describe('Setting Form component', function() {
@@ -51,7 +50,7 @@ describe('Setting Form component', function() {
     let testUserSetting;
     let testPreferenceDefinitions;
     let testSetting: Setting;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -79,12 +78,11 @@ describe('Setting Form component', function() {
             declarations: [
                 SettingFormComponent,
                 MockComponent(SettingFormFieldComponent),
-                CustomLabelComponent,
                 ErrorDisplayComponent,
                 InfoMessageComponent,
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -93,7 +91,7 @@ describe('Setting Form component', function() {
         fixture = TestBed.createComponent(SettingFormComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');

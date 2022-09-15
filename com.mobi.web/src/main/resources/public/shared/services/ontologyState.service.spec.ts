@@ -26,14 +26,9 @@ import { concat, filter, get, has, includes, map, set, sortBy } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { ElementRef } from '@angular/core';
+import { MatSnackBar } from '@angular/material';
 
-import {
-    mockPropertyManager,
-    mockUpdateRefs,
-    mockUtil,
-    mockManchesterConverter,
-    mockPolicyEnforcement,
-    mockPolicyManager} from '../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 import { HierarchyNode } from '../models/hierarchyNode.interface';
@@ -43,14 +38,18 @@ import { OntologyListItem } from '../models/ontologyListItem.class';
 import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { CatalogManagerService } from './catalogManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
-import { OntologyStateService } from './ontologyState.service';
 import { Hierarchy } from '../models/hierarchy.interface';
 import { OntologyAction } from '../models/ontologyAction';
 import { RESTError } from '../models/RESTError.interface';
 import { StateManagerService } from './stateManager.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { ElementRef } from '@angular/core';
-import { MatSnackBar } from '@angular/material';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { UtilService } from './util.service';
+import { PolicyManagerService } from './policyManager.service';
+import { ManchesterConverterService } from './manchesterConverter.service';
+import { OntologyStateService } from './ontologyState.service';
+import { PropertyManagerService } from './propertyManager.service';
+import { UpdateRefsService } from './updateRefs.service';
 
 class MockElementRef extends ElementRef {
     constructor() {
@@ -65,30 +64,11 @@ describe('Ontology State Service', function() {
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let snackBarStub: jasmine.SpyObj<MatSnackBar>;
-    let propertyManagerStub;
-    let updateRefsStub;
-    let policyEnforcementStub;
-    let manchesterConverterStub;
-    let utilStub;
-
-    // TODO: Do this differently later so we can pull straight from the service
-    const broaderRelations = [
-        SKOS + 'broaderTransitive',
-        SKOS + 'broader',
-        SKOS + 'broadMatch'
-    ];
-    const narrowerRelations = [
-        SKOS + 'narrowerTransitive',
-        SKOS + 'narrower',
-        SKOS + 'narrowMatch'
-    ];
-    const conceptToScheme = [
-        SKOS + 'inScheme',
-        SKOS + 'topConceptOf'
-    ];
-    const schemeToConcept = [
-        SKOS + 'hasTopConcept'
-    ];
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+    let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error message';
     const catalogId = 'catalogId';
@@ -172,12 +152,12 @@ describe('Ontology State Service', function() {
                     }
                 }) },
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'updateRefsService', useClass: mockUpdateRefs },
-                { provide: 'policyManagerService', useClass: mockPolicyManager },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'manchesterConverterService', useClass: mockManchesterConverter },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PropertyManagerService),
+                MockProvider(UpdateRefsService),
+                MockProvider(PolicyManagerService),
+                MockProvider(PolicyEnforcementService),
+                MockProvider(ManchesterConverterService),
+                MockProvider(UtilService),
                 { provide: ElementRef, useClass: MockElementRef }
             ]
         });
@@ -190,12 +170,14 @@ describe('Ontology State Service', function() {
         splitIRIStub = TestBed.get(SplitIRIPipe);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         snackBarStub = TestBed.get(MatSnackBar);
-        propertyManagerStub = TestBed.get('propertyManagerService');
-        updateRefsStub = TestBed.get('updateRefsService');
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        manchesterConverterStub = TestBed.get('manchesterConverterService');
-        utilStub = TestBed.get('utilService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
+        updateRefsStub = TestBed.get(UpdateRefsService);
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        manchesterConverterStub = TestBed.get(ManchesterConverterService);
+        utilStub = TestBed.get(UtilService);
 
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
         splitIRIStub.transform.and.returnValue(splitIRI);
         catalogManagerStub.localCatalog = {'@id': catalogId};
         service.initialize();
@@ -1356,7 +1338,6 @@ describe('Ontology State Service', function() {
         };
         expect(service.getIndividualsParentPath(listItem)).toEqual(['classA', 'classB']);
     });
-    // TODO address spinner id
     describe('setVocabularyStuff sets the appropriate state variables on', function() {
         const response: VocabularyStuff = {
             importedIRIs: [],
@@ -1395,8 +1376,7 @@ describe('Ontology State Service', function() {
             it('resolves', fakeAsync(function() {
                 service.setVocabularyStuff();
                 tick();
-                // expect(httpSvc.cancel).toHaveBeenCalledWith(service.vocabularySpinnerId);
-                expect(ontologyManagerStub.getVocabularyStuff).toHaveBeenCalledWith(recordId, branchId, commitId/* , service.vocabularySpinnerId */);
+                expect(ontologyManagerStub.getVocabularyStuff).toHaveBeenCalledWith(recordId, branchId, commitId);
                 expect(service.listItem.derivedConcepts).toEqual(['derivedConcept']);
                 expect(service.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
                 expect(service.listItem.derivedSemanticRelations).toEqual(['derivedSemanticRelation']);
@@ -1618,6 +1598,7 @@ describe('Ontology State Service', function() {
             'Class B1': ['Individual B1']
         };
         listItem.individualsParentPath = ['Class A', 'Class B', 'Class B1'];
+        utilStub.getBeautifulIRI.and.callFake(a => a);
         expect(service.createFlatIndividualTree(listItem)).toEqual([{
             entityIRI: 'Class A',
             hasChildren: false,
@@ -2257,7 +2238,6 @@ describe('Ontology State Service', function() {
         expect(service.listItem.iriBegin).toEqual('begin');
         expect(service.listItem.iriThen).toEqual('then');
     });
-    // TODO address spinner id
     describe('setSelected should set the correct values and call the correct methods', function() {
         const id = 'id';
         const object = {'@id': id};
@@ -2266,6 +2246,7 @@ describe('Ontology State Service', function() {
             spyOn(service, 'setEntityUsages');
             spyOn(service, 'getActivePage').and.returnValue({});
             ontologyManagerStub.getEntityAndBlankNodes.and.returnValue(of([object, bnode]));
+            manchesterConverterStub.jsonldToManchester.and.returnValue('');
         });
         it('if a falsy entityIRI is passed', fakeAsync(function() {
             service.setSelected('', undefined, listItem)
@@ -2276,11 +2257,11 @@ describe('Ontology State Service', function() {
             expect(listItem.blankNodes).toEqual({});
             expect(ontologyManagerStub.getEntityAndBlankNodes).not.toHaveBeenCalled();
         }));
-        it('when a component is passed', fakeAsync(function() {
+        it('when an element is passed', fakeAsync(function() {
             const el = new MockElementRef();
             service.setSelected(id, false, listItem, el).subscribe();
             tick();
-            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined/* , '' */);
+            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined, true);
             expect(listItem.selected).toEqual(object);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
@@ -2293,7 +2274,7 @@ describe('Ontology State Service', function() {
         it('when getUsages is true and getActivePage object does not have a usages property', fakeAsync(function() {
             service.setSelected(id, true, listItem).subscribe();
             tick();
-            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined/* , '' */);
+            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined, false);
             expect(listItem.selected).toEqual(object);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
@@ -2304,7 +2285,7 @@ describe('Ontology State Service', function() {
         it('when getUsages is false', fakeAsync(function() {
             service.setSelected(id, false, listItem).subscribe();
             tick();
-            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined/* , '' */);
+            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined, false);
             expect(listItem.selected).toEqual(object);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
@@ -2317,7 +2298,7 @@ describe('Ontology State Service', function() {
             object['urn:prop'] = [{'@value': 'test'}];
             service.setSelected(id, false, listItem).subscribe();
             tick();
-            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined/* , '' */);
+            expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined, false);
             expect(listItem.selected).toEqual(object);
             expect(listItem.selected['urn:prop']).toEqual([{'@value': 'test', '@type': XSD + 'string'}]);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
@@ -2327,14 +2308,15 @@ describe('Ontology State Service', function() {
             expect(service.setEntityUsages).not.toHaveBeenCalled();
         }));
     });
-    // TODO address spinner id
     describe('setEntityUsages should call the correct function', function() {
         const id = 'idx';
         const key = 'project';
+        const el = new MockElementRef();
         beforeEach(function() {
             service.listItem = listItem;
-            this.activePage = {};
-            // this.httpId = 'usages-' + key + '-' + service.listItem.versionedRdfRecord.recordId;
+            this.activePage = { usagesContainer: el };
+            service.listItem.editorTabStates = {};
+            service.listItem.editorTabStates[key] = this.activePage;
             spyOn(service, 'getActivePage').and.returnValue(this.activePage);
             spyOn(service, 'getActiveKey').and.returnValue(key);
         });
@@ -2343,17 +2325,19 @@ describe('Ontology State Service', function() {
             ontologyManagerStub.getEntityUsages.and.returnValue(of(response));
             service.setEntityUsages(id);
             tick();
-            // expect(httpSvc.cancel).toHaveBeenCalledWith(this.httpId);
+            expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
+            expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
             expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
-            expect(this.activePage.usages).toEqual(response);
+            expect(service.listItem.editorTabStates[key].usages).toEqual(response);
         }));
         it('when getEntityUsages rejects', fakeAsync(function() {
             ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
             service.setEntityUsages(id);
             tick();
-            // expect(httpSvc.cancel).toHaveBeenCalledWith(this.httpId);
+            expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
+            expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
             expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
-            expect(this.activePage.usages).toEqual([]);
+            expect(service.listItem.editorTabStates[key].usages).toEqual([]);
         }));
     });
     // TODO test for getBnodeIndex
@@ -2363,7 +2347,7 @@ describe('Ontology State Service', function() {
             service.listItem = listItem;
             service.listItem.editorTabStates = {
                 classes: {entityIRI: 'id', usages: []},
-                project: {entityIRI: 'id', preview: 'test', component: this.el}
+                project: {entityIRI: 'id', preview: 'test', element: this.el}
             };
             spyOn(service, 'setSelected').and.callFake(() => {
                 service.listItem.selected = {'@id': 'id'};
@@ -2392,7 +2376,7 @@ describe('Ontology State Service', function() {
             service.resetStateTabs();
             tick();
             expect(service.resetSearchTab).toHaveBeenCalledWith(listItem);
-            expect(service.listItem.editorTabStates.project).toEqual({entityIRI: 'newId', preview: '', component: this.el});
+            expect(service.listItem.editorTabStates.project).toEqual({entityIRI: 'newId', preview: '', element: this.el});
             expect(service.listItem.selected).toEqual({'@id': 'id'});
             expect(service.listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
             expect(service.listItem.blankNodes).toEqual({bnode: 'bnode'});
@@ -2400,7 +2384,6 @@ describe('Ontology State Service', function() {
             expect(service.listItem.seeHistory).toBe(false);
         }));
     });
-    // TODO address httpService
     it('resetSearchTab should reset variables', function() {
         service.listItem = listItem;
         service.listItem.editorTabStates.search = {
@@ -2412,7 +2395,6 @@ describe('Ontology State Service', function() {
             highlightText: 'test'
         };
         service.resetSearchTab();
-        // expect(httpSvc.cancel).toHaveBeenCalledWith(service.listItem.editorTabStates.search.id);
         expect(service.listItem.editorTabStates.search.errorMessage).toEqual('');
         expect(service.listItem.editorTabStates.search.infoMessage).toEqual('');
         expect(service.listItem.editorTabStates.search.results).toEqual({});
@@ -2453,7 +2435,7 @@ describe('Ontology State Service', function() {
             service.selectItem(undefined)
                 .subscribe(() => {}, () => fail('Observable should have resolved'));
             tick();
-            expect(service.getActivePage).not.toHaveBeenCalled();
+            expect(service.getActivePage).toHaveBeenCalledWith();
             expect(service.setEntityUsages).not.toHaveBeenCalled();
             expect(service.setSelected).toHaveBeenCalledWith(undefined, false, service.listItem, undefined);
         }));
@@ -2476,9 +2458,10 @@ describe('Ontology State Service', function() {
                 expect(service.setEntityUsages).not.toHaveBeenCalled();
                 expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem, undefined);
             }));
-            it('and a component is provided',  fakeAsync(function() {
+            it('and an element is set on the page',  fakeAsync(function() {
                 const el = new MockElementRef();
-                service.selectItem(classId, false, el)
+                service.listItem.editorTabStates.classes.element = el;
+                service.selectItem(classId, false)
                     .subscribe(() => {}, () => fail('Observable should have resolved'));
                 tick();
                 expect(service.getActivePage).toHaveBeenCalledWith();
@@ -2832,22 +2815,22 @@ describe('Ontology State Service', function() {
         it('an ontology', function() {
             service.goTo('ontologyId');
             expect(listItem.tabIndex).toEqual(OntologyListItem.PROJECT_TAB);
-            expect(service.selectItem).toHaveBeenCalledWith('ontologyId', undefined, this.el);
+            expect(service.selectItem).toHaveBeenCalledWith('ontologyId', undefined, 0);
         });
         it('a class', function() {
             service.goTo('class1');
             expect(listItem.tabIndex).toEqual(OntologyListItem.CLASSES_TAB);
-            expect(service.selectItem).toHaveBeenCalledWith('class1', undefined, this.el);
-            expect(service.openAt).toHaveBeenCalledWith(service.listItem.classes.flat, 'class1');
+            expect(service.selectItem).toHaveBeenCalledWith('class1', undefined, 2);
+            expect(service.openAt).toHaveBeenCalledWith(service.listItem.classes.flat, 'class1', 2);
             expect(service.listItem.editorTabStates.classes.index).toEqual(1);
         });
         it('a datatype property', function() {
             spyOn(service, 'setDataPropertiesOpened');
             service.goTo('dataProp2');
             expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
-            expect(service.selectItem).toHaveBeenCalledWith('dataProp2', undefined, this.el);
-            expect(service.openAt).toHaveBeenCalledWith(service.listItem.dataProperties.flat, 'dataProp2');
-            expect(service.setDataPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
+            expect(service.selectItem).toHaveBeenCalledWith('dataProp2', undefined, 3);
+            expect(service.openAt).toHaveBeenCalledWith(service.listItem.dataProperties.flat, 'dataProp2', 3);
+            expect(service.setDataPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true, 3);
             expect(service.listItem.editorTabStates.properties.index).toEqual(2);
         });
         describe('an object property', function() {
@@ -2855,9 +2838,9 @@ describe('Ontology State Service', function() {
                 spyOn(service, 'setObjectPropertiesOpened');
                 service.goTo('objectProp1');
                 expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
-                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined, this.el);
-                expect(service.openAt).toHaveBeenCalledWith(service.listItem.objectProperties.flat, 'objectProp1');
-                expect(service.setObjectPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
+                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined, 3);
+                expect(service.openAt).toHaveBeenCalledWith(service.listItem.objectProperties.flat, 'objectProp1', 3);
+                expect(service.setObjectPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true, 3);
                 expect(service.listItem.editorTabStates.properties.index).toEqual(4);
             });
             it('with no datatype properties in the ontology', function() {
@@ -2865,9 +2848,9 @@ describe('Ontology State Service', function() {
                 spyOn(service, 'setObjectPropertiesOpened');
                 service.goTo('objectProp1');
                 expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
-                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined, this.el);
-                expect(service.openAt).toHaveBeenCalledWith(service.listItem.objectProperties.flat, 'objectProp1');
-                expect(service.setObjectPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
+                expect(service.selectItem).toHaveBeenCalledWith('objectProp1', undefined, 3);
+                expect(service.openAt).toHaveBeenCalledWith(service.listItem.objectProperties.flat, 'objectProp1', 3);
+                expect(service.setObjectPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true, 3);
                 expect(service.listItem.editorTabStates.properties.index).toEqual(1);
             });
         });
@@ -2877,9 +2860,9 @@ describe('Ontology State Service', function() {
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
                     expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
-                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
-                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 3);
+                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1', 3);
+                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true, 3);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(6);
                 });
                 it('with no object properties in the ontology', function() {
@@ -2887,9 +2870,9 @@ describe('Ontology State Service', function() {
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
                     expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
-                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
-                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 3);
+                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1', 3);
+                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true, 3);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(4);
                 });
             });
@@ -2901,9 +2884,9 @@ describe('Ontology State Service', function() {
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
                     expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
-                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
-                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 3);
+                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1', 3);
+                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true, 3);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(3);
                 });
                 it('with no object properties in the ontology', function() {
@@ -2911,9 +2894,9 @@ describe('Ontology State Service', function() {
                     spyOn(service, 'setAnnotationPropertiesOpened');
                     service.goTo('annotationProp1');
                     expect(listItem.tabIndex).toEqual(OntologyListItem.PROPERTIES_TAB);
-                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, this.el);
-                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1');
-                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true);
+                    expect(service.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 3);
+                    expect(service.openAt).toHaveBeenCalledWith(service.listItem.annotations.flat, 'annotationProp1', 3);
+                    expect(service.setAnnotationPropertiesOpened).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, true, 3);
                     expect(service.listItem.editorTabStates.properties.index).toEqual(1);
                 });
             });
@@ -2921,22 +2904,22 @@ describe('Ontology State Service', function() {
         it('a concept', function() {
             service.goTo('concept1');
             expect(listItem.tabIndex).toEqual(OntologyListItem.CONCEPTS_TAB);
-            expect(service.selectItem).toHaveBeenCalledWith('concept1', undefined, this.el);
-            expect(service.openAt).toHaveBeenCalledWith(service.listItem.concepts.flat, 'concept1');
+            expect(service.selectItem).toHaveBeenCalledWith('concept1', undefined, 6);
+            expect(service.openAt).toHaveBeenCalledWith(service.listItem.concepts.flat, 'concept1', 6);
             expect(service.listItem.editorTabStates.concepts.index).toEqual(1);
         });
         it('a conceptScheme', function() {
             service.goTo('scheme1');
             expect(listItem.tabIndex).toEqual(OntologyListItem.CONCEPTS_SCHEMES_TAB);
-            expect(service.selectItem).toHaveBeenCalledWith('scheme1', undefined, this.el);
-            expect(service.openAt).toHaveBeenCalledWith(service.listItem.conceptSchemes.flat, 'scheme1');
+            expect(service.selectItem).toHaveBeenCalledWith('scheme1', undefined, 5);
+            expect(service.openAt).toHaveBeenCalledWith(service.listItem.conceptSchemes.flat, 'scheme1', 5);
             expect(service.listItem.editorTabStates.schemes.index).toEqual(1);
         });
         it('an individual', function() {
             service.goTo('individual1');
             expect(listItem.tabIndex).toEqual(OntologyListItem.INDIVIDUALS_TAB);
-            expect(service.selectItem).toHaveBeenCalledWith('individual1', undefined, this.el);
-            expect(service.openAt).toHaveBeenCalledWith(service.listItem.individuals.flat, 'individual1');
+            expect(service.selectItem).toHaveBeenCalledWith('individual1', undefined, 4);
+            expect(service.openAt).toHaveBeenCalledWith(service.listItem.individuals.flat, 'individual1', 4);
             expect(service.listItem.editorTabStates.individuals.index).toEqual(3);
         });
     });
@@ -3649,8 +3632,8 @@ describe('Ontology State Service', function() {
         describe('when the relationship is', function() {
             [
                 {
-                    targetArray: broaderRelations,
-                    otherArray: narrowerRelations,
+                    targetArray: OntologyStateService.broaderRelations,
+                    otherArray: OntologyStateService.narrowerRelations,
                     key: 'concepts',
                     entityIRI: 'selectedId',
                     parentIRI: '',
@@ -3658,8 +3641,8 @@ describe('Ontology State Service', function() {
                     targetTypeExpect: 'containsDerivedConcept'
                 },
                 {
-                    targetArray: narrowerRelations,
-                    otherArray: broaderRelations,
+                    targetArray: OntologyStateService.narrowerRelations,
+                    otherArray: OntologyStateService.broaderRelations,
                     key: 'concepts',
                     entityIRI: '',
                     parentIRI: 'selectedId',
@@ -3667,8 +3650,8 @@ describe('Ontology State Service', function() {
                     targetTypeExpect: 'containsDerivedConcept'
                 },
                 {
-                    targetArray: conceptToScheme,
-                    otherArray: schemeToConcept,
+                    targetArray: OntologyStateService.conceptToScheme,
+                    otherArray: OntologyStateService.schemeToConcept,
                     key: 'conceptSchemes',
                     entityIRI: 'selectedId',
                     parentIRI: '',
@@ -3676,8 +3659,8 @@ describe('Ontology State Service', function() {
                     targetTypeExpect: 'containsDerivedConceptScheme'
                 },
                 {
-                    targetArray: schemeToConcept,
-                    otherArray: conceptToScheme,
+                    targetArray: OntologyStateService.schemeToConcept,
+                    otherArray: OntologyStateService.conceptToScheme,
                     key: 'conceptSchemes',
                     entityIRI: '',
                     parentIRI: 'selectedId',
@@ -3789,8 +3772,8 @@ describe('Ontology State Service', function() {
         describe('when the relationship is', function() {
             [
                 {
-                    targetArray: broaderRelations,
-                    otherArray: narrowerRelations,
+                    targetArray: OntologyStateService.broaderRelations,
+                    otherArray: OntologyStateService.narrowerRelations,
                     key: 'concepts',
                     entityIRI: 'selectedId',
                     parentIRI: 'value1',
@@ -3798,8 +3781,8 @@ describe('Ontology State Service', function() {
                     targetTypeExpect: 'containsDerivedConcept',
                 },
                 {
-                    targetArray: narrowerRelations,
-                    otherArray: broaderRelations,
+                    targetArray: OntologyStateService.narrowerRelations,
+                    otherArray: OntologyStateService.broaderRelations,
                     key: 'concepts',
                     entityIRI: 'value1',
                     parentIRI: 'selectedId',
@@ -3807,8 +3790,8 @@ describe('Ontology State Service', function() {
                     targetTypeExpect: 'containsDerivedConcept'
                 },
                 {
-                    targetArray: conceptToScheme,
-                    otherArray: schemeToConcept,
+                    targetArray: OntologyStateService.conceptToScheme,
+                    otherArray: OntologyStateService.schemeToConcept,
                     key: 'conceptSchemes',
                     entityIRI: 'selectedId',
                     parentIRI: 'value1',
@@ -3816,8 +3799,8 @@ describe('Ontology State Service', function() {
                     targetTypeExpect: 'containsDerivedConceptScheme'
                 },
                 {
-                    targetArray: schemeToConcept,
-                    otherArray: conceptToScheme,
+                    targetArray: OntologyStateService.schemeToConcept,
+                    otherArray: OntologyStateService.conceptToScheme,
                     key: 'conceptSchemes',
                     entityIRI: 'value1',
                     parentIRI: 'selectedId',

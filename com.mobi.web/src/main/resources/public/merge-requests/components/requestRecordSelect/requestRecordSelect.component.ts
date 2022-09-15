@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PageEvent } from '@angular/material';
 import { get, find } from 'lodash';
 
@@ -31,6 +31,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './requestRecordSelect.component.scss';
 
@@ -60,7 +61,7 @@ export class RequestRecordSelectComponent implements OnInit {
     @ViewChild('mrRecords') mrRecords: ElementRef;
 
     constructor(public cm: CatalogManagerService, public state: MergeRequestsStateService,
-        private spinnerSvc: ProgressSpinnerService, @Inject('utilService') public util) {}
+        private spinnerSvc: ProgressSpinnerService, public util: UtilService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');

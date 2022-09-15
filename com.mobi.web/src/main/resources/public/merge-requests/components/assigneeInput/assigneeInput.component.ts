@@ -76,7 +76,7 @@ export class AssigneeInputComponent implements OnInit {
     
         this.parentForm.controls.assignees.setValue(null);
     }
-    remove(user: string): void {
+    removeAssignee(user: string): void {
         const index = this.selected.indexOf(user);
     
         if (index >= 0) {

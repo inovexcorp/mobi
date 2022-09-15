@@ -29,12 +29,12 @@ import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { CATALOG } from '../../../prefixes';
 import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { MappingCommitsTabComponent } from './mappingCommitsTab.component';
 
 describe('Mapping Commits Tab component', function() {
@@ -42,7 +42,7 @@ describe('Mapping Commits Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<MappingCommitsTabComponent>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const commitId = 'commitId';
@@ -57,7 +57,7 @@ describe('Mapping Commits Tab component', function() {
             ],
             providers: [
                 MockProvider(MapperStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -67,7 +67,7 @@ describe('Mapping Commits Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mapperStateStub = TestBed.get(MapperStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         mapperStateStub.selected = {
             mapping: undefined,

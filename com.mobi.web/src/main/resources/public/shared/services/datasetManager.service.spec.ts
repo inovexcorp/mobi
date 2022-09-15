@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpResponse } from '@angular/common/http';
+import { HttpParams, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
@@ -28,22 +28,21 @@ import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
-    mockUtil,
     cleanStylesFromDOM
 } from '../../../../../test/ts/Shared';
 import { DATASET, DCTERMS } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { CatalogManagerService } from './catalogManager.service';
-import { DatasetManagerService } from './datasetManager.service';
 import { DiscoverStateService } from './discoverState.service';
-import { HelperService } from './helper.service';
+import { UtilService } from './util.service';
+import { DatasetManagerService } from './datasetManager.service';
 
 describe('Dataset Manager service', function() {
     let service: DatasetManagerService;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
 
     const error = 'Error Message';
@@ -54,11 +53,10 @@ describe('Dataset Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 DatasetManagerService,
-                HelperService,
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -67,11 +65,35 @@ describe('Dataset Manager service', function() {
         service = TestBed.get(DatasetManagerService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
         discoverStateStub = TestBed.get(DiscoverStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         httpMock = TestBed.get(HttpTestingController);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
 
         utilStub.paginatedConfigToParams.and.callFake(x => Object.assign({}, x) || {});
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
         progressSpinnerStub.track.and.callFake(ob => ob);
     });
 

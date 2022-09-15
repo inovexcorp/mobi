@@ -26,7 +26,7 @@
             <h3 class="mapping-title text-truncate">{{state.selected.record ? state.selected.record.title : state.selected.config.title}}</h3>
             <div class="flex-1 remove-min-height">
                 <file-upload-form></file-upload-form>
-                <mapping-preview *ngIf="!state.editMapping" [mapping]="state.selected.mapping" [invalidProps]="state.invalidProps"></mapping-preview>
+                <mapping-preview *ngIf="shouldDisplayPreview" [mapping]="state.selected.mapping" [invalidProps]="state.invalidProps"></mapping-preview>
                 <div *ngIf="state.editMapping && state.invalidProps.length" class="invalid-props">
                     <h3 class="text-danger">Missing Columns</h3>
                     <ul>

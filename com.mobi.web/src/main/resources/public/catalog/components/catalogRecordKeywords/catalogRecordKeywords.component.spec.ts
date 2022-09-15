@@ -28,11 +28,11 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import {
-    mockUtil,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { CATALOG } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { CatalogRecordKeywordsComponent } from './catalogRecordKeywords.component';
 
@@ -41,7 +41,7 @@ describe('Catalog Record Keywords component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CatalogRecordKeywordsComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
@@ -55,7 +55,7 @@ describe('Catalog Record Keywords component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -65,7 +65,7 @@ describe('Catalog Record Keywords component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getPropertyId.and.callFake((obj, propId) => {
             if (propId === CATALOG + 'catalog') {

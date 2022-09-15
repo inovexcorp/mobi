@@ -20,62 +20,52 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { noop } from 'lodash';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-recordPermissionsManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
+import { REST_PREFIX } from '../../constants';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { RecordPermissions } from '../models/recordPermissions.interface';
+import { UtilService } from './util.service';
 
 /**
- * @ngdoc service
- * @name shared.service:recordPermissionsManagerService
- * @requires shared.service:httpService
+ * @class shared.RecordPermissionsManagerService
  *
- * @description
- * `recordPermissionsManagerService` is a service that provides access to the Mobi policy REST
- * endpoints and variables with common IRIs used in policies.
- * @TODO upgrade to angular
+ * A service that provides access to the Mobi policy REST endpoints and variables with common IRIs used in policies.
  */
-function recordPermissionsManagerService($http, $q, REST_PREFIX, utilService) {
-    var self = this;
-    var prefix = REST_PREFIX + 'record-permissions';
-    var util = utilService;
+@Injectable()
+export class RecordPermissionsManagerService {
+    prefix = REST_PREFIX + 'record-permissions';
+    
+    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
-     * @ngdoc method
-     * @name getRecordPolicy
-     * @methodOf shared.service:recordPermissionsManagerService
-     *
-     * @description
      * Calls the GET /mobirest/record-permissions/{recordId} endpoint to get the Record Policy JSON
      * representation of users who are permitted to perform each action (read, delete, update, modify,
      * modifyMaster)  for the provided ID.
      *
      * @param {string} recordId The ID of a Record whose Record Policy JSON to retrieve
-     * @return {Promise} A Promise that resolves with the matching Record Policy JSON if found or is rejected
+     * @return {Observable} An Observable that resolves with the matching Record Policy JSON if found or is rejected
      * with an error message
      */
-    self.getRecordPolicy = function(recordId) {
-        return $http.get(prefix + '/' + encodeURIComponent(recordId))
-            .then(response => response.data, util.rejectError);
+    getRecordPolicy(recordId: string): Observable<RecordPermissions> {
+        return this.spinnerSvc.track(this.http.get<RecordPermissions>(this.prefix + '/' + encodeURIComponent(recordId)))
+            .pipe(catchError(this.util.handleError));
     }
 
     /**
-     * @ngdoc method
-     * @name updateRecordPolicy
-     * @methodOf shared.service:recordPermissionsManagerService
-     *
-     * @description
      * Calls the PUT /mobirest/record-permissions/{recordId} endpoint with the provided new Policy object and updates
      * the Policy with the associated recordId.
      *
      * @param {string} recordId The ID of a Record whose Record Policy JSON to update
-     * @param {Object} newPolicy A Policy JSON object to replace the original with
-     * @return {Promise} A Promise that resolves if the update was successful or is rejected with an error
+     * @param {RecordPermissions} newPolicy A Policy JSON object to replace the original with
+     * @return {Observable} An Observable that resolves if the update was successful or is rejected with an error
      * message
      */
-    self.updateRecordPolicy = function(recordId, newPolicy) {
-        return $http.put(prefix + '/' + encodeURIComponent(recordId), newPolicy)
-            .then(noop, util.rejectError);
+    updateRecordPolicy(recordId: string, newPolicy: RecordPermissions): Observable<null> {
+        return this.spinnerSvc.track(this.http.put(this.prefix + '/' + encodeURIComponent(recordId), newPolicy))
+            .pipe(catchError(this.util.handleError));
     }
 }
-
-export default recordPermissionsManagerService;

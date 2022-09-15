@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 public class UITokenContext extends AuthHttpContext {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
-    static final String CONTEXT_ID = "uiCtxId";
+    public static final String CONTEXT_ID = "uiCtxId";
 
     private TokenManager tokenManager;
 

@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { find, difference, includes, get} from 'lodash';
 
 import { CATALOG } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class catalog.RecordTypeComponent
@@ -55,7 +56,7 @@ export class RecordTypeComponent {
         return this._record;
     }
 
-    constructor(public cm: CatalogManagerService, @Inject('utilService') public util) {}
+    constructor(public cm: CatalogManagerService, public util: UtilService) {}
 
     getType(record: JSONLDObject): string {
         const type = find(difference(this.cm.recordTypes, this.cm.coreRecordTypes), type => includes(get(record, '@type', []), type));

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
 import { FormBuilder, Validators } from '@angular/forms';
 import { get } from 'lodash';
@@ -29,6 +29,7 @@ import { first } from 'rxjs/operators';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class shapes-graph-editor.CommitModalComponent
@@ -49,9 +50,8 @@ export class CommitModalComponent {
         comment: ['', Validators.required]
     });
 
-    constructor(private state: ShapesGraphStateService, @Inject('utilService') private util,
-                private cm: CatalogManagerService, private fb: FormBuilder,
-                private dialogRef: MatDialogRef<CommitModalComponent>) {}
+    constructor(private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
+        private fb: FormBuilder, private dialogRef: MatDialogRef<CommitModalComponent>) {}
 
     commit(): void {
         this.cm.getRecordBranch(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId)

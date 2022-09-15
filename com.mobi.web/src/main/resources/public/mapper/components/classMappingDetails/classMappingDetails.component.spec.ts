@@ -31,8 +31,6 @@ import { of } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockPropertyManager,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { DELIM, RDFS, XSD } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
@@ -44,6 +42,8 @@ import { MappingProperty } from '../../../shared/models/mappingProperty.interfac
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { IriTemplateOverlayComponent } from '../iriTemplateOverlay/iriTemplateOverlay.component';
 import { PropMappingOverlayComponent } from '../propMappingOverlay/propMappingOverlay.component';
 import { ClassMappingDetailsComponent } from './classMappingDetails.component';
@@ -55,8 +55,8 @@ describe('Class Mapping Details component', function() {
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
-    let propertyManagerStub;
-    let utilStub;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
     const classMappingId = 'classMappingId';
@@ -94,8 +94,8 @@ describe('Class Mapping Details component', function() {
                 MockProvider(MappingManagerService),
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -110,8 +110,8 @@ describe('Class Mapping Details component', function() {
         mappingManagerStub = TestBed.get(MappingManagerService);
         mapperStateStub = TestBed.get(MapperStateService);
         delimitedManagerStub = TestBed.get(DelimitedManagerService);
-        propertyManagerStub = TestBed.get('propertyManagerService');
-        utilStub = TestBed.get('utilService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
+        utilStub = TestBed.get(UtilService);
         matDialog = TestBed.get(MatDialog);
 
         mappingStub = jasmine.createSpyObj('Mapping', [
@@ -404,7 +404,7 @@ describe('Class Mapping Details component', function() {
             expect(element.queryAll(By.css('.prop-list mat-list-item')).length).toEqual(component.propMappings.length);
         });
         it('depending on whether a property is a data or object property', function() {
-            let propMappingPreview: any = {
+            const propMappingPreview: any = {
                 jsonld: propMapping,
                 isInvalid: false,
                 title: '',

@@ -21,10 +21,13 @@
  * #L%
  */
 import { forEach, isEmpty, omit, cloneDeep } from 'lodash';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 
 import './searchTab.component.scss';
 
@@ -42,17 +45,28 @@ import './searchTab.component.scss';
     selector: 'search-tab',
     templateUrl: './searchTab.component.html'
 })
-export class SearchTabComponent implements OnInit {
-    constructor(public os: OntologyStateService, public om: OntologyManagerService) {}
+export class SearchTabComponent implements OnDestroy {
+    @ViewChild('searchResults') searchResults: ElementRef;
 
-    ngOnInit(): void {
-        this.os.listItem.editorTabStates.search.id = 'search-' + this.os.listItem.versionedRdfRecord.recordId; // TODO: May need at some point
+    sub: Subscription;
+
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, 
+        private spinnerSvc: ProgressSpinnerService) {}
+        
+    ngOnDestroy(): void {
+        if (this.sub && !this.sub.closed) {
+            this.sub.unsubscribe();
+        }
     }
     onKeyup(): void {
         if (this.os.listItem.editorTabStates.search.searchText) {
             this.unselectItem();
             const state = this.os.listItem.editorTabStates;
-            this.om.getSearchResults(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.editorTabStates.search.searchText)
+            this.spinnerSvc.startLoadingForComponent(this.searchResults);
+            this.sub = this.om.getSearchResults(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.editorTabStates.search.searchText)
+                .pipe(finalize(() => {
+                    this.spinnerSvc.finishLoadingForComponent(this.searchResults);
+                }))
                 .subscribe(results => {
                     state.search.errorMessage = '';
                     forEach(results, arr => {

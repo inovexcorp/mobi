@@ -43,8 +43,8 @@ module.exports = {
     'Step 4: Open Ontology Visualization' : function (browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Visualization")]]')
-            .click('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Visualization")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(., "Visualization")]]')
+            .click('//mat-tab-header//div[text()[contains(., "Visualization")]]')
             .useCss()
             .waitForElementNotVisible('div.spinner')
             .waitForElementNotPresent('div.visualization-spinner')

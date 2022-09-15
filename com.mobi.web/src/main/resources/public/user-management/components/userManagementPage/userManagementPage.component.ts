@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, ViewChild, Inject} from '@angular/core';
-import { MatTabChangeEvent } from '@angular/material';
+import { Component, ViewChild } from '@angular/core';
 
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { PermissionsPageComponent } from '../permissionsPage/permissionsPage.component';
 
@@ -30,8 +30,6 @@ import './userManagementPage.component.scss';
 
 /**
  * @class user-management.UserManagementPageComponent
- * @requires shared.service:UserStateService
- * @requires shared.service:settingManagerService
  * 
  * A component which creates a `mat-tab-group` with tabs depending on whether the
  * {@link user-management.UsersPageComponent users}, {@link user-management.GroupsPageComponent groups},
@@ -45,11 +43,5 @@ import './userManagementPage.component.scss';
 export class UserManagementPageComponent {
     @ViewChild(PermissionsPageComponent) permissionsPage: PermissionsPageComponent;
     
-    constructor(public state: UserStateService, @Inject('settingManagerService') public sm) {}
-
-    onTabChanged(event: MatTabChangeEvent): void {
-        if (event.index === 2) {
-            this.permissionsPage.reset();
-        }
-    }
+    constructor(public state: UserStateService, public sm: SettingManagerService) {}
 }

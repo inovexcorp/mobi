@@ -26,8 +26,8 @@ var validURL = 'https://avm.inovexcorp.com/ontologies/10/2019';
 var invalidURL = 'https://avm.inovexcorp.com/ontolo<gies/10/2019';
 var validEndsWith = 'CurrencyUnitOntology';
 var invalidEndsWidth = 'test`-local-`imports-1';
-var input_iriBegin = '//input[@id="iriBegin"]';
-var input_iriEnds = '//input[@id="iriEnd"]';
+var input_iriBegin = '//mat-label[text()[contains(.,"Begins With")]]//ancestor::mat-form-field//input';
+var input_iriEnds = '//mat-label[text()[contains(.,"Ends With")]]//ancestor::mat-form-field//input';
 
 var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/CurrencyUnitOntology.ttl'
 
@@ -49,25 +49,20 @@ module.exports = {
     'Step 4: Open edit IRI Modal' : function (browser) {
             browser
             .useXpath()
-            .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-penci")]')
-            .click('//static-iri//div[contains(@class, "static-ir")]//span//a')
-            .waitForElementVisible('//edit-iri-overlay-ajs')
+            .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .waitForElementVisible('//edit-iri-overlay')
             .waitForElementVisible(input_iriBegin)
             .waitForElementVisible(input_iriEnds)
-            .waitForElementNotPresent('//div[contains(@class, "ng-animate")]')
             .clearValue(input_iriBegin)
             .setValue(input_iriBegin, invalidURL)
-            .waitForElementVisible('//edit-iri-overlay-ajs//ng-message')
-            .assert.visible('//edit-iri-overlay-ajs//ng-message[text()[contains(.,"Value is not a valid namespace.")]]')
+            .assert.visible('//edit-iri-overlay//mat-error[text()[contains(.,"This value is invalid")]]')
             .clearValue(input_iriBegin)
             .setValue(input_iriBegin, validURL)
-            .assert.not.elementPresent('//edit-iri-overlay-ajs//ng-message')
             .clearValue(input_iriEnds)
             .setValue(input_iriEnds, invalidEndsWidth)
-            .waitForElementVisible('//edit-iri-overlay-ajs//ng-message')
-            .assert.visible('//edit-iri-overlay-ajs//ng-message[text()[contains(.,"There is an invalid character.")]]')
+            .assert.visible('//edit-iri-overlay//mat-error[text()[contains(.,"This value is invalid")]]')
             .clearValue(input_iriEnds)
             .setValue(input_iriEnds, validEndsWith)
-            .assert.not.elementPresent('//edit-iri-overlay-ajs//ng-message')
     }
 }

@@ -42,7 +42,7 @@
         </mat-tab>
         <mat-tab label="Editor" >
             <ng-template matTabContent>
-                <mat-label>Expression</mat-label>
+                <div class="field-label">Expression</div>
                 <div class="codemirror-wrapper" [ngClass]="{'readOnly': editorOptions.readOnly}">
                     <ngx-codemirror [(ngModel)]="expression" [options]="editorOptions"></ngx-codemirror>
                 </div>

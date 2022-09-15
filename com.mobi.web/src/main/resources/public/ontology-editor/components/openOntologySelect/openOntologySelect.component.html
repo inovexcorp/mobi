@@ -28,6 +28,7 @@
         (optionSelected)="changeEntity($event)"
         (opened)="openPanel()"
         (closed)="closePanel()"
+        [panelWidth]="300"
         class="open-ontology-select-autocomplete">
         <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
             <mat-option *ngFor="let option of group.options" [value]="option">

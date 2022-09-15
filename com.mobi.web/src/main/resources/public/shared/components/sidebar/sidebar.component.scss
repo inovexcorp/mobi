@@ -117,19 +117,13 @@
         }
     }
     .collapsed-hide {
-        &.ng-enter,
-        &.ng-leave,
         &.hidden,
         &.shown {
             transition: all 0.2s linear;
         }
-        &.ng-enter,
-        &.ng-leave.ng-leave-active,
         &.hidden {
             opacity: 0;
         }
-        &.ng-leave,
-        &.ng-enter.ng-enter-active,
         &.shown {
             opacity: 1;
         }
@@ -153,18 +147,12 @@
         line-height: $icon-small-size;
     }
     .mat-icon {
+        color: white;
         width: $icon-small-size;
         height: $icon-small-size;
     }
     .material-icons {
         font-size: $icon-small-size;
-    }
-    md-icon {
-        color: white;
-        height: unset;
-        width: unset;
-        min-height: unset;
-        min-width: unset;
     }
     .badge-beta {
         background-color: #6c757d;

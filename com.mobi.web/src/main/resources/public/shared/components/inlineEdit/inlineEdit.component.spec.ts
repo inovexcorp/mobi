@@ -28,20 +28,20 @@ import { MatInputModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
-import { MockDirective } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { FocusDirective } from '../../directives/focus/focus.directive';
+import { UtilService } from '../../services/util.service';
 import { InlineEditComponent } from './inlineEdit.component';
 
 describe('Inline Edit component', function() {
     let component: InlineEditComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<InlineEditComponent>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -56,7 +56,7 @@ describe('Inline Edit component', function() {
                 MockDirective(FocusDirective)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -65,7 +65,7 @@ describe('Inline Edit component', function() {
         fixture = TestBed.createComponent(InlineEditComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {

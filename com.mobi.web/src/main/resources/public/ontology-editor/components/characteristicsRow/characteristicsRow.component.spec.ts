@@ -112,18 +112,4 @@ describe('Characteristics Row component', function() {
             });
         });
     });
-    // TODO: Determine if needed
-    // describe('controller methods', function() {
-    //     it('update the types of the selected object', function() {
-    //         const object = {
-    //             label: '',
-    //             names: [],
-    //         };
-    //         ontologyStateStub.getEntityByRecordId.and.returnValue(object);
-    //         component.updateTypes(['test']);
-    //         expect(ontologyStateStub.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.selected['@id']);
-    //         expect(ontologyStateStub.listItem.selected['@types']).toEqual(['test']);
-    //         expect(this.object['@types']).toEqual(['test']);
-    //     });
-    // });
 });

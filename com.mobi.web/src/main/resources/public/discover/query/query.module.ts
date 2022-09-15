@@ -21,8 +21,6 @@
  * #L%
  */
 import { NgModule } from '@angular/core';
-import { downgradeComponent } from '@angular/upgrade/static';
-import * as angular from 'angular';
 
 import { SharedModule } from '../../shared/shared.module';
 import { DiscoverSharedModule } from '../discoverShared.module';
@@ -54,7 +52,3 @@ import { QueryTabComponent } from './components/queryTab/queryTab.component';
     ]
 })
 export class QueryModule {}
-
-angular.module('query', [])
-    .directive('downloadQueryOverlay', downgradeComponent({component: DownloadQueryOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('queryTab', downgradeComponent({component: QueryTabComponent}) as angular.IDirectiveFactory);

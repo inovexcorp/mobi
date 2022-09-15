@@ -20,14 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 /**
  * @class ontology-editor.AdvancedLanguageSelectComponent
  *
- * A component that creates a collapsible language selector bound to the `language` control of the provided parent
- * `FormGroup`. When collapsed, sets the `language` value to empty string, when opened, defaults to 'en'.
+ * A component that creates a collapsible {@link shared.LanguageSelectComponent} bound to the `language` control of the
+ * provided parent `FormGroup`. When collapsed, sets the `language` value to empty string, when opened, defaults to 'en'.
  * 
  * @param {FormGroup} parentForm The parent FormGroup to attached the language select to
  */
@@ -35,17 +35,13 @@ import { FormGroup } from '@angular/forms';
     selector: 'advanced-language-select',
     templateUrl: './advancedLanguageSelect.component.html'
 })
-export class AdvancedLanguageSelectComponent implements OnInit {
+export class AdvancedLanguageSelectComponent {
     @Input() parentForm: FormGroup;
 
     isShown = false;
-    languages: {label: string, value: string}[] = [];
 
-    constructor(@Inject('propertyManagerService') private pm) {}
+    constructor() {}
 
-    ngOnInit(): void {
-        this.languages = this.pm.languageList;
-    }
     show(): void {
         this.isShown = true;
         this.parentForm.controls.language.setValue('en');

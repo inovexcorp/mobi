@@ -20,13 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { union, sortBy, has, get } from 'lodash';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { OntologyPropertyOverlayComponent } from '../ontologyPropertyOverlay/ontologyPropertyOverlay.component';
 
 /**
@@ -49,7 +50,7 @@ export class OntologyPropertiesBlockComponent implements OnChanges {
     properties = [];
     propertiesFiltered = [];
 
-    constructor(private dialog: MatDialog, public os: OntologyStateService, @Inject('propertyManagerService') private pm) {}
+    constructor(private dialog: MatDialog, public os: OntologyStateService, private pm: PropertyManagerService) {}
     
     ngOnChanges(): void {
         this.updatePropertiesFiltered();

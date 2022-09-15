@@ -24,28 +24,32 @@ import { MOSListener } from './dist/MOSListener';
 import { DescriptionContext, ConjunctionContext, PrimaryContext, AtomicContext, DataRangeContext, DataConjunctionContext, DataPrimaryContext, DataAtomicContext, IndividualListContext, LiteralListContext, RestrictionContext, LiteralContext, ObjectPropertyContext, DataPropertyContext, DataPropertyExpressionContext, IndividualContext, TypedLiteralContext, StringLiteralNoLanguageContext, StringLiteralWithLanguageContext, IntegerLiteralContext, DecimalLiteralContext, FloatingPointLiteralContext, NonNegativeIntegerContext } from './dist/MOSParser';
 import { ParserRuleContext } from 'antlr4ts';
 
-var prefixes, util;
+import { OWL, RDF, RDFS, XSD } from '../../prefixes';
+import { UtilService } from '../../shared/services/util.service';
+import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
+
+let util: UtilService;
 
 class BlankNodesListener implements MOSListener {
-    arr: any;
-    localNames: any;
-    map: {};
+    arr: JSONLDObject[];
+    localNames: {[key: string]: string};
+    map: any;
 
-    constructor(arr, localNames, prefixesService, utilService) {
+    constructor(arr: JSONLDObject[], localNames: {[key: string]: string}, utilService: UtilService) {
         this.arr = arr;
         this.localNames = localNames;
         this.map = {};
-        prefixes = prefixesService;
         util = utilService;
     }
 
-    enterDescription = function(ctx: DescriptionContext) { // Used for unions
+    enterDescription(ctx: DescriptionContext): void { // Used for unions
         if (ctx.OR_LABEL().length > 0) {
+            let parent;
             if (this._hasParentNode(ctx)) { // Fetch parent first to avoid circular references
-                var parent = this._getParentNode(ctx);
+                parent = this._getParentNode(ctx);
             }
-            var bnode = this._addBNode(prefixes.owl + 'Class');
-            this.map[this._getCtxHash(ctx)] = {bnode, prop: prefixes.owl + 'unionOf', list: true, numChildren: ctx.conjunction().length, children: []};
+            const bnode = this._addBNode(OWL + 'Class');
+            this.map[this._getCtxHash(ctx)] = {bnode, prop: OWL + 'unionOf', list: true, numChildren: ctx.conjunction().length, children: []};
             if (parent && parent.bnode['@id'] !== bnode['@id']) {
                 this._addValueToBNode(parent, {'@id': bnode['@id']});
             }
@@ -54,13 +58,14 @@ class BlankNodesListener implements MOSListener {
         }
     }
 
-    enterConjunction = function(ctx: ConjunctionContext) { // Used for intersections
+    enterConjunction(ctx: ConjunctionContext): void { // Used for intersections
         if (ctx.AND_LABEL().length > 0) {
+            let parent;
             if (this._hasParentNode(ctx)) { // Fetch parent first to avoid circular references
-                var parent = this._getParentNode(ctx);
+                parent = this._getParentNode(ctx);
             }
-            var bnode = this._addBNode(prefixes.owl + 'Class');
-            this.map[this._getCtxHash(ctx)] = {bnode, prop: prefixes.owl + 'intersectionOf', list: true, numChildren: ctx.primary().length, children: []};
+            const bnode = this._addBNode(OWL + 'Class');
+            this.map[this._getCtxHash(ctx)] = {bnode, prop: OWL + 'intersectionOf', list: true, numChildren: ctx.primary().length, children: []};
             if (parent && parent.list && parent.bnode['@id'] !== bnode['@id']) {
                 this._addValueToBNode(parent, {'@id': bnode['@id']});
             }
@@ -69,13 +74,14 @@ class BlankNodesListener implements MOSListener {
         }
     }
 
-    enterPrimary = function(ctx: PrimaryContext) { // Used for complements
+    enterPrimary(ctx: PrimaryContext): void { // Used for complements
         if (ctx.NOT_LABEL()) {
+            let parent;
             if (this._hasParentNode(ctx)) { // Fetch parent first to avoid circular references
-                var parent = this._getParentNode(ctx);
+                parent = this._getParentNode(ctx);
             }
-            var bnode = this._addBNode(prefixes.owl + 'Class');
-            this.map[this._getCtxHash(ctx)] = {bnode, prop: prefixes.owl + 'complementOf'};
+            const bnode = this._addBNode(OWL + 'Class');
+            this.map[this._getCtxHash(ctx)] = {bnode, prop: OWL + 'complementOf'};
             if (parent && parent.list && parent.bnode['@id'] !== bnode['@id']) {
                 this._addIdToListNode(parent, bnode['@id']);
             }
@@ -86,161 +92,161 @@ class BlankNodesListener implements MOSListener {
         }
     }
 
-    enterAtomic = function(ctx: AtomicContext) { // Used for IRI references and lists of individuals
+    enterAtomic(ctx: AtomicContext): void { // Used for IRI references and lists of individuals
         if (this._hasParentNode(ctx)) {
-            var parent = this._getParentNode(ctx); // Fetch parent first to avoid circular references
+            const parent = this._getParentNode(ctx); // Fetch parent first to avoid circular references
             if (ctx.classIRI()) {
-                var iri = this._getFullIRI(ctx);
+                const iri = this._getFullIRI(ctx);
                 if (parent.list) {
                     this._addIdToListNode(parent, iri);
                 } else {
-                    if (parent.prop === prefixes.owl + 'allValuesFrom' || parent.prop === prefixes.owl + 'someValuesFrom' || parent.prop === prefixes.owl + 'complementOf') {
+                    if (parent.prop === OWL + 'allValuesFrom' || parent.prop === OWL + 'someValuesFrom' || parent.prop === OWL + 'complementOf') {
                         util.setPropertyId(parent.bnode, parent.prop, iri);
                     } else {
-                        util.setPropertyId(parent.bnode, prefixes.owl + 'onClass', iri);
+                        util.setPropertyId(parent.bnode, OWL + 'onClass', iri);
                     }
                 }
             } else if (ctx.individualList()) {
-                var bnode = this._addBNode(prefixes.owl + 'Class');
+                const bnode = this._addBNode(OWL + 'Class');
                 util.setPropertyId(parent.bnode, parent.prop, bnode['@id']);
-                this.map[this._getCtxHash(ctx)] = {bnode, prop: prefixes.owl + 'oneOf', list: true, numChildren: ctx.individualList().individual().length, children: []};
+                this.map[this._getCtxHash(ctx)] = {bnode, prop: OWL + 'oneOf', list: true, numChildren: ctx.individualList().individual().length, children: []};
             } else {
                 this.map[this._getCtxHash(ctx)] = parent;
             }
         } else {
             if (ctx.individualList()) {
-                var bnode = this._addBNode(prefixes.owl + 'Class');
-                this.map[this._getCtxHash(ctx)] = {bnode, prop: prefixes.owl + 'oneOf', list: true, numChildren: ctx.individualList().individual().length, children: []};
+                const bnode = this._addBNode(OWL + 'Class');
+                this.map[this._getCtxHash(ctx)] = {bnode, prop: OWL + 'oneOf', list: true, numChildren: ctx.individualList().individual().length, children: []};
             }
         }
     }
 
-    enterDataRange = function(ctx: DataRangeContext) {
+    enterDataRange(ctx: DataRangeContext): void {
         this._pass(ctx);
     }
 
-    enterDataConjunction = function(ctx: DataConjunctionContext) {
+    enterDataConjunction(ctx: DataConjunctionContext): void {
         this._pass(ctx);
     }
 
-    enterDataPrimary = function(ctx: DataPrimaryContext) {
+    enterDataPrimary(ctx: DataPrimaryContext): void {
         this._pass(ctx);
     }
 
-    enterDataAtomic = function(ctx: DataAtomicContext) { // Used for lists of literals
+    enterDataAtomic(ctx: DataAtomicContext): void { // Used for lists of literals
         if (this._hasParentNode(ctx)) {
-            var parent = this._getParentNode(ctx);
+            const parent = this._getParentNode(ctx);
             if (ctx.literalList()) {
-                var bnode = this._addBNode(prefixes.rdfs + 'Datatype');
+                const bnode = this._addBNode(RDFS + 'Datatype');
                 util.setPropertyId(parent.bnode, parent.prop, bnode['@id']);
-                this.map[this._getCtxHash(ctx)] = {bnode, prop: prefixes.owl + 'oneOf', list: true, numChildren: ctx.literalList().literal().length, children: []};
+                this.map[this._getCtxHash(ctx)] = {bnode, prop: OWL + 'oneOf', list: true, numChildren: ctx.literalList().literal().length, children: []};
             } else {
                 this.map[this._getCtxHash(ctx)] = parent;
             }
         } else {
             if (ctx.literalList()) {
-                var bnode = this._addBNode(prefixes.rdfs + 'Datatype');
-                this.map[this._getCtxHash(ctx)] = {bnode, prop: prefixes.owl + 'oneOf', list: true, numChildren: ctx.literalList().literal().length, children: []};
+                const bnode = this._addBNode(RDFS + 'Datatype');
+                this.map[this._getCtxHash(ctx)] = {bnode, prop: OWL + 'oneOf', list: true, numChildren: ctx.literalList().literal().length, children: []};
             }
         }
     }
 
-    enterIndividualList = function(ctx: IndividualListContext) {
+    enterIndividualList(ctx: IndividualListContext): void {
         this._pass(ctx);
     }
 
-    enterLiteralList = function(ctx: LiteralListContext) {
+    enterLiteralList(ctx: LiteralListContext): void {
         this._pass(ctx);
     }
 
-    enterRestriction = function(ctx: RestrictionContext) { // Used to create parent restriction bnodes
-        var bnode = this._addBNode(prefixes.owl + 'Restriction');
+    enterRestriction(ctx: RestrictionContext): void { // Used to create parent restriction bnodes
+        const bnode = this._addBNode(OWL + 'Restriction');
         if (this._hasParentNode(ctx)) {
-            var parent = this._getParentNode(ctx);
+            const parent = this._getParentNode(ctx);
             this._addIdToListNode(parent, bnode['@id']);
         }
-        var prop;
+        let prop;
         if (ctx.MAX_LABEL()) {
-            prop = prefixes.owl + 'maxCardinality';
+            prop = OWL + 'maxCardinality';
         } else if (ctx.MIN_LABEL()) {
-            prop = prefixes.owl + 'minCardinality';
+            prop = OWL + 'minCardinality';
         } else if (ctx.EXACTLY_LABEL()) {
-            prop = prefixes.owl + 'cardinality';
+            prop = OWL + 'cardinality';
         } else if (ctx.ONLY_LABEL()) {
-            prop = prefixes.owl + 'allValuesFrom';
+            prop = OWL + 'allValuesFrom';
         } else if (ctx.SOME_LABEL()) {
-            prop = prefixes.owl + 'someValuesFrom';
+            prop = OWL + 'someValuesFrom';
         } else if (ctx.VALUE_LABEL()) {
-            prop = prefixes.owl + 'hasValue';
+            prop = OWL + 'hasValue';
         }
     
         this.map[this._getCtxHash(ctx)] = {bnode, prop};
     
     }
 
-    enterLiteral = function(ctx: LiteralContext) {
+    enterLiteral(ctx: LiteralContext): void {
         this._pass(ctx);
     }
     
-    exitObjectPropertyExpression = function(ctx: ObjectPropertyContext) {
+    exitObjectPropertyExpression(ctx: ObjectPropertyContext): void {
         this._setOnProperty(ctx);
     }
 
-    exitDataPropertyExpression = function(ctx: DataPropertyExpressionContext) {
+    exitDataPropertyExpression(ctx: DataPropertyExpressionContext): void {
         this._setOnProperty(ctx);
     }
 
-    exitIndividual = function(ctx: IndividualContext) {
-        var parent = this._getParentNode(ctx);
-        var iriObj = {'@id': this._getFullIRI(ctx)};
+    exitIndividual(ctx: IndividualContext): void {
+        const parent = this._getParentNode(ctx);
+        const iriObj = {'@id': this._getFullIRI(ctx)};
         this._addValueToBNode(parent, iriObj);
     }
 
-    exitTypedLiteral = function(ctx: TypedLiteralContext) {
-        var parent = this._getParentNode(ctx);
-        var type = ctx.dataType().text;
+    exitTypedLiteral(ctx: TypedLiteralContext): void {
+        const parent = this._getParentNode(ctx);
+        let type = ctx.dataType().text;
         if (type.substr(0, 'xsd:'.length) === 'xsd:') {
-            type = type.replace('xsd:', prefixes.xsd);
+            type = type.replace('xsd:', XSD);
         } else {
             type = type.replace('<', '').replace('>', '');
         }
-        var valueObj = {'@value': ctx.lexicalValue().text.replace(/\"/g, ''), '@type': type};
+        const valueObj = {'@value': ctx.lexicalValue().text.replace(/"/g, ''), '@type': type};
         this._addValueToBNode(parent, valueObj);
     }
 
-    exitStringLiteralNoLanguage = function(ctx: StringLiteralNoLanguageContext) {
-        var parent = this._getParentNode(ctx);
-        var valueObj = {'@value': ctx.text.replace(/\"/g, '')};
+    exitStringLiteralNoLanguage(ctx: StringLiteralNoLanguageContext): void {
+        const parent = this._getParentNode(ctx);
+        const valueObj = {'@value': ctx.text.replace(/"/g, '')};
         this._addValueToBNode(parent, valueObj);
     }
 
-    exitStringLiteralWithLanguage = function(ctx: StringLiteralWithLanguageContext) {
-        var parent = this._getParentNode(ctx);
-        var valueObj = {'@value': ctx.children[0].text.replace(/\"/g, ''), '@language': ctx.children[1].text.replace('@', '')};
+    exitStringLiteralWithLanguage(ctx: StringLiteralWithLanguageContext): void {
+        const parent = this._getParentNode(ctx);
+        const valueObj = {'@value': ctx.children[0].text.replace(/"/g, ''), '@language': ctx.children[1].text.replace('@', '')};
         this._addValueToBNode(parent, valueObj);
     }
 
-    exitIntegerLiteral = function(ctx: IntegerLiteralContext) {
-        var parent = this._getParentNode(ctx);
-        var valueObj = {'@value': ctx.text, '@type': prefixes.xsd + 'integer'};
+    exitIntegerLiteral(ctx: IntegerLiteralContext): void {
+        const parent = this._getParentNode(ctx);
+        const valueObj = {'@value': ctx.text, '@type': XSD + 'integer'};
         this._addValueToBNode(parent, valueObj);
     }
 
-    exitDecimalLiteral = function(ctx: DecimalLiteralContext) {
-        var parent = this._getParentNode(ctx);
-        var valueObj = {'@value': ctx.text, '@type': prefixes.xsd + 'decimal'};
+    exitDecimalLiteral(ctx: DecimalLiteralContext): void {
+        const parent = this._getParentNode(ctx);
+        const valueObj = {'@value': ctx.text, '@type': XSD + 'decimal'};
         this._addValueToBNode(parent, valueObj);
     }
 
-    exitFloatingPointLiteral = function(ctx: FloatingPointLiteralContext) {
-        var parent = this._getParentNode(ctx);
-        var valueObj = {'@value': ctx.text, '@type': prefixes.xsd + 'float'};
+    exitFloatingPointLiteral(ctx: FloatingPointLiteralContext): void {
+        const parent = this._getParentNode(ctx);
+        const valueObj = {'@value': ctx.text, '@type': XSD + 'float'};
         this._addValueToBNode(parent, valueObj);
     }
 
-    exitNonNegativeInteger = function(ctx: NonNegativeIntegerContext) {
-        var parent = this._getParentNode(ctx);
-        parent.bnode[parent.prop] = [{'@value': ctx.text, '@type': prefixes.xsd + 'nonNegativeInteger'}];
+    exitNonNegativeInteger(ctx: NonNegativeIntegerContext): void {
+        const parent = this._getParentNode(ctx);
+        parent.bnode[parent.prop] = [{'@value': ctx.text, '@type': XSD + 'nonNegativeInteger'}];
     }
 
     private _createBNode(type) {
@@ -248,8 +254,8 @@ class BlankNodesListener implements MOSListener {
     }
 
     private _setOnProperty(ctx: ParserRuleContext) {
-        var bnode = this.map[this._getCtxHash(ctx.parent)].bnode;
-        util.setPropertyId(bnode, prefixes.owl + 'onProperty', this._getFullIRI(ctx));
+        const bnode = this.map[this._getCtxHash(ctx.parent)].bnode;
+        util.setPropertyId(bnode, OWL + 'onProperty', this._getFullIRI(ctx));
     }
 
     private _getParentNode(ctx: ParserRuleContext) {
@@ -271,7 +277,7 @@ class BlankNodesListener implements MOSListener {
     }
 
     private _addBNode(type) {
-        var bnode = this._createBNode(type);
+        const bnode = this._createBNode(type);
         this.arr.push(bnode);
         return bnode;
     }
@@ -283,15 +289,15 @@ class BlankNodesListener implements MOSListener {
     private _addObjToListNode(mapItem, valueObj) {
         if (mapItem.numChildren > 1) { // If the parent node has more than one child
             // Create rdf:List bnode
-            var listBnode = this._addBNode(prefixes.rdf + 'List');
-            listBnode[prefixes.rdf + 'first'] = [valueObj];
+            const listBnode = this._addBNode(RDF + 'List');
+            listBnode[RDF + 'first'] = [valueObj];
             if (mapItem.children.length === 0) { // If this is the first item in the list
                 mapItem.bnode[mapItem.prop] = [{'@id': listBnode['@id']}]; // Add bnode of the list to the parent node with the specified property
             } else { // If this is not the first item in the list
-                var previousListBnode = mapItem.children[mapItem.children.length - 1]; // Get the child bnode right before this
-                previousListBnode[prefixes.rdf + 'rest'] = [{'@id': listBnode['@id']}];  // Add link to the previous bnode
+                const previousListBnode = mapItem.children[mapItem.children.length - 1]; // Get the child bnode right before this
+                previousListBnode[RDF + 'rest'] = [{'@id': listBnode['@id']}];  // Add link to the previous bnode
                 if (mapItem.children.length === mapItem.numChildren - 1) { // If this is the last item in the list
-                    listBnode[prefixes.rdf + 'rest'] = [{'@list': []}];
+                    listBnode[RDF + 'rest'] = [{'@list': []}];
                 }
             }
             mapItem.children.push(listBnode); // Add generated bnode to children of parent node
@@ -309,8 +315,8 @@ class BlankNodesListener implements MOSListener {
     }
 
     private _getFullIRI(ctx: ParserRuleContext) {
-        var localName = ctx.text;
-        var iri = this.localNames[localName];
+        const localName = ctx.text;
+        const iri = this.localNames[localName];
         if (!iri) {
             throw 'line ' + ctx.start.line + ':' + ctx.start.startIndex + ' - "' + localName + '" does not correspond to a known IRI';
         }
@@ -322,13 +328,13 @@ class BlankNodesListener implements MOSListener {
     }
 
     private _hash(...args: any[]) {
-        var h=0, i=0;
-        if (args.length == 1) {
+        let h = 0, i = 0;
+        if (args.length === 1) {
             for (i = 0; i < args[0].length; i++) {
                 h = (h * 31 + args[0].charCodeAt(i)) & 0xffffffff;
             }
         } else {
-            for (let i in args) {
+            for (const i in args) {
                 h ^= this._hash(args[i]);
             }
         }

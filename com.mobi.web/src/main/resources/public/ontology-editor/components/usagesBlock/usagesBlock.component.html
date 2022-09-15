@@ -24,7 +24,7 @@
     <div class="section-header">
         <h5>Usages</h5>
     </div>
-    <div class="usages-container" targeted-spinner="this.id">
+    <div class="usages-container" #usagesContainer>
         <div *ngIf="this.results">
             <div class="property-values mt-3" *ngFor="let property of this.results | keyvalue">
                 <div class="prop-header d-flex align-items-center clearfix">

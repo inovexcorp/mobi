@@ -24,7 +24,6 @@ import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
 import {
     Component,
     ElementRef,
-    Inject,
     Input,
     OnChanges,
     OnDestroy,
@@ -40,6 +39,7 @@ import { GraphState } from '../../classes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 
 import './ontologyVisualization.component.scss';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class OntologyVisualization
@@ -88,7 +88,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
 
     sidePanelActionSub$: Subscription; // Subscription to control cytoscape graph from different components
 
-    constructor(private ovis: OntologyVisualizationService,  @Inject('utilService') private util, 
+    constructor(private ovis: OntologyVisualizationService,  private util: UtilService, 
         private spinnerSrv : ProgressSpinnerService) {}
 
     ngOnChanges(changes: SimpleChanges): void {

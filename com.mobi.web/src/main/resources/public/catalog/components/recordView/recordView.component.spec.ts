@@ -29,12 +29,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import {
-    cleanStylesFromDOM,
-    mockOntologyState,
-    mockPolicyEnforcement,
-    mockUtil,
-} from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { InlineEditComponent } from '../../../shared/components/inlineEdit/inlineEdit.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -46,9 +41,12 @@ import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.
 import { RecordIconComponent } from '../recordIcon/recordIcon.component';
 import { RecordViewTabsetComponent } from '../recordViewTabset/recordViewTabset.component';
 import { CATALOG, DCTERMS, POLICY } from '../../../prefixes';
-import { RecordViewComponent } from './recordView.component';
 import { ManageRecordButtonComponent } from '../manageRecordButton/manageRecordButton.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { RecordViewComponent } from './recordView.component';
 
 describe('Record View component', function() {
     let component: RecordViewComponent;
@@ -56,9 +54,9 @@ describe('Record View component', function() {
     let fixture: ComponentFixture<RecordViewComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
-    let ontologyStateStub;
-    let policyEnforcementStub;
-    let utilStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
@@ -84,9 +82,10 @@ describe('Record View component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyStateService),
+                // { provide: OntologyStateService, useClass: mockOntologyState },
+                MockProvider(PolicyEnforcementService),
+                MockProvider(UtilService),
             ],
         });
     });
@@ -98,9 +97,11 @@ describe('Record View component', function() {
         catalogManagerStub = TestBed.get(CatalogManagerService);
         catalogStateStub = TestBed.get(CatalogStateService);
         ontologyStateStub = TestBed.get(OntologyStateService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        utilStub = TestBed.get(UtilService);
 
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
         utilStub.getPropertyId.and.callFake((obj, propId) => {
             if (propId === CATALOG + 'catalog') {
                 return catalogId;
@@ -204,12 +205,14 @@ describe('Record View component', function() {
                 expect(component.updateRecord).toHaveBeenCalledWith(record);
             });
             it('and update ontology state title if open', function() {
-                ontologyStateStub.list = [{versionedRdfRecord: {title: 'title'}}];
+                const listItem = new OntologyListItem();
+                listItem.versionedRdfRecord.title = 'title';
+                ontologyStateStub.list = [listItem];
                 const title = 'This is a new title';
                 component.updateTitle(title);
                 expect(component.record[DCTERMS + 'title'][0]['@value']).toEqual(title);
                 expect(component.updateRecord).toHaveBeenCalledWith(record);
-                expect(ontologyStateStub.list[0].versionedRdfRecord.title).toEqual(title);
+                expect(listItem.versionedRdfRecord.title).toEqual(title);
             });
         });
         describe('should set whether the user can edit the record', function() {
@@ -219,7 +222,7 @@ describe('Record View component', function() {
             });
             describe('when evaluateRequest resolves', function() {
                 it('with Permit', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                     component.setCanEdit();
                     tick();
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});
@@ -227,7 +230,7 @@ describe('Record View component', function() {
                     expect(utilStub.createWarningToast).not.toHaveBeenCalled();
                 }));
                 it('with Indeterminate', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.indeterminate);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.indeterminate));
                     component.setCanEdit();
                     tick();
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});
@@ -235,7 +238,7 @@ describe('Record View component', function() {
                     expect(utilStub.createWarningToast).not.toHaveBeenCalled();
                 }));
                 it('with Deny', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     component.setCanEdit();
                     tick();
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});
@@ -244,7 +247,7 @@ describe('Record View component', function() {
                 }));
             });
             it('when evaluateRequest rejects', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.rejectWith('Error message');
+                policyEnforcementStub.evaluateRequest.and.returnValue(throwError('Error message'));
                 component.setCanEdit();
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});

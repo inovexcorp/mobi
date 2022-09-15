@@ -23,8 +23,6 @@
 import { NgModule } from '@angular/core';
 import { MatChipsModule, MatDividerModule, MatButtonToggleModule, MatExpansionModule, MatTooltipModule } from '@angular/material';
 import { MatSelectModule } from '@angular/material/select';
-import { downgradeComponent } from '@angular/upgrade/static';
-import * as angular from 'angular';
 
 import { SharedModule } from '../shared/shared.module';
 import { CreateBranchModal } from './components/createBranchModal/createBranchModal.component';
@@ -98,22 +96,3 @@ import { YateComponent } from './components/yate/yate.component';
     ]
 })
 export class ShapesGraphEditorModule {}
-
-angular.module('shapes-graph-editor', [])
-    .directive('newShapesGraphRecordModal', downgradeComponent({component: NewShapesGraphRecordModalComponent}) as angular.IDirectiveFactory)
-    .directive('shapesGraphDetailsComponent', downgradeComponent({component: ShapesGraphDetailsComponent}) as angular.IDirectiveFactory)
-    .directive('uploadRecordModal', downgradeComponent({component: UploadRecordModalComponent}) as angular.IDirectiveFactory)
-    .directive('downloadRecordModal', downgradeComponent({component: DownloadRecordModalComponent}) as angular.IDirectiveFactory)
-    .directive('commitModal', downgradeComponent({component: CommitModalComponent}) as angular.IDirectiveFactory)
-    .directive('editorBranchSelect', downgradeComponent({component: EditorBranchSelectComponent}) as angular.IDirectiveFactory)
-    .directive('editorRecordSelect', downgradeComponent({component: EditorRecordSelectComponent}) as angular.IDirectiveFactory)
-    .directive('editorTopBar', downgradeComponent({component: EditorTopBarComponent}) as angular.IDirectiveFactory)
-    .directive('shapesGraphEditorPage', downgradeComponent({component: ShapesGraphEditorPageComponent}) as angular.IDirectiveFactory)
-    .directive('shapesGraphChangesPage', downgradeComponent({component: ShapesGraphChangesPageComponent}) as angular.IDirectiveFactory)
-    .directive('shapesGraphMergePage', downgradeComponent({component: ShapesGraphMergePageComponent}) as angular.IDirectiveFactory)
-    .directive('staticIriLimited', downgradeComponent({component: StaticIriLimitedComponent}) as angular.IDirectiveFactory)
-    .directive('shapesGraphPropertiesBlock', downgradeComponent({component: ShapesGraphPropertiesBlockComponent}) as angular.IDirectiveFactory)
-    .directive('shapesGraphPropertyValues', downgradeComponent({component: ShapesGraphPropertyValuesComponent}) as angular.IDirectiveFactory)
-    .directive('createBranchModal', downgradeComponent({component: CreateBranchModal}) as angular.IDirectiveFactory)
-    .directive('createTagModal', downgradeComponent({component: CreateTagModal}) as angular.IDirectiveFactory)
-    .directive('yate', downgradeComponent({component: YateComponent}) as angular.IDirectiveFactory);

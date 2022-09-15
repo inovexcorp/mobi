@@ -20,11 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { get, find } from 'lodash';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class catalog.EntityPublisherComponent
@@ -52,7 +53,7 @@ export class EntityPublisherComponent {
         return this._entity;
     }
 
-    constructor(public um: UserManagerService, @Inject('utilService') public util) {}
+    constructor(public um: UserManagerService, public util: UtilService) {}
 
     getPublisherName(entity: JSONLDObject): string {
         const publisherId = this.util.getDctermsId(entity, 'publisher');

@@ -20,17 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
-import {FormControl, FormGroup} from '@angular/forms';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {FormGroup} from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material';
 import { Observable } from 'rxjs';
 import { debounceTime, finalize, map, startWith, switchMap } from 'rxjs/operators';
 
 import { DCTERMS } from '../../../prefixes';
 import { DatasetManagerService } from '../../services/datasetManager.service';
+import {DiscoverStateService} from '../../services/discoverState.service';
+import { UtilService } from '../../services/util.service';
 
 import './datasetSelect.component.scss';
-import {DiscoverStateService} from "../../services/discoverState.service";
 
 interface DatasetPreview {
     id: string,
@@ -46,12 +47,11 @@ export class DatasetSelectComponent implements OnInit {
 
     @Input() parentForm: FormGroup;
     @Input() recordId: string;
-    @Output() recordIdChange = new EventEmitter<{}>();
+    @Output() recordIdChange = new EventEmitter<{recordId: string, recordTitle: string}>();
 
     filteredDatasets: Observable<DatasetPreview[]>;
 
-    constructor(private dam: DatasetManagerService, public state: DiscoverStateService,
-                @Inject('utilService') private util) {}
+    constructor(private dam: DatasetManagerService, public state: DiscoverStateService, private util: UtilService) {}
 
     ngOnInit(): void {
         this.resetSearch();

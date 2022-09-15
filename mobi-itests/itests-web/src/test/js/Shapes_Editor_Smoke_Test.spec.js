@@ -55,7 +55,7 @@ module.exports = {
             .waitForElementVisible('shapes-graph-details')
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
-            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
             .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
             .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
@@ -98,7 +98,7 @@ module.exports = {
             .assert.visible('mat-chip.uncommitted')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(5)
         browser
-            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            .assert.not.elementPresent('div.toast-title')
             .click('editor-top-bar button.changes')
             .waitForElementVisible('shapes-graph-changes-page')
             .waitForElementVisible('xpath','//shapes-graph-changes-page//button//span[contains(text(), "Remove All Changes")]')
@@ -140,6 +140,7 @@ module.exports = {
             .click('upload-record-modal button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
+            .waitForElementNotVisible('div.toast-title')
             .pause(1000)
             .click('button.commit')
             .sendKeys('commit-modal textarea', 'A conflict commit on master')
@@ -236,7 +237,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('xpath', '//div[@id="toast-container"]')
-            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            .waitForElementNotVisible('xpath', '//div[@id="toast-container"]')
             .click('editor-branch-select mat-form-field mat-icon')
             .pause(3000)
             .useXpath()

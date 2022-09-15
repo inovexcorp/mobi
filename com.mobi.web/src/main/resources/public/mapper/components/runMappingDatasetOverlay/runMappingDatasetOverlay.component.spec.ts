@@ -31,7 +31,8 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { skip } from 'rxjs/operators';
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { DCTERMS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { Difference } from '../../../shared/models/difference.class';
@@ -39,6 +40,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { RunMappingDatasetOverlayComponent } from './runMappingDatasetOverlay.component';
 
 describe('Run Mapping Dataset Overlay component', function() {
@@ -49,7 +51,7 @@ describe('Run Mapping Dataset Overlay component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error message';
     const recordId = 'recordId';
@@ -80,7 +82,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
                 MockProvider(DatasetManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -94,7 +96,7 @@ describe('Run Mapping Dataset Overlay component', function() {
         delimitedManagerStub = TestBed.get(DelimitedManagerService);
         datasetManagerStub = TestBed.get(DatasetManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         datasetManagerStub.getDatasetRecords.and.returnValue(of(new HttpResponse<JSONLDObject[][]>({body: [[record]]})));
         datasetManagerStub.getRecordFromArray.and.returnValue(record);

@@ -21,19 +21,24 @@
  * #L%
  */
 
+import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
+import { MockProvider } from 'ng-mocks';
+import { throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../test/ts/Shared';
-import { HelperService } from './helper.service';
+import { cleanStylesFromDOM } from '../../../../../test/ts/Shared';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { UtilService } from './util.service';
 import { PolicyManagerService } from './policyManager.service';
 
 describe('Policy Manager service', function() {
     let service: PolicyManagerService;
-    let utilStub;
     let httpMock: HttpTestingController;
-    let helper: HelperService;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+
     const error = 'Error Message';
 
     configureTestSuite(function() {
@@ -41,41 +46,54 @@ describe('Policy Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 PolicyManagerService,
-                HelperService,
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
+                MockProvider(ProgressSpinnerService)
             ]
         });
     });
 
     beforeEach(function() {
         service = TestBed.get(PolicyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         httpMock = TestBed.get(HttpTestingController);
-        helper = TestBed.get(HelperService);
+        progressSpinnerStub = TestBed.get(ProgressSpinnerService);
 
-        spyOn(helper, 'createHttpParams').and.callThrough();
-        utilStub.rejectError.and.callFake(() => Promise.reject(error));
+        progressSpinnerStub.track.and.callFake(ob => ob);
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(() => throwError(error));
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
         utilStub = null;
-        httpMock = null;
-        helper = null;
-    });
-
-    afterEach(() => {
+        progressSpinnerStub = null;
         httpMock.verify();
+        httpMock = null;
     });
 
     describe('should retrieve a list of policies', function() {
         it('unless an error occurs', function(done) {
             service.getPolicies()
-                .then(() => fail('Promise should have rejected'), response => {
+                .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
                 });
             const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
@@ -83,9 +101,9 @@ describe('Policy Manager service', function() {
         });
         it('successfully', function(done) {
             service.getPolicies()
-                .then(response => {
+                .subscribe(response => {
                     expect(response).toEqual([]);
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
@@ -98,9 +116,9 @@ describe('Policy Manager service', function() {
                 relatedAction: 'action'
             };
             service.getPolicies(config.relatedResource, config.relatedSubject, config.relatedAction)
-                .then(response => {
+                .subscribe(response => {
                     expect(response).toEqual([]);
-                    expect(helper.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalled();
                     done();
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
@@ -113,9 +131,8 @@ describe('Policy Manager service', function() {
     describe('should retrieve a policy', function() {
         it('unless an error occurs', function(done) {
             service.getPolicy('id')
-                .then(() => fail('Promise should have rejected'), response => {
+                .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
                 });
             const request = httpMock.expectOne({url: service.prefix + '/id', method: 'GET'});
@@ -123,7 +140,7 @@ describe('Policy Manager service', function() {
         });
         it('successfully', function(done) {
             service.getPolicy('id')
-                .then(response => {
+                .subscribe(response => {
                     expect(response).toEqual({});
                     done();
                 }, () => fail('Promise should have resolved'));
@@ -137,9 +154,8 @@ describe('Policy Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             service.updatePolicy(this.policy)
-                .then(() => fail('Promise should have rejected'), response => {
+                .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
                     done();
                 });
             const request = httpMock.expectOne({url: service.prefix + '/' + this.policy.PolicyId, method: 'PUT'});
@@ -148,7 +164,7 @@ describe('Policy Manager service', function() {
         });
         it('when resolved', function(done) {
             service.updatePolicy(this.policy)
-                .then(() => {
+                .subscribe(() => {
                     done();
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne({url: service.prefix + '/' + this.policy.PolicyId, method: 'PUT'});

@@ -21,8 +21,6 @@
  * #L%
  */
 import { NgModule } from '@angular/core';
-import { downgradeComponent, downgradeInjectable } from '@angular/upgrade/static';
-import * as angular from 'angular';
 
 import { SharedModule } from '../../shared/shared.module';
 import { DiscoverSharedModule } from '../discoverShared.module';
@@ -78,18 +76,3 @@ import { NewInstancePropertyOverlayComponent } from './components/newInstancePro
     ]
 })
 export class ExploreModule {}
-
-angular.module('explore', [])
-    .factory('exploreUtilsService', downgradeInjectable(ExploreUtilsService))
-    .directive('classCards', downgradeComponent({component: ClassCardsComponent}) as angular.IDirectiveFactory)
-    .directive('classBlock', downgradeComponent({component: ClassesDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('exploreTab', downgradeComponent({component: ExploreTabComponent}) as angular.IDirectiveFactory)
-    .directive('instanceCards', downgradeComponent({component: InstanceCardsComponent}) as angular.IDirectiveFactory)
-    .directive('instancesDisplay', downgradeComponent({component: InstancesDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('newInstanceClassOverlay', downgradeComponent({component: NewInstanceClassOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('classBlockHeader', downgradeComponent({component: ClassBlockHeaderComponent}) as angular.IDirectiveFactory)
-    .directive('instanceView', downgradeComponent({component: InstanceViewComponent}) as angular.IDirectiveFactory)
-    .directive('instanceEditor', downgradeComponent({component: InstanceEditorComponent}) as angular.IDirectiveFactory)
-    .directive('instanceForm', downgradeComponent({component: InstanceFormComponent}) as angular.IDirectiveFactory)
-    .directive('instanceCreatorComponent', downgradeComponent({component: InstanceCreatorComponent}) as angular.IDirectiveFactory)
-    .directive('newInstancePropertyOverlay', downgradeComponent({component: NewInstancePropertyOverlayComponent}) as angular.IDirectiveFactory)

@@ -21,7 +21,9 @@
  * #L%
  */
 import { Pipe, PipeTransform } from '@angular/core';
+
 import { SplitIRI } from '../models/splitIRI.interface';
+
 @Pipe({
     name: 'splitIRI'
 })

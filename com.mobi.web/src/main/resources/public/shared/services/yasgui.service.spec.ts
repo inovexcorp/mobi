@@ -28,7 +28,6 @@ import { of } from 'rxjs';
 
 import { 
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../test/ts/Shared';
 import { 
     yasguiMockResponse, 
@@ -37,6 +36,7 @@ import {
     getJsonLDResponseText 
 } from './yasguiMockResponse';
 import { DiscoverStateService } from './discoverState.service';
+import { UtilService } from './util.service';
 import { YasguiService } from './yasgui.service';
 
 describe('YASGUI service', function() {
@@ -53,7 +53,7 @@ describe('YASGUI service', function() {
             providers: [
                 YasguiService,
                 MockProvider(DiscoverStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }

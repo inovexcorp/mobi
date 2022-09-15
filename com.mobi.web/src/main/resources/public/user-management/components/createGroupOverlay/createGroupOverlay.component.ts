@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { map, without } from 'lodash';
@@ -29,6 +29,8 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
  * @class user-management.CreateGroupOverlayComponent
@@ -51,8 +53,7 @@ export class CreateGroupOverlayComponent implements OnInit {
     });
 
     constructor(private dialogRef: MatDialogRef<CreateGroupOverlayComponent>, private fb: FormBuilder,
-        private um: UserManagerService, @Inject('loginManagerService') private lm,
-        @Inject('utilService') private util) {}
+        private um: UserManagerService, private lm: LoginManagerService, private util: UtilService) {}
     
     ngOnInit(): void {
         this.members = [this.lm.currentUser];

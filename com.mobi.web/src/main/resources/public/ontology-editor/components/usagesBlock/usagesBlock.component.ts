@@ -21,7 +21,7 @@
  * #L%
  */
 import { forEach, get, chunk, union } from 'lodash';
-import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
@@ -42,7 +42,7 @@ import './usagesBlock.component.scss';
     selector: 'usages-block',
     templateUrl: './usagesBlock.component.html'
 })
-export class UsagesBlockComponent implements OnInit, OnChanges {
+export class UsagesBlockComponent implements OnInit, OnChanges, OnDestroy {
     @Input() usages;
 
     size = 100;
@@ -53,16 +53,23 @@ export class UsagesBlockComponent implements OnInit, OnChanges {
     shown = 0;
     chunks = 0;
 
-    constructor(public os: OntologyStateService) {}
+    @ViewChild('usagesContainer') usagesContainer: ElementRef;
 
+    constructor(public os: OntologyStateService) {}
+    
     ngOnInit(): void {
-        this.id = 'usages-' + this.os.getActiveKey() + '-' + this.os.listItem.versionedRdfRecord.recordId;
+        this.os.getActivePage().usagesElement = this.usagesContainer;
     }
     ngOnChanges(): void {
         this.size = 100;
         this.index = 0;
         this.shown = 0;
         this.results = this.getResults();
+    }
+    ngOnDestroy(): void {
+        if (this.os.listItem) {
+            this.os.getActivePage().usagesElement = undefined;
+        }
     }
     getMoreResults(): void {
         this.index++;

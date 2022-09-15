@@ -21,10 +21,9 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatSelectionListChange } from '@angular/material';
 import { get, find, isEqual, has, uniq, map, set } from 'lodash';
-import { from } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
 import { CATALOG, DCTERMS, DELIM, ONTOLOGYEDITOR } from '../../../prefixes';
@@ -38,6 +37,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './mappingConfigOverlay.component.scss';
 
@@ -100,7 +100,7 @@ export class MappingConfigOverlayComponent implements OnInit {
 
     constructor(private dialog: MatDialogRef<MappingConfigOverlayComponent>, private spinnerSvc: ProgressSpinnerService,
         public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
-        @Inject('utilService') public util, private om: OntologyManagerService) {}
+        public util: UtilService, private om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');

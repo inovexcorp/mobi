@@ -30,8 +30,6 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 
 import {
-    mockUtil,
-    mockPolicyEnforcement,
     cleanStylesFromDOM} from '../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
@@ -42,17 +40,19 @@ import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
-import { ShapesGraphStateService } from './shapesGraphState.service';
 import { PolicyManagerService } from './policyManager.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { StateManagerService } from './stateManager.service';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { UtilService } from './util.service';
+import { ShapesGraphStateService } from './shapesGraphState.service';
 
 describe('Shapes Graph State service', function() {
     let service: ShapesGraphStateService;
     let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
-    let policyEnforcementStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     const catalogId = 'catalog';
 
@@ -65,8 +65,8 @@ describe('Shapes Graph State service', function() {
                 MockProvider(PolicyManagerService),
                 MockProvider(StateManagerService),
                 MockProvider(ShapesGraphManagerService),
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
             ]
         });
     });
@@ -76,7 +76,9 @@ describe('Shapes Graph State service', function() {
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         service = TestBed.get(ShapesGraphStateService);
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
         service.listItem = new ShapesGraphListItem();
         this.branch = {
             '@id': 'branch123',
@@ -84,7 +86,7 @@ describe('Shapes Graph State service', function() {
             [DCTERMS + 'title']: [{'@value': 'MASTER'}]
         };
         this.branches = [this.branch];
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
             return get(obj, `['${DCTERMS}${prop}'][0]['@value']`, '');
         });
@@ -159,7 +161,6 @@ describe('Shapes Graph State service', function() {
             describe('and create the state', function() {
                describe('successfully', function() {
                    it('with a success toast', async function() {
-                    //    shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo('theId');
                        await service.uploadShapesGraph(this.rdfUpload);
                        expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
@@ -183,7 +184,6 @@ describe('Shapes Graph State service', function() {
                        expect(service.list).toContain(service.listItem);
                    });
                    it('without a success toast', async function() {
-                    //    shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo('theId');
                        await service.uploadShapesGraph(this.rdfUpload, false);
                        expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
                        expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
@@ -309,7 +309,7 @@ describe('Shapes Graph State service', function() {
             it('successfully', async function() {
                 shapesGraphManagerStub.getShapesGraphIRI.and.resolveTo('theId');
                 shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo([{'@id': 'theId'}]);
-                const updateShapesGraphMetadataSpy = spyOn(service, 'updateShapesGraphMetadata').and.resolveTo();
+                spyOn(service, 'updateShapesGraphMetadata').and.resolveTo();
                 await service.openShapesGraph(this.selectedRecord);
                 expect(this.catalogDetailsSpy).toHaveBeenCalledWith(this.selectedRecord.recordId);
                 expect(service.listItem.versionedRdfRecord).toEqual({
@@ -353,7 +353,7 @@ describe('Shapes Graph State service', function() {
             shapesGraphManagerStub.getShapesGraphIRI.and.resolveTo('theId');
             shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo([{'@id': 'theId'}]);
             shapesGraphManagerStub.getShapesGraphContent.and.resolveTo('<urn:testClass> a <http://www.w3.org/2002/07/owl#Class>;');
-            policyEnforcementStub.evaluateRequest.and.resolveTo('Permit');
+            policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
         });
         it('successfully', async function() {
             await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
@@ -366,7 +366,7 @@ describe('Shapes Graph State service', function() {
             expect(service.list).toContain(service.listItem);
         });
         it('when the user does not have permission to modify', async function() {
-            policyEnforcementStub.evaluateRequest.and.resolveTo('Deny');
+            policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
             await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
             expect(service.listItem.shapesGraphId).toEqual('theId');
             expect(service.listItem.metadata['@id']).toEqual('theId');

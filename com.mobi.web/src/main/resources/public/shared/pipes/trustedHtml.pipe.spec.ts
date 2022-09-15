@@ -24,6 +24,7 @@ import { TrustedHtmlPipe } from './trustedHtml.pipe';
 import { TestBed, inject } from "@angular/core/testing";
 import { DomSanitizer } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
+
 describe('Trusted HTML pipe', () => {
     let pipe:TrustedHtmlPipe;
     let pipeMode = null;

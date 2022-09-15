@@ -30,10 +30,11 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockPropertyManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { AnnotationOverlayComponent } from '../annotationOverlay/annotationOverlay.component';
 import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
 import { AnnotationBlockComponent } from './annotationBlock.component';
@@ -44,7 +45,7 @@ describe('Annotation Block component', function() {
     let fixture: ComponentFixture<AnnotationBlockComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let propertyManagerStub;
+    let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
 
     const entityIRI = 'entity';
 
@@ -64,7 +65,7 @@ describe('Annotation Block component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
+                MockProvider(PropertyManagerService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -77,7 +78,7 @@ describe('Annotation Block component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
-        propertyManagerStub = TestBed.get('propertyManagerService');
+        propertyManagerStub = TestBed.get(PropertyManagerService);
         matDialog = TestBed.get(MatDialog);
 
         ontologyStateStub.listItem = new OntologyListItem();

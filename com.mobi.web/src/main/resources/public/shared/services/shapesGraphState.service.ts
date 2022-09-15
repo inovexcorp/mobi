@@ -38,6 +38,8 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { BRANCHID, COMMITID, SHAPESGRAPHSTATE, TAGID, GRAPHEDITOR, DCTERMS, CATALOG } from '../../prefixes';
 import { StateManagerService } from './stateManager.service';
 import { PolicyManagerService } from './policyManager.service';
+import { UtilService } from './util.service';
+import { PolicyEnforcementService } from './policyEnforcement.service';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -49,8 +51,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
 
     constructor(protected sm: StateManagerService,
                 protected cm: CatalogManagerService,
-                @Inject('utilService') protected util,
-                @Inject('policyEnforcementService') protected pep,
+                protected util: UtilService,
+                protected pep: PolicyEnforcementService,
                 private pm: PolicyManagerService,
                 private sgm: ShapesGraphManagerService) {
         super(SHAPESGRAPHSTATE,
@@ -201,7 +203,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
                     resourceId: this.listItem.versionedRdfRecord.recordId,
                     actionId: this.pm.actionModify
                 };
-                return this.pep.evaluateRequest(modifyRequest);
+                return this.pep.evaluateRequest(modifyRequest).pipe(first()).toPromise();
             })
             .then(decision => {
                 const modifyMasterRequest: any = {
@@ -210,7 +212,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
                     actionAttrs: { [CATALOG + 'branch']: this.listItem.masterBranchIri }
                 };
                 this.listItem.userCanModify = decision === this.pep.permit;
-                return this.pep.evaluateRequest(modifyMasterRequest);
+                return this.pep.evaluateRequest(modifyMasterRequest).pipe(first()).toPromise();
             })
             .then(decision => {
                 this.listItem.userCanModifyMaster = decision === this.pep.permit;

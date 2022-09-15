@@ -25,7 +25,7 @@
         <div class="search pb-1">
             <search-bar class="w-100" [bindModel]="os.listItem.editorTabStates.search.searchText" (bindModelChange)="searchChanged($event)" (submitEvent)="onKeyup()"></search-bar>
         </div>
-        <div class="flex-1 vertical-scroll" targeted-spinner="os.listItem.editorTabStates.search.id">
+        <div class="flex-1 vertical-scroll" #searchResults>
             <error-display *ngIf="os.listItem.editorTabStates.search.errorMessage">{{os.listItem.editorTabStates.search.errorMessage}}</error-display>
             <info-message *ngIf="os.listItem.editorTabStates.search.infoMessage">{{os.listItem.editorTabStates.search.infoMessage}}</info-message>
             <warning-message *ngIf="os.listItem.editorTabStates.search.warningMessage">{{os.listItem.editorTabStates.search.warningMessage}}</warning-message>
@@ -52,17 +52,17 @@
                 </div>
             </div>
             <div class="property-values mt-3" 
-            *ngFor="let selected of os.listItem.editorTabStates.search.selected | keyvalue;trackBy:trackByKey" disable-animate>
+            *ngFor="let selected of os.listItem.editorTabStates.search.selected | keyvalue;trackBy:trackByKey">
                 <div class="prop-header d-flex align-items-center clearfix">
-                    <p class="text text-truncate m-0" title="{{selected.key}}"><span [innerHtml]="os.getEntityNameByListItem(selected.key, os.listItem) | highlightText: os.listItem.editorTabStates.search.highlightText | safeHtml: 'html'"></span></p>
-                    <small class="ml-1 text-muted text-truncate flex-1">&lt;<span [innerHtml]="selected.key | highlightText: os.listItem.editorTabStates.search.highlightText | safeHtml: 'html'"></span>&gt;</small>
+                    <p class="text text-truncate m-0" title="{{selected.key}}"><span>{{os.getEntityNameByListItem(selected.key, os.listItem)}}</span></p>
+                    <small class="ml-1 text-muted text-truncate flex-1">&lt;<span>{{selected.key}}</span>&gt;</small>
                 </div>
                 <div class="prop-value-container p-1 ml-3 mt-1" *ngFor="let item of selected.value">
                     <span class="value-display-wrapper">
-                        <span *ngIf="os.isLinkable(item['@id'])" class="value-display"><span [innerHtml]="os.getEntityNameByListItem(item['@id']) | highlightText: os.listItem.editorTabStates.search.highlightText | safeHtml: 'html'"></span> <small>&lt;<a (click)="os.goTo(item['@id'])" [innerHtml]="item['@id'] | highlightText:os.listItem.editorTabStates.search.highlightText | safeHtml: 'html'"></a>&gt;</small></span>
-                        <span *ngIf="!os.isLinkable(item['@id'])" class="value-display"><span [innerHtml]="(os.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlightText: os.listItem.editorTabStates.search.highlightText | safeHtml: 'html'"></span>
-                            <small *ngIf="item['@type']" class="text-muted type-display">[type: <span [innerHtml]="item['@type'] | prefixation | highlightText:os.listItem.editorTabStates.search.highlightText | safeHtml: 'html'"></span>]</small>
-                            <small *ngIf="item['@language']" class="text-muted type-display">[language: <span [innerHtml]="item['@language'] | prefixation | highlightText:os.listItem.editorTabStates.search.highlightText | safeHtml: 'html'"></span>]</small>
+                        <span *ngIf="os.isLinkable(item['@id'])" class="value-display"><span [innerHtml]="os.getEntityNameByListItem(item['@id']) | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span> <small>&lt;<a (click)="os.goTo(item['@id'])" [innerHtml]="item['@id'] | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></a>&gt;</small></span>
+                        <span *ngIf="!os.isLinkable(item['@id'])" class="value-display"><span [innerHtml]="(os.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>
+                            <small *ngIf="item['@type']" class="text-muted type-display">[type: <span [innerHtml]="item['@type'] | prefixation | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>]</small>
+                            <small *ngIf="item['@language']" class="text-muted type-display">[language: <span [innerHtml]="item['@language'] | prefixation | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>]</small>
                         </span>
                     </span>
                 </div>

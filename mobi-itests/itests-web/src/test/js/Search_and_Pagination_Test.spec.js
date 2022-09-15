@@ -55,12 +55,12 @@ module.exports = {
             .useXpath()
             .click('//div[contains(@class, "upload-snackbar")]//div//button//mat-icon[text()[contains(.,"close")]]')
             .waitForElementNotPresent('//div[contains(@class, "upload-snackbar")]')
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]');
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]')
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useCss()
             .waitForElementVisible('shapes-graph-editor-page')
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
         browser.globals.wait_for_no_spinners(browser);
         browser
             .waitForElementVisible('button.upload-button')
@@ -84,7 +84,7 @@ module.exports = {
     'Step 5: Validate Pagination With Unconfirmed Search Text': function (browser) {
         browser
             .useCss()
-            .setValue('open-ontology-tab input.ontology-search', 'test')
+            .setValue('open-ontology-tab search-bar input', 'test')
             .pause(1000)
             .click('open-ontology-tab button.mat-paginator-navigation-next');
         browser.globals.wait_for_no_spinners(browser);
@@ -100,9 +100,9 @@ module.exports = {
             .click('open-ontology-tab button.mat-paginator-navigation-previous');
         browser.globals.wait_for_no_spinners(browser);
         browser
-            .waitForElementVisible('open-ontology-tab input.ontology-search')
-            .setValue('open-ontology-tab input.ontology-search', 'test-local-imports')
-            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+            .waitForElementVisible('open-ontology-tab search-bar input')
+            .setValue('open-ontology-tab search-bar input', 'test-local-imports')
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
         browser.globals.wait_for_no_spinners(browser);
         browser
             .useXpath()

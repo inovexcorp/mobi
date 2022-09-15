@@ -28,20 +28,20 @@ import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 
 import {
-    mockProvManager,
-    mockUtil,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { ActivityTitleComponent } from './activityTitle.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { ProvManagerService } from '../../../shared/services/provManager.service';
 
 describe('Activity Title component', function() {
     let component: ActivityTitleComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ActivityTitleComponent>;
-    let provManagerStub;
-    let utilStub;
+    let provManagerStub: jasmine.SpyObj<ProvManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
 
     configureTestSuite(function() {
@@ -51,8 +51,8 @@ describe('Activity Title component', function() {
                 ActivityTitleComponent
             ],
             providers: [
-                { provide: 'provManagerService', useClass: mockProvManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(ProvManagerService),
+                MockProvider(UtilService),
                 MockProvider(UserManagerService)
             ]
         });
@@ -62,8 +62,8 @@ describe('Activity Title component', function() {
         fixture = TestBed.createComponent(ActivityTitleComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        provManagerStub = TestBed.get('provManagerService');
-        utilStub = TestBed.get('utilService');
+        provManagerStub = TestBed.get(ProvManagerService);
+        utilStub = TestBed.get(UtilService);
         userManagerStub = TestBed.get(UserManagerService);
 
         provManagerStub.activityTypes = [{type: 'type1', word: 'word1', pred: 'pred'}, {type: 'type', word: 'word', pred: 'pred'}];

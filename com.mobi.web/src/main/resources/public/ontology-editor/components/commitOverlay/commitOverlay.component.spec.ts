@@ -31,12 +31,13 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { CommitOverlayComponent } from './commitOverlay.component';
 
 describe('Commit Overlay component', function() {
@@ -46,7 +47,6 @@ describe('Commit Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CommitOverlayComponent>>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub;
 
     const error = 'Error';
     const catalogId = 'catalogId';
@@ -73,7 +73,7 @@ describe('Commit Overlay component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -86,7 +86,6 @@ describe('Commit Overlay component', function() {
         ontologyStateStub = TestBed.get(OntologyStateService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         ontologyStateStub.listItem = new OntologyListItem();
@@ -101,7 +100,6 @@ describe('Commit Overlay component', function() {
         matDialogRef = null;
         ontologyStateStub = null;
         catalogManagerStub = null;
-        utilStub = null;
     });
 
     it('should initialize correctly', function() {

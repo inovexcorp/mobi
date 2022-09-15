@@ -1,19 +1,6 @@
-import { ShapesGraphStateService } from "../../../shared/services/shapesGraphState.service";
-import { ShowPropertiesPipe } from "../../../shared/pipes/showProperties.pipe";
-import { ShapesGraphManagerService } from "../../../shared/services/shapesGraphManager.service";
-import { mockPropertyManager, cleanStylesFromDOM } from "../../../../../../test/ts/Shared";
-import { ShapesGraphPropertyValuesComponent } from "../shapesGraphPropertyValues/shapesGraphPropertyValues.component";
-import { ShapesGraphPropertiesBlockComponent } from "./shapesGraphPropertiesBlock.component";
-import { TestBed, ComponentFixture } from "@angular/core/testing";
-import { configureTestSuite } from "ng-bullet";
-import { DebugElement } from "@angular/core";
-import { MockProvider, MockComponent } from "ng-mocks";
-import { VersionedRdfListItem } from "../../../shared/models/versionedRdfListItem.class";
-import { By } from "@angular/platform-browser";
-
 /*-
- * #%L
- * com.mobi.web
+* #%L
+* com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -32,14 +19,27 @@ import { By } from "@angular/platform-browser";
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+*/
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { configureTestSuite } from 'ng-bullet';
+import { DebugElement } from '@angular/core';
+import { MockProvider, MockComponent } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ShowPropertiesPipe } from '../../../shared/pipes/showProperties.pipe';
+import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { ShapesGraphPropertyValuesComponent } from '../shapesGraphPropertyValues/shapesGraphPropertyValues.component';
+import { ShapesGraphPropertiesBlockComponent } from './shapesGraphPropertiesBlock.component';
+
 describe('Shapes Graph Properties Block component', function() {
-    
     let component: ShapesGraphPropertiesBlockComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphPropertiesBlockComponent>;
     let shapesGraphStateStub;
-    let propertyManagerStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -52,7 +52,7 @@ describe('Shapes Graph Properties Block component', function() {
                 ShowPropertiesPipe,
                 MockProvider(ShapesGraphStateService),
                 MockProvider(ShapesGraphManagerService),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager }
+                MockProvider(PropertyManagerService)
             ]
         });
     });
@@ -64,7 +64,6 @@ describe('Shapes Graph Properties Block component', function() {
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
         shapesGraphStateStub.listItem = new VersionedRdfListItem();
         shapesGraphStateStub.listItem.metadata = {};
-        propertyManagerStub = TestBed.get('propertyManagerService');
 
         component.shapesGraph = {
             'prop1': [{'@id': 'value1'}],
@@ -79,7 +78,6 @@ describe('Shapes Graph Properties Block component', function() {
         component = null;
         element = null;
         fixture = null;
-        propertyManagerStub = null;
         shapesGraphStateStub = null;
     });
 
@@ -95,7 +93,6 @@ describe('Shapes Graph Properties Block component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.shapes-graph-properties-block')).length).toEqual(1);
-            expect(element.queryAll(By.css('.annotation-block')).length).toEqual(1);
         });
         it('with a .section-header', function() {
             expect(element.queryAll(By.css('.section-header')).length).toEqual(1);

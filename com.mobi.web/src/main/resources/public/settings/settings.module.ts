@@ -20,9 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
 import { NgModule } from '@angular/core';
-import { downgradeComponent } from '@angular/upgrade/static';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -31,6 +29,11 @@ import { PasswordTabComponent } from './components/passwordTab/passwordTab.compo
 import { ProfileTabComponent } from './components/profileTab/profileTab.component';
 import { SettingsPageComponent } from './components/settingsPage/settingsPage.component';
 
+/**
+ * @namespace settings
+ *
+ * The `settings` module provides components that make up the Settings module in the Mobi application.
+ */
 @NgModule({
     imports: [
         SharedModule
@@ -48,14 +51,3 @@ import { SettingsPageComponent } from './components/settingsPage/settingsPage.co
     ]
 })
 export class SettingsModule {}
-
-/**
- * @namespace settings
- *
- * The `settings` module provides components that make up the Settings module in the Mobi application.
- */
-angular.module('settings', [])
-    .directive('groupTab', downgradeComponent({component: GroupTabComponent}) as angular.IDirectiveFactory)
-    .directive('passwordTab', downgradeComponent({component: PasswordTabComponent}) as angular.IDirectiveFactory)
-    .directive('profileTab', downgradeComponent({component: ProfileTabComponent}) as angular.IDirectiveFactory)
-    .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory)

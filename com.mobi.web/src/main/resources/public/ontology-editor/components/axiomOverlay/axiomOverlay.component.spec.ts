@@ -30,7 +30,7 @@ import { of } from 'rxjs';
 import { invert, values } from 'lodash';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
-import { cleanStylesFromDOM, mockManchesterConverter, mockPropertyManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { SharedModule } from '../../../shared/shared.module';
@@ -38,6 +38,9 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { RDFS } from '../../../prefixes';
 import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { AxiomOverlayComponent } from './axiomOverlay.component';
 
 describe('Axiom Overlay component', function() {
@@ -48,9 +51,9 @@ describe('Axiom Overlay component', function() {
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<AxiomOverlayComponent>>;
     let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
-    let manchesterConverterStub;
-    let propertyServiceStub;
-    let utilStub;
+    let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
+    let propertyServiceStub: jasmine.SpyObj<PropertyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const data = {axiomList: []};
     const axiom = {iri: 'axiom', valuesKey: 'list'};
@@ -66,9 +69,9 @@ describe('Axiom Overlay component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(SplitIRIPipe),
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'manchesterConverterService', useClass: mockManchesterConverter },
+                MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
+                MockProvider(ManchesterConverterService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) }
             ]
@@ -83,9 +86,9 @@ describe('Axiom Overlay component', function() {
         ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
         splitIriStub = TestBed.get (SplitIRIPipe);
         matDialogRef = TestBed.get(MatDialogRef);
-        utilStub = TestBed.get('utilService');
-        propertyServiceStub = TestBed.get('propertyManagerService');
-        manchesterConverterStub = TestBed.get('manchesterConverterService');
+        utilStub = TestBed.get(UtilService);
+        propertyServiceStub = TestBed.get(PropertyManagerService);
+        manchesterConverterStub = TestBed.get(ManchesterConverterService);
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
         ontologyStateServiceStub.listItem.selected = {
@@ -348,7 +351,7 @@ describe('Axiom Overlay component', function() {
         component.axiom = axiom;
         component.values = ['value'];
         spyOn(component, 'addAxiom');
-        // fixture.detectChanges();
+        fixture.detectChanges();
 
         const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         button.triggerEventHandler('click', null);

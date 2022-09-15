@@ -27,11 +27,11 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
-    mockLoginManager,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { GroupTabComponent } from './groupTab.component';
 
 describe('Group Tab component', function() {
@@ -39,7 +39,7 @@ describe('Group Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<GroupTabComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let loginManagerStub;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -48,7 +48,7 @@ describe('Group Tab component', function() {
                 MockComponent(InfoMessageComponent)
             ],
             providers: [
-                { provide: 'loginManagerService', useClass: mockLoginManager },
+                MockProvider(LoginManagerService),
                 MockProvider(UserManagerService)
             ]
         });
@@ -58,7 +58,7 @@ describe('Group Tab component', function() {
         fixture = TestBed.createComponent(GroupTabComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        loginManagerStub = TestBed.get('loginManagerService');
+        loginManagerStub = TestBed.get(LoginManagerService);
         userManagerStub = TestBed.get(UserManagerService);
 
         this.user = 'user';

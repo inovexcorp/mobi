@@ -31,7 +31,6 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { User } from '../../../shared/models/user.interface';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -39,6 +38,7 @@ import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPasswo
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { CreateUserOverlayComponent } from './createUserOverlay.component';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Create User Overlay component', function() {
     let component: CreateUserOverlayComponent;
@@ -66,7 +66,7 @@ describe('Create User Overlay component', function() {
             providers: [
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -133,7 +133,7 @@ describe('Create User Overlay component', function() {
                 });
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.addUser.and.returnValue(Promise.reject('Error Message'));
+                userManagerStub.addUser.and.rejectWith('Error Message');
                 component.add();
                 tick();
                 expect(userManagerStub.addUser).toHaveBeenCalledWith(this.newUser, component.createUserForm.controls.unmaskPassword.value);
@@ -141,12 +141,12 @@ describe('Create User Overlay component', function() {
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.addUser.and.returnValue(Promise.resolve());
+                userManagerStub.addUser.and.resolveTo();
                 component.add();
                 tick();
                 expect(userManagerStub.addUser).toHaveBeenCalledWith(this.newUser, component.createUserForm.controls.unmaskPassword.value);
                 expect(component.errorMessage).toEqual('');
-                expect(matDialogRef.close).toHaveBeenCalled();
+                expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });
     });
@@ -212,13 +212,13 @@ describe('Create User Overlay component', function() {
         const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
         cancelButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(matDialogRef.close).toHaveBeenCalled();
+        expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
     });
     it('should call add when the button is clicked', function() {
         spyOn(component, 'add');
         const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.add).toHaveBeenCalled();
+        expect(component.add).toHaveBeenCalledWith();
     });
 });

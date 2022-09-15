@@ -23,15 +23,14 @@
 import { DebugElement } from '@angular/core';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { get, has, set } from 'lodash';
+import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
-    mockSettingManager,
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { SettingFormComponent } from '../settingForm/settingForm.component';
@@ -39,16 +38,18 @@ import { SettingConstants } from '../../models/settingConstants.class';
 import { SimpleSetting } from '../../models/simpleSetting.class';
 import { SettingUtils } from '../../models/settingUtils.class';
 import { OWL, RDFS, SETTING, SHACL, XSD } from '../../../prefixes';
+import { UtilService } from '../../services/util.service';
+import { SettingManagerService } from '../../services/settingManager.service';
 import { SettingGroupComponent } from './settingGroup.component';
 
 describe('Setting Group component', function() {
     let component: SettingGroupComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SettingGroupComponent>;
-    let settingManagerStub;
+    let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
     let testUserSettings;
     let testSettingsDefinitions;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -61,8 +62,8 @@ describe('Setting Group component', function() {
                 ErrorDisplayComponent
             ],
             providers: [
-                { provide: 'settingManagerService', useClass: mockSettingManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(SettingManagerService),
+                MockProvider(UtilService),
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
@@ -72,8 +73,8 @@ describe('Setting Group component', function() {
         fixture = TestBed.createComponent(SettingGroupComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        settingManagerStub = TestBed.get('settingManagerService');
-        utilStub = TestBed.get('utilService');
+        settingManagerStub = TestBed.get(SettingManagerService);
+        utilStub = TestBed.get(UtilService);
         
         spyOn(SettingUtils, 'isSimpleSetting').and.returnValue(true);
         
@@ -210,9 +211,9 @@ describe('Setting Group component', function() {
               '@id': SETTING + 'hasDataValue'
             } ]
           } ];
-        settingManagerStub.getDefaultNamespace.and.resolveTo(settingManagerStub.defaultNamespace);
-        settingManagerStub.getSettingDefinitions.and.resolveTo({data: testSettingsDefinitions});
-        settingManagerStub.getSettings.and.resolveTo({data: testUserSettings});
+        settingManagerStub.getDefaultNamespace.and.returnValue(of('http://test.com'));
+        settingManagerStub.getSettingDefinitions.and.returnValue(of(testSettingsDefinitions));
+        settingManagerStub.getSettings.and.returnValue(of(testUserSettings));
     });
 
     afterEach(function() {
@@ -238,7 +239,7 @@ describe('Setting Group component', function() {
                     expect(component.settings[SETTING + 'SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserSettings[SETTING + 'SomeSimpleTextPreference']);
                 }));
                 it('when no user settings exist', fakeAsync(function() {
-                    settingManagerStub.getSettings.and.resolveTo({data: []});
+                    settingManagerStub.getSettings.and.returnValue(of({}));
                     component.retrieveSettings();
                     tick();
                     expect(Object.keys(component.settings).length).toEqual(2);
@@ -253,17 +254,17 @@ describe('Setting Group component', function() {
             component.retrieveSettings();
             tick();
             const simpleSetting: SimpleSetting = component.settings[SETTING + 'SomeSimpleBooleanPreference'];
-            settingManagerStub.updateSetting.and.resolveTo();
+            settingManagerStub.updateSetting.and.returnValue(of(null));
             component.updateSetting(simpleSetting);
             expect(settingManagerStub.updateSetting).toHaveBeenCalled();
             expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
         }));
         it('should create a setting', fakeAsync(function() {
-            settingManagerStub.getSettings.and.resolveTo({data: []});
             component.retrieveSettings();
             tick();
             const simpleSetting: SimpleSetting = component.settings[SETTING + 'SomeSimpleBooleanPreference'];
-            settingManagerStub.createUserPreference.and.resolveTo();
+            simpleSetting.topLevelSettingNodeshapeInstanceId = '';
+            settingManagerStub.createSetting.and.returnValue(of(null));
             component.updateSetting(simpleSetting);
             expect(settingManagerStub.updateSetting).not.toHaveBeenCalled();
             expect(settingManagerStub.createSetting).toHaveBeenCalled();
@@ -278,7 +279,7 @@ describe('Setting Group component', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
         }));
         it('when settings are can not be retrieved', fakeAsync(function() {
-            settingManagerStub.getSettings.and.rejectWith('Error message');
+            settingManagerStub.getSettings.and.returnValue(throwError('Error message'));
             component.retrieveSettings();
             tick();
             fixture.detectChanges();

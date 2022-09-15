@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material';
 import { includes, groupBy } from 'lodash';
 import { Observable } from 'rxjs';
@@ -50,10 +50,18 @@ interface PropertyGroup {
     templateUrl: './propSelect.component.html'
 })
 export class PropSelectComponent implements OnInit {
+    private _selectedProp:MappingProperty;
     @Input() isReadOnly: boolean;
     @Input() parentForm: FormGroup;
     @Input() properties: MappingProperty[];
-    @Input() selectedProp: MappingProperty;
+    @Input() set selectedProp (value: MappingProperty) {
+        this._selectedProp = value;
+       if (this.parentForm.get('prop').disabled) {
+           this.parentForm.controls.prop.disable();
+       } else {
+        this.parentForm.controls.prop.enable();
+       }
+    }
 
     @Output() selectedPropChange = new EventEmitter<MappingProperty>();
 
@@ -89,7 +97,10 @@ export class PropSelectComponent implements OnInit {
         return mappingProperty ? mappingProperty.name : '';
     }
     selectProp(event: MatAutocompleteSelectedEvent): void {
-        this.selectedProp = event.option.value;
-        this.selectedPropChange.emit(this.selectedProp);
+        this._selectedProp = event.option.value;
+        this.selectedPropChange.emit(this._selectedProp);
+    }
+    public getSelectedProp () : MappingProperty{
+        return this._selectedProp;
     }
 }

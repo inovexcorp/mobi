@@ -21,13 +21,15 @@
  * #L%
  */
 
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import {FormBuilder, FormControl} from '@angular/forms';
 import { MatDialog } from '@angular/material';
 
 import { CATALOG, POLICY } from '../../../../prefixes';
 import { DatasetManagerService } from '../../../../shared/services/datasetManager.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/newInstanceClassOverlay.component';
@@ -38,7 +40,7 @@ import './classesDisplay.component.scss';
  * @class explore.ClassesDisplayComponent
  *
  * A component that provides a form with a {@link shared.DatasetSelectComponent}, a button to create a new instance in
- * the selected dataset, and a {@link explore.component:classCardsComponent} to display the class details associated
+ * the selected dataset, and a {@link explore.ClassCardsComponent} to display the class details associated
  * with a selected dataset.
  */
 @Component({
@@ -53,7 +55,7 @@ export class ClassesDisplayComponent {
 
     constructor(private fb: FormBuilder, public state: DiscoverStateService, public dm: DatasetManagerService,
         private eu: ExploreUtilsService, private es: ExploreService, private matDialog: MatDialog,
-        @Inject('policyEnforcementService') private pep, @Inject('utilService') private util) {}
+        private pep: PolicyEnforcementService, private util: UtilService) {}
 
     showCreate(): void {
         const pepRequest = {
@@ -61,7 +63,7 @@ export class ClassesDisplayComponent {
             actionId: CATALOG + 'Modify'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canEdit = response !== this.pep.deny;
                 if (canEdit) {
                     this.eu.getClasses(this.state.explore.recordId)
@@ -90,7 +92,7 @@ export class ClassesDisplayComponent {
             actionId: POLICY + 'Read'
         };
         this.pep.evaluateRequest(pepRequest)
-            .then(response => {
+            .subscribe(response => {
                 const canRead = response !== this.pep.deny;
                 if (canRead) {
                     this.state.explore.hasPermissionError = false;

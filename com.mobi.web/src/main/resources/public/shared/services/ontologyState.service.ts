@@ -70,6 +70,7 @@ import {
 } from 'lodash';
 import { switchMap, map, catchError, tap, finalize } from 'rxjs/operators';
 import { ElementRef, Inject, Injectable } from '@angular/core';
+import { MatSnackBar } from '@angular/material';
 
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -95,7 +96,12 @@ import { RESTError } from '../models/RESTError.interface';
 import { OntologyUploadItem } from '../models/ontologyUploadItem.interface';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { MatSnackBar } from '@angular/material';
+import { UtilService } from './util.service';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { PolicyManagerService } from './policyManager.service';
+import { ManchesterConverterService } from './manchesterConverter.service';
+import { PropertyManagerService } from './propertyManager.service';
+import { UpdateRefsService } from './updateRefs.service';
 
 /**
  * @class shared.OntologyStateService
@@ -110,29 +116,29 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     // Only the service has access to the subject
     _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
 
-    broaderRelations = [
+    static broaderRelations = [
         SKOS + 'broaderTransitive',
         SKOS + 'broader',
         SKOS + 'broadMatch'
     ];
-    narrowerRelations = [
+    static narrowerRelations = [
         SKOS + 'narrowerTransitive',
         SKOS + 'narrower',
         SKOS + 'narrowMatch'
     ];
-    conceptToScheme = [
+    static conceptToScheme = [
         SKOS + 'inScheme',
         SKOS + 'topConceptOf'
     ];
-    schemeToConcept = [
+    static schemeToConcept = [
         SKOS + 'hasTopConcept'
     ];
 
     constructor(protected snackBar: MatSnackBar, protected sm: StateManagerService, protected cm: CatalogManagerService, 
         protected spinnerSvc: ProgressSpinnerService, protected om: OntologyManagerService, protected splitIRI: SplitIRIPipe,
-        @Inject('utilService') protected util, @Inject('updateRefsService') protected updateRefs, 
-        @Inject('propertyManagerService') protected pm, @Inject('manchesterConverterService') protected mc, 
-        @Inject('policyEnforcementService') protected pe, @Inject('policyManagerService') protected polm) {
+        protected util: UtilService, protected updateRefs: UpdateRefsService, 
+        protected pm: PropertyManagerService, protected mc: ManchesterConverterService, 
+        protected pe: PolicyEnforcementService, protected polm: PolicyManagerService) {
             super(ONTOLOGYSTATE,
                 'http://mobi.com/states/ontology-editor/branch-id/',
                 'http://mobi.com/states/ontology-editor/tag-id/',
@@ -265,9 +271,9 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 switchMap(() => this.cm.getInProgressCommit(recordId, this.catalogId)),
                 switchMap((commit: Difference) => {
                     const listItem = this.getListItemByRecordId(recordId);
-                    // TODO not working
-                    if (this.listItem?.versionedRdfRecord.recordId === listItem.versionedRdfRecord.recordId) {
-                        this.listItem = Object.assign({}, listItem); // Needed to trigger component input watchers
+                    listItem.inProgressCommit = commit;
+                    if (this.listItem?.versionedRdfRecord.recordId === recordId) {
+                        this.listItem = cloneDeep(listItem); // Needed to trigger component input watchers
                         const idx = findIndex(this.list, item => item.versionedRdfRecord.recordId === this.listItem.versionedRdfRecord.recordId);
                         this.list[idx] = this.listItem;
                     }
@@ -344,12 +350,9 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     return tagId ? this.updateState({recordId, commitId, tagId}) : this.updateState({recordId, commitId});
                 }),
                 map(() => {
-                    // TODO validate this when the components are upgraded
                     const tabIndex = oldListItem.tabIndex;
-                    // const activeKey = this.getActiveKey(oldListItem);
                     assign(oldListItem, listItem);
                     oldListItem.tabIndex = tabIndex;
-                    // this.setActivePage(activeKey, oldListItem);
                     return null;
                 })
             );
@@ -533,7 +536,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @param listItem 
      */
     setVocabularyStuff(listItem: OntologyListItem = this.listItem): void {
-        // httpService.cancel(this.vocabularySpinnerId); TODO
         this.om.getVocabularyStuff(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId)
             .subscribe(response => {
                 listItem.derivedConcepts = get(response, 'derivedConcepts', []);
@@ -709,22 +711,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         unset(listItem.entityInfo, entityIRI);
     }
     /**
-     * @ngdoc method
-     * @name getListItemByRecordId
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Gets the associated object from the {@link shared.service:ontologyStateService#list list} that
-     * contains the requested record ID. Returns the list item.
-     *
-     * @param {string} recordId The record ID of the requested ontology.
-     * @returns {Object} The associated Object from the
-     * {@link shared.service:ontologyStateService#list list}.
-     */
-    // getListItemByRecordId(recordId) {
-    //     return find(this.list, {ontologyRecord: {recordId}});
-    // }
-    /**
      * Gets entity with the provided IRI from the ontology linked to the provided recordId in the Mobi
      * repository. Returns the entity Object.
      *
@@ -780,7 +766,10 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @returns {string} The beautified IRI string.
      */
     getEntityNameByListItem(entityIRI: string, listItem: OntologyListItem = this.listItem): string {
-        return get(listItem.entityInfo, '[\'' + entityIRI + '\'].label', this.util.getBeautifulIRI(entityIRI));
+        if (listItem.entityInfo[entityIRI]) {
+            return listItem.entityInfo[entityIRI].label || this.util.getBeautifulIRI(entityIRI);
+        }
+        return this.util.getBeautifulIRI(entityIRI);
     }
     /**
      * Saves all changes to the ontology with the specified record id by updating the in progress commit.
@@ -885,7 +874,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
 
                     // Needed to trigger component input watchers
                     if (this.listItem.versionedRdfRecord.recordId === listItem.versionedRdfRecord.recordId) {
-                        this.listItem = Object.assign({}, listItem); 
+                        this.listItem = cloneDeep(listItem); 
                         const idx = findIndex(this.list, item => item.versionedRdfRecord.recordId === this.listItem.versionedRdfRecord.recordId);
                         this.list[idx] = this.listItem;
                     }
@@ -904,7 +893,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     clearInProgressCommit(): void {
         this.listItem.inProgressCommit = new Difference();
         // Needed to trigger component input watchers
-        this.listItem = Object.assign({}, this.listItem); 
+        this.listItem = cloneDeep(this.listItem); 
         const idx = findIndex(this.list, item => item.versionedRdfRecord.recordId === this.listItem.versionedRdfRecord.recordId);
         this.list[idx] = this.listItem;
     }
@@ -913,64 +902,64 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @param recordId 
      * @param isOpened 
      */
-    setNoDomainsOpened(recordId: string, isOpened: boolean): void {
-        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'noDomainsOpened'), isOpened);
+    setNoDomainsOpened(recordId: string, isOpened: boolean, key: number = undefined): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'noDomainsOpened'), isOpened);
     }
     /**
      * 
      * @param recordId 
      * @returns 
      */
-    getNoDomainsOpened(recordId: string): boolean {
-        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'noDomainsOpened'), false);
+    getNoDomainsOpened(recordId: string, key: number = undefined): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'noDomainsOpened'), false);
     }
     /**
      * 
      * @param recordId 
      * @param isOpened 
      */
-    setDataPropertiesOpened(recordId: string, isOpened: boolean): void {
-        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
+    setDataPropertiesOpened(recordId: string, isOpened: boolean, key: number = undefined): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'dataPropertiesOpened'), isOpened);
     }
     /**
      * 
      * @param recordId 
      * @returns 
      */
-    getDataPropertiesOpened(recordId: string): boolean {
-        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'dataPropertiesOpened'), false);
+    getDataPropertiesOpened(recordId: string, key: number = undefined): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'dataPropertiesOpened'), false);
     }
     /**
      * 
      * @param recordId 
      * @param isOpened 
      */
-    setObjectPropertiesOpened(recordId: string, isOpened: boolean): void {
-        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'objectPropertiesOpened'), isOpened);
+    setObjectPropertiesOpened(recordId: string, isOpened: boolean, key: number = undefined): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'objectPropertiesOpened'), isOpened);
     }
     /**
      * 
      * @param recordId 
      * @returns 
      */
-    getObjectPropertiesOpened(recordId: string): boolean {
-        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'objectPropertiesOpened'), false);
+    getObjectPropertiesOpened(recordId: string, key: number = undefined): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'objectPropertiesOpened'), false);
     }
     /**
      * 
      * @param recordId 
      * @param isOpened 
      */
-    setAnnotationPropertiesOpened(recordId: string, isOpened: boolean): void {
-        set(this.listItem.editorTabStates, this._getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
+    setAnnotationPropertiesOpened(recordId: string, isOpened: boolean, key: number = undefined): void {
+        set(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'annotationPropertiesOpened'), isOpened);
     }
     /**
      * 
      * @param recordId 
      * @returns 
      */
-    getAnnotationPropertiesOpened(recordId: string): boolean {
-        return get(this.listItem.editorTabStates, this._getOpenPath(recordId, 'annotationPropertiesOpened'), false);
+    getAnnotationPropertiesOpened(recordId: string, key: number = undefined): boolean {
+        return get(this.listItem.editorTabStates, this._getOpenPath(key, recordId, 'annotationPropertiesOpened'), false);
     }
     // TODO: Keep an eye on this
     /**
@@ -990,7 +979,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             return throwError('OnEdit validation failed for iriEnd');
         }
         const newIRI = iriBegin + iriThen + iriEnd;
-        const oldEntity = Object.assign({}, this.listItem.selected);
+        const oldEntity = cloneDeep(this.listItem.selected);
         this.getActivePage().entityIRI = newIRI;
         if (some(this.listItem.additions, oldEntity)) {
             remove(this.listItem.additions, oldEntity);
@@ -1007,7 +996,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         if (!this.listItem.versionedRdfRecord.recordId) {
             return throwError('OnEdit validation failed for recordId');
         }
-        this.addToAdditions(this.listItem.versionedRdfRecord.recordId, Object.assign({}, this.listItem.selected));
+        this.addToAdditions(this.listItem.versionedRdfRecord.recordId, cloneDeep(this.listItem.selected));
         return this.om.getEntityUsages(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, oldEntity['@id'], 'construct')
             .pipe(
                 map(statements => {
@@ -1040,10 +1029,10 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @param {string} entityIRI The IRI of the entity to retrieve
      * @param {boolean} [getUsages=true] Whether to set the usages of the entity after fetching
      * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
-     * @param {ElementRef} component An optional element to attach a spinner to when fetching the entity
+     * @param {ElementRef} element An optional element to attach a spinner to when fetching the entity
      * @return {Observable} An Observable indicating the success of the action
      */
-    setSelected(entityIRI: string, getUsages = true, listItem: OntologyListItem = this.listItem, component?: ElementRef): Observable<null> {
+    setSelected(entityIRI: string, getUsages = true, listItem: OntologyListItem = this.listItem, element?: ElementRef, key?): Observable<null> {
         listItem.selected = undefined;
         if (!entityIRI || !listItem) {
             if (listItem) {
@@ -1052,14 +1041,14 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             }
             return of(null);
         }
-        if (component) {
-            this.spinnerSvc.startLoadingForComponent(component);
+        if (element) {
+            this.spinnerSvc.startLoadingForComponent(element);
         }
-        return this.om.getEntityAndBlankNodes(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, entityIRI, undefined, undefined, undefined)
+        return this.om.getEntityAndBlankNodes(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, entityIRI, undefined, undefined, undefined, !!element)
             .pipe(
                 finalize(() => {
-                    if (component) {
-                        this.spinnerSvc.finishLoadingForComponent(component);
+                    if (element) {
+                        this.spinnerSvc.finishLoadingForComponent(element);
                     }
                 }),
                 map(arr => {
@@ -1072,24 +1061,38 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     if (this.om.isIndividual(listItem.selected)) {
                         this._findValuesMissingDatatypes(listItem.selected);
                     }
-                    if (getUsages && !has(this.getActivePage(), 'usages') && listItem.selected) {
-                        this.setEntityUsages(entityIRI);
+                    if (key) {
+                        if (getUsages && !has(this.getActivePage(this.listItem, key), 'usages') && listItem.selected) {
+                            this.setEntityUsages(entityIRI);
+                        }
+                    } else {
+                        if (getUsages && !has(this.getActivePage(), 'usages') && listItem.selected) {
+                            this.setEntityUsages(entityIRI);
+                        }
                     }
                     return null;
                 })
             );
     }
     /**
-     * 
+     * Set Entity Usages 
      * @param entityIRI 
      */
     setEntityUsages(entityIRI: string, listItem: OntologyListItem = this.listItem): void {
         const page = this.getActivePage(listItem);
-        // TODO figure this out
-        // const id = 'usages-' + this.getActiveKey() + '-' + this.listItem.versionedRdfRecord.recordId;
-        // httpService.cancel(id);
+        if (page.usagesContainer) {
+            this.spinnerSvc.startLoadingForComponent(page.usagesContainer);
+        }
         this.om.getEntityUsages(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, entityIRI, 'select')
-            .subscribe(bindings => set(page, 'usages', bindings), () => set(page, 'usages', []));
+            .pipe(finalize(() => {
+                if (page.usagesContainer) {
+                    this.spinnerSvc.finishLoadingForComponent(page.usagesContainer);
+                }
+            }))
+            .subscribe(
+                bindings => this.listItem.editorTabStates[this.getActiveKey(listItem)].usages = bindings,
+                () => this.listItem.editorTabStates[this.getActiveKey(listItem)].usages = []
+            );
     }
     /**
      * Creates an index for the blank nodes so that the manchester syntax logic will work correctly.
@@ -1134,7 +1137,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             listItem.selectedBlankNodes = [];
             listItem.blankNodes = {};
         } else {
-            this.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem, listItem.editorTabStates.project.component).subscribe(noop, error => this.util.createErrorToast(error));
+            this.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem, listItem.editorTabStates.project.element).subscribe(noop, error => this.util.createErrorToast(error));
         }
         listItem.seeHistory = false;
     }
@@ -1143,8 +1146,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @param listItem 
      */
     resetSearchTab(listItem: OntologyListItem = this.listItem): void {
-        // TODO figure this out
-        // httpService.cancel(listItem.editorTabStates.search.id);
         listItem.editorTabStates.search.errorMessage = '';
         listItem.editorTabStates.search.highlightText = '';
         listItem.editorTabStates.search.infoMessage = '';
@@ -1155,12 +1156,15 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         listItem.editorTabStates.search.entityIRI = '';
     }
     /**
-     * 
-     * @param listItem 
+     * Get Active Key
+     * @param {OntologyListItem} listItem The listItem to get the active key for. Otherwise uses the currently selected
+     * @param {number} [tabIndex=undefined] An optional tab index to get the key for. Otherwise uses the active page of
+     * the listItem
      * @returns 
      */
-    getActiveKey(listItem: OntologyListItem = this.listItem): string {
-        switch (listItem.tabIndex) {
+    getActiveKey(listItem: OntologyListItem = this.listItem, idx: number = undefined): string {
+        const tabIndex = idx !== undefined ? idx : listItem.tabIndex;
+        switch (tabIndex) {
             case OntologyListItem.PROJECT_TAB:
                 return 'project';
             case OntologyListItem.OVERVIEW_TAB:
@@ -1188,39 +1192,44 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
     }
     /**
+     * Get the page state object of the active page of the provided {@link OntologyListItem}.
      * 
-     * @param listItem 
+     * @param {OntologyListItem} listItem The optional listItem to get the active page of. Otherwise uses the currently
+     * selected item
+     * @param {number} [tabIndex=undefined] The optional index of the page to retrieve. Otherwise uses the active one 
      * @returns 
      */
-    getActivePage(listItem: OntologyListItem = this.listItem): any {
-        return listItem.editorTabStates[this.getActiveKey(listItem)];
+    getActivePage(listItem: OntologyListItem = this.listItem, tabIndex: number = undefined): any {
+        return tabIndex !== undefined ? listItem.editorTabStates[this.getActiveKey(listItem, tabIndex)] : listItem.editorTabStates[this.getActiveKey(listItem)];
     }
     /**
+     * Retrieves the IRI of the activity entity on a specific page of the provided {@link OntologyListItem}.
      * 
-     * @param listItem 
-     * @returns 
+     * @param {OntologyListItem} listItem The optional listItem to get the active entity of. Otherwise uses the currently
+     * selected item
+     * @returns {string} The IRI of the active entity
      */
     getActiveEntityIRI(listItem: OntologyListItem = this.listItem): string {
         return get(this.getActivePage(listItem), 'entityIRI');
     }
     /**
      * Selects the entity with the specified IRI in the current `listItem`. Optionally can set the usages of the entity.
-     * Also accepts a component to attach a spinner to in the call to fetch the entity. Returns an Observable indicating
-     * the success  of the action.
+     * Returns an Observable indicating the success of the action.
      * 
      * @param {string} entityIRI The IRI of an entity in the current `listItem`
      * @param {boolean} [getUsages=true] Whether to set the usages of the specified entity
-     * @param {ElementRef} component An optional element to attach a spinner to when fetching the entity
+     * @param {number} [tabIndex=undefined] Optional tab index to select the item on
      * @returns {Observable<null>} An Observable that resolves if the action was successful; rejects otherwise
      */
-    selectItem(entityIRI: string, getUsages = true, component?: ElementRef): Observable<null> {
-        if (entityIRI && entityIRI !== this.getActiveEntityIRI()) {
-            set(this.getActivePage(), 'entityIRI', entityIRI);
+    selectItem(entityIRI: string, getUsages = true, tabIndex: number = undefined): Observable<null> {
+        const page = tabIndex !== undefined ? this.getActivePage(this.listItem, tabIndex) : this.getActivePage();
+        if (entityIRI && entityIRI !== get(page, 'entityIRI')) {
+            set(page, 'entityIRI', entityIRI);
             if (getUsages) {
                 this.setEntityUsages(entityIRI);
             }
         }
-        return this.setSelected(entityIRI, false, this.listItem, component);
+        return this.setSelected(entityIRI, false, this.listItem, page.element);
     }
     /**
      * Unselects the currently selected entity. This includes wiping the usages, stored RDF, and the related blank
@@ -1260,7 +1269,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         listItem.isSaved = this.isCommittable(listItem);
     }
     /**
-     * 
+     * addEntityToHierarchy 
      * @param hierarchyInfo 
      * @param entityIRI 
      * @param parentIRI 
@@ -1278,7 +1287,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
     }
     /**
-     * 
+     * Delete Entity From ParentInHierarchy 
      * @param hierarchyInfo 
      * @param entityIRI 
      * @param parentIRI 
@@ -1307,7 +1316,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
     }
     /**
-     * 
+     * Delete Entity From Hierarchy
      * @param hierarchyInfo 
      * @param entityIRI 
      */
@@ -1330,7 +1339,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         });
     }
     /**
-     * 
+     * Get Paths To
      * @param hierarchyInfo 
      * @param entityIRI 
      * @returns 
@@ -1396,72 +1405,69 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     goTo(iri: string): void {
         if (get(this.listItem, 'ontologyId') === iri) {
             this._commonGoTo(OntologyListItem.PROJECT_TAB, iri);
-            // this._commonGoTo('project', iri);
         } else if (this._isInIris('classes', iri)) {
             this._commonGoTo(OntologyListItem.CLASSES_TAB, iri, this.listItem.classes.flat);
-            // this._commonGoTo('classes', iri, this.listItem.classes.flat);
-            this.listItem.editorTabStates.classes.index = this._getScrollIndex(iri, this.listItem.classes.flat);
+            this.listItem.editorTabStates.classes.index = this._getScrollIndex(iri, this.listItem.classes.flat, OntologyListItem.CLASSES_TAB);
         } else if (this._isInIris('dataProperties', iri)) {
             this._commonGoTo(OntologyListItem.PROPERTIES_TAB, iri, this.listItem.dataProperties.flat);
-            // this._commonGoTo('properties', iri, this.listItem.dataProperties.flat);
-            this.setDataPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true);
+            this.setDataPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true, OntologyListItem.PROPERTIES_TAB);
             // Index is incremented by 1 to account for Data Property folder
-            this.listItem.editorTabStates.properties.index = this._getScrollIndex(iri, this.listItem.dataProperties.flat, true, iri => this.getDataPropertiesOpened(iri)) + 1;
+            this.listItem.editorTabStates.properties.index = this._getScrollIndex(iri, this.listItem.dataProperties.flat, OntologyListItem.PROPERTIES_TAB,  true, iri => this.getDataPropertiesOpened(iri)) + 1;
         } else if (this._isInIris('objectProperties', iri)) {
             this._commonGoTo(OntologyListItem.PROPERTIES_TAB, iri, this.listItem.objectProperties.flat);
-            // this._commonGoTo('properties', iri, this.listItem.objectProperties.flat);
-            this.setObjectPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true);
+            this.setObjectPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true, OntologyListItem.PROPERTIES_TAB);
 
             let index = 0;
             // If Data Properties are present, count the number of shown properties and increment by 1 for the Data Property folder
             if (this.listItem.dataProperties.flat.length > 0) {
-                index += this._getScrollIndex(iri, this.listItem.dataProperties.flat, true, iri => this.getDataPropertiesOpened(iri)) + 1;
+                index += this._getScrollIndex(iri, this.listItem.dataProperties.flat, OntologyListItem.PROPERTIES_TAB, true, iri => this.getDataPropertiesOpened(iri)) + 1;
             }
             // Index is incremented by 1 to account for Object Property folder
-            this.listItem.editorTabStates.properties.index = index + this._getScrollIndex(iri, this.listItem.objectProperties.flat, true, iri => this.getObjectPropertiesOpened(iri)) + 1;
+            this.listItem.editorTabStates.properties.index = index + this._getScrollIndex(iri, this.listItem.objectProperties.flat, OntologyListItem.PROPERTIES_TAB, true, iri => this.getObjectPropertiesOpened(iri)) + 1;
         } else if (this._isInIris('annotations', iri)) {
             this._commonGoTo(OntologyListItem.PROPERTIES_TAB, iri, this.listItem.annotations.flat);
-            // this._commonGoTo('properties', iri, this.listItem.annotations.flat);
-            this.setAnnotationPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true);
+            this.setAnnotationPropertiesOpened(this.listItem.versionedRdfRecord.recordId, true, OntologyListItem.PROPERTIES_TAB);
 
             let index = 0;
             // If Data Properties are present, count the number of shown properties and increment by 1 for the Data Property folder
             if (this.listItem.dataProperties.flat.length > 0) {
-                index += this._getScrollIndex(iri, this.listItem.dataProperties.flat, true, iri => this.getDataPropertiesOpened(iri)) + 1;
+                index += this._getScrollIndex(iri, this.listItem.dataProperties.flat, OntologyListItem.PROPERTIES_TAB, true, iri => this.getDataPropertiesOpened(iri, OntologyListItem.PROPERTIES_TAB)) + 1;
             }
             // If Object Properties are present, count the number of shown properties and increment by 1 for the Object Property folder
             if (this.listItem.objectProperties.flat.length > 0) {
-                index += this._getScrollIndex(iri, this.listItem.objectProperties.flat, true, iri => this.getObjectPropertiesOpened(iri)) + 1;
+                index += this._getScrollIndex(iri, this.listItem.objectProperties.flat, OntologyListItem.PROPERTIES_TAB, true, iri => this.getObjectPropertiesOpened(iri, OntologyListItem.PROPERTIES_TAB)) + 1;
             }
             // Index is incremented by 1 to account for Annotation Property folder
-            this.listItem.editorTabStates.properties.index = index + this._getScrollIndex(iri, this.listItem.annotations.flat, true, iri => this.getAnnotationPropertiesOpened(iri)) + 1;
+            this.listItem.editorTabStates.properties.index = index + this._getScrollIndex(iri, this.listItem.annotations.flat, OntologyListItem.PROPERTIES_TAB, true, iri => this.getAnnotationPropertiesOpened(iri, OntologyListItem.PROPERTIES_TAB)) + 1;
         } else if (this._isInIris('concepts', iri)) {
             this._commonGoTo(OntologyListItem.CONCEPTS_TAB, iri, this.listItem.concepts.flat);
-            // this._commonGoTo('concepts', iri, this.listItem.concepts.flat);
-            this.listItem.editorTabStates.concepts.index = this._getScrollIndex(iri, this.listItem.concepts.flat);
+            this.listItem.editorTabStates.concepts.index = this._getScrollIndex(iri, this.listItem.concepts.flat, OntologyListItem.CONCEPTS_TAB);
         } else if (this._isInIris('conceptSchemes', iri)) {
             this._commonGoTo(OntologyListItem.CONCEPTS_SCHEMES_TAB, iri, this.listItem.conceptSchemes.flat);
-            // this._commonGoTo('schemes', iri, this.listItem.conceptSchemes.flat);
-            this.listItem.editorTabStates.schemes.index = this._getScrollIndex(iri, this.listItem.conceptSchemes.flat);
+            this.listItem.editorTabStates.schemes.index = this._getScrollIndex(iri, this.listItem.conceptSchemes.flat, OntologyListItem.CONCEPTS_SCHEMES_TAB);
         } else if (this._isInIris('individuals', iri)) {
             this._commonGoTo(OntologyListItem.INDIVIDUALS_TAB, iri, this.listItem.individuals.flat);
-            // this._commonGoTo('individuals', iri, this.listItem.individuals.flat);
-            this.listItem.editorTabStates.individuals.index = this._getScrollIndex(iri, this.listItem.individuals.flat);
+            this.listItem.editorTabStates.individuals.index = this._getScrollIndex(iri, this.listItem.individuals.flat, OntologyListItem.INDIVIDUALS_TAB);
         }
     }
     /**
      * Opens the hierarchy represented by the provided list of nodes at the entity identified byt he provided IRI.
      * 
      * @param {HierarchyNode[]} flatHierarchy The flattened hierarchy to open the entity within
+     * @param {number} [tabIndex=undefined] An optional tab index to open the entity on. Otherwise uses the active page
      * @param {string} entityIRI The IRI of the entity to open at
      */
-    openAt(flatHierarchy: HierarchyNode[], entityIRI: string): void {
+    openAt(flatHierarchy: HierarchyNode[], entityIRI: string, tabIndex: number = undefined): void {
         const path = get(find(flatHierarchy, {entityIRI}), 'path', []);
         if (path.length) {
             let pathString : string = head(path);
             forEach(tail(initial(path)), pathPart => {
                 pathString += '.' + pathPart;
-                this.listItem.editorTabStates[this.getActiveKey()].open[pathString] = true;
+                if (tabIndex !== undefined) {
+                    this.listItem.editorTabStates[this.getActiveKey(this.listItem, tabIndex)].open[pathString] = true;
+                } else {
+                    this.listItem.editorTabStates[this.getActiveKey()].open[pathString] = true;
+                }
             });
         }
     }
@@ -1753,7 +1759,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      */
     handleNewProperty(property: JSONLDObject): void {
         const domainPath = RDFS + 'domain';
-        if (property[domainPath] === [] || property[domainPath] === undefined) {
+        if (property[domainPath] === undefined || property[domainPath] === null || !property[domainPath].length) {
             this.listItem.noDomainProperties.push(property['@id']);
         } else {
             property[domainPath].forEach(domain => {
@@ -1840,14 +1846,14 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @param {(JSONLDId | JSONLDValue)[]} values The JSON-LD of the values of the property that were added
      */
     updateVocabularyHierarchies(relationshipIRI: string, values: (JSONLDId | JSONLDValue)[]): void {
-        if (this._isVocabPropAndEntity(relationshipIRI, this.broaderRelations, a => this.containsDerivedConcept(a))) {
-            this._commonAddToVocabHierarchy(relationshipIRI, values, this.listItem.selected['@id'], undefined, this.broaderRelations, this.narrowerRelations, 'concepts', a => this.containsDerivedConcept(a));
-        } else if (this._isVocabPropAndEntity(relationshipIRI, this.narrowerRelations, a => this.containsDerivedConcept(a))) {
-            this._commonAddToVocabHierarchy(relationshipIRI, values, undefined, this.listItem.selected['@id'], this.narrowerRelations, this.broaderRelations, 'concepts', a => this.containsDerivedConcept(a));
-        } else if (this._isVocabPropAndEntity(relationshipIRI, this.conceptToScheme, a => this.containsDerivedConcept(a))) {
-            this._commonAddToVocabHierarchy(relationshipIRI, values, this.listItem.selected['@id'], undefined, this.conceptToScheme, this.schemeToConcept, 'conceptSchemes', a => this.containsDerivedConceptScheme(a));
-        } else if (this._isVocabPropAndEntity(relationshipIRI, this.schemeToConcept, a => this.containsDerivedConceptScheme(a))) {
-            this._commonAddToVocabHierarchy(relationshipIRI, values, undefined, this.listItem.selected['@id'], this.schemeToConcept, this.conceptToScheme, 'conceptSchemes', a => this.containsDerivedConcept(a));
+        if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.broaderRelations, a => this.containsDerivedConcept(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, this.listItem.selected['@id'], undefined, OntologyStateService.broaderRelations, OntologyStateService.narrowerRelations, 'concepts', a => this.containsDerivedConcept(a));
+        } else if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.narrowerRelations, a => this.containsDerivedConcept(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, undefined, this.listItem.selected['@id'], OntologyStateService.narrowerRelations, OntologyStateService.broaderRelations, 'concepts', a => this.containsDerivedConcept(a));
+        } else if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.conceptToScheme, a => this.containsDerivedConcept(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, this.listItem.selected['@id'], undefined, OntologyStateService.conceptToScheme, OntologyStateService.schemeToConcept, 'conceptSchemes', a => this.containsDerivedConceptScheme(a));
+        } else if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.schemeToConcept, a => this.containsDerivedConceptScheme(a))) {
+            this._commonAddToVocabHierarchy(relationshipIRI, values, undefined, this.listItem.selected['@id'], OntologyStateService.schemeToConcept, OntologyStateService.conceptToScheme, 'conceptSchemes', a => this.containsDerivedConcept(a));
         }
     }
     /**
@@ -1860,17 +1866,17 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     removeFromVocabularyHierarchies(relationshipIRI: string, axiomObject: JSONLDId | JSONLDValue): void {
         this.getEntityNoBlankNodes(axiomObject['@id'], this.listItem)
             .subscribe(targetEntity => {
-                if (this._isVocabPropAndEntity(relationshipIRI, this.broaderRelations, a => this.containsDerivedConcept(a)) 
-                    && this._shouldUpdateVocabHierarchy(targetEntity, this.broaderRelations, this.narrowerRelations, relationshipIRI, a => this.containsDerivedConcept(a))) {
+                if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.broaderRelations, a => this.containsDerivedConcept(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, OntologyStateService.broaderRelations, OntologyStateService.narrowerRelations, relationshipIRI, a => this.containsDerivedConcept(a))) {
                     this._deleteFromConceptHierarchy(this.listItem.selected['@id'], targetEntity['@id']);
-                } else if (this._isVocabPropAndEntity(relationshipIRI, this.narrowerRelations, a => this.containsDerivedConcept(a)) 
-                    && this._shouldUpdateVocabHierarchy(targetEntity, this.narrowerRelations, this.broaderRelations, relationshipIRI, a => this.containsDerivedConcept(a))) {
+                } else if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.narrowerRelations, a => this.containsDerivedConcept(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, OntologyStateService.narrowerRelations, OntologyStateService.broaderRelations, relationshipIRI, a => this.containsDerivedConcept(a))) {
                     this._deleteFromConceptHierarchy(targetEntity['@id'], this.listItem.selected['@id']);
-                } else if (this._isVocabPropAndEntity(relationshipIRI, this.conceptToScheme, a => this.containsDerivedConcept(a)) 
-                    && this._shouldUpdateVocabHierarchy(targetEntity, this.conceptToScheme, this.schemeToConcept, relationshipIRI, a => this.containsDerivedConceptScheme(a))) {
+                } else if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.conceptToScheme, a => this.containsDerivedConcept(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, OntologyStateService.conceptToScheme, OntologyStateService.schemeToConcept, relationshipIRI, a => this.containsDerivedConceptScheme(a))) {
                     this._deleteFromSchemeHierarchy(this.listItem.selected['@id'], targetEntity['@id']);
-                } else if (this._isVocabPropAndEntity(relationshipIRI, this.schemeToConcept, a => this.containsDerivedConceptScheme(a)) 
-                    && this._shouldUpdateVocabHierarchy(targetEntity, this.schemeToConcept, this.conceptToScheme, relationshipIRI, a => this.containsDerivedConcept(a))) {
+                } else if (this._isVocabPropAndEntity(relationshipIRI, OntologyStateService.schemeToConcept, a => this.containsDerivedConceptScheme(a)) 
+                    && this._shouldUpdateVocabHierarchy(targetEntity, OntologyStateService.schemeToConcept, OntologyStateService.conceptToScheme, relationshipIRI, a => this.containsDerivedConcept(a))) {
                     this._deleteFromSchemeHierarchy(targetEntity['@id'], this.listItem.selected['@id']);
                 }
             }, error => {
@@ -2104,7 +2110,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 // this.listItem.isSaved = this.isCommittable(this.listItem);
             }, errorMessage => {
                 this.util.createErrorToast(errorMessage);
-                listItem.isSaved = false;
+                this.listItem.isSaved = false;
             }));
             
     }
@@ -2244,7 +2250,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         })), group => group.namespace.toUpperCase());
     }
     /**
-     * Creates an HTML string of the body of a {@link shared.component:confirmModal} for confirming the
+     * Creates an HTML string of the body of a {@link shared.ConfirmModalComponent} for confirming the
      * deletion of the specified property value on the selected entity of the current `listItem`
      *
      * @param {string} key The IRI of a property on the current entity
@@ -2383,16 +2389,15 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     private _existenceCheck(iriObj: {[key: string]: string}, iri: string): boolean {
         return has(iriObj, '[\'' + iri + '\']');
     }
-    private _commonGoTo(key, iri, flatHierarchy = undefined): void {
-        this.listItem.tabIndex = key;
-        // this.setActivePage(key);
-        this.selectItem(iri, undefined, this.getActivePage().component).subscribe(() => {
+    private _commonGoTo(tabIndex: number, iri: string, flatHierarchy: HierarchyNode[]  = undefined): void {
+        this.selectItem(iri, undefined, tabIndex).subscribe(() => {
             if (flatHierarchy) {
-                this.openAt(flatHierarchy, iri);
+                this.openAt(flatHierarchy, iri, tabIndex);
+                this.listItem.tabIndex = tabIndex;
             }
-        }, this.util.createErrorToast);  
+        }, error => this.util.createErrorToast(error));
     }
-    private _getScrollIndex(iri: string, flatHierarchy, property = false, checkPropertyOpened: (a: string) => boolean = () => false): number {
+    private _getScrollIndex(iri: string, flatHierarchy: HierarchyNode[], key: number = undefined, property = false, checkPropertyOpened: (a: string) => boolean = () => false): number {
         let scrollIndex = 0;
         let index = findIndex(flatHierarchy, {entityIRI: iri});
         if (index < 0) {
@@ -2400,16 +2405,25 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
         for (let i = 0; i < index; i++) {
             const node = flatHierarchy[i];
-            if (!property && ((node.indent > 0 && this.areParentsOpen(node, this.getActiveKey())) || node.indent === 0)) {
-                scrollIndex++;
-            } else if (property && this.areParentsOpen(node, this.getActiveKey()) && checkPropertyOpened(this.listItem.versionedRdfRecord.recordId)) {
-                scrollIndex++;
+            if (key) {
+                if (!property && ((node.indent > 0 && this.areParentsOpen(node, this.getActiveKey(this.listItem, key))) || node.indent === 0)) {
+                    scrollIndex++;
+                } else if (property && this.areParentsOpen(node, this.getActiveKey(this.listItem, key)) && checkPropertyOpened(this.listItem.versionedRdfRecord.recordId)) {
+                    scrollIndex++;
+                }
+            } else {
+                if (!property && ((node.indent > 0 && this.areParentsOpen(node, this.getActiveKey())) || node.indent === 0)) {
+                    scrollIndex++;
+                } else if (property && this.areParentsOpen(node, this.getActiveKey()) && checkPropertyOpened(this.listItem.versionedRdfRecord.recordId)) {
+                    scrollIndex++;
+                }
             }
         }
         return scrollIndex;
     }
-    private _getOpenPath(...args): string {
-        return this.getActiveKey() + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
+    private _getOpenPath(key = undefined, ...args): string {
+        if (key) return this.getActiveKey(this.listItem, key) + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
+        else return this.getActiveKey() + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
     }
     private _setupListItem(recordId: string, branchId: string, commitId: string, inProgressCommit: Difference, upToDate: boolean, title: string): OntologyListItem {
         const listItem = new OntologyListItem();
@@ -2492,7 +2506,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     private _addToInProgress(recordId: string, json: JSONLDObject, prop: string): void {
         const listItem = this.getListItemByRecordId(recordId);
         const entity = find(listItem[prop], {'@id': json['@id']});
-        const filteredJson = Object.assign({}, json);
+        const filteredJson = cloneDeep(json);
         if (entity) {
             mergeWith(entity, filteredJson, this.util.mergingArrays);
         } else  {

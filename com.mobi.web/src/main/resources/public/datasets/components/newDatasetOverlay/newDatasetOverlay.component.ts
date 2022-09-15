@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { trim, map } from 'lodash';
@@ -28,6 +28,7 @@ import { trim, map } from 'lodash';
 import { REGEX } from '../../../constants';
 import { DatasetRecordConfig } from '../../../shared/models/datasetRecordConfig.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { OntologyDetails } from '../../models/ontologyDetails.interface';
 
 /**
@@ -55,7 +56,7 @@ export class NewDatasetOverlayComponent {
     selectedOntologies: OntologyDetails[] = [];
 
     constructor(private dialogRef: MatDialogRef<NewDatasetOverlayComponent>, private fb: FormBuilder,
-        public dm: DatasetManagerService, @Inject('utilService') public util) {}
+        public dm: DatasetManagerService, public util: UtilService) {}
 
     create(): void {
         const recordConfig: DatasetRecordConfig = {

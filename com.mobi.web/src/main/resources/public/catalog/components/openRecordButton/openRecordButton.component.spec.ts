@@ -24,29 +24,25 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
-import { StateService } from '@uirouter/core';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import {
     cleanStylesFromDOM,
-    mockOntologyState,
-    mockPolicyEnforcement,
-    mockPolicyManager,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CATALOG, DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
-import { OpenRecordButtonComponent } from './openRecordButton.component';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
-// Mocks
-class mockState {
-    go = jasmine.createSpy('go');
-}
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { OpenRecordButtonComponent } from './openRecordButton.component';
+import { Router } from '@angular/router';
 
 describe('Open Record Button component', function() {
     let component: OpenRecordButtonComponent;
@@ -54,18 +50,18 @@ describe('Open Record Button component', function() {
     let fixture: ComponentFixture<OpenRecordButtonComponent>;
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let ontologyStateStub;
-    let policyEnforcementStub;
-    let policyManagerStub;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub;
-    let $stateStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
+    let router: Router;
 
     const recordId = 'recordId';
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, RouterTestingModule.withRoutes([]) ],
             declarations: [
                 OpenRecordButtonComponent,
             ],
@@ -73,11 +69,10 @@ describe('Open Record Button component', function() {
                 MockProvider(CatalogStateService),
                 MockProvider(ShapesGraphStateService),
                 MockProvider(MapperStateService),
-                { provide: OntologyStateService, useClass: mockOntologyState },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'policyManagerService', useClass: mockPolicyManager },
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: StateService, useClass: mockState },
+                MockProvider(OntologyStateService),
+                MockProvider(PolicyEnforcementService),
+                MockProvider(PolicyManagerService),
+                MockProvider(UtilService),
             ],
         });
     });
@@ -89,11 +84,16 @@ describe('Open Record Button component', function() {
         catalogStateStub = TestBed.get(CatalogStateService);
         ontologyStateStub = TestBed.get(OntologyStateService);
         mapperStateStub = TestBed.get(MapperStateService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        policyManagerStub = TestBed.get('policyManagerService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        policyManagerStub = TestBed.get(PolicyManagerService);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        utilStub = TestBed.get('utilService');
-        $stateStub = TestBed.get(StateService);
+        utilStub = TestBed.get(UtilService);
+        router = TestBed.get(Router);
+        spyOn(router, 'navigate');
+
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
+        utilStub.getDctermsValue.and.returnValue('');
 
         this.record = {
             '@id': recordId,
@@ -111,6 +111,7 @@ describe('Open Record Button component', function() {
         ontologyStateStub = null;
         policyEnforcementStub = null;
         utilStub = null;
+        router = null;
     });
 
     it('should initialize correctly on record change', function() {
@@ -157,23 +158,24 @@ describe('Open Record Button component', function() {
                 component.record = this.record;
             });
             it('if it is already open', function() {
-                ontologyStateStub.list = [{versionedRdfRecord: {recordId: recordId}}];
+                const listItem = new OntologyListItem();
+                listItem.versionedRdfRecord.recordId = recordId;
+                ontologyStateStub.list = [listItem];
                 component.openOntology();
                 expect(ontologyStateStub.openOntology).not.toHaveBeenCalled();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(ontologyStateStub.listItem).toEqual({versionedRdfRecord: {recordId: recordId}, active: true});
-                expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, { reload: true });
+                expect(listItem.active).toBeTrue();
+                expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
             });
             describe('if it is not already open', function() {
                 it('successfully', fakeAsync(function() {
-                    const ontologyId = 'ontologyId';
-                    ontologyStateStub.openOntology.and.returnValue(of(ontologyId));
+                    ontologyStateStub.openOntology.and.returnValue(of(null));
                     component.openOntology();
                     tick();
                     expect(utilStub.getDctermsValue).toHaveBeenCalledWith(this.record, 'title');
                     expect(ontologyStateStub.openOntology).toHaveBeenCalledWith(recordId, 'title');
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                    expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, { reload: true });
+                    expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
                 }));
                 it('unless an error occurs', fakeAsync(function() {
                     ontologyStateStub.openOntology.and.returnValue(throwError('Error message'));
@@ -182,7 +184,7 @@ describe('Open Record Button component', function() {
                     expect(utilStub.getDctermsValue).toHaveBeenCalledWith(this.record, 'title');
                     expect(ontologyStateStub.openOntology).toHaveBeenCalledWith(recordId, 'title');
                     expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
-                    expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, { reload: true });
+                    expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
                 }));
             });
         });
@@ -194,11 +196,11 @@ describe('Open Record Button component', function() {
             };
             component.openMapping();
             expect(mapperStateStub.paginationConfig.searchText).toEqual('title');
-            expect($stateStub.go).toHaveBeenCalledWith('root.mapper', null, { reload: true });
+            expect(router.navigate).toHaveBeenCalledWith(['/mapper']);
         });
         it('openDataset navigates to the dataset module', function() {
             component.openDataset();
-            expect($stateStub.go).toHaveBeenCalledWith('root.datasets', null, { reload: true });
+            expect(router.navigate).toHaveBeenCalledWith(['/datasets']);
         });
         it('openShapesGraphRecord navigates to the shapes graph module', function() {
             component.record = this.record;
@@ -209,7 +211,7 @@ describe('Open Record Button component', function() {
             };
             shapesGraphStateStub.openShapesGraph.and.resolveTo();
             component.openShapesGraph();
-            expect($stateStub.go).toHaveBeenCalledWith('root.shapes-graph-editor', null, { reload: true });
+            expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
             expect(shapesGraphStateStub.openShapesGraph).toHaveBeenCalledWith(recordSelect);
         });
         describe('update set the appropriate variables', function() {
@@ -228,7 +230,7 @@ describe('Open Record Button component', function() {
                     catalogStateStub.getRecordType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
                 });
                 it('the user can view', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                     component.update();
                     tick();
                     expect(component.recordType).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
@@ -236,7 +238,7 @@ describe('Open Record Button component', function() {
                     expect(component.showButton).toEqual(true);
                 }));
                 it('the user cannot view', fakeAsync(function() {
-                    policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     component.update();
                     tick();
                     expect(component.recordType).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');

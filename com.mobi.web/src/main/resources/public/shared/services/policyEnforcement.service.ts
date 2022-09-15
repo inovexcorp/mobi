@@ -20,36 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { pick } from 'lodash';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'httpService'];
+import { REST_PREFIX } from '../../constants';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { XACMLDecision } from '../models/XACMLDecision.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { UtilService } from './util.service';
 
 /**
- * @ngdoc service
- * @name shared.service:policyEnforcementService
- * @requires shared.service:prefixes
- * @requires shared.service:utilService
- * @requires shared.service:httpService
+ * @class shared.PolicyEnforcementService
  *
- * @description
- * `policyEnforcementService` is a service that provides access to the Mobi policy enforcement REST
- * endpoint.
+ * A service that provides access to the Mobi policy enforcement REST endpoint.
  */
-function policyEnforcementService($http, $q, REST_PREFIX, utilService, httpService) {
-    const self = this;
-    const prefix = REST_PREFIX + 'pep';
-    const util = utilService;
+@Injectable()
+export class PolicyEnforcementService {
+    prefix = REST_PREFIX + 'pep';
+    permit = 'Permit';
+    deny = 'Deny';
+    indeterminate = 'Indeterminate';
 
-    self.permit = 'Permit';
-    self.deny = 'Deny';
-    self.indeterminate = 'Indeterminate';
+    constructor(private http: HttpClient, private spinnerSrv: ProgressSpinnerService, private util: UtilService) {}
 
     /**
-     * @ngdoc method
-     * @name evaluateRequest
-     * @methodOf shared.service:policyEnforcementService
-     *
-     * @description
      * Calls the POST /mobirest/pep endpoint with the passed XACML parameters to be evaluated.
      * Example JSON object:
      * {
@@ -60,22 +57,18 @@ function policyEnforcementService($http, $q, REST_PREFIX, utilService, httpServi
      *     }
      * }
      *
-     * @param {Object} [jsonRequest] An Object of ids and attributes to create a XACML request
-     * @return {Promise} A Promise that resolves to a string of the decision of the request or is rejected with
+     * @param {XACMLRequest} [jsonRequest] An Object of ids and attributes to create a XACML request
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An Observable that resolves to a string of the decision of the request or is rejected with
      * an error message
      */
-    self.evaluateRequest = function(jsonRequest, id = '') {
+    evaluateRequest(jsonRequest: XACMLRequest, isTracked = false): Observable<string> {
         const filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
-        const promise = id ? httpService.post(prefix, filteredRequest, id) : $http.post(prefix, filteredRequest);
-        return promise.then(response => response.data, util.rejectError);
-    };
+        return this._trackedRequest(this.http.post(this.prefix, filteredRequest, {responseType: 'text'}), isTracked)
+            .pipe(catchError(this.util.handleError));
+    }
 
     /**
-     * @ngdoc method
-     * @name evaluateMultiDecisionRequest
-     * @methodOf shared.service:policyEnforcementService
-     *
-     * @description
      * Calls the POST /mobirest/pep/multiDecisionRequest endpoint with the passed XACML parameters to be evaluated.
      * Resource ID and Action ID must be passed as arrays of strings. May have multiple XACML response objects.
      * The response data is returned as an array of objects.
@@ -85,15 +78,22 @@ function policyEnforcementService($http, $q, REST_PREFIX, utilService, httpServi
      *      "actionId": ["http://mobi.com/ontologies/policy#Delete"]
      * }
      *
-     * @param {Object} [jsonRequest] An Object of ids and attributes to create a XACML request
-     * @return {Promise} A Promise that resolves to an array of xacml responses of the request or is rejected with
+     * @param {XACMLRequest} [jsonRequest] An Object of ids and attributes to create a XACML request
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An Observable that resolves to an array of xacml responses of the request or is rejected with
      * an error message
      */
-    self.evaluateMultiDecisionRequest = function(jsonRequest, id = '') {
+    evaluateMultiDecisionRequest(jsonRequest: XACMLRequest, isTracked = false): Observable<XACMLDecision[]> {
         const filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
-        const promise = id ? httpService.post(prefix + '/multiDecisionRequest', filteredRequest, id) : $http.post(prefix + '/multiDecisionRequest', filteredRequest);
-        return promise.then(response => response.data, util.rejectError);
-    };
-}
+        return this._trackedRequest(this.http.post<XACMLDecision[]>(this.prefix + '/multiDecisionRequest', filteredRequest), isTracked)
+            .pipe(catchError(this.util.handleError));
+    }
 
-export default policyEnforcementService;
+    private _trackedRequest<T>(request: Observable<T>, tracked: boolean): Observable<T> {
+        if (tracked) {
+            return request;
+        } else {
+            return this.spinnerSrv.track(request);
+        }
+    }
+}

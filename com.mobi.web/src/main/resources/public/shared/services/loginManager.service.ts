@@ -21,8 +21,12 @@
  * #L%
  */
 
-import { first } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { get } from 'lodash';
+import { forkJoin, from, Observable, of, throwError } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { CatalogStateService } from './catalogState.service';
@@ -39,260 +43,190 @@ import { UserManagerService } from './userManager.service';
 import { UserStateService } from './userState.service';
 import { YasguiService } from './yasgui.service';
 import { OntologyStateService } from './ontologyState.service';
-
-loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
-    'catalogManagerService',
-    'catalogStateService',
-    'datasetManagerService',
-    'datasetStateService',
-    'delimitedManagerService',
-    'discoverStateService',
-    'mapperStateService',
-    'mergeRequestsStateService',
-    'ontologyManagerService',
-    'ontologyStateService',
-    'shapesGraphStateService',
-    'stateManagerService',
-    'userManagerService',
-    'userStateService',
-    'utilService',
-    'yasguiService'
-];
+import { REST_PREFIX } from '../../constants';
+import { UtilService } from './util.service';
 
 /**
- * @ngdoc service
- * @name shared.service:loginManagerService
- * @requires $http
- * @requires $q
- * @requires $state
- * @requires shared.service:catalogManagerService
- * @requires shared.service:catalogStateService
- * @requires shared.service:datasetManagerService
- * @requires shared.service:datasetStateService
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:discoverStateService
- * @requires shared.service:mapperStateService
- * @requires shared.service:mergeRequestsStateService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:sparqlManagerService
- * @requires shared.service:shapesGraphStateService
- * @requires shared.service:stateManagerService
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
+ * @class shared.LoginManagerService
  *
- * @description
- * `loginManagerService` is a service that provides access to the Mobi login REST
- * endpoints so users can log into and out of Mobi.
+ * A service that provides access to the Mobi login REST endpoints so users can log into and out of Mobi.
  */
-function loginManagerService($q, $http, $state, REST_PREFIX,
-                             catalogManagerService: CatalogManagerService,
-                             catalogStateService: CatalogStateService, datasetManagerService: DatasetManagerService,
-                             datasetStateService: DatasetStateService, delimitedManagerService: DelimitedManagerService,
-                             discoverStateService: DiscoverStateService, mapperStateService: MapperStateService,
-                             mergeRequestsStateService: MergeRequestsStateService, ontologyManagerService: OntologyManagerService,
-                             ontologyStateService: OntologyStateService, shapesGraphStateService: ShapesGraphStateService,
-                             stateManagerService: StateManagerService, userManagerService: UserManagerService,
-                             userStateService: UserStateService, utilService, yasguiService: YasguiService) {
-    const self = this,
-        prefix = REST_PREFIX + 'session';
+@Injectable()
+export class LoginManagerService {
+    prefix = REST_PREFIX + 'session';
+    weGood = false;
+
+    constructor(private http: HttpClient, private router: Router,
+        private cm: CatalogManagerService,
+        private cs: CatalogStateService, private dm: DatasetManagerService,
+        private ds: DatasetStateService, private dlm: DelimitedManagerService,
+        private dis: DiscoverStateService, private ms: MapperStateService,
+        private mrs: MergeRequestsStateService, private om: OntologyManagerService,
+        private os: OntologyStateService, private sgs: ShapesGraphStateService,
+        private sm: StateManagerService, private um: UserManagerService,
+        private us: UserStateService, private util: UtilService, private yasgui: YasguiService) {}
     
-    self.weGood = false;
-
     /**
-     * @ngdoc property
-     * @name currentUser
-     * @propertyOf shared.service:loginManagerService
-     * @type {string}
-     *
-     * @description
      * `currentUser` holds the username of the user that is currently logged into Mobi.
-     */
-    self.currentUser = '';
-
-    /**
-     * @ngdoc property
-     * @name currentUserIRI
-     * @propertyOf shared.service:loginManagerService
      * @type {string}
-     *
-     * @description
-     * `currentUserIRI` holds the IRI of the user that is currently logged into Mobi.
      */
-    self.currentUserIRI = '';
+    currentUser = '';
 
     /**
-     * @ngdoc method
-     * @name loginManager.loginManagerService#login
-     * @methodOf shared.service:loginManagerService
-     *
-     * @description
+     * `currentUserIRI` holds the IRI of the user that is currently logged into Mobi.
+     * @type {string}
+     */
+    currentUserIRI = '';
+
+    /**
      * Makes a call to POST /mobirest/session to attempt to log into Mobi using the passed credentials. Returns a
      * Promise with the success of the log in attempt. If failed, contains an appropriate error message.
      *
      * @param {string} username the username to attempt to log in with
      * @param {string} password the password to attempt to log in with
-     * @return {Promise} A Promise that resolves if the log in attempt succeeded and rejects
+     * @return {Observable} An Observable that resolves if the log in attempt succeeded and rejects
      * with an error message if the log in attempt failed
      */
-    self.login = function(username, password) {
-        const config = { params: { username, password } };
-        return $http.post(prefix, null, config)
-            .then(response => {
-                if (response.status === 200 && response.data) {
-                    self.currentUser = response.data;
-                    if (get(response.headers(), 'accounts-merged', false) === 'true') {
-                        utilService.createWarningToast('Local User Account found. Accounts have been merged.');
+    login(username: string, password: string): Observable<boolean> {
+        const params = { username, password };
+        return this.http.post(this.prefix, null, {params: this.util.createHttpParams(params), responseType: 'text', observe: 'response'}).pipe(
+            switchMap(response => {
+                if (response.status === 200 && response.body) {
+                    this.currentUser = response.body;
+                    if (get(response.headers, 'accounts-merged', false) === 'true') {
+                        this.util.createWarningToast('Local User Account found. Accounts have been merged.');
                     }
-                    return userManagerService.getUser(self.currentUser)
-                        .then(user => {
-                            self.currentUserIRI = user.iri;
-                            self.currentUser = user.username;
-                            $state.go('root.home');
-                            return true;
-                        });
+                    return from(this.um.getUser(this.currentUser))
+                        .pipe(
+                            map(user => {
+                                this.currentUserIRI = user.iri;
+                                this.currentUser = user.username;
+                                this.router.navigate(['/home']);
+                                return true;
+                            }),
+                            catchError(() => of(false))
+                        );
                 }
-            }, response => {
+            }),
+            catchError(response => {
                 if (response.status === 401) {
-                    return $q.reject('This email/password combination is not correct.');
+                    return throwError('This email/password combination is not correct.');
                 } else {
-                    return $q.reject('An error has occurred. Please try again later.');
+                    return throwError('An error has occurred. Please try again later.');
                 }
-            });
+            })
+        );
     }
 
     /**
-     * @ngdoc method
-     * @name loginManager.loginManagerService#logout
-     * @methodOf shared.service:loginManagerService
-     *
-     * @description
      * Makes a call to DELETE /mobirest/session to log out of which ever user account is current. Navigates back to
      * the login page.
      */
-    self.logout = function() {
-        datasetStateService.reset();
-        delimitedManagerService.reset();
-        discoverStateService.reset();
-        mapperStateService.initialize();
-        mapperStateService.resetEdit();
-        mergeRequestsStateService.reset();
-        ontologyStateService.reset();
-        shapesGraphStateService.reset();
-        catalogStateService.reset();
-        yasguiService.reset();
-        $http.delete(prefix)
-            .then(response => {
-                self.currentUser = '';
-                self.currentUserIRI = '';
-                userStateService.reset();
-                $state.go('login');
+    logout(): void {
+        this.ds.reset();
+        this.dlm.reset();
+        this.dis.reset();
+        this.ms.initialize();
+        this.ms.resetEdit();
+        this.mrs.reset();
+        this.os.reset();
+        this.sgs.reset();
+        this.cs.reset();
+        this.yasgui.reset();
+        this.http.delete(this.prefix)
+            .subscribe(() => {
+                this.currentUser = '';
+                this.currentUserIRI = '';
+                this.us.reset();
+                this.router.navigate(['/login']);
             });
     }
 
     /**
-     * @ngdoc method
-     * @name loginManager.loginManagerService#isAuthenticated
-     * @methodOf shared.service:loginManagerService
-     *
-     * @description
      * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
-     * is logged in, initializes the {@link shared.service:catalogManagerService},
-     * {@link shared.service:catalogStateService},
-     * {@link shared.service:mergeRequestsStateService},
-     * {@link shared.service:ontologyManagerService},
-     * {@link shared.service:ontologyStateService},
-     * {@link shared.service:datasetManagerService},
-     * {@link shared.service:stateManagerService},
-     * and the {@link shared.service:userManagerService}. Returns
-     * a Promise with whether or not a user is logged in.
+     * is logged in, initializes the {@link shared.CatalogManagerService}, {@link shared.CatalogStateService},
+     * {@link shared.MergeRequestsStateService}, {@link shared.OntologyManagerService},
+     * {@link shared.OntologyStateService}, {@link shared.DatasetManagerService}, {@link shared.StateManagerService},
+     * and the {@link shared.UserManagerService}. Returns an Observable with whether or not a user is logged in.
      *
-     * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
+     * @return {Observable} An Observable that resolves if a user is logged in and rejects with the HTTP
      * response data if no user is logged in.
      */
-    self.isAuthenticated = function() {
-        const handleError = function(data) {
-            self.currentUser = '';
-            self.currentUserIRI = '';
-            $state.go('login');
-        };
-        return self.getCurrentLogin().then(data => {
-            if (!data) {
-                return $q.reject(data);
-            }
-            let promises = [
-                stateManagerService.initialize().pipe(first()).toPromise(),
-                userManagerService.initialize(),
-                userManagerService.getUser(data).then(user => {
-                    self.currentUserIRI = user.iri;
-                    self.currentUser = user.username;
-                })
-            ];
-            if (!self.weGood) {
-                promises = promises.concat([
-                    catalogManagerService.initialize().pipe(first()).toPromise().then(() => {
-                        catalogStateService.initialize();
-                        mergeRequestsStateService.initialize();
-                        ontologyManagerService.initialize();
-                        ontologyStateService.initialize();
-                        shapesGraphStateService.initialize();
-                    }),
-                    datasetManagerService.initialize().pipe(first()).toPromise()
-                ]);
-            }
-            if (self.checkMergedAccounts()) {
-                utilService.createWarningToast('Local User Account found. Accounts have been merged.');
-            }
+    isAuthenticated(): Observable<boolean> {
+        return this.getCurrentLogin().pipe(
+            switchMap((data: string) => {
+                if (!data) {
+                    return throwError(data);
+                }
+                let requests = [
+                    this.sm.initialize(),
+                    from(this.um.initialize()),
+                    from(this.um.getUser(data).then(user => {
+                        this.currentUserIRI = user.iri;
+                        this.currentUser = user.username;
+                    }))
+                ];
+                if (!this.weGood) {
+                    requests = requests.concat([
+                        this.cm.initialize().pipe(tap(() => {
+                            this.cs.initialize();
+                            this.mrs.initialize();
+                            this.om.initialize();
+                            this.os.initialize();
+                            this.sgs.initialize();
+                        })),
+                        this.dm.initialize()
+                    ]);
+                }
+                if (this.checkMergedAccounts()) {
+                    this.util.createWarningToast('Local User Account found. Accounts have been merged.');
+                }
 
-            return $q.all(promises);
-        }, $q.reject)
-        .then(() => {
-            self.weGood = true;
-        }, handleError);
-    };
+                return forkJoin(requests);
+            }),
+            mergeMap(() => {
+                this.weGood = true;
+                return of(true);
+            }),
+            catchError(() => {
+                this.currentUser = '';
+                this.currentUserIRI = '';
+                return of(false);
+            })
+        );
+    }
 
     /**
-     * @ngdoc method
-     * @name loginManager.loginManagerService#getCurrentLogin
-     * @methodOf shared.service:loginManagerService
-     *
-     * @description
      * Makes a call to GET /mobirest/session to retrieve the user that is currently logged in. Returns a Promise
      * with the result of the call.
      *
-     * @return {Promise} A Promise with the response data that resolves if the request was successful; rejects if
+     * @return {Observable} An Observable with the response data that resolves if the request was successful; rejects if
      * unsuccessful
      */
-    self.getCurrentLogin = function () {
-        const deferred = $q.defer();
-
-        $http.get(prefix).then(response => {
-            if (response.status === 200) {
-                deferred.resolve(response.data);
-            } else {
-                deferred.reject(response.data);
-            }
-        }, error => deferred.reject(error.data));
-
-        return deferred.promise;
-    };
+    getCurrentLogin(): Observable<string> {
+        return this.http.get(this.prefix, {observe: 'response', responseType: 'text'}).pipe(
+            catchError(error => throwError(error.statusText)),
+            switchMap(response => {
+                if (response.status === 200) {
+                    return of(response.body);
+                } else {
+                    return throwError(response.body);
+                }
+            })
+        );
+    }
 
     /**
-     * @ngdoc method
-     * @name loginManager.loginManagerService#checkMergedAccount
-     * @methodOf shared.service:loginManagerService
-     *
-     * @description
      * Takes the current url of the window and parses the string for path params that are preceded by a question mark.
      * If a path param for the merged-account flag is present it returns the value of the flag. If the flag is not
      * present, it returns false.
      *
-     * @return {boolean} A boolean value repesenting whether a local account and a remote account were merged or not.
+     * @return {boolean} A boolean value representing whether a local account and a remote account were merged or not.
      */
-    self.checkMergedAccounts = function() {
+    checkMergedAccounts(): boolean {
         const url = window.location.href;
         let merged = false;
-        let queryParams = url.split('?');
+        const queryParams = url.split('?');
         queryParams.forEach(param => {
             if (param && param.includes('merged-accounts')) {
                 merged = param.split('=')[1] === 'true' ? true : false;
@@ -302,5 +236,3 @@ function loginManagerService($q, $http, $state, REST_PREFIX,
         return merged;
     }
 }
-
-export default loginManagerService;

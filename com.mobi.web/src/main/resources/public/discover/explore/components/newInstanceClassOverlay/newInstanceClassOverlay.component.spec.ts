@@ -28,20 +28,22 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 
 import { 
-    cleanStylesFromDOM, mockPolicyEnforcement, mockUtil
+    cleanStylesFromDOM
  } from '../../../../../../../test/ts/Shared';
 import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
-import { NewInstanceClassOverlayComponent } from './newInstanceClassOverlay.component';
 import { NewInstancePropertyOverlayComponent } from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
-import { of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
+import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../../shared/services/util.service';
+import { NewInstanceClassOverlayComponent } from './newInstanceClassOverlay.component';
 
 describe('New Instance Class Overlay component', function() {
     let component: NewInstanceClassOverlayComponent;
@@ -51,11 +53,10 @@ describe('New Instance Class Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<NewInstancePropertyOverlayComponent>>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
-    let utilStub;
-    let policyEnforcementStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     const data = {
         classes: [{id: 'test'}, {id: 'blah'}]
-    }
+    };
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -64,8 +65,8 @@ describe('New Instance Class Overlay component', function() {
                 NewInstanceClassOverlayComponent,
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
+                MockProvider(UtilService),
+                MockProvider(PolicyEnforcementService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 { provide: uuid, useFactory: () => jasmine.createSpyObj('uuid', ['v4'])},
@@ -86,9 +87,8 @@ describe('New Instance Class Overlay component', function() {
         matDialogRef = TestBed.get(MatDialogRef);
         discoverStateStub = TestBed.get(DiscoverStateService);
         exploreServiceStub = TestBed.get(ExploreService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
         splitIriStub = TestBed.get (SplitIRIPipe);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -128,7 +128,6 @@ describe('New Instance Class Overlay component', function() {
         discoverStateStub = null;
         matDialogRef = null;
         utilStub = null;
-
     });
 
     describe('contains the correct html', function() {
@@ -143,13 +142,13 @@ describe('New Instance Class Overlay component', function() {
             });
         });
         it('with buttons to cancel and submit', function() {
-            let buttons = element.queryAll(By.css('.mat-dialog-actions button'));
+            const buttons = element.queryAll(By.css('.mat-dialog-actions button'));
             expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(buttons[0].nativeElement.textContent.trim());
             expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
         });
         it('depending on whether the selected class is deprecated', function() {
-            let button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
+            const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
             expect(button.properties['disabled']).toBeFalsy();
 
@@ -183,7 +182,7 @@ describe('New Instance Class Overlay component', function() {
             });
             describe('when getClassInstanceDetails resolves', function() {
                 beforeEach(function() {
-                    exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse<InstanceDetails[]>({body:[]})));
+                    exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse<InstanceDetails[]>({body: []})));
                     splitIriStub.transform.and.returnValue({begin: 'begin/', then: 'then/', end: 'end'});
                 });
                 it('if instances already exist', fakeAsync( function() {
@@ -192,19 +191,19 @@ describe('New Instance Class Overlay component', function() {
                     fixture.detectChanges();
                     tick();
                     expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, component.selectedClass.id, {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit});
-                    exploreServiceStub.getClassInstanceDetails(discoverStateStub.explore.recordId, component.selectedClass.id, {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit}).subscribe(result => {
+                    exploreServiceStub.getClassInstanceDetails(discoverStateStub.explore.recordId, component.selectedClass.id, {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit}).subscribe(() => {
                         expect(discoverStateStub.explore.creating).toEqual(true);
                         expect(discoverStateStub.explore.classId).toEqual(component.selectedClass.id);
                         expect(discoverStateStub.explore.classDeprecated).toEqual(component.selectedClass.deprecated);
-                        expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalled();
+                        expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                         expect(discoverStateStub.explore.instanceDetails.data).toEqual([{instanceIRI: 'instance', title: 'test', description: 'desc'}]);
                         expect(splitIriStub.transform).toHaveBeenCalledWith('instance');
                         expect(discoverStateStub.explore.instance.entity[0]['@type']).toEqual([component.selectedClass.id]);
                         expect(discoverStateStub.explore.instance.entity[0]['@id'].startsWith('begin/then/')).toBeTruthy();
                         expect(discoverStateStub.explore.instance.metadata.instanceIRI.startsWith('begin/then/')).toBeTruthy();
                         expect(discoverStateStub.explore.breadcrumbs).toEqual(['Classes', component.selectedClass.title, 'New Instance']);
-                        expect(matDialogRef.close).toHaveBeenCalled();
-                    })
+                        expect(matDialogRef.close).toHaveBeenCalledWith();
+                    });
                 }));
                 it('if there are no instances', fakeAsync( function() {
                     exploreServiceStub.createPagedResultsObject.and.returnValue({data: [], total: 0});
@@ -212,28 +211,28 @@ describe('New Instance Class Overlay component', function() {
                     fixture.detectChanges();
                     tick();
                     expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, component.selectedClass.id, {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit});
-                    exploreServiceStub.getClassInstanceDetails(discoverStateStub.explore.recordId, component.selectedClass.id, {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit}).subscribe(result => {
+                    exploreServiceStub.getClassInstanceDetails(discoverStateStub.explore.recordId, component.selectedClass.id, {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit}).subscribe(() => {
                         expect(discoverStateStub.explore.creating).toEqual(true);
                         expect(discoverStateStub.explore.classId).toEqual(component.selectedClass.id);
                         expect(discoverStateStub.explore.classDeprecated).toEqual(component.selectedClass.deprecated);
-                        expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalled();
+                        expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                         expect(discoverStateStub.explore.instanceDetails.data).toEqual([]);
                         expect(splitIriStub.transform).toHaveBeenCalledWith(component.selectedClass.id);
                         expect(discoverStateStub.explore.instance.entity[0]['@type']).toEqual([component.selectedClass.id]);
                         expect(discoverStateStub.explore.instance.entity[0]['@id'].startsWith('http://mobi.com/data/end/')).toBeTruthy();
                         expect(discoverStateStub.explore.instance.metadata.instanceIRI.startsWith('http://mobi.com/data/end/')).toBeTruthy();
                         expect(discoverStateStub.explore.breadcrumbs).toEqual(['Classes', component.selectedClass.title, 'New Instance']);
-                        expect(matDialogRef.close).toHaveBeenCalled();
-                    })
+                        expect(matDialogRef.close).toHaveBeenCalledWith();
+                    });
                 }));
             });
         });
     });
     it('should call submit when the button is clicked', function() {
         spyOn(component, 'submit');
-        let continueButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
+        const continueButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         continueButton.triggerEventHandler('click', null);
-        expect(component.submit).toHaveBeenCalled();
+        expect(component.submit).toHaveBeenCalledWith();
     });
     it('should call cancel when the button is clicked', function() {
         const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];

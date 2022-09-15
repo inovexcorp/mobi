@@ -21,13 +21,14 @@
  * #L%
  */
 import { includes } from 'lodash';
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { AxiomOverlayComponent } from '../axiomOverlay/axiomOverlay.component';
 import { RDFS } from '../../../prefixes';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 
 /**
  * @class ontology-editor.AxiomBlockComponent
@@ -46,7 +47,7 @@ import { RDFS } from '../../../prefixes';
 })
 export class AxiomBlockComponent {
     constructor(public om: OntologyManagerService, public os: OntologyStateService, private dialog: MatDialog,
-                @Inject('propertyManagerService') public pm) {}
+                private pm: PropertyManagerService) {}
 
     showAxiomOverlay(): void {
         if (this.om.isClass(this.os.listItem.selected)) {
@@ -54,7 +55,7 @@ export class AxiomBlockComponent {
                 data: {
                     axiomList: this.pm.classAxiomList
                 }
-            }).afterClosed().subscribe(result => {
+            }).afterClosed().subscribe((result: { axiom: string, values: string[] }) => {
                 if (result) {
                     this.updateClassHierarchy(result);
                 }
@@ -64,7 +65,7 @@ export class AxiomBlockComponent {
                 data: {
                     axiomList: this.pm.objectAxiomList
                 }
-            }).afterClosed().subscribe(result => {
+            }).afterClosed().subscribe((result: { axiom: string, values: string[] }) => {
                 if (result) {
                     this.updateObjectPropHierarchy(result);
                 }
@@ -74,14 +75,14 @@ export class AxiomBlockComponent {
                 data: {
                     axiomList: this.pm.datatypeAxiomList
                 }
-            }).afterClosed().subscribe(result => {
+            }).afterClosed().subscribe((result: { axiom: string, values: string[] }) => {
                 if (result) {
                     this.updateDataPropHierarchy(result);
                 }
             });
         }
     }
-    updateClassHierarchy(updatedAxiomObj): void {
+    updateClassHierarchy(updatedAxiomObj: { axiom: string, values: string[] }): void {
         if (updatedAxiomObj.axiom === RDFS + 'subClassOf' && updatedAxiomObj.values.length) {
             this.os.setSuperClasses(this.os.listItem.selected['@id'], updatedAxiomObj.values);
             if (includes(this.os.listItem.individualsParentPath, this.os.listItem.selected['@id'])) {
@@ -90,7 +91,7 @@ export class AxiomBlockComponent {
             this.os.setVocabularyStuff();
         }
     }
-    updateDataPropHierarchy(updatedAxiomObj): void {
+    updateDataPropHierarchy(updatedAxiomObj: { axiom: string, values: string[] }): void {
         if (updatedAxiomObj.axiom === RDFS + 'subPropertyOf' && updatedAxiomObj.values.length) {
             this.os.setSuperProperties(this.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
         } else if (updatedAxiomObj.axiom === RDFS + 'domain' && updatedAxiomObj.values.length) {
@@ -98,7 +99,7 @@ export class AxiomBlockComponent {
             this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
         }
     }
-    updateObjectPropHierarchy(updatedAxiomObj): void {
+    updateObjectPropHierarchy(updatedAxiomObj: { axiom: string, values: string[] }): void {
         if (updatedAxiomObj.axiom === RDFS + 'subPropertyOf' && updatedAxiomObj.values.length) {
             this.os.setSuperProperties(this.os.listItem.selected['@id'], updatedAxiomObj.values, 'objectProperties');
             if (this.os.containsDerivedSemanticRelation(updatedAxiomObj.values)) {

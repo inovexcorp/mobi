@@ -21,11 +21,13 @@
  * #L%
  */
 import { find } from 'lodash';
-import { OnInit, Component, Inject } from '@angular/core';
+import { OnInit, Component } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
  * @name settings.PasswordTabComponent
@@ -46,8 +48,8 @@ export class PasswordTabComponent implements OnInit {
         unmaskPassword: ['', [Validators.required]]
     });
    
-    constructor(private um: UserManagerService, @Inject('loginManagerService') private lm,
-        @Inject('utilService') private util, private fb: FormBuilder) {}
+    constructor(private um: UserManagerService, private lm: LoginManagerService,
+        private util: UtilService, private fb: FormBuilder) {}
 
     ngOnInit(): void {
         this.currentUser = find(this.um.users, { username: this.lm.currentUser });

@@ -27,9 +27,7 @@ import { get, has, sortBy } from 'lodash';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { RDF, XSD } from '../../../prefixes';
-import {
-    DatatypePropertyOverlayComponent
-} from '../datatypePropertyOverlay/datatypePropertyOverlay.component';
+import { DatatypePropertyOverlayComponent } from '../datatypePropertyOverlay/datatypePropertyOverlay.component';
 
 /**
  * @class ontology-editor.DatatypePropertyBlockComponent
@@ -45,21 +43,13 @@ import {
     selector: 'datatype-property-block'
 })
 export class DatatypePropertyBlockComponent implements OnChanges {
-    @Input() selected;
-    data : {
-        editingProperty: boolean,
-        propertySelect: string,
-        propertyValue: string,
-        propertyType: string,
-        propertyIndex: number,
-        propertyLanguage:string
-    }
-    dataProperties = [];
-    dataPropertiesFiltered = [];
+    @Input() selected; // Here to trigger on changes
+
+    dataProperties: string[] = [];
+    dataPropertiesFiltered: string[] = [];
 
     constructor(public os: OntologyStateService,
-                private dialog: MatDialog,
-    ) {}
+                private dialog: MatDialog) {}
 
     ngOnChanges(): void  {
         this.updatePropertiesFiltered();
@@ -77,7 +67,7 @@ export class DatatypePropertyBlockComponent implements OnChanges {
             propertyIndex: 0,
             propertyLanguage: 'en'
         };
-        this.dialog.open(DatatypePropertyOverlayComponent, {data: data}).afterClosed().subscribe( (result) => {
+        this.dialog.open(DatatypePropertyOverlayComponent, { data }).afterClosed().subscribe(() => {
             this.updatePropertiesFiltered();
         });
     }

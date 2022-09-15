@@ -32,7 +32,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { MatChipsModule, MatButtonToggleModule } from '@angular/material';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -45,6 +45,7 @@ import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordMod
 import { CommitModalComponent } from '../commitModal/commitModal.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Editor Top Bar component', function() {
     let component: EditorTopBarComponent;
@@ -52,8 +53,8 @@ describe('Editor Top Bar component', function() {
     let fixture: ComponentFixture<EditorTopBarComponent>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let shapesGraphStateStub;
-    let utilStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalog';
 
@@ -75,7 +76,7 @@ describe('Editor Top Bar component', function() {
             providers: [
                 MockProvider(ShapesGraphStateService),
                 MockProvider(CatalogManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -97,13 +98,13 @@ describe('Editor Top Bar component', function() {
             commitId: 'commit1',
             title: 'title'
         };
-        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
+        shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
         catalogManagerStub = TestBed.get(CatalogManagerService);
         catalogManagerStub.localCatalog = {'@id': catalogId};
-        let commitDifference = new CommitDifference();
+        const commitDifference = new CommitDifference();
         commitDifference.commit = {'@id': 'commit3'};
         catalogManagerStub.getBranchHeadCommit.and.returnValue(of(commitDifference));
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
     });
 
     afterEach(function() {
@@ -144,7 +145,7 @@ describe('Editor Top Bar component', function() {
         });
         it('should check if the download button is disabled', function() {
             expect(component.downloadDisabled()).toBeFalse();
-            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            shapesGraphStateStub.listItem = new ShapesGraphListItem();
             expect(component.downloadDisabled()).toBeTrue();
         });
         describe('should update the branch with the head', function() {
@@ -159,7 +160,7 @@ describe('Editor Top Bar component', function() {
                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                    }));
                    it('unless an error occurs', fakeAsync(function() {
-                       shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+                       shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
                        component.update();
                        tick();
                        expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
@@ -197,7 +198,7 @@ describe('Editor Top Bar component', function() {
             expect(branchButton.length).toEqual(1);
             expect(branchButton[0].nativeElement.getAttribute('disabled')).toBeNull();
 
-            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            shapesGraphStateStub.listItem = new ShapesGraphListItem();
             fixture.detectChanges();
             await fixture.whenStable();
             branchButton = element.queryAll(By.css('button.create-branch'));
@@ -209,7 +210,7 @@ describe('Editor Top Bar component', function() {
             expect(downloadButton.length).toEqual(1);
             expect(downloadButton[0].nativeElement.getAttribute('disabled')).toBeNull();
 
-            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            shapesGraphStateStub.listItem = new ShapesGraphListItem();
             fixture.detectChanges();
             await fixture.whenStable();
             downloadButton = element.queryAll(By.css('button.download-record'));
@@ -221,7 +222,7 @@ describe('Editor Top Bar component', function() {
             expect(uploadButton.length).toEqual(1);
             expect(uploadButton[0].nativeElement.getAttribute('disabled')).toBeNull();
 
-            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            shapesGraphStateStub.listItem = new ShapesGraphListItem();
             fixture.detectChanges();
             await fixture.whenStable();
             uploadButton = element.queryAll(By.css('button.upload-changes'));
@@ -266,7 +267,7 @@ describe('Editor Top Bar component', function() {
                 expect(updateButton.length).toEqual(0);
 
                 shapesGraphStateStub.listItem.upToDate = false;
-                shapesGraphStateStub.listItem.inProgressCommit.additions = [{'@id': 'thing', '@type': 'otherThing'}];
+                shapesGraphStateStub.listItem.inProgressCommit.additions = [{'@id': 'thing', '@type': ['otherThing']}];
 
                 fixture.detectChanges();
                 await fixture.whenStable();
@@ -283,7 +284,7 @@ describe('Editor Top Bar component', function() {
             expect(changesButton.length).toEqual(1);
             expect(changesButton[0].nativeElement.getAttribute('disabled')).toBeNull();
 
-            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            shapesGraphStateStub.listItem = new ShapesGraphListItem();
             fixture.detectChanges();
             await fixture.whenStable();
             changesButton = element.queryAll(By.css('button.upload-changes'));
@@ -312,7 +313,7 @@ describe('Editor Top Bar component', function() {
         createButton.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.download).toHaveBeenCalled();
+        expect(component.download).toHaveBeenCalledWith();
     });
     it('should call update when the Update with HEAD button is clicked', async function() {
         spyOn(component, 'update');
@@ -324,6 +325,6 @@ describe('Editor Top Bar component', function() {
         createButton.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.update).toHaveBeenCalled();
+        expect(component.update).toHaveBeenCalledWith();
     });
 });

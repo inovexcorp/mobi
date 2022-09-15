@@ -42,7 +42,6 @@ module.exports = {
             .useXpath()
             .waitForElementVisible(newOntologyButtonXpath)
             .click(newOntologyButtonXpath)
-            
     },
 
     'Step 3: Edit New Ontology Overlay' : function(browser) {
@@ -74,72 +73,66 @@ module.exports = {
             .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"myTitle")]]')
             .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"myDescription")]]')
             .waitForElementVisible('//static-iri//span[text()[contains(.,"MyTitle")]]')
-            .waitForElementVisible('//material-tabset//a[@class="nav-link active"]//span[text()[contains(.,"Project")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Project")]]')
             .useCss()       
     },
 
     'Step 6: Edit IRI for ontology' : function(browser) { 
         browser
-            .useCss()  
-            .click('static-iri i.fa.fa-pencil')
-            .waitForElementVisible('edit-iri-overlay-ajs')
-            .setValue('edit-iri-overlay-ajs div.form-group.ends-container input', 'myOntology')
-            .click('xpath', '//edit-iri-overlay-ajs//button[text()="Submit"]')
-//            .waitForElementNotVisible('.spinner')
+            .useXpath()
+            .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .setValue('//mat-label[text()[contains(.,"Ends With")]]//ancestor::mat-form-field//input', 'myOntology')
+            .click('xpath', '//edit-iri-overlay//span[text()="Submit"]')
+            .waitForElementNotPresent('edit-iri-overlay')
+        browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 6: Open Commit overlay' : function(browser) { 
+    'Step 7: Open Commit overlay' : function(browser) {
         browser
-            .useCss()  
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-git')
-            .click('circle-button-stack .fa-git')
+            .useCss()
+            .pause(1000)
+            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
+            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
+            .click('ontology-button-stack circle-button-stack button.btn-info')
             .waitForElementVisible('commit-overlay')
     },
 
-    'Step 7: Edit Commit message and Submit' : function(browser) { 
+    'Step 8: Edit Commit message and Submit' : function(browser) {
         browser
-            .useCss()  
-            .waitForElementVisible('commit-overlay')
-            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
+            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'Changed IRI')
             .useXpath()
-            .click('//commit-overlay//button[text()="Submit"]')
+            .click('//commit-overlay//span[text()="Submit"]')
             .useCss()
             .waitForElementNotPresent('#spinner-full')
             .waitForElementNotPresent('commit-overlay')
             .waitForElementPresent('ontology-editor-page ontology-tab')
     },
 
-    'Step 8: Open Ontology Editor Page Ontology List Page' : function(browser) { 
+    'Step 9: Open Ontology Editor Page Ontology List Page' : function(browser) {
         browser
-            .useCss()  
-            .waitForElementPresent('ontology-editor-page ontology-tab')
             .click('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button')
             .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
     },
 
-    'Step 9: On The Ontology List Page, search for ontology' : function(browser) { 
+    'Step 10: On The Ontology List Page, search for ontology' : function(browser) {
         browser
             .useCss() 
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .clearValue('open-ontology-tab input.ontology-search')
-            .setValue('open-ontology-tab input.ontology-search', 'myTitle')
-            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER);
+            .clearValue('open-ontology-tab search-bar input')
+            .setValue('open-ontology-tab search-bar input', 'myTitle')
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
         browser.globals.wait_for_no_spinners(browser);
         browser.waitForElementVisible('ontology-editor-page open-ontology-tab')
     },
 
-    'Step 10: Ensure IRI changes are successful' : function(browser) {
+    'Step 11: Ensure IRI changes are successful' : function(browser) {
         browser
-            .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .setValue('open-ontology-tab input.ontology-search', 'myTitle')
-            .sendKeys('open-ontology-tab input.ontology-search', browser.Keys.ENTER)
             .useXpath()
             .assert.textContains('//open-ontology-tab//small', 'myOntology')
             .click('//open-ontology-tab//small[text()[contains(.,"myOntology")]]')
-        // wait for loading to finish
         browser
             .useCss()
             .waitForElementNotPresent('#spinner-full')
@@ -147,25 +140,25 @@ module.exports = {
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
     },
 
-    'Step 11: Create a new branch' : function(browser) {
+    'Step 12: Create a new branch' : function(browser) {
         browser
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-code-fork')
-            .click('circle-button-stack .fa-code-fork')
-            .waitForElementVisible('create-branch-overlay .modal-title')
-            .assert.textContains('create-branch-overlay .modal-title', 'Create New Branch')
-            .waitForElementVisible('create-branch-overlay text-input[display-text="\'Title\'"] input')
-            .setValue('create-branch-overlay text-input[display-text="\'Title\'"] input', "newBranchTitle")
-            .waitForElementVisible('create-branch-overlay text-area[display-text="\'Description\'"] textarea')
-            .setValue('create-branch-overlay text-area[display-text="\'Description\'"] textarea', "newBranchDescription")
+            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
+            .waitForElementVisible('ontology-button-stack circle-button-stack button i.fa-code-fork')
+            .click('ontology-button-stack circle-button-stack button i.fa-code-fork')
+            .waitForElementVisible('create-branch-overlay h1.mat-dialog-title')
+            .assert.textContains('create-branch-overlay h1.mat-dialog-title', 'Create New Branch')
             .useXpath()
-            .click('//create-branch-overlay//button[text()="Submit"]')
+            .waitForElementVisible('//create-branch-overlay//input[@placeholder="Title"]')
+            .waitForElementVisible('//create-branch-overlay//textarea[@placeholder="Description"]')
+            .setValue('//create-branch-overlay//input[@placeholder="Title"]', "newBranchTitle")
+            .setValue('//create-branch-overlay//textarea[@placeholder="Description"]', "newBranchDescription")
+            .click('//create-branch-overlay//span[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('create-branch-overlay .modal-title');
+            .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
             browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 12: Verify a new branch was created' : function(browser) {
+    'Step 13: Verify a new branch was created' : function(browser) {
         browser
             .useXpath()
             .getValue("//open-ontology-select//input", function(result) {
@@ -176,49 +169,42 @@ module.exports = {
             .useCss()
     },
 
-    'Step 13: Create a new Class': function(browser) {
+    'Step 14: Create a new Class': function(browser) {
         browser
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-code-fork')
-            .click('circle-button-stack .hidden-buttons .fa-plus')
-            .waitForElementVisible('create-entity-modal .modal-header h3')
-            .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
+            .click('ontology-button-stack circle-button-stack')
+            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
+            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
             .click('create-entity-modal .create-class')
             .waitForElementNotPresent('create-entity-modal .create-class')
-            .waitForElementVisible('create-class-overlay .modal-header h3')
-            .assert.textContains('create-class-overlay .modal-header h3', 'Create New OWL Class')
+            .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
+            .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
             .useXpath()
-            .waitForElementVisible('//create-class-overlay//parent::label[text()="Name"]/parent::custom-label/following-sibling::input')
-            .setValue('//create-class-overlay//parent::label[text()="Name"]/parent::custom-label/following-sibling::input', 'firstClass')
+            .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')
+            .setValue('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input', 'firstClass')
+            .setValue('//mat-label[text()[contains(.,"Description")]]//ancestor::mat-form-field//textarea', 'firstClassDescription')
+            .click('//create-class-overlay//span[text()="Submit"]')
             .useCss()
-            .setValue('create-class-overlay text-area[display-text="\'Description\'"] textarea', 'firstClassDescription') 
-            .useXpath()
-            .click('//create-class-overlay//button[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('create-class-overlay .modal-header h3')
+            .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title')
     },
 
-    'Step 14: Verify class was created': function(browser) {
+    'Step 15: Verify class was created': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Classes")]]')
-            .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
+            .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
     },
 
-    'Step 15: Verify changes are shown': function(browser) {
+    'Step 16: Verify changes are shown': function(browser) {
         browser
             .useXpath() // Must use Xpath when checking does an element with a certain value exist among other like elements
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Changes")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Changes")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Changes")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Changes")]]')
             .useCss()
-            .waitForElementVisible('saved-changes-tab .expansion-panel p[title*="FirstClass"]')
-            .assert.textContains('saved-changes-tab .expansion-panel p[title*="FirstClass"]', 'firstClass') // Verify Title
-            .assert.textContains('saved-changes-tab .expansion-panel p[title*="FirstClass"] ~ small a', 'FirstClass') // Verify IRI
-            .assert.hidden('saved-changes-tab .additions')
-            .click('saved-changes-tab .expansion-panel p[title*="FirstClass"]')
+            .waitForElementVisible('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]')
+            .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]', 'firstClass') // Verify Title
+            .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-Description[title*="FirstClass"]', 'FirstClass') // Verify IRI
+            .click('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]')
             .waitForElementVisible('saved-changes-tab .additions')
             .assert.textContains('saved-changes-tab .additions', 'Added Statements')
             .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/description"]', "description")
@@ -229,73 +215,74 @@ module.exports = {
             .assert.textContains('saved-changes-tab .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
     },
 
-    'Step 16: Commit Changes': function(browser) {
+    'Step 17: Commit Changes': function(browser) {
         browser
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-git')
-            .click('circle-button-stack .fa-git')
-            .waitForElementVisible('commit-overlay .modal-header h3')
-            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
+            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
+            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
+            .click('ontology-button-stack circle-button-stack button.btn-info')
+            .waitForElementVisible('commit-overlay h1.mat-dialog-title')
+            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'commit123')
             .useXpath()
-            .click('//commit-overlay//button[text()="Submit"]')
+            .click('//commit-overlay//span[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('commit-overlay .modal-header h3')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title')
     },
 
-    'Step 17: Verify no changes are shown': function(browser) {
+    'Step 18: Verify no changes are shown': function(browser) {
         browser
-            .assert.textContains('.nav-link.active span', 'Changes')
+            .useXpath()
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
+            .useCss()
             .waitForElementVisible('info-message p')
             .assert.textContains('info-message p', 'You don\'t have any uncommitted changes.')
             .assert.not.elementPresent('saved-changes-tab .expansion-panel')
     },
 
-    'Step 18: Open the Create Data Property Modal': function(browser) {
-                browser
-                    .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-                    .waitForElementVisible('circle-button-stack .fa-code-fork')
-                    .click('circle-button-stack .hidden-buttons .fa-plus')
-                    .waitForElementVisible('create-entity-modal .modal-header h3')
-                    .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
-                    .click('create-entity-modal .create-data-property')
-                    .waitForElementNotPresent('create-entity-modal .create-data-property')
-                    .waitForElementVisible('create-data-property-overlay .modal-header h3')
-                    .useXpath()
-                    .waitForElementVisible('//create-data-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
-                    .click('//create-data-property-overlay//button[text()="Cancel"]')
-                    .useCss()
-                    .waitForElementNotPresent('create-data-property-overlay .modal-header h3')
+    'Step 19: Open the Create Data Property Modal': function(browser) {
+        browser
+            .waitForElementVisible('ontology-button-stack circle-button-stack')
+            .click('ontology-button-stack circle-button-stack')
+            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
+            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
+            .click('create-entity-modal .create-data-property')
+            .waitForElementNotPresent('create-entity-modal .create-data-property')
+            .waitForElementVisible('create-data-property-overlay h1.mat-dialog-title')
+            .assert.textContains('create-data-property-overlay h1.mat-dialog-title', 'Create New OWL Data Property')
+            .useXpath()
+            .waitForElementVisible('//create-data-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
+            .click('//create-data-property-overlay//span[text()="Cancel"]')
+            .useCss()
+            .waitForElementNotPresent('create-data-property-overlay h1.mat-dialog-title')
     },
 
-    'Step 19: Open the Create Object Property Modal': function(browser) {
-                browser
-                    .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-                    .waitForElementVisible('circle-button-stack .fa-code-fork')
-                    .click('circle-button-stack .hidden-buttons .fa-plus')
-                    .waitForElementVisible('create-entity-modal .modal-header h3')
-                    .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
-                    .click('create-entity-modal .create-object-property')
-                    .waitForElementNotPresent('create-entity-modal .create-object-property')
-                    .waitForElementVisible('create-object-property-overlay .modal-header h3')
-                    .useXpath()
-                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
-                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Asymmetric Property")]]')
-                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Symmetric Property")]]')
-                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Transitive Property")]]')
-                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Reflexive Property")]]')
-                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Irreflexive Property")]]')
-                    .click('//create-object-property-overlay//button[text()="Cancel"]')
-                    .useCss()
-                    .waitForElementNotPresent('create-object-property-overlay .modal-header h3')
+    'Step 20: Open the Create Object Property Modal': function(browser) {
+        browser
+            .waitForElementVisible('ontology-button-stack circle-button-stack')
+            .click('ontology-button-stack circle-button-stack')
+            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
+            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
+            .click('create-entity-modal .create-object-property')
+            .waitForElementNotPresent('create-entity-modal .create-object-property')
+            .waitForElementVisible('create-object-property-overlay h1.mat-dialog-title')
+            .assert.textContains('create-object-property-overlay h1.mat-dialog-title', 'Create New OWL Object Property')
+            .useXpath()
+            .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
+            .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Asymmetric Property")]]')
+            .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Symmetric Property")]]')
+            .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Transitive Property")]]')
+            .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Reflexive Property")]]')
+            .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Irreflexive Property")]]')
+            .click('//create-object-property-overlay//span[text()="Cancel"]')
+            .useCss()
+            .waitForElementNotPresent('create-object-property-overlay h1.mat-dialog-title')
     },
 
-    'Step 20: Verify Commit': function(browser) {
+    'Step 21: Verify Commit': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]')
-            .click('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]//parent::a')
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
             .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
@@ -303,7 +290,7 @@ module.exports = {
             .assert.textContains('commit-history-table .commit-message[title="commit123"] span', 'commit123')
     },
 
-    'Step 21: Verify Master Branch only has initial commit': function(browser) {
+    'Step 22: Verify Master Branch only has initial commit': function(browser) {
         browser
             .useXpath()
             .getValue("//open-ontology-select//input", function(result) {
@@ -324,13 +311,12 @@ module.exports = {
                 this.assert.equal(result.status, 0);
                 this.assert.equal(result.value, "MASTER");
             })
-            .assert.visible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementNotPresent('commit-history-table .commit-message[title="commit123"]')
             .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
     },
 
-    'Step 22: Switch back to the other branch': function(browser) {
+    'Step 23: Switch back to the other branch': function(browser) {
         browser
             .useXpath()
             .getValue("//open-ontology-select//input", function(result) {
@@ -354,15 +340,14 @@ module.exports = {
             .useCss()
     },
 
-    'Step 23: Perform a merge': function(browser) {
+    'Step 24: Perform a merge': function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useCss()
-            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .hidden-buttons')
-            .waitForElementVisible('circle-button-stack .fa-random',15000)
-            .click('circle-button-stack .fa-random')
-            .waitForElementVisible('.merge-message')
+            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
+            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
+            .useXpath().click('//circle-button-stack//button[@mattooltip="Merge Branches"]')
+            .useCss().waitForElementVisible('.merge-message')
             .assert.textContains('.merge-message', 'newBranchTitle')
             .useXpath()
             .click('//branch-select//div[@class=\'branch-select\']//div[@class=\'mat-form-field-infix\']')
@@ -376,7 +361,7 @@ module.exports = {
             })
             .useCss()
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"]')
-            .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"]', 'First Class')
+            .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"]', 'firstClass')
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"] ~ small')
             .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"] ~ small', 'myOntology#FirstClass')
             .assert.textContains('merge-block .additions h5', 'Added Statements')
@@ -391,11 +376,11 @@ module.exports = {
             .useCss()
     },
 
-    'Step 24: Validate Merged Commits': function(browser) {
+    'Step 25: Validate Merged Commits': function(browser) {
         browser
             .waitForElementNotPresent('#spinner-full')
             .useXpath()
-            .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
             .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')

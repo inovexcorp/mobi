@@ -28,13 +28,11 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 
 import {
     cleanStylesFromDOM,
-    mockPolicyEnforcement,
-    mockUtil
 } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
@@ -53,9 +51,11 @@ import { Difference } from '../../../shared/models/difference.class';
 import { MappingRecord } from '../../../shared/models/mappingRecord.interface';
 import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
-import { MappingSelectPageComponent } from './mappingSelectPage.component';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { MappingSelectPageComponent } from './mappingSelectPage.component';
 
 describe('Mapping Select Page component', function() {
     let component: MappingSelectPageComponent;
@@ -66,8 +66,8 @@ describe('Mapping Select Page component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let policyEnforcementStub;
-    let utilStub;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error message';
     const catalogId = 'catalogId';
@@ -102,6 +102,8 @@ describe('Mapping Select Page component', function() {
         isDeprecated: false,
         ontologyId: ''
     };
+    const totalSize = 10;
+    const headers = {'x-total-count': '' + totalSize};
      
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -132,8 +134,8 @@ describe('Mapping Select Page component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
-                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(PolicyEnforcementService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -149,12 +151,12 @@ describe('Mapping Select Page component', function() {
         mapperStateStub = TestBed.get(MapperStateService);
         catalogManagerStub = TestBed.get(CatalogManagerService);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
-        policyEnforcementStub = TestBed.get('policyEnforcementService');
-        utilStub = TestBed.get('utilService');
+        policyEnforcementStub = TestBed.get(PolicyEnforcementService);
+        utilStub = TestBed.get(UtilService);
         matDialog = TestBed.get(MatDialog);
         
         catalogManagerStub.localCatalog = {'@id': catalogId};
-        catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [record]})));
+        catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [record], headers: new HttpHeaders(headers)})));
         mapperStateStub.paginationConfig = {
             limit: 10,
             pageIndex: 0,
@@ -166,7 +168,9 @@ describe('Mapping Select Page component', function() {
             }
         };
         mapperStateStub.getClasses.and.returnValue([mappingClass]);
-        policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.permit);
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
     });
 
     afterEach(function() {
@@ -250,6 +254,7 @@ describe('Mapping Select Page component', function() {
                     keywords: ['keyword'],
                     branch: branchId
                 }]);
+                expect(mapperStateStub.totalSize).toEqual(totalSize);
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
@@ -325,7 +330,7 @@ describe('Mapping Select Page component', function() {
             }));
             it('unless the user does not have permission', fakeAsync(function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.edit(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: CATALOG + 'Modify', actionAttrs: { [CATALOG + 'branch']: branchId}});
@@ -362,7 +367,7 @@ describe('Mapping Select Page component', function() {
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.showNew();
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: POLICY + 'Create', actionAttrs: { [RDF + 'type']: DELIM + 'MappingRecord'}});
@@ -385,7 +390,7 @@ describe('Mapping Select Page component', function() {
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.confirmDeleteMapping(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Delete'});
@@ -411,7 +416,7 @@ describe('Mapping Select Page component', function() {
             }));
             it('unless the user does not have permission', fakeAsync(function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
-                policyEnforcementStub.evaluateRequest.and.resolveTo(policyEnforcementStub.deny);
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.duplicate(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: POLICY + 'Create', actionAttrs: { [RDF + 'type']: DELIM + 'MappingRecord'}});

@@ -28,8 +28,11 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatCheckboxModule } from '@angular/material';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
 import { CheckboxComponent } from '../../../shared/components/checkbox/checkbox.component';
 import { CommitDifferenceTabsetComponent } from '../../../shared/components/commitDifferenceTabset/commitDifferenceTabset.component';
@@ -40,6 +43,7 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG, DCTERMS } from '../../../prefixes';
+import { UtilService } from '../../../shared/services/util.service';
 import { ShapesGraphMergePageComponent } from './shapesGraphMergePage.component';
 
 describe('Shapes Graph Merge Page component', function() {
@@ -47,7 +51,7 @@ describe('Shapes Graph Merge Page component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphMergePageComponent>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
 
     const branch1Iri = 'branch1';
@@ -61,7 +65,12 @@ describe('Shapes Graph Merge Page component', function() {
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ ],
+            imports: [ 
+                NoopAnimationsModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatCheckboxModule
+            ],
             declarations: [
                 ShapesGraphMergePageComponent,
                 MockComponent(ErrorDisplayComponent),
@@ -71,7 +80,7 @@ describe('Shapes Graph Merge Page component', function() {
                 MockComponent(ResolveConflictsBlock)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphStateService)
             ]
@@ -85,7 +94,7 @@ describe('Shapes Graph Merge Page component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
@@ -226,7 +235,7 @@ describe('Shapes Graph Merge Page component', function() {
                 expect(element.queryAll(By.css('.merge-block')).length).toEqual(1);
                 expect(element.queryAll(By.css('resolve-conflicts-block')).length).toEqual(0);
             });
-            forEach(['branch-select', 'checkbox'], item => {
+            forEach(['branch-select', 'mat-checkbox'], item => {
                 it('with a ' + item, function() {
                     expect(element.queryAll(By.css(item)).length).toEqual(1);
                 });
@@ -248,12 +257,12 @@ describe('Shapes Graph Merge Page component', function() {
                 expect(element.queryAll(By.css('error-display')).length).toEqual(1);
             });
             it('depending on whether the branch is the master branch', async function() {
-                expect(element.queryAll(By.css('checkbox')).length).toEqual(1);
+                expect(element.queryAll(By.css('mat-checkbox')).length).toEqual(1);
 
                 component.branchTitle = 'MASTER';
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(element.queryAll(By.css('checkbox')).length).toEqual(0);
+                expect(element.queryAll(By.css('mat-checkbox')).length).toEqual(0);
             });
             it('depending on whether a target has been selected', async function() {
                 expect(element.queryAll(By.css('commit-difference-tabset')).length).toEqual(0);

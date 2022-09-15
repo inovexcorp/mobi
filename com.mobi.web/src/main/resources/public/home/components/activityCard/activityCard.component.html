@@ -28,7 +28,7 @@
             </li>
         </ul>
     </div>
-    <div class="card-body h-100 vertical-scroll" targeted-spinner="id">
+    <div class="card-body h-100 vertical-scroll" #cardBody>
         <div class="activity pb-3" *ngFor="let activity of activities; trackBy: trackByFn">
             <activity-title [activity]="activity" [entities]="entities"></activity-title>
             <div class="timestamp text-muted">{{getTimeStamp(activity)}}</div>

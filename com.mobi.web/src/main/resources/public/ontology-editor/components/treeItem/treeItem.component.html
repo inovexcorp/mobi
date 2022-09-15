@@ -20,17 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree-item" [ngClass]="{'saved': saved , 'imported': entityInfo.imported}">
+<div class="tree-item" [ngClass]="{'saved': saved , 'imported': entityInfo?.imported}">
     <a *ngIf="!hasChildren" (click)="clickAction()" [ngClass]="{'active': isActive}">
         <i class="fa fa-fw {{os.listItem.propertyIcons[currentIri] || 'fa-square-o'}}"></i>
-        <span [ngClass]="{'underlined': underline}">{{entityInfo.label}}</span>
+        <span [ngClass]="{'underlined': underline}">{{entityInfo?.label}}</span>
         <i class="fa fa-fw fa-caret-left"></i>
     </a>
     <a *ngIf="hasChildren" (click)="clickAction()" (dblclick)="toggleAction()" [ngClass]="{'active': isActive}">
         <i class="fa fa-fw"
            [ngClass]="{'fa-minus-square-o': isOpened, 'fa-plus-square-o': !isOpened}"
            (click)="toggleAction(); $event.stopPropagation()"></i>
-        <span [ngClass]="{'underlined': underline}">{{entityInfo.label}}</span>
+        <span [ngClass]="{'underlined': underline}">{{entityInfo?.label}}</span>
         <i class="fa fa-fw fa-caret-left"></i>
     </a>
 </div>

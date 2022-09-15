@@ -27,23 +27,23 @@ import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testin
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule, MatFormFieldModule, MatInputModule } from '@angular/material';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import {
-    mockLoginManager,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { ProfileTabComponent } from './profileTab.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { ReactiveFormsModule } from '@angular/forms';
 import { FOAF } from '../../../prefixes';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { ProfileTabComponent } from './profileTab.component';
 
 describe('Profile Tab component', function() {
     let component: ProfileTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ProfileTabComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let loginManagerStub;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -59,7 +59,7 @@ describe('Profile Tab component', function() {
                 MockComponent(ErrorDisplayComponent)
             ],
             providers: [
-                { provide: 'loginManagerService', useClass: mockLoginManager },
+                MockProvider(LoginManagerService),
                 MockProvider(UserManagerService),
             ]
         });
@@ -69,7 +69,7 @@ describe('Profile Tab component', function() {
         fixture = TestBed.createComponent(ProfileTabComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        loginManagerStub = TestBed.get('loginManagerService');
+        loginManagerStub = TestBed.get(LoginManagerService);
         userManagerStub = TestBed.get(UserManagerService);
 
         loginManagerStub.currentUser = 'user';

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { map } from 'lodash';
@@ -28,7 +28,7 @@ import { map } from 'lodash';
 import { REGEX } from '../../../constants';
 import { User } from '../../../shared/models/user.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UserStateService } from '../../../shared/services/userState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
 
 /**
@@ -55,8 +55,7 @@ export class CreateUserOverlayComponent {
     });
 
     constructor(private dialogRef: MatDialogRef<CreateUserOverlayComponent>, private fb: FormBuilder,
-        private state: UserStateService, private um: UserManagerService,
-        @Inject('utilService') private util) {}
+        private um: UserManagerService, private util: UtilService) {}
 
     getUsernames(): string[] {
         return map(this.um.users, 'username');

@@ -28,14 +28,13 @@ import { MockProvider, MockPipe } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockOntologyManager,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { PropPreviewComponent } from './propPreview.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Prop Preview component', function() {
     let component: PropPreviewComponent;
@@ -43,8 +42,8 @@ describe('Prop Preview component', function() {
     let fixture: ComponentFixture<PropPreviewComponent>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
-    let ontologyManagerStub;
-    let utilStub;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
     
     const classId = 'classId';
     const propId = 'propId';
@@ -67,8 +66,8 @@ describe('Prop Preview component', function() {
             providers: [
                 MockProvider(MapperStateService),
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: OntologyManagerService, useClass: mockOntologyManager }
+                MockProvider(UtilService),
+                MockProvider(OntologyManagerService),
             ]
         });
     });
@@ -80,7 +79,7 @@ describe('Prop Preview component', function() {
         mapperStateStub = TestBed.get(MapperStateService);
         splitIRIStub = TestBed.get(SplitIRIPipe);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         mapperStateStub.availableClasses = [mappingClass];
         ontologyManagerStub.getEntityName.and.returnValue('Name');

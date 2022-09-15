@@ -20,11 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
 
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './uploadDataOverlay.component.scss';
 
@@ -45,7 +46,7 @@ export class UploadDataOverlayComponent implements OnInit {
     importing = false;
 
     constructor(private dialogRef: MatDialogRef<UploadDataOverlayComponent>, public dm: DatasetManagerService,
-        public state: DatasetStateService, @Inject('utilService') public util) {}
+        public state: DatasetStateService, public util: UtilService) {}
     
     ngOnInit(): void {
         this.datasetTitle = this.util.getDctermsValue(this.state.selectedDataset.record, 'title');

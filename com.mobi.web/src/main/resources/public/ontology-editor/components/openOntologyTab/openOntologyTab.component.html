@@ -23,9 +23,7 @@
 <div class="open-ontology-tab row m-0 h-100" dragFile="os.uploadFiles" (fileDropped)="updateFiles($event)">
     <div class="col-10 offset-1 d-flex flex-column h-100">
         <div class="search-form d-flex pt-2">
-            <mat-form-field class="flex-1 mr-2">
-                <input matInput class="ontology-search" placeholder="Search..." [(ngModel)]="filterText" (keyup.enter)="search()">
-            </mat-form-field>
+            <search-bar class="flex-1 mr-2" [(bindModel)]="searchBindModel" (submitEvent)="search()"></search-bar>
             <div>
                 <button mat-raised-button color="primary" class="new-button ml-1" (click)="newOntology()">New Ontology</button>
                 <button mat-raised-button color="primary" class="upload-button ml-1" (click)="clickUpload()">Upload Ontology</button>

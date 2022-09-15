@@ -26,19 +26,19 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
-import { cleanStylesFromDOM, mockOntologyManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { StaticIriLimitedComponent } from '../staticIriLimited/staticIriLimited.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
-import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { ShapesGraphDetailsComponent } from './shapesGraphDetails.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { ShapesGraphDetailsComponent } from './shapesGraphDetails.component';
 
 describe('Shapes Graph Details component', function() {
     let component: ShapesGraphDetailsComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphDetailsComponent>;
-    let shapesGraphStateStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -51,7 +51,8 @@ describe('Shapes Graph Details component', function() {
             providers: [
                 PrefixationPipe,
                 MockProvider(ShapesGraphStateService),
-                { provide: OntologyManagerService, useClass: mockOntologyManager }
+                MockProvider(OntologyManagerService),
+                // { provide: OntologyManagerService, useClass: mockOntologyManager }
             ]
         });
     });
@@ -61,8 +62,8 @@ describe('Shapes Graph Details component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        shapesGraphStateStub.listItem = new VersionedRdfListItem();
-        shapesGraphStateStub.listItem.metadata = {};
+        shapesGraphStateStub.listItem = new ShapesGraphListItem();
+        shapesGraphStateStub.listItem.metadata = {'@id': ''};
     });
 
     afterAll(function() {
@@ -87,12 +88,12 @@ describe('Shapes Graph Details component', function() {
     describe('controller methods', function() {
         describe('getTypes functions properly', function() {
             it('when @type is empty', function() {
-                shapesGraphStateStub.listItem.metadata = {};
+                shapesGraphStateStub.listItem.metadata = {'@id': ''};
                 expect(component.getTypes()).toEqual('');
             });
             it('when @type has items', function() {
-                let expected = 'test, test2';
-                shapesGraphStateStub.listItem.metadata = {'@type': ['test', 'test2']};
+                const expected = 'test, test2';
+                shapesGraphStateStub.listItem.metadata = {'@id': '', '@type': ['test', 'test2']};
                 expect(component.getTypes()).toEqual(expected);
             });
         });

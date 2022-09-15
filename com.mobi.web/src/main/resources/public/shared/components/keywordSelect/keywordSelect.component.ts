@@ -25,6 +25,7 @@ import { ENTER } from '@angular/cdk/keycodes';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material';
+import './keywordSelect.component.scss';
 
 /**
  * @class shared.KeywordSelectComponent

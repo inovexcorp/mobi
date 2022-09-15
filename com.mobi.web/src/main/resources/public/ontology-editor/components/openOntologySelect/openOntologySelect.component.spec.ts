@@ -31,7 +31,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -41,6 +41,7 @@ import { State } from '../../../shared/models/state.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { EditBranchOverlayComponent } from '../editBranchOverlay/editBranchOverlay.component';
 import { OpenOntologySelectComponent, OptionIcon } from './openOntologySelect.component';
 
@@ -52,9 +53,9 @@ describe('Open Ontology Select component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
-    const error = 'Error Message'
+    const error = 'Error Message';
     const catalogId = 'catalogId';
     const recordId = 'recordId';
     const branchId = 'branchId';
@@ -112,7 +113,7 @@ describe('Open Ontology Select component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -128,7 +129,7 @@ describe('Open Ontology Select component', function() {
         ontologyManagerStub = TestBed.get(OntologyManagerService);
         ontologyStateStub = TestBed.get(OntologyStateService);
         matDialog = TestBed.get(MatDialog);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         
         catalogManagerStub.localCatalog = {'@id': catalogId};
 

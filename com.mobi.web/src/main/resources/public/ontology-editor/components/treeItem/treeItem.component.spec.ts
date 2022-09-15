@@ -22,17 +22,20 @@
  */
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { TreeItemComponent } from './treeItem.component';
-import { cleanStylesFromDOM, mockOntologyState } from '../../../../../../test/ts/Shared';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { TreeItemComponent } from './treeItem.component';
+import { MockProvider } from 'ng-mocks';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 
 describe('Tree Item component', function() {
     let component: TreeItemComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<TreeItemComponent>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -42,7 +45,7 @@ describe('Tree Item component', function() {
                 TreeItemComponent,
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState },
+                MockProvider(OntologyStateService)
             ]
         });
     });
@@ -51,7 +54,9 @@ describe('Tree Item component', function() {
         fixture = TestBed.createComponent(TreeItemComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        ontologyStateStub = TestBed.get(OntologyStateService);
 
+        ontologyStateStub.listItem = new OntologyListItem();
         component.hasChildren = true;
         component.isActive = false;
         spyOn(component.onClick, 'emit');
@@ -75,6 +80,7 @@ describe('Tree Item component', function() {
         component = null;
         element = null;
         fixture = null;
+        ontologyStateStub = null;
     });
 
     it('should update on changes', function() {
@@ -100,7 +106,6 @@ describe('Tree Item component', function() {
         it('depending on whether it has children', function() {
             let anchor = element.queryAll(By.css('a'));
             expect(anchor.length).toEqual(1);
-            // TODO: Not sure how to modify this one expect(element.queryAll(By.css('a[')).attr('ng-dblclick')).toBeTruthy();
             expect(element.queryAll(By.css('i')).length).toEqual(2);
 
             component.hasChildren = false;
@@ -108,7 +113,6 @@ describe('Tree Item component', function() {
             fixture.detectChanges();
             anchor = element.queryAll(By.css('a'));
             expect(anchor.length).toEqual(1);
-            // TODO: Not sure how to modify this one expect(anchor.attr('ng-dblclick')).toBeFalsy();
             expect(element.queryAll(By.css('i')).length).toEqual(2);
         });
         it('depending on whether it is active', function() {

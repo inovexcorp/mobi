@@ -26,9 +26,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { map, range } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
-import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { CommitChange } from '../../models/commitChange.interface';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { UtilService } from '../../services/util.service';
 import { StatementContainerComponent } from '../statementContainer/statementContainer.component';
 import { StatementDisplayComponent } from '../statementDisplay/statementDisplay.component';
 import { CommitChangesDisplayComponent } from './commitChangesDisplay.component';
@@ -37,7 +40,7 @@ describe('Commit Changes Display component', function() {
     let component: CommitChangesDisplayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommitChangesDisplayComponent>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const change: CommitChange = {p: '', o: {'@value': ''}};
 
@@ -50,7 +53,8 @@ describe('Commit Changes Display component', function() {
                 MockComponent(StatementDisplayComponent)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService),
+                MockProvider(OntologyStateService)
             ]
         });
     });
@@ -59,7 +63,7 @@ describe('Commit Changes Display component', function() {
         fixture = TestBed.createComponent(CommitChangesDisplayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
         utilStub.getPredicateLocalNameOrdered.and.callFake(changes => {
             return changes;
         });
@@ -116,25 +120,25 @@ describe('Commit Changes Display component', function() {
             component.showMore = false;
             component.size = 2;
             component.index = 2;
-            this.additions = [{'@id': 'add'}];
-            this.deletions = [{'@id': 'del'}];
-            component.additions = this.additions;
-            component.deletions = this.deletions;
+            const additions: JSONLDObject[] = [{'@id': 'add'}];
+            const deletions: JSONLDObject[] = [{'@id': 'del'}];
+            component.additions = additions;
+            component.deletions = deletions;
             component.results = {
-                '1': {additions: this.additions, deletions: this.deletions},
-                '2': {additions: this.additions, deletions: this.deletions}
+                '1': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
+                '2': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]}
             };
-            utilStub.getChangesById.and.callFake((id, arr) => arr);
+            utilStub.getChangesById.and.callFake((id, arr) => arr.map(obj => ({p: obj['@id'], o: ''})));
             component.addPagedChangesToResults();
             expect(utilStub.getChangesById).toHaveBeenCalledWith('3', component.additions);
             expect(utilStub.getChangesById).toHaveBeenCalledWith('3', component.deletions);
             expect(utilStub.getChangesById).toHaveBeenCalledWith('4', component.additions);
             expect(utilStub.getChangesById).toHaveBeenCalledWith('4', component.deletions);
             expect(component.results).toEqual({
-                '1': {additions: this.additions, deletions: this.deletions},
-                '2': {additions: this.additions, deletions: this.deletions},
-                '3': {additions: this.additions, deletions: this.deletions},
-                '4': {additions: this.additions, deletions: this.deletions}
+                '1': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
+                '2': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
+                '3': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
+                '4': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]}
             });
             expect(component.showMore).toEqual(true);
         });

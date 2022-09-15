@@ -21,20 +21,26 @@
   #L%
   -->
 <div class="user-management-page h-100">
-    <!-- TODO: Loads each tab content eagerly, i.e. right away. Starting with Angular Material 6, we can switch this to
-        lazy loading (with manual destroy) which will be critical for modules like the Ontology Editor -->
-    <mat-tab-group dynamicHeight="true" class="h-100" [(selectedIndex)]="state.tabIndex" (selectedTabChange)="onTabChanged($event)">
+    <mat-tab-group dynamicHeight="true" class="h-100" [(selectedIndex)]="state.tabIndex">
         <mat-tab label="Users">
-            <users-page></users-page>
+            <ng-template matTabContent>
+                <users-page></users-page>
+            </ng-template>
         </mat-tab>
         <mat-tab label="Groups">
-            <groups-page></groups-page>
+            <ng-template matTabContent>
+                <groups-page></groups-page>
+            </ng-template>
         </mat-tab>
         <mat-tab label="Permissions">
-            <permissions-page></permissions-page>
+            <ng-template matTabContent>
+                <permissions-page></permissions-page>
+            </ng-template>
         </mat-tab>
         <mat-tab label="Application Settings">
-            <setting-edit-page [settingType]="this.sm.appSettingType"></setting-edit-page>
+            <ng-template matTabContent>
+                <setting-edit-page [settingType]="this.sm.appSettingType"></setting-edit-page>
+            </ng-template>
         </mat-tab>
     </mat-tab-group>
 </div>

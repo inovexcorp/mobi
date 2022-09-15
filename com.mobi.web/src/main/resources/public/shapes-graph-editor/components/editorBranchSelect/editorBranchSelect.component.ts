@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialog } from '@angular/material';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
@@ -34,6 +34,7 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface OptionGroup {
     title: string,
@@ -76,7 +77,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
     filteredOptions: Observable<OptionGroup[]>
 
     constructor(private state: ShapesGraphStateService, private cm: CatalogManagerService,
-                private dialog: MatDialog, @Inject('utilService') private util) {}
+                private dialog: MatDialog, private util: UtilService) {}
 
     ngOnInit(): void {
         this.setFilteredOptions();

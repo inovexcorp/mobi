@@ -20,16 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { find } from 'lodash';
 
 import { CATALOG, POLICY } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './recordView.component.scss';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
  * @class catalog.RecordViewComponent
@@ -56,9 +58,8 @@ export class RecordViewComponent implements OnInit {
     issued = '';
     canEdit = false;
 
-    constructor(public state: CatalogStateService, public cm: CatalogManagerService, 
-        public os: OntologyStateService, @Inject('policyEnforcementService') public pep, 
-        @Inject('utilService') public util) {}
+    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public os: OntologyStateService, 
+        public pep: PolicyEnforcementService, public util: UtilService) {}
 
     ngOnInit(): void {
         this.cm.getRecord(this.state.selectedRecord['@id'], this.util.getPropertyId(this.state.selectedRecord, CATALOG + 'catalog'))
@@ -108,7 +109,7 @@ export class RecordViewComponent implements OnInit {
             actionId: POLICY + 'Update'
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 this.canEdit = response !== this.pep.deny;
             }, () => {
                 this.util.createWarningToast('Could not retrieve record permissions');

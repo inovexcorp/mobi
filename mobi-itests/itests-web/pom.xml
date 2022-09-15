@@ -184,7 +184,7 @@
                                         <wait>
                                             <http>
                                                 <allowAllHosts>true</allowAllHosts>
-                                                <status>200..399</status>
+                                                <status>200</status>
                                                 <!-- Check for this URL to return a 200 return code .... -->
                                                 <url>https://localhost:${https-port}/mobi/index.html#/home</url>
                                                 <method>GET</method>
@@ -192,6 +192,7 @@
                                             <time>300000</time>
                                             <exec>
                                                 <postStart>sh /opt/mobi/import.sh</postStart>
+<!--                                                <breakOnError>true</breakOnError>-->
                                             </exec>
                                         </wait>
                                     </run>

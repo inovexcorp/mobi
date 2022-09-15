@@ -20,15 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="concepts-tab h-100 row m-0" targeted-spinner="os.vocabularySpinnerId">
+<div class="concepts-tab h-100 row m-0">
     <concept-hierarchy-block class="col-3 h-100"></concept-hierarchy-block>
-    <div class="selected-concept col-9 pt-2 h-100" targeted-spinner="os.listItem.editorTabStates.concepts.targetedSpinnerId">
+    <div class="selected-concept col-9 pt-2 h-100" #conceptsTab>
         <div class="h-100 w-100 d-flex flex-column" *ngIf="os.listItem.selected">
             <div class="selected-header d-flex">
                 <selected-details class="flex-1"></selected-details>
                 <div class="btn-container">
-                    <button class="btn btn-primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
-                    <button *ngIf="os.canModify()" class="btn btn-danger" [disabled]="os.isSelectedImported()" (click)="showDeleteConfirmation()">Delete</button>
+                    <button mat-raised-button color="primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
+                    <button mat-raised-button *ngIf="os.canModify()" color="warn" [disabled]="os.isSelectedImported()" (click)="showDeleteConfirmation()">Delete</button>
                 </div>
             </div>
             <div class="row flex-1 remove-min-height">
@@ -36,7 +36,7 @@
                     <div class="row py-2">
                         <annotation-block [selected]="os.listItem.selected"
                                           [highlightIris]="om.entityNameProps"
-                                          [highlightText]="os.listItem.editorTabStates.concepts.searchText"
+                                          [highlightText]="highlightText"
                                           class="col" ></annotation-block>
                     </div>
                     <div class="row py-2">

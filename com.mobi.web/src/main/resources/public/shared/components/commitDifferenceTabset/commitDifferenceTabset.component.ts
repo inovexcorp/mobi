@@ -26,16 +26,14 @@ import { Difference } from '../../models/difference.class';
 import { Commit } from '../../models/commit.interface';
 
 import './commitDifferenceTabset.component.scss';
-import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { OntologyStateService } from '../../services/ontologyState.service';
 
 /**
- * @ngdoc component
- * @name shared.component:commitDifferenceTabset
+ * @class shared.CommitDifferenceTabsetComponent
  *
- * @description
- * `commitDifferenceTabset` is a directive which creates a div containing a {@link shared.component:tabset} with
- * tabs for the {@link shared.component:commitChangesDisplay changes} and
- * {@link shared.component:commitHistoryTable commits} between two branches.
+ * A directive which creates a div containing a `mat-tabgroup` with tabs for the
+ * {@link shared.CommitChangesDisplayComponent changes} and
+ * {@link shared.CommitHistoryTableComponent commits} between two branches.
  *
  * @param {string} recordId The IRI of the VersionedRDFRecord that the Commits belong to
  * @param {Object} sourceBranch The JSON-LD of the source branch of the difference
@@ -56,7 +54,7 @@ export class CommitDifferenceTabsetComponent {
     @Input() commitId: string;
     @Input() targetId: string;
     @Input() difference: Difference;
-    @Input() entityNameFunc?: (args: any) => string;
+    @Input() entityNameFunc?: (entityIRI: string, os: OntologyStateService) => string;
     @Input() startIndex?: number;
     @Input() recordId?: string;
     @Output() showMoreResultsFunc = new EventEmitter<{limit: number, offset: number}>();

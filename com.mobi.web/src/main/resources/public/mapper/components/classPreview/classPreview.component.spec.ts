@@ -26,21 +26,18 @@ import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 
-import {
-    cleanStylesFromDOM,
-    mockOntologyManager,
-} from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { ClassPreviewComponent } from './classPreview.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { ClassPreviewComponent } from './classPreview.component';
 
 describe('Class Preview component', function() {
     let component: ClassPreviewComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ClassPreviewComponent>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let ontologyManagerStub;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -49,7 +46,8 @@ describe('Class Preview component', function() {
             ],
             providers: [
                 MockProvider(MapperStateService),
-                { provide: OntologyManagerService, useClass: mockOntologyManager }
+                MockProvider(OntologyManagerService),
+                // { provide: OntologyManagerService, useClass: mockOntologyManager }
             ]
         });
     });

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 
@@ -29,6 +29,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class mapper.IriTemplateOverlayComponent
@@ -56,7 +57,7 @@ export class IriTemplateOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<IriTemplateOverlayComponent>, private fb: FormBuilder, 
         public state: MapperStateService, public mm: MappingManagerService, public dm: DelimitedManagerService, 
-        @Inject('utilService') private util) {}
+        private util: UtilService) {}
 
     ngOnInit(): void {
         this.classMapping = this.state.selected.mapping.getClassMapping(this.state.selectedClassMappingId);

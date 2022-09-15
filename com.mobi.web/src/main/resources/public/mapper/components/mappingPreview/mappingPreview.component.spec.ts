@@ -28,11 +28,11 @@ import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-    mockUtil,
 } from '../../../../../../test/ts/Shared';
 import { DELIM } from '../../../prefixes';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { MappingPreviewComponent } from './mappingPreview.component';
 
 describe('Mapping Preview component', function() {
@@ -40,7 +40,7 @@ describe('Mapping Preview component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<MappingPreviewComponent>;
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const classMappingA = {'@id': 'classMappingA'};
     const classMappingB = {'@id': 'classMappingB'};
@@ -55,7 +55,7 @@ describe('Mapping Preview component', function() {
             ],
             providers: [
                 MockProvider(MappingManagerService),
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(UtilService),
             ]
         });
     });
@@ -65,7 +65,7 @@ describe('Mapping Preview component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mappingManagerStub = TestBed.get(MappingManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         mappingStub = jasmine.createSpyObj('Mapping', [
             'getClassMapping',
@@ -74,6 +74,7 @@ describe('Mapping Preview component', function() {
         ]);
         mappingStub.getAllClassMappings.and.returnValue([classMappingB, classMappingA]);
         mappingStub.getPropMappingsByClass.and.returnValue([propMappingB, propMappingA]);
+        utilStub.getDctermsValue.and.returnValue('');
     });
 
     afterEach(function() {

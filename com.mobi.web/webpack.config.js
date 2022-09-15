@@ -1,7 +1,7 @@
 const commonConfig = require('./webpack-configs/webpack.common');
 const webpackMerge = require('webpack-merge');
 
-const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const smp = new SpeedMeasurePlugin();
 
 module.exports = (env) => {

@@ -31,6 +31,8 @@ import { OWL, XSD } from '../../../prefixes';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 
 import './annotationOverlay.component.scss';
 
@@ -81,7 +83,7 @@ export class AnnotationOverlayComponent implements OnInit {
     constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: { editing: boolean, annotation?: string, value?: string, type?: string, index?: number, language?: string},
         private om: OntologyManagerService, public os: OntologyStateService,
-        @Inject('propertyManagerService') public pm, @Inject('utilService') public util) {}
+        public pm: PropertyManagerService, public util: UtilService) {}
     
     ngOnInit(): void {
         this.annotations = union(Object.keys(this.os.listItem.annotations.iris), this.pm.defaultAnnotations, this.pm.owlAnnotations);
@@ -178,7 +180,7 @@ export class AnnotationOverlayComponent implements OnInit {
         }
         this.dialogRef.close(edited);
     }
-    getName(iri: string) {
+    getName(iri: string): string {
         return this.os.getEntityNameByListItem(iri);
     }
 

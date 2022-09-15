@@ -22,52 +22,52 @@
  * 
  */
 
-import { UsagesBlockComponent } from './usagesBlock.component';
 import { DebugElement } from '@angular/core';
-import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 import { MockProvider, MockPipe } from 'ng-mocks';
 import { configureTestSuite } from 'ng-bullet';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { By } from '@angular/platform-browser';
+import { min } from 'lodash';
+
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
-import _ = require('lodash');
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { UsagesBlockComponent } from './usagesBlock.component';
 
 describe('Usages Block component', function() {
     let component: UsagesBlockComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<UsagesBlockComponent>;
-    let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
-    let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [
                 UsagesBlockComponent,
-                MockPipe(SplitIRIPipe, value => ({begin: 'www.test.com', then: '/', end: 'test'}))
+                MockPipe(SplitIRIPipe, () => ({begin: 'www.test.com', then: '/', end: 'test'}))
             ],
             providers: [
                 MockProvider(OntologyStateService),
             ]
-        })
-    })
+        });
+    });
 
     beforeEach(function() {
         fixture = TestBed.createComponent(UsagesBlockComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        ontologyStateServiceStub = TestBed.get(OntologyStateService);
-        ontologyStateServiceStub.listItem = new OntologyListItem();
-        ontologyStateServiceStub.listItem.selected = {'@id': 'test'};
-        ontologyStateServiceStub.listItem.versionedRdfRecord = {
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyStateStub.listItem = new OntologyListItem();
+        ontologyStateStub.listItem.selected = {'@id': 'test'};
+        ontologyStateStub.listItem.versionedRdfRecord = {
             title: 'test ontology',
             recordId: 'www.test.com',
             commitId: 'www.testCommit.com',
         };
-        ontologyStateServiceStub.getActiveKey.and.returnValue('test');
+        ontologyStateStub.getActiveKey.and.returnValue('test');
+        ontologyStateStub.getActivePage.and.returnValue({});
         fixture.detectChanges();
     });
 
@@ -76,10 +76,21 @@ describe('Usages Block component', function() {
         fixture = null;
         component = null;
         element = null;
-        ontologyStateServiceStub = null;
-        splitIriStub = null;
+        ontologyStateStub = null;
     });
 
+    it('should initialize correctly', function() {
+        const page: any = {};
+        ontologyStateStub.getActivePage.and.returnValue(page);
+        component.ngOnInit();
+        expect(page.usagesElement).toEqual(component.usagesContainer);
+    });
+    it('should tear down correctly', function() {
+        const page: any = {usagesElement: 'prev'};
+        ontologyStateStub.getActivePage.and.returnValue(page);
+        component.ngOnDestroy();
+        expect(page.usagesElement).toBeUndefined();
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.usages-block')).length).toEqual(1);
@@ -147,7 +158,7 @@ describe('Usages Block component', function() {
         component.ngOnChanges();
         expect(component.results).toEqual(expected);
         expect(component.total).toEqual(component.usages.length);
-        expect(component.shown).toEqual(_.min([component.usages.length, component.size]));
+        expect(component.shown).toEqual(min([component.usages.length, component.size]));
     });
     describe('controller methods', function() {
         it('getMoreResults populates variables correctly', function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -29,12 +29,8 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 
 /**
  * @class ontology-editor.ConceptSchemesTabComponent
- * @requires shared.service:ontologyStateService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:modalService
  *
- * @description
- * `conceptSchemesTab` is a component that creates a page containing the
+ * A component that creates a page containing the
  * {@link ontology-editor.ConceptSchemeHierarchyBlockComponent} of the current
  * {@link shared.OntologyStateService#listItem selected ontology/vocabulary} and information about a
  * selected entity from that list. The selected entity display includes a
@@ -48,25 +44,40 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
     templateUrl: './conceptSchemesTab.component.html'
 })
 
-export class ConceptSchemesTabComponent {
+export class ConceptSchemesTabComponent implements OnInit, OnDestroy {
+    highlightText = '';
+    @ViewChild('conceptSchemesTab') conceptSchemesTab: ElementRef;
+
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog){}
-    showDeleteConfirmation() {
+
+    ngOnInit(): void {
+        this.os.listItem.editorTabStates.schemes.element = this.conceptSchemesTab;
+        this.highlightText = this.os.listItem.editorTabStates.classes.searchText;
+    }
+    ngOnDestroy(): void {
+        if (this.os.listItem) {
+            this.os.listItem.editorTabStates.schemes.element = undefined;
+        }
+    }
+    showDeleteConfirmation(): void {
         this.dialog.open(ConfirmModalComponent,{
             data: {
                 content: '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>'
             }
         }).afterClosed().subscribe(result => {
-            if (result) this.deleteEntity();
+            if (result) {
+                this.deleteEntity();
+            }
         });
     }
-    deleteEntity() {
+    deleteEntity(): void {
         if (this.om.isConcept(this.os.listItem.selected, this.os.listItem.derivedConcepts)) {
             this.os.deleteConcept();
         } else if (this.om.isConceptScheme(this.os.listItem.selected, this.os.listItem.derivedConceptSchemes)) {
             this.os.deleteConceptScheme();
         }
     }
-    seeHistory() {
+    seeHistory(): void {
         this.os.listItem.seeHistory = true;
     }
 }

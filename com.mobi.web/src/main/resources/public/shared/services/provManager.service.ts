@@ -21,66 +21,58 @@
  * #L%
  */
 
-provManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes', 'httpService'];
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { REST_PREFIX } from '../../constants';
+import { MATPROV, PROV } from '../../prefixes';
+import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { UtilService } from './util.service';
 
 /**
- * @ngdoc service
- * @name shared.service:provManagerService
- * @requires $http
- * @requires $q
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- * @requires shared.service:httpService
+ * @class shared.ProvManagerService
  *
- * @description
- * `provManagerService` is a service that provides access to the Mobi Provenance REST endpoints and variables
- * to hold information about the different types of activities.
+ * A service that provides access to the Mobi Provenance REST endpoints and variables to hold information about the
+ * different types of activities.
  */
-function provManagerService($http, $q, REST_PREFIX, utilService, prefixes, httpService) {
-    var self = this,
-        util = utilService,
-        prefix = REST_PREFIX + 'provenance-data';
+@Injectable()
+export class ProvManagerService {
+    prefix = REST_PREFIX + 'provenance-data';
+
+    constructor(private http: HttpClient, private util: UtilService) {}
 
     /**
-     * @ngdoc property
-     * @name activityTypes
-     * @propertyOf shared.service:provManagerService
-     * @type {Object[]}
-     *
-     * @description
      * `activityTypes` is an array of objects that represent the different subclasses of `prov:Activity`
      * that Mobi supports ordered such that subclasses are first. Each object contains the type IRI, the
      * associated active word, and associated predicate for linking to the affected `prov:Entity(s)`.
+     * @type {Object[]}
      */
-    self.activityTypes = [
+    activityTypes = [
         {
-            type: prefixes.matprov + 'CreateActivity',
+            type: MATPROV + 'CreateActivity',
             word: 'created',
-            pred: prefixes.prov + 'generated'
+            pred: PROV + 'generated'
         },
         {
-            type: prefixes.matprov + 'UpdateActivity',
+            type: MATPROV + 'UpdateActivity',
             word: 'updated',
-            pred: prefixes.prov + 'used'
+            pred: PROV + 'used'
         },
         {
-            type: prefixes.matprov + 'UseActivity',
+            type: MATPROV + 'UseActivity',
             word: 'used',
-            pred: prefixes.prov + 'used'
+            pred: PROV + 'used'
         },
         {
-            type: prefixes.matprov + 'DeleteActivity',
+            type: MATPROV + 'DeleteActivity',
             word: 'deleted',
-            pred: prefixes.prov + 'invalidated'
+            pred: PROV + 'invalidated'
         }
     ];
 
     /**
-     * @ngdoc method
-     * @name getActivities
-     * @methodOf shared.service:provManagerService
-     *
-     * @description
      * Makes a call to GET /mobirest/provenance-data to get a paginated list of `Activities` and their associated
      * `Entities`. Returns the paginated response for the query using the passed page index and limit. The
      * data of the response will be an object with the array of `Activities` and the array of associated
@@ -88,18 +80,14 @@ function provManagerService($http, $q, REST_PREFIX, utilService, prefixes, httpS
      * query, and the "link" header will contain the URLs for the next and previous page if present. Can
      * optionally be a cancel-able request by passing a request id.
      *
-     * @param {Object} paginatedConfig A configuration object for paginated requests
-     * @param {number} paginatedConfig.limit The number of results per page
-     * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
-     * @param {string} [id=''] The identifier for this request
-     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * @param {PaginatedConfig} paginatedConfig A configuration object for paginated requests.
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getActivities = function(paginatedConfig, id = '') {
-        var config = { params: util.paginatedConfigToParams(paginatedConfig) };
-        var promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
-        return promise.then($q.when, util.rejectError);
+    getActivities(paginatedConfig: PaginatedConfig, isTracked = false): Observable<HttpResponse<{activities: any, entities: any}>> {
+        const params = this.util.paginatedConfigToParams(paginatedConfig);
+        return this.util.trackedRequest(this.http.get(this.prefix, {params: this.util.createHttpParams(params), observe: 'response'}), isTracked)
+            .pipe(catchError(this.util.handleError));
     }
 }
-
-export default provManagerService;

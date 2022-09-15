@@ -20,26 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {
-    mockUtil, mockOntologyState,
-} from '../../../../../../test/ts/Shared';
-import { join, cloneDeep } from 'lodash';
+import { cloneDeep, join } from 'lodash';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
-import { SharedModule } from '../../../shared/shared.module';
+import { of } from 'rxjs';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { SharedModule } from '../../../shared/shared.module';
 import { TreeItemComponent } from '../treeItem/treeItem.component';
 import { HierarchyFilterComponent } from '../hierarchyFilter/hierarchyFilter.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
-import { By } from '@angular/platform-browser';
 import { DCTERMS } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { PropertyTreeComponent } from './propertyTree.component';
-import {of} from 'rxjs';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { UtilService } from '../../../shared/services/util.service';
+import { PropertyTreeComponent } from './propertyTree.component';
 
 describe('Property Tree component', function() {
     let component: PropertyTreeComponent;
@@ -47,7 +46,7 @@ describe('Property Tree component', function() {
     let fixture: ComponentFixture<PropertyTreeComponent>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const propsList = [{
         entityIRI: 'class1',
@@ -74,9 +73,9 @@ describe('Property Tree component', function() {
                 MockComponent(TreeItemComponent),
             ],
             providers: [
-                { provide: OntologyStateService, useClass: mockOntologyState },
+                MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                { provide: 'utilService', useClass: mockUtil }
+                MockProvider(UtilService)
             ]
         });
     });
@@ -87,7 +86,7 @@ describe('Property Tree component', function() {
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.get(OntologyStateService);
         ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
 
@@ -103,6 +102,7 @@ describe('Property Tree component', function() {
             }
         });
         ontologyStateServiceStub.getActiveKey.and.returnValue('properties');
+        utilStub.getBeautifulIRI.and.returnValue('test');
         component.datatypeProps = [{
             entityIRI: 'dataProp1',
             hasChildren: true,
@@ -131,6 +131,8 @@ describe('Property Tree component', function() {
             path: ['a']
         }];
         component.index = 0;
+        component.filterText = '';
+        component.searchText = '';
         component.ngOnInit();
         fixture.detectChanges();
     });
@@ -157,7 +159,7 @@ describe('Property Tree component', function() {
         it('with a .tree-item-wrapper', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(3);
+            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(7);
         });
     });
     describe('controller methods', function() {
@@ -175,20 +177,12 @@ describe('Property Tree component', function() {
 
             component.ngOnInit();
             const copy = cloneDeep(component.flatPropertyTree);
-            expect(copy).toContain({title: 'Data Properties', get: jasmine.any(Function), set: jasmine.any(Function), isOpened: undefined});
-            expect(copy).toContain({title: 'Object Properties', get: jasmine.any(Function), set: jasmine.any(Function), isOpened: undefined});
-            expect(copy).toContain({title: 'Annotation Properties', get: jasmine.any(Function), set: jasmine.any(Function), isOpened: undefined});
-            expect(copy).toContain({prop: 'data', get: jasmine.any(Function)});
-            expect(copy).toContain({prop: 'object', get: jasmine.any(Function)});
-            expect(copy).toContain({prop: 'annotation', get: jasmine.any(Function)});
-
-            // TODO: These assertions are broken because of bind(this). Temporarily going with the less specific jasmine.any(Function)
-            // expect(copy).toContain({title: 'Data Properties', get: ontologyStateServiceStub.getDataPropertiesOpened, set: ontologyStateServiceStub.setDataPropertiesOpened, isOpened: undefined});
-            // expect(copy).toContain({title: 'Object Properties', get: ontologyStateServiceStub.getObjectPropertiesOpened, set: ontologyStateServiceStub.setObjectPropertiesOpened, isOpened: undefined});
-            // expect(copy).toContain({title: 'Annotation Properties', get: ontologyStateServiceStub.getAnnotationPropertiesOpened, set: ontologyStateServiceStub.setAnnotationPropertiesOpened, isOpened: undefined});
-            // expect(copy).toContain({prop: 'data', get: ontologyStateServiceStub.getDataPropertiesOpened});
-            // expect(copy).toContain({prop: 'object', get: ontologyStateServiceStub.getObjectPropertiesOpened});
-            // expect(copy).toContain({prop: 'annotation', get: ontologyStateServiceStub.getAnnotationPropertiesOpened});
+            expect(copy).toContain(jasmine.objectContaining({title: 'Data Properties', get: jasmine.any(Function), set: jasmine.any(Function)}));
+            expect(copy).toContain(jasmine.objectContaining({title: 'Object Properties', get: jasmine.any(Function), set: jasmine.any(Function)}));
+            expect(copy).toContain(jasmine.objectContaining({title: 'Annotation Properties', get: jasmine.any(Function), set: jasmine.any(Function)}));
+            expect(copy).toContain(jasmine.objectContaining({prop: 'data', get: jasmine.any(Function)}));
+            expect(copy).toContain(jasmine.objectContaining({prop: 'object', get: jasmine.any(Function)}));
+            expect(copy).toContain(jasmine.objectContaining({prop: 'annotation', get: jasmine.any(Function)}));
         });
         it('clickItem should call the correct method', function() {
             ontologyStateServiceStub.selectItem.and.returnValue(of(null));
@@ -407,19 +401,19 @@ describe('Property Tree component', function() {
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
                         expect(component.isShown(this.node)).toEqual(true);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
                         expect(ontologyStateServiceStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                     it('and does not have a child with a text match', function() {
                         expect(component.isShown(this.node)).toEqual(false);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
                         expect(ontologyStateServiceStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateServiceStub.areParentsOpen.and.returnValue(true);
                     expect(component.isShown(this.node)).toEqual(true);
-                    expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId);
+                    expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
                     expect(ontologyStateServiceStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                 });
             });
@@ -435,7 +429,6 @@ describe('Property Tree component', function() {
                         beforeEach(function() {
                             component.filterText = 'text';
                             this.node.parentNoMatch = true;
-                            expect(component.isShown(this.node)).toEqual(false);
                         });
                         it('and has a child that has a text match', function() {
                             this.node.displayNode = true;
@@ -458,22 +451,20 @@ describe('Property Tree component', function() {
                         beforeEach(function() {
                             component.filterText = 'text';
                             this.node.parentNoMatch = true;
-                            expect(component.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId);
                         });
                         it('and has a child that has a text match', function() {
                             this.node.displayNode = true;
                             expect(component.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
                         });
                         it('and does not have a child with a text match', function() {
                             expect(component.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
                         });
                     });
                     it('and filterText is not set and is not a parent node without a text match', function() {
                         expect(component.isShown(this.node)).toEqual(false);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
                     });
                 });
             });

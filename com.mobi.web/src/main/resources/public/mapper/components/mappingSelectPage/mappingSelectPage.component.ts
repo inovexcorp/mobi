@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { MatDialog, PageEvent } from '@angular/material';
 import { get, map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
@@ -38,6 +38,8 @@ import { MappingState } from '../../../shared/models/mappingState.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { CreateMappingOverlayComponent } from '../createMappingOverlay/createMappingOverlay.component';
 import { DownloadMappingOverlayComponent } from '../downloadMappingOverlay/downloadMappingOverlay.component';
 import { ViewMappingModalComponent } from '../viewMappingModal/viewMappingModal.component';
@@ -45,12 +47,10 @@ import { ViewMappingModalComponent } from '../viewMappingModal/viewMappingModal.
 /**
  * @class mapper.MappingSelectPageComponent
  * 
- * TODO: update this
- * A component that creates a Bootstrap `row` div with two columns for selecting and
- * previewing a mapping. The left column contains a {@link mapper.MappingListBlockComponent mappingListBlock} for
- * selecting the current {@link shared.MapperStateService#mapping}. The right column contains a
- * {@link mapper.MappingPreviewComponent} of the selected mapping and buttons for editing running,
- * duplicating, and downloading the mapping.
+ * A component that creates a searchable, paginated list of mapping records. Contains a
+ * {@link shared.SearchBarComponent} and a `mat-paginator` for handling the list. Each mapping is displayed with its
+ * title, last modified date, and description and has a menu of actions including editing, running,
+ * duplicating, and downloading the mapping. The component also contains a button to create a new mapping.
  */
 @Component({
     selector: 'mapping-select-page',
@@ -65,7 +65,7 @@ export class MappingSelectPageComponent implements OnInit {
 
     constructor(public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
         private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService,
-        @Inject('policyEnforcementService') private pep, @Inject('utilService') public util) {}
+        private pep: PolicyEnforcementService, public util: UtilService) {}
     
     ngOnInit(): void {
         this.searchText = this.state.paginationConfig.searchText;
@@ -98,7 +98,7 @@ export class MappingSelectPageComponent implements OnInit {
                     modified: this.util.getDate(this.util.getDctermsValue(record, 'modified'), 'short'),
                     branch: this.util.getPropertyId(record, CATALOG + 'masterBranch')
                 }));
-                this.state.totalSize = this.results.length;
+                this.state.totalSize = Number(response.headers.get('x-total-count')) || 0;
             }, error => this.util.createErrorToast(error));
     }
     view(mappingRecord: MappingRecord): void {
@@ -129,7 +129,7 @@ export class MappingSelectPageComponent implements OnInit {
             }
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.setStateIfCompatible(mappingRecord)
@@ -155,7 +155,7 @@ export class MappingSelectPageComponent implements OnInit {
             }
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.state.startCreateMapping();
@@ -177,7 +177,7 @@ export class MappingSelectPageComponent implements OnInit {
             actionId: POLICY + 'Delete'
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.dialog.open(ConfirmModalComponent, {
@@ -212,7 +212,7 @@ export class MappingSelectPageComponent implements OnInit {
             }
         };
         this.pep.evaluateRequest(request)
-            .then(response => {
+            .subscribe(response => {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.setStateIfCompatible(mappingRecord)

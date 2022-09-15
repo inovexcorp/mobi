@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="commit-compiled-resource vertical-scroll h-100" targeted-spinner="id">
+<div class="commit-compiled-resource vertical-scroll h-100" #compiledResource>
     <error-display *ngIf="error">{{error}}</error-display>
     <info-message *ngIf="!resource && !error">No entity to display</info-message>
     <div class="wrapper mt-1" *ngIf="resource">
@@ -32,9 +32,9 @@
                 <div class="px-4 flex-1 remove-min-width">{{typeObj.type | prefixation}}</div>
             </div>
         </div>
-        <div class="property-values my-2" *ngFor="let element of resource | keyvalue" disable-animate>
+        <div class="property-values my-2" *ngFor="let element of resource | keyvalue">
             <div class="prop-header d-flex align-items-center">
-                <p class="text text-truncate m-0" title="{{element.key}}">{{this.entityNameFunc ? this.entityNameFunc(element.key) : this.util.getBeautifulIRI(element.key)}}</p>
+                <p class="text text-truncate m-0" title="{{element.key}}">{{entityNameFunc ? entityNameFunc(element.key) : util.getBeautifulIRI(element.key)}}</p>
                 <small class="ml-1 text-muted text-truncate flex-1 remove-min-width">&lt;<span>{{element.key}}</span>&gt;</small>
             </div>
             <div class="prop-value-container" *ngFor="let item of element.value">

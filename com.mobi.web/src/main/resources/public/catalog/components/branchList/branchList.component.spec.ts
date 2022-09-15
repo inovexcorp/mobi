@@ -28,26 +28,23 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 
-import {
-    cleanStylesFromDOM,
-    mockUtil,
-    mockOntologyManager
-} from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { CATALOG, DCTERMS } from '../../../prefixes';
-import { BranchListComponent } from './branchList.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { UtilService } from '../../../shared/services/util.service';
+import { BranchListComponent } from './branchList.component';
 
 describe('Branch List component', function() {
     let component: BranchListComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<BranchListComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let ontologyManagerStub;
-    let utilStub;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
@@ -65,8 +62,9 @@ describe('Branch List component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                { provide: OntologyManagerService, useClass: mockOntologyManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(OntologyManagerService),
+                // { provide: OntologyManagerService, useClass: mockOntologyManager },
+                MockProvider(UtilService),
             ],
         });
     });
@@ -77,7 +75,7 @@ describe('Branch List component', function() {
         element = fixture.debugElement;
         catalogManagerStub = TestBed.get(CatalogManagerService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
-        utilStub = TestBed.get('utilService');
+        utilStub = TestBed.get(UtilService);
 
         utilStub.getPropertyId.and.callFake((obj, propId) => {
             if (propId === CATALOG + 'catalog') {

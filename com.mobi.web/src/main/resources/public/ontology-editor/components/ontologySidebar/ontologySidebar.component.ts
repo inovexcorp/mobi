@@ -66,8 +66,8 @@ export class OntologySidebarComponent {
         if (previousListItem) {
             previousListItem.active = false;
             Object.keys(previousListItem.editorTabStates).forEach(tab => {
-                if (previousListItem.editorTabStates[tab].component) {
-                    previousListItem.editorTabStates[tab].component = undefined;
+                if (previousListItem.editorTabStates[tab].element) {
+                    previousListItem.editorTabStates[tab].element = undefined;
                 }
             });
             if (previousListItem.openSnackbar) {

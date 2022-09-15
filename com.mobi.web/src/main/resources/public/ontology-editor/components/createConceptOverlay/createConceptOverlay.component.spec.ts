@@ -31,13 +31,12 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { 
-    cleanStylesFromDOM, mockPropertyManager
+    cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OWL, SKOS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
-import { CustomLabelComponent } from '../../../shared/components/customLabel/customLabel.component';
 import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
@@ -76,14 +75,12 @@ describe('Create Concept Overlay component', function() {
                 CreateConceptOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(StaticIriComponent),
-                MockComponent(CustomLabelComponent),
                 MockComponent(AdvancedLanguageSelectComponent),
                 MockComponent(IriSelectOntologyComponent),
             ],
             providers: [
                 MockProvider(OntologyStateService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
-                { provide: 'propertyManagerService', useClass: mockPropertyManager },
                 { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
                 { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
             ]

@@ -21,61 +21,54 @@
  * #L%
  */
 
+import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { find, get } from 'lodash';
+import { Router } from '@angular/router';
+
+import { LoginManagerService } from '../../services/loginManager.service';
+import { UserManagerService } from '../../services/userManager.service';
 
 import './sidebar.component.scss';
 
-const template = require('./filtered/sidebar.component.html');
-
 /**
- * @ngdoc component
- * @name shared.component:sidebar
- * @requires $rootScope
- * @requires $state
- * @requires shared.service:loginManagerService
- * @requires shared.service:userManagerService
+ * @class shared.SidebarComponent
  *
- * @description
- * `sidebar` is a component that creates the main sidebar of the application. It contains a display of the currently
- * {@link shared.service:loginManagerService logged in user} that also serves as a button to go to the
- * {@link settings.component:settingsPage}, buttons to navigate to the main modules of the application, an
- * "Administration" button to go to the {@link user-management.component:userManagementPage user management page}, a
+ * A component that creates the main sidebar of the application. It contains a display of the currently
+ * {@link shared.LoginManagerService logged in user} that also serves as a button to go to the
+ * {@link settings.SettingsPageComponent}, buttons to navigate to the main modules of the application, an
+ * "Administration" button to go to the {@link user-management.UserManagementPageComponent user management page}, a
  * button to get help for the application, a button to logout, and version information.
  */
-const sidebarComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: sidebarComponentCtrl
-};
+@Component({
+    selector: 'sidebar',
+    templateUrl: './filtered/sidebar.component.html'
+})
+export class SidebarComponent implements OnInit {
+    @Input() collapsedNav: boolean;
+    @Output() collapsedNavChange = new EventEmitter<boolean>();
 
-sidebarComponentCtrl.$inject = ['$rootScope', '$state', 'loginManagerService', 'userManagerService'];
+    perspectives = [];
 
-function sidebarComponentCtrl($rootScope, $state, loginManagerService, userManagerService) {
-    var dvm = this;
-    dvm.lm = loginManagerService;
-    dvm.um = userManagerService;
-    dvm.perspectives = [];
+    constructor(public router: Router, public lm: LoginManagerService, public um: UserManagerService) {}
 
-    dvm.$onInit = function() {
-        dvm.perspectives = [
-            { icon: 'home', sref: 'root.home', isActive: $state.is('root.home'), name: 'Home' },
-            { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' },
-            { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Ontology Editor'},
-            { mat: true, icon: 'rule', sref: 'root.shapes-graph-editor', isActive: $state.is('root.shapes-graph-editor'), name: 'Shapes Editor'},
-            { icon: 'envelope-o', sref: 'root.merge-requests', isActive: $state.is('root.merge-requests'), name: 'Merge Requests' },
-            { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Mapping Tool' },
-            { icon: 'database', sref: 'root.datasets', isActive: $state.is('root.datasets'), name: 'Datasets' },
-            { icon: 'search', sref: 'root.discover', isActive: $state.is('root.discover'), name: 'Discover' },
+    ngOnInit(): void {
+        this.perspectives = [
+            { icon: 'home', route: '/home', isActive: this.router.isActive('/home', false), name: 'Home' },
+            { icon: 'book', route: '/catalog', isActive: this.router.isActive('/catalog', false), name: 'Catalog' },
+            { icon: 'pencil-square-o', route: '/ontology-editor', isActive: this.router.isActive('/ontology-editor', false), name: 'Ontology Editor'},
+            { mat: true, icon: 'rule', route: '/shapes-graph-editor', isActive: this.router.isActive('/shapes-graph-editor', false), name: 'Shapes Editor'},
+            { icon: 'envelope-o', route: '/merge-requests', isActive: this.router.isActive('/merge-requests', false), name: 'Merge Requests' },
+            { icon: 'map-o', route: '/mapper', isActive: this.router.isActive('/mapper', false), name: 'Mapping Tool' },
+            { icon: 'database', route: '/datasets', isActive: this.router.isActive('/datasets', false), name: 'Datasets' },
+            { icon: 'search', route: '/discover', isActive: this.router.isActive('/discover', false), name: 'Discover' },
         ];
     }
-    dvm.toggle = function() {
-        $rootScope.collapsedNav = !$rootScope.collapsedNav;
+    toggle(): void {
+        this.collapsedNav = !this.collapsedNav;
+        this.collapsedNavChange.emit(this.collapsedNav);
     }
-    dvm.getUserDisplay = function() {
-        var user = find(dvm.um.users, {iri: dvm.lm.currentUserIRI});
+    getUserDisplay(): string {
+        const user = find(this.um.users, {iri: this.lm.currentUserIRI});
         return get(user, 'firstName', '') || get(user, 'username', '');
     }
 }
-
-export default sidebarComponent;

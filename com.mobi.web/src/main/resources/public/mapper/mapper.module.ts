@@ -21,8 +21,6 @@
  * #L%
  */
 import { NgModule } from '@angular/core';
-import * as angular from 'angular';
-import { downgradeComponent } from '@angular/upgrade/static';
 import { GridJsAngularModule } from 'gridjs-angular';
 
 import { SharedModule } from '../shared/shared.module';
@@ -56,6 +54,11 @@ import { RunMappingDownloadOverlayComponent } from './components/runMappingDownl
 import { RunMappingOntologyOverlayComponent } from './components/runMappingOntologyOverlay/runMappingOntologyOverlay.component';
 import { ViewMappingModalComponent } from './components/viewMappingModal/viewMappingModal.component';
 
+/**
+ * @namespace mapper
+ *
+ * The `mapper` module provides components that make up the Mapping Tool module in the Mobi application.
+ */
 @NgModule({
     imports: [
         SharedModule,
@@ -106,38 +109,3 @@ import { ViewMappingModalComponent } from './components/viewMappingModal/viewMap
     ]
 })
 export class MapperModule {}
-
-/**
- * @namespace mapper
- *
- * The `mapper` module provides components that make up the Mapping Tool module in the Mobi application.
- */
-angular.module('mapper', [])
-    .directive('classMappingDetails', downgradeComponent({component: ClassMappingDetailsComponent}) as angular.IDirectiveFactory)
-    .directive('classMappingOverlay', downgradeComponent({component: ClassMappingOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('classMappingSelect', downgradeComponent({component: ClassMappingSelectComponent}) as angular.IDirectiveFactory)
-    .directive('classPreview', downgradeComponent({component: ClassPreviewComponent}) as angular.IDirectiveFactory)
-    .directive('classSelect', downgradeComponent({component: ClassSelectComponent}) as angular.IDirectiveFactory)
-    .directive('columnSelect', downgradeComponent({component: ColumnSelectComponent}) as angular.IDirectiveFactory)
-    .directive('createMappingOverlay', downgradeComponent({component: CreateMappingOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('downloadMappingOverlay', downgradeComponent({component: DownloadMappingOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('editMappingPage', downgradeComponent({component: EditMappingPageComponent}) as angular.IDirectiveFactory)
-    .directive('editMappingTab', downgradeComponent({component: EditMappingTabComponent}) as angular.IDirectiveFactory)
-    .directive('fileUploadForm', downgradeComponent({component: FileUploadFormComponent}) as angular.IDirectiveFactory)
-    .directive('fileUploadPage', downgradeComponent({component: FileUploadPageComponent}) as angular.IDirectiveFactory)
-    .directive('iriTemplateOverlay', downgradeComponent({component: IriTemplateOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('mapperPage', downgradeComponent({component: MapperPageComponent}) as angular.IDirectiveFactory)
-    .directive('mapperSerializationSelect', downgradeComponent({component: MapperSerializationSelectComponent}) as angular.IDirectiveFactory)
-    .directive('mappingPreview', downgradeComponent({component: MappingPreviewComponent}) as angular.IDirectiveFactory)
-    .directive('mappingCommitsPage', downgradeComponent({component: MappingCommitsTabComponent}) as angular.IDirectiveFactory)
-    .directive('mappingConfigOverlay', downgradeComponent({component: MappingConfigOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('mappingSelectPage', downgradeComponent({component: MappingSelectPageComponent}) as angular.IDirectiveFactory)
-    .directive('previewDataGrid', downgradeComponent({component: PreviewDataGridComponent}) as angular.IDirectiveFactory)
-    .directive('propMappingOverlay', downgradeComponent({component: PropMappingOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('propPreview', downgradeComponent({component: PropPreviewComponent}) as angular.IDirectiveFactory)
-    .directive('propSelect', downgradeComponent({component: PropSelectComponent}) as angular.IDirectiveFactory)
-    .directive('rdfPreviewTab', downgradeComponent({component: RdfPreviewTabComponent}) as angular.IDirectiveFactory)
-    .directive('runMappingDatasetOverlay', downgradeComponent({component: RunMappingDatasetOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('runMappingDownloadOverlay', downgradeComponent({component: RunMappingDownloadOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('runMappingOntologyOverlay', downgradeComponent({component: RunMappingOntologyOverlayComponent}) as angular.IDirectiveFactory)
-    .directive('viewMappingModal', downgradeComponent({component: ViewMappingModalComponent}) as angular.IDirectiveFactory);

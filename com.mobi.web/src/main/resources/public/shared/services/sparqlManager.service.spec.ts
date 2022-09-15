@@ -25,7 +25,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
@@ -33,14 +33,15 @@ import {
 import { XSD } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { HelperService } from './helper.service';
 import { SparqlManagerService } from './sparqlManager.service';
+import { UtilService } from './util.service';
 
 describe('SPARQL Manager service', function() {
     let service: SparqlManagerService;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
-
+    let utilStub: jasmine.SpyObj<UtilService>;
+    
     const error = 'error message';
     const query = 'SELECT * WHERE { ?s ?p ?o }';
     const datasetRecordIRI = 'datasetRecordIRI';
@@ -62,7 +63,7 @@ describe('SPARQL Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 SparqlManagerService,
-                HelperService,
+                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService),
             ]
         });
@@ -72,8 +73,33 @@ describe('SPARQL Manager service', function() {
         service = TestBed.get(SparqlManagerService);
         httpMock = TestBed.get(HttpTestingController);
         progressSpinnerStub = TestBed.get(ProgressSpinnerService);
+        utilStub = TestBed.get(UtilService);
    
         progressSpinnerStub.track.and.callFake((ob) => ob);
+        utilStub.trackedRequest.and.callFake((ob) => ob);
+        utilStub.handleError.and.callFake(error => {
+            if (error.status === 0) {
+                return throwError('');
+            } else {
+                return throwError(error.statusText || 'Something went wrong. Please try again later.');
+            }
+        });
+        utilStub.createHttpParams.and.callFake(params => {
+            let httpParams: HttpParams = new HttpParams();
+            Object.keys(params).forEach(param => {
+                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
+                    if (Array.isArray(params[param])) {
+                        params[param].forEach(el => {
+                            httpParams = httpParams.append(param, '' + el);
+                        });
+                    } else {
+                        httpParams = httpParams.append(param, '' + params[param]);
+                    }
+                }
+            });
+        
+            return httpParams;
+        });
     });
 
     afterEach(function() {
@@ -81,6 +107,7 @@ describe('SPARQL Manager service', function() {
         service = null;
         httpMock = null;
         progressSpinnerStub = null;
+        utilStub = null;
     });
 
     describe('should query the repository with a GET', function() {

@@ -30,7 +30,7 @@ import { MatButtonModule, MatDialog, MatDialogModule, MatFormFieldModule, MatInp
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 
-import { cleanStylesFromDOM, mockLoginManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { Group } from '../../../shared/models/group.interface';
@@ -40,6 +40,8 @@ import { MemberTableComponent } from '../memberTable/memberTable.component';
 import { GroupsListComponent } from '../groupsList/groupsList.component';
 import { CreateGroupOverlayComponent } from '../createGroupOverlay/createGroupOverlay.component';
 import { EditGroupInfoOverlayComponent } from '../editGroupInfoOverlay/editGroupInfoOverlay.component';
+import { UtilService } from '../../../shared/services/util.service';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { GroupsPageComponent } from './groupsPage.component';
 
 describe('Groups Page component', function() {
@@ -49,8 +51,8 @@ describe('Groups Page component', function() {
     let userStateStub: jasmine.SpyObj<UserStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let loginManagerStub;
-    let utilStub;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
     let group: Group;
 
     configureTestSuite(function() {
@@ -73,8 +75,8 @@ describe('Groups Page component', function() {
             providers: [
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
-                { provide: 'loginManagerService', useClass: mockLoginManager },
-                { provide: 'utilService', useClass: mockUtil },
+                MockProvider(LoginManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -89,8 +91,8 @@ describe('Groups Page component', function() {
         userStateStub = TestBed.get(UserStateService);
         userManagerStub = TestBed.get(UserManagerService);
         matDialog = TestBed.get(MatDialog);
-        loginManagerStub = TestBed.get('loginManagerService');
-        utilStub = TestBed.get('utilService');
+        loginManagerStub = TestBed.get(LoginManagerService);
+        utilStub = TestBed.get(UtilService);
 
         group = {
             title: 'group',
@@ -121,7 +123,7 @@ describe('Groups Page component', function() {
         userManagerStub.groups = [group];
         component.ngOnInit();
         expect(component.filteredGroups).toEqual([group]);
-        expect(component.setAdmin).toHaveBeenCalled();
+        expect(component.setAdmin).toHaveBeenCalledWith();
         expect(userManagerStub.isAdmin).toHaveBeenCalledWith(loginManagerStub.currentUser);
         expect(component.isAdmin).toEqual(true);
     });
@@ -130,7 +132,7 @@ describe('Groups Page component', function() {
             spyOn(component, 'setAdmin');
             component.selectGroup(group);
             expect(userStateStub.selectedGroup).toEqual(group);
-            expect(component.setAdmin).toHaveBeenCalled();
+            expect(component.setAdmin).toHaveBeenCalledWith();
         });
         it('should open a modal for creating a group', function() {
             component.createGroup();
@@ -154,7 +156,7 @@ describe('Groups Page component', function() {
                     this.event = new MatSlideToggleChange(slider.componentInstance, true);
                 });
                 it('successfully', fakeAsync(function() {
-                    userManagerStub.addGroupRoles.and.returnValue(Promise.resolve());
+                    userManagerStub.addGroupRoles.and.resolveTo();
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addGroupRoles).toHaveBeenCalledWith(group.title, ['admin']);
@@ -162,7 +164,7 @@ describe('Groups Page component', function() {
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
-                    userManagerStub.addGroupRoles.and.returnValue(Promise.reject('Error message'));
+                    userManagerStub.addGroupRoles.and.rejectWith('Error message');
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addGroupRoles).toHaveBeenCalledWith(group.title, ['admin']);
@@ -176,7 +178,7 @@ describe('Groups Page component', function() {
                     this.event = new MatSlideToggleChange(slider.componentInstance, false);
                 });
                 it('successfully', fakeAsync(function() {
-                    userManagerStub.deleteGroupRole.and.returnValue(Promise.resolve());
+                    userManagerStub.deleteGroupRole.and.resolveTo();
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addGroupRoles).not.toHaveBeenCalled();
@@ -184,7 +186,7 @@ describe('Groups Page component', function() {
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
-                    userManagerStub.deleteGroupRole.and.returnValue(Promise.reject('Error message'));
+                    userManagerStub.deleteGroupRole.and.rejectWith('Error message');
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addGroupRoles).not.toHaveBeenCalled();
@@ -198,7 +200,7 @@ describe('Groups Page component', function() {
             spyOn(component, 'deleteGroup');
             component.confirmDeleteGroup();
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to remove')}});
-            expect(component.deleteGroup).toHaveBeenCalled();
+            expect(component.deleteGroup).toHaveBeenCalledWith();
         });
         it('should open a modal for editing a group description', function() {
             component.editDescription();
@@ -219,7 +221,7 @@ describe('Groups Page component', function() {
                 spyOn(component, 'setAdmin');
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.deleteGroup.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.deleteGroup.and.rejectWith('Error message');
                 component.deleteGroup();
                 tick();
                 expect(userManagerStub.deleteGroup).toHaveBeenCalledWith(group.title);
@@ -228,12 +230,12 @@ describe('Groups Page component', function() {
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.deleteGroup.and.returnValue(Promise.resolve());
+                userManagerStub.deleteGroup.and.resolveTo();
                 component.deleteGroup();
                 tick();
                 expect(userManagerStub.deleteGroup).toHaveBeenCalledWith(group.title);
                 expect(userStateStub.selectedGroup).toBeUndefined();
-                expect(component.setAdmin).toHaveBeenCalled();
+                expect(component.setAdmin).toHaveBeenCalledWith();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
@@ -250,7 +252,7 @@ describe('Groups Page component', function() {
                 userStateStub.selectedGroup = group;
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.addUserGroup.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.addUserGroup.and.rejectWith('Error message');
                 component.addMember(this.user);
                 tick();
                 expect(userManagerStub.addUserGroup).toHaveBeenCalledWith(this.user.username, group.title);
@@ -258,11 +260,11 @@ describe('Groups Page component', function() {
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.addUserGroup.and.returnValue(Promise.resolve());
+                userManagerStub.addUserGroup.and.resolveTo();
                 component.addMember(this.user);
                 tick();
                 expect(userManagerStub.addUserGroup).toHaveBeenCalledWith(this.user.username, group.title);
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
@@ -278,7 +280,7 @@ describe('Groups Page component', function() {
                 userStateStub.selectedGroup = group;
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.deleteUserGroup.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.deleteUserGroup.and.rejectWith('Error message');
                 component.removeMember('batman');
                 tick();
                 expect(userManagerStub.deleteUserGroup).toHaveBeenCalledWith('batman', group.title);
@@ -286,11 +288,11 @@ describe('Groups Page component', function() {
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.deleteUserGroup.and.returnValue(Promise.resolve());
+                userManagerStub.deleteUserGroup.and.resolveTo();
                 component.removeMember('batman');
                 tick();
                 expect(userManagerStub.deleteUserGroup).toHaveBeenCalledWith('batman', group.title);
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
@@ -383,7 +385,7 @@ describe('Groups Page component', function() {
         spyOn(component, 'createGroup');
         const createButton = element.query(By.css('.col-4 button[color="primary"]'));
         createButton.triggerEventHandler('click', null);
-        expect(component.createGroup).toHaveBeenCalled();
+        expect(component.createGroup).toHaveBeenCalledWith();
     });
     it('should call confirmDeleteGroup when the button is clicked', function() {
         userStateStub.selectedGroup = group;
@@ -391,7 +393,7 @@ describe('Groups Page component', function() {
         spyOn(component, 'confirmDeleteGroup');
         const deleteButton = element.query(By.css('.col-8 .group-title button[color="warn"]'));
         deleteButton.triggerEventHandler('click', null);
-        expect(component.confirmDeleteGroup).toHaveBeenCalled();
+        expect(component.confirmDeleteGroup).toHaveBeenCalledWith();
     });
     it('should call editDescription when the button is clicked', function() {
         userStateStub.selectedGroup = group;
@@ -399,6 +401,6 @@ describe('Groups Page component', function() {
         spyOn(component, 'editDescription');
         const editButton = element.query(By.css('.col-8 button.mat-icon-button[color="primary"]'));
         editButton.triggerEventHandler('click', null);
-        expect(component.editDescription).toHaveBeenCalled();
+        expect(component.editDescription).toHaveBeenCalledWith();
     });
 });
