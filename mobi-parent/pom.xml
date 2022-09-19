@@ -54,7 +54,7 @@
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-codec.version>1.10</commons-codec.version>
         <commons-collections.version>3.2.1</commons-collections.version>
-        <commons-io.version>2.5</commons-io.version>
+        <commons-io.version>2.7</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
         <commons-rdf-api.version>0.5.0</commons-rdf-api.version>
@@ -64,6 +64,7 @@
         <httpclient.version>4.5.13</httpclient.version>
         <httpcore.version>4.4.15</httpcore.version>
         <jackson.version>2.13.2</jackson.version>
+        <jackson-databind.version>2.13.2.1</jackson-databind.version>
         <javax.cache.version>1.1.1</javax.cache.version>
         <jaxb.version>2.3.3</jaxb.version>
         <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
@@ -242,7 +243,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson-databind.version}</version>
             </dependency>
 
             <!-- Karaf Dependencies -->

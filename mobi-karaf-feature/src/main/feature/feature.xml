@@ -33,7 +33,7 @@
         <bundle>mvn:org.apache.commons/commons-collections4/4.2</bundle>
         <bundle>mvn:commons-validator/commons-validator/${commons-validator.version}</bundle>
         <bundle>mvn:commons-digester/commons-digester/1.8.1</bundle>
-        <bundle>mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.version}</bundle>
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-databind/${jackson-databind.version}</bundle>
         <bundle>mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
         <bundle>mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.version}</bundle>
         <bundle>mvn:ch.qos.logback/logback-classic/${logback.version}</bundle>
