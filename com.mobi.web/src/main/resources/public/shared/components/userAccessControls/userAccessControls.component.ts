@@ -87,6 +87,8 @@ export class UserAccessControlsComponent implements OnInit {
             this.userSearchControl.disable();
             this.groupSearchControl.disable();
         }
+        this.item.selectedUsers = filter(this.item.selectedUsers, user => user !== undefined);
+        this.item.selectedGroups = filter(this.item.selectedGroups, group => group !== undefined);
         this.setUsers();
         this.setGroups();
         this.filteredAvailableUsers = this.userSearchControl.valueChanges.pipe(
