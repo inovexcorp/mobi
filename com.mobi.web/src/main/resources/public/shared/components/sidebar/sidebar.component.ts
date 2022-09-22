@@ -21,12 +21,13 @@
  * #L%
  */
 
-import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
+import { Component, Input, EventEmitter, Output, Inject } from '@angular/core';
 import { find, get } from 'lodash';
 import { Router } from '@angular/router';
 
 import { LoginManagerService } from '../../services/loginManager.service';
 import { UserManagerService } from '../../services/userManager.service';
+import { PERSPECTIVES, RoutePerspective } from '../../models/routePerspective.interface';
 
 import './sidebar.component.scss';
 
@@ -43,26 +44,13 @@ import './sidebar.component.scss';
     selector: 'sidebar',
     templateUrl: './filtered/sidebar.component.html'
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent {
     @Input() collapsedNav: boolean;
     @Output() collapsedNavChange = new EventEmitter<boolean>();
 
-    perspectives = [];
+    constructor(public router: Router, public lm: LoginManagerService, public um: UserManagerService, 
+        @Inject(PERSPECTIVES) public perspectives: RoutePerspective[]) {}
 
-    constructor(public router: Router, public lm: LoginManagerService, public um: UserManagerService) {}
-
-    ngOnInit(): void {
-        this.perspectives = [
-            { icon: 'home', route: '/home', isActive: this.router.isActive('/home', false), name: 'Home' },
-            { icon: 'book', route: '/catalog', isActive: this.router.isActive('/catalog', false), name: 'Catalog' },
-            { icon: 'pencil-square-o', route: '/ontology-editor', isActive: this.router.isActive('/ontology-editor', false), name: 'Ontology Editor'},
-            { mat: true, icon: 'rule', route: '/shapes-graph-editor', isActive: this.router.isActive('/shapes-graph-editor', false), name: 'Shapes Editor'},
-            { icon: 'envelope-o', route: '/merge-requests', isActive: this.router.isActive('/merge-requests', false), name: 'Merge Requests' },
-            { icon: 'map-o', route: '/mapper', isActive: this.router.isActive('/mapper', false), name: 'Mapping Tool' },
-            { icon: 'database', route: '/datasets', isActive: this.router.isActive('/datasets', false), name: 'Datasets' },
-            { icon: 'search', route: '/discover', isActive: this.router.isActive('/discover', false), name: 'Discover' },
-        ];
-    }
     toggle(): void {
         this.collapsedNav = !this.collapsedNav;
         this.collapsedNavChange.emit(this.collapsedNav);

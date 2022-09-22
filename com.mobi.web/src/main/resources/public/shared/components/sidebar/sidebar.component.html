@@ -22,14 +22,14 @@
   -->
 <div class="sidebar py-2 h-100 d-flex flex-column" [ngClass]="collapsedNav ? 'collapsed' : 'open'">
     <div class="image-container text-center pb-2">
-        <a class="d-block" [routerLink]="['/home']"><img src="{{collapsedNav ? 'images/mobi-alternate-logo-icon.png' : 'images/mobi-alternate-logo.svg'}}" alt="Mobi Logo"></a>
+        <a class="d-block" [routerLink]="['/home']"><img src="{{collapsedNav ? 'images/sidebar-logo-collapsed.png' : 'images/sidebar-logo.png'}}" alt="Logo"></a>
     </div>
     <a class="current-user-box p-2 my-2 d-flex align-items-center" [ngClass]="{'active': router.isActive('/settings', false), 'text-truncate': !collapsedNav}" [routerLink]="['/settings']" [routerLinkActive]="'active'">
         <div class="avatar-box rounded-circle align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
         <div class="user-title flex-1 remove-min-width text-truncate ml-1 align-middle collapsed-hide" *ngIf="!collapsedNav">{{getUserDisplay()}}</div>
     </a>
     <ul class="main-nav nav flex-column flex-grow-1">
-        <li class="nav-item" *ngFor="let per of perspectives" [ngClass]="{'active': per.isActive}" [routerLinkActive]="'active'">
+        <li class="nav-item" *ngFor="let per of perspectives" [ngClass]="{'active': router.isActive(per.route, false), 'sub-item': per.sub}" [routerLinkActive]="'active'">
             <a class="nav-link" [routerLink]="[per.route]">
                 <i *ngIf="!per.mat" class="fa fa-{{per.icon}}"></i>
                 <mat-icon *ngIf="per.mat">{{per.icon}}</mat-icon>
