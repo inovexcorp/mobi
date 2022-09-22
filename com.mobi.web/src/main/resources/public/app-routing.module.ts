@@ -39,6 +39,7 @@ import { LoginPageComponent } from './login/components/loginPage/loginPage.compo
 import { MainLayoutComponent } from './layouts/main-layout.component';
 import { LoginLayoutComponent } from './layouts/login-layout.component';
 import { AlreadyAuthenticatedGuard } from './alreadyAuthenticated.guard';
+import { PERSPECTIVES } from './shared/models/routePerspective.interface';
 
 const routes: Routes = [
     {
@@ -69,6 +70,16 @@ const routes: Routes = [
     providers: [
         { provide: LocationStrategy, useClass: HashLocationStrategy },
         { provide: APP_BASE_HREF, useValue: ''},
+        { provide: PERSPECTIVES, useValue: [
+            { icon: 'home', route: '/home', name: 'Home' },
+            { icon: 'book', route: '/catalog', name: 'Catalog' },
+            { icon: 'pencil-square-o', route: '/ontology-editor', name: 'Ontology Editor'},
+            { mat: true, icon: 'rule', route: '/shapes-graph-editor', name: 'Shapes Editor'},
+            { icon: 'envelope-o', route: '/merge-requests', name: 'Merge Requests' },
+            { icon: 'map-o', route: '/mapper', name: 'Mapping Tool' },
+            { icon: 'database', route: '/datasets', name: 'Datasets' },
+            { icon: 'search', route: '/discover', name: 'Discover' },
+        ]},
         AuthenticationGuard,
         AlreadyAuthenticatedGuard
     ]

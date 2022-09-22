@@ -29,6 +29,13 @@
     position: relative;
     color: #fff;
 
+    .main-nav {
+        overflow-x: hidden;
+    }
+    .main-nav .nav-item.sub-item {
+        font-size: 0.9em;
+        padding-left: 1em;
+    }
     a {
         color: #fff;
         text-decoration: none;
@@ -58,8 +65,7 @@
         transition: all 0.2s linear;
 
         img {
-            height: 50px;
-            width: auto;
+            width: 90%;
         }
     }
     .help .dropdown-item {

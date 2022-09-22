@@ -32,6 +32,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { PERSPECTIVES, RoutePerspective } from '../../models/routePerspective.interface';
 import { User } from '../../models/user.interface';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { UserManagerService } from '../../services/userManager.service';
@@ -44,6 +45,10 @@ describe('Sidebar component', function() {
     let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let router: Router;
+
+    const perspectives: RoutePerspective[] = [
+        { icon: 'icon', route: '/home', name: 'name' }
+    ];
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -60,7 +65,8 @@ describe('Sidebar component', function() {
             ],
             providers: [
                 MockProvider(LoginManagerService),
-                MockProvider(UserManagerService)
+                MockProvider(UserManagerService),
+                { provide: PERSPECTIVES, useValue: perspectives }
             ]
         });
     });
@@ -85,10 +91,6 @@ describe('Sidebar component', function() {
         router = null;
     });
 
-    it('should initialize correctly', function() {
-        component.ngOnInit();
-        expect(component.perspectives.length).toEqual(8);
-    });
     describe('controller methods', function() {
         it('should toggle whether the nav is collapsed', function() {
             spyOn(component.collapsedNavChange, 'emit');
@@ -134,7 +136,7 @@ describe('Sidebar component', function() {
             const userbox = element.queryAll(By.css('.current-user-box'))[0];
             const version = element.queryAll(By.css('.version small'))[0];
             expect(sidebar.classes['open']).toBeTruthy();
-            expect(logo.nativeElement.src).not.toContain('icon');
+            expect(logo.nativeElement.src).not.toContain('collapsed');
             expect(userbox.classes['text-truncate']).toBeTruthy();
             expect(version.classes['shown']).toBeTruthy();
             expect(element.queryAll(By.css('.current-user-box .user-title')).length).toEqual(1);
@@ -143,14 +145,15 @@ describe('Sidebar component', function() {
             component.collapsedNav = true;
             fixture.detectChanges();
             expect(sidebar.classes['collapsed']).toBeTruthy();
-            expect(logo.nativeElement.src).toContain('icon');
+            expect(logo.nativeElement.src).toContain('collapsed');
             expect(userbox.classes['text-truncate']).toBeFalsy();
             expect(version.classes['hidden']).toBeTruthy();
             expect(element.queryAll(By.css('.current-user-box .user-title')).length).toEqual(0);
             expect(element.queryAll(By.css('.nav-item .nav-link span')).length).toEqual(0);
         });
         it('depending on the number of perspectives', function() {
-            expect(element.queryAll(By.css('.main-nav .nav-item')).length).toEqual(component.perspectives.length);
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('.main-nav .nav-item')).length).toEqual(perspectives.length);
         });
     });
 });
