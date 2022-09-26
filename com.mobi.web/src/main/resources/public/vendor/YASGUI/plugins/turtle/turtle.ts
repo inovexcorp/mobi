@@ -24,20 +24,20 @@
  * Make sure not to include any deps from our main index file. That way, we can easily publish the publin as standalone build
  */
 import { Plugin } from '@triply/yasr/src/plugins/index';
-import { drawFontAwesomeIconAsSvg, drawSvgStringAsElement } from "../utils/yasguiUtil";
+import { drawFontAwesomeIconAsSvg, drawSvgStringAsElement } from '../utils/yasguiUtil';
 import Yasr from '@triply/yasr/build/yasr.min.js';
-import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faAlignLeft";
+import * as faAlignLeft from '@fortawesome/free-solid-svg-icons/faAlignLeft';
 
-const CodeMirror = require("codemirror");
-require("codemirror/addon/fold/foldcode.js");
-require("codemirror/addon/fold/foldgutter.js");
-require("codemirror/addon/fold/xml-fold.js");
-require("codemirror/addon/fold/brace-fold.js");
-require("codemirror/addon/edit/matchbrackets.js");
-require("codemirror/mode/xml/xml.js");
-require("codemirror/mode/turtle/turtle.js")
-require("codemirror/mode/javascript/javascript.js");
-require("codemirror/lib/codemirror.css");
+const CodeMirror = require('codemirror');
+require('codemirror/addon/fold/foldcode.js');
+require('codemirror/addon/fold/foldgutter.js');
+require('codemirror/addon/fold/xml-fold.js');
+require('codemirror/addon/fold/brace-fold.js');
+require('codemirror/addon/edit/matchbrackets.js');
+require('codemirror/mode/xml/xml.js');
+require('codemirror/mode/turtle/turtle.js')
+require('codemirror/mode/javascript/javascript.js');
+require('codemirror/lib/codemirror.css');
 
 export interface PlugingConfig {
     maxLines: number
@@ -62,7 +62,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
     };
     // public attributes
     public priority = 11;
-    public label = "Turtle";
+    public label = 'Turtle';
     public getIcon() {
         return drawSvgStringAsElement(drawFontAwesomeIconAsSvg(faAlignLeft));
     }
@@ -82,7 +82,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
     // Draw the resultset.
     draw() {
         // When the original response is empty, use an empty string
-        let value = this.yasr.results?.getOriginalResponseAsString() || "";
+        let value = this.yasr.results?.getOriginalResponseAsString() || '';
         let contentType = this.yasr.results?.getContentType();
         const type = this.yasr.results?.getType();
         
@@ -90,16 +90,22 @@ export default class Turtle implements Plugin<PlugingConfig> {
             value = JSON.stringify(value, null, 4);
         }
 
+        if (type === 'json') {
+            if( value.includes('contentType') && value.includes('status') && value.includes('executionTime')) {
+                value = '';
+            }
+        }
+        
         const codemirrorOpts = {
             readOnly: true,
             lineNumbers: true,
             lineWrapping: true,
             foldGutter: true,
-            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
             value: value
         };
 
-        if (type === "ttl") {
+        if (type === 'ttl') {
             codemirrorOpts['mode'] = this.mode;
         }
 
@@ -112,11 +118,11 @@ export default class Turtle implements Plugin<PlugingConfig> {
         const type = this.yasr.results.getType();
         return {
             getData: () => {
-                return this.yasr.results?.getOriginalResponseAsString() || "";
+                return this.yasr.results?.getOriginalResponseAsString() || '';
             },
-            filename: "queryResults" + (type ? "." + type : ""),
-            contentType: contentType ? contentType : "text/plain",
-            title: "Download result"
+            filename: 'queryResults' + (type ? '.' + type : ''),
+            contentType: contentType ? contentType : 'text/plain',
+            title: 'Download result'
         };
     }
 
