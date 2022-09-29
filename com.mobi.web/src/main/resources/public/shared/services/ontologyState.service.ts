@@ -2285,20 +2285,22 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      */
     removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue> {
         const remove = (bnodeId) => {
-            const entity = this.listItem.selectedBlankNodes.splice(this.listItem.selectedBlankNodes
-                .findIndex(obj => obj['@id'] === bnodeId), 1)[0];
-            this.addToDeletions(this.listItem.versionedRdfRecord.recordId, entity);
-            forOwn(omit(entity, ['@id', '@type']), (value, key) => {
-                if (this.om.isBlankNodeId(key)) {
-                    remove(key);
-                }
-                forEach(value, valueObj => {
-                    const id = get(valueObj, '@id');
-                    if (this.om.isBlankNodeId(id)) {
-                        remove(id);
+            let matchingBlankNodeIndex = this.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === bnodeId);
+            if (matchingBlankNodeIndex >= 0) {
+                const entity = this.listItem.selectedBlankNodes.splice(matchingBlankNodeIndex, 1)[0];
+                this.addToDeletions(this.listItem.versionedRdfRecord.recordId, entity);
+                forOwn(omit(entity, ['@id', '@type']), (value, key) => {
+                    if (this.om.isBlankNodeId(key)) {
+                        remove(key);
                     }
+                    forEach(value, valueObj => {
+                        const id = get(valueObj, '@id');
+                        if (this.om.isBlankNodeId(id)) {
+                            remove(id);
+                        }
+                    });
                 });
-            });
+            }
         };
         const axiomObject: JSONLDId|JSONLDValue = this.listItem.selected[key][index];
         const json: JSONLDObject = {
