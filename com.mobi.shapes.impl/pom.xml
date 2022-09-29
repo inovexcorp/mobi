@@ -53,7 +53,15 @@
             <artifactId>rest.util</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>platform.config.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
         <!-- Test Dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
