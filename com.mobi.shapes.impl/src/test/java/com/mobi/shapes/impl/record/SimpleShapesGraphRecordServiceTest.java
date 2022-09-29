@@ -74,6 +74,8 @@ import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -81,6 +83,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -104,6 +107,11 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
     private SimpleShapesGraphRecordService recordService;
     private ShapesGraphRecord testRecord;
+    private ShapesGraphRecord stateRecord01;
+    private ShapesGraphRecord stateRecord02;
+    private ShapesGraphRecord stateRecord03;
+    private Model testStateModel;
+
     private Branch branch;
     private Commit headCommit;
     private Difference difference;
@@ -164,6 +172,14 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(headCommit);
         branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+
+        InputStream testStateOntology = getClass().getResourceAsStream("/test-state.ttl");
+        testStateModel = MODEL_FACTORY.createEmptyModel();
+        testStateModel.addAll(Rio.parse(testStateOntology, "", RDFFormat.TURTLE));
+
+        stateRecord01 = recordFactory.createNew(VALUE_FACTORY.createIRI("https://mobi.com/records#eb-record-id-0001"));
+        stateRecord02 = recordFactory.createNew(VALUE_FACTORY.createIRI("https://mobi.com/records#eb-record-id-0002"));
+        stateRecord03 = recordFactory.createNew(VALUE_FACTORY.createIRI("https://mobi.com/records#eb-record-id-not-exit"));
 
         Model deletions = MODEL_FACTORY.createEmptyModel();
         deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
@@ -646,4 +662,68 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
             recordService.delete(testIRI, user, connection);
         }
     }
+
+    @Test
+    public void getPlatformStateIdsTest() throws Exception {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testStateModel);
+
+            List<String> record01Ids = recordService.getPlatformStateIds(stateRecord01, connection)
+                    .stream().map(resource -> resource.toString()).sorted().collect(Collectors.toList());
+            List<String> record02Ids = recordService.getPlatformStateIds(stateRecord02, connection)
+                    .stream().map(resource -> resource.toString()).sorted().collect(Collectors.toList());
+            List<String> record03Ids = recordService.getPlatformStateIds(stateRecord03, connection)
+                    .stream().map(resource -> resource.toString()).sorted().collect(Collectors.toList());
+
+            assertEquals(record01Ids.toString(), "[http://mobi.com/states#platform-id-1, http://mobi.com/states#platform-id-2]");
+            assertEquals(record02Ids.toString(), "[http://mobi.com/states#platform-id-3]");
+            assertEquals(record03Ids.toString(), "[]");
+        }
+    }
+
+    @Test
+    public void getAllStateModelsForRecordTest() throws Exception {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testStateModel);
+
+            String actual = "[http://mobi.com/ontologies/shapes-graph/state#state-record-1, http://mobi.com/ontologies/shapes-graph/state#state-record-2, http://mobi.com/states#platform-id-1, http://mobi.com/states#platform-id-2, http://mobi.com/states/shapes-graph-editor/branch-id/id-branch-1, http://mobi.com/states/shapes-graph-editor/branch-id/id-branch-2]";
+            String actual1 = "[http://mobi.com/ontologies/shapes-graph/state#state-record-3, http://mobi.com/states#platform-id-3, http://mobi.com/states/shapes-graph-editor/branch-id/id-branch-3]";
+            String actual2 = "[]";
+
+            testIdsForStateModel(connection, actual, actual1, actual2);
+        }
+    }
+
+    @Test
+    public void deleteOntologyStateTest() throws Exception {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testStateModel);
+
+            final String actual = "[http://mobi.com/ontologies/shapes-graph/state#state-record-1, http://mobi.com/ontologies/shapes-graph/state#state-record-2, http://mobi.com/states#platform-id-1, http://mobi.com/states#platform-id-2, http://mobi.com/states/shapes-graph-editor/branch-id/id-branch-1, http://mobi.com/states/shapes-graph-editor/branch-id/id-branch-2]";
+            final String actual1 = "[http://mobi.com/ontologies/shapes-graph/state#state-record-3, http://mobi.com/states#platform-id-3, http://mobi.com/states/shapes-graph-editor/branch-id/id-branch-3]";
+            final String actualEmpty = "[]";
+
+            testIdsForStateModel(connection, actual, actual1, actualEmpty);
+            recordService.deleteShapeGraphState(stateRecord01, connection);
+            testIdsForStateModel(connection, actualEmpty, actual1, actualEmpty);
+            recordService.deleteShapeGraphState(stateRecord02, connection);
+            testIdsForStateModel(connection, actualEmpty, actualEmpty, actualEmpty);
+        }
+    }
+
+    private void testIdsForStateModel(RepositoryConnection connection, String actual, String actual1, String actual2) {
+        List<String> record01Ids = recordService.getAllStateModelsForRecord(stateRecord01, connection)
+                .stream().map(model -> model.subjects().iterator().next().toString()).sorted().collect(Collectors.toList());
+        List<String> record02Ids = recordService.getAllStateModelsForRecord(stateRecord02, connection)
+                .stream().map(model -> model.subjects().iterator().next().toString()).sorted().collect(Collectors.toList());
+        List<String> record03Ids = recordService.getAllStateModelsForRecord(stateRecord03, connection)
+                .stream().map(model -> model.subjects().iterator().next().toString()).sorted().collect(Collectors.toList());
+
+        assertEquals(record01Ids.toString(), actual);
+        assertEquals(record02Ids.toString(), actual1);
+        assertEquals(record03Ids.toString(), actual2);
+    }
+
+
+
 }

@@ -24,12 +24,33 @@ package com.mobi.shapes.impl.record;
  */
 
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.platform.config.api.ontologies.platformconfig.State;
+import com.mobi.platform.config.api.ontologies.platformconfig.StateFactory;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecordFactory;
 import com.mobi.shapes.api.record.AbstractShapesGraphRecordService;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 
 @Component(
         immediate = true,
@@ -37,8 +58,26 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class SimpleShapesGraphRecordService extends AbstractShapesGraphRecordService<ShapesGraphRecord> {
 
+    private final static  String FIND_PLATFORM_STATES_FOR_SHAPE_GRAPH_RECORD;
+    ModelFactory mf = new DynamicModelFactory();
+
+    static {
+        try {
+            FIND_PLATFORM_STATES_FOR_SHAPE_GRAPH_RECORD = IOUtils.toString(
+                    SimpleShapesGraphRecordService.class
+                            .getResourceAsStream("/find-platform-states-for-shape-record.rq"),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
     @Reference
     public ShapesGraphRecordFactory shapesGraphRecordFactory;
+
+    @Reference
+    StateFactory stateFactory;
 
     @Activate
     public void activate() {
@@ -54,4 +93,62 @@ public class SimpleShapesGraphRecordService extends AbstractShapesGraphRecordSer
     public String getTypeIRI() {
         return ShapesGraphRecord.TYPE;
     }
+
+    @Override
+    protected void deleteRecord(ShapesGraphRecord record, RepositoryConnection conn) {
+        deleteVersionedRDFData(record, conn);
+        deleteRecordObject(record, conn);
+        deletePolicies(record, conn);
+        deleteShapeGraphState(record, conn);
+    }
+
+    /**
+     * Delete Ontology State.  When an OntologyRecord is deleted, all State data associated with that
+     * Record is deleted from the application for all users.
+     */
+    protected void deleteShapeGraphState(ShapesGraphRecord record, RepositoryConnection conn){
+        List<Model> states = getAllStateModelsForRecord(record, conn);
+        List<Statement> statementsToRemove = new ArrayList<>();
+        for(Model stateModel: states){
+            stateModel.forEach((statement) -> statementsToRemove.add(statement));
+        }
+        conn.remove(statementsToRemove);
+    }
+
+    protected Set<Resource> getPlatformStateIds(ShapesGraphRecord record, RepositoryConnection conn) {
+        Set<Resource> statePlatformIds = new HashSet<>();
+        String query = FIND_PLATFORM_STATES_FOR_SHAPE_GRAPH_RECORD.replace("%RECORDIRI%",
+                record.getResource().stringValue());
+        TupleQuery stateQuery = conn.prepareTupleQuery(query);
+        stateQuery.evaluate().forEach(bindings ->
+                statePlatformIds.add((Bindings.requiredResource(bindings, "state"))));
+        return statePlatformIds;
+    }
+
+    /**
+     * Get ApplicationState and the ResourceModel of each ApplicationState as models
+     * @param record OntologyRecord
+     * @param conn RepositoryConnection
+     * @return List<Model> all state models
+     */
+    protected List<Model> getAllStateModelsForRecord(ShapesGraphRecord record, RepositoryConnection conn) {
+        Set<Resource> platformStateIds = getPlatformStateIds(record, conn);
+        List<Model> states = new ArrayList<>();
+        List<Model> stateResourceModels = new ArrayList<>();
+
+        for(Resource recordId: platformStateIds){
+            Model model = QueryResults.asModel(conn.getStatements(recordId, null, null), mf);
+            states.add(model);
+
+            State state = stateFactory.getExisting(recordId, model).orElseThrow(()
+                    -> new IllegalArgumentException("Record " + recordId + " does not exist"));
+            for (Resource stateResourceId: state.getStateResource()) {
+                Model stateResourceModel = QueryResults.asModel(conn.getStatements(stateResourceId, null, null), mf);
+                stateResourceModels.add(stateResourceModel);
+            }
+        }
+        states.addAll(stateResourceModels);
+        return states;
+    }
+
 }
