@@ -24,16 +24,35 @@ package com.mobi.ontology.impl.core.record;
  */
 
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.platform.config.api.ontologies.platformconfig.State;
+import com.mobi.platform.config.api.ontologies.platformconfig.StateFactory;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component(
         immediate = true,
@@ -42,12 +61,29 @@ import org.slf4j.LoggerFactory;
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
+    private final static  String FIND_PLATFORM_STATES_FOR_ONTOLOGY_RECORD;
+    ModelFactory mf = new DynamicModelFactory();
+
+    static {
+        try {
+            FIND_PLATFORM_STATES_FOR_ONTOLOGY_RECORD = IOUtils.toString(
+                    SimpleOntologyRecordService.class
+                            .getResourceAsStream("/find-platform-states-for-ontology-record.rq"),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     public OntologyCache ontologyCache;
 
     @Reference
     public OntologyRecordFactory ontologyRecordFactory;
+
+    @Reference
+    StateFactory stateFactory;
 
     @Activate
     public void activate() {
@@ -72,7 +108,57 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         deleteRecordObject(record, conn);
         deletePolicies(record, conn);
         clearOntologyCache(record);
+        deleteOntologyState(record, conn);
         logTrace("deleteOntology(recordId)", start);
+    }
+
+    /**
+     * Delete Ontology State.  When an OntologyRecord is deleted, all State data associated with that
+     * Record is deleted from the application for all users.
+     */
+    protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn){
+        List<Model> states = getAllStateModelsForRecord(record, conn);
+        List<Statement> statementsToRemove = new ArrayList<>();
+        for(Model stateModel: states){
+            stateModel.forEach((statement) -> statementsToRemove.add(statement));
+        }
+        conn.remove(statementsToRemove);
+    }
+
+    protected Set<Resource> getPlatformStateIds(OntologyRecord record, RepositoryConnection conn) {
+        Set<Resource> statePlatformIds = new HashSet<>();
+        String query = FIND_PLATFORM_STATES_FOR_ONTOLOGY_RECORD.replace("%RECORDIRI%",
+                record.getResource().stringValue());
+        TupleQuery stateQuery = conn.prepareTupleQuery(query);
+        stateQuery.evaluate().forEach(bindings ->
+                statePlatformIds.add((Bindings.requiredResource(bindings, "state"))));
+        return statePlatformIds;
+    }
+
+    /**
+     * Get ApplicationState and the ResourceModel of each ApplicationState as models
+     * @param record OntologyRecord
+     * @param conn RepositoryConnection
+     * @return List<Model> all state models
+     */
+    protected List<Model> getAllStateModelsForRecord(OntologyRecord record, RepositoryConnection conn) {
+        Set<Resource> platformStateIds = getPlatformStateIds(record, conn);
+        List<Model> states = new ArrayList<>();
+        List<Model> stateResourceModels = new ArrayList<>();
+
+        for(Resource recordId: platformStateIds){
+            Model model = QueryResults.asModel(conn.getStatements(recordId, null, null), mf);
+            states.add(model);
+
+            State state = stateFactory.getExisting(recordId, model).orElseThrow(()
+                    -> new IllegalArgumentException("Record " + recordId + " does not exist"));
+            for (Resource stateResourceId: state.getStateResource()) {
+                Model stateResourceModel = QueryResults.asModel(conn.getStatements(stateResourceId, null, null), mf);
+                stateResourceModels.add(stateResourceModel);
+            }
+        }
+        states.addAll(stateResourceModels);
+        return states;
     }
 
     /**
