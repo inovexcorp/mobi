@@ -1,0 +1,54 @@
+
+<http://mobi.com/states#platform-id-1> a <http://www.w3.org/2002/07/owl#Thing>,
+    <http://mobi.com/ontologies/platform/config#ApplicationState>, <http://mobi.com/ontologies/platform/config#State>;
+  <http://mobi.com/ontologies/platform/config#stateResource> <http://mobi.com/ontologies/state#state-record-1>,
+    <http://mobi.com/states/ontology-editor/branch-id/id-branch-1>;
+  <http://mobi.com/ontologies/platform/config#forUser> <http://mobi.com/users/eb-user-id-0001>;
+  <http://mobi.com/ontologies/platform/config#application> <http://mobi.com/applications#ontology-editor> .
+
+<http://mobi.com/ontologies/state#state-record-1> a <http://mobi.com/ontologies/state#StateRecord>;
+  <http://mobi.com/ontologies/state#branchStates> <http://mobi.com/states/ontology-editor/branch-id/id-branch-1>;
+  <http://mobi.com/ontologies/state#currentState> <http://mobi.com/states/ontology-editor/branch-id/id-branch-1>;
+  <http://mobi.com/ontologies/state#record> <https://mobi.com/records#eb-record-id-0001> .
+
+
+<http://mobi.com/states#platform-id-2> a <http://www.w3.org/2002/07/owl#Thing>,
+    <http://mobi.com/ontologies/platform/config#ApplicationState>, <http://mobi.com/ontologies/platform/config#State>;
+  <http://mobi.com/ontologies/platform/config#stateResource> <http://mobi.com/ontologies/state#state-record-2>,
+    <http://mobi.com/states/ontology-editor/branch-id/id-branch-2>;
+  <http://mobi.com/ontologies/platform/config#forUser> <http://mobi.com/users/eb-user-id-0002>;
+  <http://mobi.com/ontologies/platform/config#application> <http://mobi.com/applications#ontology-editor> .
+
+<http://mobi.com/ontologies/state#state-record-2> a <http://mobi.com/ontologies/state#StateRecord>;
+  <http://mobi.com/ontologies/state#branchStates> <http://mobi.com/states/ontology-editor/branch-id/id-branch-2>;
+  <http://mobi.com/ontologies/state#currentState> <http://mobi.com/states/ontology-editor/branch-id/id-branch-2>;
+  <http://mobi.com/ontologies/state#record> <https://mobi.com/records#eb-record-id-0001> .
+
+
+<http://mobi.com/states#platform-id-3> a <http://www.w3.org/2002/07/owl#Thing>,
+    <http://mobi.com/ontologies/platform/config#ApplicationState>, <http://mobi.com/ontologies/platform/config#State>;
+  <http://mobi.com/ontologies/platform/config#stateResource> <http://mobi.com/ontologies/state#state-record-3>,
+    <http://mobi.com/states/ontology-editor/branch-id/id-branch-3>;
+  <http://mobi.com/ontologies/platform/config#forUser> <http://mobi.com/users/eb-user-id-0002>;
+  <http://mobi.com/ontologies/platform/config#application> <http://mobi.com/applications#ontology-editor> .
+
+<http://mobi.com/ontologies/state#state-record-3> a <http://mobi.com/ontologies/state#StateRecord>;
+  <http://mobi.com/ontologies/state#branchStates> <http://mobi.com/states/ontology-editor/branch-id/id-branch-3>;
+  <http://mobi.com/ontologies/state#currentState> <http://mobi.com/states/ontology-editor/branch-id/id-branch-3>;
+  <http://mobi.com/ontologies/state#record> <https://mobi.com/records#eb-record-id-0002> .
+
+
+<http://mobi.com/states/ontology-editor/branch-id/id-branch-1>
+  a <http://mobi.com/ontologies/state#StateCommit>, <http://mobi.com/ontologies/state#StateBranch>;
+  <http://mobi.com/ontologies/state#branch> <https://mobi.com/branches#eb-branch-id-0001>;
+  <http://mobi.com/ontologies/state#commit> <https://mobi.com/commits#eb-commit-id-0001> .
+
+<http://mobi.com/states/ontology-editor/branch-id/id-branch-2>
+  a <http://mobi.com/ontologies/state#StateCommit>, <http://mobi.com/ontologies/state#StateBranch>;
+  <http://mobi.com/ontologies/state#branch> <https://mobi.com/branches#eb-branch-id-0002>;
+  <http://mobi.com/ontologies/state#commit> <https://mobi.com/commits#eb-commit-id-0002> .
+
+<http://mobi.com/states/ontology-editor/branch-id/id-branch-3>
+  a <http://mobi.com/ontologies/state#StateCommit>, <http://mobi.com/ontologies/state#StateBranch>;
+  <http://mobi.com/ontologies/state#branch> <https://mobi.com/branches#eb-branch-id-0003>;
+  <http://mobi.com/ontologies/state#commit> <https://mobi.com/commits#eb-commit-id-0003> .
