@@ -22,7 +22,7 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { concat, filter, get, has, includes, map, set, sortBy } from 'lodash';
+import { concat, filter, get, has, includes, map, set, sortBy, cloneDeep } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
@@ -4762,6 +4762,105 @@ describe('Ontology State Service', function() {
                 this.expected = {'@id': service.listItem.selected['@id']};
                 service.listItem.selectedBlankNodes = [{'@id': 'id'}];
             });
+            it('but is not present in the listItems list of selectedBlankNodes', fakeAsync(function() {
+                this.key = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
+                service.listItem.selected = {
+                    '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassC',
+                    '@type': [
+                        'http://www.w3.org/2002/07/owl#Class'
+                    ],
+                    'http://www.w3.org/2000/01/rdf-schema#subClassOf': [
+                        {
+                            '@id': 'http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1'
+                        },
+                        {
+                            '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc834'
+                        }
+                    ]
+                };
+                this.expected = {
+                    '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassC',
+                    'http://www.w3.org/2000/01/rdf-schema#subClassOf': [
+                        {
+                            '@id': 'http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1'
+                        }
+                    ]
+                };
+                ontologyManagerStub.isBlankNodeId.and.returnValue(true);
+                const originalSelectedBlankNodes = [
+                    {
+                        '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc834',
+                        '@type': [
+                            'http://www.w3.org/2002/07/owl#Class'
+                        ],
+                        'http://www.w3.org/2002/07/owl#unionOf': [
+                            {
+                                '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc835'
+                            }
+                        ]
+                    },
+                    {
+                        '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc835',
+                        'http://www.w3.org/1999/02/22-rdf-syntax-ns#first': [
+                            {
+                                '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassA'
+                            }
+                        ],
+                        'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest': [
+                            {
+                                '@list': [
+                                    {
+                                        '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassB'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ];
+                service.listItem.selectedBlankNodes = cloneDeep(originalSelectedBlankNodes);
+                service.removeProperty(this.key, this.index)
+                    .subscribe(response => {
+                        expect(response).toEqual({'@id': 'http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1'});
+                    });
+                tick();
+                expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, this.expected);
+                expect(service.addToDeletions).not.toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {
+                    '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc834',
+                    '@type': [
+                        'http://www.w3.org/2002/07/owl#Class'
+                    ],
+                    'http://www.w3.org/2002/07/owl#unionOf': [
+                        {
+                            '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc835'
+                        }
+                    ]
+                });
+                expect(service.addToDeletions).not.toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {
+                    '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc835',
+                    'http://www.w3.org/1999/02/22-rdf-syntax-ns#first': [
+                        {
+                            '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassA'
+                        }
+                    ],
+                    'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest': [
+                        {
+                            '@list': [
+                                {
+                                    '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassB'
+                                }
+                            ]
+                        }
+                    ]
+                });
+                expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1');
+                expect(service.listItem.selectedBlankNodes).toEqual(originalSelectedBlankNodes);
+                expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
+                expect(service.saveCurrentChanges).toHaveBeenCalledWith();
+                expect(service.updateLabel).not.toHaveBeenCalled();
+                expect(service.updatePropertyIcon).not.toHaveBeenCalled();
+                expect(service.createFlatEverythingTree).not.toHaveBeenCalled();
+                expect(service.listItem.flatEverythingTree).toEqual([]);
+            }));
             it('and the selected key is rdfs:domain', fakeAsync(function() {
                 this.key = RDFS + 'domain';
                 service.listItem.selected[this.key] = [{'@id': 'id'}];
