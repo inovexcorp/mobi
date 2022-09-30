@@ -58,7 +58,7 @@ public class BatchGraphInserter extends BatchInserter {
      * @param batchSize How may statemtns should be added at a time
      */
     public BatchGraphInserter(RepositoryConnection conn,long batchSize, Resource graph) {
-        super(conn, batchSize);
+        super(conn, batchSize, false);
         this.graph = graph;
         this.sesameVf = SimpleValueFactory.getInstance();
     }

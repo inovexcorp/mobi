@@ -512,7 +512,7 @@ public class DatasetRest {
                 .format(format)
                 .logOutput(true);
         try {
-            importService.importInputStream(builder.build(), inputStream);
+            importService.importInputStream(builder.build(), inputStream, true);
             return Response.ok().build();
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

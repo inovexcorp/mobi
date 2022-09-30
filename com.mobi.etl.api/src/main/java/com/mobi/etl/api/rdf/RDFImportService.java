@@ -77,11 +77,12 @@ public interface RDFImportService {
      *
      * @param config The configuration for the import specifying the target
      * @param stream An InputStream of serialized RDF data
+     * @param cleanGraphs Whether or not to purge Mobi specific graphs
      * @throws RDFParseException thrown if there is a problem parsing the RDF InputStream
      * @throws RepositoryException thrown if there is a problem connecting to the specified Repository or the
      *      Dataset of the specified DatasetRecord
      * @throws IOException thrown if there is a problem reading the InputStream
      * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
      */
-    void importInputStream(ImportServiceConfig config, InputStream stream) throws IOException;
+    void importInputStream(ImportServiceConfig config, InputStream stream, boolean cleanGraphs) throws IOException;
 }

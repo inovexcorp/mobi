@@ -30,8 +30,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -565,7 +564,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
     @Test
@@ -577,32 +576,32 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(importService, times(0)).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        verify(importService, times(0)).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
     @Test
     public void uploadDataWithBadRequestTest() throws Exception {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        doThrow(new IllegalArgumentException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test.ttl", getClass().getResourceAsStream("/test.ttl"));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
     @Test
     public void uploadDataWithServerErrorTest() throws Exception {
         // Setup:
-        doThrow(new IOException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        doThrow(new IOException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test.ttl", getClass().getResourceAsStream("/test.ttl"));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
-        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 }

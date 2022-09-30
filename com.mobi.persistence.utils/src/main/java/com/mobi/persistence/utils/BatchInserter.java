@@ -31,7 +31,9 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class BatchInserter extends AbstractRDFHandler {
 
@@ -41,6 +43,10 @@ public class BatchInserter extends AbstractRDFHandler {
     protected final Map<String, String> namespaces = new HashMap<>();
     protected Logger logger = null;
     protected boolean printToSystem = false;
+    protected boolean cleanGraphs = false;
+    protected String MOBI_HTTPS_NAMESPACE = "https://mobi.com/";
+    protected String MOBI_HTTP_NAMESPACE = "http://mobi.com/";
+    protected Set<String> cleansedGraphStrings = new HashSet<>();
 
     /**
      * Creates a new BatchInserter that will use the provided RepositoryConnection to insert statements
@@ -61,9 +67,10 @@ public class BatchInserter extends AbstractRDFHandler {
      * @param conn The RepositoryConnection to use to add statements
      * @param batchSize How may statemtns should be added at a time
      */
-    public BatchInserter(RepositoryConnection conn, long batchSize) {
+    public BatchInserter(RepositoryConnection conn, long batchSize, boolean cleanGraphs) {
         this.conn = conn;
         this.batchSize = batchSize;
+        this.cleanGraphs = cleanGraphs;
     }
 
     /**
@@ -82,9 +89,16 @@ public class BatchInserter extends AbstractRDFHandler {
         conn.commit();
         if (logger != null) {
             logger.debug("Import complete. " + count + " statements imported");
+            for (String cleansedGraph : getCleansedGraphStrings()) {
+                logger.debug("Protected graph " + cleansedGraph + " was cleansed before import.");
+            }
         }
         if (printToSystem) {
             System.out.println("Import complete. " + count + " statements imported");
+            for (String cleansedGraph : getCleansedGraphStrings()) {
+                System.out.println("Protected graph " + cleansedGraph + " was cleansed before import.");
+            }
+
         }
     }
 
@@ -97,22 +111,31 @@ public class BatchInserter extends AbstractRDFHandler {
 
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
-        conn.add(st);
-        count++;
-        if (count % batchSize == 0) {
-            try {
-                conn.commit();
-                if (logger != null) {
-                    logger.debug(batchSize + " statements imported");
+        if (cleanGraphs && hasInternallyManagedGraph(st)) {
+            cleansedGraphStrings.add(st.getContext().stringValue());
+        } else {
+            conn.add(st);
+            count++;
+            if (count % batchSize == 0) {
+                try {
+                    conn.commit();
+                    if (logger != null) {
+                        logger.debug(batchSize + " statements imported");
+                    }
+                    if (printToSystem) {
+                        System.out.println(batchSize + " statements imported");
+                    }
+                    conn.begin();
+                } catch (RepositoryException e) {
+                    throw new RDFHandlerException(e);
                 }
-                if (printToSystem) {
-                    System.out.println(batchSize + " statements imported");
-                }
-                conn.begin();
-            } catch (RepositoryException e) {
-                throw new RDFHandlerException(e);
             }
         }
+    }
+
+    private boolean hasInternallyManagedGraph(Statement st) {
+        return (st.getContext() != null) && (st.getContext().stringValue().contains(MOBI_HTTPS_NAMESPACE)
+                || st.getContext().stringValue().contains(MOBI_HTTP_NAMESPACE));
     }
 
     /**
@@ -140,5 +163,14 @@ public class BatchInserter extends AbstractRDFHandler {
      */
     public long getFinalCount() {
         return count;
+    }
+
+    /**
+     * Returns the set of strings representing the internal graphs that were cleansed from the batch insert.
+     *
+     * @return the set of strings representing the internal graphs that were cleansed from the batch insert
+     */
+    public Set<String> getCleansedGraphStrings() {
+        return cleansedGraphStrings;
     }
 }
