@@ -98,12 +98,12 @@ public class RDFImportServiceImpl implements RDFImportService {
     }
 
     @Override
-    public void importInputStream(ImportServiceConfig config, InputStream stream) throws IOException {
+    public void importInputStream(ImportServiceConfig config, InputStream stream, boolean cleanGraphs) throws IOException {
         if (config.getFormat() == null) {
             throw new IllegalArgumentException("Config must contain a format if importing an InputStream");
         }
         try (RepositoryConnection conn = getConnection(config)) {
-            importInputStream(conn, config, stream, config.getFormat(), null);
+            importInputStream(conn, config, stream, config.getFormat(), null, cleanGraphs);
         }
     }
 
@@ -157,16 +157,16 @@ public class RDFImportServiceImpl implements RDFImportService {
 
     private void importFile(RepositoryConnection conn, ImportServiceConfig config, @Nonnull File file,
                             @Nonnull RDFFormat format) throws IOException {
-        importInputStream(conn, config, new FileInputStream(file), format, null);
+        importInputStream(conn, config, new FileInputStream(file), format, null, false);
     }
 
     private void importFile(RepositoryConnection conn, ImportServiceConfig config, @Nonnull File file,
                             @Nonnull RDFFormat format, Resource graph) throws IOException {
-        importInputStream(conn, config, new FileInputStream(file), format, graph);
+        importInputStream(conn, config, new FileInputStream(file), format, graph, false);
     }
 
     private void importInputStream(RepositoryConnection conn, ImportServiceConfig config, @Nonnull InputStream stream,
-                                   @Nonnull RDFFormat format, Resource graph) throws IOException {
+                                   @Nonnull RDFFormat format, Resource graph, boolean cleanGraphs) throws IOException {
         RDFParser parser = Rio.createParser(format);
         ParserConfig parserConfig = new ParserConfig();
         if (config.getContinueOnError()) {
@@ -177,7 +177,7 @@ public class RDFImportServiceImpl implements RDFImportService {
         parserConfig.addNonFatalError(BasicParserSettings.VERIFY_URI_SYNTAX);
         BatchInserter inserter;
         if (graph == null) {
-            inserter = new BatchInserter(conn, config.getBatchSize());
+            inserter = new BatchInserter(conn, config.getBatchSize(), cleanGraphs);
         } else {
             parserConfig.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, false);
             parserConfig.set(BasicParserSettings.VERIFY_RELATIVE_URIS, false);

@@ -95,7 +95,7 @@ class RDFImportSpec extends Specification {
         def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).format(RDFFormat.TRIG).build()
 
         when:
-        service.importInputStream(config, new FileInputStream(file))
+        service.importInputStream(config, new FileInputStream(file), false)
 
         then:
         (1.._) * conn.add(*_)
@@ -106,7 +106,7 @@ class RDFImportSpec extends Specification {
         def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
 
         when:
-        service.importInputStream(config, new FileInputStream(file))
+        service.importInputStream(config, new FileInputStream(file), false)
 
         then:
         thrown IllegalArgumentException
@@ -185,7 +185,7 @@ class RDFImportSpec extends Specification {
         def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).format(RDFFormat.TRIG).build()
 
         when:
-        service.importInputStream(config, new FileInputStream(file))
+        service.importInputStream(config, new FileInputStream(file), false)
 
         then:
         (1.._) * datasetConn.add(*_)
