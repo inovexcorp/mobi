@@ -137,11 +137,12 @@ module.exports = {
             .waitForElementVisible('upload-record-modal file-input')
             .waitForElementVisible('upload-record-modal button.mat-primary')
             .uploadFile('upload-record-modal file-input input', shapes_graph_conflict)
-            .click('upload-record-modal button.mat-primary')
-        browser.globals.wait_for_no_spinners(browser)
+            .click('upload-record-modal button.mat-primary');
+//        browser.globals.wait_for_no_spinners(browser)
         browser
-            .waitForElementNotVisible('div.toast-title')
-            .pause(1000)
+            .useCss()
+            .waitForElementVisible('div.toast-success')
+            .waitForElementNotPresent('div.toast-success')
             .click('button.commit')
             .sendKeys('commit-modal textarea', 'A conflict commit on master')
             .click('commit-modal button.mat-primary')
@@ -155,10 +156,11 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]')
             .click('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]')
+            .waitForElementNotPresent('//editor-top-bar//button[contains(@class,"merge-branch")][@disabled]')
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('editor-top-bar button.merge-branch')
-            .waitForElementVisible('shapes-graph-merge-page branch-select')
+            .waitForElementVisible('shapes-graph-merge-page branch-select input')
             .waitForElementVisible('shapes-graph-merge-page button.btn-primary')
             .click('shapes-graph-merge-page branch-select')
             .click('xpath', '//div//mat-option//span[contains(text(), "MASTER")]')
@@ -220,6 +222,7 @@ module.exports = {
 
     'Step 14: Delete created tag and verify deletion': function (browser) {
         browser
+            .waitForElementVisible('editor-branch-select mat-form-field input')
             .click('editor-branch-select mat-form-field mat-icon')
             .pause(1000)
             .useXpath()
@@ -228,6 +231,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useCss()
+            .waitForElementVisible('editor-branch-select mat-form-field input')
             .click('editor-branch-select mat-form-field mat-icon')
             .pause(3000)
             .useXpath()

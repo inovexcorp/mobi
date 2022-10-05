@@ -484,6 +484,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                                             INTERNAL_SERVER_ERROR));
                                     value = getLiteral(binding.getValue().stringValue(), datatype);
                                 }
+                                result.close();
                             }
                             break;
                         case PRIMITIVE:
