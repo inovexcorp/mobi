@@ -222,7 +222,6 @@ module.exports = {
     'switchToPage': function(browser, page, waitForElement){
         browser
             .click('sidebar div ul a[class=nav-link][href="#/' + page + '"]')
-            .waitForElementVisible('#spinner-full')
             .waitForElementNotPresent('#spinner-full', 30000);
         if (waitForElement) {
             browser.waitForElementVisible(waitForElement);
