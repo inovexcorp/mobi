@@ -362,18 +362,18 @@ public class UserRest {
             @Parameter(description = "New password for the user", required = true)
             @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new MobiException("Current username must be provided"));
         }
         checkCurrentUser(getActiveUsername(servletRequest), username);
         if (StringUtils.isEmpty(currentPassword)) {
-            throw ErrorUtils.sendError("Current password must be provided", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new MobiException("Current password must be provided"));
         }
         if (StringUtils.isEmpty(newPassword)) {
-            throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new MobiException("New password must be provided"));
         }
         try {
             if (!engineManager.checkPassword(rdfEngine.getEngineName(), username, currentPassword)) {
-                throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
+                throw RestUtils.getErrorObjBadRequest(new MobiException("Current password is wrong"));
             }
             return changePassword(username, newPassword);
         } catch (IllegalArgumentException ex) {
@@ -800,14 +800,14 @@ public class UserRest {
      */
     private Response changePassword(String username, String newPassword) {
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
-                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                        RestUtils.getErrorObjBadRequest(new MobiException("User " + username + " not found")));
         if (!savedUser.getPassword().isPresent()) {
-            throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(new MobiException("User must have a password"));
         }
         User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
                 new UserConfig.Builder("", newPassword, new HashSet<>()).build());
         if (!tempUser.getPassword().isPresent()) {
-            throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(new MobiException("User must have a password"));
         }
         savedUser.setPassword(tempUser.getPassword().get());
         engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
