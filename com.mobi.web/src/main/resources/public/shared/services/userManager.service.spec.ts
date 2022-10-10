@@ -127,7 +127,7 @@ describe('User Manager service', function() {
             [USER + 'hasGroupRole']: [{'@id': ROLES + group.roles[0]}]
         };
         group.jsonld = groupRdf;
-        
+        utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
         utilStub.getPropertyValue.and.callFake((jsonld, prop) => {
             if (prop === USER + 'username') {
                 return user.username;
@@ -385,7 +385,7 @@ describe('User Manager service', function() {
             const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'POST');
             expect(request.request.params.get('currentPassword')).toEqual('currentPassword');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush('flush', { status: 400, statusText: error});
         });
         it('successfully', function(done) {
             service.changePassword(user.username, 'currentPassword', 'newPassword')

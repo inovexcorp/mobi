@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -384,6 +385,11 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "MobiException");
+        assertEquals(responseObject.get("errorMessage"), "Current password must be provided");
+        assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
@@ -395,7 +401,12 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "error")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 401);
+        assertEquals(response.getStatus(), 400);
+
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "MobiException");
+        assertEquals(responseObject.get("errorMessage"), "Invalid password");
+        assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
@@ -404,6 +415,11 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "ABC")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "MobiException");
+        assertEquals(responseObject.get("errorMessage"), "New password must be provided");
+        assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
@@ -416,6 +432,11 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "MobiException");
+        assertEquals(responseObject.get("errorMessage"), "User tester not found");
+        assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
@@ -441,6 +462,10 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "MobiException");
+        assertEquals(responseObject.get("errorMessage"), "User error not found");
+        assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
@@ -719,4 +744,9 @@ public class UserRestTest extends MobiRestTestCXF {
                 .request().get();
         assertEquals(response.getStatus(), 404);
     }
+
+    private JSONObject getResponse(Response response) {
+        return JSONObject.fromObject(response.readEntity(String.class));
+    }
+
 }

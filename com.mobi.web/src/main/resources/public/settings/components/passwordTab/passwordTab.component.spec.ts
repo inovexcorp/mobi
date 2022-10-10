@@ -130,11 +130,20 @@ describe('Password Tab component', function() {
                 component.passwordForm.controls.unmaskPassword.setValue('new');
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.changePassword.and.rejectWith('Error message');
+                userManagerStub.changePassword.and.rejectWith({ errorMessage: 'Error message' });
                 component.save();
                 tick();
                 expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, component.passwordForm.controls.currentPassword.value, component.passwordForm.controls.unmaskPassword.value);
                 expect(component.errorMessage).toEqual('Error message');
+            }));
+            it('unless an current password error occurs', fakeAsync(function() {
+                userManagerStub.changePassword.and.rejectWith({ errorMessage: 'Current password is invalid' });
+                component.save();
+                tick();
+                expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, component.passwordForm.controls.currentPassword.value, component.passwordForm.controls.unmaskPassword.value);
+                expect(component.errorMessage).toEqual('');
+                expect(component.currentPasswordErrorMessage).toEqual('Current password is invalid');
+                expect(component.passwordForm.controls.currentPassword.errors).toEqual({'currentPasswordInvalid': true});
             }));
             it('successfully', fakeAsync(function() {
                 userManagerStub.changePassword.and.resolveTo();

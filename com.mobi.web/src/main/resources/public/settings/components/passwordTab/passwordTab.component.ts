@@ -47,6 +47,7 @@ export class PasswordTabComponent implements OnInit {
         currentPassword: ['', [Validators.required]],
         unmaskPassword: ['', [Validators.required]]
     });
+    currentPasswordErrorMessage: string;
    
     constructor(private um: UserManagerService, private lm: LoginManagerService,
         private util: UtilService, private fb: FormBuilder) {}
@@ -66,9 +67,19 @@ export class PasswordTabComponent implements OnInit {
         this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.controls.unmaskPassword.value)
             .then(() => {
                 this.errorMessage = '';
+                this.currentPasswordErrorMessage = '';
                 this.util.createSuccessToast('Password successfully saved');
                 this.reset();
-            }, error => this.errorMessage = error);
+            }, errorObj => {
+                this.errorMessage = '';
+                this.currentPasswordErrorMessage = '';
+                if (errorObj.errorMessage.includes('Current password')) {
+                    this.currentPasswordErrorMessage = errorObj.errorMessage;
+                    this.passwordForm.controls['currentPassword'].setErrors({'currentPasswordInvalid': true});
+                } else {
+                    this.errorMessage = errorObj.errorMessage;
+                }
+            });
     }
 
     disableAllFields(formGroup: FormGroup): void {

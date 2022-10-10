@@ -214,7 +214,7 @@ export class UserManagerService {
         };
         return this.http.post(this.userPrefix + '/' + encodeURIComponent(username) + '/password', null, {params: this.util.createHttpParams(params)})
             .toPromise()
-            .then(noop, error => this.util.rejectError(error));
+            .then(noop, error => this.util.rejectErrorObject(error));
     }
     /**
      * Calls the PUT /mobirest/users/{username}/password endpoint to reset the password of a Mobi user specified by
