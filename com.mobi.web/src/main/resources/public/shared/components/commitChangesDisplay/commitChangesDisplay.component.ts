@@ -22,7 +22,9 @@
  */
 
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { map, forEach, filter, union, orderBy, isEmpty } from 'lodash';
+import { intersection, sortBy } from 'lodash';
+import { ChangesItem } from '../../../ontology-editor/components/savedChangesTab/savedChangesTab.component';
+import { OWL, RDF, SKOS } from '../../../prefixes';
 
 import { CommitChange } from '../../models/commitChange.interface';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
@@ -31,11 +33,21 @@ import { UtilService } from '../../services/util.service';
 
 import './commitChangesDisplay.component.scss';
 
+export interface AdditionsWithId {
+    additions: CommitChange[];
+    id: string;
+}
+
+export interface DeletionsWithId {
+    deletions: CommitChange[];
+    id: string;
+}
+
 /**
  * @class shared.CommitChangesDisplayComponent
  *
- * A component that creates a sequence of divs displaying the changes made to entities separated by additions and
- * deletions. Each changes display uses the `.property-values` class. The display of an entity's name can be optionally
+ * A *dumb* component that creates a sequence of mat-accordion displaying the changes made to entities separated by additions and
+ * deletions. Each changes display uses the `mat-expansion-panel`. The display of an entity's name can be optionally
  * controlled by the provided `entityNameFunc` function and defaults to the
  * {@link shared.UtilService beautified local name} of the IRI.
  *
@@ -43,12 +55,11 @@ import './commitChangesDisplay.component.scss';
  * @param {JSONLDObject[]} deletions An array of JSON-LD objects representing statements deleted
  * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The 
  * component will pass the IRI of the entity as the only argument
- * @param {Function} showMoreResultsFunc A function retrieve more difference results. Will pass the limit and offset as 
- * arguments.
  * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
  * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
+ * @param {EventEmitter} showMoreResultsEmitter A EventEmitter to retrieve more difference results. Will pass the limit and offset as 
+ * arguments.
  */
-
 @Component({
     selector: 'commit-changes-display',
     templateUrl: './commitChangesDisplay.component.html'
@@ -60,49 +71,65 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     @Input() hasMoreResults: boolean;
     @Input() startIndex?: number;
 
-    @Output() showMoreResultsFunc = new EventEmitter<{limit: number, offset: number}>();
+    @Output() showMoreResultsEmitter = new EventEmitter<{limit: number, offset: number}>();
 
-    size = 100; // Must be the same as the limit prop in the commitHistoryTable
-    index = 0;
-    list = [];
-    chunkList = [];
-    results: { [key: string]: { additions: CommitChange[], deletions: CommitChange[] } } = {};
-    showMore = false;
-    
+    typeIRI = RDF + 'type';
+    types = [
+        OWL + 'Class',
+        OWL + 'ObjectProperty',
+        OWL + 'DatatypeProperty',
+        OWL + 'AnnotationProperty',
+        OWL + 'NamedIndividual',
+        SKOS + 'Concept',
+        SKOS + 'ConceptScheme'
+    ];
+
+    limit = 100; // Must be the same as the limit prop in the commitHistoryTable - Should be 100
+    offsetIndex = 0;
+    changesItems: ChangesItem[] = [];
+
     constructor(private util: UtilService, public os: OntologyStateService) {}
 
     ngOnInit(): void {
         if (this.startIndex) {
-            this.index = this.startIndex;
+            this.offsetIndex = this.startIndex;
         }
     }
     ngOnChanges(changesObj: SimpleChanges): void {
         if (changesObj?.additions?.currentValue || changesObj?.deletions?.currentValue) {
-            let adds;
-            let deletes;
-            if (isEmpty(this.results)) {
-                adds = map(this.additions, '@id');
-                deletes = map(this.deletions, '@id');
-            } else {
-                adds = filter(map(this.additions, '@id'), id => !this.results[id]);
-                deletes = filter(map(this.deletions, '@id'), id => !this.results[id]);
-            }
-            const combined = union(adds, deletes);
-            this.list = orderBy(combined, item => item, 'asc');
-            this.addPagedChangesToResults();
+            const additions: AdditionsWithId[] = (this.additions).map(addition => ({
+                additions: this.util.getPredicatesAndObjects(addition),
+                id: addition['@id']
+            }));
+            const deletions: DeletionsWithId[] = (this.deletions).map(deletion => ({
+                deletions: this.util.getPredicatesAndObjects(deletion),
+                id: deletion['@id']
+            }));
+            const commitsMap: {[key: string]: { id: string, additions: CommitChange[], deletions: CommitChange[] }} = [].concat(additions, deletions).reduce((dict, currentItem) => {
+                const existingValue = dict[currentItem['id']] || {};
+                const mergedValue = Object.assign({ id: '', additions: [], deletions: []}, existingValue, currentItem);
+                dict[currentItem.id] = mergedValue;
+                return dict;  
+            }, {});
+            const commits = Object.keys(commitsMap).map(key => commitsMap[key]);
+            let changesItems: ChangesItem[] = commits.map(item => ({
+                id: item.id,
+                entityName: this.entityNameFunc ? this.entityNameFunc(item.id, this.os) : this.util.getBeautifulIRI(item.id),
+                additions: this.util.getPredicateLocalNameOrdered(item.additions),
+                deletions: this.util.getPredicateLocalNameOrdered(item.deletions),
+                disableAll: this._hasSpecificType(item.additions) || this._hasSpecificType(item.deletions)
+            }));
+            this.changesItems = sortBy(changesItems, 'entityName');
         }
     }
-    addPagedChangesToResults(): void {
-        forEach(this.list, id => {
-            this._addToResults(this.util.getChangesById(id, this.additions), this.util.getChangesById(id, this.deletions), id, this.results);
-        });
-        this.showMore = this.hasMoreResults;
+    loadMore(): void {
+        this.offsetIndex += this.limit;
+        this.showMoreResultsEmitter.emit({limit: this.limit, offset: this.offsetIndex}); // Will trigger ngOnChanges
     }
-    getMorePagedChanges(): void {
-        this.index += this.size;
-        this.showMoreResultsFunc.emit({limit: this.size, offset: this.index}); // Should trigger ngOnChanges
+    getEntityName(entityIRI: string): string {
+        return this.entityNameFunc ? this.entityNameFunc(entityIRI, this.os) : this.os.getEntityNameByListItem(entityIRI);
     }
-    private _addToResults(additions: CommitChange[], deletions: CommitChange[], id: string, results): void {
-        results[id] = { additions: additions, deletions: deletions };
+    private _hasSpecificType(array: CommitChange[]): boolean {
+        return !!intersection(array.filter(change => change.p === this.typeIRI).map(change => change.o), this.types).length;
     }
 }

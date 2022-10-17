@@ -26,7 +26,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { get, merge, union } from 'lodash';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { Observable, of, throwError, noop } from 'rxjs';
+import { of, throwError, noop, Observable } from 'rxjs';
 
 import { CommitDifference } from '../../models/commitDifference.interface';
 import { UserManagerService } from '../../services/userManager.service';
@@ -36,6 +36,7 @@ import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { UtilService } from '../../services/util.service';
 
 import './commitInfoOverlay.component.scss';
+import { EntityNames } from '../../models/entityNames.interface';
 
 /**
  * @class shared.CommitInfoOverlayComponent
@@ -45,9 +46,9 @@ import './commitInfoOverlay.component.scss';
  * additions and deletions for the commit. Meant to be used in conjunction with the `MatDialog` service. Expects the
  * following data to be provided.
  *
- * @param {Object} resolve.commit The commit to display information about
- * @param {string} resolve.commit.id The IRI string identifying the commit
- * @param {string} resolve.ontRecordId An optional IRI string representing an OntologyRecord to query for names if present
+ * @param {Object} MAT_DIALOG_DATA.commit The commit to display information about
+ * @param {string} MAT_DIALOG_DATA.commit.id The IRI string identifying the commit
+ * @param {string} MAT_DIALOG_DATA.ontRecordId An optional IRI string representing an OntologyRecord to query for names if present
  */
 @Component({
     selector: 'commit-info-overlay',
@@ -75,7 +76,7 @@ export class CommitInfoOverlayComponent implements OnInit {
     retrieveMoreResults(limit: number, offset: number): void {
         this.cm.getDifference(this.data.commit.id, null, limit, offset)
             .pipe(
-                switchMap((response: HttpResponse<CommitDifference>) => {
+                switchMap((response: HttpResponse<CommitDifference>): Observable<EntityNames> => {
                     this.tempAdditions = response.body.additions as JSONLDObject[];
                     this.tempDeletions = response.body.deletions as JSONLDObject[];
                     const headers = response.headers;
@@ -92,8 +93,8 @@ export class CommitInfoOverlayComponent implements OnInit {
                     if (data) {
                         merge(this.entityNames, data);
                     }
-                    this.additions = this.tempAdditions;
-                    this.deletions = this.tempDeletions;
+                    this.additions = this.additions.concat(this.tempAdditions);
+                    this.deletions = this.deletions.concat(this.tempDeletions);
                     this.tempAdditions = [];
                     this.tempDeletions = [];
                     return null;

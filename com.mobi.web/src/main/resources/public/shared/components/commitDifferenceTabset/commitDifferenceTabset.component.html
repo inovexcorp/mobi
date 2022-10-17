@@ -27,7 +27,7 @@
                                     [additions]="difference.additions"
                                     [deletions]="difference.deletions"
                                     [entityNameFunc]="entityNameFunc"
-                                    (showMoreResultsFunc)="middleShowMoreResultsFunc($event)"
+                                    (showMoreResultsEmitter)="middleShowMoreResultsFunc($event)"
                                     [hasMoreResults]="difference.hasMoreResults"
                                     [startIndex]="startIndex"></commit-changes-display>
             <info-message *ngIf="!difference?.additions?.length && !difference?.deletions?.length">No changes to display</info-message>

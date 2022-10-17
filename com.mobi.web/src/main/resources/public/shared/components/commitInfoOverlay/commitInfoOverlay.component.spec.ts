@@ -74,7 +74,6 @@ describe('Commit Info Overlay component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyManagerService),
-                // { provide: OntologyManagerService, useClass: mockOntologyManager },
                 MockProvider(UtilService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
@@ -201,12 +200,14 @@ describe('Commit Info Overlay component', function() {
                     component.data = {
                         commit: {'id': '123'}
                     };
+                    expect(component.additions).toEqual([]);
                     fixture.detectChanges();
                     await fixture.whenStable();
 
+                    expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}]);
                     await component.retrieveMoreResults(100, 0);
                     expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
-                    expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}]);
+                    expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}, {'@id': 'iri1', '@type': []}]);
                     expect(component.deletions).toEqual([]);
                     expect(component.hasMoreResults).toEqual(true);
                     expect(component.entityNames).toEqual({});

@@ -33,7 +33,7 @@ import { CATALOG, OWL, RDF, SKOS } from '../../../prefixes';
 import { CommitChange } from '../../../shared/models/commitChange.interface';
 import { UtilService } from '../../../shared/services/util.service';
 
-interface ChangesItem {
+export interface ChangesItem {
     id: string,
     entityName: string,
     additions: CommitChange[],
