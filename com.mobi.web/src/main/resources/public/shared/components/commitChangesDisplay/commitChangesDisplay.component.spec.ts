@@ -23,7 +23,9 @@
 
 import { DebugElement, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatButtonModule, MatExpansionModule, MatIconModule, MatExpansionPanel } from '@angular/material';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { map, range } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -42,11 +44,37 @@ describe('Commit Changes Display component', function() {
     let fixture: ComponentFixture<CommitChangesDisplayComponent>;
     let utilStub: jasmine.SpyObj<UtilService>;
 
-    const change: CommitChange = {p: '', o: {'@value': ''}};
+    const geoJsonldList: JSONLDObject[] =  [
+        {
+            '@id':'http://topquadrant.com/ns/examples/geography#Abilene',
+            '@type':['http://topquadrant.com/ns/examples/geography#City'],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#lat':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'32.4263401615464'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#long':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'-99.744873046875'}],
+            'http://www.w3.org/2004/02/skos/core#broader':[{'@id':'http://topquadrant.com/ns/examples/geography#Texas'}],
+            'http://www.w3.org/2004/02/skos/core#prefLabel':[{'@language':'en','@value':'Abilene'}]
+        },
+        {
+            '@id':'http://topquadrant.com/ns/examples/geography#Abu_Dhabi',
+            '@type':['http://topquadrant.com/ns/examples/geography#City'],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#lat':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'24.46666717529297'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#long':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'54.36666488647461'}],
+            'http://www.w3.org/2004/02/skos/core#broader':[{'@id':'http://topquadrant.com/ns/examples/geography#United_Arab_Emirates'}],
+            'http://www.w3.org/2004/02/skos/core#prefLabel':[{'@language':'en','@value':'Abu Dhabi'}]
+        }
+    ];
+    const change: CommitChange = {
+        p: '', 
+        o: {'@value': ''}
+    };
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [
+                NoopAnimationsModule,
+                MatButtonModule,
+                MatIconModule,
+                MatExpansionModule
+            ],
             declarations: [
                 CommitChangesDisplayComponent,
                 MockComponent(StatementContainerComponent),
@@ -64,10 +92,9 @@ describe('Commit Changes Display component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         utilStub = TestBed.get(UtilService);
-        utilStub.getPredicateLocalNameOrdered.and.callFake(changes => {
-            return changes;
-        });
 
+        utilStub.getPredicatesAndObjects.and.returnValue([change]);
+        utilStub.getPredicateLocalNameOrdered.and.callFake(a => a);
         component.additions = [];
         component.deletions = [];
         component.entityNameFunc = jasmine.createSpy('entityNameFunc');
@@ -100,47 +127,42 @@ describe('Commit Changes Display component', function() {
         });
     });
     describe('controller methods', function() {
-        it('ngOnChanges should produce current number of list elements', function() {
-            component.additions = map(range(0, 150), i => ({'@id': `${i}`, '@type': []}));
-            component.deletions = map(range(50, 200), i => ({'@id': `${i}`, '@type': []}));
-            utilStub.getChangesById.and.returnValue([]);
+        it('ngOnChanges should produce current number of changesItems elements', function() {
+            component.entityNameFunc = (entityIRI: string, os: OntologyStateService) => {
+                return entityIRI;
+            }
+            component.additions = map(range(0, 4), i => ({'@id': `${i}`, '@type': ['http://example.com/ns/geo#City']}));
+            component.deletions = map(range(2, 6), i => ({'@id': `${i}`, '@type': ['http://example.com/ns/geo#City']}));
+            expect(component.additions.length).withContext('additions.length').toEqual(4);
+            expect(component.deletions.length).withContext('deletions.length').toEqual(4);
+            expect(component.changesItems.length).withContext('changesItems.length').toEqual(0);
+            
             component.ngOnChanges({
-                additions: new SimpleChange(null, {}, true),
-                deletions: new SimpleChange(null, {}, true)
+                additions: new SimpleChange(null, [], true),
+                deletions: new SimpleChange(null, [], true)
             });
-            expect(component.list.length).toEqual(200);
-            expect(component.results).toEqual(jasmine.objectContaining({
-                '1': {additions: [], deletions: []},
-                '3': {additions: [], deletions: []}
-            }));
+
+            expect(component.changesItems.length).withContext('changesItems.length').toEqual(6);
+            expect(component.changesItems).toEqual([
+                {'id':'0', 'entityName': '0', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[],'disableAll':false},
+                {'id':'1', 'entityName': '1', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[],'disableAll':false},
+                {'id':'2', 'entityName': '2', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false},
+                {'id':'3', 'entityName': '3', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false},
+                {'id':'4', 'entityName': '4', 'additions':[],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false},
+                {'id':'5', 'entityName': '5', 'additions':[],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false}
+            ]);
         });
         it('should add paged changes to results', function() {
-            component.list = ['3', '4'];
-            component.hasMoreResults = true;
-            component.showMore = false;
-            component.size = 2;
-            component.index = 2;
-            const additions: JSONLDObject[] = [{'@id': 'add'}];
-            const deletions: JSONLDObject[] = [{'@id': 'del'}];
-            component.additions = additions;
-            component.deletions = deletions;
-            component.results = {
-                '1': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
-                '2': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]}
-            };
-            utilStub.getChangesById.and.callFake((id, arr) => arr.map(obj => ({p: obj['@id'], o: ''})));
-            component.addPagedChangesToResults();
-            expect(utilStub.getChangesById).toHaveBeenCalledWith('3', component.additions);
-            expect(utilStub.getChangesById).toHaveBeenCalledWith('3', component.deletions);
-            expect(utilStub.getChangesById).toHaveBeenCalledWith('4', component.additions);
-            expect(utilStub.getChangesById).toHaveBeenCalledWith('4', component.deletions);
-            expect(component.results).toEqual({
-                '1': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
-                '2': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
-                '3': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]},
-                '4': {additions: [{p: 'add', o: ''}], deletions: [{p: 'del', o: ''}]}
-            });
-            expect(component.showMore).toEqual(true);
+            spyOn(component.showMoreResultsEmitter, 'emit');
+            component.limit = 2;
+            component.offsetIndex = 0;
+            expect(component.showMoreResultsEmitter.emit).withContext('page 1 showMoreResultsEmitter').not.toHaveBeenCalled();
+            component.loadMore();
+            expect(component.offsetIndex).withContext('page 2 offsetIndex').toEqual(2);
+            expect(component.showMoreResultsEmitter.emit).withContext('page 2 showMoreResultsEmitter').toHaveBeenCalledWith({limit: 2, offset: 2});
+            component.loadMore();
+            expect(component.offsetIndex).withContext('page 3 offsetIndex').toEqual(4);
+            expect(component.showMoreResultsEmitter.emit).withContext('page 3 showMoreResultsEmitter').toHaveBeenCalledWith({limit: 2, offset: 4});
         });
     });
     describe('contains the correct html', function() {
@@ -148,47 +170,113 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('.commit-changes-display')).length).toEqual(1);
         });
         it('depending on whether there are additions and deletions', async function() {
-            expect(element.queryAll(By.css('div.property-values')).length).toEqual(0);
+            expect(element.queryAll(By.css('mat-expansion-panel')).length).toEqual(0);
 
-            component.list = ['id'];
-            component.results = {'id': {additions: [change], deletions: []}};
+            component.additions = geoJsonldList;
+            component.deletions = geoJsonldList;
+            component.ngOnChanges({
+                additions: new SimpleChange(null, [], true),
+                deletions: new SimpleChange(null, [], true)
+            });
+
             fixture.detectChanges();
             await fixture.whenStable();
             
-            expect(element.queryAll(By.css('div.property-values')).length).toEqual(component.list.length);
+            expect(element.queryAll(By.css('mat-expansion-panel')).length).toEqual(component.changesItems.length);
         });
         it('depending on whether there are additions', async function() {
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
-            component.list = ['id'];
-            component.results = {'id': {additions: [change], deletions: []}};
+            expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(0);
+            expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(0);
+
+            component.additions = geoJsonldList;
+            component.ngOnChanges({
+                additions: new SimpleChange(null, [], true),
+                deletions: new SimpleChange(null, [], true)
+            });
+           
             fixture.detectChanges();
             await fixture.whenStable();
             
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(1);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(1);
-        });
-        it('depending on whether there are deletions', async function() {
+            expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(2);
+            expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(2);
+            // expand
             expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
             expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
-            component.list = ['id'];
-            component.results = {'id': {additions: [], deletions: [change]}};
+
+            const panels = element.queryAll(By.directive(MatExpansionPanel));
+            expect(panels.length).toEqual(2);
+            panels.forEach(panel => {
+                panel.componentInstance.expanded = true;
+            });
+
             fixture.detectChanges();
             await fixture.whenStable();
-            
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(1);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(1);
-        });
-        it('depending on whether there are additions and deletions', async function() {
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
-            component.list = ['id'];
-            component.results = {'id': {additions: [change], deletions: [change]}};
-            fixture.detectChanges();
-            await fixture.whenStable();
-            
+
             expect(element.queryAll(By.css('statement-container')).length).toEqual(2);
             expect(element.queryAll(By.css('statement-display')).length).toEqual(2);
+        });
+        it('depending on whether there are deletions', async function() {
+            expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(0);
+            expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(0);
+
+            component.deletions = geoJsonldList;
+            component.ngOnChanges({
+                additions: new SimpleChange(null, [], true),
+                deletions: new SimpleChange(null, [], true)
+            });
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            
+            expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(2);
+            expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(2);
+            // expand
+            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
+            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
+
+            const panels = element.queryAll(By.directive(MatExpansionPanel));
+            expect(panels.length).toEqual(2);
+            panels.forEach(panel => {
+                panel.componentInstance.expanded = true;
+            });
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(element.queryAll(By.css('statement-container')).length).toEqual(2);
+            expect(element.queryAll(By.css('statement-display')).length).toEqual(2);
+        });
+        it('depending on whether there are additions and deletions', async function() {
+            expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(0);
+            expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(0);
+            
+            component.additions = geoJsonldList;
+            component.deletions = geoJsonldList;
+            component.ngOnChanges({
+                additions: new SimpleChange(null, [], true),
+                deletions: new SimpleChange(null, [], true)
+            });
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            
+            expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(2);
+            expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(2);
+            // expand
+            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
+            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
+
+            const panels = element.queryAll(By.directive(MatExpansionPanel));
+            expect(panels.length).toEqual(2);
+            panels.forEach(panel => {
+                panel.componentInstance.expanded = true;
+            });
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(element.queryAll(By.css('statement-container')).length).toEqual(4);
+            expect(element.queryAll(By.css('statement-display')).length).toEqual(4);
         });
     });
 });

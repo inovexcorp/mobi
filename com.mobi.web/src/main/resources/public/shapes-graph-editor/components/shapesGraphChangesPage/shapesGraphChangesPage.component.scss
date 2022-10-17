@@ -30,13 +30,12 @@
     .has-changes {
         padding-top: 20px;
         .changes-display {
-            padding-top: 20px;
-            padding-bottom: 60px;
+            padding: 20px 20px 0px;
             overflow: scroll;
             .mat-expansion-panel {
                 .mat-expansion-panel-header {
                     .mat-expansion-panel-header-title {
-                        max-width: 50%;
+                        max-width: 45%;
                         flex: 0 0 50%;
                         display: block !important;
                     }

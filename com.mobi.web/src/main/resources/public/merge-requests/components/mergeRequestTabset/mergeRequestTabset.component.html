@@ -30,7 +30,7 @@
                 [additions]="state.difference?.additions"
                 [deletions]="state.difference?.deletions"
                 [entityNameFunc]="getEntityName.bind(this)"
-                (showMoreResultsFunc)="state.retrieveMoreResults($event)"
+                (showMoreResultsEmitter)="state.retrieveMoreResults($event)"
                 [hasMoreResults]="state.difference?.hasMoreResults"
                 [startIndex]="state.startIndex"></commit-changes-display>
         <ng-template #noChangesBlock><info-message>No changes to display</info-message></ng-template>

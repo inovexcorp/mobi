@@ -36,25 +36,25 @@
                         </div>
                     </div>
                     <div class="changes-display">
-                        <mat-accordion>
-                        <mat-expansion-panel *ngFor="let item of showList">
-                            <mat-expansion-panel-header>
-                                <mat-panel-title matTooltip="{{util.getBeautifulIRI(item.id)}}" class="text-truncate">
-                                    {{ util.getBeautifulIRI(item.id) }}
-                                </mat-panel-title>
-                            <mat-panel-description matTooltip="{{item.id}}" class="text-truncate">
-                                {{ item.id }}
-                            </mat-panel-description>
-                            </mat-expansion-panel-header>
-
-                            <statement-container *ngIf="item.additions.length" additions>
-                                <statement-display *ngFor="let addition of util.getPredicateLocalNameOrdered(item.additions)" [predicate]="addition.p" [object]="addition.o"></statement-display>
-                            </statement-container>
-                            <statement-container *ngIf="item.deletions.length" deletions>
-                                <statement-display *ngFor="let deletion of util.getPredicateLocalNameOrdered(item.deletions)" [predicate]="deletion.p" [object]="deletion.o"></statement-display>
-                            </statement-container>
-
-                        </mat-expansion-panel>
+                        <mat-accordion *ngFor="let item of showList">
+                            <mat-expansion-panel class="my-2">
+                                <mat-expansion-panel-header>
+                                    <mat-panel-title matTooltip="{{util.getBeautifulIRI(item.id)}}" class="col-4 remove-min-width text-truncate">
+                                        {{ util.getBeautifulIRI(item.id) }}
+                                    </mat-panel-title>
+                                <mat-panel-description matTooltip="{{item.id}}" class="remove-min-width text-truncate">
+                                    {{ item.id }}
+                                </mat-panel-description>
+                                </mat-expansion-panel-header>
+                                <ng-template matExpansionPanelContent>
+                                    <statement-container *ngIf="item.additions.length" additions>
+                                        <statement-display *ngFor="let addition of util.getPredicateLocalNameOrdered(item.additions)" [predicate]="addition.p" [object]="addition.o"></statement-display>
+                                    </statement-container>
+                                    <statement-container *ngIf="item.deletions.length" deletions>
+                                        <statement-display *ngFor="let deletion of util.getPredicateLocalNameOrdered(item.deletions)" [predicate]="deletion.p" [object]="deletion.o"></statement-display>
+                                    </statement-container>
+                                </ng-template>
+                            </mat-expansion-panel>
                         </mat-accordion>
                         <div class="text-center">
                             <button *ngIf="showList.length !== list.length" (click)="getMoreResults()" class="btn btn-outline-primary"><i class="fa fa-fw fa-plus"></i><span>Load More</span></button>
