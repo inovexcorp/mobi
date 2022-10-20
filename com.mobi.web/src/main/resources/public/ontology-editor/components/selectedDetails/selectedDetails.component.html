@@ -27,7 +27,8 @@
                     [readOnly]="readOnly"
                     [iri]="os.listItem.selected['@id']"
                     (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)"
-                    [highlightText]="highlightText">
+                    [highlightText]="highlightText"
+                    [duplicateCheck]="true">
         </static-iri>
     </div>
     <p *ngIf="isFromImportedOntology()" class="type-wrapper is-imported-ontology">

@@ -25,13 +25,13 @@
     <error-display *ngIf="data.validator && iriFormControl.errors && iriFormControl.errors[data.validatorKey]">{{data.validatorMsg}}</error-display>
     <mat-form-field class="w-100 template-begins-with">
         <mat-label>Begins With</mat-label>
-        <input type="text" matInput name="beginsWith" formControlName="beginsWith" required focus/>
-        <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.pattern">This value is invalid</mat-error>
-        <mat-error *ngIf="iriFormControl.get('beginsWith').errors?.required">This value is required</mat-error>
+        <input type="text" matInput name="iriBegin" formControlName="iriBegin" required focus/>
+        <mat-error *ngIf="iriFormControl.get('iriBegin').errors?.pattern">This value is invalid</mat-error>
+        <mat-error *ngIf="iriFormControl.get('iriBegin').errors?.required">This value is required</mat-error>
     </mat-form-field>
     <mat-form-field class="template-then w-100">
         <mat-label>Then</mat-label>
-        <mat-select name="then" formControlName="then" required>
+        <mat-select name="iriThen" formControlName="iriThen" required>
             <mat-option class="then-option" value="/">/</mat-option>
             <mat-option class="then-option" value="#">#</mat-option>
             <mat-option class="then-option" value=":">:</mat-option>
@@ -39,9 +39,9 @@
     </mat-form-field>
     <mat-form-field class="w-100 template-begins-with">
         <mat-label>Ends With</mat-label>
-        <input type="text" matInput name="endsWith" formControlName="endsWith" required focus/>
-        <mat-error *ngIf="iriFormControl.get('endsWith').errors?.pattern">This value is invalid</mat-error>
-        <mat-error *ngIf="iriFormControl.get('endsWith').errors?.required">This value is required</mat-error>
+        <input type="text" matInput name="iriEnd" formControlName="iriEnd" required focus/>
+        <mat-error *ngIf="iriFormControl.get('iriEnd').errors?.pattern">This value is invalid</mat-error>
+        <mat-error *ngIf="iriFormControl.get('iriEnd').errors?.required">This value is required</mat-error>
     </mat-form-field>
 </form>
 <div mat-dialog-actions>

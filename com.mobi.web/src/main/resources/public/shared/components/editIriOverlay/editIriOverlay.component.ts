@@ -59,35 +59,35 @@ export class EditIriOverlayComponent implements OnInit {
 
     namespacePattern = REGEX.IRI;
     localNamePattern = REGEX.LOCALNAME;
-    endsWithPattern = /^[\w\-\._~:/?[\]@!\$&'\(\)\*\+,;=.]+$/;
+    iriEndPattern = /^[\w\-\._~:/?[\]@!\$&'\(\)\*\+,;=.]+$/;
 
     iriFormControl = this.fb.group({
-        beginsWith: ['', [Validators.required, Validators.pattern(this.namespacePattern)]],
-        then: ['', Validators.required],
-        endsWith: ['', [Validators.required, Validators.pattern(this.localNamePattern)]]
+        iriBegin: ['', [Validators.required, Validators.pattern(this.namespacePattern)]],
+        iriThen: ['', Validators.required],
+        iriEnd: ['', [Validators.required, Validators.pattern(this.localNamePattern)]]
     });
 
     ngOnInit(): void {
         if (this.data.validator) {
             this.iriFormControl.setValidators(this.data.validator);
         }
-        this.iriFormControl.controls.beginsWith.setValue(this.data.iriBegin);
-        this.iriFormControl.controls.then.setValue(this.data.iriThen);
-        this.iriFormControl.controls.endsWith.setValue(this.data.iriEnd);
+        this.iriFormControl.controls.iriBegin.setValue(this.data.iriBegin);
+        this.iriFormControl.controls.iriThen.setValue(this.data.iriThen);
+        this.iriFormControl.controls.iriEnd.setValue(this.data.iriEnd);
     }
     submit(): void {
         const editCloseEvent: OnEditEventI = {
             value: {
-                iriBegin: this.iriFormControl.controls.beginsWith.value,
-                iriThen: this.iriFormControl.controls.then.value,
-                iriEnd: this.iriFormControl.controls.endsWith.value
+                iriBegin: this.iriFormControl.controls.iriBegin.value,
+                iriThen: this.iriFormControl.controls.iriThen.value,
+                iriEnd: this.iriFormControl.controls.iriEnd.value
             }
         };
         this.dialogRef.close(editCloseEvent);
     }
     resetVariables(): void {
-        this.iriFormControl.controls.beginsWith.setValue(this.data.iriBegin);
-        this.iriFormControl.controls.then.setValue(this.data.iriThen);
-        this.iriFormControl.controls.endsWith.setValue(this.data.iriEnd);
+        this.iriFormControl.controls.iriBegin.setValue(this.data.iriBegin);
+        this.iriFormControl.controls.iriThen.setValue(this.data.iriThen);
+        this.iriFormControl.controls.iriEnd.setValue(this.data.iriEnd);
     }
 }
