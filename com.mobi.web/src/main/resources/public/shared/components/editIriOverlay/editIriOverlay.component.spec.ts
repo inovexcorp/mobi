@@ -101,9 +101,9 @@ describe('Edit IRI Overlay component', function() {
             expect(element.queryAll(By.css('div[mat-dialog-actions] button')).length).toEqual(3);
         });
         it('with the error\'s details', function() {
-            component.iriFormControl.controls.beginsWith.setValue('');
+            component.iriFormControl.controls.iriBegin.setValue('');
             fixture.detectChanges();
-            // console.log(component.iriFormControl.controls.beginsWith.errors)
+            // console.log(component.iriFormControl.controls.iriBegin.errors)
             // expect(element.queryAll(By.css('mat-error')).length).toEqual(2);
             // expect(element.queryAll(By.css('mat-form-field.template-begins-with mat-error'))[0].nativeElement.textContent.trim()).toContain('This value is invalid');
             // expect(element.queryAll(By.css('mat-form-field.template-begins-with mat-error'))[1].nativeElement.textContent.trim()).toContain('This value is required');
@@ -195,56 +195,56 @@ describe('Edit IRI Overlay component', function() {
         beforeEach(function() {
             fixture.detectChanges();
         });
-        describe('beginsWith field', function() {
+        describe('iriBegin field', function() {
             it('when it is a valid namespace', function() {
-                component.iriFormControl.controls.beginsWith.setValue('https://test.com');
+                component.iriFormControl.controls.iriBegin.setValue('https://test.com');
                 fixture.detectChanges();
                 expect(component.iriFormControl.status).toEqual('VALID');
             }) ;
             it('invalid when there is a protocol missing', function() {
-                component.iriFormControl.controls.beginsWith.setValue('//test.com');
+                component.iriFormControl.controls.iriBegin.setValue('//test.com');
                 fixture.detectChanges();
                 expect(component.iriFormControl.status).toEqual('INVALID');
-                expect(Object.keys(component.iriFormControl.controls.beginsWith.errors)).toEqual(['pattern']);
+                expect(Object.keys(component.iriFormControl.controls.iriBegin.errors)).toEqual(['pattern']);
             }) ;
             it('invalid when field is emtpy', function() {
-                component.iriFormControl.controls.beginsWith.setValue('');
+                component.iriFormControl.controls.iriBegin.setValue('');
                 fixture.detectChanges();
-                expect(component.iriFormControl.controls.beginsWith.errors).toEqual({required: true});
+                expect(component.iriFormControl.controls.iriBegin.errors).toEqual({required: true});
             }) ;
         });
-        describe('then field', function() {
-            it('valid when then field is not emtpy', function() {
-                component.iriFormControl.controls.then.setValue('HELLO');
+        describe('iriThen field', function() {
+            it('valid when iriThen field is not empty', function() {
+                component.iriFormControl.controls.iriThen.setValue('HELLO');
                 fixture.detectChanges();
-                expect(component.iriFormControl.controls.then.status).toEqual('VALID');
+                expect(component.iriFormControl.controls.iriThen.status).toEqual('VALID');
             }) ;
-            it('invalid when then field is emtpy', function() {
-                component.iriFormControl.controls.then.setValue('');
+            it('invalid when iriThen field is empty', function() {
+                component.iriFormControl.controls.iriThen.setValue('');
                 fixture.detectChanges();
-                expect(component.iriFormControl.controls.then.errors).toEqual({required: true});
+                expect(component.iriFormControl.controls.iriThen.errors).toEqual({required: true});
             }) ;
         });
-        describe('endsWith field', function() {
+        describe('iriEnd field', function() {
             it('valid when it is a valid LOCALNAME', function() {
-                component.iriFormControl.controls.endsWith.setValue('test');
+                component.iriFormControl.controls.iriEnd.setValue('test');
                 fixture.detectChanges();
                 expect(component.iriFormControl.status).toEqual('VALID');
             }) ;
             it('valid when it is a invalid LOCALNAME', function() {
-                component.iriFormControl.controls.endsWith.setValue('test.com/');
+                component.iriFormControl.controls.iriEnd.setValue('test.com/');
                 fixture.detectChanges();
                 expect(component.iriFormControl.status).toEqual('INVALID');
             }) ;
             it('invalid when there is a protocol there', function() {
-                component.iriFormControl.controls.endsWith.setValue('http://test.com');
+                component.iriFormControl.controls.iriEnd.setValue('http://test.com');
                 fixture.detectChanges();
                 expect(component.iriFormControl.status).toEqual('INVALID');
             });
-            it('invalid when endsWith field is emtpy', function() {
-                component.iriFormControl.controls.endsWith.setValue('');
+            it('invalid when iriEnd field is empty', function() {
+                component.iriFormControl.controls.iriEnd.setValue('');
                 fixture.detectChanges();
-                expect(component.iriFormControl.controls.endsWith.errors).toEqual({required: true});
+                expect(component.iriFormControl.controls.iriEnd.errors).toEqual({required: true});
             });
         });
     });
@@ -255,14 +255,14 @@ describe('Edit IRI Overlay component', function() {
             expect(matDialogRef.close).toHaveBeenCalledWith({value: {iriBegin: dialogData.iriBegin, iriThen: dialogData.iriThen, iriEnd: dialogData.iriEnd}});
         });
         it('resetVariables updates iriBegin, iriThen, and iriEnd', function() {
-            component.iriFormControl.controls.beginsWith.setValue('new');
-            component.iriFormControl.controls.then.setValue('new');
-            component.iriFormControl.controls.endsWith.setValue('new');
+            component.iriFormControl.controls.iriBegin.setValue('new');
+            component.iriFormControl.controls.iriThen.setValue('new');
+            component.iriFormControl.controls.iriEnd.setValue('new');
             component.resetVariables();
             fixture.detectChanges();
-            expect(component.iriFormControl.controls.beginsWith.value,).toBe(dialogData.iriBegin);
-            expect(component.iriFormControl.controls.then.value).toBe(dialogData.iriThen);
-            expect(component.iriFormControl.controls.endsWith.value).toBe(dialogData.iriEnd);
+            expect(component.iriFormControl.controls.iriBegin.value,).toBe(dialogData.iriBegin);
+            expect(component.iriFormControl.controls.iriThen.value).toBe(dialogData.iriThen);
+            expect(component.iriFormControl.controls.iriEnd.value).toBe(dialogData.iriEnd);
         });
     });
     it('should call cancel when the button is clicked', function() {

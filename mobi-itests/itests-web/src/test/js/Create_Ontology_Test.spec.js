@@ -192,6 +192,9 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
             .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useXpath()
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
     },
 
