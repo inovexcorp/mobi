@@ -2237,7 +2237,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
             File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn);
             Model result = Models.createModel(new FileInputStream(file));
-            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            assertTrue(org.eclipse.rdf4j.model.util.Models.isomorphic(expected, result));
             file.delete();
         }
     }
@@ -2256,7 +2256,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
             File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/class"));
             Model result = Models.createModel(new FileInputStream(file));
-            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            assertTrue(org.eclipse.rdf4j.model.util.Models.isomorphic(expected, result));
             file.delete();
         }
     }
@@ -2273,7 +2273,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
             File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn);
             Model result = Models.createModel(new FileInputStream(file));
-            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            assertTrue(org.eclipse.rdf4j.model.util.Models.isomorphic(expected, result));
             file.delete();
         }
     }
@@ -2290,7 +2290,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
             File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1"));
             Model result = Models.createModel(new FileInputStream(file));
-            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            assertTrue(org.eclipse.rdf4j.model.util.Models.isomorphic(expected, result));
             file.delete();
         }
     }

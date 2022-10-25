@@ -492,11 +492,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     @Test

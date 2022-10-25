@@ -292,12 +292,16 @@ public class Restore implements Action {
             }
             Files.walk(src).forEach(backupConfig -> {
                 try {
+                    boolean isSystemPolicy = containsSubPath(backupConfig, Paths.get("policies/systemPolicies"));
                     Path newFileDest = dest.resolve(src.relativize(backupConfig));
                     if (Files.isDirectory(backupConfig)) {
                         if (!Files.exists(newFileDest)) {
                             Files.createDirectory(newFileDest);
                             LOGGER.trace("Created directory: " + newFileDest.getFileName().toString());
                         }
+                    } else if (isSystemPolicy && Files.exists(newFileDest)) {
+                        LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
+                        return;
                     } else if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
                         Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
                     } else {
@@ -333,6 +337,13 @@ public class Restore implements Action {
             }
             throw e;
         }
+    }
+
+    private boolean containsSubPath(Path someRealPath, Path subPathToCheck) {
+        return someRealPath.normalize()
+                .toString()
+                .contains(subPathToCheck.normalize()
+                        .toString());
     }
 
     /**
@@ -496,7 +507,7 @@ public class Restore implements Action {
                 .map(datasetRecordOptional -> datasetRecordOptional.get())
                 .collect(Collectors.toList());
 
-        for(DatasetRecord datasetRecord : datasetRecords){
+        for (DatasetRecord datasetRecord : datasetRecords) {
             datasetRecordService.overwritePolicyDefault(datasetRecord);
         }
     }

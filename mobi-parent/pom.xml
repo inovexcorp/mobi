@@ -69,7 +69,7 @@
         <jaxb.version>2.3.3</jaxb.version>
         <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
         <jose-jwt.version>9.22</jose-jwt.version>
-        <junit.version>4.13.2</junit.version>
+        <junit.version>5.9.1</junit.version>
         <karaf.version>4.4.1</karaf.version>
         <logback.version>1.2.11</logback.version>
         <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
@@ -450,8 +450,8 @@
 
             <!-- Test Dependencies -->
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
+                <groupId>org.junit.vintage</groupId>
+                <artifactId>junit-vintage-engine</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>

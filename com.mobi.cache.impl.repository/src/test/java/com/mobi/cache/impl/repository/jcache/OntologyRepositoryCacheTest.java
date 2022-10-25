@@ -186,6 +186,11 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         key2 = "urn:record2&urn:commit1";
         key3 = "urn:record3&urn:commit1";
 
+        IRI record1IRI = vf.createIRI("urn:record1");
+        IRI record2IRI = vf.createIRI("urn:record2");
+        IRI record3IRI = vf.createIRI("urn:record3");
+        IRI commit1IRI = vf.createIRI("urn:commit1");
+
         timestampIRI = vf.createIRI("http://mobi.com/ontologies/graph#lastAccessed");
         ontNoImportsIRI = vf.createIRI("urn:ontNoImports");
         ontOneImportIRI = vf.createIRI("urn:ontOneImport");
@@ -252,6 +257,12 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         when(ontologyManager.retrieveOntologyByCommit(vf.createIRI("urn:record2"), vf.createIRI("urn:commit1"))).thenReturn(Optional.of(ontOneImport));
         when(ontologyManager.retrieveOntologyByCommit(vf.createIRI("urn:record3"), vf.createIRI("urn:commit1"))).thenReturn(Optional.of(ontMultipleImports));
 
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(utilsService.commitInRecord(any(), any(), any())).thenReturn(true);
+        when(ontologyCreationService.createOntology(record1IRI, commit1IRI)).thenReturn(ontNoImports);
+        when(ontologyCreationService.createOntology(record2IRI, commit1IRI)).thenReturn(ontOneImport);
+        when(ontologyCreationService.createOntology(record3IRI, commit1IRI)).thenReturn(ontMultipleImports);
+
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repo.getRepositoryID(), vf));
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
@@ -303,7 +314,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertTrue(timestamp.isBefore(OffsetDateTime.parse(statements.get(0).getObject().stringValue())));
         }
         assertEquals(ontNoImports, ontology);
-        verify(ontologyManager).retrieveOntologyByCommit(vf.createIRI("urn:record1"), vf.createIRI("urn:commit1"));
+        verify(ontologyCreationService).createOntology(vf.createIRI("urn:record1"), vf.createIRI("urn:commit1"));
     }
 
     @Test
@@ -327,7 +338,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertTrue(timestamp.isBefore(OffsetDateTime.parse(statements.get(0).getObject().stringValue())));
         }
         assertEquals(ontOneImport, ontology);
-        verify(ontologyManager).retrieveOntologyByCommit(vf.createIRI("urn:record2"), vf.createIRI("urn:commit1"));
+        verify(ontologyCreationService).createOntology(vf.createIRI("urn:record2"), vf.createIRI("urn:commit1"));
     }
 
     @Test
@@ -353,7 +364,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertTrue(timestamp.isBefore(OffsetDateTime.parse(statements.get(0).getObject().stringValue())));
         }
         assertEquals(ontMultipleImports, ontology);
-        verify(ontologyManager).retrieveOntologyByCommit(vf.createIRI("urn:record3"), vf.createIRI("urn:commit1"));
+        verify(ontologyCreationService).createOntology(vf.createIRI("urn:record3"), vf.createIRI("urn:commit1"));
     }
 
     /* getAll() */
@@ -366,14 +377,20 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
 
     @Test
     public void getAllTest() {
-        cache.put(key1, ontNoImports);
-        cache.put(key2, ontOneImport);
-        cache.put(key3, ontMultipleImports);
-        Map<String, Ontology> map = cache.getAll(Stream.of(key1, key2, key3).collect(Collectors.toSet()));
-        assertEquals(3, map.size());
-        assertEquals(map.get(key1), ontNoImports);
-        assertEquals(map.get(key2), ontOneImport);
-        assertEquals(map.get(key3), ontMultipleImports);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(ontNoImports.asModel(), vf.createIRI(key1));
+            conn.add(ontOneImport.asModel(), vf.createIRI(key2));
+            conn.add(ontMultipleImports.asModel(), vf.createIRI(key3));
+
+            cache.put(key1, ontNoImports);
+            cache.put(key2, ontOneImport);
+            cache.put(key3, ontMultipleImports);
+            Map<String, Ontology> map = cache.getAll(Stream.of(key1, key2, key3).collect(Collectors.toSet()));
+            assertEquals(3, map.size());
+            assertEquals(map.get(key1), ontNoImports);
+            assertEquals(map.get(key2), ontOneImport);
+            assertEquals(map.get(key3), ontMultipleImports);
+        }
     }
 
     @Test

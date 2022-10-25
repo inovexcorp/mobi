@@ -37,7 +37,6 @@ import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
@@ -46,9 +45,12 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Optional;
@@ -132,14 +134,15 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
     @Override
     protected Optional<Resource> writeRecordPolicy(Resource user, Resource recordId) {
         try {
-            InputStream recordPolicyStream = DatasetRecordService.class
-                    .getResourceAsStream("/datasetRecordPolicy.xml");
+            Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                    + File.separator + "policyTemplates" + File.separator + "datasetRecordPolicy.xml");
+            String recordPolicy = new String(Files.newInputStream(recordPolicyPath).readAllBytes(),
+                    StandardCharsets.UTF_8);
             String encodedRecordIRI = ResourceUtils.encode(recordId);
 
             String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING};
             String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI};
-            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, StandardCharsets.UTF_8),
-                    search, replace);
+            recordPolicy = StringUtils.replaceEach(recordPolicy, search, replace);
 
             return Optional.of(addPolicy(recordPolicy));
         } catch (IOException e) {

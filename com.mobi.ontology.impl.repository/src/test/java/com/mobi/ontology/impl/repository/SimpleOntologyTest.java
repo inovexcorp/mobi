@@ -1163,8 +1163,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         Ontology listOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/list"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, blankNodeService, vf, mf, importService);
         String jsonld = listOntology.asJsonLD(false).toString();
-        assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:node[a-zA-Z0-9]+\"", "\"")),
-                removeWhitespace(jsonld.replaceAll("_:node[a-zA-Z0-9]+\"", "\"")));
+        assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:[a-zA-Z0-9]+\"", "\"")),
+                removeWhitespace(jsonld.replaceAll("_:[a-zA-Z0-9]+\"", "\"")));
         verify(blankNodeService, times(0)).skolemize(any(org.eclipse.rdf4j.model.Model.class));
     }
 
@@ -2161,8 +2161,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     private String replaceBlankNodeSuffix(String s) {
-        String s1 = s.replaceAll("/genid/genid[a-zA-Z0-9-]+\"", "\"");
-        return s1.replaceAll("/genid/node[a-zA-Z0-9]+\"", "\"");
+        String s1 = s.replaceAll("/genid/[a-zA-Z0-9-]+\"", "\"");
+        return s1.replaceAll("/genid/[a-zA-Z0-9]+\"", "\"");
     }
 
     private Model createModelFromFile(String filename) throws Exception {

@@ -402,6 +402,7 @@ public class ExplorableDatasetRest {
                 throw ErrorUtils.sendError("The new instance's IRI is already taken.",
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
+            conn.close();
             conn.add(instanceModel);
             return Response.status(201).entity(instanceId.stringValue()).build();
         } catch (IllegalArgumentException e) {
@@ -501,6 +502,7 @@ public class ExplorableDatasetRest {
             reifiedDeclarations.forEach(statement -> {
                 RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
                 conn.remove(reification);
+                reification.close();
             });
             conn.add(jsonldToDeskolemizedModel(json, bNodeService));
             conn.commit();

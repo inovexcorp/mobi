@@ -161,6 +161,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
+        System.setProperty("karaf.etc", MappingRecordServiceTest.class.getResource("/").getPath());
         repository = new MemoryRepositoryWrapper();
         repository.setDelegate(new SailRepository(new MemoryStore()));
 

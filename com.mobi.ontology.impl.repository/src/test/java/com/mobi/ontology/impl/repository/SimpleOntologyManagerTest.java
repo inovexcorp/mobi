@@ -54,6 +54,7 @@ import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyCreationService;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
@@ -124,6 +125,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Mock
     private RDFImportService importService;
 
+    @Mock
+    private OntologyCreationService ontologyCreationService;
+
     private AutoCloseable closeable;
     private SimpleOntologyManager manager;
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
@@ -191,6 +195,8 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(nonSimpleOntology.getOntologyId()).thenReturn(ontologyId);
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
+        when(ontologyCreationService.createOntology(any(), any())).thenReturn(ontology);
+        when(ontologyCreationService.createOntologyFromCommit(any(), any())).thenReturn(nonSimpleOntology);
 
         model = MODEL_FACTORY.createEmptyModel();
         model.add(VALUE_FACTORY.createIRI("urn:ontologyIRI"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue()));
@@ -262,6 +268,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.catalogManager = catalogManager;
         manager.utilsService = catalogUtilsService;
         manager.ontologyCache = ontologyCache;
+        manager.ontologyCreationService = ontologyCreationService;
         manager.activate();
     }
 
@@ -430,7 +437,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResourceFile(commitIRI);
+        doThrow(new IllegalArgumentException()).when(ontologyCreationService).createOntologyFromCommit(any(), any());
 
         manager.retrieveOntology(recordIRI);
     }
@@ -507,7 +514,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResourceFile(commitIRI);
+        doThrow(new IllegalArgumentException()).when(ontologyCreationService).createOntologyFromCommit(any(), any());
 
         manager.retrieveOntology(recordIRI, branchIRI);
     }
@@ -574,7 +581,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResourceFile(commitIRI);
+        doThrow(new IllegalArgumentException()).when(ontologyCreationService).createOntologyFromCommit(any(), any());
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }

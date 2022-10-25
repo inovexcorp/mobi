@@ -405,7 +405,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         JSONObject responseObject = getResponse(response);
         assertEquals(responseObject.get("error"), "MobiException");
-        assertEquals(responseObject.get("errorMessage"), "Invalid password");
+        assertEquals(responseObject.get("errorMessage"), "Current password is wrong");
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 

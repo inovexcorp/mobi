@@ -34,9 +34,13 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public abstract class AbstractUnversionedRecordService<T extends UnversionedRecord>
@@ -85,10 +89,11 @@ public abstract class AbstractUnversionedRecordService<T extends UnversionedReco
             String encodedRecordIRI = ResourceUtils.encode(recordId);
             String[] search = {USER_IRI_BINDING, POLICY_IRI_BINDING, ENCODED_POLICY_IRI_BINDING};
             String[] replace = {user.stringValue(), recordPolicyResource.stringValue(), encodedRecordIRI};
-            InputStream policyPolicyStream = AbstractVersionedRDFRecordService.class
-                    .getResourceAsStream("/policyPolicy.xml");
-            String policyPolicy = StringUtils.replaceEach(IOUtils.toString(policyPolicyStream, StandardCharsets.UTF_8),
-                    search, replace);
+            Path policyPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                    + File.separator + "policyTemplates" + File.separator + "policyPolicy.xml");
+            String policyPolicy = new String(Files.newInputStream(policyPolicyPath).readAllBytes(),
+                    StandardCharsets.UTF_8);
+            policyPolicy = StringUtils.replaceEach(policyPolicy, search, replace);
             addPolicy(policyPolicy);
         } catch (IOException e) {
             throw new MobiException("Error writing record policy.", e);

@@ -79,6 +79,12 @@
             <artifactId>rdf-orm-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>owlapi.utils</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
