@@ -23,7 +23,6 @@ package com.mobi.sparql.cli;
  * #L%
  */
 
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -34,6 +33,7 @@ import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.vocabularies.xsd.XSD;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -97,8 +97,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/creator"),
                 VALUE_FACTORY.createLiteral("A.N.Other"));
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -112,8 +112,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"));
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -141,8 +141,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
 
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -162,8 +162,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("urn:3"),
                 VALUE_FACTORY.createIRI("urn:test2"));
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -199,8 +199,8 @@ public class QueryTest extends OrmEnabledTestCase {
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book2"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/creator"),
                 VALUE_FACTORY.createLiteral("Edmund Wells"));
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -220,8 +220,8 @@ public class QueryTest extends OrmEnabledTestCase {
         expectedDeletes.add(VALUE_FACTORY.createIRI("urn:1"),
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"));
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -257,8 +257,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Desing"),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -310,8 +310,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
                 VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)));
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -377,8 +377,8 @@ public class QueryTest extends OrmEnabledTestCase {
 
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -456,8 +456,8 @@ public class QueryTest extends OrmEnabledTestCase {
 
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -535,8 +535,8 @@ public class QueryTest extends OrmEnabledTestCase {
 
         Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -567,8 +567,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"),
                 VALUE_FACTORY.createIRI("urn:test2"));
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -647,8 +647,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://purl.org/dc/dcmitype/PhysicalObject"),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -727,8 +727,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://purl.org/dc/dcmitype/PhysicalObject"),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -790,8 +790,8 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("mailto:fred@example"),
                 VALUE_FACTORY.createIRI("http://example.com/addresses"));
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 
     @Test
@@ -847,15 +847,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createLiteral("Fred"),
                 VALUE_FACTORY.createIRI("http://example.com/names"));
 
-        assertModelsEqual(expectedInserts, result.getAdditions());
-        assertModelsEqual(expectedDeletes, result.getDeletions());
-    }
-
-    private void assertModelsEqual(Model expected, Model actual) {
-        expected.forEach(expectedStatement -> {
-            assertTrue(actual.contains(expectedStatement.getSubject(), expectedStatement.getPredicate(),
-                    expectedStatement.getObject(), expectedStatement.getContext()));
-        });
-        assertEquals(expected.size(), actual.size());
+        assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
+        assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
     }
 }

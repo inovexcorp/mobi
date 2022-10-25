@@ -102,6 +102,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
+        System.setProperty("com.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize", "true"); // JDK16+ fix
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
         try {

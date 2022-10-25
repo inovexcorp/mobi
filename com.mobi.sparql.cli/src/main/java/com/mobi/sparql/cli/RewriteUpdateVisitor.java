@@ -33,6 +33,7 @@ import org.eclipse.rdf4j.query.algebra.Join;
 import org.eclipse.rdf4j.query.algebra.MultiProjection;
 import org.eclipse.rdf4j.query.algebra.ProjectionElem;
 import org.eclipse.rdf4j.query.algebra.ProjectionElemList;
+import org.eclipse.rdf4j.query.algebra.QueryRoot;
 import org.eclipse.rdf4j.query.algebra.Reduced;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.TupleExpr;
@@ -208,6 +209,15 @@ public class RewriteUpdateVisitor extends AbstractQueryModelVisitor<RuntimeExcep
                         ? graphClauseMatcher.group(0).substring(graphClauseMatcher.group(0).indexOf("<") + 1,
                         graphClauseMatcher.group(0).indexOf(">")) : "";
                 contextToConstructQuery.put(context, (MultiProjection) expr);
+            } else if (expr instanceof QueryRoot) {
+                TupleExpr innerExpr = ((QueryRoot) expr).getArg();
+                if (innerExpr instanceof Reduced) {
+                    Reduced reduced = (Reduced) innerExpr;
+                    String context = graphClauseMatcher.find()
+                            ? graphClauseMatcher.group(0).substring(graphClauseMatcher.group(0).indexOf("<") + 1,
+                            graphClauseMatcher.group(0).indexOf(">")) : "";
+                    contextToConstructQuery.put(context, new MultiProjection(reduced.getArg()));
+                }
             }
         }
     }
@@ -256,6 +266,15 @@ public class RewriteUpdateVisitor extends AbstractQueryModelVisitor<RuntimeExcep
                         ? graphClauseMatcher.group(0).substring(graphClauseMatcher.group(0).indexOf("<") + 1,
                         graphClauseMatcher.group(0).indexOf(">")) : "";
                 contextToConstructQuery.put(context, (MultiProjection) expr);
+            } else if (expr instanceof QueryRoot) {
+                TupleExpr innerExpr = ((QueryRoot) expr).getArg();
+                if (innerExpr instanceof Reduced) {
+                    Reduced reduced = (Reduced) innerExpr;
+                    String context = graphClauseMatcher.find()
+                            ? graphClauseMatcher.group(0).substring(graphClauseMatcher.group(0).indexOf("<") + 1,
+                            graphClauseMatcher.group(0).indexOf(">")) : "";
+                    contextToConstructQuery.put(context, new MultiProjection(reduced.getArg()));
+                }
             }
         }
     }
@@ -271,6 +290,12 @@ public class RewriteUpdateVisitor extends AbstractQueryModelVisitor<RuntimeExcep
             contextToConstructQuery.put(graph, new MultiProjection(reduced.getArg()));
         } else if (expr instanceof MultiProjection) {
             contextToConstructQuery.put(graph, (MultiProjection) expr);
+        } else if (expr instanceof QueryRoot) {
+            TupleExpr innerExpr = ((QueryRoot) expr).getArg();
+            if (innerExpr instanceof Reduced) {
+                Reduced reduced = (Reduced) innerExpr;
+                contextToConstructQuery.put(graph, new MultiProjection(reduced.getArg()));
+            }
         }
     }
 

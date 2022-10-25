@@ -161,6 +161,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
+        System.setProperty("karaf.etc", VersionedRDFRecordServiceTest.class.getResource("/").getPath());
         recordService = new SimpleVersionedRDFRecordService();
         repository = new MemoryRepositoryWrapper();
         repository.setDelegate(new SailRepository(new MemoryStore()));

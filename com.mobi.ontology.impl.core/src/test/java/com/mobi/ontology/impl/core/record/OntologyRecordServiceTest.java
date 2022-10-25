@@ -187,6 +187,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
+        System.setProperty("karaf.etc", OntologyRecordServiceTest.class.getResource("/").getPath());
         repository = new MemoryRepositoryWrapper();
         repository.setDelegate(new SailRepository(new MemoryStore()));
 

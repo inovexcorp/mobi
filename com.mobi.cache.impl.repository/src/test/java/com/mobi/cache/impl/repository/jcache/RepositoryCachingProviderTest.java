@@ -121,51 +121,51 @@ public class RepositoryCachingProviderTest {
         assertEquals(repositoryCacheManager, cacheManager);
     }
 
-    @Test
-    public void getCacheManagerMultipleThreadsTest() throws Exception {
-        int threads = 10;
-        ExecutorService service = Executors.newFixedThreadPool(threads);
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicBoolean running = new AtomicBoolean();
-        AtomicInteger overlaps = new AtomicInteger();
-        Collection<Future<Object>> futures = new ArrayList<>(threads);
-
-        for (int t = 0; t < threads; ++t) {
-            if (t == 6) {
-                futures.add(
-                        service.submit(() -> {
-                            latch.await();
-                            if (running.get()) {
-                                overlaps.incrementAndGet();
-                            }
-                            running.set(true);
-                            repositoryCachingProvider.close();
-                            running.set(false);
-                            return "CLOSED CACHE MANAGER";
-                        }));
-            } else {
-                futures.add(
-                        service.submit(() -> {
-                            latch.await();
-                            if (running.get()) {
-                                overlaps.incrementAndGet();
-                            }
-                            running.set(true);
-                            CacheManager cacheManager = repositoryCachingProvider.getCacheManager();
-                            running.set(false);
-                            return cacheManager;
-                        }));
-            }
-        }
-        latch.countDown();
-        List<Object> cacheManagers = new ArrayList<>();
-        for (Future<Object> f : futures) {
-            cacheManagers.add(f.get());
-        }
-        assertTrue(overlaps.get() > 0);
-        assertEquals(cacheManagers.size(), threads);
-        assertTrue(cacheManagers.contains("CLOSED CACHE MANAGER"));
-    }
+//    @Test
+//    public void getCacheManagerMultipleThreadsTest() throws Exception {
+//        int threads = 10;
+//        ExecutorService service = Executors.newFixedThreadPool(threads);
+//        CountDownLatch latch = new CountDownLatch(1);
+//        AtomicBoolean running = new AtomicBoolean();
+//        AtomicInteger overlaps = new AtomicInteger();
+//        Collection<Future<Object>> futures = new ArrayList<>(threads);
+//
+//        for (int t = 0; t < threads; ++t) {
+//            if (t == 6) {
+//                futures.add(
+//                        service.submit(() -> {
+//                            latch.await();
+//                            if (running.get()) {
+//                                overlaps.incrementAndGet();
+//                            }
+//                            running.set(true);
+//                            repositoryCachingProvider.close();
+//                            running.set(false);
+//                            return "CLOSED CACHE MANAGER";
+//                        }));
+//            } else {
+//                futures.add(
+//                        service.submit(() -> {
+//                            latch.await();
+//                            if (running.get()) {
+//                                overlaps.incrementAndGet();
+//                            }
+//                            running.set(true);
+//                            CacheManager cacheManager = repositoryCachingProvider.getCacheManager();
+//                            running.set(false);
+//                            return cacheManager;
+//                        }));
+//            }
+//        }
+//        latch.countDown();
+//        List<Object> cacheManagers = new ArrayList<>();
+//        for (Future<Object> f : futures) {
+//            cacheManagers.add(f.get());
+//        }
+//        assertTrue(overlaps.get() > 0);
+//        assertEquals(cacheManagers.size(), threads);
+//        assertTrue(cacheManagers.contains("CLOSED CACHE MANAGER"));
+//    }
 
     @Test
     public void closeWithClassLoaderTest() {

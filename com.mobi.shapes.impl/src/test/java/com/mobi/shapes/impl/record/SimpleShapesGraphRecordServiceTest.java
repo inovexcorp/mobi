@@ -161,6 +161,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
+        System.setProperty("karaf.etc", SimpleShapesGraphRecordServiceTest.class.getResource("/").getPath());
         repository = new MemoryRepositoryWrapper();
         repository.setDelegate(new SailRepository(new MemoryStore()));
         

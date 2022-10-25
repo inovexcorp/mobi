@@ -36,7 +36,6 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.ResourceUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -44,9 +43,12 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 
 public abstract class AbstractMappingRecordService<T extends MappingRecord>
@@ -83,16 +85,17 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
     protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
         try {
             // Record Policy
-            InputStream recordPolicyStream = AbstractMappingRecordService.class
-                    .getResourceAsStream("/mappingRecordPolicy.xml");
+            Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                    + File.separator + "policyTemplates" + File.separator + "mappingRecordPolicy.xml");
+            String recordPolicy = new String(Files.newInputStream(recordPolicyPath).readAllBytes(),
+                    StandardCharsets.UTF_8);
             String encodedRecordIRI = ResourceUtils.encode(recordId);
 
             String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
                     MASTER_BRANCH_IRI_BINDING};
             String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
                     masterBranchId.stringValue()};
-            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, StandardCharsets.UTF_8),
-                    search, replace);
+            recordPolicy = StringUtils.replaceEach(recordPolicy, search, replace);
 
             return addPolicy(recordPolicy);
         } catch (IOException e) {

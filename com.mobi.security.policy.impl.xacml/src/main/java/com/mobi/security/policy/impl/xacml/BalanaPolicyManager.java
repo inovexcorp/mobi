@@ -52,8 +52,6 @@ import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -63,15 +61,17 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -112,7 +112,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
     @Activate
     @Modified
-    protected void start(BundleContext context, final PolicyManagerConfig config) {
+    protected void start(final PolicyManagerConfig config) {
         typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         policyFileTypeIRI = vf.createIRI(PolicyFile.TYPE);
 
@@ -134,7 +134,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             throw new MobiException(e);
         }
 
-        loadPolicies(context);
+        loadPolicies();
     }
 
     @Override
@@ -375,34 +375,41 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         }
     }
 
-    private void loadPolicies(BundleContext context) {
+    private void loadPolicies() {
         LOG.debug("Loading policies");
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         cache.ifPresent(Cache::clear);
         try (RepositoryConnection conn = repository.getConnection()) {
             VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
 
-            // Initialize policies from within the bundle if they don't already exist
-            Bundle bundle = context.getBundle();
-            Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", true);
-            while (urls.hasMoreElements()) {
-                URL url = urls.nextElement();
-                String fileName = URLDecoder.decode(FilenameUtils.getName(url.getPath()), "UTF-8");
-                String fileId = FilenameUtils.removeExtension(URLDecoder.decode(fileName, "UTF-8"));
-                Resource fileIRI = vf.createIRI(fileId);
-                if (!ConnectionUtils.contains(conn, fileIRI, null, null)) {
-                    VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
-                    addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
-                } else {
-                    PolicyFile policy = validatePolicy(fileIRI);
-                    VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
-                    if (!file.exists()) {
-                        file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
-                        addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
+            // Initialize policies from the systemPolicies directory if they don't already exist
+            Path policiesDirectory = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                    + File.separator + "systemPolicies");
+            Files.walk(policiesDirectory).forEach(path -> {
+                if (!Files.isDirectory(path)) {
+                    try {
+                        String fileName = URLDecoder.decode(
+                                FilenameUtils.getName(path.getFileName().toString()), StandardCharsets.UTF_8);
+                        String fileId = FilenameUtils.removeExtension(
+                                URLDecoder.decode(fileName, StandardCharsets.UTF_8));
+                        Resource fileIRI = vf.createIRI(fileId);
+                        if (!ConnectionUtils.contains(conn, fileIRI, null, null)) {
+                            VirtualFile file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
+                            addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
+                        } else {
+                            PolicyFile policy = validatePolicy(fileIRI);
+                            VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
+                            if (!file.exists()) {
+                                file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
+                                addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
+                            }
+                        }
+                        systemPolicies.add(fileIRI);
+                    } catch (IOException e) {
+                        LOG.error("Could not load system policy for " + path);
                     }
                 }
-                systemPolicies.add(fileIRI);
-            }
+            });
 
             // Grab fileNames that are already in the repository
             Set<String> fileNames = new HashSet<>();
@@ -411,7 +418,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 PolicyFile policyFile = validatePolicy(policyIRI);
                 fileNames.add(FilenameUtils.removeExtension(getFileName(policyFile)));
             });
-
 
             addMissingFilesToRepo(fileNames, directory);
 

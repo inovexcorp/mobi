@@ -68,9 +68,13 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -225,16 +229,17 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      */
     protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
         try {
-            InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
-                    .getResourceAsStream("/recordPolicy.xml");
+            Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                    + File.separator + "policyTemplates" + File.separator + "recordPolicy.xml");
+            String recordPolicy = new String(Files.newInputStream(recordPolicyPath).readAllBytes(),
+                    StandardCharsets.UTF_8);
             String encodedRecordIRI = ResourceUtils.encode(recordId);
 
             String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
                     MASTER_BRANCH_IRI_BINDING};
             String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
                     masterBranchId.stringValue()};
-            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, StandardCharsets.UTF_8),
-                    search, replace);
+            recordPolicy = StringUtils.replaceEach(recordPolicy, search, replace);
 
             return addPolicy(recordPolicy);
         } catch (IOException e) {
@@ -254,10 +259,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             String encodedRecordIRI = ResourceUtils.encode(recordId);
             String[] search = {USER_IRI_BINDING, POLICY_IRI_BINDING, ENCODED_POLICY_IRI_BINDING};
             String[] replace = {user.stringValue(), recordPolicyResource.stringValue(), encodedRecordIRI};
-            InputStream policyPolicyStream = AbstractVersionedRDFRecordService.class
-                    .getResourceAsStream("/policyPolicy.xml");
-            String policyPolicy = StringUtils.replaceEach(IOUtils.toString(policyPolicyStream, StandardCharsets.UTF_8),
-                    search, replace);
+            Path policyPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                    + File.separator + "policyTemplates" + File.separator + "policyPolicy.xml");
+            String policyPolicy = new String(Files.newInputStream(policyPolicyPath).readAllBytes(),
+                    StandardCharsets.UTF_8);
+            policyPolicy = StringUtils.replaceEach(policyPolicy, search, replace);
             addPolicy(policyPolicy);
         } catch (IOException e) {
             throw new MobiException("Error writing record policy.", e);
