@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -78,12 +79,13 @@ public class PolicyRest {
     /**
      * Fetches all security policies that match the provided query parameters.
      *
-     * @param relatedSubject String representing a subject ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedSubject Optional string representing a subject ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
-     * @param relatedResource String representing a resource ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedResource Optional string representing a resource ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
-     * @param relatedAction String representing a action ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedAction Optional string representing an action ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
+     * @param systemOnly Boolean representing whether only system policies should be returned. Defaults to false
      * @return A JSON array of JSON representations of matching policies
      */
     @GET
@@ -99,12 +101,15 @@ public class PolicyRest {
             }
     )
     public Response getPolicies(
-            @Parameter(description = "String representing a subject ID", required = true)
+            @Parameter(description = "String representing a subject ID")
             @QueryParam("relatedSubject") String relatedSubject,
-            @Parameter(description = "String representing a resource ID", required = true)
+            @Parameter(description = "String representing a resource ID")
             @QueryParam("relatedResource") String relatedResource,
-            @Parameter(description = "String representing a action ID", required = true)
-            @QueryParam("relatedAction") String relatedAction) {
+            @Parameter(description = "String representing a action ID")
+            @QueryParam("relatedAction") String relatedAction,
+            @Parameter(description = "Boolean of whether to only return system policies")
+            @DefaultValue("false")
+            @QueryParam("systemOnly") boolean systemOnly) {
         PolicyQueryParams.Builder params = new PolicyQueryParams.Builder();
         if (StringUtils.isNotEmpty(relatedResource)) {
             params.addResourceIRI(vf.createIRI(relatedResource));
@@ -114,6 +119,9 @@ public class PolicyRest {
         }
         if (StringUtils.isNotEmpty(relatedAction)) {
             params.addActionIRI(vf.createIRI(relatedAction));
+        }
+        if (systemOnly) {
+            params.setSystemOnly(true);
         }
         try {
             return Response.ok(policyManager.getPolicies(params.build()).stream()

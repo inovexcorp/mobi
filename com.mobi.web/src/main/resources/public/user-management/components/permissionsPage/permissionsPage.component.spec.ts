@@ -26,13 +26,12 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatButtonModule, MatTooltipModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { set } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
-import { RDF, USER, XSD } from '../../../prefixes';
+import { USER, XSD } from '../../../prefixes';
 import { UserAccessControlsComponent } from '../../../shared/components/userAccessControls/userAccessControls.component';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
@@ -152,6 +151,7 @@ describe('Permissions Page component', function() {
         userManagerStub.groups = [group];
         catalogManagerStub.localCatalog = {'@id': 'catalogId', '@type': []};
         utilStub.getBeautifulIRI.and.callFake(a => a);
+        policyManagerStub.getPolicies.and.returnValue(of([]));
     });
 
     afterEach(function() {
@@ -172,171 +172,71 @@ describe('Permissions Page component', function() {
 
     describe('initializes policies correctly when getPolicies', function() {
         describe('resolves', function() {
-            beforeEach(function() {
-                this.firstTypePolicy = {
-                    PolicyId: 'id',
-                    Target: {AnyOf: [{AllOf: [{Match: [{
-                        AttributeDesignator: {AttributeId: RDF + 'type'},
-                        AttributeValue: {content: ['type']}
-                    }]}]}]}
-                };
-                this.secondTypePolicy = {
-                    PolicyId: 'id2',
-                    Target: {AnyOf: [{AllOf: [{Match: [{
-                        AttributeDesignator: {AttributeId: RDF + 'type'},
-                        AttributeValue: {content: ['type']}
-                    }]}]}]}
-                };
-            });
             it('with no matching policies', fakeAsync(function() {
-                policyManagerStub.getPolicies.and.returnValue(of([]));
                 component.ngOnInit();
                 tick();
-                expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                    resourceId: component.catalogId,
-                    actionId: policyManagerStub.actionCreate,
-                    subjectId: undefined
-                }));
-                expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                    resourceId: component.systemRepoId,
-                    actionId: policyManagerStub.actionRead,
-                    subjectId: undefined
-                }));
-                expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(component.catalogId, undefined, policyManagerStub.actionCreate);
-                expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(component.systemRepoId, undefined, policyManagerStub.actionRead);
+                expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(undefined, undefined, undefined, true);
                 expect(component.policies).toEqual([]);
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
-            it('with a policy that allows everyone', fakeAsync(function() {
-                const firstPolicyPolicies = [set(this.firstTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', everyoneMatch)];
-                const secondPolicyPolicies = [set(this.secondTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', everyoneMatch)];
-
-                policyManagerStub.getPolicies
-                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.returnValue(of(firstPolicyPolicies))
-                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.returnValue(of(secondPolicyPolicies));
-
+            it('with policies', fakeAsync(function() {
+                const policies = [
+                    {
+                        PolicyId: 'id1',
+                        Description: 'Policy 1',
+                        Rule: [ { Target: { AnyOf: [ { AllOf: [ { Match: [ everyoneMatch ] } ] } ] } } ]
+                    },
+                    {
+                        PolicyId: 'id2',
+                        Description: 'Policy 2',
+                        Rule: [ { Target: { AnyOf: [ { AllOf: [ { Match: [ userMatch ] } ] } ] } } ]
+                    },
+                    {
+                        PolicyId: 'id3',
+                        Description: 'Policy 3',
+                        Rule: [ { Target: { AnyOf: [ { AllOf: [ { Match: [ groupMatch ] } ] } ] } } ]
+                    }
+                ];
+                policyManagerStub.getPolicies.and.returnValue(of(policies));
                 component.ngOnInit();
                 tick();
                 
-                expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                    resourceId: component.catalogId,
-                    actionId: policyManagerStub.actionCreate,
-                    subjectId: undefined
-                }));
-                expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                    resourceId: component.systemRepoId,
-                    actionId: policyManagerStub.actionRead,
-                    subjectId: undefined
-                }));
-                expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(component.catalogId, undefined, policyManagerStub.actionCreate);
-                expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(component.systemRepoId, undefined, policyManagerStub.actionRead);
+                expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(undefined, undefined, undefined, true);
                 expect(component.policies).toContain({
-                    policy: firstPolicyPolicies[0],
-                    id: this.firstTypePolicy.PolicyId,
-                    title: 'Create type',
+                    policy: policies[0],
+                    id: 'id1',
+                    title: 'Policy 1',
                     changed: false,
                     everyone: true,
                     selectedUsers: [],
                     selectedGroups: []
                 });
                 expect(component.policies).toContain({
-                    policy: secondPolicyPolicies[0],
-                    id: this.secondTypePolicy.PolicyId,
-                    title: 'Query System Repo',
+                    policy: policies[1],
+                    id: 'id2',
+                    title: 'Policy 2',
                     changed: false,
-                    everyone: true,
-                    selectedUsers: [],
+                    everyone: false,
+                    selectedUsers: [user],
                     selectedGroups: []
+                });
+                expect(component.policies).toContain({
+                    policy: policies[2],
+                    id: 'id3',
+                    title: 'Policy 3',
+                    changed: false,
+                    everyone: false,
+                    selectedUsers: [],
+                    selectedGroups: [group],
                 });
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-            }));
-            it('with a policy that has selected users', fakeAsync(function() {
-                const firstPolicyPolicies = [set(this.firstTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', userMatch)];
-                const secondPolicyPolicies = [set(this.secondTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', userMatch)];
-
-                policyManagerStub.getPolicies
-                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.returnValue(of(firstPolicyPolicies))
-                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.returnValue(of(secondPolicyPolicies));
-
-                component.ngOnInit();
-                tick();
-                
-                expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                    resourceId: component.catalogId,
-                    actionId: policyManagerStub.actionCreate,
-                    subjectId: undefined
-                }));
-                expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                    resourceId: component.systemRepoId,
-                    actionId: policyManagerStub.actionRead,
-                    subjectId: undefined
-                }));
-                expect(component.policies).toContain({
-                    policy: firstPolicyPolicies[0],
-                    id: this.firstTypePolicy.PolicyId,
-                    title: 'Create type',
-                    changed: false,
-                    everyone: false,
-                    selectedUsers: [user],
-                    selectedGroups: [],
-                });
-                expect(component.policies).toContain({
-                    policy: secondPolicyPolicies[0],
-                    id: this.secondTypePolicy.PolicyId,
-                    title: 'Query System Repo',
-                    changed: false,
-                    everyone: false,
-                    selectedUsers: [user],
-                    selectedGroups: [],
-                });
-            }));
-            it('with a policy that has selected groups', fakeAsync(function() {
-                const firstPolicyPolicies = [set(this.firstTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', groupMatch)];
-                const secondPolicyPolicies = [set(this.secondTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', groupMatch)];
-
-                policyManagerStub.getPolicies
-                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.returnValue(of(firstPolicyPolicies))
-                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.returnValue(of(secondPolicyPolicies));
-
-                component.ngOnInit();
-                tick();
-
-                expect(component.policies).toContain({
-                    policy: firstPolicyPolicies[0],
-                    id: this.firstTypePolicy.PolicyId,
-                    title: 'Create type',
-                    changed: false,
-                    everyone: false,
-                    selectedUsers: [],
-                    selectedGroups: [group],
-                });
-                expect(component.policies).toContain({
-                    policy: secondPolicyPolicies[0],
-                    id: this.secondTypePolicy.PolicyId,
-                    title: 'Query System Repo',
-                    changed: false,
-                    everyone: false,
-                    selectedUsers: [],
-                    selectedGroups: [group],
-                });
             }));
         });
         it('rejects', fakeAsync(function() {
             policyManagerStub.getPolicies.and.returnValue(throwError('Error message'));
             component.ngOnInit();
             tick();
-            expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                resourceId: component.catalogId,
-                actionId: policyManagerStub.actionCreate,
-                subjectId: undefined
-            }));
-            expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
-                resourceId: component.systemRepoId,
-                actionId: policyManagerStub.actionRead,
-                subjectId: undefined
-            }));
-            expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(component.catalogId, undefined, policyManagerStub.actionCreate);
-            expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(component.systemRepoId, undefined, policyManagerStub.actionRead);
+            expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(undefined, undefined, undefined, true);
             expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
         }));
     });

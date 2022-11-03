@@ -93,38 +93,50 @@ describe('Policy Manager service', function() {
             service.getPolicies()
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({
+                        relatedResource: undefined,
+                        relatedSubject: undefined,
+                        relatedAction: undefined,
+                        systemOnly: false,
+                    });
                     done();
                 });
-            const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function(done) {
             service.getPolicies()
                 .subscribe(response => {
                     expect(response).toEqual([]);
-                    expect(utilStub.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({
+                        relatedResource: undefined,
+                        relatedSubject: undefined,
+                        relatedAction: undefined,
+                        systemOnly: false,
+                    });
                     done();
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
             request.flush([]);
         });
         it('with filters', function(done) {
             const config = {
                 relatedResource: 'resource',
                 relatedSubject: 'subject',
-                relatedAction: 'action'
+                relatedAction: 'action',
+                systemOnly: true
             };
-            service.getPolicies(config.relatedResource, config.relatedSubject, config.relatedAction)
+            service.getPolicies(config.relatedResource, config.relatedSubject, config.relatedAction, config.systemOnly)
                 .subscribe(response => {
                     expect(response).toEqual([]);
-                    expect(utilStub.createHttpParams).toHaveBeenCalled();
+                    expect(utilStub.createHttpParams).toHaveBeenCalledWith(config);
                     done();
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
             expect(request.request.params.get('relatedResource')).toEqual('resource');
             expect(request.request.params.get('relatedSubject')).toEqual('subject');
             expect(request.request.params.get('relatedAction')).toEqual('action');
+            expect(request.request.params.get('systemOnly')).toEqual('true');
             request.flush([]);
         });
     });

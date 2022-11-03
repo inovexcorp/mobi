@@ -21,7 +21,7 @@
   #L%
   -->
 <Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/system-repo-access" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
-    <Description>Who can make sparql queries against the system repository?</Description>
+    <Description>Query System Repository</Description>
     <Target>
         <AnyOf>
             <AllOf>

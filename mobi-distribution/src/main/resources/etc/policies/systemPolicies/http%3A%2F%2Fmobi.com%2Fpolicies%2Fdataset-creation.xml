@@ -21,7 +21,7 @@
   #L%
   -->
 <Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/dataset-creation" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
-    <Description>Who can create an DatasetRecord in the Local Catalog?</Description>
+    <Description>Create Dataset Record</Description>
     <Target>
         <AnyOf>
             <AllOf>

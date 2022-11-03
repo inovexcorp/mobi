@@ -57,21 +57,24 @@ export class PolicyManagerService {
 
     /**
      * Calls the GET /mobirest/policies endpoint with the passed filter values for
-     * http://mobi.com/ontologies/policy#relatedResource, http://mobi.com/ontologies/policy#relatedSubject, and
-     * http://mobi.com/ontologies/policy#relatedAction and returns the list of matching Policies in JSON.
+     * http://mobi.com/ontologies/policy#relatedResource, http://mobi.com/ontologies/policy#relatedSubject,
+     * http://mobi.com/ontologies/policy#relatedAction, and `systemOnly` and returns the list of matching Policies in
+     * JSON-ified XML.
      *
      * @param {string} [relatedResource=''] An optional IRI string for a related Resource
      * @param {string} [relatedSubject=''] An optional IRI string for a related Subject
      * @param {string} [relatedAction=''] An optional IRI string for a related Action
+     * @param {boolean} [onlySystem=false] An optional boolean which will only retrieve system policies if tru
      * @returns {Observable} An Observable that resolves to a JSON array of Policy JSON objects or is rejected with
      * an error message
      */
-    getPolicies(relatedResource?: string, relatedSubject?: string, relatedAction?: string): Observable<any[]> {
+    getPolicies(relatedResource?: string, relatedSubject?: string, relatedAction?: string, systemOnly = false): Observable<any[]> {
         const config = {
             params: this.util.createHttpParams({
                 relatedResource,
                 relatedSubject,
-                relatedAction
+                relatedAction,
+                systemOnly
             })
         };
         return this.spinnerSvc.track(this.http.get(this.prefix, config))

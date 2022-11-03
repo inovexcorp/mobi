@@ -23,7 +23,6 @@ package com.mobi.security.policy.api.xacml;
  * #L%
  */
 
-
 import org.eclipse.rdf4j.model.IRI;
 
 import java.util.Collection;
@@ -35,14 +34,26 @@ import java.util.Set;
  */
 public class PolicyQueryParams {
 
-    private Set<IRI> resourceIRIs;
-    private Set<IRI> subjectIRIs;
-    private Set<IRI> actionIRIs;
+    private final boolean secured;
+    private final boolean systemOnly;
+    private final Set<IRI> resourceIRIs;
+    private final Set<IRI> subjectIRIs;
+    private final Set<IRI> actionIRIs;
 
     private PolicyQueryParams(Builder builder) {
+        secured = builder.secured;
+        systemOnly = builder.systemOnly;
         resourceIRIs = builder.resourceIRIs;
         subjectIRIs = builder.subjectIRIs;
         actionIRIs = builder.actionIRIs;
+    }
+
+    public boolean isSecured() {
+        return secured;
+    }
+
+    public boolean isSystemOnly() {
+        return systemOnly;
     }
 
     public Set<IRI> getResourceIRIs() {
@@ -58,11 +69,23 @@ public class PolicyQueryParams {
     }
 
     public static class Builder {
-        private Set<IRI> resourceIRIs = new HashSet<>();
-        private Set<IRI> subjectIRIs = new HashSet<>();
-        private Set<IRI> actionIRIs = new HashSet<>();
+        private boolean secured = true;
+        private boolean systemOnly = false;
+        private final Set<IRI> resourceIRIs = new HashSet<>();
+        private final Set<IRI> subjectIRIs = new HashSet<>();
+        private final Set<IRI> actionIRIs = new HashSet<>();
 
         public Builder() {}
+
+        public Builder setSecured(boolean secured) {
+            this.secured = secured;
+            return this;
+        }
+
+        public Builder setSystemOnly(boolean systemOnly) {
+            this.systemOnly = systemOnly;
+            return this;
+        }
 
         public Builder addResourceIRI(IRI iri) {
             resourceIRIs.add(iri);
