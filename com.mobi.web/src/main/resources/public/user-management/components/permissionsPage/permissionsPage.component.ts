@@ -21,10 +21,10 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { get, map, filter, some, chain, find, sortBy, isNull, head, isUndefined} from 'lodash';
+import { get, map, filter, some, chain, find, sortBy, isNull, isUndefined} from 'lodash';
 import { forkJoin } from 'rxjs';
 
-import { FOAF, RDF, USER } from '../../../prefixes';
+import { FOAF, USER } from '../../../prefixes';
 import { Group } from '../../../shared/models/group.interface';
 import { Policy } from '../../../shared/models/policy.interface';
 import { User } from '../../../shared/models/user.interface';
@@ -53,14 +53,12 @@ export class PermissionsPageComponent implements OnInit {
     groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + FOAF + 'member' + '>') + ')';
     userRole = 'http://mobi.com/roles/user';
     policies: Policy[] = [];
-    policiesInQuestion = [];
 
     constructor(private pm: PolicyManagerService, private cm: CatalogManagerService, private util: UtilService,
         private um: UserManagerService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
-        this.setPoliciesInQuestion();
         this.setPolicies();
     }
     saveChanges(): void {
@@ -75,41 +73,24 @@ export class PermissionsPageComponent implements OnInit {
         return some(this.policies, 'changed');
     }
 
-    private setPoliciesInQuestion(): void {
-        this.policiesInQuestion = [];
-        this.policiesInQuestion.push({ resourceId: this.catalogId, actionId: this.pm.actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + this.util.getBeautifulIRI(this.getRecordType(policy)) });
-        this.policiesInQuestion.push({ resourceId: this.systemRepoId, actionId: this.pm.actionRead, subjectId: undefined, titleFunc: () => 'Query System Repo' });
-    }
     private setPolicies(): void {
         this.policies = [];
-        forkJoin(this.policiesInQuestion.map(policy => this.pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
+        this.pm.getPolicies(undefined, undefined, undefined, true)
             .subscribe(results => {
-                results.forEach((response, idx) => {
-                    this.policies = this.policies.concat(chain(response)
-                        .map(policy => ({
-                            policy,
-                            id: policy.PolicyId,
-                            title: this.policiesInQuestion[idx].titleFunc(policy),
-                            changed: false,
-                            everyone: false,
-                            selectedUsers: [],
-                            selectedGroups: []
-                        }))
-                        .filter('title')
-                        .forEach(item => this.setInfo(item))
-                        .value());
-                });
+                this.policies = this.policies.concat(chain(results)
+                    .map(policy => ({
+                        policy,
+                        id: policy.PolicyId,
+                        title: policy.Description,
+                        changed: false,
+                        everyone: false,
+                        selectedUsers: [],
+                        selectedGroups: []
+                    }))
+                    .filter('title')
+                    .forEach(item => this.setInfo(item))
+                    .value());
             }, error => this.util.createErrorToast(error));
-    }
-    private getRecordType(policy): string {
-        const target = get(policy, 'Target.AnyOf', []);
-        const allOfMatch = chain(target)
-            .map('AllOf').flatten()
-            .map('Match').flatten()
-            .find(['AttributeDesignator.AttributeId', RDF + 'type']).value();
-        const attributeValue = get(allOfMatch, 'AttributeValue.content', []);
-        const value =  head(attributeValue);
-        return '' + value;
     }
     private setInfo(item: Policy): void {
         const rules = get(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);

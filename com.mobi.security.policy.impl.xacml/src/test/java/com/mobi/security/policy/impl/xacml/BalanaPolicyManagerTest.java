@@ -446,6 +446,19 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getPoliciesWithoutCacheOnlySystemTest() throws Exception {
+        // Setup:
+        initializeRepo();
+        when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
+        manager.start(policyManagerConfig);
+
+        List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().setSystemOnly(true).build());
+        verify(policyCache, atLeastOnce()).getPolicyCache();
+        assertEquals(policies.size(), 1);
+        assertEquals(policies.get(0).getId(), defaultPolicyId);
+    }
+
+    @Test
     public void getPolicyWithCacheTest() throws Exception {
         // Setup:
         initializeRepo();

@@ -27,6 +27,7 @@ import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -35,9 +36,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
@@ -48,16 +46,21 @@ import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
@@ -113,6 +116,39 @@ public class PolicyRestTest extends MobiRestTestCXF {
         Response response = target().path("policies").request().get();
         assertEquals(response.getStatus(), 200);
         verify(policyManager).getPolicies(any(PolicyQueryParams.class));
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject policyObj = result.optJSONObject(0);
+            assertNotNull(policyObj);
+            String id = policyObj.optString("PolicyId");
+            assertNotNull(id);
+            assertEquals(id, policyId.stringValue());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getPoliciesWithFiltersTest() {
+        ArgumentCaptor<PolicyQueryParams> params = ArgumentCaptor.forClass(PolicyQueryParams.class);
+        Response response = target().path("policies")
+                .queryParam("relatedResource", vf.createIRI("urn:resource"))
+                .queryParam("relatedSubject", vf.createIRI("urn:subject"))
+                .queryParam("relatedAction", vf.createIRI("urn:action"))
+                .queryParam("systemOnly", true).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(policyManager).getPolicies(params.capture());
+        Set<IRI> resourceIRIs = params.getValue().getResourceIRIs();
+        assertEquals(resourceIRIs.size(), 1);
+        assertTrue(resourceIRIs.contains(vf.createIRI("urn:resource")));
+        Set<IRI> actionIRIs = params.getValue().getActionIRIs();
+        assertEquals(actionIRIs.size(), 1);
+        assertTrue(actionIRIs.contains(vf.createIRI("urn:action")));
+        Set<IRI> subjectIRIs = params.getValue().getSubjectIRIs();
+        assertEquals(subjectIRIs.size(), 1);
+        assertTrue(subjectIRIs.contains(vf.createIRI("urn:subject")));
+        assertTrue(params.getValue().isSystemOnly());
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);

@@ -77,6 +77,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.cache.Cache;
 import javax.xml.bind.JAXB;
 
@@ -93,7 +94,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     private IRI typeIRI;
     private IRI policyFileTypeIRI;
     private Set<Resource> systemPolicies = new HashSet<>();
-
+    private Set<Resource> protectedPolicies;
 
     final ValueFactory vf = SimpleValueFactory.getInstance();
     final ModelFactory mf = new DynamicModelFactory();
@@ -115,6 +116,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     protected void start(final PolicyManagerConfig config) {
         typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         policyFileTypeIRI = vf.createIRI(PolicyFile.TYPE);
+        protectedPolicies = new HashSet<>(List.of(vf.createIRI("http://mobi.com/policies/admin-user-only-access-versioned-rdf-record")));
 
         try {
             LOG.debug("Setting up policy file directory");
@@ -159,7 +161,14 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
     @Override
     public List<XACMLPolicy> getPolicies(PolicyQueryParams params) {
-        Set<Resource> policyIds = PolicyUtils.findPolicies(params, repository);
+        Stream<Resource> policyIdsStream = PolicyUtils.findPolicies(params, repository).stream();
+        if (params.isSystemOnly()) {
+            policyIdsStream = policyIdsStream.filter(iri -> systemPolicies.contains(iri));
+        }
+        if (params.isSecured()) {
+            policyIdsStream = policyIdsStream.filter(iri -> !protectedPolicies.contains(iri));
+        }
+        Set<Resource> policyIds = policyIdsStream.collect(Collectors.toSet());
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         // If there is a policy cache
         if (cache.isPresent()) {
