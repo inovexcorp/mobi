@@ -1,0 +1,26 @@
+<https://mobi.com/ontologies/ComplexBlankNodeChainDeletion#MainClass> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "MainClass";
+  <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:007af7dc-e552-4326-b96c-2d149cc2c6f8 .
+
+_:007af7dc-e552-4326-b96c-2d149cc2c6f8 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#intersectionOf> _:1e34e602-feec-42da-ab4d-31902d9e3691 .
+
+<https://mobi.com/ontologies/ComplexBlankNodeChainDeletion#SubClass> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "SubClass" .
+
+<https://mobi.com/ontologies/ComplexBlankNodeChainDeletion#SubClass2> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "SubClass2" .
+
+_:1e34e602-feec-42da-ab4d-31902d9e3691 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://mobi.com/ontologies/ComplexBlankNodeChainDeletion#SubClass>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:2aa53b03-a509-4cde-8d90-0dc7d81935f1 .
+
+_:2aa53b03-a509-4cde-8d90-0dc7d81935f1 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:44343830-66bc-440c-9dbf-f1a16d13bcfa;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:44343830-66bc-440c-9dbf-f1a16d13bcfa a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#complementOf> <https://mobi.com/ontologies/ComplexBlankNodeChainDeletion#SubClass2> .
+
+<https://mobi.com/ontologies/ComplexBlankNodeChainDeletion> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/title> "ComplexBlankNodeChainDeletion" .

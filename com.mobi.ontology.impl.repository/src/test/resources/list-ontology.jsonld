@@ -1,93 +1,173 @@
 [
-   {
-      "@id":"_:adc609c451b840f4ab08f8f28e953de920",
-      "@type":[
-         "http://www.w3.org/2002/07/owl#Class"
-      ],
-      "http://www.w3.org/2002/07/owl#unionOf":[
-         {
-            "@list":[
-               {
-                  "@id":"http://mobi.com/ontology/list#ClassA"
-               },
-               {
-                  "@id":"http://mobi.com/ontology/list#ClassB"
-               },
-               {
-                  "@id":"http://mobi.com/ontology/list#ClassC"
-               }
-            ]
-         }
-      ]
-   },
-   {
-      "@id":"_:adc609c451b840f4ab08f8f28e953de924",
-      "@type":[
-         "http://www.w3.org/2000/01/rdf-schema#Datatype"
-      ],
-      "http://www.w3.org/2002/07/owl#oneOf":[
-         {
-            "@list":[
-               {
-                  "@value":"a"
-               },
-               {
-                  "@value":"b"
-               },
-               {
-                  "@value":"c"
-               },
-               {
-                  "@value":"d"
-               }
-            ]
-         }
-      ]
-   },
-   {
-      "@id":"http://mobi.com/ontology/list",
-      "@type":[
-         "http://www.w3.org/2002/07/owl#Ontology"
-      ]
-   },
-   {
-      "@id":"http://mobi.com/ontology/list#ClassA",
-      "@type":[
-         "http://www.w3.org/2002/07/owl#Class"
-      ]
-   },
-   {
-      "@id":"http://mobi.com/ontology/list#ClassB",
-      "@type":[
-         "http://www.w3.org/2002/07/owl#Class"
-      ]
-   },
-   {
-      "@id":"http://mobi.com/ontology/list#ClassC",
-      "@type":[
-         "http://www.w3.org/2002/07/owl#Class"
-      ]
-   },
-   {
-      "@id":"http://mobi.com/ontology/list#ClassD",
-      "@type":[
-         "http://www.w3.org/2002/07/owl#Class"
-      ],
-      "http://www.w3.org/2000/01/rdf-schema#subClassOf":[
-         {
-            "@id":"_:adc609c451b840f4ab08f8f28e953de920"
-         }
-      ]
-   },
-   {
-      "@id":"http://mobi.com/ontology/list#dataPropA",
-      "@type":[
-         "http://www.w3.org/2002/07/owl#DatatypeProperty"
-      ],
-      "http://www.w3.org/2000/01/rdf-schema#range":[
-         {
-            "@id":"_:adc609c451b840f4ab08f8f28e953de924"
-         }
-      ]
-   }
+  {
+    "@id": "",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    "http://www.w3.org/2002/07/owl#unionOf": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#first": [
+      {
+        "@id": "http://mobi.com/ontology/list#ClassA"
+      }
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#first": [
+      {
+        "@id": "http://mobi.com/ontology/list#ClassB"
+      }
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#first": [
+      {
+        "@id": "http://mobi.com/ontology/list#ClassC"
+      }
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest": [
+      {
+        "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "@type": [
+      "http://www.w3.org/2000/01/rdf-schema#Datatype"
+    ],
+    "http://www.w3.org/2002/07/owl#oneOf": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "@type": [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#first": [
+      {
+        "@value": "a"
+      }
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "@type": [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#first": [
+      {
+        "@value": "b"
+      }
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "@type": [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#first": [
+      {
+        "@value": "c"
+      }
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "",
+    "@type": [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#first": [
+      {
+        "@value": "d"
+      }
+    ],
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest": [
+      {
+        "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"
+      }
+    ]
+  },
+  {
+    "@id": "http://mobi.com/ontology/list",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Ontology"
+    ]
+  },
+  {
+    "@id": "http://mobi.com/ontology/list#ClassA",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://mobi.com/ontology/list#ClassB",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://mobi.com/ontology/list#ClassC",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://mobi.com/ontology/list#ClassD",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#subClassOf": [
+      {
+        "@id": ""
+      }
+    ]
+  },
+  {
+    "@id": "http://mobi.com/ontology/list#dataPropA",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#DatatypeProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": ""
+      }
+    ]
+  }
 ]

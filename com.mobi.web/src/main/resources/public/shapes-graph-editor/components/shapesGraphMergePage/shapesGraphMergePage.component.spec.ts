@@ -187,7 +187,7 @@ describe('Shapes Graph Merge Page component', function() {
             it('successfully', fakeAsync(function() {
                 shapesGraphStateStub.getMergeDifferences.and.returnValue(of(null));
                 component.targetHeadCommitId = 'targetCommitId';
-                component.retrieveMoreResults(100, 100);
+                component.retrieveMoreResults({limit: 100, offset: 100});
                 tick();
                 expect(shapesGraphStateStub.getMergeDifferences).toHaveBeenCalledWith('commit1', 'targetCommitId', 100, 100);
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe('Shapes Graph Merge Page component', function() {
             it('unless an error occurs', fakeAsync(function() {
                 shapesGraphStateStub.getMergeDifferences.and.returnValue(throwError('Error'));
                 component.targetHeadCommitId = 'targetCommitId';
-                component.retrieveMoreResults(100, 100);
+                component.retrieveMoreResults({limit: 100, offset: 100});
                 tick();
                 expect(shapesGraphStateStub.getMergeDifferences).toHaveBeenCalledWith('commit1', 'targetCommitId', 100, 100);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');

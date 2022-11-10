@@ -96,8 +96,8 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
             this.state.listItem.merge.difference = undefined;
         }
     }
-    retrieveMoreResults(limit: number, offset: number): void {
-        this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, limit, offset)
+    retrieveMoreResults(event: {limit: number, offset: number}): void {
+        this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, event.limit, event.offset)
             .subscribe(() => {}, this.util.createErrorToast);
     }
     submit(): void {

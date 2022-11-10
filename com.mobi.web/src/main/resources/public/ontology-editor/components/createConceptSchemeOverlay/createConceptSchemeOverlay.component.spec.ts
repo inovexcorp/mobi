@@ -50,7 +50,7 @@ describe('Create Concept Scheme Overlay component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CreateConceptSchemeOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateConceptSchemeOverlayComponent>>;
-    let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
@@ -89,17 +89,18 @@ describe('Create Concept Scheme Overlay component', function() {
     });
 
     beforeEach(function() {
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyStateStub.getDuplicateValidator.and.returnValue(() => null);
         fixture = TestBed.createComponent(CreateConceptSchemeOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
-        ontologyStateServiceStub = TestBed.get(OntologyStateService);
         camelCaseStub = TestBed.get(CamelCasePipe);
 
-        ontologyStateServiceStub.getDefaultPrefix.and.returnValue(iri);
-        ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of([]));
-        ontologyStateServiceStub.listItem = new OntologyListItem();
-        ontologyStateServiceStub.listItem.concepts.iris = {'concept1': 'test'};
+        ontologyStateStub.getDefaultPrefix.and.returnValue(iri);
+        ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
+        ontologyStateStub.listItem = new OntologyListItem();
+        ontologyStateStub.listItem.concepts.iris = {'concept1': 'test'};
         
         splitIRIStub = TestBed.get(SplitIRIPipe);
         splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
@@ -111,14 +112,14 @@ describe('Create Concept Scheme Overlay component', function() {
         element = null;
         fixture = null;
         matDialogRef = null;
-        ontologyStateServiceStub = null;
+        ontologyStateStub = null;
         camelCaseStub = null;
         splitIRIStub = null;
     });
     
     it('initializes with the correct values', function() {
         component.ngOnInit();
-        expect(ontologyStateServiceStub.getDefaultPrefix).toHaveBeenCalledWith();
+        expect(ontologyStateStub.getDefaultPrefix).toHaveBeenCalledWith();
         expect(component.scheme['@id']).toEqual(iri);
         expect(component.scheme['@type']).toEqual([OWL + 'NamedIndividual', SKOS + 'ConceptScheme']);
         expect(component.scheme[SKOS + 'hasTopConcept']).toBeUndefined();
@@ -186,7 +187,7 @@ describe('Create Concept Scheme Overlay component', function() {
             component.onEdit('begin', 'then', 'end');
             expect(component.scheme['@id']).toEqual('begin' + 'then' + 'end');
             expect(component.iriHasChanged).toEqual(true);
-            expect(ontologyStateServiceStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
+            expect(ontologyStateStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept scheme', fakeAsync(function() {
             const schemeIri = 'scheme-iri';
@@ -200,23 +201,23 @@ describe('Create Concept Scheme Overlay component', function() {
                 entityInfo: {label: 'label', names: ['name']},
                 joinedPath: 'path1path2',
             };
-            ontologyStateServiceStub.flattenHierarchy.and.returnValue([hierarchyNode]);
+            ontologyStateStub.flattenHierarchy.and.returnValue([hierarchyNode]);
             component.createForm.controls.iri.setValue(schemeIri);
             component.createForm.controls.title.setValue('label');
             component.createForm.controls.language.setValue('en');
             component.selectedConcepts = ['concept1', 'concept2'];
             component.create();
             component.selectedConcepts.forEach(concept => {
-                expect(ontologyStateServiceStub.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.conceptSchemes, concept, schemeIri);
+                expect(ontologyStateStub.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, concept, schemeIri);
             });
-            expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.scheme);
-            expect(ontologyStateServiceStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.scheme, component.createForm.controls.language.value);
-            expect(ontologyStateServiceStub.listItem.conceptSchemes.iris).toEqual({[schemeIri]: ontologyStateServiceStub.listItem.ontologyId});
-            expect(ontologyStateServiceStub.listItem.conceptSchemes.flat).toEqual([hierarchyNode]);
-            expect(ontologyStateServiceStub.addIndividual).toHaveBeenCalledWith(component.scheme);
-            expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
+            expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.scheme);
+            expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.scheme, component.createForm.controls.language.value);
+            expect(ontologyStateStub.listItem.conceptSchemes.iris).toEqual({[schemeIri]: ontologyStateStub.listItem.ontologyId});
+            expect(ontologyStateStub.listItem.conceptSchemes.flat).toEqual([hierarchyNode]);
+            expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.scheme);
+            expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
             expect(matDialogRef.close).toHaveBeenCalledWith();
-            expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(schemeIri);
+            expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(schemeIri);
         }));
     });
     it('should call cancel when the button is clicked', function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { noop } from 'lodash';
+import { get, noop } from 'lodash';
 import { TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
@@ -312,6 +312,13 @@ describe('Ontology Manager service', function() {
             } else {
                 return throwError(error.statusText || 'Something went wrong. Please try again later.');
             }
+        });
+        utilStub.getErrorDataObject.and.callFake(error => {
+            const statusText = get(error, 'statusText');
+            return {
+                'errorMessage': get(statusText, 'errorMessage') || '',
+                'errorDetails': get(statusText, 'errorDetails') || []
+            };
         });
         utilStub.createHttpParams.and.callFake(params => {
             let httpParams: HttpParams = new HttpParams();

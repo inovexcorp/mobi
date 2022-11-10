@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { forkJoin, throwError, from, Observable, of, Subject, noop } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -102,6 +102,7 @@ import { PolicyManagerService } from './policyManager.service';
 import { ManchesterConverterService } from './manchesterConverter.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { UpdateRefsService } from './updateRefs.service';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 /**
  * @class shared.OntologyStateService
@@ -268,7 +269,18 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     uploadChanges(file: File, recordId: string, branchId: string, commitId: string): Observable<null> {
         return this.om.uploadChangesFile(file, recordId, branchId, commitId)
             .pipe(
-                switchMap(() => this.cm.getInProgressCommit(recordId, this.catalogId)),
+                switchMap((response: HttpResponse<string>) => this.cm.getInProgressCommit(recordId, this.catalogId)),
+                catchError((response: HttpErrorResponse): Observable<string> => {
+                    if (typeof response === 'string'){
+                        return throwError({'errorMessage': response, 'errorDetails': []});
+                    } else if (typeof response === 'object' && 'errorMessage' in response){
+                        return throwError(response);
+                    } else if (response.status === 404) {
+                        return throwError({'errorMessage': 'No changes were found in the uploaded file.', 'errorDetails': []});
+                    } else {
+                        return throwError({'errorMessage': 'Something went wrong. Please try again later.', 'errorDetails': []});
+                    }
+                }),
                 switchMap((commit: Difference) => {
                     const listItem = this.getListItemByRecordId(recordId);
                     listItem.inProgressCommit = commit;
@@ -1657,7 +1669,8 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @returns {boolean} True if the selected IRI is imported; false otherwise
      */
     isSelectedImported(listItem: OntologyListItem = this.listItem): boolean {
-        return this.isImported(get(listItem.selected, '@id', ''), listItem);
+        const iri = get(listItem.selected, '@id', '');
+        return iri ? this.isImported(iri, listItem) : false;
     }
     /**
      * Method to collapse all of the nodes in hierarchy flat list under following tabs: 'classes', 'dataProperties',
@@ -2150,6 +2163,17 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      */
     checkIri(iri: string): boolean {
         return includes(this.listItem.iriList, iri) && iri !== get(this.listItem.selected, '@id');
+    }
+    /**
+     * Creates a form validator that will test whether an IRI already exists in the current {@link OntologyListItem}. If
+     * it does, marks the control as invalid with the `iri` error key.
+     * 
+     * @returns {ValidatorFn} A Validator that marks as invalid if the IRI exists in the ontology
+     */
+    getDuplicateValidator(): ValidatorFn {
+        return (control: AbstractControl): ValidationErrors | null => {
+            return this.checkIri(control.value) ? { iri: true } : null;
+        };
     }
     /**
      * Sets the super classes of the provided class iri to the provided set of class IRIs on the current `listItem`

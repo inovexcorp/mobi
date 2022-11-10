@@ -31,6 +31,7 @@ import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphM
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { UtilService } from '../../../shared/services/util.service';
+import { RESTError } from "../../../shared/models/RESTError.interface";
 
 /**
  * @class shapes-graph-editor.UploadRecordModalComponent
@@ -42,7 +43,11 @@ import { UtilService } from '../../../shared/services/util.service';
     templateUrl: './uploadRecordModal.component.html'
 })
 export class UploadRecordModalComponent {
-    error: any = '';
+    error: RESTError = {
+        error: '',
+        errorDetails: [],
+        errorMessage: ''
+    };
     selectedFile: File;
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
@@ -51,7 +56,6 @@ export class UploadRecordModalComponent {
         @Inject(MAT_DIALOG_DATA) public data: any) {}
 
     uploadChanges(): void {
-        this.error = '';
         const updateParams: RdfUpdate = {
             recordId: this.state.listItem.versionedRdfRecord.recordId,
             file: this.selectedFile,
@@ -66,25 +70,32 @@ export class UploadRecordModalComponent {
         this.sm.uploadChanges(updateParams)
             .then((response) => {
                 if (response.status === 204) {
-                    this.util.createWarningToast('No changes were found in the uploaded file.');
                     return Promise.reject('No changes');
                 }
-                return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise();
+                return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
+                    .pipe(first()).toPromise();
             }, error => {
                 return Promise.reject(error);
             }).then(commit => {
                 this.state.listItem.inProgressCommit.additions = commit.additions;
                 this.state.listItem.inProgressCommit.deletions = commit.deletions;
-                return this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
+                return this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId,
+                    this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
             })
             .then(() => {
                 this.util.createSuccessToast('Record ' + this.state.listItem.versionedRdfRecord.recordId + ' successfully updated.');
                 this.dialogRef.close(true);
             })
             .catch(error => {
-                if (error !== 'No changes') {
+                if (typeof error === 'string') {
+                    this.error = {
+                        error: '',
+                        errorDetails: [],
+                        errorMessage: error
+                    };
+                } else {
                     this.error = error;
                 }
             });
-        }
+    }
 }

@@ -4,7 +4,13 @@ prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 select ?s
 where {
-    values ?type {owl:Class rdfs:Class}
-    ?class rdf:type ?type .
-    ?s rdf:type ?class .
+    {
+        ?class rdf:type owl:Class .
+        ?s rdf:type ?class .
+    }
+    UNION
+    {
+        ?class rdf:type rdfs:Class .
+        ?s rdf:type ?class .
+    }
 }

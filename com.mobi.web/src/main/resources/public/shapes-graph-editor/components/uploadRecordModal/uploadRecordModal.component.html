@@ -22,7 +22,7 @@
   -->
 <div class="upload-shapes-graph-record-changes-modal">
     <h1 mat-dialog-title>Upload Shapes Graph Changes</h1>
-    <error-display *ngIf="error.errorMessage">
+    <error-display *ngIf="error && error.errorMessage">
         {{error.errorMessage}}
         <ul>
             <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">

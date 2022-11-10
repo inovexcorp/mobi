@@ -51,7 +51,7 @@ describe('Create Data Property Overlay component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CreateDataPropertyOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateDataPropertyOverlayComponent>>;
-    let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
@@ -90,16 +90,17 @@ describe('Create Data Property Overlay component', function() {
     });
 
     beforeEach(function() {
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyStateStub.getDuplicateValidator.and.returnValue(() => null);
         fixture = TestBed.createComponent(CreateDataPropertyOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
-        ontologyStateServiceStub = TestBed.get(OntologyStateService);
         camelCaseStub = TestBed.get(CamelCasePipe);
 
-        ontologyStateServiceStub.getDefaultPrefix.and.returnValue(iri);
-        ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of([]));
-        ontologyStateServiceStub.listItem = new OntologyListItem();
+        ontologyStateStub.getDefaultPrefix.and.returnValue(iri);
+        ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
+        ontologyStateStub.listItem = new OntologyListItem();
 
         splitIRIStub = TestBed.get(SplitIRIPipe);
         splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
@@ -111,14 +112,14 @@ describe('Create Data Property Overlay component', function() {
         element = null;
         fixture = null;
         matDialogRef = null;
-        ontologyStateServiceStub = null;
+        ontologyStateStub = null;
         camelCaseStub = null;
         splitIRIStub = null;
     });
 
     it('initializes with the correct values', function() {
         component.ngOnInit();
-        expect(ontologyStateServiceStub.getDefaultPrefix).toHaveBeenCalledWith();
+        expect(ontologyStateStub.getDefaultPrefix).toHaveBeenCalledWith();
         expect(component.property['@id']).toEqual(iri);
         expect(component.property['@type']).toEqual([OWL + 'DatatypeProperty']);
         expect(component.property[DCTERMS + 'title']).toEqual([{'@value': ''}]);
@@ -189,7 +190,7 @@ describe('Create Data Property Overlay component', function() {
             component.onEdit('begin', 'then', 'end');
             expect(component.property['@id']).toEqual('begin' + 'then' + 'end');
             expect(component.iriHasChanged).toEqual(true);
-            expect(ontologyStateServiceStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
+            expect(ontologyStateStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('create calls the correct manager functions', function() {
             const propIri = 'property-iri';
@@ -202,12 +203,12 @@ describe('Create Data Property Overlay component', function() {
                 joinedPath: 'path1path2',
             };
             beforeEach(function() {
-                ontologyStateServiceStub.flattenHierarchy.and.returnValue([hierarchyNode]);
+                ontologyStateStub.flattenHierarchy.and.returnValue([hierarchyNode]);
                 component.createForm.controls.iri.setValue(propIri);
                 component.createForm.controls.title.setValue('label');
                 component.createForm.controls.description.setValue('description');
                 component.createForm.controls.language.setValue('en');
-                ontologyStateServiceStub.createFlatEverythingTree.and.returnValue([hierarchyNode]);
+                ontologyStateStub.createFlatEverythingTree.and.returnValue([hierarchyNode]);
             });
             it('and sets the domains and ranges', fakeAsync(function() {
                 component.selectedDomains = ['domain'];
@@ -217,48 +218,48 @@ describe('Create Data Property Overlay component', function() {
                 expect(component.property[DCTERMS + 'description']).toEqual([{'@value': 'description'}]);
                 expect(component.property[RDFS + 'domain']).toEqual([{'@id': 'domain'}]);
                 expect(component.property[RDFS + 'range']).toEqual([{'@id': 'range'}]);
-                expect(ontologyStateServiceStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
-                expect(ontologyStateServiceStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
-                expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.property);
-                expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.property);
-                expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
+                expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
+                expect(ontologyStateStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
+                expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.property);
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.property);
+                expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
-                expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(propIri);
+                expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(propIri);
             }));
             describe('if super properties', function() {
                 it('are not set', fakeAsync(function() {
                     component.create();
                     tick();
-                    expect(ontologyStateServiceStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
-                    expect(ontologyStateServiceStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
-                    expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.property);
-                    expect(ontologyStateServiceStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateServiceStub.listItem);
-                    expect(ontologyStateServiceStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
-                    expect(ontologyStateServiceStub.listItem.dataProperties.iris).toEqual({[propIri]: ontologyStateServiceStub.listItem.ontologyId});
-                    expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.property);
-                    expect(ontologyStateServiceStub.handleNewProperty).toHaveBeenCalledWith(component.property);
-                    expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
+                    expect(ontologyStateStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
+                    expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.property);
+                    expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
+                    expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
+                    expect(ontologyStateStub.listItem.dataProperties.iris).toEqual({[propIri]: ontologyStateStub.listItem.ontologyId});
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.property);
+                    expect(ontologyStateStub.handleNewProperty).toHaveBeenCalledWith(component.property);
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(matDialogRef.close).toHaveBeenCalledWith();
-                    expect(ontologyStateServiceStub.flattenHierarchy).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.dataProperties);
-                    expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(propIri);
+                    expect(ontologyStateStub.flattenHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.dataProperties);
+                    expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(propIri);
                 }));
                 it('are set', fakeAsync(function() {
                     component.selectedSubProperties = [{'@id': 'propertyA'}];
                     component.create();
                     tick();
-                    expect(ontologyStateServiceStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
-                    expect(ontologyStateServiceStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
-                    expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.property);
-                    expect(ontologyStateServiceStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateServiceStub.listItem);
-                    expect(ontologyStateServiceStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
-                    expect(ontologyStateServiceStub.listItem.dataProperties.iris).toEqual({[propIri]: ontologyStateServiceStub.listItem.ontologyId});
-                    expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.property);
-                    expect(ontologyStateServiceStub.handleNewProperty).toHaveBeenCalledWith(component.property);
-                    expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
+                    expect(ontologyStateStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
+                    expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.property);
+                    expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
+                    expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
+                    expect(ontologyStateStub.listItem.dataProperties.iris).toEqual({[propIri]: ontologyStateStub.listItem.ontologyId});
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.property);
+                    expect(ontologyStateStub.handleNewProperty).toHaveBeenCalledWith(component.property);
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                     expect(component.property[RDFS + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);
-                    expect(ontologyStateServiceStub.setSuperProperties).toHaveBeenCalledWith(propIri, ['propertyA'], 'dataProperties');
-                    expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(propIri);
+                    expect(ontologyStateStub.setSuperProperties).toHaveBeenCalledWith(propIri, ['propertyA'], 'dataProperties');
+                    expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(propIri);
                 }));
             });
             describe('if characteristics', function() {
@@ -269,13 +270,13 @@ describe('Create Data Property Overlay component', function() {
                     component.create();
                     tick();
                     expect(component.property['@type'].includes(OWL + 'FunctionalProperty')).toEqual(true);
-                    expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(propIri);
+                    expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(propIri);
                 }));
                 it('are not set', fakeAsync(function() {
                     component.create();
                     tick();
                     expect(component.property['@type'].includes(OWL + 'FunctionalProperty')).toEqual(false);
-                    expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(propIri);
+                    expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(propIri);
                 }));
             });
         });

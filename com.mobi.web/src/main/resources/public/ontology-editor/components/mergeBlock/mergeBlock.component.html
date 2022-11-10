@@ -38,13 +38,13 @@
                                   [targetId]="targetHeadCommitId"
                                   [difference]="os.listItem.merge.difference"
                                   [entityNameFunc]="getEntityName.bind(this)"
-                                  (showMoreResultsFunc)="retrieveMoreResults.bind(this)"
+                                  (showMoreResultsFunc)="retrieveMoreResults($event)"
                                   [startIndex]="os.listItem.merge.startIndex"
                                   [recordId]="os.listItem.versionedRdfRecord.recordId"
-                                  (receiveCommits)="commits = $event"></commit-difference-tabset>
+                                  (receiveCommits)="receiveCommits($event)"></commit-difference-tabset>
     </div>
     <div class="btn-container pt-2">
-        <button class="btn btn-primary float-right" (click)="submit()" [disabled]="isDisabled() || !os.listItem.merge.target || !os.listItem.upToDate">Submit</button>
+        <button class="btn btn-primary float-right" (click)="submit()" [disabled]="!(commits.length > 0) || !os.listItem.merge.target || !os.listItem.upToDate">Submit</button>
         <button class="btn float-right mr-2" (click)="os.cancelMerge()">Cancel</button>
     </div>
 </div>

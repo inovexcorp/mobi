@@ -205,7 +205,7 @@
             <dependency>
                 <groupId>com.github.jsonld-java</groupId>
                 <artifactId>jsonld-java</artifactId>
-                <version>0.13.5-MOBI</version>
+                <version>0.13.5.1-MOBI</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.httpcomponents</groupId>

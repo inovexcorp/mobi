@@ -31,7 +31,7 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { REST_PREFIX } from '../../constants';
 import { DC, DCTERMS, ONTOLOGYEDITOR, OWL, RDFS, SKOS, SKOSXL } from '../../prefixes';
 import { OntologyRecordConfig } from '../models/ontologyRecordConfig.interface';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { PropertyToRanges } from '../models/propertyToRanges.interface';
@@ -130,8 +130,7 @@ export class OntologyManagerService {
      * @return {Observable} HTTP OK unless there was an error.
      * 
      */
-   
-    uploadChangesFile(file: File, recordId: string, branchId: string, commitId: string): Observable<null> {
+    uploadChangesFile(file: File, recordId: string, branchId: string, commitId: string): Observable<HttpResponse<string>> {
         const fd = new FormData();
         fd.append('file', file);
         let headers = new HttpHeaders;
@@ -144,7 +143,16 @@ export class OntologyManagerService {
             observe: 'response',
             headers,
             params: this.util.createHttpParams(params)
-        })).pipe(catchError(this.util.handleError));
+        })).pipe(
+            catchError((error: HttpErrorResponse): Observable<ErrorResponse> => {
+                if (error.status === 0) {
+                    return throwError({'errorMessage': 'Something went wrong. Please try again later.', 'errorDetails': []});
+                } else {
+                    return throwError(this.util.getErrorDataObject(error));
+                }
+            }),
+            map((response: HttpResponse<string>) => response)
+        );
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId} endpoint which retrieves an ontology in the provided
