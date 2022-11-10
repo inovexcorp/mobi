@@ -32,6 +32,7 @@ import { CATALOG } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
 
 import './mergeBlock.component.scss';
+import { Commit } from '../../../shared/models/commit.interface';
 
 /**
  * @class ontology-editor.MergeBlockComponent
@@ -63,7 +64,6 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
         this.branches = reject(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
         const branch = find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
         this.branchTitle = this.util.getDctermsValue(branch, 'title');
-
         this.changeTarget(undefined);
     }
     ngOnDestroy(): void {
@@ -93,15 +93,14 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
             ).subscribe(noop, errorMessage => {
                     this.util.createErrorToast(errorMessage);
                     this.os.listItem.merge.difference = undefined;
-                    // throwError(errorMessage);
                     return throwError(errorMessage);
             });
         } else {
             this.os.listItem.merge.difference = undefined;
         }
     }
-    retrieveMoreResults(limit: number, offset: number): void {
-        this.os.getMergeDifferences(this.os.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, limit, offset).subscribe(noop, this.util.createErrorToast);
+    retrieveMoreResults(event: {limit: number, offset: number}): void {
+        this.os.getMergeDifferences(this.os.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, event.limit, event.offset).subscribe(noop, this.util.createErrorToast);
     }
     submit(): void {
         this.os.attemptMerge()
@@ -111,10 +110,8 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
                 this.os.cancelMerge();
             }, error => this.error = error);
     }
-    isDisabled(): boolean {
-        return !(this.commits.length > 0);
-    }
-    setCommits(value): void {
+    receiveCommits(value: Commit[]){
         this.commits = value;
     }
+
 }

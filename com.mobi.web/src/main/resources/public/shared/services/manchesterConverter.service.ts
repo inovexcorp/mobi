@@ -277,6 +277,8 @@ export class ManchesterConverterService {
                     result += this._getValue(rest['@list'][0], jsonld, index, html);
                 }
                 end = true;
+            } else if (rest['@id'] === RDF + 'nil') {
+                end = true;
             } else {
                 result += listKeyword;
                 id = rest['@id'];

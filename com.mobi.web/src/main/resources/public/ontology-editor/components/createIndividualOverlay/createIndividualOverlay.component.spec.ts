@@ -46,7 +46,7 @@ describe('Create Individual Overlay component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CreateIndividualOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateIndividualOverlayComponent>>;
-    let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
@@ -81,16 +81,17 @@ describe('Create Individual Overlay component', function() {
     });
 
     beforeEach(function() {
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyStateStub.getDuplicateValidator.and.returnValue(() => null);
         fixture = TestBed.createComponent(CreateIndividualOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
-        ontologyStateServiceStub = TestBed.get(OntologyStateService);
         camelCaseStub = TestBed.get(CamelCasePipe);
 
-        ontologyStateServiceStub.getDefaultPrefix.and.returnValue(iri);
-        ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of([]));
-        ontologyStateServiceStub.listItem = new OntologyListItem();
+        ontologyStateStub.getDefaultPrefix.and.returnValue(iri);
+        ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
+        ontologyStateStub.listItem = new OntologyListItem();
 
         splitIRIStub = TestBed.get(SplitIRIPipe);
         splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
@@ -102,14 +103,14 @@ describe('Create Individual Overlay component', function() {
         element = null;
         fixture = null;
         matDialogRef = null;
-        ontologyStateServiceStub = null;
+        ontologyStateStub = null;
         camelCaseStub = null;
         splitIRIStub = null;
     });
     
     it('initializes with the correct values', function() {
         component.ngOnInit();
-        expect(ontologyStateServiceStub.getDefaultPrefix).toHaveBeenCalledWith();
+        expect(ontologyStateStub.getDefaultPrefix).toHaveBeenCalledWith();
         expect(component.individual['@id']).toEqual(iri);
         expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual']);
         expect(component.individual[DCTERMS + 'title']).toEqual([{'@value': ''}]);
@@ -170,7 +171,7 @@ describe('Create Individual Overlay component', function() {
             component.onEdit('begin', 'then', 'end');
             expect(component.iriHasChanged).toEqual(true);
             expect(component.individual['@id']).toEqual('begin' + 'then' + 'end');
-            expect(ontologyStateServiceStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
+            expect(ontologyStateStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('should create an individual', function() {
             const indvIri = 'individual-iri';
@@ -180,45 +181,45 @@ describe('Create Individual Overlay component', function() {
                 component.createForm.controls.title.setValue('label');
             });
             it('if it is a derived concept', fakeAsync(function() {
-                ontologyStateServiceStub.containsDerivedConcept.and.returnValue(true);
+                ontologyStateStub.containsDerivedConcept.and.returnValue(true);
                 component.create();
                 tick();
-                expect(ontologyStateServiceStub.addIndividual).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.individual);
                 expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual', 'ClassA']);
-                expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.individual);
-                expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.individual);
-                expect(ontologyStateServiceStub.addConcept).toHaveBeenCalledWith(component.individual);
-                expect(ontologyStateServiceStub.addConceptScheme).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
+                expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.individual);
+                expect(ontologyStateStub.addConcept).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.addConceptScheme).not.toHaveBeenCalled();
+                expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
-                expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(indvIri);
+                expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(indvIri);
             }));
             it('if it is a derived conceptScheme', fakeAsync(function() {
-                ontologyStateServiceStub.containsDerivedConceptScheme.and.returnValue(true);
+                ontologyStateStub.containsDerivedConceptScheme.and.returnValue(true);
                 component.create();
                 tick();
-                expect(ontologyStateServiceStub.addIndividual).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.individual);
                 expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual', 'ClassA']);
-                expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.individual);
-                expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.individual);
-                expect(ontologyStateServiceStub.addConcept).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.addConceptScheme).toHaveBeenCalledWith(component.individual);
-                expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
+                expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.individual);
+                expect(ontologyStateStub.addConcept).not.toHaveBeenCalled();
+                expect(ontologyStateStub.addConceptScheme).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
-                expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(indvIri);
+                expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(indvIri);
             }));
             it('if it is not a derived concept or a concept', fakeAsync(function() {
                 component.create();
                 tick();
-                expect(ontologyStateServiceStub.addIndividual).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.individual);
                 expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual', 'ClassA']);
-                expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.individual);
-                expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.individual);
-                expect(ontologyStateServiceStub.addConcept).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.addConceptScheme).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
+                expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.individual);
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.individual);
+                expect(ontologyStateStub.addConcept).not.toHaveBeenCalled();
+                expect(ontologyStateStub.addConceptScheme).not.toHaveBeenCalled();
+                expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
-                expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(indvIri);
+                expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(indvIri);
             }));
         });
     });

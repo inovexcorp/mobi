@@ -260,6 +260,7 @@ describe('Ontology Tab component', function() {
     describe('contains the correct html', function() {
         beforeEach(function() {
             ontologyStateStub.listItem.versionedRdfRecord.branchId = branchId;
+            ontologyStateStub.listItem.isVocabulary = true;
             fixture.detectChanges();
         });
         it('for wrapping containers', function() {

@@ -430,7 +430,7 @@ describe('Ontology State Service', function() {
                 catalogManagerStub.getInProgressCommit.and.returnValue(throwError(error));
                 listItem.upToDate = true;
                 service.uploadChanges(this.fileObj, recordId, branchId, commitId).subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual({ errorMessage: error, errorDetails: [  ] });
                 });
                 tick();
                 expect(ontologyManagerStub.uploadChangesFile).toHaveBeenCalledWith(this.fileObj, recordId, branchId, commitId);
@@ -440,7 +440,7 @@ describe('Ontology State Service', function() {
         it('when uploadChangesFile rejects', fakeAsync(function() {
             ontologyManagerStub.uploadChangesFile.and.returnValue(throwError(error));
             service.uploadChanges(this.fileObj, recordId, branchId, commitId).subscribe(() => fail('Observable should have rejected'), response => {
-                expect(response).toEqual(error);
+                expect(response).toEqual({ errorMessage: error, errorDetails: [  ] });
             });
             tick();
             expect(ontologyManagerStub.uploadChangesFile).toHaveBeenCalledWith(this.fileObj, recordId, branchId, commitId);
@@ -3404,9 +3404,9 @@ describe('Ontology State Service', function() {
         });
         it('listItem.selected is undefined', function() {
             delete listItem.selected;
-            spyOn(service, 'isImported').and.returnValue(true);
-            expect(service.isSelectedImported(listItem)).toBe(true);
-            expect(service.isImported).toHaveBeenCalledWith('', listItem);
+            spyOn(service, 'isImported');
+            expect(service.isSelectedImported(listItem)).toBe(false);
+            expect(service.isImported).not.toHaveBeenCalled();
         });
     });
     // TODO: test for collapseFlatLists

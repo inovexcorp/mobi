@@ -50,7 +50,7 @@ describe('Create Class Overlay component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CreateClassOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateClassOverlayComponent>>;
-    let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
     let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
@@ -86,17 +86,18 @@ describe('Create Class Overlay component', function() {
     });
 
     beforeEach(function() {
+        ontologyStateStub = TestBed.get(OntologyStateService);
+        ontologyStateStub.getDuplicateValidator.and.returnValue(() => null);
         fixture = TestBed.createComponent(CreateClassOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
-        ontologyStateServiceStub = TestBed.get(OntologyStateService);
         camelCaseStub = TestBed.get(CamelCasePipe);
         splitIRIStub = TestBed.get(SplitIRIPipe);
         
-        ontologyStateServiceStub.getDefaultPrefix.and.returnValue(iri);
-        ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of([]));
-        ontologyStateServiceStub.listItem = new OntologyListItem();
+        ontologyStateStub.getDefaultPrefix.and.returnValue(iri);
+        ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
+        ontologyStateStub.listItem = new OntologyListItem();
 
         splitIRIStub = TestBed.get(SplitIRIPipe);
         splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
@@ -108,14 +109,14 @@ describe('Create Class Overlay component', function() {
         element = null;
         fixture = null;
         matDialogRef = null;
-        ontologyStateServiceStub = null;
+        ontologyStateStub = null;
         camelCaseStub = null;
         splitIRIStub = null;
     });
 
     it('initializes with the correct values', function() {
         component.ngOnInit();
-        expect(ontologyStateServiceStub.getDefaultPrefix).toHaveBeenCalledWith();
+        expect(ontologyStateStub.getDefaultPrefix).toHaveBeenCalledWith();
         expect(component.clazz['@id']).toEqual(iri);
         expect(component.clazz['@type']).toEqual([OWL + 'Class']);
         expect(component.clazz[DCTERMS + 'title']).toEqual([{'@value': ''}]);
@@ -176,7 +177,7 @@ describe('Create Class Overlay component', function() {
             component.onEdit('begin', 'then', 'end');
             expect(component.clazz['@id']).toEqual('begin' + 'then' + 'end');
             expect(component.iriHasChanged).toEqual(true);
-            expect(ontologyStateServiceStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
+            expect(ontologyStateStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('create calls the correct manager functions when super classes', function() {
             const classIri = 'class-iri';
@@ -191,8 +192,8 @@ describe('Create Class Overlay component', function() {
             beforeEach(function() {
                 spyOn(component, 'nameChanged');
                 component.ngOnInit();
-                ontologyStateServiceStub.createFlatEverythingTree.and.returnValue([hierarchyNode]);
-                ontologyStateServiceStub.flattenHierarchy.and.returnValue([hierarchyNode]);
+                ontologyStateStub.createFlatEverythingTree.and.returnValue([hierarchyNode]);
+                ontologyStateStub.flattenHierarchy.and.returnValue([hierarchyNode]);
                 component.createForm.controls.iri.setValue(classIri);
                 component.createForm.controls.title.setValue('label');
                 component.createForm.controls.description.setValue('description');
@@ -201,55 +202,55 @@ describe('Create Class Overlay component', function() {
             it('are not set', fakeAsync(function() {
                 component.create();
                 tick();
-                expect(ontologyStateServiceStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
-                expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.clazz);
-                expect(ontologyStateServiceStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateServiceStub.listItem);
-                expect(ontologyStateServiceStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
-                expect(ontologyStateServiceStub.addToClassIRIs).toHaveBeenCalledWith(ontologyStateServiceStub.listItem, classIri);
-                expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.clazz);
-                expect(ontologyStateServiceStub.flattenHierarchy).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.classes);
-                expect(ontologyStateServiceStub.listItem.classes.flat).toEqual([hierarchyNode]);
+                expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
+                expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.clazz);
+                expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
+                expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
+                expect(ontologyStateStub.addToClassIRIs).toHaveBeenCalledWith(ontologyStateStub.listItem, classIri);
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.clazz);
+                expect(ontologyStateStub.flattenHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.classes);
+                expect(ontologyStateStub.listItem.classes.flat).toEqual([hierarchyNode]);
                 expect(matDialogRef.close).toHaveBeenCalledWith();
-                expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
-                expect(ontologyStateServiceStub.setSuperClasses).not.toHaveBeenCalled();
-                expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(classIri);
+                expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+                expect(ontologyStateStub.setSuperClasses).not.toHaveBeenCalled();
+                expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(classIri);
             }));
             describe('are set', function() {
                 beforeEach(function () {
                     component.selectedClasses = [{'@id': 'classA'}];
                 });
                 it('including a derived concept', fakeAsync(function() {
-                    ontologyStateServiceStub.containsDerivedConcept.and.returnValue(true);
+                    ontologyStateStub.containsDerivedConcept.and.returnValue(true);
                     component.create();
                     tick();
-                    expect(ontologyStateServiceStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
-                    expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.clazz);
-                    expect(ontologyStateServiceStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateServiceStub.listItem);
-                    expect(ontologyStateServiceStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
-                    expect(ontologyStateServiceStub.addToClassIRIs).toHaveBeenCalledWith(ontologyStateServiceStub.listItem, classIri);
-                    expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.clazz);
-                    expect(ontologyStateServiceStub.flattenHierarchy).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
+                    expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.clazz);
+                    expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
+                    expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
+                    expect(ontologyStateStub.addToClassIRIs).toHaveBeenCalledWith(ontologyStateStub.listItem, classIri);
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.clazz);
+                    expect(ontologyStateStub.flattenHierarchy).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith();
-                    expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(ontologyStateServiceStub.listItem.derivedConcepts).toContain(classIri);
-                    expect(ontologyStateServiceStub.setSuperClasses).toHaveBeenCalledWith(classIri, ['classA']);
-                    expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(classIri);
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(ontologyStateStub.listItem.derivedConcepts).toContain(classIri);
+                    expect(ontologyStateStub.setSuperClasses).toHaveBeenCalledWith(classIri, ['classA']);
+                    expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(classIri);
                 }));
                 it('without a derived concept',fakeAsync( function() {
                     component.create();
                     tick();
-                    expect(ontologyStateServiceStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
-                    expect(ontologyStateServiceStub.addEntity).toHaveBeenCalledWith(component.clazz);
-                    expect(ontologyStateServiceStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateServiceStub.listItem);
-                    expect(ontologyStateServiceStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
-                    expect(ontologyStateServiceStub.addToClassIRIs).toHaveBeenCalledWith(ontologyStateServiceStub.listItem, classIri);
-                    expect(ontologyStateServiceStub.addToAdditions).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, component.clazz);
-                    expect(ontologyStateServiceStub.flattenHierarchy).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
+                    expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.clazz);
+                    expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
+                    expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
+                    expect(ontologyStateStub.addToClassIRIs).toHaveBeenCalledWith(ontologyStateStub.listItem, classIri);
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.clazz);
+                    expect(ontologyStateStub.flattenHierarchy).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith();
-                    expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(ontologyStateServiceStub.listItem.derivedConcepts).toEqual([]);
-                    expect(ontologyStateServiceStub.setSuperClasses).toHaveBeenCalledWith(classIri, ['classA']);
-                    expect(ontologyStateServiceStub.openSnackbar).toHaveBeenCalledWith(classIri);
+                    expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+                    expect(ontologyStateStub.listItem.derivedConcepts).toEqual([]);
+                    expect(ontologyStateStub.setSuperClasses).toHaveBeenCalledWith(classIri, ['classA']);
+                    expect(ontologyStateStub.openSnackbar).toHaveBeenCalledWith(classIri);
                 }));
             });
         });

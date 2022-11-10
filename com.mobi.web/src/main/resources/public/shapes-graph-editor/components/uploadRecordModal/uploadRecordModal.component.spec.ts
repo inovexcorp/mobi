@@ -21,7 +21,7 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { MatChipsModule } from '@angular/material/chips';
@@ -161,20 +161,23 @@ describe('Upload Record Modal component', function() {
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             });
-            it('unless there are no changes in the uploaded file', async function() {
+            it('unless there are no changes in the uploaded file', fakeAsync (function() {
+                fixture.detectChanges();
                 component.selectedFile = file;
                 shapesGraphManagerStub.uploadChanges.and.resolveTo({status: 204});
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
                 component.uploadChanges();
                 fixture.detectChanges();
-                await fixture.whenStable();
+                tick(500);
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                console.log(component.error)
+                expect(component.error).toEqual({error: '', errorDetails: [], errorMessage: 'No changes'});
                 expect(matDialogRef.close).not.toHaveBeenCalled();
-            });
+            }));
         });
     });
     describe('contains the correct html', function() {

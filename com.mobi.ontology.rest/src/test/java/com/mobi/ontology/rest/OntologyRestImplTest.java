@@ -5933,8 +5933,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         }
 
         try {
-            // TODO: JSONLDWriter condenses the last list item for the two lists and does not respect the skolemization
-            Assert.assertEquals(results.size(), expectedResults.size() - 2);
+            Assert.assertEquals(results.size(), expectedResults.size());
 //            Assert.assertEquals(results, expectedResults);
         } catch (AssertionError e) {
             printModel("Expected Results", expectedResults);
@@ -5956,9 +5955,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         }
 
         try {
-            // TODO: JSONLDWriter condenses the last list item for the one list and does not respect the skolemization
-            Assert.assertEquals(results.size(), expectedResults.size() - 1);
-//            Assert.assertEquals(expectedResults, results);
+            Assert.assertEquals(results.size(), expectedResults.size());
         } catch (AssertionError e) {
             printModel("Expected Results", expectedResults);
             printModel("Actual Results", results);

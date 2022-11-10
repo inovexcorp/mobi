@@ -50,12 +50,12 @@
                     <individuals-tab></individuals-tab>
                 </ng-template>
             </mat-tab>
-            <mat-tab label="Schemes" [aria-labelledby]="!os.listItem.isVocabulary ? 'hidden' : undefined">
+            <mat-tab *ngIf="os.listItem.isVocabulary" label="Schemes">
                 <ng-template matTabContent>
                     <concept-schemes-tab></concept-schemes-tab>
                 </ng-template>
             </mat-tab>
-            <mat-tab label="Concepts" [aria-labelledby]="!os.listItem.isVocabulary ? 'hidden' : undefined">
+            <mat-tab *ngIf="os.listItem.isVocabulary" label="Concepts">
                 <ng-template matTabContent>
                     <concepts-tab></concepts-tab>
                 </ng-template>

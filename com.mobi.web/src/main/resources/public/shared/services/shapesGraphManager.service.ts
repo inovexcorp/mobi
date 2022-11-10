@@ -120,7 +120,7 @@ export class ShapesGraphManagerService {
         if (rdfUpdate.replaceInProgressCommit) {
             fd.append('replaceInProgressCommit', rdfUpdate.replaceInProgressCommit ? 'true' : 'false');
         }
-        return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, { observe: 'response'})).toPromise().then((response: any) => response, this.util.rejectErrorObject);
+        return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, { observe: 'response'})).toPromise().then((response: any) => response, this.util.rejectErrorObject.bind(this.util));
     }
 
     /**

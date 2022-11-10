@@ -32,6 +32,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
 interface CharacteristicI {
     typeIRI: string;
@@ -69,8 +70,8 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
     selectedSubProperties: JSONLDId[] = [];
    
     createForm = this.fb.group({
-        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
-        title: ['', [ Validators.required]],
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
+        title: ['', [ Validators.required, noWhitespaceValidator()]],
         description: [''],
         language: [''],
         characteristics: this.fb.array(this.characteristics.map(() => false))

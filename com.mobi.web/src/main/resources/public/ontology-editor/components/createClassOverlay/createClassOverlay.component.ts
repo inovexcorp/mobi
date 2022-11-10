@@ -33,6 +33,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
 /**
  * @class ontology-editor.CreateClassOverlayComponent
@@ -55,8 +56,8 @@ export class CreateClassOverlayComponent implements OnInit {
     selectedClasses: JSONLDId[] = [];
     
     createForm = this.fb.group({
-        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
-        title: ['', [ Validators.required]],
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
+        title: ['', [ Validators.required, noWhitespaceValidator()]],
         description: [''],
         language: ['']
     });

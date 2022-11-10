@@ -88,7 +88,7 @@ export class StaticIriComponent implements OnInit, OnChanges {
             dataObj.validator = (g: FormGroup) => {
                 const fullIRI = g.get('iriBegin').value + g.get('iriThen').value + g.get('iriEnd').value;
                 // If the IRI doesn't exist in the ontology and isn't the original input IRI, then it's valid
-                return !this.os.checkIri(fullIRI) && fullIRI !== this.iri ? null : { iri: true };
+                return fullIRI === this.iri || !this.os.checkIri(fullIRI) ? null : { iri: true };
             };
             dataObj.validatorMsg = 'This IRI already exists';
             dataObj.validatorKey = 'iri';

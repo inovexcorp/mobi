@@ -30,6 +30,7 @@ import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
 /**
  * @class ontology-editor.CreateIndividualOverlayComponent
@@ -51,8 +52,8 @@ export class CreateIndividualOverlayComponent implements OnInit {
     classes: string[] = [];
     
     createForm = this.fb.group({
-        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
-        title: ['', [ Validators.required]],
+        iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
+        title: ['', [ Validators.required, noWhitespaceValidator()]],
     });
     
     constructor(private fb: FormBuilder,
