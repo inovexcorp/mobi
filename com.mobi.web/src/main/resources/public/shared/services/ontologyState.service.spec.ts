@@ -2592,6 +2592,7 @@ describe('Ontology State Service', function() {
             path: [recordId, 'otherIRI', 'andAnotherIRI', 'iri'],
             joinedPath: recordId + '.otherIRI.andAnotherIRI.iri',
             hasChildren: false,
+            toggledClosed: true,
             entityInfo: undefined
         };
         const tab = 'classes';

@@ -83,6 +83,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
     preFilteredHierarchy = [];
     midFilteredHierarchy = [];
     activeTab = '';
+    neverToggled = false;
     dropdownFilterActive = false;
     dropdownFilters: HierarchyFilterI[] = [];
     activeEntityFilter: HierarchyFilterI;
@@ -156,8 +157,29 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
     toggleOpen(node: HierarchyNode): void {
         node.isOpened = !node.isOpened;
         node.isOpened ? this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = true : delete this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
-        this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this));
+        if (!node.isOpened) {
+            this.collapseChildren(node.joinedPath);
+        } else {
+            this.expandChildren(node.joinedPath);
+        }
+        this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this, Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0));
         this.datasource.adapter.reload(this.datasource.adapter.firstVisible.$index);
+    }
+    collapseChildren(nodeJoinedPath: string): void {
+        this.preFilteredHierarchy = filter(this.preFilteredHierarchy, aNode => {
+            if (aNode.joinedPath.startsWith(nodeJoinedPath)) {
+                aNode.toggledClosed = true;
+            }
+            return true;
+        });
+    }
+    expandChildren(nodeJoinedPath: string): void {
+        this.preFilteredHierarchy = filter(this.preFilteredHierarchy, aNode => {
+            if (aNode.joinedPath.startsWith(nodeJoinedPath)) {
+                aNode.toggledClosed = false;
+            }
+            return true;
+        });
     }
     matchesSearchFilter(node: HierarchyNode): boolean {
         let searchMatch = false;
@@ -188,6 +210,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         delete node.displayNode;
 
         if (this.filterText || this.dropdownFilterActive) {
+            delete node.toggledClosed;
             delete node.isOpened;
             let match = false;
             
@@ -219,8 +242,8 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
             this.os.listItem.editorTabStates[this.activeTab].open[fullPath] = true;
         }
     }
-    isShown(node: HierarchyNode): boolean {
-        const displayNode = (node.indent > 0 && this.os.areParentsOpen(node, this.activeTab)) || node.indent === 0;
+    isShown(hasOpenedNodes: boolean, node: HierarchyNode): boolean {
+        const displayNode = node.indent === 0 || hasOpenedNodes && node.indent > 0 && this.os.areParentsOpen(node, this.activeTab);
         if ((this.dropdownFilterActive || this.filterText) && node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
@@ -230,7 +253,10 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         }
         return displayNode;
     }
-    openEntities(node: HierarchyNode): boolean {
+    openEntities(hasOpenedNodes: boolean, node: HierarchyNode): boolean {
+        if (!hasOpenedNodes) {
+            return true;
+        }
         const toOpen = this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
         if (toOpen) {
             if (!node.isOpened) {
@@ -247,8 +273,8 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         }
         this.updateSearch.emit(this.filterText);
         this.preFilteredHierarchy = this.hierarchy.filter(this.searchFilter.bind(this));
-        this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
-        this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
+        this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this, Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0));
+        this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this, Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0));
         let selectedIndex;
         if (this.os.listItem.selected) {
             selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
