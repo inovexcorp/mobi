@@ -1378,6 +1378,19 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
         return result;
     }
+    
+    /**
+     * Tests whether the direct parent node of the provided HierarchyNode is open within the hierarchy of the provided
+     * tab in the current `listItem`.
+     * 
+     * @param {HierarchyNode} node The HierarchyNode of interest
+     * @param {string} tab The name of the tab to test the hierarchy within
+     * @returns True if all parent of the node are open in the tab's hierarchy; false otherwise
+     */
+    isDirectParentOpen(node: HierarchyNode, tab: string): boolean {
+        return this.listItem.editorTabStates[tab].open[this.joinPath(node.path.slice(0, node.path.length - 1))];
+    }
+
     /**
      * Tests whether all the parent nodes of the provided HierarchyNode are open within the hierarchy of the provided
      * tab in the current `listItem`.
@@ -1387,17 +1400,24 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @returns True if all parent of the node are open in the tab's hierarchy; false otherwise
      */
     areParentsOpen(node: HierarchyNode, tab: string): boolean {
-        let allOpen = true;
-        for (let i = node.path.length - 1; i > 1; i--) {
-            const fullPath = this.joinPath(node.path.slice(0, i));
-
-            if (!this.listItem.editorTabStates[tab].open[fullPath]) {
-                allOpen = false;
-                break;
+        // If a this node has been toggled closed at some point by a parent being collapsed, their may be a scenario where it's direct parent is open but it's grandparent is closed. So we must examine every one of the node's ancestors 
+        if (tab !== 'classes' || node.toggledClosed) {
+            let allOpen = true;
+            for (let i = node.path.length - 1; i > 1; i--) {
+                const fullPath = this.joinPath(node.path.slice(0, i));
+    
+                if (!this.listItem.editorTabStates[tab].open[fullPath]) {
+                    allOpen = false;
+                    break;
+                }
             }
+            return allOpen;
+        } else { // If the node was not toggled closed by a parent being collapsed, we can just check if it's direct parent is open
+            return this.isDirectParentOpen(node, tab);
         }
-        return allOpen;
+        
     }
+
     /**
      * Joins the provided path to an entity in a hierarchy represented by the array of strings into a single string,
      * joined with `.`.

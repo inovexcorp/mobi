@@ -306,17 +306,17 @@ describe('Hierarchy Tree component', function() {
                     });
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
-                        expect(component.isShown(this.node)).toEqual(true);
+                        expect(component.isShown(true, this.node)).toEqual(true);
                         expect(ontologyStateStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                     it('and does not have a child with a text match', function() {
-                        expect(component.isShown(this.node)).toEqual(false);
+                        expect(component.isShown(true, this.node)).toEqual(false);
                         expect(ontologyStateStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateStub.areParentsOpen.and.returnValue(true);
-                    expect(component.isShown(this.node)).toEqual(true);
+                    expect(component.isShown(true, this.node)).toEqual(true);
                     expect(ontologyStateStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                 });
             });
@@ -338,16 +338,16 @@ describe('Hierarchy Tree component', function() {
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
                         ontologyStateStub.areParentsOpen.and.returnValue(true);
-                        expect(component.isShown(this.node)).toEqual(true);
+                        expect(component.isShown(true, this.node)).toEqual(true);
                     });
                     it('and does not have a child with a text match', function() {
                         ontologyStateStub.areParentsOpen.and.returnValue(false);
-                        expect(component.isShown(this.node)).toEqual(false);
+                        expect(component.isShown(true, this.node)).toEqual(false);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateStub.areParentsOpen.and.returnValue(true);
-                    expect(component.isShown(this.node)).toEqual(true);
+                    expect(component.isShown(true, this.node)).toEqual(true);
                 });
             });
             describe('indent is greater than 0 and areParentsOpen is false', function () {
@@ -368,17 +368,17 @@ describe('Hierarchy Tree component', function() {
                     });
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
-                        expect(component.isShown(this.node)).toEqual(false);
+                        expect(component.isShown(true, this.node)).toEqual(false);
                         expect(ontologyStateStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                     it('and does not have a child with a text match', function() {
-                        expect(component.isShown(this.node)).toEqual(false);
+                        expect(component.isShown(true, this.node)).toEqual(false);
                         expect(ontologyStateStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateStub.areParentsOpen.and.returnValue(false);
-                    expect(component.isShown(this.node)).toEqual(false);
+                    expect(component.isShown(true, this.node)).toEqual(false);
                     expect(ontologyStateStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                 });
             });
@@ -389,13 +389,13 @@ describe('Hierarchy Tree component', function() {
             });
             it('node is open', function() {
                 ontologyStateStub.listItem.editorTabStates[component.activeTab].open[this.node.title] = true;
-                expect(component.openEntities(this.node)).toEqual(true);
+                expect(component.openEntities(true, this.node)).toEqual(true);
                 expect(this.node.isOpened).toEqual(true);
                 expect(this.node.displayNode).toEqual(true);
             });
             it('node is not open', function() {
                 ontologyStateStub.listItem.editorTabStates[component.activeTab].open[this.node.title] = false;
-                expect(component.openEntities(this.node)).toEqual(true);
+                expect(component.openEntities(true, this.node)).toEqual(true);
                 expect(this.node.isOpened).toBeUndefined();
                 expect(this.node.displayNode).toBeUndefined();
             });

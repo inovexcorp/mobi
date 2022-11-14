@@ -33,6 +33,7 @@ export interface HierarchyNode {
     entityInfo: EntityNamesItem,
     joinedPath: string,
     isOpened?: boolean,
+    toggledClosed?: boolean,
     isClass?: boolean,
     underline?: boolean
     parentNoMatch?: boolean
