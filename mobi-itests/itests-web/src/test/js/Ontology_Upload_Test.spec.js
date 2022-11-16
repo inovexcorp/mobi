@@ -116,21 +116,37 @@ module.exports = {
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
     },
 
-    'Step 9: Return to ontology search page' : function (browser) {
+    'Step 9: Search for a class in the classes tab' : function (browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(., "Search")]]')
+            .click('xpath', '//mat-tab-header//div[text()[contains(., "Search")]]')
+            .useCss()
+            .waitForElementVisible('search-bar input.search-bar-input.ng-valid')
+            .click('search-bar input.search-bar-input.ng-valid')
+            .setValue('search-bar input.search-bar-input', 'Class 0')
+            .sendKeys('search-bar input.search-bar-input', browser.Keys.ENTER)
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//tree-item//span[text()[contains(.,"Class 0")]]'})
+            .useXpath()
+            .click('//tree-item//span[text()[contains(.,"Class 0")]]')
+            .waitForElementVisible('//span[@class[contains(.,"value-display")]]//mark[text()[contains(.,"Class 0")]]')
+    },
+
+    'Step 10: Return to ontology search page' : function (browser) {
         browser.globals.return_to_ontology_editor_search(browser)
     },
 
-    'Step 10: Open an Ontology called test-class-empty-label' : function (browser) {
+    'Step 11: Open an Ontology called test-class-empty-label' : function (browser) {
         browser.globals.open_ontology(browser, Onto5)
     },
 
-    'Step 11: Click classes tab' : function (browser) {
+    'Step 12: Click classes tab' : function (browser) {
         browser
             .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
-    'Step 12: Check for Ontology classes' : function (browser) {
+    'Step 13: Check for Ontology classes' : function (browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
