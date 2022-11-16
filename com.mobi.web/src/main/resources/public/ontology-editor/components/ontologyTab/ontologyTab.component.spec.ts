@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement } from '@angular/core';
+import { DebugElement, SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
@@ -260,7 +260,8 @@ describe('Ontology Tab component', function() {
     describe('contains the correct html', function() {
         beforeEach(function() {
             ontologyStateStub.listItem.versionedRdfRecord.branchId = branchId;
-            ontologyStateStub.listItem.isVocabulary = true;
+            ontologyStateStub.listItem.isVocabulary = false;
+            component.isVocab = false;
             fixture.detectChanges();
         });
         it('for wrapping containers', function() {
@@ -277,68 +278,85 @@ describe('Ontology Tab component', function() {
         });
         it('with a tab for project-tab', function() {
             expect(element.queryAll(By.css('project-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for overview-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 1;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('overview-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for classes-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 2;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('classes-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for properties-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 3;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('properties-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for individuals-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 4;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('individuals-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for concept-schemes-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 5;
             ontologyStateStub.listItem.isVocabulary = true;
+            component.isVocab = true;
+            const change = new SimpleChange(null, ontologyStateStub.listItem.isVocabulary, false);
+            component.ngOnChanges({isVocab: change});
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('concept-schemes-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(0);
         });
         it('with a tab for concepts-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 6;
             ontologyStateStub.listItem.isVocabulary = true;
+            component.isVocab = true;
+            const change = new SimpleChange(null, ontologyStateStub.listItem.isVocabulary, false);
+            component.ngOnChanges({isVocab: change});
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('concepts-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(0);
         });
         it('with a tab for search-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 7;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('search-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for saved-changes-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 8;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('saved-changes-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for commits-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 9;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('commits-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('with a tab for visualization-tab', async function() {
             ontologyStateStub.listItem.tabIndex = 11;
             fixture.detectChanges();
             await fixture.isStable();
             expect(element.queryAll(By.css('visualization-tab')).length).toBe(1);
+            expect(element.queryAll(By.css('div.mat-tab-label[aria-labelledby=hidden]')).length).toBe(2);
         });
         it('if branches are being merged', function() {
             expect(element.queryAll(By.css('merge-tab')).length).toEqual(0);

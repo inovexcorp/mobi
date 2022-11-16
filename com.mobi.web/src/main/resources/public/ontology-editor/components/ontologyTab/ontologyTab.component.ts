@@ -22,7 +22,7 @@
  */
 import { find, get } from 'lodash';
 import { switchMap } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, OnChanges, SimpleChanges, ViewChild, ViewContainerRef, TemplateRef } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -49,11 +49,21 @@ import { UtilService } from '../../../shared/services/util.service';
     selector: 'ontology-tab',
     templateUrl: './ontologyTab.component.html'
 })
-export class OntologyTabComponent implements OnInit, OnDestroy {
+export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
+    @Input() isVocab: boolean;
+    @ViewChild('outlet', { read: ViewContainerRef }) outletRef?: ViewContainerRef;
+    @ViewChild('content', { read: TemplateRef }) contentRef: TemplateRef<any>;
+
     constructor(public os: OntologyStateService, private cm: CatalogManagerService, private util: UtilService) {}
     
     ngOnInit(): void {
         this._checkBranchExists();
+    }
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.isVocab && this.outletRef) {
+            this.outletRef.clear();
+            this.outletRef.createEmbeddedView(this.contentRef);  // Force rerender of concept and schemes tabs when status as a vocab changes
+        }
     }
     ngOnDestroy(): void {
         if (this.os.listItem && this.os.listItem.openSnackbar) {

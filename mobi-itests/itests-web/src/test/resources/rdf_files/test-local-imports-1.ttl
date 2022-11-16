@@ -10,6 +10,7 @@
     owl:imports <http://mobi.com/ontology/test-local-imports-2> .
 
 :Class0 a owl:Class ;
+    <http://purl.org/dc/terms/title> "Class 0"^^xsd:string ;
     owl:equivalentClass <http://mobi.com/ontology/test-local-imports-2#Class2> .
 
 :Class1 a owl:Class ;
