@@ -121,6 +121,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
                 this.state.clearInProgressCommit();
                 this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
                 this.util.createSuccessToast('In Progress Commit removed successfully.');
+                this.index = 0;
             }, errorMessage => this.util.createErrorToast(`Error removing In Progress Commit: ${errorMessage}`));
     }
     getMoreResults(): void {

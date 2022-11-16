@@ -141,6 +141,7 @@ describe('Shapes Graph Changes Page component', function() {
             it('successfully', async function() {
                 shapesGraphStateStub.listItem.inProgressCommit = new Difference();
                 shapesGraphStateStub.listItem.inProgressCommit.additions = [{'@id': '12345', '@type': []}];
+                component.index = 100;
                 component.removeChanges();
                 fixture.detectChanges();
                 await fixture.whenStable();
@@ -148,12 +149,14 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(shapesGraphStateStub.clearInProgressCommit).toHaveBeenCalledWith();
                 expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(component.index).toEqual(0);
             });
             it('unless an error occurs', async function() {
                 catalogManagerStub.deleteInProgressCommit.and.returnValue(throwError(''));
                 const diff = new Difference();
                 diff.additions = [{'@id': '12345', '@type': []}];
                 shapesGraphStateStub.listItem.inProgressCommit = diff;
+                component.index = 100;
                 component.removeChanges();
                 fixture.detectChanges();
                 await fixture.whenStable();
@@ -161,6 +164,7 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(diff);
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(component.index).toEqual(100);
             });
         });
         it('should get more results', function() {

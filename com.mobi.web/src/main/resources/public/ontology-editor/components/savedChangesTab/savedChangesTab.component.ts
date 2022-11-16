@@ -180,7 +180,10 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
                 this.os.resetStateTabs();
                 return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.upToDate).pipe(first()).toPromise();
             }))
-            .subscribe(() => this.os.clearInProgressCommit(), errorMessage => this.util.createErrorToast(errorMessage));
+            .subscribe(() => {
+                this.os.clearInProgressCommit();
+                this.index = 0;
+            }, errorMessage => this.util.createErrorToast(errorMessage));
     }
     getMoreResults(): void {
         this.index++;
