@@ -477,31 +477,37 @@ describe('Saved Changes Tab component', function() {
                 });
                 it('and updateOntology resolves', fakeAsync(function() {
                     ontologyStateStub.updateOntology.and.returnValue(of(null));
+                    component.index = 100;
                     component.removeChanges();
                     tick();
                     expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
                     expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, ontologyStateStub.listItem.upToDate);
                     expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
                     expect(ontologyStateStub.clearInProgressCommit).toHaveBeenCalledWith();
+                    expect(component.index).toEqual(0);
                 }));
                 it('and updateOntology rejects', fakeAsync(function() {
                     ontologyStateStub.updateOntology.and.returnValue(throwError(error));
+                    component.index = 100;
                     component.removeChanges();
                     tick();
                     expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
                     expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
                     expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, ontologyStateStub.listItem.upToDate);
                     expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(component.index).toEqual(100);
                 }));
             });
             it('when deleteInProgressCommit rejects', fakeAsync(function() {
                 catalogManagerStub.deleteInProgressCommit.and.returnValue(throwError(error));
+                component.index = 100;
                 component.removeChanges();
                 tick();
                 expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
                 expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(component.index).toEqual(100);
             }));
         });
         it('getEntityName should call the correct method', function() {
