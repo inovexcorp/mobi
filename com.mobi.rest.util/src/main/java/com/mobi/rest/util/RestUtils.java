@@ -27,6 +27,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.jsonldjava.core.JsonLdApi;
+import com.github.jsonldjava.core.JsonLdOptions;
+import com.github.jsonldjava.utils.JsonUtils;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -45,14 +48,23 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
+import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.rio.helpers.JSONSettings;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +104,7 @@ public class RestUtils {
     public static final  String TURTLE_MIME_TYPE = "text/turtle";
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
-
+    private static final ValueFactory vf = SimpleValueFactory.getInstance();
 
     /**
      * Returns the specified RDFFormat. Currently supports Turtle, TRiG, RDF/XML, and JSON-LD.
@@ -313,7 +325,44 @@ public class RestUtils {
     public static Model jsonldToModel(String jsonld) {
         long start = System.currentTimeMillis();
         try {
-            return Rio.parse(IOUtils.toInputStream(jsonld, StandardCharsets.UTF_8), "", RDFFormat.JSONLD);
+            RDFParser rdfParser = Rio.createParser(RDFFormat.JSONLD);
+            Model model = new LinkedHashModel();
+            rdfParser.setRDFHandler(new StatementCollector(model));
+
+            rdfParser.getParserConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
+            rdfParser.parse(IOUtils.toInputStream(jsonld, StandardCharsets.UTF_8));
+
+            JsonLdApi api = new JsonLdApi(JsonUtils.fromString(jsonld), new JsonLdOptions());
+            api.toRDF();
+            Map<String, String> map = api.getBlankNodeIdentifierMap();
+
+            Map<String, String> inversedMap = map.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+            Model updatedModel = new LinkedHashModel();
+            model.forEach(statement -> {
+                Resource sub = statement.getSubject();
+                IRI pred = statement.getPredicate();
+                Value obj = statement.getObject();
+                Resource cont = statement.getContext();
+
+                if (sub instanceof BNode) {
+                    BNode bNode = (BNode) sub;
+                    String bNodeVal = "_:" + bNode.stringValue();
+                    if (inversedMap.containsKey(bNodeVal)) {
+                        sub = vf.createBNode(inversedMap.get(bNodeVal).replace("_:", ""));
+                    }
+                }
+                if (obj instanceof BNode) {
+                    BNode bNode = (BNode) obj;
+                    String bNodeVal = "_:" + bNode.stringValue();
+                    if (inversedMap.containsKey(bNodeVal)) {
+                        obj = vf.createBNode(inversedMap.get(bNodeVal).replace("_:", ""));
+                    }
+                }
+                updatedModel.add(sub, pred, obj, cont);
+            });
+            return updatedModel;
         } catch (Exception e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } finally {
