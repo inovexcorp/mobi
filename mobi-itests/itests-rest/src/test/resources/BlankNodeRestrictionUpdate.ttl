@@ -1,0 +1,19 @@
+
+<https://mobi.com/ontologies/BlankNodeRestrictionUpdate> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/title> "BlankNodeRestrictionUpdate" .
+
+<https://mobi.com/ontologies/BlankNodeRestrictionUpdate#BaseClass> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:958c9782-5723-4871-a56a-5137be116313;
+  <http://purl.org/dc/terms/title> "BaseClass" .
+
+_:958c9782-5723-4871-a56a-5137be116313 a <http://www.w3.org/2002/07/owl#Restriction>;
+  <http://www.w3.org/2002/07/owl#someValuesFrom> <https://mobi.com/ontologies/BlankNodeRestrictionUpdate#RestrictionClass>;
+  <http://www.w3.org/2002/07/owl#onProperty> <https://mobi.com/ontologies/BlankNodeRestrictionUpdate#hasSomething> .
+
+<https://mobi.com/ontologies/BlankNodeRestrictionUpdate#RestrictionClass> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "RestrictionClass" .
+
+<https://mobi.com/ontologies/BlankNodeRestrictionUpdate#hasSomething> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <http://www.w3.org/2000/01/rdf-schema#range> <https://mobi.com/ontologies/BlankNodeRestrictionUpdate#RestrictionClass>;
+  <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.com/ontologies/BlankNodeRestrictionUpdate#BaseClass>;
+  <http://purl.org/dc/terms/title> "hasSomething" .

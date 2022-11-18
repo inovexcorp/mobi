@@ -54,6 +54,7 @@ import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.After;
@@ -86,6 +87,7 @@ public class RestUtilsTest {
     private static final ModelFactory mf = new DynamicModelFactory();
     private static IRI testPropIRI = vf.createIRI("http://example.com/test#prop");
 
+    private String bNodeJsonld;
     private String expectedJsonld;
     private String expectedTypedJsonld;
     private String expectedTurtle;
@@ -118,6 +120,7 @@ public class RestUtilsTest {
     public void setUp() throws Exception {
         setUpModels();
 
+        bNodeJsonld = IOUtils.toString(getClass().getResourceAsStream("/test-bnode.json"), StandardCharsets.UTF_8);
         expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"), StandardCharsets.UTF_8);
         expectedTypedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test-typed.json"),
                 StandardCharsets.UTF_8);
@@ -280,6 +283,22 @@ public class RestUtilsTest {
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", service));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", service)));
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "something", service)));
+    }
+
+    @Test
+    public void jsonldBnodeToModelTest() throws Exception {
+        Model expectedModel = mf.createEmptyModel();
+        expectedModel.add(vf.createBNode("genid-1024e515be3042e890725d6ebf42462058-EAB37436DD2C162351935B8308AC176D"),
+                vf.createIRI("http://www.w3.org/2002/07/owl#someValuesFrom"),
+                vf.createBNode("genid-1024e515be3042e890725d6ebf42462058-EAB37436DD2C162351935B8308ACJHGD"));
+        expectedModel.add(vf.createBNode("genid-1024e515be3042e890725d6ebf42462058-EAB37436DD2C162351935B8308ACJHGD"),
+                vf.createIRI("http://www.w3.org/2002/07/owl#someValuesFrom"),
+                vf.createIRI("https://mobi.com/ontologies/BlankNodeRestrictionUpdate#RestrictionClassUpdatedIRI"));
+
+        Model result = RestUtils.jsonldToModel(bNodeJsonld);
+        result.forEach(statement -> {
+            assertTrue(expectedModel.contains(statement.getSubject(), statement.getPredicate(), statement.getObject(), statement.getContext()));
+        });
     }
 
     @Test

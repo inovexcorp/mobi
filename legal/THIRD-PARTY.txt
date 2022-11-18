@@ -17,7 +17,7 @@ Lists of 419 third-party dependencies.
      (The Apache Software License, Version 2.0) Jackson module: Old JAXB Annotations (javax.xml.bind) (com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.13.2 - https://github.com/FasterXML/jackson-modules-base)
      (The Apache License, Version 2.0) Woodstox (com.fasterxml.woodstox:woodstox-core:6.2.4 - https://github.com/FasterXML/woodstox)
      (The Apache Software License, Version 2.0) Caffeine cache (com.github.ben-manes.caffeine:caffeine:2.8.1 - https://github.com/ben-manes/caffeine)
-     (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.13.5.1-MOBI - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
+     (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.13.5.2-MOBI - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
      (The Apache Software License, Version 2.0) dumbster (com.github.kirviq:dumbster:1.7.1 - https://github.com/kirviq/dumbster)
      (The Apache Software License, Version 2.0) JCIP Annotations under Apache License (com.github.stephenc.jcip:jcip-annotations:1.0-1 - http://stephenc.github.com/jcip-annotations)
      (Revised BSD License) curvesapi (com.github.virtuald:curvesapi:1.03 - https://github.com/virtuald/curvesapi)

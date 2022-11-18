@@ -659,8 +659,9 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void updateInstanceTest() {
         //Setup:
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
-                .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
+        JSONArray array = new JSONArray();
+        array.add(new JSONObject().element("@value", "title"));
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR).element(_Thing.title_IRI, array);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
@@ -675,8 +676,9 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void updateInstanceWithReifiedTriplesTest() {
         //Setup:
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
-                .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
+        JSONArray array = new JSONArray();
+        array.add(new JSONObject().element("@value", "title"));
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR).element(_Thing.title_IRI, array);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(REIFIED_ID)).request().put(Entity.json(instance.toString()));

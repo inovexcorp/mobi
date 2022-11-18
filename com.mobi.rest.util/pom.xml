@@ -39,6 +39,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.github.jsonld-java</groupId>
+            <artifactId>jsonld-java</artifactId>
+            <version>${jsonld-java.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>web.security</artifactId>
             <version>${project.version}</version>
