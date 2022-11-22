@@ -30,7 +30,6 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 
 import { SharedModule } from '../../../shared/shared.module';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { RDFS } from '../../../prefixes';
 import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
@@ -39,16 +38,17 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { ClassAxiomsComponent } from './classAxioms.component';
+import { UtilService } from '../../../shared/services/util.service';
 
 describe('Class Axioms component', function() {
     let component: ClassAxiomsComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ClassAxiomsComponent>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
-    let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
     let dialogStub : jasmine.SpyObj<MatDialog>;
     let propertyServiceStub: jasmine.SpyObj<PropertyManagerService>;
-
+    let utilStub: jasmine.SpyObj<UtilService>;
+    
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [ SharedModule ],
@@ -58,9 +58,9 @@ describe('Class Axioms component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(OntologyManagerService),
                 MockProvider(MatDialog),
                 MockProvider(PropertyManagerService),
+                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     }) }
@@ -73,9 +73,9 @@ describe('Class Axioms component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.get(OntologyStateService);
-        ontologyManagerServiceStub = TestBed.get(OntologyManagerService);
         propertyServiceStub = TestBed.get(PropertyManagerService);
         dialogStub = TestBed.get(MatDialog);
+        utilStub = TestBed.get(UtilService);
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
         ontologyStateServiceStub.listItem.selected = {
@@ -91,9 +91,9 @@ describe('Class Axioms component', function() {
         component = null;
         element = null;
         fixture = null;
-        ontologyManagerServiceStub = null;
         ontologyStateServiceStub = null;
         dialogStub = null;
+        utilStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -139,7 +139,7 @@ describe('Class Axioms component', function() {
                 expect(ontologyStateServiceStub.flattenHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.setVocabularyStuff).not.toHaveBeenCalled();
 
-                ontologyManagerServiceStub.isBlankNodeId.and.returnValue(true);
+                utilStub.isBlankNodeId.and.returnValue(true);
                 component.removeFromHierarchy(RDFS + 'subClassOf', this.axiomObject);
                 expect(ontologyStateServiceStub.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.flattenHierarchy).not.toHaveBeenCalled();

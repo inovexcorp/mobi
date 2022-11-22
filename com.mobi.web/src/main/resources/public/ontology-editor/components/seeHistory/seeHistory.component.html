@@ -20,11 +20,11 @@
   -->
 <div class="see-history row p-4 h-100">
     <div class="col-auto back-column h-100">
-        <button (click)="goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+        <button (click)="goBack()" mat-button class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
     <div class="see-history-header d-flex flex-column remove-min-width col h-100">
         <div class="row">
-            <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{this.om.getEntityName(this.os.listItem.selected)}}</h2>
+            <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{om.getEntityName(os.listItem.selected)}}</h2>
             <static-iri class="align-self-end" [readOnly]=true [iri]="os.listItem.selected['@id']"></static-iri>
         </div>
         <div class="row flex-1 remove-min-height">
@@ -39,16 +39,17 @@
                         </mat-select>
                     </mat-form-field>
                     <div class="form-group">
-                        <button (click)="prev()" [disabled]="commits.indexOf(os.listItem.selectedCommit) + 1 === commits.length || !os.listItem.selectedCommit" class="btn btn-flat previous-btn remove-min-width">
+                        <button mat-button (click)="prev()" [disabled]="commits.indexOf(os.listItem.selectedCommit) + 1 === commits.length || !os.listItem.selectedCommit" class="previous-btn remove-min-width">
                             <span class="fa fa-chevron-left fa-2x"></span>
                         </button>
-                        <button (click)="next()" [disabled]="commits.indexOf(os.listItem.selectedCommit) === 0 || !os.listItem.selectedCommit" class="btn btn-flat next-btn remove-min-width">
+                        <button mat-button (click)="next()" [disabled]="commits.indexOf(os.listItem.selectedCommit) === 0 || !os.listItem.selectedCommit" class="next-btn remove-min-width">
                             <span class="fa fa-chevron-right fa-2x"></span>
                         </button>
                     </div>
                 </div>
-                <div class="flex-1 remove-min-height">
-                    <commit-compiled-resource [commitId]="os.listItem.selectedCommit?.id" [entityId]="os.listItem.selected['@id']" [entityNameFunc]="getEntityNameDisplay"></commit-compiled-resource>
+                <div class="flex-1 remove-min-height" #compiledResource>
+                    <error-display *ngIf="error">{{error}}</error-display>
+                    <commit-compiled-resource [triples]="resource" [changes]="changes" [entityId]="os.listItem.selected['@id']" [entityNameFunc]="getEntityNameDisplay"></commit-compiled-resource>
                 </div>
             </div>
             <div class="col remove-min-width h-100 vertical-scroll">

@@ -20,14 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { findIndex } from 'lodash';
-import { Component } from '@angular/core';
+import { findIndex, head } from 'lodash';
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { finalize, first, switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { UtilService } from '../../../shared/services/util.service';
 import { Commit } from '../../../shared/models/commit.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CommitDifference } from '../../../shared/models/commitDifference.interface';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 
 /**
  * @class ontology-editor.SeeHistoryComponent
@@ -43,9 +47,14 @@ import { Commit } from '../../../shared/models/commit.interface';
 export class SeeHistoryComponent{
     commits: Commit[] = [];
     selectedCommit;
+    resource: JSONLDObject;
+    changes: CommitDifference;
+    error = '';
 
+    @ViewChild('compiledResource') compiledResource: ElementRef;
+    
     constructor(public os: OntologyStateService, public om: OntologyManagerService, public cm: CatalogManagerService,
-                private util: UtilService) {}
+                private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
 
     goBack(): void {
         this.os.listItem.seeHistory = undefined;
@@ -54,21 +63,20 @@ export class SeeHistoryComponent{
     }
     prev(): void {
         const index = findIndex(this.commits, this.os.listItem.selectedCommit);
-        this.os.listItem['selectedCommit'] = this.commits[index + 1];
         this.selectedCommit = this.commits[index + 1];
+        this.selectCommit();
     }
     next(): void {
         const index = this.commits.indexOf(this.os.listItem.selectedCommit);
-        this.os.listItem['selectedCommit'] = this.commits[index - 1];
         this.selectedCommit = this.commits[index - 1];
+        this.selectCommit();
     }
     getEntityNameDisplay(iri: string): string {
-        return this.om.isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityNameByListItem(iri);
+        return this.util.isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityNameByListItem(iri);
     }
     receiveCommits(commits: Commit[]): void {
         this.commits = commits;
         if (this.commits[0]) {
-            this.os.listItem.selectedCommit = this.commits[0];
             this.selectedCommit = this.commits[0];
             this.selectCommit();
         }
@@ -82,5 +90,30 @@ export class SeeHistoryComponent{
     }
     selectCommit(): void {
         this.os.listItem.selectedCommit = this.selectedCommit;
+        this.setData();
+    }
+    setData(): void {
+        const entityId = this.os.listItem.selected['@id'];
+        const commitId = this.os.listItem.selectedCommit.id;
+        this.spinnerSvc.startLoadingForComponent(this.compiledResource);
+        this.cm.getCompiledResource(commitId, entityId, true)
+            .pipe(
+                finalize(() => {
+                    this.spinnerSvc.finishLoadingForComponent(this.compiledResource);
+                }),
+                first(),
+                switchMap( (resources: JSONLDObject[]) => {
+                    this.resource = head(resources) || undefined;
+                    return this.cm.getDifferenceForSubject(entityId, commitId).pipe(first());
+                })
+            )
+            .subscribe((response: CommitDifference) => {
+                this.changes = response;
+                this.error = '';
+            }, errorMessage => {
+                this.error = errorMessage;
+                this.resource = undefined;
+                this.changes = undefined;
+            });
     }
 }

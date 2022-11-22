@@ -23,7 +23,7 @@
 import { formatDate } from '@angular/common';
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { get, isArray, isEqual, unionWith, forEach, has, find, forOwn, replace, set, some, remove } from 'lodash';
+import { get, isArray, isEqual, unionWith, forEach, has, find, forOwn, replace, set, some, remove, isString } from 'lodash';
 import { ToastrService } from 'ngx-toastr';
 import { Observable, throwError } from 'rxjs';
 import { v4 } from 'uuid';
@@ -50,6 +50,24 @@ export class UtilService {
     constructor(private toastr: ToastrService, private beautify: BeautifyPipe, private splitIRI: SplitIRIPipe, 
         private spinnerSrv: ProgressSpinnerService) {}
 
+    /**
+     * Checks if the provided entity is blank node. Returns a boolean.
+     *
+     * @param {JSONLDObject} entity The entity you want to check.
+     * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
+     */
+     isBlankNode(entity: JSONLDObject): boolean {
+        return this.isBlankNodeId(get(entity, '@id', ''));
+    }
+    /**
+     * Checks if the provided entity id is a blank node id. Returns a boolean.
+     *
+     * @param {string} id The id to check.
+     * @return {boolean} Returns true if the id is a blank node id, otherwise returns false.
+     */
+    isBlankNodeId(id: string): boolean {
+        return isString(id) && (id.includes('/.well-known/genid/') || id.includes('_:genid') || id.includes('_:b'));
+    }
     /**
      * Gets the "beautified" IRI representation for the iri passed. Returns the modified IRI.
      *

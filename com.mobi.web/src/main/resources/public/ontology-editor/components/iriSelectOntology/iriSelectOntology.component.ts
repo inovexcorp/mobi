@@ -30,6 +30,7 @@ import { map, startWith, debounceTime } from 'rxjs/operators';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 interface IriGrouping {
     namespace: string,
@@ -83,13 +84,13 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
 
     @ViewChild('multiInput') multiInput: ElementRef;
 
-    constructor(public os: OntologyStateService, private om: OntologyManagerService) {}
+    constructor(public os: OntologyStateService, private om: OntologyManagerService, public util: UtilService) {}
 
     ngOnInit(): void {
         this.singleSelect = !(this.singleSelect === false);
         if (this.singleSelect) {
             if (this.selected && this.selected.length) {
-                const isBlankNode = this.om.isBlankNodeId(this.selected[0]);
+                const isBlankNode = this.util.isBlankNodeId(this.selected[0]);
                 this.singleControl.setValue({
                     item: this.selected[0],
                     isBlankNode,
@@ -108,7 +109,7 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
         } else {
             if (this.selected && this.selected.length) {
                 this.selectedOptions = this.selected.map(iri => {
-                    const isBlankNode = this.om.isBlankNodeId(iri);
+                    const isBlankNode = this.util.isBlankNodeId(iri);
                     return {
                         item: iri,
                         isBlankNode,
@@ -177,7 +178,7 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
     filter(searchText: string): IriGrouping[] {
         const array: IriOption[] = [];
         const mapped: IriOption[] = Object.keys(this.selectList).map(item => {
-            const isBlankNode = this.om.isBlankNodeId(item);
+            const isBlankNode = this.util.isBlankNodeId(item);
             return {
                 item,
                 isBlankNode,
@@ -211,7 +212,7 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
         const value = event.value;
     
         if (value) {
-            const isBlankNode = this.om.isBlankNodeId(value);
+            const isBlankNode = this.util.isBlankNodeId(value);
             this.selectedOptions.push({ item: value, name: this.getName(value, isBlankNode), isBlankNode });
             this.selected.push(value);
             this.selectedChange.emit(this.selected);

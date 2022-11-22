@@ -21,10 +21,11 @@
  * #L%
  */
 import { Component, OnChanges, Input } from '@angular/core';
-import { get, map, concat, intersection, filter, chunk } from 'lodash';
+import { get, concat, intersection, chunk } from 'lodash';
 
 import { OWL, RDF, SKOS } from '../../../prefixes';
-import { CommitChange } from '../../../shared/models/commitChange.interface';
+import { Commit } from '../../../shared/models/commit.interface';
+import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -32,15 +33,9 @@ import { UtilService } from '../../../shared/services/util.service';
 
 import './shapesGraphChangesPage.component.scss';
 
-interface Statements {
-    id: string,
-    additions?: CommitChange[],
-    deletions?: CommitChange[],
-}
 interface CommitChanges {
     id: string,
-    additions: CommitChange[],
-    deletions: CommitChange[],
+    difference: Difference,
     disableAll: boolean
 }
 
@@ -73,7 +68,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
              OWL + 'AnnotationProperty', OWL + 'NamedIndividual', SKOS
              + 'Concept', SKOS + 'ConceptScheme'];
 
-    commits: CommitChanges[] = [];
+    commits: Commit[] = [];
     list: CommitChanges[] = [];
     showList: CommitChanges[] = [];
     chunks: CommitChanges[][] = [];
@@ -88,31 +83,23 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     constructor(public state: ShapesGraphStateService, private cm: CatalogManagerService, private util: UtilService) {}
 
     ngOnChanges(): void {
-        const inProgressAdditions: Statements[] = map(this.additions, addition => ({
-            additions: this.util.getPredicatesAndObjects(addition),
-            id: addition['@id']
-        }));
-        const inProgressDeletions: Statements[] = map(this.deletions, deletion => ({
-            deletions: this.util.getPredicatesAndObjects(deletion),
-            id: deletion['@id']
-        }));
-
-        const mergedInProgressCommitsMap = [].concat(inProgressAdditions, inProgressDeletions).reduce((dict,
-            currentItem) => {
-            const existingValue = dict[currentItem['id']] || {};
-            const mergedValue = Object.assign({ 'id': '', 'additions': [], 'deletions': []}, existingValue,
-                currentItem);
-            dict[currentItem.id] = mergedValue;
+        let mergedInProgressCommitsMap: { [key: string]: Difference } = this.additions.reduce((dict, currentItem) => {
+            const diff = new Difference();
+            diff.additions = [currentItem];
+            dict[currentItem['@id']] = diff;
             return dict;
         }, {});
-        const mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key =>
-            mergedInProgressCommitsMap[key]);
-        this.list = map(mergedInProgressCommits, inProgressItem => ({
-                id: inProgressItem.id,
-                additions: inProgressItem.additions,
-                deletions: inProgressItem.deletions,
-                disableAll: this.hasSpecificType(inProgressItem.additions) || this.hasSpecificType(inProgressItem.deletions)
-        } as CommitChanges));
+        mergedInProgressCommitsMap = this.deletions.reduce((dict, currentItem) => {
+            const diff: Difference = dict[currentItem['@id']] ? dict[currentItem['@id']] : new Difference();
+            diff.deletions = [currentItem];
+            dict[currentItem['@id']] = diff ;
+            return dict;
+        }, mergedInProgressCommitsMap);
+        this.list = Object.keys(mergedInProgressCommitsMap).map(id => ({
+            id,
+            difference: mergedInProgressCommitsMap[id],
+            disableAll: this.hasSpecificType(mergedInProgressCommitsMap[id], id)
+        }));
         this.showList = this.getList();
     }
     removeChanges(): void {
@@ -129,17 +116,21 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         const currChunk = get(this.chunks, this.index, []);
         this.showList = concat(this.showList, currChunk);
     }
-    hasSpecificType(array: CommitChange[]): boolean {
-        return !!intersection(map(filter(array, {p: this.typeIRI}), 'o'), this.types).length;
+    hasSpecificType(difference: Difference, entityId: string): boolean {
+        const addObj = (difference.additions as JSONLDObject[]).find(obj => obj['@id'] === entityId);
+        const addTypes = addObj ? addObj['@type'] || [] : [];
+        const delObj = (difference.deletions as JSONLDObject[]).find(obj => obj['@id'] === entityId);
+        const delTypes = delObj ? delObj['@type'] || [] : [];
+        return !!intersection(addTypes.concat(delTypes), this.types).length;
     }
     getList(): CommitChanges[] {
         this.chunks = chunk(this.list, this.size);
         return get(this.chunks, this.index, []);
     }
-    getCommitId(commit: CommitChanges): string {
+    getCommitId(commit: Commit): string {
         return commit.id;
     }
-    openCommit(commit: CommitChanges): Promise<any> {
+    openCommit(commit: Commit): Promise<any> {
         return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, this.util.condenseCommitId(commit.id))
             .then(() => {}, error => this.util.createErrorToast(error));
     }

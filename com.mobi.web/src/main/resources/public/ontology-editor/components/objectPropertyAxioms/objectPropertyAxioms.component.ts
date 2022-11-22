@@ -26,12 +26,12 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { RDFS } from '../../../prefixes';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class ontology-editor.ObjectPropertyAxiomsComponent
@@ -50,8 +50,8 @@ export class ObjectPropertyAxiomsComponent implements OnChanges{
 
     axioms: string[] = [];
 
-    constructor(private om: OntologyManagerService, private os: OntologyStateService, private dialog: MatDialog,
-                private pm: PropertyManagerService) {}
+    constructor(private os: OntologyStateService, private dialog: MatDialog,
+                private pm: PropertyManagerService, public util: UtilService) {}
 
     ngOnChanges(): void {
         const axioms = map(this.pm.objectAxiomList, 'iri');
@@ -71,7 +71,7 @@ export class ObjectPropertyAxiomsComponent implements OnChanges{
         });
     }
     removeFromHierarchy(axiom: string, axiomObject: JSONLDId): void {
-        if (RDFS + 'subPropertyOf' === axiom && !this.om.isBlankNodeId(axiomObject['@id'])) {
+        if (RDFS + 'subPropertyOf' === axiom && !this.util.isBlankNodeId(axiomObject['@id'])) {
             this.os.deleteEntityFromParentInHierarchy(this.os.listItem.objectProperties, this.os.listItem.selected['@id'], axiomObject['@id']);
             this.os.listItem.objectProperties.flat = this.os.flattenHierarchy(this.os.listItem.objectProperties);
             this.os.setVocabularyStuff();

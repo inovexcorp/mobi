@@ -39,6 +39,7 @@ import { CommitChangesDisplayComponent } from '../commitChangesDisplay/commitCha
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { UtilService } from '../../services/util.service';
+import { Commit } from '../../models/commit.interface';
 import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
 
 describe('Commit Info Overlay component', function() {
@@ -54,11 +55,16 @@ describe('Commit Info Overlay component', function() {
     const commitId = 'commitId';
     const ontRecordId = 'ontRecordId';
     const emptyObj: JSONLDObject = {'@id': '', '@type': []};
-    const data = {
+    const data: {commit: Commit, ontRecordId: string} = {
         commit: {
             id: commitId,
-            ontRecordId
-        }
+            creator: undefined,
+            date: '',
+            message: '',
+            base: '',
+            auxiliary: ''
+        },
+        ontRecordId
     };
 
     configureTestSuite(function() {
@@ -123,20 +129,16 @@ describe('Commit Info Overlay component', function() {
             expect(element.queryAll(By.css('.changes-container p')).length).toEqual(1);
             expect(element.queryAll(By.css('.changes-container commit-changes-display')).length).toEqual(0);
 
-            difference.additions = [emptyObj];
-            difference.deletions = [];
-            catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
-            await component.retrieveMoreResults(100, 0);
+            component.additions = [emptyObj];
+            component.deletions = [];
             fixture.detectChanges();
             await fixture.whenStable();
 
             expect(element.queryAll(By.css('.changes-container p')).length).toEqual(0);
             expect(element.queryAll(By.css('.changes-container commit-changes-display')).length).toEqual(1);
 
-            difference.additions = [];
-            difference.deletions = [emptyObj];
-            catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: difference, headers: new HttpHeaders(headers)})));
-            await component.retrieveMoreResults(100, 0);
+            component.additions = [];
+            component.deletions = [emptyObj];
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -167,7 +169,14 @@ describe('Commit Info Overlay component', function() {
                 describe('and resolve.ontRecordId is set', function() {
                     beforeEach( async function() {
                         component.data = {
-                            commit: {'id': '123'},
+                            commit: {
+                                'id': '123',
+                                creator: undefined,
+                                date: '',
+                                message: '',
+                                base: '',
+                                auxiliary: ''
+                            },
                             ontRecordId: 'recordId'
                         };
                         fixture.detectChanges();
@@ -198,7 +207,15 @@ describe('Commit Info Overlay component', function() {
                 });
                 it('and resolve.recordId is not set', async function() {
                     component.data = {
-                        commit: {'id': '123'}
+                        commit: {
+                            'id': '123',
+                            creator: undefined,
+                            date: '',
+                            message: '',
+                            base: '',
+                            auxiliary: ''
+                        },
+                        ontRecordId: ''
                     };
                     expect(component.additions).toEqual([]);
                     fixture.detectChanges();
@@ -215,7 +232,15 @@ describe('Commit Info Overlay component', function() {
             });
             it('unless getDifference rejects', async function() {
                 component.data = {
-                    commit: {'id': '123'}
+                    commit: {
+                        'id': '123',
+                        creator: undefined,
+                        date: '',
+                        message: '',
+                        base: '',
+                        auxiliary: ''
+                    },
+                    ontRecordId: ''
                 };
                 fixture.detectChanges();
                 await fixture.whenStable();

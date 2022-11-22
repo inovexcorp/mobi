@@ -98,7 +98,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     limit = 100;
     error = '';
     commit = undefined;
-    commits = [];
+    commits: Commit[] = [];
     circleRadius = 5;
     circleSpacing = 48;
     columnSpacing = 25;

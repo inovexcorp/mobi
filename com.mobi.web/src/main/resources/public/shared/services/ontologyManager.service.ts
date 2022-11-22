@@ -770,7 +770,7 @@ export class OntologyManagerService {
      * false.
      */
     hasClasses(ontologies: JSONLDObject[][]): boolean {
-        return some(ontologies, ont => some(ont, entity => this.isClass(entity) && !this.isBlankNode(entity)));
+        return some(ontologies, ont => some(ont, entity => this.isClass(entity) && !this.util.isBlankNode(entity)));
     }
     /**
      * Gets the list of all owl:Class entities within the provided ontologies that are not blank nodes. Returns
@@ -780,7 +780,7 @@ export class OntologyManagerService {
      * @returns {JSONLDObject[]} An array of all owl:Class entities within the ontologies.
      */
     getClasses(ontologies: JSONLDObject[][]): JSONLDObject[] {
-        return this._collectThings(ontologies, entity => this.isClass(entity) && !this.isBlankNode(entity));
+        return this._collectThings(ontologies, entity => this.isClass(entity) && !this.util.isBlankNode(entity));
     }
 
     /**
@@ -889,7 +889,7 @@ export class OntologyManagerService {
      * returns false.
      */
     hasObjectProperties(ontologies: JSONLDObject[][]): boolean {
-        return some(ontologies, ont => some(ont, entity => this.isObjectProperty(entity) && !this.isBlankNode(entity)));
+        return some(ontologies, ont => some(ont, entity => this.isObjectProperty(entity) && !this.util.isBlankNode(entity)));
     }
     /**
      * Gets the list of all owl:ObjectProperty entities within the provided ontologies that are not blank nodes.
@@ -899,7 +899,7 @@ export class OntologyManagerService {
      * @returns {JSONLDObject[]} An array of all owl:ObjectProperty entities within the ontologies.
      */
     getObjectProperties(ontologies: JSONLDObject[][]): JSONLDObject[] {
-        return this._collectThings(ontologies, entity => this.isObjectProperty(entity) && !this.isBlankNode(entity));
+        return this._collectThings(ontologies, entity => this.isObjectProperty(entity) && !this.util.isBlankNode(entity));
     }
     /**
      * Gets the list of all owl:ObjectProperty entity IRIs within the provided ontologies that are not blank
@@ -940,7 +940,7 @@ export class OntologyManagerService {
      * @returns {JSONLDObject[]} An array of all owl:DatatypeProperty entities within the ontologies.
      */
     getDataTypeProperties(ontologies: JSONLDObject[][]): JSONLDObject[] {
-        return this._collectThings(ontologies, entity => this.isDataTypeProperty(entity) && !this.isBlankNode(entity));
+        return this._collectThings(ontologies, entity => this.isDataTypeProperty(entity) && !this.util.isBlankNode(entity));
     }
     /**
      * Gets the list of all owl:DatatypeProperty entity IRIs within the provided ontologies that are not blank
@@ -1012,7 +1012,7 @@ export class OntologyManagerService {
      */
     hasAnnotations(ontologies: JSONLDObject[][]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => this.isAnnotation(entity) && !this.isBlankNode(entity)));
+                    some(ont, entity => this.isAnnotation(entity) && !this.util.isBlankNode(entity)));
     }
     /**
      * Gets the list of all owl:AnnotationProperty entities within the provided ontologies. Returns a JSONLDObject[].
@@ -1021,7 +1021,7 @@ export class OntologyManagerService {
      * @returns {JSONLDObject[]} An array of all owl:AnnotationProperty entities within the ontologies.
      */
     getAnnotations(ontologies: JSONLDObject[][]): JSONLDObject[] {
-        return this._collectThings(ontologies, entity => this.isAnnotation(entity) && !this.isBlankNode(entity));
+        return this._collectThings(ontologies, entity => this.isAnnotation(entity) && !this.util.isBlankNode(entity));
     }
     /**
      * Gets the list of all owl:AnnotationProperty entity IRIs within the provided ontologies that are not blank
@@ -1139,31 +1139,13 @@ export class OntologyManagerService {
         return this._collectThings(ontologies, entity => this.isRestriction(entity));
     }
     /**
-     * Checks if the provided entity is blank node. Returns a boolean.
-     *
-     * @param {JSONLDObject} entity The entity you want to check.
-     * @returns {boolean} Returns true if it is a blank node entity, otherwise returns false.
-     */
-    isBlankNode(entity: JSONLDObject): boolean {
-        return this.isBlankNodeId(get(entity, '@id', ''));
-    }
-    /**
-     * Checks if the provided entity id is a blank node id. Returns a boolean.
-     *
-     * @param {string} id The id to check.
-     * @return {boolean} Returns true if the id is a blank node id, otherwise returns false.
-     */
-    isBlankNodeId(id: string): boolean {
-        return isString(id) && (includes(id, '/.well-known/genid/') || includes(id, '_:genid') || includes(id, '_:b'));
-    }
-    /**
      * Gets the list of all entities within the provided ontologies that are blank nodes. Returns a JSONLDObject[].
      *
      * @param {JSONLDObject[][]} ontologies The array of ontologies you want to check.
      * @returns {JSONLDObject[]} An array of all owl:Restriction entities within the ontologies.
      */
     getBlankNodes(ontologies: JSONLDObject[][]): JSONLDObject[] {
-        return this._collectThings(ontologies, entity => this.isBlankNode(entity));
+        return this._collectThings(ontologies, entity => this.util.isBlankNode(entity));
     }
     /**
      * Gets entity with the provided IRI from the provided ontologies in the Mobi repository. Returns the
@@ -1249,7 +1231,7 @@ export class OntologyManagerService {
      */
     hasConcepts(ontologies: JSONLDObject[][], derivedConcepts: string[]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => this.isConcept(entity, derivedConcepts) && !this.isBlankNode(entity)));
+                    some(ont, entity => this.isConcept(entity, derivedConcepts) && !this.util.isBlankNode(entity)));
     }
     /**
      * Gets the list of all skos:Concept entities within the provided ontologies that are not blank nodes.
@@ -1260,7 +1242,7 @@ export class OntologyManagerService {
      * @returns {JSONLDObject[]} An array of all skos:Concept entities within the ontologies.
      */
     getConcepts(ontologies: JSONLDObject[][], derivedConcepts: string[]): JSONLDObject[] {
-        return this._collectThings(ontologies, entity => this.isConcept(entity, derivedConcepts) && !this.isBlankNode(entity));
+        return this._collectThings(ontologies, entity => this.isConcept(entity, derivedConcepts) && !this.util.isBlankNode(entity));
     }
     /**
      * Gets the list of all skos:Concept entity IRIs within the provided ontologies that are not blank nodes.
@@ -1294,7 +1276,7 @@ export class OntologyManagerService {
      */
     hasConceptSchemes(ontologies: JSONLDObject[][], derivedConceptSchemes: string[]): boolean {
         return some(ontologies, ont =>
-                    some(ont, entity => this.isConceptScheme(entity, derivedConceptSchemes) && !this.isBlankNode(entity)));
+                    some(ont, entity => this.isConceptScheme(entity, derivedConceptSchemes) && !this.util.isBlankNode(entity)));
     }
     /**
      * Gets the list of all skos:ConceptScheme entities within the provided ontologies that are not blank nodes.
@@ -1305,7 +1287,7 @@ export class OntologyManagerService {
      * @returns {JSONLDObject[]} An array of all skos:ConceptScheme entities within the ontologies.
      */
     getConceptSchemes(ontologies: JSONLDObject[][], derivedConceptSchemes: string[]): JSONLDObject[] {
-        return this._collectThings(ontologies, entity => this.isConceptScheme(entity, derivedConceptSchemes) && !this.isBlankNode(entity));
+        return this._collectThings(ontologies, entity => this.isConceptScheme(entity, derivedConceptSchemes) && !this.util.isBlankNode(entity));
     }
     /**
      * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontologies that are not blank

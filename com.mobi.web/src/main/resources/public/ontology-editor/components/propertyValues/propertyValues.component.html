@@ -28,7 +28,7 @@
     <div class="prop-value-container d-flex p-1 ml-3 mt-1" *ngFor="let value of entity[property]; index as $index">
         <span *ngIf="os.isLinkable(value['@id']); else notLinkable" class="value-display-wrapper flex-1 remove-min-width">{{os.getEntityNameByListItem(value['@id'])}} <small>&lt;<a (click)="os.goTo(value['@id'])">{{value['@id']}}</a>&gt;</small></span>
         <ng-template #notLinkable><span class="value-display-wrapper flex-1 remove-min-width">
-            <blank-node-value-display *ngIf="om.isBlankNodeId(value['@id']); else notBlankNode" [nodeId]="value['@id']"></blank-node-value-display>
+            <blank-node-value-display *ngIf="util.isBlankNodeId(value['@id']); else notBlankNode" [nodeId]="value['@id']"></blank-node-value-display>
             <ng-template #notBlankNode>
                 <value-display *ngIf="isHighlightedProp; else noHighlight" [value]="value" [highlightText]="highlightText"></value-display>
                 <ng-template #noHighlight><value-display [value]="value"></value-display></ng-template>
@@ -36,7 +36,7 @@
         </span></ng-template>
         <div class="button-container">
             <button *ngIf="isRemoveSet && !os.isImported(entity['@id']) && os.canModify()" mat-icon-button color="primary" (click)="callRemove($index)" title="Delete"><mat-icon>delete</mat-icon></button>
-            <button *ngIf="!om.isBlankNodeId(value['@id']) && isEditSet && !os.isImported(entity['@id']) && os.canModify()" mat-icon-button color="primary" (click)="callEdit($index)" title="Edit"><mat-icon>edit</mat-icon></button>
+            <button *ngIf="!util.isBlankNodeId(value['@id']) && isEditSet && !os.isImported(entity['@id']) && os.canModify()" mat-icon-button color="primary" (click)="callEdit($index)" title="Edit"><mat-icon>edit</mat-icon></button>
         </div>
     </div>
 </div>

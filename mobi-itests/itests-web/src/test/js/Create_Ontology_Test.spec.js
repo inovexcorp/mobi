@@ -208,18 +208,19 @@ module.exports = {
             .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]', 'firstClass') // Verify Title
             .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-Description[title*="FirstClass"]', 'FirstClass') // Verify IRI
             .click('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]')
-            .waitForElementVisible('saved-changes-tab .additions')
-            .assert.textContains('saved-changes-tab .additions', 'Added Statements')
-            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/description"]', "description")
-            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/description"] ~ div[title=firstClassDescription]', 'firstClassDescription')
-            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/title"]', "title")
-            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/title"] ~ div[title=firstClass]', 'firstClass')
-            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="ns#type"]', "type")
-            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
+            .waitForElementVisible('saved-changes-tab commit-compiled-resource')
+            .assert.textContains('saved-changes-tab commit-compiled-resource p.type-label', "Type(s)")
+            .assert.textContains('saved-changes-tab commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
+            .useXpath()
+            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
+            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
+            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
+            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
     },
 
     'Step 17: Commit Changes': function(browser) {
         browser
+            .useCss()
             .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
             .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
             .click('ontology-button-stack circle-button-stack button.btn-info')
@@ -368,20 +369,20 @@ module.exports = {
             .waitForElementVisible('merge-block commit-changes-display mat-panel-title[title*="firstClass"] ~ mat-panel-description small')
             .assert.textContains('merge-block commit-changes-display mat-panel-title[title*="firstClass"] ~ mat-panel-description small', 'myOntology#FirstClass')
             .click('merge-block commit-changes-display mat-panel-title[title*="firstClass"]')
-            .assert.textContains('merge-block .additions h5', 'Added Statements')
-            .assert.textContains('merge-block .additions .statement-display div[title*="terms/description"]', "description")
-            .assert.textContains('merge-block .additions .statement-display div[title*="terms/description"] ~ div[title=firstClassDescription]', 'firstClassDescription')
-            .assert.textContains('merge-block .additions .statement-display div[title*="terms/title"]', "title")
-            .assert.textContains('merge-block .additions .statement-display div[title*="terms/title"] ~ div[title=firstClass]', 'firstClass')
-            .assert.textContains('merge-block .additions .statement-display div[title*="ns#type"]', "type")
-            .assert.textContains('merge-block .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
+            .waitForElementVisible('merge-block commit-compiled-resource')
+            .assert.textContains('merge-block commit-compiled-resource p.type-label', "Type(s)")
+            .assert.textContains('merge-block commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
             .useXpath()
+            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
+            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
+            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
+            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
             .click('//button[text()="Submit"]')
-            .useCss()
     },
 
     'Step 25: Validate Merged Commits': function(browser) {
         browser
+            .useCss()
             .waitForElementNotPresent('#spinner-full')
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')

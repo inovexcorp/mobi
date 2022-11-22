@@ -33,12 +33,7 @@
                     </mat-panel-description>
                 </mat-expansion-panel-header>
                 <ng-template matExpansionPanelContent>
-                    <statement-container *ngIf="changesItem.additions.length" additions>
-                        <statement-display *ngFor="let addition of changesItem.additions" [predicate]="addition.p" [object]="addition.o" [entityNameFunc]="getEntityName.bind(this)"></statement-display>
-                    </statement-container>
-                    <statement-container *ngIf="changesItem.deletions.length" deletions>
-                        <statement-display *ngFor="let deletion of changesItem.deletions" [predicate]="deletion.p" [object]="deletion.o" [entityNameFunc]="getEntityName.bind(this)"></statement-display>
-                    </statement-container>
+                    <commit-compiled-resource [changes]="changesItem.difference" [entityId]="changesItem.id"></commit-compiled-resource>
                 </ng-template>
             </mat-expansion-panel>
         </mat-accordion>

@@ -67,7 +67,7 @@ export class SelectedDetailsComponent {
     getTypes(): string {
         return join(orderBy(
                 map(get(this.os.listItem.selected, '@type', []), t => { 
-                    if (this.om.isBlankNodeId(t)) {
+                    if (this.util.isBlankNodeId(t)) {
                         return this.mc.jsonldToManchester(t, this.os.listItem.selectedBlankNodes, this.os.getBnodeIndex());
                     } else {
                         return this.prefixation.transform(t);

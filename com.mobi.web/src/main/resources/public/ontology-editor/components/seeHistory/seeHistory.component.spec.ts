@@ -25,33 +25,65 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { MatButtonModule, MatFormFieldModule, MatSelectModule } from '@angular/material';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { SeeHistoryComponent } from './seeHistory.component';
-import { SharedModule} from '../../../shared/shared.module';
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { UtilService } from '../../../shared/services/util.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CommitDifference } from '../../../shared/models/commitDifference.interface';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { CommitCompiledResourceComponent } from '../../../shared/components/commitCompiledResource/commitCompiledResource.component';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
+import { SeeHistoryComponent } from './seeHistory.component';
 
 describe('See History component', function() {
     let component: SeeHistoryComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SeeHistoryComponent>;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let utilStub: jasmine.SpyObj<UtilService>;
+
+    const resource: JSONLDObject = {
+        '@id': 'www.test.com',
+        '@type': ['commit'],
+        'extraProp': ['test']
+    };
+    const commitDifference: CommitDifference = new CommitDifference();
+    commitDifference.commit = {'@id': '', '@type': []};
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [SharedModule],
+            imports: [
+                NoopAnimationsModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatButtonModule,
+                MatFormFieldModule,
+                MatSelectModule
+            ],
             declarations: [
                 SeeHistoryComponent,
+                MockComponent(ErrorDisplayComponent),
                 MockComponent(StaticIriComponent),
+                MockComponent(CommitCompiledResourceComponent),
+                MockComponent(CommitHistoryTableComponent),
             ],
             providers: [
+                MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
+                MockProvider(ProgressSpinnerService),
                 MockProvider(UtilService)
             ]
         });
@@ -61,7 +93,9 @@ describe('See History component', function() {
         fixture = TestBed.createComponent(SeeHistoryComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        catalogManagerStub = TestBed.get(CatalogManagerService);
         ontologyStateStub = TestBed.get(OntologyStateService);
+        progressSpinnerStub = TestBed.get(ProgressSpinnerService);
         utilStub = TestBed.get(UtilService);
 
         ontologyStateStub.listItem = new OntologyListItem();
@@ -78,26 +112,49 @@ describe('See History component', function() {
         fixture = null;
         component = null;
         element = null;
+        catalogManagerStub = null;
+        ontologyStateStub = null;
+        progressSpinnerStub = null;
         utilStub = null;
     });
 
     describe('controller methods', function() {
         it('should go to prev', function() {
             component.commits = this.commits;
+            component.selectedCommit = component.commits[0];
             ontologyStateStub.listItem.selectedCommit = component.commits[0];
+            spyOn(component, 'selectCommit');
             component.prev();
-            expect(ontologyStateStub.listItem.selectedCommit).toEqual(component.commits[1]);
+            expect(component.selectedCommit).toEqual(component.commits[1]);
+            expect(component.selectCommit).toHaveBeenCalledWith();
         });
         it('should go to next', function() {
             component.commits = this.commits;
+            component.selectedCommit = component.commits[1];
             ontologyStateStub.listItem.selectedCommit = component.commits[1];
+            spyOn(component, 'selectCommit');
             component.next();
-            expect(ontologyStateStub.listItem.selectedCommit).toEqual(component.commits[0]);
+            expect(component.selectedCommit).toEqual(component.commits[0]);
+            expect(component.selectCommit).toHaveBeenCalledWith();
         });
         it('should go back', function() {
             component.goBack();
             expect(ontologyStateStub.listItem.seeHistory).toBeUndefined();
             expect(ontologyStateStub.listItem.selectedCommit).toBeUndefined();
+        });
+        describe('should load a list of commits', function() {
+            beforeEach(function() {
+                spyOn(component, 'selectCommit');
+            });
+            it('to `commits` in the controller when receiveCommits is called', function() {
+                component.receiveCommits(this.commits);
+                expect(component.commits).toEqual(this.commits);
+            });
+            it('and set the default value in the dropdown to the latest commit for an entity', function() {
+                component.receiveCommits(this.commits);
+                expect(component.selectedCommit).toEqual(this.commits[0]);
+                expect(component.selectCommit).toHaveBeenCalledWith();
+            });
         });
         it('should assign the correct label for each commit', function() {
             component.commits = this.commits;
@@ -111,14 +168,53 @@ describe('See History component', function() {
                 }
             });
         });
-        describe('should load a list of commits', function() {
-            it('to `commits` in the controller when receiveCommits is called', function() {
-                component.receiveCommits(this.commits);
-                expect(component.commits).toEqual(this.commits);
+        it('should select a commit', function() {
+            component.selectedCommit = this.commits[0];
+            spyOn(component, 'setData');
+            component.selectCommit();
+            expect(ontologyStateStub.listItem.selectedCommit).toEqual(this.commits[0]);
+            expect(component.setData).toHaveBeenCalledWith();
+        });
+        describe('sets the important data for display', function() {
+            beforeEach(function() {
+                ontologyStateStub.listItem.selectedCommit = this.commits[0];
+                catalogManagerStub.getCompiledResource.and.returnValue(of([resource]));
+                catalogManagerStub.getDifferenceForSubject.and.returnValue(of(commitDifference));
             });
-            it('and set the default value in the dropdown to the latest commit for an entity', function() {
-                component.receiveCommits(this.commits);
-                expect(component.os.listItem.selectedCommit).toEqual(this.commits[0]);
+            it('successfully', function() {
+                component.setData();
+                fixture.detectChanges();
+                expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.compiledResource);
+                expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.compiledResource);
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(this.commits[0].id, ontologyStateStub.listItem.selected['@id'], true);
+                expect(catalogManagerStub.getDifferenceForSubject).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], this.commits[0].id);
+                expect(component.resource).toEqual(resource);
+                expect(component.changes).toEqual(commitDifference);
+                expect(component.error).toEqual('');
+            });
+            it('unless getCompiledResource rejects', function() {
+                catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
+                component.setData();
+                fixture.detectChanges();
+                expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.compiledResource);
+                expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.compiledResource);
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(this.commits[0].id, ontologyStateStub.listItem.selected['@id'], true);
+                expect(catalogManagerStub.getDifferenceForSubject).not.toHaveBeenCalled();
+                expect(component.resource).toBeUndefined();
+                expect(component.changes).toBeUndefined();
+                expect(component.error).toEqual('Error Message');
+            });
+            it('unless getDifferenceForSubject rejects', function() {
+                catalogManagerStub.getDifferenceForSubject.and.returnValue(throwError('Error Message'));
+                component.setData();
+                fixture.detectChanges();
+                expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.compiledResource);
+                expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.compiledResource);
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(this.commits[0].id, ontologyStateStub.listItem.selected['@id'], true);
+                expect(catalogManagerStub.getDifferenceForSubject).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], this.commits[0].id);
+                expect(component.resource).toBeUndefined();
+                expect(component.changes).toBeUndefined();
+                expect(component.error).toEqual('Error Message');
             });
         });
     });

@@ -30,9 +30,9 @@ export class Difference {
     deletions: string|JSONLDObject[] // The deleted statements either as JSON-LD array or a string of another RDF format
     hasMoreResults: boolean // Whether there are more differences than what is stored within this object
 
-    constructor() {
-        this.additions = [];
-        this.deletions = [];
+    constructor(additions?: string|JSONLDObject[], deletions?: string|JSONLDObject[]) {
+        this.additions = additions || [];
+        this.deletions = deletions || [];
         this.hasMoreResults = false;
     }
 

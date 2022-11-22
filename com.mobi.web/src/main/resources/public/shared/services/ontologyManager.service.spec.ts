@@ -36,9 +36,9 @@ import { PropertyToRanges } from '../models/propertyToRanges.interface';
 import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { CatalogManagerService } from './catalogManager.service';
-import { OntologyManagerService } from './ontologyManager.service';
 import { UtilService } from './util.service';
 import { GroupQueryResults } from '../models/groupQueryResults.interface';
+import { OntologyManagerService } from './ontologyManager.service';
 
 describe('Ontology Manager service', function() {
     let service: OntologyManagerService;
@@ -74,7 +74,7 @@ describe('Ontology Manager service', function() {
     let individualId: string;
     let restrictionId: string;
     let blankNodeId: string;
-    let blankNodeObj;
+    let blankNodeObj: JSONLDObject;
     let usages;
     let conceptId: string;
     let schemeId: string;
@@ -337,6 +337,7 @@ describe('Ontology Manager service', function() {
             return httpParams;
         });
         utilStub.handleErrorObject.and.returnValue(throwError(errorObject));
+        utilStub.isBlankNode.and.returnValue(false);
     });
 
     afterEach(function() {
@@ -1890,27 +1891,10 @@ describe('Ontology Manager service', function() {
             expect(service.getRestrictions([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
     });
-    describe('isBlankNode should return', function() {
-        it('true if the entity contains a blank node id', function() {
-            expect(service.isBlankNode(blankNodeObj)).toBe(true);
-        });
-        it('false if the entity does not contain a blank node id', function() {
-            expect(service.isBlankNode(emptyObj)).toBe(false);
-        });
-    });
-    describe('isBlankNodeId should return', function() {
-        it('true if the id is a blank node id', function() {
-            expect(service.isBlankNodeId('_:genid')).toBe(true);
-            expect(service.isBlankNodeId('_:b')).toBe(true);
-            expect(service.isBlankNodeId('http://mobi.com/.well-known/genid/')).toBe(true);
-        });
-        it('false if the id is not a blank node id', function() {
-            ['', 'notblanknode', undefined, null].forEach((test) => {
-                expect(service.isBlankNodeId(test)).toBe(false);
-            });
-        });
-    });
     describe('getBlankNodes should return', function() {
+        beforeEach(function() {
+            utilStub.isBlankNode.and.callFake(obj => obj['@id'] === blankNodeId);
+        });
         it('correct blank node objects if there are any in the ontology', function() {
             expect(service.getBlankNodes([[blankNodeObj, this.ontologyObj]])).toEqual([blankNodeObj]);
         });

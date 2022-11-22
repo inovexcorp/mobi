@@ -1512,7 +1512,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      */
     getDefaultPrefix(): string {
         let prefixIri = replace(this.listItem.iriBegin || this.listItem.ontologyId, '#', '/') + (this.listItem.iriThen || '#');
-        if (this.om.isBlankNodeId(prefixIri)) {
+        if (this.util.isBlankNodeId(prefixIri)) {
             const nonBlankNodeId = head(keys(this.listItem.entityInfo));
             if (nonBlankNodeId) {
                 const split = this.splitIRI.transform(nonBlankNodeId);
@@ -1814,7 +1814,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     addPropertyToClasses(propertyIRI: string, classIris: string[]): void {
         let hasBlankNodeParents = true;
         classIris.forEach(parentclass => {
-            if (!this.om.isBlankNodeId(parentclass)) {
+            if (!this.util.isBlankNodeId(parentclass)) {
                 if (!this.listItem.classToChildProperties[parentclass]) {
                     this.listItem.classToChildProperties[parentclass] = [];
                 }
@@ -2090,7 +2090,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * blankNodes map; undefined otherwise 
      */
     getBlankNodeValue(id: string): string {
-        if (this.om.isBlankNodeId(id)) {
+        if (this.util.isBlankNodeId(id)) {
             return get(this.listItem.blankNodes, id, id);
         }
         return;
@@ -2103,7 +2103,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @returns {boolean} True if the id exists as an entity and not a blank node; false otherwise
      */
     isLinkable(id: string): boolean {
-        return !!this.existsInListItem(id, this.listItem) && !this.om.isBlankNodeId(id);
+        return !!this.existsInListItem(id, this.listItem) && !this.util.isBlankNodeId(id);
     }
     /**
      * Adds a language specification on the dct:title, dct:description, and skos:prefLabel properties on the
@@ -2334,12 +2334,12 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 const entity = this.listItem.selectedBlankNodes.splice(matchingBlankNodeIndex, 1)[0];
                 this.addToDeletions(this.listItem.versionedRdfRecord.recordId, entity);
                 forOwn(omit(entity, ['@id', '@type']), (value, key) => {
-                    if (this.om.isBlankNodeId(key)) {
+                    if (this.util.isBlankNodeId(key)) {
                         remove(key);
                     }
                     forEach(value, valueObj => {
                         const id = get(valueObj, '@id');
-                        if (this.om.isBlankNodeId(id)) {
+                        if (this.util.isBlankNodeId(id)) {
                             remove(id);
                         }
                     });
@@ -2352,12 +2352,12 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             [key]: [cloneDeep(axiomObject)]
         };
         this.addToDeletions(this.listItem.versionedRdfRecord.recordId, json);
-        if (this.om.isBlankNodeId(axiomObject['@id'])) {
+        if (this.util.isBlankNodeId(axiomObject['@id'])) {
             remove(axiomObject['@id']);
         }
         this.pm.remove(this.listItem.selected, key, index);
 
-        if (RDFS + 'domain' === key && !this.om.isBlankNodeId(axiomObject['@id'])) {
+        if (RDFS + 'domain' === key && !this.util.isBlankNodeId(axiomObject['@id'])) {
             this.removePropertyFromClass(this.listItem.selected, axiomObject['@id']);
             this.listItem.flatEverythingTree = this.createFlatEverythingTree(this.listItem);
         } else if (RDFS + 'range' === key) {

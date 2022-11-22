@@ -224,7 +224,7 @@ describe('Selected Details component', function() {
             it('when @type has blank node items', function() {
                 ontologyStateStub.listItem.selectedBlankNodes = [];
                 ontologyStateStub.getBnodeIndex.and.returnValue({});
-                ontologyManagerStub.isBlankNodeId.and.returnValue(true);
+                utilStub.isBlankNodeId.and.returnValue(true);
                 ontologyStateStub.listItem.selected['@type'] = ['test', 'test2'];
                 manchesterConverterStub.jsonldToManchester.and.callFake(a => a);
                 expect(component.getTypes()).toEqual(expected);

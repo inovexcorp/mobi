@@ -23,25 +23,15 @@
 
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { intersection, sortBy } from 'lodash';
-import { ChangesItem } from '../../../ontology-editor/components/savedChangesTab/savedChangesTab.component';
-import { OWL, RDF, SKOS } from '../../../prefixes';
 
-import { CommitChange } from '../../models/commitChange.interface';
+import { ChangesItem } from '../../../ontology-editor/components/savedChangesTab/savedChangesTab.component';
+import { OWL, SKOS } from '../../../prefixes';
+import { Difference } from '../../models/difference.class';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { UtilService } from '../../services/util.service';
 
 import './commitChangesDisplay.component.scss';
-
-export interface AdditionsWithId {
-    additions: CommitChange[];
-    id: string;
-}
-
-export interface DeletionsWithId {
-    deletions: CommitChange[];
-    id: string;
-}
 
 /**
  * @class shared.CommitChangesDisplayComponent
@@ -73,7 +63,6 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
 
     @Output() showMoreResultsEmitter = new EventEmitter<{limit: number, offset: number}>();
 
-    typeIRI = RDF + 'type';
     types = [
         OWL + 'Class',
         OWL + 'ObjectProperty',
@@ -84,6 +73,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
         SKOS + 'ConceptScheme'
     ];
 
+    difference = new Difference();
     limit = 100; // Must be the same as the limit prop in the commitHistoryTable - Should be 100
     offsetIndex = 0;
     changesItems: ChangesItem[] = [];
@@ -97,27 +87,24 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     }
     ngOnChanges(changesObj: SimpleChanges): void {
         if (changesObj?.additions?.currentValue || changesObj?.deletions?.currentValue) {
-            const additions: AdditionsWithId[] = (this.additions).map(addition => ({
-                additions: this.util.getPredicatesAndObjects(addition),
-                id: addition['@id']
-            }));
-            const deletions: DeletionsWithId[] = (this.deletions).map(deletion => ({
-                deletions: this.util.getPredicatesAndObjects(deletion),
-                id: deletion['@id']
-            }));
-            const commitsMap: {[key: string]: { id: string, additions: CommitChange[], deletions: CommitChange[] }} = [].concat(additions, deletions).reduce((dict, currentItem) => {
-                const existingValue = dict[currentItem['id']] || {};
-                const mergedValue = Object.assign({ id: '', additions: [], deletions: []}, existingValue, currentItem);
-                dict[currentItem.id] = mergedValue;
-                return dict;  
+            this.difference = new Difference(this.additions, this.deletions);
+            let mergedInProgressCommitsMap: { [key: string]: Difference } = (this.difference.additions as JSONLDObject[]).reduce((dict, currentItem) => {
+                const diff = new Difference();
+                diff.additions = [currentItem];
+                dict[currentItem['@id']] = diff;
+                return dict;
             }, {});
-            const commits = Object.keys(commitsMap).map(key => commitsMap[key]);
-            let changesItems: ChangesItem[] = commits.map(item => ({
-                id: item.id,
-                entityName: this.entityNameFunc ? this.entityNameFunc(item.id, this.os) : this.util.getBeautifulIRI(item.id),
-                additions: this.util.getPredicateLocalNameOrdered(item.additions),
-                deletions: this.util.getPredicateLocalNameOrdered(item.deletions),
-                disableAll: this._hasSpecificType(item.additions) || this._hasSpecificType(item.deletions)
+            mergedInProgressCommitsMap = (this.difference.deletions as JSONLDObject[]).reduce((dict, currentItem) => {
+                const diff: Difference = dict[currentItem['@id']] ? dict[currentItem['@id']] : new Difference();
+                diff.deletions = [currentItem];
+                dict[currentItem['@id']] = diff ;
+                return dict;
+            }, mergedInProgressCommitsMap);
+            const changesItems: ChangesItem[] = Object.keys(mergedInProgressCommitsMap).map(id => ({
+                id,
+                difference: mergedInProgressCommitsMap[id],
+                entityName: this.entityNameFunc ? this.entityNameFunc(id, this.os) : this.util.getBeautifulIRI(id),
+                disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id)
             }));
             this.changesItems = sortBy(changesItems, 'entityName');
         }
@@ -129,7 +116,11 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     getEntityName(entityIRI: string): string {
         return this.entityNameFunc ? this.entityNameFunc(entityIRI, this.os) : this.os.getEntityNameByListItem(entityIRI);
     }
-    private _hasSpecificType(array: CommitChange[]): boolean {
-        return !!intersection(array.filter(change => change.p === this.typeIRI).map(change => change.o), this.types).length;
+    private _hasSpecificType(difference: Difference, entityId: string): boolean {
+        const addObj = (difference.additions as JSONLDObject[]).find(obj => obj['@id'] === entityId);
+        const addTypes = addObj ? addObj['@type'] || [] : [];
+        const delObj = (difference.deletions as JSONLDObject[]).find(obj => obj['@id'] === entityId);
+        const delTypes = delObj ? delObj['@type'] || [] : [];
+        return !!intersection(addTypes.concat(delTypes), this.types).length;
     }
 }

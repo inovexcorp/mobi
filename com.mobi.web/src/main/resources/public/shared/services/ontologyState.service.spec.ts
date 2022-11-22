@@ -2954,7 +2954,7 @@ describe('Ontology State Service', function() {
     });
     describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
         beforeEach(function() {
-            ontologyManagerStub.isBlankNodeId.and.callFake(id => typeof id === 'string' && (includes(id, '/.well-known/genid/') || includes(id, '_:genid') || includes(id, '_:b')));
+            utilStub.isBlankNodeId.and.callFake(id => typeof id === 'string' && (includes(id, '/.well-known/genid/') || includes(id, '_:genid') || includes(id, '_:b')));
             service.listItem = listItem;
         });
         it('when there is no iriBegin or iriThen', function() {
@@ -2972,7 +2972,7 @@ describe('Ontology State Service', function() {
             expect(service.getDefaultPrefix().startsWith('https://mobi.com/blank-node-namespace/')).toBeTrue();
         });
         it('when the iri is a blank node and there is something in the entityInfo', function() {
-            ontologyManagerStub.isBlankNodeId.and.returnValue(true);
+            utilStub.isBlankNodeId.and.returnValue(true);
             splitIRIStub.transform.and.returnValue({begin: 'http://matonto.org/ontologies/uhtc', then: '#', end: ''});
             service.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
             service.listItem.entityInfo = {
@@ -4220,7 +4220,7 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
             service.listItem = listItem;
             service.listItem.blankNodes = {key1: 'value1'};
-            ontologyManagerStub.isBlankNodeId.and.returnValue(true);
+            utilStub.isBlankNodeId.and.returnValue(true);
         });
         it('value for the key provided contained in the object', function() {
             expect(service.getBlankNodeValue('key1')).toEqual(service.listItem.blankNodes['key1']);
@@ -4229,38 +4229,38 @@ describe('Ontology State Service', function() {
             expect(service.getBlankNodeValue('key2')).toEqual('key2');
         });
         it('undefined if isBlankNodeId returns false', function() {
-            ontologyManagerStub.isBlankNodeId.and.returnValue(false);
+            utilStub.isBlankNodeId.and.returnValue(false);
             expect(service.getBlankNodeValue('key1')).toEqual(undefined);
         });
     });
     describe('isLinkable returns proper value', function() {
         it('when existsInListItem exists and isBlankNodeId is false', function() {
             spyOn(service, 'existsInListItem').and.returnValue(true);
-            ontologyManagerStub.isBlankNodeId.and.returnValue(false);
+            utilStub.isBlankNodeId.and.returnValue(false);
             expect(service.isLinkable('iri')).toEqual(true);
             expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('iri');
+            expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('iri');
         });
         it('when existsInListItem is undefined and isBlankNodeId is false', function() {
             spyOn(service, 'existsInListItem').and.returnValue(false);
-            ontologyManagerStub.isBlankNodeId.and.returnValue(false);
+            utilStub.isBlankNodeId.and.returnValue(false);
             expect(service.isLinkable('iri')).toEqual(false);
             expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(ontologyManagerStub.isBlankNodeId).not.toHaveBeenCalled();
+            expect(utilStub.isBlankNodeId).not.toHaveBeenCalled();
         });
         it('when existsInListItem exists and isBlankNodeId is true', function() {
             spyOn(service, 'existsInListItem').and.returnValue(true);
-            ontologyManagerStub.isBlankNodeId.and.returnValue(true);
+            utilStub.isBlankNodeId.and.returnValue(true);
             expect(service.isLinkable('iri')).toEqual(false);
             expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('iri');
+            expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('iri');
         });
         it('when existsInListItem is undefined and isBlankNodeId is true', function() {
             spyOn(service, 'existsInListItem').and.returnValue(false);
-            ontologyManagerStub.isBlankNodeId.and.returnValue(true);
+            utilStub.isBlankNodeId.and.returnValue(true);
             expect(service.isLinkable('iri')).toEqual(false);
             expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(ontologyManagerStub.isBlankNodeId).not.toHaveBeenCalled();
+            expect(utilStub.isBlankNodeId).not.toHaveBeenCalled();
         });
     });
     describe('addLanguageToNewEntity should set the proper values', function() {
@@ -4759,7 +4759,7 @@ describe('Ontology State Service', function() {
         }));
         describe('if the selected value is a blank node', function() {
             beforeEach(function() {
-                ontologyManagerStub.isBlankNodeId.and.callFake(id => id === 'id');
+                utilStub.isBlankNodeId.and.callFake(id => id === 'id');
                 this.expected = {'@id': service.listItem.selected['@id']};
                 service.listItem.selectedBlankNodes = [{'@id': 'id'}];
             });
@@ -4787,7 +4787,7 @@ describe('Ontology State Service', function() {
                         }
                     ]
                 };
-                ontologyManagerStub.isBlankNodeId.and.returnValue(true);
+                utilStub.isBlankNodeId.and.returnValue(true);
                 const originalSelectedBlankNodes = [
                     {
                         '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc834',
@@ -4853,7 +4853,7 @@ describe('Ontology State Service', function() {
                         }
                     ]
                 });
-                expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1');
+                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1');
                 expect(service.listItem.selectedBlankNodes).toEqual(originalSelectedBlankNodes);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();
@@ -4872,7 +4872,7 @@ describe('Ontology State Service', function() {
                     });
                 tick();
                 expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, this.expected);
-                expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('id');
+                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('id');
                 expect(service.listItem.selectedBlankNodes).toEqual([]);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();
@@ -4890,7 +4890,7 @@ describe('Ontology State Service', function() {
                     });
                 tick();
                 expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, this.expected);
-                expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('id');
+                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('id');
                 expect(service.listItem.selectedBlankNodes).toEqual([]);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();
@@ -4900,7 +4900,7 @@ describe('Ontology State Service', function() {
                 expect(service.listItem.flatEverythingTree).toEqual([]);
             }));
             it('and the blank node has some transitive blank nodes', fakeAsync(function() {
-                ontologyManagerStub.isBlankNodeId.and.callFake(id => id === 'bnode0' || id === 'bnode1');
+                utilStub.isBlankNodeId.and.callFake(id => id === 'bnode0' || id === 'bnode1');
                 service.listItem.selected[this.key] = [{'@id': 'bnode0'}];
                 service.listItem.selectedBlankNodes = [{
                     '@id': 'bnode0',
@@ -4923,8 +4923,8 @@ describe('Ontology State Service', function() {
                 });
                 expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {'@id': 'bnode1'});
                 expect(service.addToDeletions).not.toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {'@id': 'bnode2'});
-                expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('bnode0');
-                expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith('bnode1');
+                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('bnode0');
+                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('bnode1');
                 expect(service.listItem.selectedBlankNodes).toEqual([{'@id': 'bnode2'}]);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();

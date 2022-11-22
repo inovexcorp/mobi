@@ -29,9 +29,9 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ONTOLOGYSTATE } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './ontologyTab.component.scss';
-import { UtilService } from '../../../shared/services/util.service';
 
 /**
  * @class ontology-editor.OntologyTabComponent
