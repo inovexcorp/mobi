@@ -19,10 +19,9 @@
   #L%
   -->
 <div class="commit-compiled-resource vertical-scroll h-100" #compiledResource>
-    <error-display *ngIf="error">{{error}}</error-display>
-    <info-message *ngIf="!resource && !error">No entity to display</info-message>
+    <info-message *ngIf="!resource">No entity to display</info-message>
     <div class="wrapper mt-1" *ngIf="resource">
-        <div class="mb-2">
+        <div class="mb-2" *ngIf="types.length">
             <p class="type-label m-0">Type(s)</p>
             <div class="type text-truncate d-flex w-100" *ngFor="let typeObj of types" [ngClass]="{'text-success': typeObj.add, 'text-danger': typeObj.del}">
                 <div class="value-signs">
@@ -44,7 +43,7 @@
                         <span class="text-monospace px-1" *ngIf="item.del">--</span>
                     </div>
                     <div class="value-display px-4 flex-1 remove-min-width">
-                        <span *ngIf="item['@id']" class="value-display"><span>{{entityNameFunc ? entityNameFunc(item['@id']) : util.getBeautifulIRI(item['@id'])}}</span> <small *ngIf="!om.isBlankNodeId(item['@id'])">&lt;<span>{{item['@id']}}</span>&gt;</small></span>
+                        <span *ngIf="item['@id']" class="value-display"><span>{{entityNameFunc ? entityNameFunc(item['@id']) : util.getBeautifulIRI(item['@id'])}}</span> <small *ngIf="!util.isBlankNodeId(item['@id'])">&lt;<span>{{item['@id']}}</span>&gt;</small></span>
                         <span *ngIf="item['@value']" class="value-display"><span>{{item['@value']}}</span>
                             <small *ngIf="item['@type']" class="item-type type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}">[type: <span [innerHtml]="item['@type'] | prefixation"></span>]</small>
                             <small *ngIf="item['@language']" class="item-language type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}">[language: <span [innerHtml]="item['@language'] | prefixation"></span>]</small>

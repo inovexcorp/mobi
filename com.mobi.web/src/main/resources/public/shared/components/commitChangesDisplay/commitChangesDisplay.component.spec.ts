@@ -29,43 +29,38 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { map, range } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
+
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
-import { CommitChange } from '../../models/commitChange.interface';
+import { Difference } from '../../models/difference.class';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { UtilService } from '../../services/util.service';
-import { StatementContainerComponent } from '../statementContainer/statementContainer.component';
-import { StatementDisplayComponent } from '../statementDisplay/statementDisplay.component';
+import { CommitCompiledResourceComponent } from '../commitCompiledResource/commitCompiledResource.component';
 import { CommitChangesDisplayComponent } from './commitChangesDisplay.component';
 
 describe('Commit Changes Display component', function() {
     let component: CommitChangesDisplayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommitChangesDisplayComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const geoJsonldList: JSONLDObject[] =  [
         {
-            '@id':'http://topquadrant.com/ns/examples/geography#Abilene',
-            '@type':['http://topquadrant.com/ns/examples/geography#City'],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#lat':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'32.4263401615464'}],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#long':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'-99.744873046875'}],
-            'http://www.w3.org/2004/02/skos/core#broader':[{'@id':'http://topquadrant.com/ns/examples/geography#Texas'}],
-            'http://www.w3.org/2004/02/skos/core#prefLabel':[{'@language':'en','@value':'Abilene'}]
+            '@id': 'http://topquadrant.com/ns/examples/geography#Abilene',
+            '@type': ['http://topquadrant.com/ns/examples/geography#City'],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#lat': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '32.4263401615464'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#long': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '-99.744873046875'}],
+            'http://www.w3.org/2004/02/skos/core#broader': [{'@id': 'http://topquadrant.com/ns/examples/geography#Texas'}],
+            'http://www.w3.org/2004/02/skos/core#prefLabel': [{'@language': 'en','@value': 'Abilene'}]
         },
         {
-            '@id':'http://topquadrant.com/ns/examples/geography#Abu_Dhabi',
-            '@type':['http://topquadrant.com/ns/examples/geography#City'],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#lat':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'24.46666717529297'}],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#long':[{'@type':'http://www.w3.org/2001/XMLSchema#double','@value':'54.36666488647461'}],
-            'http://www.w3.org/2004/02/skos/core#broader':[{'@id':'http://topquadrant.com/ns/examples/geography#United_Arab_Emirates'}],
-            'http://www.w3.org/2004/02/skos/core#prefLabel':[{'@language':'en','@value':'Abu Dhabi'}]
+            '@id': 'http://topquadrant.com/ns/examples/geography#Abu_Dhabi',
+            '@type': ['http://topquadrant.com/ns/examples/geography#City'],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#lat': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '24.46666717529297'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#long': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '54.36666488647461'}],
+            'http://www.w3.org/2004/02/skos/core#broader': [{'@id': 'http://topquadrant.com/ns/examples/geography#United_Arab_Emirates'}],
+            'http://www.w3.org/2004/02/skos/core#prefLabel': [{'@language': 'en','@value': 'Abu Dhabi'}]
         }
     ];
-    const change: CommitChange = {
-        p: '', 
-        o: {'@value': ''}
-    };
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -77,8 +72,7 @@ describe('Commit Changes Display component', function() {
             ],
             declarations: [
                 CommitChangesDisplayComponent,
-                MockComponent(StatementContainerComponent),
-                MockComponent(StatementDisplayComponent)
+                MockComponent(CommitCompiledResourceComponent)
             ],
             providers: [
                 MockProvider(UtilService),
@@ -91,10 +85,7 @@ describe('Commit Changes Display component', function() {
         fixture = TestBed.createComponent(CommitChangesDisplayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.get(UtilService);
 
-        utilStub.getPredicatesAndObjects.and.returnValue([change]);
-        utilStub.getPredicateLocalNameOrdered.and.callFake(a => a);
         component.additions = [];
         component.deletions = [];
         component.entityNameFunc = jasmine.createSpy('entityNameFunc');
@@ -106,50 +97,32 @@ describe('Commit Changes Display component', function() {
         component = null;
         element = null;
         fixture = null;
-        utilStub = null;
     });
 
-    describe('should initialize with the correct data for', function() {
-        it('additions', function() {
-            expect(component.additions).toEqual([]);
-        });
-        it('deletions', function() {
-            expect(component.deletions).toEqual([]);
-        });
-        it('entityNameFunc', function() {
-            expect(component.entityNameFunc).toBeDefined();
-        });
-        it('hasMoreResults', function() {
-            expect(component.hasMoreResults).toBeFalsy();
-        });
-        it('startIndex', function() {
-            expect(component.startIndex).toBeUndefined();
-        });
-    });
     describe('controller methods', function() {
         it('ngOnChanges should produce current number of changesItems elements', function() {
             component.entityNameFunc = (entityIRI: string, os: OntologyStateService) => {
                 return entityIRI;
-            }
+            };
             component.additions = map(range(0, 4), i => ({'@id': `${i}`, '@type': ['http://example.com/ns/geo#City']}));
             component.deletions = map(range(2, 6), i => ({'@id': `${i}`, '@type': ['http://example.com/ns/geo#City']}));
-            expect(component.additions.length).withContext('additions.length').toEqual(4);
-            expect(component.deletions.length).withContext('deletions.length').toEqual(4);
-            expect(component.changesItems.length).withContext('changesItems.length').toEqual(0);
+            expect(component.additions.length).toEqual(4);
+            expect(component.deletions.length).toEqual(4);
+            expect(component.changesItems.length).toEqual(0);
             
             component.ngOnChanges({
                 additions: new SimpleChange(null, [], true),
                 deletions: new SimpleChange(null, [], true)
             });
 
-            expect(component.changesItems.length).withContext('changesItems.length').toEqual(6);
+            expect(component.changesItems.length).toEqual(6);
             expect(component.changesItems).toEqual([
-                {'id':'0', 'entityName': '0', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[],'disableAll':false},
-                {'id':'1', 'entityName': '1', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[],'disableAll':false},
-                {'id':'2', 'entityName': '2', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false},
-                {'id':'3', 'entityName': '3', 'additions':[{'p':'','o':{'@value':''}}],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false},
-                {'id':'4', 'entityName': '4', 'additions':[],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false},
-                {'id':'5', 'entityName': '5', 'additions':[],'deletions':[{'p':'','o':{'@value':''}}],'disableAll':false}
+                {'id': '0', 'entityName': '0', 'difference': new Difference([{'@id': '0', '@type': ['http://example.com/ns/geo#City']}]), 'disableAll': false},
+                {'id': '1', 'entityName': '1', 'difference': new Difference([{'@id': '1', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
+                {'id': '2', 'entityName': '2', 'difference': new Difference([{'@id': '2', '@type': ['http://example.com/ns/geo#City']}], [{'@id': '2', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
+                {'id': '3', 'entityName': '3', 'difference': new Difference([{'@id': '3', '@type': ['http://example.com/ns/geo#City']}], [{'@id': '3', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
+                {'id': '4', 'entityName': '4', 'difference': new Difference([], [{'@id': '4', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
+                {'id': '5', 'entityName': '5', 'difference': new Difference([], [{'@id': '5', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false}
             ]);
         });
         it('should add paged changes to results', function() {
@@ -200,8 +173,7 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(2);
             expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(2);
             // expand
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(0);
 
             const panels = element.queryAll(By.directive(MatExpansionPanel));
             expect(panels.length).toEqual(2);
@@ -212,8 +184,7 @@ describe('Commit Changes Display component', function() {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(2);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(2);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(2);
         });
         it('depending on whether there are deletions', async function() {
             expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(0);
@@ -231,8 +202,7 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(2);
             expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(2);
             // expand
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(0);
 
             const panels = element.queryAll(By.directive(MatExpansionPanel));
             expect(panels.length).toEqual(2);
@@ -243,8 +213,7 @@ describe('Commit Changes Display component', function() {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(2);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(2);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(2);
         });
         it('depending on whether there are additions and deletions', async function() {
             expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(0);
@@ -263,8 +232,7 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(2);
             expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(2);
             // expand
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(0);
 
             const panels = element.queryAll(By.directive(MatExpansionPanel));
             expect(panels.length).toEqual(2);
@@ -275,8 +243,7 @@ describe('Commit Changes Display component', function() {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(4);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(4);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(2);
         });
     });
 });

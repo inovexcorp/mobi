@@ -25,41 +25,31 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { configureTestSuite } from 'ng-bullet';
 import { By } from '@angular/platform-browser';
-import { of, throwError} from 'rxjs';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
-import { OntologyStateService } from '../../services/ontologyState.service';
-import { OntologyManagerService } from '../../services/ontologyManager.service';
-import { SharedModule } from '../../shared.module';
-import { CatalogManagerService } from '../../services/catalogManager.service';
-import { CommitDifference } from '../../models/commitDifference.interface';
 import { UtilService } from '../../services/util.service';
+import { Difference } from '../../models/difference.class';
+import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+import { PrefixationPipe } from '../../pipes/prefixation.pipe';
 import { CommitCompiledResourceComponent } from './commitCompiledResource.component';
-import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 
 describe('Commit Compiled Resource component', function() {
     let component: CommitCompiledResourceComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommitCompiledResourceComponent>;
-    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
-    const commitDifference: CommitDifference = new CommitDifference();
-    commitDifference.commit = {'@id': '', '@type': []};
+    const entityId = 'entity';
 
     configureTestSuite((function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
-            declarations: [],
+            declarations: [
+                CommitCompiledResourceComponent,
+                MockComponent(InfoMessageComponent),
+                MockPipe(PrefixationPipe)
+            ],
             providers: [
-                MockProvider(OntologyStateService),
-                MockProvider(OntologyManagerService),
-                MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
-                MockProvider(ProgressSpinnerService)
+                MockProvider(UtilService)
             ]
         });
     }));
@@ -68,30 +58,8 @@ describe('Commit Compiled Resource component', function() {
         fixture = TestBed.createComponent(CommitCompiledResourceComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        ontologyStateStub = TestBed.get(OntologyStateService);
-        ontologyManagerStub = TestBed.get(OntologyManagerService);
-        catalogManagerStub = TestBed.get(CatalogManagerService);
-        utilStub = TestBed.get(UtilService);
 
-        this.error = 'error';
-        this.commitId = 'commit';
-        this.entityId = 'entity';
-        this.resource = {
-            '@id': 'www.test.com',
-            '@type': ['commit'],
-            'extraProp': ['test']
-        };
-        this.commit = {
-            id: this.commitId,
-            additions: [],
-            deletions: []
-        };
-
-        catalogManagerStub.getCompiledResource.and.returnValue(of([this.resource]));
-        catalogManagerStub.getCommit.and.returnValue(of(this.commit));
-
-        component.commitId = '';
-        component.entityId = '';
+        component.entityId = entityId;
         component.entityNameFunc = jasmine.createSpy('entityNameFunc');
         component.entityNameFunc.and.returnValue('label');
         fixture.detectChanges();
@@ -102,73 +70,61 @@ describe('Commit Compiled Resource component', function() {
         fixture = null;
         component = null;
         element = null;
-        ontologyStateStub = null;
-        ontologyManagerStub = null;
-        catalogManagerStub = null;
-        utilStub = null;
     });
 
-    describe('controller bound variable', function() {
-        it('commitId is one way bound', function() {
-            component.commitId = 'Test';
-            fixture.detectChanges();
-            expect(component.commitId).toEqual('Test');
-        });
-        it('entityId is one way bound', function() {
-            component.entityId = 'Test';
-            fixture.detectChanges();
-            expect(component.entityId).toEqual('Test');
-        });
-    });
     describe('controller methods', function() {
-        describe('sets the compiled resource and commit', function() {
-            beforeEach(function() {
-                component.commitId = this.commitId;
-                component.entityId = this.entityId;
-            });
-            it('if a commitId is set', function() {
-                catalogManagerStub.getDifferenceForSubject.and.returnValue(of(commitDifference));
-
+        describe('sets the data for display', function() {
+            it('if only triples are set', function() {
+                component.triples = {'@id': entityId, '@type': ['TypeA']};
                 component.setResource();
-                fixture.detectChanges();
-                //expect(httpSvc.cancel).toHaveBeenCalledWith(component.id);
-                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, true);
-                expect(catalogManagerStub.getDifferenceForSubject).toHaveBeenCalledWith(this.entityId, this.commitId);
-                expect(component.resource).toEqual({'extraProp': ['test']});
+                expect(component.resource).toEqual({});
+                expect(component.types).toEqual([{type: 'TypeA'}]);
             });
-            it('unless a commitId is not set', function() {
-                component.commitId = null;
+            it('if only changes are set', function() {
+                component.changes = new Difference([
+                    {'@id': entityId, '@type': ['NewType'], propA: [{'@value': 'New Value'}], propB: [{'@id': 'otherobject'}]}, {'@id': 'otherobject'}],
+                    [{'@id': entityId, '@type': ['OldType'], propA: [{'@value': 'Old Value'}], propC: [{'@id': 'oldobject'}]}, {'@id': 'oldobject'}]
+                );
                 component.setResource();
-                fixture.detectChanges();
-                //expect(httpSvc.cancel).not.toHaveBeenCalled();
-                expect(catalogManagerStub.getCompiledResource).not.toHaveBeenCalled();
-                expect(catalogManagerStub.getDifferenceForSubject).not.toHaveBeenCalled();
+                expect(component.resource).toEqual({
+                    propA: [{'@value': 'New Value', add: true}, {'@value': 'Old Value', del: true}],
+                    propB: [{'@id': 'otherobject', add: true}],
+                    propC: [{'@id': 'oldobject', del: true}]
+                });
+                expect(component.types).toEqual([{type: 'NewType', add: true}, {type: 'OldType', del: true}]);
+            });
+            it('if both changes and triples are set', function() {
+                component.triples = {
+                    '@id': entityId,
+                    '@type': ['TypeA'],
+                    propA: [{'@value': 'Existing Value'}, {'@value': 'New Value'}],
+                    propB: [{'@id': 'otherobject'}],
+                    propC: [{'@id': 'existingobject'}],
+                    propD: [{'@value': 'other value'}]
+                };
+                component.changes = new Difference([
+                    {'@id': entityId, '@type': ['NewType'], propA: [{'@value': 'New Value'}], propB: [{'@id': 'otherobject'}]}, {'@id': 'otherobject'}],
+                    [{'@id': entityId, '@type': ['OldType'], propA: [{'@value': 'Old Value'}], propC: [{'@id': 'oldobject'}]}, {'@id': 'oldobject'}]
+                );
+                component.setResource();
+                expect(component.resource).toEqual({
+                    propA: [{'@value': 'Existing Value'}, {'@value': 'New Value', add: true}, {'@value': 'Old Value', del: true}],
+                    propB: [{'@id': 'otherobject', add: true}],
+                    propC: [{'@id': 'existingobject'}, {'@id': 'oldobject', del: true}],
+                    propD: [{'@value': 'other value'}]
+                });
+                expect(component.types).toEqual([{type: 'TypeA'}, {type: 'NewType', add: true}, {type: 'OldType', del: true}]);
+            });
+            it('unless nothing is set', function() {
+                component.setResource();
                 expect(component.resource).toBeUndefined();
-            });
-            it('unless getCompiledResource rejects', function() {
-                catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
-                component.setResource();
-                fixture.detectChanges();
-                //expect(httpSvc.cancel).toHaveBeenCalledWith(component.id);
-                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, true);
-                expect(catalogManagerStub.getDifferenceForSubject).not.toHaveBeenCalled();
-                expect(component.error).toEqual('Error Message');
-            });
-            it('unless getDifference rejects', function() {
-                catalogManagerStub.getDifferenceForSubject.and.returnValue(throwError('Error Message'));
-                component.setResource();
-                fixture.detectChanges();
-                //expect(httpSvc.cancel).toHaveBeenCalledWith(component.id);
-                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, true);
-                expect(catalogManagerStub.getDifferenceForSubject).toHaveBeenCalledWith(this.entityId, this.commitId);
-                expect(component.error).toEqual('Error Message');
+                expect(component.types).toEqual([]);
             });
         });
     });
     describe('contains the correct html', function() {
         it('depending on whether a resource is found', function() {
             component.resource = {prop: [{'@value': 'Test'}]};
-            component.commitId = 'commit';
             component.entityId = 'entity';
             fixture.detectChanges();
             expect(element.queryAll(By.css('.wrapper')).length).toBe(1);
@@ -178,14 +134,7 @@ describe('Commit Compiled Resource component', function() {
             expect(element.queryAll(By.css('.prop-header')).length).toBe(1);
             expect(element.queryAll(By.css('.value-signs')).length).toBe(1);
         });
-        it('depending on whether there is a error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toBe(0);
-            component.error = this.error;
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toBe(1);
-        });
-        it('depending on whether there is no resource and no error', function() {
-            component.error = '';
+        it('depending on whether there is no resource', function() {
             component.resource = {};
             fixture.detectChanges();
             expect(element.queryAll(By.css('info-message')).length).toBe(0);

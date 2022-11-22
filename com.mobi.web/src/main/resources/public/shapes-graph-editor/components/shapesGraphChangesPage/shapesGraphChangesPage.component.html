@@ -47,12 +47,7 @@
                                 </mat-panel-description>
                                 </mat-expansion-panel-header>
                                 <ng-template matExpansionPanelContent>
-                                    <statement-container *ngIf="item.additions.length" additions>
-                                        <statement-display *ngFor="let addition of util.getPredicateLocalNameOrdered(item.additions)" [predicate]="addition.p" [object]="addition.o"></statement-display>
-                                    </statement-container>
-                                    <statement-container *ngIf="item.deletions.length" deletions>
-                                        <statement-display *ngFor="let deletion of util.getPredicateLocalNameOrdered(item.deletions)" [predicate]="deletion.p" [object]="deletion.o"></statement-display>
-                                    </statement-container>
+                                    <commit-compiled-resource [changes]="item.difference" [entityId]="item.id"></commit-compiled-resource>
                                 </ng-template>
                             </mat-expansion-panel>
                         </mat-accordion>

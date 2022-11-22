@@ -34,6 +34,7 @@ import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 import { IriSelectOntologyComponent } from './iriSelectOntology.component';
 
 describe('IRI Select Ontology component', function() {
@@ -42,6 +43,7 @@ describe('IRI Select Ontology component', function() {
     let fixture: ComponentFixture<IriSelectOntologyComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const iri = 'http://test.com';
     const iriOption = {
@@ -67,7 +69,8 @@ describe('IRI Select Ontology component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(OntologyManagerService)
+                MockProvider(OntologyManagerService),
+                MockProvider(UtilService),
             ]
         });
     });
@@ -78,6 +81,7 @@ describe('IRI Select Ontology component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get(OntologyStateService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
+        utilStub = TestBed.get(UtilService);
 
         spyOn(component.selectedChange, 'emit');
         ontologyStateStub.listItem = new OntologyListItem();
@@ -91,13 +95,14 @@ describe('IRI Select Ontology component', function() {
         fixture = null;
         ontologyStateStub = null;
         ontologyManagerStub = null;
+        utilStub = null;
     });
 
     describe('should initialize correctly', function() {
         beforeEach(function() {
             this.group = { namespace: 'namespace', options: [iriOption] };
             spyOn(component, 'filter').and.returnValue([this.group]);
-            ontologyManagerStub.isBlankNodeId.and.returnValue(false);
+            utilStub.isBlankNodeId.and.returnValue(false);
             spyOn(component, 'getName').and.returnValue('Name');
             component.selected = ['test'];
         });
@@ -193,7 +198,7 @@ describe('IRI Select Ontology component', function() {
                 'test3': 'C'
             };
             spyOn(component, 'getOntologyIri').and.callThrough();
-            ontologyManagerStub.isBlankNodeId.and.callFake(a => a === 'iri3');
+            utilStub.isBlankNodeId.and.callFake(a => a === 'iri3');
             spyOn(component, 'getName').and.callFake(a => a);
             expect(component.filter('I')).toEqual([
                 { namespace: 'A', options: [
@@ -205,7 +210,7 @@ describe('IRI Select Ontology component', function() {
                 ] },
             ]);
             Object.keys(component.selectList).forEach(iri => {
-                expect(ontologyManagerStub.isBlankNodeId).toHaveBeenCalledWith(iri);
+                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith(iri);
                 expect(component.getName).toHaveBeenCalledWith(iri, jasmine.any(Boolean));
             });
             ['iri1', 'iri2', 'iri3'].forEach(iri => {
@@ -231,7 +236,7 @@ describe('IRI Select Ontology component', function() {
             expect(ontologyStateStub.getEntityNameByListItem).toHaveBeenCalledWith(iri);
         });
         it('add should handle adding a chip', function() {
-            ontologyManagerStub.isBlankNodeId.and.returnValue(false);
+            utilStub.isBlankNodeId.and.returnValue(false);
             spyOn(component, 'getName').and.returnValue('name');
             component.add({input: null, value: iriOption.item});
             expect(component.selected).toEqual([iriOption.item]);

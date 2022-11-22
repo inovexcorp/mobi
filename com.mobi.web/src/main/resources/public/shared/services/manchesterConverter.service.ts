@@ -179,7 +179,7 @@ export class ManchesterConverterService {
         if (onProperty) {
             const propertyRestriction = this.splitIRI.transform(onProperty).end;
             let classRestriction = onClass ? this.splitIRI.transform(onClass).end : undefined;
-            if (this.om.isBlankNodeId(onClass)) {
+            if (this.util.isBlankNodeId(onClass)) {
                 const bNodeEntity = find(jsonld, {'@id': onClass});
                 if (bNodeEntity) {
                     const bNodeClassStr = this._renderClass(bNodeEntity, jsonld, index, html);
@@ -250,7 +250,7 @@ export class ManchesterConverterService {
             return (html ? this._surround(literal, this.literalClassName) : literal) + lang;
         } else {
             const value = get(item, '@id');
-            if (!this.om.isBlankNodeId(value)) {
+            if (!this.util.isBlankNodeId(value)) {
                 return this.splitIRI.transform(value).end;
             }
             return listKeyword ? this._render(value, jsonld, index, html, listKeyword) : '(' + this._render(value, jsonld, index, html) + ')';

@@ -29,15 +29,14 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { CATALOG, OWL, RDF, SKOS } from '../../../prefixes';
-import { CommitChange } from '../../../shared/models/commitChange.interface';
+import { CATALOG, OWL, SKOS } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
+import { Difference } from '../../../shared/models/difference.class';
 
 export interface ChangesItem {
     id: string,
     entityName: string,
-    additions: CommitChange[],
-    deletions: CommitChange[],
+    difference: Difference,
     disableAll: boolean
 }
 
@@ -59,10 +58,8 @@ export interface ChangesItem {
     templateUrl: './savedChangesTab.component.html'
 })
 export class SavedChangesTabComponent implements OnInit, OnChanges {
-    @Input() additions: JSONLDObject[];
-    @Input() deletions: JSONLDObject[];
+    @Input() difference: Difference;
 
-    typeIRI = RDF + 'type';
     types = [
         OWL + 'Class',
         OWL + 'ObjectProperty',
@@ -91,27 +88,23 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
     }
     ngOnChanges(): void {
-        const inProgressAdditions: {additions: CommitChange[], id: string}[] = (this.os.listItem.inProgressCommit.additions as JSONLDObject[]).map(addition => ({
-            additions: this.util.getPredicatesAndObjects(addition),
-            id: addition['@id']
-        }));
-        const inProgressDeletions: {deletions: CommitChange[], id: string}[] = (this.os.listItem.inProgressCommit.deletions as JSONLDObject[]).map(deletion => ({
-            deletions: this.util.getPredicatesAndObjects(deletion),
-            id: deletion['@id']
-        }));
-        const mergedInProgressCommitsMap: {[key: string]: { id: string, additions: CommitChange[], deletions: CommitChange[] }} = [].concat(inProgressAdditions, inProgressDeletions).reduce((dict, currentItem) => {
-            const existingValue = dict[currentItem['id']] || {};
-            const mergedValue = Object.assign({ id: '', additions: [], deletions: []}, existingValue, currentItem);
-            dict[currentItem.id] = mergedValue;
-            return dict;  
+        let mergedInProgressCommitsMap: { [key: string]: Difference } = (this.difference.additions as JSONLDObject[]).reduce((dict, currentItem) => {
+            const diff = new Difference();
+            diff.additions = [currentItem];
+            dict[currentItem['@id']] = diff;
+            return dict;
         }, {});
-        const mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key => mergedInProgressCommitsMap[key]);
-        this.list = mergedInProgressCommits.map(inProgressItem => ({
-                id: inProgressItem.id,
-                entityName: this.os.getEntityNameByListItem(inProgressItem.id),
-                additions: this.util.getPredicateLocalNameOrdered(inProgressItem.additions),
-                deletions: this.util.getPredicateLocalNameOrdered(inProgressItem.deletions),
-                disableAll: this._hasSpecificType(inProgressItem.additions) || this._hasSpecificType(inProgressItem.deletions)
+        mergedInProgressCommitsMap = (this.difference.deletions as JSONLDObject[]).reduce((dict, currentItem) => {
+            const diff: Difference = dict[currentItem['@id']] ? dict[currentItem['@id']] : new Difference();
+            diff.deletions = [currentItem];
+            dict[currentItem['@id']] = diff ;
+            return dict;
+        }, mergedInProgressCommitsMap);
+        this.list = Object.keys(mergedInProgressCommitsMap).map(id => ({
+            id,
+            difference: mergedInProgressCommitsMap[id],
+            entityName: this.os.getEntityNameByListItem(id),
+            disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id)
         }));
         this.list = sortBy(this.list, 'entityName');
         this.showList = this._getList();
@@ -209,8 +202,12 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
         this.os.listItem.userBranch = false;
         this.os.listItem.createdFromExists = true;
     }
-    private _hasSpecificType(array: CommitChange[]): boolean {
-        return !!intersection(array.filter(change => change.p === this.typeIRI).map(change => change.o), this.types).length;
+    private _hasSpecificType(difference: Difference, entityId: string): boolean {
+        const addObj = (difference.additions as JSONLDObject[]).find(obj => obj['@id'] === entityId);
+        const addTypes = addObj ? addObj['@type'] || [] : [];
+        const delObj = (difference.deletions as JSONLDObject[]).find(obj => obj['@id'] === entityId);
+        const delTypes = delObj ? delObj['@type'] || [] : [];
+        return !!intersection(addTypes.concat(delTypes), this.types).length;
     }
     private _getList() {
         this.chunks = chunk(this.list, this.size);

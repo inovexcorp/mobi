@@ -423,17 +423,12 @@ describe('Merge Request View component', function() {
         });
         describe('should resolve conflicts in the request', function() {
             beforeEach(function() {
-                const leftDifference = new Difference();
-                leftDifference.additions = [{'@id': 'add-right'}];
-                leftDifference.deletions = [{'@id': 'del-right'}];
-                const rightDifference = new Difference();
-                rightDifference.additions = [{'@id': 'add-left'}];
-                rightDifference.deletions = [{'@id': 'del-left'}];
+                const leftDifference = new Difference([{'@id': 'add-right'}], [{'@id': 'del-right'}]);
+                const rightDifference = new Difference([{'@id': 'add-left'}], [{'@id': 'del-left'}]);
                 this.selectedLeft = {resolved: 'left', right: rightDifference, left: new Difference()};
                 this.selectedRight = {resolved: 'right', right: new Difference(), left: leftDifference};
                 component.copiedConflicts = [this.selectedLeft, this.selectedRight];
-                this.expectedResolutions = new Difference();
-                this.expectedResolutions.deletions = [{'@id': 'add-left'}, {'@id': 'add-right'}];
+                this.expectedResolutions = new Difference(undefined, [{'@id': 'add-left'}, {'@id': 'add-right'}]);
                 component.resolveConflicts = true;
             });
             it('if resolveRequestConflicts resolves', fakeAsync(function() {

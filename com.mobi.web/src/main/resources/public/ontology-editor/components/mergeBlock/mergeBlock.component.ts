@@ -30,9 +30,9 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { CATALOG } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
+import { Commit } from '../../../shared/models/commit.interface';
 
 import './mergeBlock.component.scss';
-import { Commit } from '../../../shared/models/commit.interface';
 
 /**
  * @class ontology-editor.MergeBlockComponent

@@ -59,7 +59,7 @@ describe('Manchester Converter service', function() {
         utilStub = TestBed.get(UtilService);
         splitIRIStub = TestBed.get(SplitIRIPipe);
         // Mock calls
-        ontologyManagerStub.isBlankNodeId.and.callFake(id => includes(id, '_:genid'));
+        utilStub.isBlankNodeId.and.callFake(id => includes(id, '_:genid'));
         ontologyManagerStub.isClass.and.callFake(obj => includes(obj['@type'], OWL + 'Class'));
         ontologyManagerStub.isDatatype.and.callFake(obj => includes(obj['@type'], RDF + 'Datatype'));
         ontologyManagerStub.isRestriction.and.callFake(obj => includes(obj['@type'], OWL + 'Restriction'));

@@ -27,6 +27,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
+import { UtilService } from '../../../shared/services/util.service';
 
 import './propertyValues.component.scss';
 
@@ -71,7 +72,7 @@ export class PropertyValuesComponent implements OnInit, OnChanges {
     isEditSet = false;
     isRemoveSet = false;
 
-    constructor(public os: OntologyStateService, public om: OntologyManagerService) {}
+    constructor(public os: OntologyStateService, public om: OntologyManagerService, public util: UtilService) {}
     
     ngOnInit(): void {
         this.isEditSet = this.edit.observers.length > 0;

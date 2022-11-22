@@ -32,12 +32,11 @@ import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../../prefixes';
+import { CommitCompiledResourceComponent } from '../../../shared/components/commitCompiledResource/commitCompiledResource.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { StatementContainerComponent } from '../../../shared/components/statementContainer/statementContainer.component';
-import { StatementDisplayComponent } from '../../../shared/components/statementDisplay/statementDisplay.component';
-import { CommitChange } from '../../../shared/models/commitChange.interface';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
+import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -65,10 +64,6 @@ describe('Saved Changes Tab component', function() {
     const createdFromId = 'createdFromId';
     const branchTitle = 'branchA';
     const branchDescription = 'branchDescription';
-    const change: CommitChange = {
-        p: 'p',
-        o: 'o'
-    };
     const obj: JSONLDObject = {
         '@id': 'obj'
     };
@@ -85,8 +80,7 @@ describe('Saved Changes Tab component', function() {
                 SavedChangesTabComponent,
                 MockComponent(InfoMessageComponent),
                 MockComponent(ErrorDisplayComponent),
-                MockComponent(StatementContainerComponent),
-                MockComponent(StatementDisplayComponent),
+                MockComponent(CommitCompiledResourceComponent),
             ],
             providers: [
                 MockProvider(OntologyStateService),
@@ -124,32 +118,23 @@ describe('Saved Changes Tab component', function() {
 
     describe('should update the list of changes when additions/deletions change', function() {
         beforeEach(function() {
-            utilStub.getPredicatesAndObjects.and.returnValue([change]);
-            utilStub.getPredicateLocalNameOrdered.and.callFake(a => a);
             ontologyStateStub.getEntityNameByListItem.and.returnValue('name');
         });
         it('if there are less than 100 changes', function() {
-            ontologyStateStub.listItem.inProgressCommit.additions = [{'@id': '1', 'value': ['stuff']}];
-            ontologyStateStub.listItem.inProgressCommit.deletions = [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}];
+            component.difference = new Difference(
+                [{'@id': '1', 'value': ['stuff']}],
+                [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}]
+            );
             component.ngOnChanges();
-            ontologyStateStub.listItem.inProgressCommit.additions.forEach(change => {
-                expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
-            });
-            ontologyStateStub.listItem.inProgressCommit.deletions.forEach(change => {
-                expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
-            });
             expect(component.showList).toEqual([
-                {id: '1', entityName: 'name', additions: [change], deletions: [change], disableAll: false},
-                {id: '2', entityName: 'name', additions: [], deletions: [change], disableAll: false},
+                {id: '1', entityName: 'name', difference: new Difference([{'@id': '1', 'value': ['stuff']}], [{'@id': '1', 'value': ['otherstuff']}]), disableAll: false},
+                {id: '2', entityName: 'name', difference: new Difference([], [{'@id': '2'}]), disableAll: false},
             ]);
         });
         it('if there are more than 100 changes', function() {
             const ids = range(102);
-            ontologyStateStub.listItem.inProgressCommit.additions = ids.map(id => ({'@id': '' + id}));
+            component.difference = new Difference(ids.map(id => ({'@id': '' + id})));
             component.ngOnChanges();
-            ontologyStateStub.listItem.inProgressCommit.additions.forEach(change => {
-                expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
-            });
             expect(component.showList.length).toEqual(100);
         });
     });
@@ -173,13 +158,12 @@ describe('Saved Changes Tab component', function() {
         it('depending on how many additions/deletions there are', async function() {
             expect(element.queryAll(By.css('mat-accordion')).length).toEqual(0);
             expect(element.queryAll(By.css('mat-expansion-panel')).length).toEqual(0);
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(0);
 
             ontologyStateStub.listItem.inProgressCommit.additions = [obj];
             component.showList = [
-                {id: obj['@id'], entityName: '', additions: [change], deletions: [change], disableAll: false},
-                {id: obj['@id'], entityName: '', additions: [change, change], deletions: [], disableAll: false}
+                {id: obj['@id'], entityName: '', difference: new Difference([obj], [obj]), disableAll: false},
+                {id: obj['@id'], entityName: '', difference: new Difference([obj, obj]), disableAll: false}
             ];
             fixture.detectChanges();
             expect(element.queryAll(By.css('mat-accordion')).length).toEqual(2);
@@ -190,15 +174,14 @@ describe('Saved Changes Tab component', function() {
             });
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(element.queryAll(By.css('statement-container')).length).toEqual(3);
-            expect(element.queryAll(By.css('statement-display')).length).toEqual(4);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(2);
         });
         it('depending on whether there are more changes to show', function() {
             ontologyStateStub.listItem.inProgressCommit.additions = [obj];
             fixture.detectChanges();
             expect(element.queryAll(By.css('.changes button')).length).toEqual(0);
 
-            const item = {id: obj['@id'], entityName: '', additions: [change], deletions: [change], disableAll: false};
+            const item = {id: obj['@id'], entityName: '', difference: new Difference([obj], [obj]), disableAll: false};
             component.showList = [item];
             component.list = [item, item];
             fixture.detectChanges();

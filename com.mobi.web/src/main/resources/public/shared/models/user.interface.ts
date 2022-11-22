@@ -28,11 +28,11 @@ import { JSONLDObject } from './JSONLDObject.interface';
  */
 export interface User {
     jsonld?: JSONLDObject,
-    external: boolean,
+    external?: boolean,
     iri?: string,
     username: string,
     firstName: string,
     lastName: string,
-    email: string,
-    roles: string[]
+    email?: string,
+    roles?: string[]
 }

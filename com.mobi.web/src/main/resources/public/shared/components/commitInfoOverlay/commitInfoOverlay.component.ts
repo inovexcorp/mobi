@@ -34,9 +34,10 @@ import { CatalogManagerService } from '../../services/catalogManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { UtilService } from '../../services/util.service';
+import { EntityNames } from '../../models/entityNames.interface';
+import { Commit } from '../../models/commit.interface';
 
 import './commitInfoOverlay.component.scss';
-import { EntityNames } from '../../models/entityNames.interface';
 
 /**
  * @class shared.CommitInfoOverlayComponent
@@ -46,9 +47,9 @@ import { EntityNames } from '../../models/entityNames.interface';
  * additions and deletions for the commit. Meant to be used in conjunction with the `MatDialog` service. Expects the
  * following data to be provided.
  *
- * @param {Object} MAT_DIALOG_DATA.commit The commit to display information about
- * @param {string} MAT_DIALOG_DATA.commit.id The IRI string identifying the commit
- * @param {string} MAT_DIALOG_DATA.ontRecordId An optional IRI string representing an OntologyRecord to query for names if present
+ * @param {Commit} MAT_DIALOG_DATA.commit The commit to display information about including the commit IRI
+ * @param {string} MAT_DIALOG_DATA.ontRecordId An optional IRI string representing an OntologyRecord to query for names
+ * if present
  */
 @Component({
     selector: 'commit-info-overlay',
@@ -62,7 +63,8 @@ export class CommitInfoOverlayComponent implements OnInit {
     tempAdditions: JSONLDObject[] = [];
     tempDeletions: JSONLDObject[] = [];
 
-    constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, @Inject(MAT_DIALOG_DATA) public data: any,
+    constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, 
+                @Inject(MAT_DIALOG_DATA) public data: {ontRecordId: string, commit: Commit},
                 public util: UtilService, public um: UserManagerService, private cm: CatalogManagerService,
                 private om: OntologyManagerService) {
     }

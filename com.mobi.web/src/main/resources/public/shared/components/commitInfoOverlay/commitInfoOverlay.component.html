@@ -29,8 +29,10 @@
 
     <div class="changes-container">
         <span class="field-name">Changes</span>
-        <p *ngIf="additions?.length == 0 && deletions?.length == 0">(None)</p>
-        <commit-changes-display *ngIf="additions?.length > 0 || deletions?.length > 0" [additions]="additions" [deletions]="deletions" [entityNameFunc]="getEntityName.bind(this)" (showMoreResultsEmitter)="retrieveMoreResults($event?.limit, $event?.offset)" [hasMoreResults]="hasMoreResults"></commit-changes-display>
+        <p *ngIf="additions.length === 0 && deletions.length === 0; else elseBlock">(None)</p>
+        <ng-template #elseBlock>
+            <commit-changes-display [additions]="additions" [deletions]="deletions" [entityNameFunc]="getEntityName.bind(this)" (showMoreResultsEmitter)="retrieveMoreResults($event?.limit, $event?.offset)" [hasMoreResults]="hasMoreResults"></commit-changes-display>
+        </ng-template>
     </div>
 </div>
 <div mat-dialog-actions>

@@ -93,6 +93,22 @@ describe('Util service', function() {
         beautifyStub = null;
     });
 
+    describe('should determine whether an entity is a blank node', function() {
+        it('if the entity contains a blank node id', function() {
+            expect(service.isBlankNode({ '@id': '_:genid0' })).toBe(true);
+        });
+        it('if the entity does not contain a blank node id', function() {
+            expect(service.isBlankNode({'@id': 'test'})).toBe(false);
+        });
+    });
+    it('should determine whether a string is a blank node id', function() {
+        expect(service.isBlankNodeId('_:genid')).toBe(true);
+        expect(service.isBlankNodeId('_:b')).toBe(true);
+        expect(service.isBlankNodeId('http://mobi.com/.well-known/genid/')).toBe(true);
+        ['', 'notblanknode', undefined, null].forEach((test) => {
+            expect(service.isBlankNodeId(test)).toBe(false);
+        });
+    });
     describe('should get the beautified version of an IRI', function() {
         beforeEach(function() {
             this.iri = 'iri';

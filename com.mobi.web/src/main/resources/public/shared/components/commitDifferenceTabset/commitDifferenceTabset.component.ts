@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import { Component, Input, EventEmitter, Output } from '@angular/core';
+
 import { Difference } from '../../models/difference.class';
 import { Commit } from '../../models/commit.interface';
+import { OntologyStateService } from '../../services/ontologyState.service';
 
 import './commitDifferenceTabset.component.scss';
-import { OntologyStateService } from '../../services/ontologyState.service';
 
 /**
  * @class shared.CommitDifferenceTabsetComponent
@@ -42,7 +42,7 @@ import { OntologyStateService } from '../../services/ontologyState.service';
  * @param {Function} showMoreResultsFunc A function that takes limit and offset to update the difference provided
  * @param {Function} entityNameFunc An optional function to pass to `commitChangesDisplay` to control the display of
  * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
- * @oaram {string} [recordId=''] recordId An optional IRI string representing an OntologyRecord to query for names if present
+ * @param {string} [recordId=''] recordId An optional IRI string representing an OntologyRecord to query for names if present
  * each entity's name
  */
 @Component({
