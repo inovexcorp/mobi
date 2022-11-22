@@ -81,6 +81,7 @@
         <osgi-component-annotations.version>1.5.0</osgi-component-annotations.version>
         <osgi-metatype-annotations.version>1.4.1</osgi-metatype-annotations.version>
         <osgi-versioning.version>1.1.2</osgi-versioning.version>
+        <osgi-whiteboard.version>1.1.0</osgi-whiteboard.version>
         <osgi.version>8.0.0</osgi.version>
         <owlapi.version>5.1.20</owlapi.version>
         <poi.version>3.14_1</poi.version>
@@ -314,6 +315,11 @@
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.service.jaxrs</artifactId>
                 <version>${osgi-service-jaxrs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.http.whiteboard</artifactId>
+                <version>${osgi-whiteboard.version}</version>
             </dependency>
 
             <!-- Other Dependencies -->

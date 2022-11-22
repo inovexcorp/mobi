@@ -38,6 +38,27 @@
     <packaging>bundle</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.cm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.component</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.http.whiteboard</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+
         <!-- Mobi REST Dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
@@ -79,7 +100,6 @@
             <artifactId>platform.config.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rest.security</artifactId>
