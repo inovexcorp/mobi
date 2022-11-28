@@ -37,7 +37,10 @@ export interface ChangesItem {
     id: string,
     entityName: string,
     difference: Difference,
-    disableAll: boolean
+    disableAll: boolean,
+    showFull: boolean,
+    resource: JSONLDObject,
+    isBlankNode: boolean
 }
 
 /**
@@ -104,7 +107,10 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
             id,
             difference: mergedInProgressCommitsMap[id],
             entityName: this.os.getEntityNameByListItem(id),
-            disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id)
+            disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id),
+            showFull: false,
+            resource: undefined,
+            isBlankNode: this.util.isBlankNodeId(id)
         }));
         this.list = sortBy(this.list, 'entityName');
         this.showList = this._getList();
@@ -185,6 +191,18 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
     }
     getEntityName(entityIRI: string): string {
         return this.os.getEntityNameByListItem(entityIRI);
+    }
+    toggleFull(item: ChangesItem): void {
+        if (item.showFull) {
+            this.cm.getCompiledResource(this.os.listItem.versionedRdfRecord.commitId, item.id)
+                .subscribe((resources: JSONLDObject[]) => {
+                    item.resource = resources.find(obj => obj['@id'] === item.id);
+                }, () => {
+                    this.util.createErrorToast('Error retrieving full entity information');
+                });
+        } else {
+            item.resource = undefined;
+        }
     }
 
     private _changeUserBranchesCreatedFrom(oldCreatedFromId: string, newCreatedFromId: string): void {

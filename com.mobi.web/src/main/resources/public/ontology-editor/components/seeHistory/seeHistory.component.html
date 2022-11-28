@@ -49,7 +49,7 @@
                 </div>
                 <div class="flex-1 remove-min-height" #compiledResource>
                     <error-display *ngIf="error">{{error}}</error-display>
-                    <commit-compiled-resource [triples]="resource" [changes]="changes" [entityId]="os.listItem.selected['@id']" [entityNameFunc]="getEntityNameDisplay"></commit-compiled-resource>
+                    <commit-compiled-resource [triples]="resource" [changes]="changes" [entityId]="os.listItem.selected['@id']" [entityNameFunc]="getEntityNameDisplay.bind(this)"></commit-compiled-resource>
                 </div>
             </div>
             <div class="col remove-min-width h-100 vertical-scroll">

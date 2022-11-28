@@ -28,6 +28,7 @@ import { ChangesItem } from '../../../ontology-editor/components/savedChangesTab
 import { OWL, SKOS } from '../../../prefixes';
 import { Difference } from '../../models/difference.class';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../services/catalogManager.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { UtilService } from '../../services/util.service';
 
@@ -36,11 +37,14 @@ import './commitChangesDisplay.component.scss';
 /**
  * @class shared.CommitChangesDisplayComponent
  *
- * A *dumb* component that creates a sequence of mat-accordion displaying the changes made to entities separated by additions and
- * deletions. Each changes display uses the `mat-expansion-panel`. The display of an entity's name can be optionally
- * controlled by the provided `entityNameFunc` function and defaults to the
- * {@link shared.UtilService beautified local name} of the IRI.
+ * A *dumb* component that creates a sequence of mat-accordion displaying the changes made to entities separated by
+ * additions and deletions. Each changes display uses the `mat-expansion-panel`. The display of an entity's name can be
+ * optionally controlled by the provided `entityNameFunc` function and defaults to the
+ * {@link shared.UtilService beautified local name} of the IRI. The display of the changes can optionally include a
+ * toggle to include all triples for an entity in the expansion panel body. This controlled by the presence of the
+ * `commitId` input. If not present, the toggle will not be shown.
  *
+ * @param {string} [commitId=''] An optional Commit IRI to use in the Show Full toggle
  * @param {JSONLDObject[]} additions An array of JSON-LD objects representing statements added
  * @param {JSONLDObject[]} deletions An array of JSON-LD objects representing statements deleted
  * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The 
@@ -55,6 +59,7 @@ import './commitChangesDisplay.component.scss';
     templateUrl: './commitChangesDisplay.component.html'
 })
 export class CommitChangesDisplayComponent implements OnInit, OnChanges {
+    @Input() commitId?: string;
     @Input() additions: JSONLDObject[];
     @Input() deletions: JSONLDObject[];
     @Input() entityNameFunc?: (entityIRI: string, os: OntologyStateService) => string;
@@ -78,7 +83,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     offsetIndex = 0;
     changesItems: ChangesItem[] = [];
 
-    constructor(private util: UtilService, public os: OntologyStateService) {}
+    constructor(private util: UtilService, private cm: CatalogManagerService, public os: OntologyStateService) {}
 
     ngOnInit(): void {
         if (this.startIndex) {
@@ -104,7 +109,10 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
                 id,
                 difference: mergedInProgressCommitsMap[id],
                 entityName: this.entityNameFunc ? this.entityNameFunc(id, this.os) : this.util.getBeautifulIRI(id),
-                disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id)
+                disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id),
+                showFull: false,
+                resource: undefined,
+                isBlankNode: this.util.isBlankNodeId(id)
             }));
             this.changesItems = sortBy(changesItems, 'entityName');
         }
@@ -116,6 +124,21 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     getEntityName(entityIRI: string): string {
         return this.entityNameFunc ? this.entityNameFunc(entityIRI, this.os) : this.os.getEntityNameByListItem(entityIRI);
     }
+    toggleFull(item: ChangesItem): void {
+        if (this.commitId) {
+            if (item.showFull) {
+                this.cm.getCompiledResource(this.commitId, item.id)
+                    .subscribe((resources: JSONLDObject[]) => {
+                        item.resource = resources.find(obj => obj['@id'] === item.id);
+                    }, () => {
+                        this.util.createErrorToast('Error retrieving full entity information');
+                    });
+            } else {
+                item.resource = undefined;
+            }
+        }
+    }
+
     private _hasSpecificType(difference: Difference, entityId: string): boolean {
         const addObj = (difference.additions as JSONLDObject[]).find(obj => obj['@id'] === entityId);
         const addTypes = addObj ? addObj['@type'] || [] : [];

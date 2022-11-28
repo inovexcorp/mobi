@@ -25,7 +25,8 @@
         <mat-tab label="Changes">
             <info-message *ngIf="!difference?.additions?.length && !difference?.deletions?.length; else elseBlock">No changes to display</info-message>
             <ng-template #elseBlock>
-                <commit-changes-display [additions]="difference.additions"
+                <commit-changes-display [commitId]="commitId"
+                                        [additions]="difference.additions"
                                         [deletions]="difference.deletions"
                                         [entityNameFunc]="entityNameFunc"
                                         (showMoreResultsEmitter)="middleShowMoreResultsFunc($event)"

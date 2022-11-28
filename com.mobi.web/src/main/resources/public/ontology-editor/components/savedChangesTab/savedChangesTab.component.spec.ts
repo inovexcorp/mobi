@@ -22,7 +22,8 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatButtonModule, MatExpansionModule, MatIconModule, MatExpansionPanel } from '@angular/material';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule, MatExpansionModule, MatIconModule, MatExpansionPanel, MatSlideToggleModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { range, remove } from 'lodash';
@@ -72,9 +73,11 @@ describe('Saved Changes Tab component', function() {
         TestBed.configureTestingModule({
             imports: [
                 NoopAnimationsModule,
+                FormsModule,
                 MatButtonModule,
                 MatIconModule,
-                MatExpansionModule
+                MatExpansionModule,
+                MatSlideToggleModule
             ],
             declarations: [
                 SavedChangesTabComponent,
@@ -101,6 +104,7 @@ describe('Saved Changes Tab component', function() {
         ontologyStateStub = TestBed.get(OntologyStateService);
         ontologyManagerStub = TestBed.get(OntologyManagerService);
         utilStub = TestBed.get(UtilService);
+        utilStub.isBlankNodeId.and.returnValue(false);
 
         ontologyStateStub.listItem = new OntologyListItem();
     });
@@ -127,8 +131,8 @@ describe('Saved Changes Tab component', function() {
             );
             component.ngOnChanges();
             expect(component.showList).toEqual([
-                {id: '1', entityName: 'name', difference: new Difference([{'@id': '1', 'value': ['stuff']}], [{'@id': '1', 'value': ['otherstuff']}]), disableAll: false},
-                {id: '2', entityName: 'name', difference: new Difference([], [{'@id': '2'}]), disableAll: false},
+                {id: '1', entityName: 'name', difference: new Difference([{'@id': '1', 'value': ['stuff']}], [{'@id': '1', 'value': ['otherstuff']}]), disableAll: false, resource: undefined, showFull: false, isBlankNode: false},
+                {id: '2', entityName: 'name', difference: new Difference([], [{'@id': '2'}]), disableAll: false, resource: undefined, showFull: false, isBlankNode: false},
             ]);
         });
         it('if there are more than 100 changes', function() {
@@ -158,12 +162,13 @@ describe('Saved Changes Tab component', function() {
         it('depending on how many additions/deletions there are', async function() {
             expect(element.queryAll(By.css('mat-accordion')).length).toEqual(0);
             expect(element.queryAll(By.css('mat-expansion-panel')).length).toEqual(0);
+            expect(element.queryAll(By.css('mat-slide-toggle')).length).toEqual(0);
             expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(0);
 
             ontologyStateStub.listItem.inProgressCommit.additions = [obj];
             component.showList = [
-                {id: obj['@id'], entityName: '', difference: new Difference([obj], [obj]), disableAll: false},
-                {id: obj['@id'], entityName: '', difference: new Difference([obj, obj]), disableAll: false}
+                {id: obj['@id'], entityName: '', difference: new Difference([obj], [obj]), disableAll: false, resource: undefined, showFull: false, isBlankNode: false},
+                {id: obj['@id'], entityName: '', difference: new Difference([obj, obj]), disableAll: false, resource: undefined, showFull: false, isBlankNode: true}
             ];
             fixture.detectChanges();
             expect(element.queryAll(By.css('mat-accordion')).length).toEqual(2);
@@ -174,6 +179,7 @@ describe('Saved Changes Tab component', function() {
             });
             fixture.detectChanges();
             await fixture.whenStable();
+            expect(element.queryAll(By.css('mat-slide-toggle')).length).toEqual(1);
             expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(2);
         });
         it('depending on whether there are more changes to show', function() {
@@ -181,7 +187,7 @@ describe('Saved Changes Tab component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.changes button')).length).toEqual(0);
 
-            const item = {id: obj['@id'], entityName: '', difference: new Difference([obj], [obj]), disableAll: false};
+            const item = {id: obj['@id'], entityName: '', difference: new Difference([obj], [obj]), disableAll: false, resource: undefined, showFull: false, isBlankNode: false};
             component.showList = [item];
             component.list = [item, item];
             fixture.detectChanges();
@@ -497,6 +503,32 @@ describe('Saved Changes Tab component', function() {
             ontologyStateStub.getEntityNameByListItem.and.returnValue('iri');
             expect(component.getEntityName('id')).toEqual('iri');
             expect(ontologyStateStub.getEntityNameByListItem).toHaveBeenCalledWith('id');
+        });
+        describe('toggleFull sets the full resource on a changes item', function() {
+            it('unless the full display should be removed', function() {
+                const item = {id: obj['@id'], entityName: '', difference: new Difference(), disableAll: false, resource: obj, showFull: false, isBlankNode: false};
+                component.toggleFull(item);
+                expect(catalogManagerStub.getCompiledResource).not.toHaveBeenCalled();
+                expect(item.resource).toBeUndefined();
+            });
+            it('successfully', fakeAsync(function() {
+                catalogManagerStub.getCompiledResource.and.returnValue(of([{'@id': 'other'}, obj]));
+                const item = {id: obj['@id'], entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                component.toggleFull(item);
+                tick();
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.commitId, obj['@id']);
+                expect(item.resource).toEqual(obj);
+                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
+                const item = {id: obj['@id'], entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                component.toggleFull(item);
+                tick();
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.commitId, obj['@id']);
+                expect(item.resource).toBeUndefined();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+            }));
         });
     });
     it('should call update when the link is clicked', function() {

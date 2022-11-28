@@ -36,7 +36,10 @@ import './shapesGraphChangesPage.component.scss';
 interface CommitChanges {
     id: string,
     difference: Difference,
-    disableAll: boolean
+    disableAll: boolean,
+    showFull: boolean,
+    resource: JSONLDObject,
+    isBlankNode: boolean
 }
 
  /**
@@ -98,7 +101,10 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         this.list = Object.keys(mergedInProgressCommitsMap).map(id => ({
             id,
             difference: mergedInProgressCommitsMap[id],
-            disableAll: this.hasSpecificType(mergedInProgressCommitsMap[id], id)
+            disableAll: this.hasSpecificType(mergedInProgressCommitsMap[id], id),
+            showFull: false,
+            resource: undefined,
+            isBlankNode: this.util.isBlankNodeId(id)
         }));
         this.showList = this.getList();
     }
@@ -133,5 +139,17 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     openCommit(commit: Commit): Promise<any> {
         return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, this.util.condenseCommitId(commit.id))
             .then(() => {}, error => this.util.createErrorToast(error));
+    }
+    toggleFull(item: CommitChanges): void {
+        if (item.showFull) {
+            this.cm.getCompiledResource(this.state.listItem.versionedRdfRecord.commitId, item.id)
+                .subscribe((resources: JSONLDObject[]) => {
+                    item.resource = resources.find(obj => obj['@id'] === item.id);
+                }, () => {
+                    this.util.createErrorToast('Error retrieving full entity information');
+                });
+        } else {
+            item.resource = undefined;
+        }
     }
 }

@@ -27,6 +27,7 @@
     <mat-tab label="Changes">
         <commit-changes-display
                 *ngIf="state.difference?.additions.length || state.difference?.deletions.length; else noChangesBlock"
+                [commitId]="request.sourceCommit"
                 [additions]="state.difference?.additions"
                 [deletions]="state.difference?.deletions"
                 [entityNameFunc]="getEntityName.bind(this)"
