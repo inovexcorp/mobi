@@ -47,7 +47,8 @@
                                 </mat-panel-description>
                                 </mat-expansion-panel-header>
                                 <ng-template matExpansionPanelContent>
-                                    <commit-compiled-resource [changes]="item.difference" [entityId]="item.id"></commit-compiled-resource>
+                                    <mat-slide-toggle *ngIf="!item.isBlankNode" [(ngModel)]="item.showFull" (change)="toggleFull(item)">Show Full</mat-slide-toggle>
+                                    <commit-compiled-resource [triples]="item.resource" [changes]="item.difference" [entityId]="item.id"></commit-compiled-resource>
                                 </ng-template>
                             </mat-expansion-panel>
                         </mat-accordion>

@@ -21,12 +21,12 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { range, map } from 'lodash';
-import { MatExpansionModule, MatTooltipModule } from '@angular/material';
+import { MatExpansionModule, MatSlideToggleModule, MatTooltipModule } from '@angular/material';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
@@ -40,12 +40,18 @@ import { OWL } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
 import { CommitCompiledResourceComponent } from '../../../shared/components/commitCompiledResource/commitCompiledResource.component';
 import { Commit } from '../../../shared/models/commit.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphChangesPageComponent } from './shapesGraphChangesPage.component';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule } from '@angular/forms';
 
 interface CommitChanges {
     id: string,
     difference: Difference,
-    disableAll: boolean
+    disableAll: boolean,
+    showFull: boolean,
+    resource: JSONLDObject,
+    isBlankNode: boolean
 }
 
 describe('Shapes Graph Changes Page component', function() {
@@ -58,7 +64,7 @@ describe('Shapes Graph Changes Page component', function() {
 
     const commitId = 'commitId';
     const entityId = 'entityId';
-    const commitChanges: CommitChanges = {id: entityId, difference: new Difference(), disableAll: false};
+    const commitChanges: CommitChanges = {id: entityId, difference: new Difference(), disableAll: false, showFull: false, resource: undefined, isBlankNode: false};
     const commit: Commit = {
         id: commitId,
         creator: undefined,
@@ -71,8 +77,11 @@ describe('Shapes Graph Changes Page component', function() {
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [
+                NoopAnimationsModule,
+                FormsModule,
                 MatExpansionModule,
-                MatTooltipModule
+                MatTooltipModule,
+                MatSlideToggleModule
             ],
             declarations: [
                 MockComponent(InfoMessageComponent),
@@ -100,6 +109,7 @@ describe('Shapes Graph Changes Page component', function() {
         shapesGraphStateStub.listItem.inProgressCommit = new Difference();
         utilStub = TestBed.get(UtilService);
         utilStub.condenseCommitId.and.returnValue(commitId);
+        utilStub.isBlankNodeId.and.returnValue(false);
     });
 
     afterEach(function() {
@@ -118,8 +128,8 @@ describe('Shapes Graph Changes Page component', function() {
             component.deletions = [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}];
             component.ngOnChanges();
             expect(component.showList).toEqual([
-                {id: '1', difference: new Difference([{'@id': '1', 'value': ['stuff']}], [{'@id': '1', 'value': ['otherstuff']}]), disableAll: false},
-                {id: '2', difference: new Difference([], [{'@id': '2'}]), disableAll: false},
+                {id: '1', difference: new Difference([{'@id': '1', 'value': ['stuff']}], [{'@id': '1', 'value': ['otherstuff']}]), disableAll: false, showFull: false, resource: undefined, isBlankNode: false},
+                {id: '2', difference: new Difference([], [{'@id': '2'}]), disableAll: false, showFull: false, resource: undefined, isBlankNode: false},
             ]);
         });
         it('if there are more than 100 changes', function() {
@@ -209,6 +219,32 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, commitId, null, commitId);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
             });
+        });
+        describe('toggleFull sets the full resource on a changes item', function() {
+            it('unless the full display should be removed', function() {
+                const item = {id: entityId, entityName: '', difference: new Difference(), disableAll: false, resource: {'@id': entityId}, showFull: false, isBlankNode: false};
+                component.toggleFull(item);
+                expect(catalogManagerStub.getCompiledResource).not.toHaveBeenCalled();
+                expect(item.resource).toBeUndefined();
+            });
+            it('successfully', fakeAsync(function() {
+                catalogManagerStub.getCompiledResource.and.returnValue(of([{'@id': 'id'}, {'@id': entityId}]));
+                const item = {id: entityId, entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                component.toggleFull(item);
+                tick();
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(shapesGraphStateStub.listItem.versionedRdfRecord.commitId, entityId);
+                expect(item.resource).toEqual({'@id': entityId});
+                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
+                const item = {id: entityId, entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                component.toggleFull(item);
+                tick();
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(shapesGraphStateStub.listItem.versionedRdfRecord.commitId, entityId);
+                expect(item.resource).toBeUndefined();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+            }));
         });
     });
     describe('contains the correct html', function() {

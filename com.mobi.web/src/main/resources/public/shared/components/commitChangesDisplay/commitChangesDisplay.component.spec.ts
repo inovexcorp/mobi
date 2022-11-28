@@ -22,17 +22,20 @@
  */
 
 import { DebugElement, SimpleChange } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatButtonModule, MatExpansionModule, MatIconModule, MatExpansionPanel } from '@angular/material';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule, MatExpansionModule, MatIconModule, MatExpansionPanel, MatSlideToggleModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { map, range } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../models/difference.class';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../services/catalogManager.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { UtilService } from '../../services/util.service';
 import { CommitCompiledResourceComponent } from '../commitCompiledResource/commitCompiledResource.component';
@@ -42,6 +45,8 @@ describe('Commit Changes Display component', function() {
     let component: CommitChangesDisplayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommitChangesDisplayComponent>;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     const geoJsonldList: JSONLDObject[] =  [
         {
@@ -66,6 +71,8 @@ describe('Commit Changes Display component', function() {
         TestBed.configureTestingModule({
             imports: [
                 NoopAnimationsModule,
+                FormsModule,
+                MatSlideToggleModule,
                 MatButtonModule,
                 MatIconModule,
                 MatExpansionModule
@@ -76,6 +83,7 @@ describe('Commit Changes Display component', function() {
             ],
             providers: [
                 MockProvider(UtilService),
+                MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService)
             ]
         });
@@ -85,6 +93,9 @@ describe('Commit Changes Display component', function() {
         fixture = TestBed.createComponent(CommitChangesDisplayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        utilStub = TestBed.get(UtilService);
+        utilStub.isBlankNodeId.and.returnValue(false);
 
         component.additions = [];
         component.deletions = [];
@@ -97,11 +108,13 @@ describe('Commit Changes Display component', function() {
         component = null;
         element = null;
         fixture = null;
+        catalogManagerStub = null;
+        utilStub = null;
     });
 
     describe('controller methods', function() {
         it('ngOnChanges should produce current number of changesItems elements', function() {
-            component.entityNameFunc = (entityIRI: string, os: OntologyStateService) => {
+            component.entityNameFunc = (entityIRI: string) => {
                 return entityIRI;
             };
             component.additions = map(range(0, 4), i => ({'@id': `${i}`, '@type': ['http://example.com/ns/geo#City']}));
@@ -117,12 +130,12 @@ describe('Commit Changes Display component', function() {
 
             expect(component.changesItems.length).toEqual(6);
             expect(component.changesItems).toEqual([
-                {'id': '0', 'entityName': '0', 'difference': new Difference([{'@id': '0', '@type': ['http://example.com/ns/geo#City']}]), 'disableAll': false},
-                {'id': '1', 'entityName': '1', 'difference': new Difference([{'@id': '1', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
-                {'id': '2', 'entityName': '2', 'difference': new Difference([{'@id': '2', '@type': ['http://example.com/ns/geo#City']}], [{'@id': '2', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
-                {'id': '3', 'entityName': '3', 'difference': new Difference([{'@id': '3', '@type': ['http://example.com/ns/geo#City']}], [{'@id': '3', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
-                {'id': '4', 'entityName': '4', 'difference': new Difference([], [{'@id': '4', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false},
-                {'id': '5', 'entityName': '5', 'difference': new Difference([], [{'@id': '5', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false}
+                {'id': '0', 'entityName': '0', 'difference': new Difference([{'@id': '0', '@type': ['http://example.com/ns/geo#City']}]), 'disableAll': false, resource: undefined, showFull: false, isBlankNode: false},
+                {'id': '1', 'entityName': '1', 'difference': new Difference([{'@id': '1', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false, resource: undefined, showFull: false, isBlankNode: false},
+                {'id': '2', 'entityName': '2', 'difference': new Difference([{'@id': '2', '@type': ['http://example.com/ns/geo#City']}], [{'@id': '2', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false, resource: undefined, showFull: false, isBlankNode: false},
+                {'id': '3', 'entityName': '3', 'difference': new Difference([{'@id': '3', '@type': ['http://example.com/ns/geo#City']}], [{'@id': '3', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false, resource: undefined, showFull: false, isBlankNode: false},
+                {'id': '4', 'entityName': '4', 'difference': new Difference([], [{'@id': '4', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false, resource: undefined, showFull: false, isBlankNode: false},
+                {'id': '5', 'entityName': '5', 'difference': new Difference([], [{'@id': '5', '@type': ['http://example.com/ns/geo#City']}]),'disableAll': false, resource: undefined, showFull: false, isBlankNode: false}
             ]);
         });
         it('should add paged changes to results', function() {
@@ -136,6 +149,42 @@ describe('Commit Changes Display component', function() {
             component.loadMore();
             expect(component.offsetIndex).withContext('page 3 offsetIndex').toEqual(4);
             expect(component.showMoreResultsEmitter.emit).withContext('page 3 showMoreResultsEmitter').toHaveBeenCalledWith({limit: 2, offset: 4});
+        });
+        describe('toggleFull sets the full resource on a changes item', function() {
+            it('unless the commitId is not set', function() {
+                component.commitId = '';
+                const item = {id: 'id', entityName: '', difference: new Difference(), disableAll: false, resource: {'@id': 'id'}, showFull: false, isBlankNode: false};
+                component.toggleFull(item);
+                expect(catalogManagerStub.getCompiledResource).not.toHaveBeenCalled();
+                expect(item.resource).toEqual({'@id': 'id'});
+            });
+            it('unless the full display should be removed', function() {
+                component.commitId = 'commitId';
+                const item = {id: 'id', entityName: '', difference: new Difference(), disableAll: false, resource: {'@id': 'id'}, showFull: false, isBlankNode: false};
+                component.toggleFull(item);
+                expect(catalogManagerStub.getCompiledResource).not.toHaveBeenCalled();
+                expect(item.resource).toBeUndefined();
+            });
+            it('successfully', fakeAsync(function() {
+                component.commitId = 'commitId';
+                catalogManagerStub.getCompiledResource.and.returnValue(of([{'@id': 'other'}, {'@id': 'id'}]));
+                const item = {id: 'id', entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                component.toggleFull(item);
+                tick();
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith('commitId', 'id');
+                expect(item.resource).toEqual({'@id': 'id'});
+                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                component.commitId = 'commitId';
+                catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
+                const item = {id: 'id', entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                component.toggleFull(item);
+                tick();
+                expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith('commitId', 'id');
+                expect(item.resource).toBeUndefined();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+            }));
         });
     });
     describe('contains the correct html', function() {
@@ -157,10 +206,11 @@ describe('Commit Changes Display component', function() {
             
             expect(element.queryAll(By.css('mat-expansion-panel')).length).toEqual(component.changesItems.length);
         });
-        it('depending on whether there are additions', async function() {
+        it('depending on whether the changes are on blank nodes', async function() {
             expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(0);
             expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(0);
 
+            component.commitId = 'commitId';
             component.additions = geoJsonldList;
             component.ngOnChanges({
                 additions: new SimpleChange(null, [], true),
@@ -219,23 +269,26 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(0);
             expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(0);
             
+            component.commitId = 'id';
             component.additions = geoJsonldList;
             component.deletions = geoJsonldList;
+            utilStub.isBlankNodeId.and.callFake(id => id === geoJsonldList[0]['@id']);
             component.ngOnChanges({
                 additions: new SimpleChange(null, [], true),
                 deletions: new SimpleChange(null, [], true)
             });
-
+           
             fixture.detectChanges();
             await fixture.whenStable();
             
-            expect(element.queryAll(By.css('mat-panel-title')).length).toEqual(2);
-            expect(element.queryAll(By.css('mat-panel-description')).length).toEqual(2);
+            expect(element.queryAll(By.css('mat-panel-title')).length).withContext('mat-panel-title').toEqual(2);
+            expect(element.queryAll(By.css('mat-panel-description')).length).withContext('mat-panel-description').toEqual(2);
             // expand
-            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(0);
+            expect(element.queryAll(By.css('mat-slide-toggle')).length).withContext('mat-slide-toggle = 0').toEqual(0);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).withContext('has commit-compiled-resource = 0').toEqual(0);
 
             const panels = element.queryAll(By.directive(MatExpansionPanel));
-            expect(panels.length).toEqual(2);
+            expect(panels.length).withContext('panels.length').toEqual(2);
             panels.forEach(panel => {
                 panel.componentInstance.expanded = true;
             });
@@ -243,7 +296,8 @@ describe('Commit Changes Display component', function() {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(element.queryAll(By.css('commit-compiled-resource')).length).toEqual(2);
+            expect(element.queryAll(By.css('mat-slide-toggle')).length).withContext('mat-slide-toggle = 1').toEqual(1);
+            expect(element.queryAll(By.css('commit-compiled-resource')).length).withContext('commit-compiled-resource = 2').toEqual(2);
         });
     });
 });

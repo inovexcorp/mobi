@@ -103,7 +103,7 @@ export class SeeHistoryComponent{
                 }),
                 first(),
                 switchMap( (resources: JSONLDObject[]) => {
-                    this.resource = head(resources) || undefined;
+                    this.resource = resources.find(obj => obj['@id'] === entityId);
                     return this.cm.getDifferenceForSubject(entityId, commitId).pipe(first());
                 })
             )

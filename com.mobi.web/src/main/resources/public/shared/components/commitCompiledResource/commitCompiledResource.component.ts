@@ -21,7 +21,8 @@
  * #L%
  */
 
-import { has, map, get, forEach, omit, find, mergeWith, isArray } from 'lodash';
+import { has, map, get, forEach, omit, find, cloneDeep, mergeWith, isArray } from 'lodash';
+
 import { Component, OnChanges, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
@@ -67,7 +68,7 @@ export class CommitCompiledResourceComponent implements OnChanges {
     setResource(): void {
         if (this.triples || this.changes) {
             this.types = map(get(this.triples, '@type', []), type => ({type}));
-            this.resource = omit(this.triples, ['@id', '@type']);
+            this.resource = omit(cloneDeep(this.triples), ['@id', '@type']);
             const additionsObj = find(this.changes ? this.changes.additions as JSONLDObject[] : [], {'@id': this.entityId});
             const deletionsObj = find(this.changes ?this.changes.deletions as JSONLDObject[] : [], {'@id': this.entityId});
             forEach(get(additionsObj, '@type'), addedType => {
@@ -78,7 +79,14 @@ export class CommitCompiledResourceComponent implements OnChanges {
                     this.types.push({type: addedType, add: true});
                 }
             });
-            this.types = this.types.concat(map(get(deletionsObj, '@type', []), type => ({type, del: true})));
+            forEach(get(deletionsObj, '@type'), deletedType => {
+                const typeObj = find(this.types, {type: deletedType});
+                if (typeObj) {
+                    typeObj.del = true;
+                } else {
+                    this.types.push({type: deletedType, del: true});
+                }
+            });
             const additions = omit(additionsObj, ['@id', '@type']);
             const deletions = omit(deletionsObj, ['@id', '@type']);
             forEach(additions, (values, prop) => {
@@ -99,13 +107,19 @@ export class CommitCompiledResourceComponent implements OnChanges {
             });
             forEach(deletions, (values, prop) => {
                 forEach(values, value => {
-                    value.del = true;
+                    const resourceVal: any = find(this.resource[prop], value);
+                    if (resourceVal) {
+                        resourceVal.del = true;
+                    } else {
+                        const newValue = Object.assign({}, value);
+                        newValue.del = true;
+                        if (this.resource[prop]) {
+                            this.resource[prop].push(newValue);
+                        } else {
+                            this.resource[prop] = [newValue];
+                        }
+                    }
                 });
-            });
-            mergeWith(this.resource, deletions, (objValue, srcValue) => {
-                if (isArray(objValue)) {
-                    return objValue.concat(srcValue);
-                }
             });
         } else {
             this.resource = undefined;
