@@ -139,7 +139,7 @@ public class CatalogRestIT extends KarafTestSupport {
 
         String additions = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-additions.jsonld").openStream(), StandardCharsets.UTF_8);
         String deletions = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-deletions.jsonld").openStream(), StandardCharsets.UTF_8);
-        String result = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-inProgressCommit.jsonld").openStream(), StandardCharsets.UTF_8);
+        String result = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-inProgressCommit.jsonld").openStream(), StandardCharsets.UTF_8).replaceAll("\\s", "");;
 
         HttpEntity inProgressCommitFormData = createUpdateInProgressCommitFormData(additions, deletions);
         try (CloseableHttpResponse response = updateInProgressCommit(createHttpClient(), inProgressCommitFormData, recordId)) {

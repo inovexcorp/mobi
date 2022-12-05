@@ -23,33 +23,31 @@ package com.mobi.web.authentication.resources;
  * #L%
  */
 
-import com.mobi.web.authentication.UITokenContext;
 import com.mobi.web.security.resources.WebResources;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.http.whiteboard.HttpWhiteboardConstants;
+import org.osgi.service.http.whiteboard.propertytypes.HttpWhiteboardContextSelect;
 import org.osgi.service.http.whiteboard.propertytypes.HttpWhiteboardResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(service = { MobiWebResources.class, WebResources.class }, immediate = true, property = {
-        HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT + "=("
-                + HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME + "=" + UITokenContext.CONTEXT_ID + ")"
-})
-@HttpWhiteboardResource(pattern = "/mobi/*", prefix = "/build")
+@Component(service = { MobiWebResources.class, WebResources.class }, immediate = true)
+@HttpWhiteboardResource(pattern = "/*", prefix = "/build")
+@HttpWhiteboardContextSelect("(" + HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME + "="
+  + com.mobi.web.authentication.resources.MobiContextHelper.NAME + ")")
 public class MobiWebResources implements WebResources {
-
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     @Activate
     public void start() {
-        log.info("WebResources registered");
+        log.info("MobiWebResources registered");
     }
 
     @Deactivate
     public void stop() {
-        log.info("WebResources stopped");
+        log.info("MobiWebResources stopped");
     }
 
     @Override
