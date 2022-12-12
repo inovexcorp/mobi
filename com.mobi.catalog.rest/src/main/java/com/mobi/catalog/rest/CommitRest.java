@@ -49,7 +49,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -82,7 +82,7 @@ public class CommitRest {
 
     private BNodeService bNodeService;
     private CatalogManager catalogManager;
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     protected EngineManager engineManager;
 

@@ -44,7 +44,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.Before;
@@ -126,7 +126,7 @@ public class UserRestIT extends KarafTestSupport {
     @Test
     public void testDeleteUser() throws Exception {
         OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
-        ValueFactory vf = SimpleValueFactory.getInstance();
+        ValueFactory vf = new ValidatingValueFactory();
 
         IRI user = vf.createIRI("http://mobi.com/users/45c571a156ddcef41351a713bcddee5ba7e95460");
         IRI inProgressCommit = vf.createIRI("https://mobi.com/in-progress-commits#c152d7b8-98f4-4337-909d-7fc6c62589f5");

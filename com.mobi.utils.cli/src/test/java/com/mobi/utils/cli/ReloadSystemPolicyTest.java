@@ -34,7 +34,7 @@ import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +53,7 @@ import java.util.Set;
 public class ReloadSystemPolicyTest {
     private AutoCloseable closeable;
     private ReloadSystemPolicy reloadCommand = new ReloadSystemPolicy();
-    private ValueFactory vf = SimpleValueFactory.getInstance();
+    private ValueFactory vf = new ValidatingValueFactory();
     private Resource policyId = vf.createIRI("http://mobi.com/policies/admin-user-only-access-versioned-rdf-record");
     private Set<Resource> policyIds = Collections.singleton(policyId);
     private String fileContents;

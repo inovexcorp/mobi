@@ -33,7 +33,7 @@ import com.mobi.repository.api.OsgiRepository;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -56,7 +56,7 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
 
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference(target = "(id=system)")
     OsgiRepository repository;

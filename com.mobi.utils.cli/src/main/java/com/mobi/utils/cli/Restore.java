@@ -58,7 +58,7 @@ import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
@@ -136,7 +136,7 @@ public class Restore implements Action {
         }
     }
 
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
     public static final String CONFIG_PATH = RESTORE_PATH + File.separator + "configurations";

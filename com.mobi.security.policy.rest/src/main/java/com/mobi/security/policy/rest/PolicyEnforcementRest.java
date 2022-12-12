@@ -43,7 +43,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
@@ -72,7 +72,7 @@ public class PolicyEnforcementRest {
     private final Logger log = LoggerFactory.getLogger(PolicyEnforcementRest.class);
 
     private PDP pdp;
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
     private EngineManager engineManager;
 
     @Reference

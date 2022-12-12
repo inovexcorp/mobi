@@ -37,7 +37,7 @@ import com.mobi.ontology.core.api.Ontology;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +52,7 @@ import javax.cache.Cache;
 public class OntologyCacheImplTest {
     private AutoCloseable closeable;
     private OntologyCacheImpl service;
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     private Resource recordId = vf.createIRI("http://test.com/record");
     private IRI ontologyIRI = vf.createIRI("http://test.com/ontology");

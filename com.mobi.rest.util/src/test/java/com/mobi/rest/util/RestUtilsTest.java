@@ -46,7 +46,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingImpl;
@@ -83,7 +83,7 @@ import javax.ws.rs.core.UriInfo;
 
 public class RestUtilsTest {
     private AutoCloseable closeable;
-    private static final ValueFactory vf = SimpleValueFactory.getInstance();
+    private static final ValueFactory vf = new ValidatingValueFactory();
     private static final ModelFactory mf = new DynamicModelFactory();
     private static IRI testPropIRI = vf.createIRI("http://example.com/test#prop");
 

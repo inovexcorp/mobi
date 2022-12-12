@@ -107,7 +107,10 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
     run(): void {
         if (this.state.editMapping && this.state.isMappingChanged()) {
             this.state.saveMapping()
-                .subscribe(id => this._runMapping(id), error => this._onError(error));
+                .subscribe(id => {
+                    this.state.newMapping = false;
+                    return this._runMapping(id);
+                }, error => this._onError(error));
         } else {
             this._runMapping(this.state.selected.record.id);
         }

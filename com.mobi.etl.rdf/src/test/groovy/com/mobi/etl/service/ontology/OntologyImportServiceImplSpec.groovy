@@ -33,14 +33,14 @@ import com.mobi.ontologies.rdfs.Resource
 import com.mobi.ontology.core.api.OntologyManager
 import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import spock.lang.Specification
 
 class OntologyImportServiceImplSpec extends Specification {
 
     def service = new OntologyImportServiceImpl()
 
-    def vf = SimpleValueFactory.getInstance()
+    def vf = new ValidatingValueFactory()
     def mf = new DynamicModelFactory()
     def versioningManager = Mock(VersioningManager)
     def catalogManager = Mock(CatalogManager)

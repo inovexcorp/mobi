@@ -55,7 +55,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -104,7 +104,7 @@ public class RestUtils {
     public static final  String TURTLE_MIME_TYPE = "text/turtle";
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
-    private static final ValueFactory vf = SimpleValueFactory.getInstance();
+    private static final ValueFactory vf = new ValidatingValueFactory();
 
     /**
      * Returns the specified RDFFormat. Currently supports Turtle, TRiG, RDF/XML, and JSON-LD.

@@ -56,7 +56,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
@@ -126,7 +126,7 @@ public class SparqlRest {
 
     private RepositoryManager repositoryManager;
     private DatasetManager datasetManager;
-    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ValueFactory valueFactory = new ValidatingValueFactory();
 
     private final Logger log = LoggerFactory.getLogger(SparqlRest.class);
     private final ObjectMapper mapper = new ObjectMapper();

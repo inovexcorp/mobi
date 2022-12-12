@@ -49,7 +49,7 @@ import com.mobi.vfs.api.VirtualFilesystem;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
@@ -130,7 +130,7 @@ public class RestoreTest {
     @Before
     public void setupMocks() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
-        vf = SimpleValueFactory.getInstance();
+        vf = new ValidatingValueFactory();
 
         restore = new Restore();
         restore.stateManager = stateManager;

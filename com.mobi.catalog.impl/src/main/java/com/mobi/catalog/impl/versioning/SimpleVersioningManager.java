@@ -28,7 +28,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 public class SimpleVersioningManager implements VersioningManager {
     private Map<String, VersioningService<VersionedRDFRecord>> versioningServices = new HashMap<>();
 
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     @SuppressWarnings("unchecked")

@@ -29,7 +29,7 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper
 import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.Resource
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.query.QueryLanguage
 import org.eclipse.rdf4j.query.QueryResults
 import org.eclipse.rdf4j.repository.RepositoryConnection
@@ -45,7 +45,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     // Services
     @Shared
-    vf = SimpleValueFactory.getInstance()
+    vf = new ValidatingValueFactory()
 
     // Mocks
     def repoManager = Mock(RepositoryManager)

@@ -46,7 +46,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
@@ -89,7 +89,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
     private OsgiRepository repository;
     private VirtualFilesystem vfs;
     private XACMLPolicyManager policyManager;
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
     void setPolicyCache(PolicyCache policyCache) {

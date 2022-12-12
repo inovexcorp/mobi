@@ -44,7 +44,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -76,7 +76,7 @@ import javax.ws.rs.core.Response;
 public class SettingRest {
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
 
     /**
      * A map of the available SettingServices. The string is get typeIRI for the individual SettingService.

@@ -34,7 +34,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.apache.karaf.itests.KarafTestSupport;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.Before;
@@ -111,7 +111,7 @@ public class ImportIT extends KarafTestSupport {
 
         manager = getOsgiService(DatasetManager.class);
         userFactory = getOsgiService(UserFactory.class);
-        vf = SimpleValueFactory.getInstance();
+        vf = new ValidatingValueFactory();
         DatasetRecordConfig config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset",
                 Collections.singleton(userFactory.createNew(vf.createIRI("http://mobi.com/users/admin"))), "system").build();
         record = manager.createDataset(config);

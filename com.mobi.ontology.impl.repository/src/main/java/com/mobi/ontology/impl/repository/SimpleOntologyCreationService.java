@@ -38,7 +38,7 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
@@ -49,7 +49,7 @@ import java.io.File;
 
 @Component(service = { SimpleOntologyCreationService.class, OntologyCreationService.class })
 public class SimpleOntologyCreationService implements OntologyCreationService {
-    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    protected final ValueFactory valueFactory = new ValidatingValueFactory();
     protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference

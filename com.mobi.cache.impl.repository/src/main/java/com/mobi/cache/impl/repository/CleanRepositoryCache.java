@@ -31,7 +31,7 @@ import org.apache.karaf.scheduler.Job;
 import org.apache.karaf.scheduler.JobContext;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -92,7 +92,7 @@ public class CleanRepositoryCache implements Job {
 
     @Override
     public void execute(JobContext context) {
-        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final ValueFactory vf = new ValidatingValueFactory();
         log.trace("Starting CleanRepositoryCache Job");
         long startTime = System.currentTimeMillis();
         OsgiRepository cacheRepo = repositoryManager.getRepository(repoId)

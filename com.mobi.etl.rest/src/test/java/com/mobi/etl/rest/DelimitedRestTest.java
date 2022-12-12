@@ -555,7 +555,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test

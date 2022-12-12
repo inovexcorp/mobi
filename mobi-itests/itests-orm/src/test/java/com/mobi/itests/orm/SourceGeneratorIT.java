@@ -54,7 +54,7 @@ import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.rdf.orm.impl.ThingFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -99,7 +99,7 @@ public class SourceGeneratorIT {
 
     @BeforeClass
     public static void beforeTest() {
-        valueFactory = SimpleValueFactory.getInstance();
+        valueFactory = new ValidatingValueFactory();
         modelFactory = new DynamicModelFactory();
         valueConverterRegistry = new DefaultValueConverterRegistry();
         valueConverterRegistry.registerValueConverter(new DoubleValueConverter());

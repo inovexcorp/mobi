@@ -39,7 +39,7 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
@@ -65,7 +65,7 @@ public class SimpleProvenanceService implements ProvenanceService {
     @Reference
     OrmFactoryRegistry factoryRegistry;
 
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
 
     final ModelFactory mf = new DynamicModelFactory();
 

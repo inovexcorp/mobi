@@ -61,7 +61,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -92,7 +92,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
     private static final String DEFAULT_PREFIX = "http://mobi.com/data/";
 
-    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ValueFactory valueFactory = new ValidatingValueFactory();
     private final ModelFactory modelFactory = new DynamicModelFactory();
     private MappingFactory mappingFactory;
     private ClassMappingFactory classMappingFactory;

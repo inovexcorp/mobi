@@ -38,7 +38,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
@@ -68,7 +68,7 @@ public class DocumentTranslationCLI implements Action {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslationCLI.class);
 
-    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ValueFactory valueFactory = new ValidatingValueFactory();
     private final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Argument(name = "document", required = true, description = "The document file to translate")

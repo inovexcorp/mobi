@@ -10,7 +10,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -73,7 +73,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      * The {@link ValueFactory} we'll use for representing RDF data in this
      * {@link OrmFactory} when one isn't provided to our objects.
      */
-    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    protected final ValueFactory valueFactory = new ValidatingValueFactory();
     /**
      * The {@link ModelFactory} we'll use for constructing {@link Model} objects
      * when one isn't provided.

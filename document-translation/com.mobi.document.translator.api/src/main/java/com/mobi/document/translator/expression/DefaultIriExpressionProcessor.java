@@ -27,7 +27,7 @@ import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.expression.context.IriExpressionContext;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class DefaultIriExpressionProcessor implements IriExpressionProcessor {
 
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
-    public final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    public final ValueFactory valueFactory = new ValidatingValueFactory();
 
     @Override
     public IRI processExpression(String expression, IriExpressionContext context) throws SemanticTranslationException {

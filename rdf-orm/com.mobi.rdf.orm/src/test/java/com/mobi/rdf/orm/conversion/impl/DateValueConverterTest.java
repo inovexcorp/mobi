@@ -28,14 +28,14 @@ import static org.junit.Assert.assertEquals;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.Test;
 
 import java.time.OffsetDateTime;
 
 public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTime> {
 
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     public DateValueConverterTest() {
         super(new DateValueConverter(), OffsetDateTime.class);

@@ -56,7 +56,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -685,7 +685,7 @@ public class SourceGenerator {
                 return codeModel.ref(Literal.class);
             } else if (rangeIri.equals(XSD.ANYURI)) {
                 return codeModel.ref(IRI.class);
-            } else if (rangeIri.equals(SimpleValueFactory.getInstance().createIRI(MOBI.IDENTIFIER))) {
+            } else if (rangeIri.equals(new ValidatingValueFactory().createIRI(MOBI.IDENTIFIER))) {
                 return codeModel.ref(Resource.class);
             } else if (rangeIri.equals(RDFS.RESOURCE)) {
                 return codeModel.ref(Value.class);

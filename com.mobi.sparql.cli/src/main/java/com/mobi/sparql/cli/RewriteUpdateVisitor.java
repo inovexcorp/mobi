@@ -23,7 +23,7 @@ package com.mobi.sparql.cli;
  * #L%
  */
 
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.algebra.Clear;
 import org.eclipse.rdf4j.query.algebra.DeleteData;
 import org.eclipse.rdf4j.query.algebra.Extension;
@@ -143,7 +143,7 @@ public class RewriteUpdateVisitor extends AbstractQueryModelVisitor<RuntimeExcep
 
             Extension ext = (Extension) multiProjection.getArg();
             ext.addElement(new ExtensionElem(
-                    new ValueConstant(SimpleValueFactory.getInstance().createIRI(GRAPH_PREDICATE)), uuid));
+                    new ValueConstant(new ValidatingValueFactory().createIRI(GRAPH_PREDICATE)), uuid));
         }
         contextToConstructQuery.put(key, multiProjection);
     }

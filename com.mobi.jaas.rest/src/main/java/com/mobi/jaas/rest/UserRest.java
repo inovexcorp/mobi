@@ -54,7 +54,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -91,7 +91,7 @@ public class UserRest {
     private final Logger logger = LoggerFactory.getLogger(UserRest.class);
     static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
     
     @Reference
     EngineManager engineManager;

@@ -303,8 +303,8 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     @Test
     public void testConstructorWithModelBlankNode() {
         Model model = mf.createEmptyModel();
-        model.add(vf.createBNode("_:node123"), typeIRI, ontologyType);
-        model.add(vf.createBNode("_:node123"), vf.createIRI("urn:testPred"), vf.createLiteral("test value"));
+        model.add(vf.createBNode("node123"), typeIRI, ontologyType);
+        model.add(vf.createBNode("node123"), vf.createIRI("urn:testPred"), vf.createLiteral("test value"));
 
         OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));

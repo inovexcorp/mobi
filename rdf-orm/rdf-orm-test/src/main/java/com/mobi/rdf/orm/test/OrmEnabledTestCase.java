@@ -36,7 +36,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public abstract class OrmEnabledTestCase {
 
     protected static final ModelFactory MODEL_FACTORY = new DynamicModelFactory();
 
-    protected static final ValueFactory VALUE_FACTORY = SimpleValueFactory.getInstance();
+    protected static final ValueFactory VALUE_FACTORY = new ValidatingValueFactory();
 
     protected static final OrmFactoryRegistryImpl ORM_FACTORY_REGISTRY = new OrmFactoryRegistryImpl();
 

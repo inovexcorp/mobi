@@ -41,7 +41,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -90,7 +90,7 @@ public class DocumentTranslatorRest {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslatorRest.class);
 
-    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ValueFactory valueFactory = new ValidatingValueFactory();
     private final ModelFactory modelFactory = new DynamicModelFactory();
     
     @Reference

@@ -4,7 +4,7 @@ import com.mobi.rdf.orm.conversion.ValueConverterRegistry
 import com.mobi.rdf.orm.conversion.impl.*
 import com.mobi.rdf.orm.impl.ThingFactory
 import org.eclipse.rdf4j.model.Model
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
@@ -12,7 +12,7 @@ import spock.lang.Specification
 
 class DelimitedOntologySpec extends Specification {
 
-    def vf = SimpleValueFactory.getInstance()
+    def vf = new ValidatingValueFactory()
     def classFactory = new ClassMappingFactory()
     def dataMappingFactory = new DataMappingFactory()
     def objectMappingFactory = new ObjectMappingFactory()

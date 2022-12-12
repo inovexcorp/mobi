@@ -36,7 +36,7 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class ReloadSystemPolicy implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReloadSystemPolicy.class);
 
-    ValueFactory vf = SimpleValueFactory.getInstance();
+    ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
     XACMLPolicyManager policyManager;
