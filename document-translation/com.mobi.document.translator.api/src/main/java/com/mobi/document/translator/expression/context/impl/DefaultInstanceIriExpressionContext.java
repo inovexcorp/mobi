@@ -29,7 +29,7 @@ import com.mobi.document.translator.ontology.ExtractedOntology;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.springframework.util.MultiValueMap;
 
 import java.util.Optional;
@@ -44,7 +44,7 @@ public class DefaultInstanceIriExpressionContext extends AbstractIriExpressionCo
 
     private final MultiValueMap<IRI, Value> properties;
 
-    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ValueFactory valueFactory = new ValidatingValueFactory();
 
     public DefaultInstanceIriExpressionContext(ExtractedOntology managedOntology, ExtractedClass instanceClass,
                                                MultiValueMap<IRI, Value> properties, ValueFactory valueFactory) {

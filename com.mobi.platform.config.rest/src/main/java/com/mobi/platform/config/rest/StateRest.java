@@ -40,7 +40,7 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
@@ -73,7 +73,7 @@ import javax.ws.rs.core.Response;
 @Path("/states")
 public class StateRest {
     protected StateManager stateManager;
-    protected final ValueFactory factory = SimpleValueFactory.getInstance();
+    protected final ValueFactory factory = new ValidatingValueFactory();
     protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference

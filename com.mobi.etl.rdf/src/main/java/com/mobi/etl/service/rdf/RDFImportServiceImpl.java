@@ -174,7 +174,6 @@ public class RDFImportServiceImpl implements RDFImportService {
             parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES);
             parserConfig.addNonFatalError(BasicParserSettings.NORMALIZE_DATATYPE_VALUES);
         }
-        parserConfig.addNonFatalError(BasicParserSettings.VERIFY_URI_SYNTAX);
         BatchInserter inserter;
         if (graph == null) {
             inserter = new BatchInserter(conn, config.getBatchSize(), cleanGraphs);

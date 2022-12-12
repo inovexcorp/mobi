@@ -51,7 +51,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.osgi.service.component.annotations.Component;
@@ -84,7 +84,7 @@ import javax.ws.rs.core.Response;
 @Path("/groups")
 public class GroupRest {
     private EngineManager engineManager;
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
     private GroupFactory groupFactory;
     private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(GroupRest.class);

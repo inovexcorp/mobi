@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import org.junit.After;
@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 public class OrmFactoryRegistryImplTest {
     private AutoCloseable closeable;
     private OrmFactoryRegistryImpl registry;
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
     private ThingFactory thingFactory = new ThingFactory();
 
     private IRI thingIRI;

@@ -37,6 +37,7 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -80,7 +81,7 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
         ValueConverterRegistry valueConverterRegistry = getReference(AbstractOrmFactory.class
                 .getDeclaredField("valueConverterRegistry"), test, ValueConverterRegistry.class);
         assertNotNull(valueFactory);
-        assertEquals(VALUE_FACTORY, valueFactory);
+        assertTrue(VALUE_FACTORY instanceof ValidatingValueFactory);
         assertNotNull(modelFactory);
         assertTrue(MODEL_FACTORY instanceof DynamicModelFactory);
         assertNotNull(valueConverterRegistry);

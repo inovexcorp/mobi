@@ -31,7 +31,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.SimpleLiteral;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -45,7 +45,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 public class DefaultValueConverterRegistryTest {
 
-    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    protected final ValueFactory valueFactory = new ValidatingValueFactory();
 
     @Test
     public void testBoxify() {

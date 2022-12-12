@@ -26,7 +26,7 @@ import com.mobi.dataset.api.DatasetConnection
 import com.mobi.dataset.api.DatasetManager
 import com.mobi.etl.api.config.rdf.ImportServiceConfig
 import com.mobi.repository.api.OsgiRepository
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
@@ -35,7 +35,7 @@ import spock.lang.Specification
 
 class RDFImportSpec extends Specification {
     def service = new RDFImportServiceImpl()
-    def vf = SimpleValueFactory.getInstance()
+    def vf = new ValidatingValueFactory()
 
     def repoId = "test"
     def datasetId = vf.createIRI("http://test.com/dataset-record")

@@ -23,6 +23,7 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
+import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.osgi.service.component.annotations.Component;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.AbstractValueConverter;
@@ -42,8 +43,6 @@ import javax.xml.datatype.DatatypeFactory;
  */
 @Component(service = ValueConverter.class)
 public class CalendarValueConverter extends AbstractValueConverter<Calendar> {
-
-    private static final String XSD_DATETIME = XSD_PREFIX + "dateTime";
 
     /**
      * Default constructor.
@@ -77,7 +76,7 @@ public class CalendarValueConverter extends AbstractValueConverter<Calendar> {
             final GregorianCalendar gcal = new GregorianCalendar();
             gcal.setTimeInMillis(type.getTimeInMillis());
             return getValueFactory(thing).createLiteral(
-                    DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal).toXMLFormat(), XSD_DATETIME);
+                    DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal).toXMLFormat(), CoreDatatype.XSD.DATETIME);
         } catch (Exception e) {
             throw new ValueConversionException("Issue converting calendar into Value", e);
         }

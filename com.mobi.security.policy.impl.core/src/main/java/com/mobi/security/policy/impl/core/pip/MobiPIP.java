@@ -30,7 +30,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
@@ -59,7 +59,7 @@ public class MobiPIP implements PIP {
     static final String PROP_PATH_NAMESPACE = "http://mobi.com/policy/prop-path";
     private static final String PROP_PATH_QUERY = "SELECT ?value WHERE { ?sub %s ?value .}";
 
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference(target = "(id=system)")
     OsgiRepository repo;

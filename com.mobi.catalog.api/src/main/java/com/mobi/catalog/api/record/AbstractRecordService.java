@@ -43,7 +43,7 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
@@ -71,7 +71,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
 
     public OrmFactory<T> recordFactory;
 
-    public final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    public final ValueFactory valueFactory = new ValidatingValueFactory();
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {

@@ -53,7 +53,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.junit.Before;
@@ -139,7 +139,7 @@ public class OntologyRestIT extends KarafTestSupport {
     public void testDeleteOntology() throws Exception {
         Resource additionsGraphIRI;
         String recordId, branchId, commitId;
-        ValueFactory vf = SimpleValueFactory.getInstance();
+        ValueFactory vf = new ValidatingValueFactory();
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
@@ -164,7 +164,7 @@ public class OntologyRestIT extends KarafTestSupport {
     public void testDeleteVocabulary() throws Exception {
         Resource additionsGraphIRI;
         String recordId, branchId, commitId;
-        ValueFactory vf = SimpleValueFactory.getInstance();
+        ValueFactory vf = new ValidatingValueFactory();
         HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
@@ -226,7 +226,7 @@ public class OntologyRestIT extends KarafTestSupport {
     private Resource validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
         IRI additionsGraphIRI;
         OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
-        ValueFactory vf = SimpleValueFactory.getInstance();
+        ValueFactory vf = new ValidatingValueFactory();
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
         IRI headIRI = vf.createIRI(Branch.head_IRI);
         IRI additionsIRI = vf.createIRI("http://mobi.com/ontologies/catalog#additions");

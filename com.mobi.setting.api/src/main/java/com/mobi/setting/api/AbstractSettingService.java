@@ -38,7 +38,7 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -58,7 +58,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSettingService.class);
 
-    public final ValueFactory vf = SimpleValueFactory.getInstance();
+    public final ValueFactory vf = new ValidatingValueFactory();
     public final ModelFactory mf = new DynamicModelFactory();
 
     @Reference

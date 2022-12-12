@@ -42,7 +42,7 @@ import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -55,7 +55,7 @@ public class CoreThingApiTest {
 
     private static final ModelFactory modelFactory = new DynamicModelFactory();
 
-    private static final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private static final ValueFactory valueFactory = new ValidatingValueFactory();
     private Model model;
 
     @BeforeClass

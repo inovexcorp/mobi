@@ -28,7 +28,7 @@ import com.mobi.etl.api.config.rdf.export.RDFExportConfig
 import com.mobi.repository.api.OsgiRepository
 import org.apache.commons.io.output.NullOutputStream
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.repository.RepositoryResult
 import org.eclipse.rdf4j.rio.RDFFormat
@@ -37,7 +37,7 @@ import spock.lang.Specification
 
 class RDFExportSpec extends Specification {
     def service = new RDFExportServiceImpl()
-    def vf = SimpleValueFactory.getInstance()
+    def vf = new ValidatingValueFactory()
     def mf = new DynamicModelFactory();
 
     def repoId = "test"

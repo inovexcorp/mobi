@@ -26,7 +26,7 @@ package com.mobi.etl.service.rdf.export;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogManager;
@@ -57,7 +57,7 @@ public class RecordExportServiceImpl implements RecordExportService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RDFExportServiceImpl.class);
 
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
     CatalogConfigProvider configProvider;

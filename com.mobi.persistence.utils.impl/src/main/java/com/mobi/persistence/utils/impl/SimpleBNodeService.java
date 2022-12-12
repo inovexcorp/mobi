@@ -33,7 +33,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Component;
 
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public class SimpleBNodeService implements BNodeService {
     private static final String PATH_COMPONENT = "/.well-known/genid/";
     public static final String SKOLEMIZED_NAMESPACE = "http://mobi.com" + PATH_COMPONENT;
 
-    public final ValueFactory vf = SimpleValueFactory.getInstance();
+    public final ValueFactory vf = new ValidatingValueFactory();
     public final ModelFactory mf = new DynamicModelFactory();
 
     @Override

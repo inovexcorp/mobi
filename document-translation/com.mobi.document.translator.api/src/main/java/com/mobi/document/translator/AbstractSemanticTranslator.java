@@ -29,7 +29,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 
 /**
  * This abstract base for the {@link SemanticTranslator} interface provides hooks to provide some base functionality to
@@ -43,7 +43,7 @@ public abstract class AbstractSemanticTranslator implements SemanticTranslator {
 
     private static final String RDF_PREFIX = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 
-    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    protected final ValueFactory valueFactory = new ValidatingValueFactory();
     protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     protected IriExpressionProcessor expressionProcessor;

@@ -70,7 +70,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -123,7 +123,7 @@ public class ExplorableDatasetRest {
 
     private final Logger log = LoggerFactory.getLogger(ExplorableDatasetRest.class);
 
-    private final ValueFactory factory = SimpleValueFactory.getInstance();
+    private final ValueFactory factory = new ValidatingValueFactory();
     private final ModelFactory modelFactory = new DynamicModelFactory();
 
     private DatasetManager datasetManager;

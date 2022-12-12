@@ -41,7 +41,7 @@ import com.mobi.security.policy.api.xacml.XACMLResponse;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -82,7 +82,7 @@ import javax.xml.bind.JAXBContext;
 @Component(immediate = true, service = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
 
-    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ValueFactory vf = new ValidatingValueFactory();
 
     private static final ObjectMapper mapper = new ObjectMapper();
 

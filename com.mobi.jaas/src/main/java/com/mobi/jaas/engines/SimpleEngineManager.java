@@ -32,7 +32,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
 public class SimpleEngineManager implements EngineManager {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
     private OrmFactoryRegistry factoryRegistry;
-    private ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private ValueFactory valueFactory = new ValidatingValueFactory();
     private ModelFactory modelFactory = new DynamicModelFactory();
     private OsgiRepository repository;
     private RoleFactory roleFactory;

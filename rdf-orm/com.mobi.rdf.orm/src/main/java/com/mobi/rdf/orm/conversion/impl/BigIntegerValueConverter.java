@@ -28,6 +28,7 @@ import com.mobi.rdf.orm.conversion.AbstractValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.osgi.service.component.annotations.Component;
 
 import java.math.BigInteger;
@@ -39,11 +40,6 @@ import java.math.BigInteger;
  */
 @Component(service = ValueConverter.class)
 public class BigIntegerValueConverter extends AbstractValueConverter<BigInteger> {
-
-    /**
-     * The type of literal this {@link ValueConverter} works with.
-     */
-    private static final String XSD_INTEGER = XSD_PREFIX + "integer";
 
     /**
      * Default constructor.
@@ -70,7 +66,7 @@ public class BigIntegerValueConverter extends AbstractValueConverter<BigInteger>
      */
     @Override
     public Value convertType(BigInteger type, Thing thing) throws ValueConversionException {
-        return getValueFactory(thing).createLiteral(type.toString(), XSD_INTEGER);
+        return getValueFactory(thing).createLiteral(type.toString(), CoreDatatype.XSD.INTEGER);
     }
 
 }

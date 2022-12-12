@@ -33,7 +33,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
@@ -58,7 +58,7 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleApplicationWrapper.class);
 
     protected String applicationId;
-    final ValueFactory factory = SimpleValueFactory.getInstance();
+    final ValueFactory factory = new ValidatingValueFactory();
     final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference(target = "(id=system)")

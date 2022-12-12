@@ -26,7 +26,7 @@ package com.mobi.persistence.utils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -46,7 +46,7 @@ public class BatchGraphInserter extends BatchInserter {
     public BatchGraphInserter(RepositoryConnection conn, Resource graph) {
         super(conn);
         this.graph = graph;
-        this.sesameVf = SimpleValueFactory.getInstance();
+        this.sesameVf = new ValidatingValueFactory();
     }
 
     /**
@@ -60,7 +60,7 @@ public class BatchGraphInserter extends BatchInserter {
     public BatchGraphInserter(RepositoryConnection conn,long batchSize, Resource graph) {
         super(conn, batchSize, false);
         this.graph = graph;
-        this.sesameVf = SimpleValueFactory.getInstance();
+        this.sesameVf = new ValidatingValueFactory();
     }
 
     /**

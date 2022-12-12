@@ -26,13 +26,13 @@ package com.mobi.rdf.orm.conversion.impl;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import com.mobi.rdf.orm.conversion.AbstractValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 
 public abstract class ValueConverterTestCase<X> {
 
-    protected static final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    protected static final ValueFactory valueFactory = new ValidatingValueFactory();
     protected ValueConverter<X> valueConverter;
     protected Class<X> type;
 

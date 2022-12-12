@@ -49,7 +49,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.apache.karaf.itests.KarafTestSupport;
@@ -130,7 +130,7 @@ public class DatasetRestIT extends KarafTestSupport {
 
     @Test
     public void uploadDataToDataset() throws Exception {
-        ValueFactory vf = SimpleValueFactory.getInstance();
+        ValueFactory vf = new ValidatingValueFactory();
         OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
         IRI datasetIRI = vf.createIRI(DatasetRecord.dataset_IRI);
         IRI repositoryIRI = vf.createIRI(DatasetRecord.repository_IRI);

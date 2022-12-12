@@ -31,7 +31,7 @@ import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,7 +89,7 @@ public class BalanaIT extends KarafTestSupport {
 
     @Before
     public void setup() {
-        ValueFactory vf = SimpleValueFactory.getInstance();
+        ValueFactory vf = new ValidatingValueFactory();
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/admin-user-only-access-versioned-rdf-record"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/dataset-creation"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/ontology-creation"));

@@ -27,7 +27,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import com.mobi.rdf.orm.OrmException;
@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     private List<OrmFactory<? extends Thing>> factories = new ArrayList<>();
 
-    final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    final ValueFactory valueFactory = new ValidatingValueFactory();
 
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     protected void addFactory(OrmFactory<? extends Thing> factory) {

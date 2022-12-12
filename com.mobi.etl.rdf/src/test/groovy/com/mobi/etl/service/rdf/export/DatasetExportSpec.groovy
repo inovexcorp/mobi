@@ -27,7 +27,7 @@ import com.mobi.dataset.api.DatasetConnection
 import com.mobi.dataset.api.DatasetManager
 import com.mobi.etl.api.config.rdf.export.BaseExportConfig
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.repository.RepositoryResult
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.mockito.Mockito
@@ -35,7 +35,7 @@ import spock.lang.Specification
 
 class DatasetExportSpec extends Specification {
     def service = new DatasetExportServiceImpl()
-    def vf = SimpleValueFactory.getInstance()
+    def vf = new ValidatingValueFactory()
     def mf = new DynamicModelFactory()
 
     def datasetManager = Mock(DatasetManager)

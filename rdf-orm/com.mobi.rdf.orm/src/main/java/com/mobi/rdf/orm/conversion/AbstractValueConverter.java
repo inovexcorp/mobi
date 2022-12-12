@@ -25,7 +25,7 @@ package com.mobi.rdf.orm.conversion;
 
 import com.mobi.rdf.orm.Thing;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 
 /**
  * This is an {@link AbstractValueConverter} for implementations to extend.
@@ -36,7 +36,6 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
  */
 public abstract class AbstractValueConverter<TYPE> implements ValueConverter<TYPE> {
 
-    public static final String XSD_PREFIX = "http://www.w3.org/2001/XMLSchema#";
     /**
      * The type this {@link ValueConverter} will produce.
      */
@@ -44,7 +43,7 @@ public abstract class AbstractValueConverter<TYPE> implements ValueConverter<TYP
     /**
      * A {@link ValueFactory} instance to use by default for doing conversion.
      */
-    public final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    public final ValueFactory valueFactory = new ValidatingValueFactory();
 
     /**
      * Construct a new {@link AbstractValueConverter}.

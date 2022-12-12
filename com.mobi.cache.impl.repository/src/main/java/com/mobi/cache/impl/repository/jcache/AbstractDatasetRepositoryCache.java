@@ -35,7 +35,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.slf4j.Logger;
@@ -48,7 +48,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
 
     private final Logger LOG = LoggerFactory.getLogger(AbstractDatasetRepositoryCache.class);
 
-    protected final ValueFactory vf = SimpleValueFactory.getInstance();
+    protected final ValueFactory vf = new ValidatingValueFactory();
     protected final ModelFactory mf = new DynamicModelFactory();
     protected OsgiRepository repository;
     protected DatasetFactory datasetFactory;

@@ -75,7 +75,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -129,7 +129,7 @@ import javax.ws.rs.core.StreamingOutput;
 @JaxrsResource
 @javax.ws.rs.Path("/delimited-files")
 public class DelimitedRest {
-    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     private DelimitedConverter converter;
     private MappingManager mappingManager;
@@ -208,24 +208,30 @@ public class DelimitedRest {
             )
     )
     public Response upload(@Context HttpServletRequest servletRequest) {
-        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-        InputStream inputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
-
-        ByteArrayOutputStream fileOutput;
         try {
-            fileOutput = toByteArrayOutputStream(inputStream);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+            InputStream inputStream = (InputStream) formData.get("stream");
+            String filename = (String) formData.get("filename");
+
+            ByteArrayOutputStream fileOutput;
+            try {
+                fileOutput = toByteArrayOutputStream(inputStream);
+            } catch (IOException e) {
+                throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+            }
+            getCharset(fileOutput.toByteArray());
+
+            String uuid = generateUuid();
+            String extension = FilenameUtils.getExtension(filename);
+            Path filePath = Paths.get(TEMP_DIR + "/" + uuid + "." + extension);
+
+            saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
+            return Response.status(201).entity(filePath.getFileName().toString()).build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
-        getCharset(fileOutput.toByteArray());
-
-        String uuid = generateUuid();
-        String extension = FilenameUtils.getExtension(filename);
-        Path filePath = Paths.get(TEMP_DIR + "/" + uuid + "." + extension);
-
-        saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
-        return Response.status(201).entity(filePath.getFileName().toString()).build();
     }
 
     /**
@@ -263,20 +269,26 @@ public class DelimitedRest {
                            @Parameter(schema = @Schema(type = "string",
                                    description = "Name of the uploaded file on the server to replace", required = true))
                            @PathParam("documentName") String fileName) {
-        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-        InputStream inputStream = (InputStream) formData.get("stream");
-
-        ByteArrayOutputStream fileOutput;
         try {
-            fileOutput = toByteArrayOutputStream(inputStream);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
-        }
-        getCharset(fileOutput.toByteArray());
+            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+            InputStream inputStream = (InputStream) formData.get("stream");
 
-        Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
-        saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
-        return Response.ok(fileName).build();
+            ByteArrayOutputStream fileOutput;
+            try {
+                fileOutput = toByteArrayOutputStream(inputStream);
+            } catch (IOException e) {
+                throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+            }
+            getCharset(fileOutput.toByteArray());
+
+            Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
+            saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
+            return Response.ok(fileName).build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     /**
@@ -328,11 +340,16 @@ public class DelimitedRest {
             @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(jsonld, "Must provide a JSON-LD string");
+        try {
+            // Convert the data
+            Model data = etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true);
 
-        // Convert the data
-        Model data = etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true);
-
-        return Response.ok(groupedModelToString(data, format)).build();
+            return Response.ok(groupedModelToString(data, format)).build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     /**
@@ -379,27 +396,31 @@ public class DelimitedRest {
             @QueryParam("fileName") String downloadFileName) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
 
+        try {
         // Convert the data
-        Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders, separator, false);
-        String result = groupedModelToString(data, format);
+            Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders, separator, false);
+            String result = groupedModelToString(data, format);
 
-        // Write data into a stream
-        StreamingOutput stream = os -> {
-            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-            writer.write(result);
-            writer.flush();
-            writer.close();
-        };
-        String fileExtension = getRDFFormat(format).getDefaultFileExtension();
-        String mimeType = getRDFFormat(format).getDefaultMIMEType();
-        String dataFileName = downloadFileName == null ? fileName : downloadFileName;
-        Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + dataFileName
-                +  "." + fileExtension).header("Content-Type", mimeType).build();
+            // Write data into a stream
+            StreamingOutput stream = os -> {
+                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+                writer.write(result);
+                writer.flush();
+                writer.close();
+            };
+            String fileExtension = getRDFFormat(format).getDefaultFileExtension();
+            String mimeType = getRDFFormat(format).getDefaultMIMEType();
+            String dataFileName = downloadFileName == null ? fileName : downloadFileName;
+            Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + dataFileName
+                    +  "." + fileExtension).header("Content-Type", mimeType).build();
 
-        // Remove temp file
-        removeTempFile(fileName);
+            // Remove temp file
+            removeTempFile(fileName);
 
-        return response;
+            return response;
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -442,24 +463,30 @@ public class DelimitedRest {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
 
-        // Convert the data
-        Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
-                separator, false);
-
-        // Add data to the dataset
-        ImportServiceConfig config = new ImportServiceConfig.Builder().dataset(vf.createIRI(datasetRecordIRI))
-                .logOutput(true)
-                .build();
         try {
-            rdfImportService.importModel(config, data);
-        } catch (RepositoryException ex) {
-            throw ErrorUtils.sendError("Error in repository connection", Response.Status.INTERNAL_SERVER_ERROR);
+            // Convert the data
+            Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                    separator, false);
+
+            // Add data to the dataset
+            ImportServiceConfig config = new ImportServiceConfig.Builder().dataset(vf.createIRI(datasetRecordIRI))
+                    .logOutput(true)
+                    .build();
+            try {
+                rdfImportService.importModel(config, data);
+            } catch (RepositoryException ex) {
+                throw ErrorUtils.sendError("Error in repository connection", Response.Status.INTERNAL_SERVER_ERROR);
+            }
+
+            // Remove temp file
+            removeTempFile(fileName);
+
+            return Response.ok().build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
-
-        // Remove temp file
-        removeTempFile(fileName);
-
-        return Response.ok().build();
     }
 
     /**
@@ -517,29 +544,35 @@ public class DelimitedRest {
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
         checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
 
-        // Convert the data
-        Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
-                separator, false);
+        try {
+            // Convert the data
+            Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                    separator, false);
 
-        // Commit converted data
-        IRI branchId = vf.createIRI(branchIRI);
-        IRI recordIRI = vf.createIRI(ontologyRecordIRI);
-        User user = getActiveUser(servletRequest, engineManager);
-        String commitMsg = "Mapping data from " + mappingRecordIRI;
-        Difference committedData = ontologyImportService.importOntology(recordIRI,
-                branchId, update, mappingData, user, commitMsg);
+            // Commit converted data
+            IRI branchId = vf.createIRI(branchIRI);
+            IRI recordIRI = vf.createIRI(ontologyRecordIRI);
+            User user = getActiveUser(servletRequest, engineManager);
+            String commitMsg = "Mapping data from " + mappingRecordIRI;
+            Difference committedData = ontologyImportService.importOntology(recordIRI,
+                    branchId, update, mappingData, user, commitMsg);
 
-        Response response;
-        if (committedData.getAdditions().isEmpty() && committedData.getDeletions().isEmpty()) {
-            response = Response.status(204).entity("No data committed. Possible duplicate data.").build();
-        } else {
-            response = Response.ok().build();
+            Response response;
+            if (committedData.getAdditions().isEmpty() && committedData.getDeletions().isEmpty()) {
+                response = Response.status(204).entity("No data committed. Possible duplicate data.").build();
+            } else {
+                response = Response.ok().build();
+            }
+
+            // Remove temp file
+            removeTempFile(fileName);
+
+            return response;
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
-
-        // Remove temp file
-        removeTempFile(fileName);
-
-        return response;
     }
 
     /**
@@ -641,28 +674,34 @@ public class DelimitedRest {
             @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
             @Parameter(description = "Character the columns are separated by")
             @DefaultValue(",") @QueryParam("separator") String separator) {
-        Optional<File> optFile = getUploadedFile(fileName);
-        if (optFile.isPresent()) {
-            File file = optFile.get();
-            String extension = FilenameUtils.getExtension(file.getName());
-            int numRows = (rowEnd <= 0) ? 10 : rowEnd;
+        try {
+            Optional<File> optFile = getUploadedFile(fileName);
+            if (optFile.isPresent()) {
+                File file = optFile.get();
+                String extension = FilenameUtils.getExtension(file.getName());
+                int numRows = (rowEnd <= 0) ? 10 : rowEnd;
 
-            logger.info("Getting " + numRows + " rows from " + file.getName());
-            String json;
-            try {
-                if (extension.equals("xls") || extension.equals("xlsx")) {
-                    json = convertExcelRows(file, numRows);
-                } else {
-                    char separatorChar = separator.charAt(0);
-                    json = convertCSVRows(file, numRows, separatorChar);
+                logger.info("Getting " + numRows + " rows from " + file.getName());
+                String json;
+                try {
+                    if (extension.equals("xls") || extension.equals("xlsx")) {
+                        json = convertExcelRows(file, numRows);
+                    } else {
+                        char separatorChar = separator.charAt(0);
+                        json = convertCSVRows(file, numRows, separatorChar);
+                    }
+                } catch (Exception e) {
+                    throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
                 }
-            } catch (Exception e) {
-                throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
-            }
 
-            return Response.ok(json).build();
-        } else {
-            throw ErrorUtils.sendError("Document not found", Response.Status.NOT_FOUND);
+                return Response.ok(json).build();
+            } else {
+                throw ErrorUtils.sendError("Document not found", Response.Status.NOT_FOUND);
+            }
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 
