@@ -72,6 +72,7 @@ export class CommitModalComponent {
                     this.state.listItem.changesPageOpen),
                 error => Promise.reject(error))
             .then(() => {
+                this.util.createSuccessToast('Successfully Committed Changes');
                 this.dialogRef.close(true);
             }, error => {
                 this.errorMessage = error;
