@@ -402,8 +402,8 @@ public class ExplorableDatasetRest {
                 throw ErrorUtils.sendError("The new instance's IRI is already taken.",
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
-            conn.close();
             conn.add(instanceModel);
+            conn.close();
             return Response.status(201).entity(instanceId.stringValue()).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
@@ -461,7 +461,7 @@ public class ExplorableDatasetRest {
      *
      * @param recordIRI   The id of the {@link DatasetRecord} for the {@link Dataset} to summarize.
      * @param instanceIRI The IRI of the instance to update.
-     * @return A {@link Response} indicating whether or not the Instance was updated.
+     * @return A {@link Response} indicating whether the Instance was updated.
      */
     @PUT
     @Path("{recordIRI}/instances/{instanceIRI}")
