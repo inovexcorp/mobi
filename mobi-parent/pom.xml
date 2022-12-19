@@ -64,7 +64,7 @@
         <httpclient.version>4.5.13</httpclient.version>
         <httpcore.version>4.4.15</httpcore.version>
         <jackson.version>2.13.2</jackson.version>
-        <jackson-databind.version>2.13.2.1</jackson-databind.version>
+        <jackson-databind.version>2.13.4.1</jackson-databind.version>
         <javax.cache.version>1.1.1</javax.cache.version>
         <jaxb.version>2.3.3</jaxb.version>
         <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
