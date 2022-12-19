@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "chromedriver": "latest",
-    "nightwatch": "2.1.7",
+    "nightwatch": "2.5.4",
     "verify-junit-xml": "0.0.3"
   },
   "author": "",
