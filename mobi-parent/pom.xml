@@ -70,7 +70,7 @@
         <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
         <jose-jwt.version>9.22</jose-jwt.version>
         <junit.version>5.9.1</junit.version>
-        <karaf.version>4.4.2</karaf.version>
+        <karaf.version>4.4.1</karaf.version>
         <logback.version>1.2.11</logback.version>
         <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
         <mockito.version>4.6.1</mockito.version>
