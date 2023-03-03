@@ -136,7 +136,10 @@ module.exports = {
             .waitForElementVisible('class-mapping-overlay class-select')
             .click('form.mat-dialog-content class-select')
             .click('xpath', '//div//mat-option//span[contains(text(), "Material")]')
-            .click('div.mat-dialog-actions button.mat-primary')
+            .useXpath()
+            .click("//button/span[text() [contains(., 'Submit')]]")
+            .waitForElementNotPresent('class-mapping-overlay')
+            .useCss()
     },
 
     'Step 12: Verify Mapping has been selected' : function (browser) {

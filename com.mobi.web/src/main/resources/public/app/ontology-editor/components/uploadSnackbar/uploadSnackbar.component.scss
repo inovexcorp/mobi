@@ -1,0 +1,90 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "../../../css/variables";
+
+.upload-snackbar {
+    color: inherit;
+    background-color: #ffffff;
+    box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.14), 0 3px 4px 0 rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
+    max-height: 400px;
+    width: 400px;
+
+    // Stolen from Daemonite Material Bootstrap styles
+    align-items: center;
+    display: flex;
+    font-size: .875rem;
+    line-height: 1.42857;
+    position: fixed;
+    bottom: 0;
+    z-index: 60;
+    max-width: 35.5rem;
+    min-width: 18rem;
+    right: 1.5rem;
+    left: auto;
+
+    .snackbar-header {
+        background-color: #323232;
+        border-radius: 2px 2px 0px 0px;
+
+        button:focus {
+            outline: none !important;
+        }
+        span.title {
+            padding-left: 1em;
+            display: inline-block;
+            position: relative;
+            top: 50%;
+            -webkit-transform: translateY(50%);
+            -ms-transform: translateY(-50%);
+            transform: translateY(50%);
+        }
+    }
+    .snackbar-body {
+        padding: 0.875rem 1.5rem;
+        white-space: normal;
+        text-overflow: unset;
+        overflow: auto;
+
+        // Stolen from Daemonite Material Bootstrap styles
+        margin-right: auto;
+        max-height: 100%;
+        min-width: 0;
+
+        .uploaded-ontology {
+            border-bottom: 1px solid var(--light-dark);
+
+            &.last {
+                border-bottom: none;
+            }
+            .item-details {
+                p {
+                    word-break: break-word;
+                }
+                h4 {
+                    font-size: 1rem;
+                }
+            }
+        }
+    }
+}

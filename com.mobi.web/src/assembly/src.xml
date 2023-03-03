@@ -39,7 +39,7 @@
         </fileSet>
         <fileSet>
             <excludes>
-                <exclude>src/main/resources/public/shared/components/sidebar/filtered/*</exclude>
+                <exclude>src/main/resources/public/app/shared/components/sidebar/filtered/*</exclude>
             </excludes>
             <directory>src/main/resources/public</directory>
             <useDefaultExcludes>true</useDefaultExcludes>

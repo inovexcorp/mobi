@@ -1,0 +1,90 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="resolve-conflicts-form">
+    <div class="list-info" *ngIf="index === undefined">
+        <p><strong>NOTE:</strong> There were conflicts found for the following entities. Please select the entity you want to resolve first.</p>
+        <p *ngFor="let conflict of conflicts; let i = index" class="conflict-list-item" [ngClass]="{'text-danger': !conflict.resolved, 'text-success': conflict.resolved}">
+            <span (click)="select(i)"><i class="fa fa-fw" [ngClass]="{'fa-times': !conflict.resolved, 'fa-check': conflict.resolved}"></i><strong>{{util.getBeautifulIRI(conflict.iri)}}</strong> <small>&lt;{{conflict.iri}}&gt;</small></span>
+        </p>
+    </div>
+    <div *ngIf="index !== undefined" class="conflict-container">
+        <a mat-button class="back-to-list" (click)="backToList()">&lt; Back to List</a>
+        <h5 class="text-center">{{util.getBeautifulIRI(selected.iri)}} &lt;{{selected.iri}}&gt;</h5>
+        <div class="flex-container d-flex align-items-center">
+            <div class="btn-navigation-container">
+                <button mat-raised-button color="primary" class="prev-button" type="button" [disabled]="index === 0" (click)="select(index - 1)">&lt; Previous</button>
+            </div>
+            <div class="conflict flex-1 left px-2">
+                <div class="card" (click)="selected.resolved = 'left'" [ngClass]="{'active': selected.resolved === 'left', 'not-selected': selected.resolved === 'right'}">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <h4 class="flex-1 card-title text-truncate m-0">Branch: {{branchTitle}}</h4>
+                            <input type="radio" name="resolution" class="float-right" [(ngModel)]="selected.resolved" [value]="'left'" />
+                        </div>
+                        <div class="property-values mt-3">
+                            <div class="prop-value-container p-1">
+                                <statement-container *ngIf="changes?.left.additions.length" additions>
+                                    <statement-display
+                                            *ngFor="let addition of util.getPredicateLocalNameOrdered(changes.left.additions)"
+                                            [predicate]="addition.p" [object]="addition.o"></statement-display>
+                                </statement-container>
+                                <statement-container *ngIf="changes?.left.deletions.length" deletions>
+                                    <statement-display
+                                            *ngFor="let deletion of util.getPredicateLocalNameOrdered(changes.left.deletions)"
+                                            [predicate]="deletion.p" [object]="deletion.o"></statement-display>
+                                </statement-container>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="conflict flex-1 right px-2">
+                <div class="card" (click)="selected.resolved = 'right'" [ngClass]="{'active': selected.resolved === 'right', 'not-selected': selected.resolved === 'left'}">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <h4 class="flex-1 card-title text-truncate m-0">Branch: {{targetTitle}}</h4>
+                            <input type="radio" name="resolution" class="float-right" [(ngModel)]="selected.resolved" [value]="'right'" />
+                        </div>
+                        <div class="property-values mt-3">
+                            <div class="prop-value-container p-1">
+                                <statement-container *ngIf="changes?.right.additions.length" additions>
+                                    <statement-display
+                                            *ngFor="let addition of util.getPredicateLocalNameOrdered(changes.right.additions)"
+                                            [predicate]="addition.p" [object]="addition.o"></statement-display>
+                                </statement-container>
+                                <statement-container *ngIf="changes?.right.deletions.length" deletions>
+                                    <statement-display
+                                            *ngFor="let deletion of util.getPredicateLocalNameOrdered(changes.right.deletions)"
+                                            [predicate]="deletion.p" [object]="deletion.o"></statement-display>
+                                </statement-container>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-navigation-container">
+                <button mat-button color="primary" class="next-button" type="button" [disabled]="!hasNext()" (click)="select(index + 1)">Next &gt;</button>
+            </div>
+        </div>
+    </div>
+</div>

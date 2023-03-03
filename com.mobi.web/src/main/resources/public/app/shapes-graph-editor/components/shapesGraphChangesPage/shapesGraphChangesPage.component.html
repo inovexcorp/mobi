@@ -1,0 +1,86 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="shapes-graph-changes-page h-100 row m-0">
+    <div class="col-lg-10 offset-lg-1 pt-2 h-100">
+        <div class="row h-100 flex-nowrap">
+            <div class="col-6">
+                <info-message *ngIf="!state.isCommittable() && state?.listItem?.versionedRdfRecord?.recordId">No Changes to Display</info-message>
+                <div class="has-changes h-100 d-flex flex-column" *ngIf="state.isCommittable()">
+                    <div class="changes-info">
+                        <div class="btn-container clearfix">
+                            <button mat-raised-button color="warn"
+                                    *ngIf="state.isCommittable()"
+                                    class="m-2"
+                                    (click)="removeChanges()">Remove All Changes
+                            </button>
+                        </div>
+                    </div>
+                    <div class="changes-display">
+                        <mat-accordion *ngFor="let item of showList">
+                            <mat-expansion-panel class="my-2">
+                                <mat-expansion-panel-header>
+                                    <mat-panel-title matTooltip="{{util.getBeautifulIRI(item.id)}}" class="col-4 remove-min-width text-truncate">
+                                        {{ util.getBeautifulIRI(item.id) }}
+                                    </mat-panel-title>
+                                <mat-panel-description matTooltip="{{item.id}}" class="remove-min-width text-truncate">
+                                    {{ item.id }}
+                                </mat-panel-description>
+                                </mat-expansion-panel-header>
+                                <ng-template matExpansionPanelContent>
+                                    <mat-slide-toggle *ngIf="!item.isBlankNode" [(ngModel)]="item.showFull" (change)="toggleFull(item)">Show Full</mat-slide-toggle>
+                                    <commit-compiled-resource [triples]="item.resource" [changes]="item.difference" [entityId]="item.id"></commit-compiled-resource>
+                                </ng-template>
+                            </mat-expansion-panel>
+                        </mat-accordion>
+                        <div class="text-center">
+                            <button *ngIf="showList.length !== list.length" mat-stroked-button color="primary" (click)="getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex remove-min-width horizontal-scroll">
+                <commit-history-table class="flex-1"
+                                      [commitId]="state.listItem.versionedRdfRecord.commitId"
+                                      [headTitle]="state?.listItem?.currentVersionTitle"
+                                      (receiveCommits)="commits = $event"graph>
+                </commit-history-table>
+                <div class="view-table" *ngIf="commits.length">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr *ngFor="let commit of commits; trackBy:getCommitId">
+                            <td class="p-0 align-middle">
+                                <button type="button" mat-button color="primary" class="remove-min-width" (click)="openCommit(commit)" [disabled]="this.state.isCommittable()">View</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

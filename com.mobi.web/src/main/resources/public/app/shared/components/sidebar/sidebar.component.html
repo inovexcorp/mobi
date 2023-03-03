@@ -1,0 +1,64 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="sidebar py-2 h-100 d-flex flex-column" [ngClass]="collapsedNav ? 'collapsed' : 'open'">
+    <div class="image-container text-center pb-2">
+        <a class="d-block" [routerLink]="['/home']"><img src="{{collapsedNav ? 'images/sidebar-logo-collapsed.png' : 'images/sidebar-logo.png'}}" alt="Logo"></a>
+    </div>
+    <a class="current-user-box p-2 my-2 d-flex align-items-center" [ngClass]="{'active': router.isActive('/settings', false), 'text-truncate': !collapsedNav}" [routerLink]="['/settings']" [routerLinkActive]="'active'">
+        <div class="avatar-box rounded-circle align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
+        <div class="user-title flex-1 remove-min-width text-truncate ml-1 align-middle collapsed-hide" *ngIf="!collapsedNav">{{getUserDisplay()}}</div>
+    </a>
+    <ul class="main-nav nav flex-column flex-grow-1">
+        <li class="nav-item" *ngFor="let per of perspectives" [ngClass]="{'active': router.isActive(per.route, false), 'sub-item': per.sub}" [routerLinkActive]="'active'">
+            <a class="nav-link" [routerLink]="[per.route]">
+                <i *ngIf="!per.mat" class="fa fa-{{per.icon}}"></i>
+                <mat-icon *ngIf="per.mat">{{per.icon}}</mat-icon>
+                <span class="collapsed-hide ml-1" *ngIf="!collapsedNav">{{per.name}}
+                    <span class="badge badge-pill badge-beta" *ngIf="per.name == 'Shapes Editor'">Beta</span>
+                </span>
+            </a>
+        </li>
+    </ul>
+    <div>
+        <ul class="nav flex-column">
+            <li class="nav-item" *ngIf="um.isAdmin(lm.currentUser)" [ngClass]="{'active': router.isActive('/user-management', false)}" [routerLinkActive]="'active'">
+                <a class="nav-link" [routerLink]="['/user-management']"><i class="fa fa-cog"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Administration</span></a>
+            </li>
+            <li class="nav-item help">
+                <a class="nav-link" [matMenuTriggerFor]="helpMenu"><i class="fa fa-question-circle"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Help</span></a>
+                <mat-menu #helpMenu="matMenu" [overlapTrigger]="false">
+                    <a mat-menu-item href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a>
+                    <mat-divider></mat-divider>
+                    <a mat-menu-item href="https://inovexirad.atlassian.net/servicedesk" target="_blank">Support</a>
+                </mat-menu>
+            </li>
+            <li class="nav-item"><a class="nav-link" (click)="lm.logout()"><i class="fa fa-sign-out fa-fw"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Logout</span></a></li>
+        </ul>
+        <div class="version collapsed-hide text-center text-nowrap mt-2">
+            <small class="collapsed-hide" [ngClass]="collapsedNav ? 'hidden' : 'shown'">v${project.version}</small>
+        </div>
+    </div>
+    <div class="hover-box">
+        <button mat-button (click)="toggle()"><i class="fa" [ngClass]="collapsedNav ? 'fa-chevron-right' : 'fa-chevron-left'"></i></button>
+    </div>
+</div>

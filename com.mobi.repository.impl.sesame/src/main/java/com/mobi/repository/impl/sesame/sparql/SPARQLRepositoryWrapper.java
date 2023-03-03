@@ -90,4 +90,10 @@ public class SPARQLRepositoryWrapper extends OsgiRepositoryWrapper {
     public Class<SPARQLRepositoryConfig> getConfigType() {
         return SPARQLRepositoryConfig.class;
     }
+
+    @Override
+    public String getRepositoryType() {
+        return REPOSITORY_TYPE;
+    }
+
 }

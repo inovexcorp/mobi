@@ -326,6 +326,7 @@ module.exports = {
             .click("//button/span[text() [contains(., 'Create User')]]")
             .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
             .useCss()
+            .waitForElementVisible("create-user-overlay input[name=unmaskPassword]")
             .click('create-user-overlay input[name=username]')
             .setValue('create-user-overlay input[name=username]', newUser.username)
             .click('create-user-overlay input[name=unmaskPassword]')
@@ -339,7 +340,9 @@ module.exports = {
             .click('label.mat-slide-toggle-label')
             .useXpath()
             .click("//button/span[text() [contains(., 'Submit')]]")
+            .waitForElementNotPresent('create-user-overlay')
             .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
+        browser.globals.wait_for_no_spinners(browser)
     },
 
     'Step 13: The user successfully logs out' : function(browser) {

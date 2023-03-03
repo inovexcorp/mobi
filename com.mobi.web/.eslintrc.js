@@ -5,7 +5,8 @@ module.exports = {
     'browser': true,
     'node': true,
     'jasmine': true,
-    'angular/mocks': true
+    'angular/mocks': true,
+    'es6': true
   },
   parser: '@typescript-eslint/parser',
   globals: {

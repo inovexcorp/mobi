@@ -23,6 +23,9 @@ package com.mobi.platform.config.rest;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.rest.util.ErrorUtils;
@@ -32,8 +35,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -75,6 +76,7 @@ public class StateRest {
     protected StateManager stateManager;
     protected final ValueFactory factory = new ValidatingValueFactory();
     protected final ModelFactory modelFactory = new DynamicModelFactory();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Reference
     protected void setStateManager(StateManager stateManager) {
@@ -109,8 +111,8 @@ public class StateRest {
             @Parameter(description = "ID of the Application to filter State by", required = true)
             @QueryParam("application") String applicationId,
             @Parameter(array = @ArraySchema(
-                    arraySchema = @Schema(description = "List of all the IDs of resources that should be " +
-                            "associated with the States"),
+                    arraySchema = @Schema(description = "List of all the IDs of resources that should be "
+                            + "associated with the States"),
                     schema = @Schema(implementation = String.class, description = "ID")))
             @QueryParam("subjects") List<String> subjectIds) {
         String username = RestUtils.getActiveUsername(servletRequest);
@@ -119,14 +121,14 @@ public class StateRest {
                 .collect(Collectors.toSet());
         try {
             Map<Resource, Model> results = stateManager.getStates(username, applicationId, subjects);
-            JSONArray array = new JSONArray();
+            ArrayNode array = mapper.createArrayNode();
             results.keySet().forEach(resource -> {
-                JSONObject state = new JSONObject();
+                ObjectNode state = mapper.createObjectNode();
                 state.put("id", resource.stringValue());
                 state.put("model", convertModel(results.get(resource)));
                 array.add(state);
             });
-            return Response.ok(array).build();
+            return Response.ok(array.toString()).build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }

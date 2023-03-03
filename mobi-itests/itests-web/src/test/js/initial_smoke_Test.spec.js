@@ -46,7 +46,7 @@ module.exports = {
             .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Explore Data")]]')
             .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Query Data")]]')
             .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Ingest Data")]]')
-            .waitForElementVisible('//a[@class="nav-link active"][text()[contains(.,"Recent Activity")]]')
+            .waitForElementVisible('//mat-tab-group//div[contains(@class,"mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(., "Recent Activity")]]')
     },
 
     'Step 2: check sidebar page elements and children elements' : function(browser) {

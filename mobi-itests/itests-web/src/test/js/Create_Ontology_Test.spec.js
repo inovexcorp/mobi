@@ -82,9 +82,14 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
             .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .setValue('//mat-label[text()[contains(.,"Ends With")]]//ancestor::mat-form-field//input', 'myOntology')
-            .click('xpath', '//edit-iri-overlay//span[text()="Submit"]')
+            .waitForElementVisible("//h1[text() [contains(., 'Edit IRI')]]")
+            .useCss()
+            .pause(1000) // To avoid clashes with autofocusing
+            .setValue('edit-iri-overlay input[name=iriEnd]', 'myOntology')
+            .useXpath()
+            .click("//button/span[text() [contains(., 'Submit')]]")
             .waitForElementNotPresent('edit-iri-overlay')
+            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
         browser.globals.wait_for_no_spinners(browser);
     },
 
@@ -354,7 +359,7 @@ module.exports = {
             .useCss().waitForElementVisible('.merge-message')
             .assert.textContains('.merge-message', 'newBranchTitle')
             .useXpath()
-            .click('//branch-select//div[@class=\'branch-select\']//div[@class=\'mat-form-field-infix\']')
+            .click('//branch-select//div[@class=\'branch-select\']//div[contains(@class, \'mat-form-field-infix\')]')
             .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
             .click('//mat-option//span[text()[contains(.,"MASTER")]]')
             .waitForElementVisible('//branch-select//input')
@@ -377,7 +382,7 @@ module.exports = {
             .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
             .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
             .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
-            .click('//button[text()="Submit"]')
+            .click('//button//span[text()="Submit"]')
     },
 
     'Step 25: Validate Merged Commits': function(browser) {

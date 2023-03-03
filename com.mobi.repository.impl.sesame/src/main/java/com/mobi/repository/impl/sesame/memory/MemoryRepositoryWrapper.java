@@ -93,4 +93,10 @@ public class MemoryRepositoryWrapper extends OsgiRepositoryWrapper {
     public Class<MemoryRepositoryConfig> getConfigType() {
         return MemoryRepositoryConfig.class;
     }
+
+    @Override
+    public String getRepositoryType() {
+        return REPOSITORY_TYPE;
+    }
+
 }

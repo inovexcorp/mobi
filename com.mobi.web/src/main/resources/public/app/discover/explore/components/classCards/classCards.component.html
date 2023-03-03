@@ -1,0 +1,42 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="class-cards">
+    <div *uiScroll="let chunk of datasource" class="row">
+        <div *ngFor="let item of chunk" class="card-container col-4">
+            <mat-card>
+                <mat-card-title class="text-truncate">
+                    <span>{{item.classTitle}}</span>
+                    <span class="float-right badge badge-primary badge-pill rounded-circle">{{item.instancesCount | number}}</span>
+                </mat-card-title>
+                <mat-card-content>
+                    <p class="overview">{{item.classDescription}}</p>
+                    <p class="text-muted">Defined in {{item.ontologyRecordTitle}}</p>
+                    <em class="text-muted">Examples: <span class="example" *ngFor="let example of item.classExamples">{{example}}</span></em>
+                </mat-card-content>
+                <mat-card-actions>
+                    <button mat-button color="primary" (click)="exploreData(item)">Explore Data</button>
+                </mat-card-actions>
+            </mat-card>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,32 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="ontology-button-stack">
+    <circle-button-stack>
+        <button mat-mini-fab class="upload-circle-button" (click)="showUploadChangesOverlay()" [disabled]="!os.canModify() || os.isCommittable(os.listItem)" matTooltip="Upload Changes" matTooltipPosition="left"><mat-icon>publish</mat-icon></button>
+        <button mat-mini-fab class="btn-dark" (click)="showCreateTagModal()" [disabled]="!os.listItem.userCanModify || os.hasChanges(os.listItem) || os.isCommittable(os.listItem)" matTooltip="Create Tag" matTooltipPosition="left"><mat-icon>local_offer</mat-icon></button>
+        <button mat-mini-fab class="btn-warning" (click)="showCreateBranchOverlay()" [disabled]="!os.listItem.userCanModify" matTooltip="Create Branch" matTooltipPosition="left"><i class="fa fa-fw fa-code-fork"></i></button>
+        <button mat-mini-fab class="btn-success" (click)="os.listItem.merge.active = true" [disabled]="os.isCommittable(os.listItem) || os.hasChanges(os.listItem) || os.listItem.userBranch || !os.listItem.upToDate || !os.canModify()" matTooltip="Merge Branches" matTooltipPosition="left"><mat-icon>merge</mat-icon></button>
+        <button mat-mini-fab class="btn-info" (click)="showCommitOverlay()" [disabled]="!os.isCommittable(os.listItem) || !os.listItem.userCanModify || !os.listItem.versionedRdfRecord.branchId" matTooltip="Commit Changes" matTooltipPosition="left"><mat-icon>commit</mat-icon></button>
+        <button mat-fab color="primary" (click)="showCreateEntityOverlay()" [disabled]="!os.canModify()" matTooltip="Create Entity" matTooltipPosition="left"><mat-icon>add</mat-icon></button>
+    </circle-button-stack>
+</div>
