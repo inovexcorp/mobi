@@ -24,7 +24,7 @@ var adminUsername = 'admin'
 var adminPassword = 'admin'
 var newUser = { 'username': 'newUserB', 'password': 'testB',
     'firstName': 'firstTesterA', 'lastName': 'lastTesterA', 'email': 'testA@gmail.com' };
-var shapes_graph = process.cwd()+ '/src/test/resources/rdf_files/UHTC_shapes.ttl'
+var shapes_graph = process.cwd()+ '/src/test/resources/rdf_files/semops_shapes.ttl'
 
 module.exports = {
     '@tags': ['ontology-editor', 'sanity'],
@@ -40,7 +40,7 @@ module.exports = {
     },
 
     'Step 3: Create a new shapes graph': function (browser) {
-        browser.globals.create_shapes_graph(browser, 'UHTC Test Graph', shapes_graph)
+        browser.globals.create_shapes_graph(browser, 'Sem Ops Graph', shapes_graph)
     },
 
     'Step 4: Verify shapes graph presentation': function (browser) {
@@ -50,13 +50,13 @@ module.exports = {
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
             // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-            .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
+            .assert.value('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
             .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
     },
 
     'Step 5: Create a new branch': function (browser) {
-        browser.globals.create_shapes_graph_branch(browser, 'UHTC Test Branch');
+        browser.globals.create_shapes_graph_branch(browser, 'Sem Ops Branch');
     },
 
     'Step 6: Verify switching of branches': function (browser) {
@@ -64,8 +64,8 @@ module.exports = {
             .waitForElementVisible('shapes-graph-details')
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
-            .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
-            .assert.value('shapes-graph-editor-page editor-branch-select input', 'UHTC Test Branch')
+            .assert.value('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
+            .assert.value('shapes-graph-editor-page editor-branch-select input', 'Sem Ops Branch')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
     },
 
@@ -83,7 +83,7 @@ module.exports = {
 
     'Step 9: The admin user clicks on the permissions tab' : function(browser) {
         browser
-            .click("//*[@id='mat-tab-label-0-2']/div")
+            .click('//mat-tab-group//div[contains(@class,"mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(., "Permissions")]]')
     },
 
     'Step 10: The admin user toggles off Create Shapes Graph permission' : function(browser) {
@@ -144,7 +144,7 @@ module.exports = {
         browser
             .useXpath()
             .pause(1000)
-            .waitForElementVisible('//mat-optgroup/label[text()[contains(., "Unopened")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "UHTC Test Graph")]]/following::button[contains(@class,"delete-record")][@disabled]')
+            .waitForElementVisible('//mat-optgroup/label[text()[contains(., "Unopened")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "Sem Ops Graph")]]/following::button[contains(@class,"delete-record")][@disabled]')
             .click('//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]'); // click off dropdown
         browser.globals.wait_for_no_spinners(browser);
         browser
@@ -153,7 +153,7 @@ module.exports = {
     },
 
     'Step 18: Open Shapes Graph' : function(browser) {
-        browser.globals.open_shapes_graph(browser, 'UHTC Test Graph');
+        browser.globals.open_shapes_graph(browser, 'Sem Ops Graph');
     },
 
     'Step 19: Verify the correct buttons are disabled' : function(browser) {
@@ -190,12 +190,12 @@ module.exports = {
         browser
             .useCss()
             .waitForElementNotPresent('#spinner-full')
-            .setValue('catalog-page records-view .d-flex .search-form input','UHTC Test Graph')
+            .setValue('catalog-page records-view .d-flex .search-form input','Sem Ops Graph')
             .sendKeys('catalog-page records-view .d-flex .search-form input', browser.Keys.ENTER)
             .waitForElementNotPresent('#spinner-full')
-            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "UHTC Test Graph")]]//ancestor::mat-card')
+            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "Sem Ops Graph")]]//ancestor::mat-card')
             .waitForElementVisible('catalog-page record-view div.record-body')
-            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('UHTC Test Graph');
+            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('Sem Ops Graph');
         browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
         browser
             .assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button')
@@ -237,7 +237,7 @@ module.exports = {
     },
 
     'Step 30: Open Shapes Graph' : function(browser) {
-        browser.globals.open_shapes_graph(browser, 'UHTC Test Graph');
+        browser.globals.open_shapes_graph(browser, 'Sem Ops Graph');
     },
 
     'Step 31: Verify the correct buttons are disabled' : function(browser) {

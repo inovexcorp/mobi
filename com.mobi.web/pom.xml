@@ -197,10 +197,10 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/src/main/resources/public/shared/components/sidebar/filtered</outputDirectory>
+                            <outputDirectory>${basedir}/src/main/resources/public/app/shared/components/sidebar/filtered</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${basedir}/src/main/resources/public/shared/components/sidebar</directory>
+                                    <directory>${basedir}/src/main/resources/public/app/shared/components/sidebar</directory>
                                     <filtering>true</filtering>
                                     <includes>
                                         <include>*.html</include>

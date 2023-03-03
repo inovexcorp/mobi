@@ -82,9 +82,14 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
             .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .setValue('//mat-label[text()[contains(.,"Ends With")]]//ancestor::mat-form-field//input', 'myOntology2')
-            .click('xpath', '//edit-iri-overlay//span[text()="Submit"]')
+            .waitForElementVisible("//h1[text() [contains(., 'Edit IRI')]]")
+            .useCss()
+            .pause(1000) // To avoid clashes with autofocusing
+            .setValue('edit-iri-overlay input[name=iriEnd]', 'myOntology2')
+            .useXpath()
+            .click("//button/span[text() [contains(., 'Submit')]]")
             .waitForElementNotPresent('edit-iri-overlay')
+            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
         browser.globals.wait_for_no_spinners(browser);
     },
 
@@ -201,8 +206,8 @@ module.exports = {
                 this.assert.equal(result.status, 0);
                 this.assert.equal(result.value, "MASTER");
             })
-            .assert.not.enabled('//button[text()="Submit"]')
             .useCss()
+            .assert.not.enabled(".merge-block .btn-container button.mat-primary")
             .click('ontology-sidebar span.close-icon')
     },
 
@@ -217,12 +222,12 @@ module.exports = {
             .waitForElementVisible('//button//span[text()="Next"]')
             .click('//button//span[text()="Next"]')
             .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating')
-            .waitForElementVisible('(//div[@class=\'mat-form-field-infix\'])[1]/input')
-            .click('(//div[@class=\'mat-form-field-infix\'])[1]')
+            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[1]/input')
+            .click('(//div[contains(@class, "mat-form-field-infix")])[1]')
             .waitForElementVisible('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
             .click('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
-            .waitForElementVisible('(//div[@class=\'mat-form-field-infix\'])[2]/input')
-            .click('(//div[@class=\'mat-form-field-infix\'])[2]')
+            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[2]/input')
+            .click('(//div[contains(@class, "mat-form-field-infix")])[2]')
             .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
             .click('//mat-option//span[text()[contains(.,"MASTER")]]')
             .assert.not.enabled('//button//span[contains(text(), "Next")]/parent::button')
@@ -356,12 +361,12 @@ module.exports = {
                 .waitForElementVisible('//button//span[text()="Next"]')
                 .click('//button//span[text()="Next"]')
                 .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating')
-                .waitForElementVisible('(//div[@class=\'mat-form-field-infix\'])[1]/input')
-                .click('(//div[@class=\'mat-form-field-infix\'])[1]')
+                .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[1]/input')
+                .click('(//div[contains(@class, "mat-form-field-infix")])[1]')
                 .waitForElementVisible('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
                 .click('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
-                .waitForElementVisible('(//div[@class=\'mat-form-field-infix\'])[2]/input')
-                .click('(//div[@class=\'mat-form-field-infix\'])[2]')
+                .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[2]/input')
+                .click('(//div[contains(@class, "mat-form-field-infix")])[2]')
                 .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
                 .click('//mat-option//span[text()[contains(.,"MASTER")]]')
                 .assert.enabled('//button//span[contains(text(), "Next")]/parent::button')

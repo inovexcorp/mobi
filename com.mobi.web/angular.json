@@ -1,0 +1,166 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "mobi": {
+      "root": "",
+      "sourceRoot": "src",
+      "projectType": "application",
+      "prefix": "app",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "aot": true,
+            "outputPath": "target/classes/build",
+            "index": "src/main/resources/public/index.html",
+            "main": "src/main/resources/public/main.ts",
+            "polyfills": "src/main/resources/public/polyfills.ts",
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              "src/main/resources/public/app/images/favicon.ico",
+              "src/main/resources/public/app",
+              "src/main/resources/public/test",
+              { 
+                "glob": "**/*",
+                "input": "src/main/resources/public/app/images", 
+                "output": "images"
+              },
+              { 
+                "glob": "**/*",
+                "input": "src/main/resources/public/app/css/Material_Icons", 
+                "output": "css/Material_Icons"
+              }
+            ],
+            "styles": [
+              "src/main/resources/public/app/css/styles.scss",
+              "node_modules/font-awesome/css/font-awesome.min.css",
+              "node_modules/@triply/yasgui/build/yasgui.min.css",
+              "node_modules/gridjs/dist/theme/mermaid.min.css",
+              "src/main/resources/public/app/css/angular-material.scss",
+              "src/main/resources/public/app/css/customMaterial.scss",
+              "src/main/resources/public/app/css/manchestersyntax.scss",
+              "src/main/resources/public/app/css/yasgui.scss"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "mobi:build",
+            "proxyConfig": "./proxy.conf.json"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "mobi:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "mobi:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "src/main/resources/public/test.ts",
+            "polyfills": "src/main/resources/public/polyfills.ts",
+            "tsConfig": "./tsconfig.spec.json",
+            "karmaConfig": "./karma.conf.js",
+            "styles": [
+              "src/main/resources/public/app/css/styles.scss"
+            ],
+            "scripts": [],
+            "assets": [
+              "src/favicon.ico",
+              "src/main/resources/public/app/images"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:eslint",
+          "options": {
+            "tsConfig": [
+              "./tsconfig.app.json",
+              "./tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "mobi-e2e": {
+      "root": "e2e/",
+      "projectType": "application",
+      "prefix": "",
+      "architect": {
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "e2e/protractor.conf.js",
+            "devServerTarget": "mobi:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "mobi:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": "e2e/tsconfig.e2e.json",
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "mobi",
+  "cli": {
+    "analytics": false
+  }
+}

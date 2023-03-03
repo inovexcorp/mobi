@@ -1,0 +1,29 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix : <http://mobi.com/shapes/ontology-validation/> .
+@base <http://mobi.com/shapes/ontology-validation> .
+
+<http://mobi.com/shapes/ontology-validation> rdf:type owl:Ontology ;
+                                      <http://purl.org/dc/elements/1.1/description> "Shapes Graph developed for the the purpose of validating that an ontology follows a prescribed structure"^^xsd:string ;
+                                      <http://purl.org/dc/elements/1.1/title> "Ontology Shapes Graph"^^xsd:string ;
+                                      rdfs:label "Ontology Shapes Graph"^^xsd:string .
+
+:ClassShape a sh:NodeShape ;
+    <http://purl.org/dc/elements/1.1/title> "OWL Class shape";
+    sh:targetClass owl:Class ;
+    sh:property [
+        sh:path dct:title ;
+        sh:name "DC Terms Title"^^xsd:string ;
+        sh:maxCount 1 ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path dct:description ;
+        sh:name "DC Terms Description" ;
+        sh:maxCount 1 ; 
+        sh:minCount 1 ; 
+    ] .

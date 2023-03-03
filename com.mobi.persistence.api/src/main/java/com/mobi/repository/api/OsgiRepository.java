@@ -47,4 +47,12 @@ public interface OsgiRepository extends Repository {
      * @return A Class of the OSGi Config.
      */
     Class<?> getConfigType();
+
+    /**
+     * Returns a string representation of the type of repository.
+     *
+     * @return A string identifier for repository type.
+     */
+    String getRepositoryType();
+
 }

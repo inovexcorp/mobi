@@ -665,6 +665,8 @@
                     <excludes>
                         <exclude>src/test/resources/**</exclude>
                         <exclude>src/**/*.svg</exclude>
+                        <exclude>src/**/*.json</exclude>
+                        <exclude>*.json</exclude>
                     </excludes>
                     <extraExtensions>
                         <scss>java</scss>
@@ -689,7 +691,7 @@
                                 <root>target/processed-source</root>
                             </roots>
                             <excludes>
-                                <exclude>src/main/resources/public/images/*</exclude>
+                                <exclude>src/main/resources/public/app/images/*</exclude>
                                 <exclude>src/main/resources/swagger/**/*</exclude>
                                 <exclude>src/main/resources/**/!(*.js|*.ts|*.html)</exclude>
                                 <exclude>src/test/resources/**/*</exclude>

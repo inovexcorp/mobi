@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import 'zone.js';
-import 'reflect-metadata';
-
+import { enableProdMode } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { NgZone } from '@angular/core';
+
+import { AppModule } from './app/app.module';
+import { environment } from './environments/environment';
 
 import 'codemirror-no-newlines/no-newlines.js';
 import 'codemirror/mode/sparql/sparql.js';
@@ -32,13 +32,13 @@ import 'codemirror/mode/turtle/turtle.js';
 import 'codemirror/mode/xml/xml.js';
 import 'codemirror/mode/javascript/javascript.js';
 import 'codemirror/addon/edit/matchbrackets.js';
-import './vendor/manchestersyntax.js';
+import './app/vendor/manchestersyntax';
 
 import 'codemirror/lib/codemirror.css';
 
-import { AppModule } from './app.module';
+if (environment.production) {
+  enableProdMode();
+}
 
 platformBrowserDynamic().bootstrapModule(AppModule)
-    .then(platformRef => {
-
-    });
+  .catch(err => console.error(err));

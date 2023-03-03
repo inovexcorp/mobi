@@ -102,4 +102,10 @@ public class NativeRepositoryWrapper extends OsgiRepositoryWrapper {
     public Class<NativeRepositoryConfig> getConfigType() {
         return NativeRepositoryConfig.class;
     }
+
+    @Override
+    public String getRepositoryType() {
+        return REPOSITORY_TYPE;
+    }
+
 }

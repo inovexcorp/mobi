@@ -80,4 +80,10 @@ public class HTTPRepositoryWrapper extends OsgiRepositoryWrapper {
     public Class<HTTPRepositoryConfig> getConfigType() {
         return HTTPRepositoryConfig.class;
     }
+
+    @Override
+    public String getRepositoryType() {
+        return REPOSITORY_TYPE;
+    }
+
 }

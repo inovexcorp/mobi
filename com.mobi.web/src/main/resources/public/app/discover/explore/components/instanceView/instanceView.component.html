@@ -1,0 +1,54 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="instance-view  h-100 d-flex flex-column">
+    <div class="instances-display-header px-2">
+        <div class="breadcrumbs-container">
+            <breadcrumbs [items]="ds.explore.breadcrumbs" (onClick)="ds.clickCrumb($event)"></breadcrumbs>
+        </div>
+        <button mat-button color="primary" class="float-right edit-button" (click)="edit()">
+            <i class="fa fa-pencil-square-o"></i> Edit
+        </button>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="flex-1 remove-min-height instance-Container">
+        <div class="col-8 offset-2">
+            <h2>{{ds.explore.instance.metadata.title}}
+                <small class="text-muted">&lt;{{ds.explore.instance.metadata.instanceIRI}}&gt;</small>
+            </h2>
+            <p class="lead">{{ds.explore.instance.metadata.description}}</p>
+            <div *ngFor="let property of entity | keyvalue" class="instance-properties-container">
+                <h3 class="property">{{util.getBeautifulIRI(property.key)}}</h3>
+                <ul class="values" [ngClass]="{'show-more': property.more, 'show-link': property.value.length > 1}">
+                    <li *ngFor="let item of property.value">
+                        <div class="value-container d-flex align-items-center">
+                            <value-display class="flex-1" [value]="item"></value-display>
+                        </div>
+                    </li>
+                    <li class="link-container">
+                        <a class="link" [ngClass]="{'more': property.more}" (click)="property.more = !property.more">Show</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

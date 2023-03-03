@@ -1,0 +1,39 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="instances-display h-100 d-flex flex-column">
+    <div class="instances-display-header px-2">
+        <div class="breadcrumbs-container">
+            <breadcrumbs [items]="state.explore.breadcrumbs" (onClick)="state.clickCrumb($event)"></breadcrumbs>
+        </div>
+        <button mat-button color="primary" [disabled]="state.explore.classDeprecated" class="float-right create-button" (click)="create()">
+            <i class="fa fa-plus"></i> Create {{className}}{{state.explore.classDeprecated ? ' [Deprecated]' : ''}}
+        </button>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="flex-1 remove-min-height instance-cards-container">
+        <instance-cards [instanceData]="state.explore.instanceDetails.data"></instance-cards>
+    </div>
+    <div>
+        <mat-paginator [pageIndex]="state.explore.instanceDetails.currentPage" [length]="state.explore.instanceDetails.total" [pageSize]="state.explore.instanceDetails.limit" (page)="setPage($event)"></mat-paginator>
+    </div>
+</div>

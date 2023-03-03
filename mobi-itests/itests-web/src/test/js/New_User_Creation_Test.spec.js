@@ -86,7 +86,9 @@ module.exports = {
             .setValue('create-user-overlay input[name=email]', newUser.email)
             .click('label.mat-slide-toggle-label')
             .useXpath()
-            .click("//button/span[text() [contains(., 'Submit')]]");
+            .click("//button/span[text() [contains(., 'Submit')]]")
+            .waitForElementNotPresent('create-user-overlay')
+            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]");
         browser.globals.wait_for_no_spinners(browser)
     },
 

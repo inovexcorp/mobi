@@ -1,0 +1,12 @@
+{
+  "/mobirest": {
+    "target": "https://localhost:8443/mobirest",
+    "secure": false,
+    "logLevel": "debug",
+    "changeOrigin": true,
+    "pathRewrite": {"^/mobirest" : ""},
+    "headers": {
+      "Connection": "keep-alive"
+    }
+  }
+}

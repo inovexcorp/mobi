@@ -140,6 +140,7 @@ module.exports = {
             .click('upload-record-modal button.mat-primary');
 //        browser.globals.wait_for_no_spinners(browser)
         browser
+            // .pause(1000)
             .useCss()
             .waitForElementVisible('div.toast-success')
             .waitForElementNotPresent('div.toast-success')
@@ -161,13 +162,13 @@ module.exports = {
         browser
             .click('editor-top-bar button.merge-branch')
             .waitForElementVisible('shapes-graph-merge-page branch-select input')
-            .waitForElementVisible('shapes-graph-merge-page button.btn-primary')
+            .waitForElementVisible('shapes-graph-merge-page button.mat-primary')
             .click('shapes-graph-merge-page branch-select')
             .click('xpath', '//div//mat-option//span[contains(text(), "MASTER")]')
             .assert.visible('commit-difference-tabset')
             .expect.elements('commit-difference-tabset div.mat-tab-label').count.to.equal(2);
         browser
-            .click('shapes-graph-merge-page button.btn-primary')
+            .click('shapes-graph-merge-page button.mat-primary')
     },
 
     'Step 11: Resolve conflicts and Verify successful merge': function (browser) {
@@ -179,7 +180,7 @@ module.exports = {
         browser.expect.elements('resolve-conflicts-form div.conflict').count.to.equal(2);
         browser
             .click('xpath', '//resolve-conflicts-form//div[contains(@class,"conflict")]//div[@class="card"][1]')
-            .click('resolve-conflicts-block div.btn-container button.btn-primary')
+            .click('resolve-conflicts-block div.btn-container button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
             .waitForElementVisible('shapes-graph-details')

@@ -1,0 +1,46 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="user-management-page h-100">
+    <mat-tab-group dynamicHeight="true" mat-align-tabs="center" class="h-100" [(selectedIndex)]="state.tabIndex">
+        <mat-tab label="Users">
+            <ng-template matTabContent>
+                <users-page></users-page>
+            </ng-template>
+        </mat-tab>
+        <mat-tab label="Groups">
+            <ng-template matTabContent>
+                <groups-page></groups-page>
+            </ng-template>
+        </mat-tab>
+        <mat-tab label="Permissions">
+            <ng-template matTabContent>
+                <permissions-page></permissions-page>
+            </ng-template>
+        </mat-tab>
+        <mat-tab label="Application Settings">
+            <ng-template matTabContent>
+                <setting-edit-page [settingType]="this.sm.appSettingType"></setting-edit-page>
+            </ng-template>
+        </mat-tab>
+    </mat-tab-group>
+</div>
