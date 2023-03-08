@@ -31,4 +31,8 @@ public interface WebResources {
      * Returns the alias path for the web resources. Should start with a "/" and not end with one.
      */
     String getAlias();
+
+    default boolean isBaseApp() {
+        return false;
+    }
 }

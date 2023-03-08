@@ -54,4 +54,9 @@ public class MobiWebResources implements WebResources {
     public String getAlias() {
         return "/mobi";
     }
+
+    @Override
+    public boolean isBaseApp() {
+        return true;
+    }
 }
