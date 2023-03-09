@@ -39,6 +39,7 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
+import {datatypeValidator} from "./datatypeValidator.function";
 
 interface RangeClassOption {
     classMapping: JSONLDObject,
@@ -183,7 +184,7 @@ export class PropMappingOverlayComponent implements OnInit {
     showDatatype(): void {
         this.showDatatypeSelect = !this.showDatatypeSelect;
         if (this.showDatatypeSelect) {
-            this.propMappingForm.controls.datatype.setValidators([Validators.required]);
+            this.propMappingForm.controls.datatype.setValidators([Validators.required, datatypeValidator(Object.keys(this.datatypeMap))]);
         } else {
             this.clearDatatype();
         }
