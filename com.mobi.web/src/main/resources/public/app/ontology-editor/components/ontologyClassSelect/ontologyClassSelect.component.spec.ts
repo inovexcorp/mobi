@@ -128,13 +128,23 @@ describe('Ontology Class Select component', function() {
                 expect(result).toEqual([this.group]);
             });
         });
-        it('add should handle adding a chip', function() {
-            component.add({input: null, value: classOption.item});
-            expect(component.selected).toEqual([classOption.item]);
-            expect(component.selectedOptions).toEqual([classOption]);
-            expect(component.selectedChange.emit).toHaveBeenCalledWith([classOption.item]);
-            expect(component.clazzControl.value).toEqual(null);
-        });
+        describe('add should handle adding a chip when', function() {
+            it('the class exists', function() {
+                ontologyStateStub.listItem.classes.iris = { [classOption.item]: 'ontologyId' };
+                component.add({input: null, value: classOption.item});
+                expect(component.selected).toEqual([classOption.item]);
+                expect(component.selectedOptions).toEqual([classOption]);
+                expect(component.selectedChange.emit).toHaveBeenCalledWith([classOption.item]);
+                expect(component.clazzControl.value).toEqual(null);
+            });
+            it('the class does not exist', function() {
+                component.add({input: null, value: classOption.item});
+                expect(component.selected).toEqual([]);
+                expect(component.selectedOptions).toEqual([]);
+                expect(component.selectedChange.emit).not.toHaveBeenCalled();
+                expect(component.clazzControl.value).toEqual(null);
+            });
+        })
         it('remove should handle removing a class', function() {
             component.remove(classOption);
             expect(component.selected).toEqual([]);

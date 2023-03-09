@@ -23,12 +23,13 @@
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete'; 
+import {MatAutocompleteSelectedEvent, MatAutocompleteTrigger} from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable } from 'rxjs';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import {includes} from "lodash";
 
 interface ClassGrouping {
     namespace: string,
@@ -100,8 +101,8 @@ export class OntologyClassSelectComponent implements OnInit {
     add(event: MatChipInputEvent): void {
         const input = event.input;
         const value = event.value;
-    
-        if (value) {
+
+        if (value && includes(Object.keys(this.os.listItem.classes.iris), value)) {
             this.selectedOptions.push({ item: value, name: this.os.getEntityNameByListItem(value) });
             this.selected.push(value);
             this.selectedChange.emit(this.selected);
@@ -122,6 +123,7 @@ export class OntologyClassSelectComponent implements OnInit {
             this.selected.splice(index, 1);
             this.selectedChange.emit(this.selected);
         }
+        this.clazzControl.setValue(null);
     }
     select(event: MatAutocompleteSelectedEvent): void {
         this.selectedOptions.push(event.option.value);
@@ -129,5 +131,11 @@ export class OntologyClassSelectComponent implements OnInit {
         this.selectedChange.emit(this.selected);
         this.clazzInput.nativeElement.value = '';
         this.clazzControl.setValue(null);
+
+        this.clazzInput.nativeElement.blur();
+        setTimeout(() => {
+                this.clazzInput.nativeElement.focus();
+            }, 600
+        );
     }
 }
