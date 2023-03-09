@@ -48,6 +48,7 @@
                     aria-label="Override Datatype"
                     formControlName="datatype"
                     [matAutocomplete]="datatypeAuto">
+                <mat-error *ngIf="propMappingForm.controls.datatype.errors?.invalidDatatype">Datatype must be valid XSD Type or Lang String</mat-error>
                 <mat-autocomplete #datatypeAuto="matAutocomplete" (optionSelected)="selectDatatype($event)" [displayWith]="getDatatypeText.bind(this)">
                     <mat-optgroup *ngFor="let group of filteredDatatypes | async" [label]="group.ontologyId">
                         <mat-option *ngFor="let datatypeOption of group.options" [value]="datatypeOption.iri" [title]="datatypeOption.iri">

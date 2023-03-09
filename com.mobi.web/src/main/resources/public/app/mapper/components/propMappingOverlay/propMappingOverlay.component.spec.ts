@@ -704,6 +704,10 @@ describe('Prop Mapping Overlay component', function() {
             component.propMappingForm.controls.prop.setValue('');
             fixture.detectChanges();
             expect(button.properties['disabled']).toBeTruthy();
+
+            component.propMappingForm.controls.datatype.setValue('notValid');
+            fixture.detectChanges();
+            expect(button.properties['disabled']).toBeTruthy();
         });
         it('with buttons to cancel and submit', function() {
             const buttons = element.queryAll(By.css('.mat-dialog-actions button'));
