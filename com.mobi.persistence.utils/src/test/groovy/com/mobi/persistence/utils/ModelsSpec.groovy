@@ -313,6 +313,17 @@ class ModelsSpec extends Specification{
         thrown(IllegalArgumentException.class)
     }
 
+    def "createModel for invalid language tags throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/invalidlanguage.owl")
+
+        when:
+        Models.createModel(input)
+
+        then:
+        thrown(IllegalArgumentException.class)
+    }
+
     def "createModel with invalid extension for OWL format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.owl")
