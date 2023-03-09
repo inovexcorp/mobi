@@ -169,6 +169,7 @@ public class RDFImportServiceImpl implements RDFImportService {
                                    @Nonnull RDFFormat format, Resource graph, boolean cleanGraphs) throws IOException {
         RDFParser parser = Rio.createParser(format);
         ParserConfig parserConfig = new ParserConfig();
+        parserConfig.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true);
         if (config.getContinueOnError()) {
             parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES);
             parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES);

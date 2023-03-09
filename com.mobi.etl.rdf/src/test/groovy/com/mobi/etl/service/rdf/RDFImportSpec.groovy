@@ -29,6 +29,7 @@ import com.mobi.repository.api.OsgiRepository
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.RDFParseException
 import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
@@ -133,6 +134,18 @@ class RDFImportSpec extends Specification {
 
         then:
         thrown IOException
+    }
+
+    def "Throws exception for repository if invalid language tag"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(false).repository(repoId).build()
+        File f = new ClassPathResource("importer/invalidlanguage.owl").getFile()
+
+        when:
+        service.importFile(config, f)
+
+        then:
+        thrown RDFParseException
     }
 
     def "Throws exception for repository if nonexistent file"() {

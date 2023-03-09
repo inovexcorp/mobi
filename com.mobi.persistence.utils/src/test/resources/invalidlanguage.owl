@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
+<rdf:Description rdf:about="https://mobi.com/ontologies/Test">
+	<rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+	<title xmlns="http://purl.org/dc/terms/">test</title>
+	<contributor xmlns="http://purl.org/dc/elements/1.1/" xml:lang="test.com">Bob Smith</contributor>
+	<contributor xmlns="http://purl.org/dc/elements/1.1/" xml:lang="test.com">Joe Jones</contributor>
+</rdf:Description>
+
+</rdf:RDF>

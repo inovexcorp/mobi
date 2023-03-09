@@ -42,6 +42,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.eclipse.rdf4j.rio.rdfxml.RDFXMLParser;
@@ -384,7 +385,10 @@ public class Models {
             throws RDFParseException, IOException {
         parser.setRDFHandler(collector);
         parser.setParseErrorListener(new ParseErrorLogger());
-        parser.setParserConfig(new ParserConfig());
+        ParserConfig parserConfig = new ParserConfig();
+        parserConfig.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, true);
+        parserConfig.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true);
+        parser.setParserConfig(parserConfig);
         parser.parse(rdfData, "");
         return new LinkedHashModel(collector.getStatements());
     }
