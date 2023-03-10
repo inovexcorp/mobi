@@ -74,7 +74,10 @@ public class ImportedOntologyRest {
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("HEAD");
             if (conn.getResponseCode() == HttpURLConnection.HTTP_OK ||
-                    conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+                    conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP ||
+                    conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM ||
+                    conn.getResponseCode() == HttpURLConnection.HTTP_SEE_OTHER ||
+                    conn.getResponseCode() == 307 || conn.getResponseCode() == 308) {
                 return Response.ok().build();
             } else {
                 throw ErrorUtils.sendError("The provided URL was unresolvable.", Response.Status.BAD_REQUEST);
