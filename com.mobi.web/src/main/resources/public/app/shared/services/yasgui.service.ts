@@ -255,6 +255,7 @@ export class YasguiService {
     }
 
     private _updateResponseLimitMessage(limit = 0) {
+        this.reponseLimitElement.innerText = "";
         const className = 'hide';
         if (limit) {
             this.reponseLimitElement.classList.remove(className);
