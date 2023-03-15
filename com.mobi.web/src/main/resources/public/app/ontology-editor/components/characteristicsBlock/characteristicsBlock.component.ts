@@ -114,7 +114,7 @@ export class CharacteristicsBlockComponent implements OnChanges {
             this._handleCase(this.os.listItem.additions, (str, obj) => this.os.addToDeletions(str, obj), characteristicObj.typeIRI);
         }
         this.typesChange.emit(types);
-        this.os.saveCurrentChanges().subscribe();
+        this.os.saveCurrentChanges(this.os.listItem, false).subscribe();
     }
 
     private _handleCase(array, method: (s: string, o: JSONLDObject) => void, typeIRI: string) {

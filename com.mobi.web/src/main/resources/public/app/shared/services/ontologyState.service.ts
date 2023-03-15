@@ -879,7 +879,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * 
      * @returns 
      */
-    afterSave(listItem: OntologyListItem = this.listItem): Observable<unknown> {
+    afterSave(listItem: OntologyListItem = this.listItem, cloneListItem = true): Observable<unknown> {
         return this.cm.getInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId)
             .pipe(
                 switchMap((inProgressCommit: Difference) => {
@@ -896,7 +896,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     });
 
                     // Needed to trigger component input watchers
-                    if (this.listItem.versionedRdfRecord.recordId === listItem.versionedRdfRecord.recordId) {
+                    if (this.listItem.versionedRdfRecord.recordId === listItem.versionedRdfRecord.recordId && cloneListItem) {
                         this.listItem = cloneDeep(listItem); 
                         const idx = findIndex(this.list, item => item.versionedRdfRecord.recordId === this.listItem.versionedRdfRecord.recordId);
                         this.list[idx] = this.listItem;
@@ -2137,12 +2137,12 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * 
      * @returns {Observable<null>} An Observable indicating the success of the save
      */
-    saveCurrentChanges(listItem: OntologyListItem = this.listItem): Observable<unknown> {
+    saveCurrentChanges(listItem: OntologyListItem = this.listItem, cloneListItem = true): Observable<unknown> {
         const difference = new Difference();
         difference.additions = listItem.additions;
         difference.deletions = listItem.deletions;
         return this.saveChanges(listItem.versionedRdfRecord.recordId, difference).pipe(
-            switchMap(() => this.afterSave(listItem)),
+            switchMap(() => this.afterSave(listItem, cloneListItem)),
             // catchError(error => of(error)),
             tap(() => {
                 const entityIRI = this.getActiveEntityIRI(listItem);
