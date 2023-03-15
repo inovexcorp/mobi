@@ -4337,7 +4337,7 @@ describe('Ontology State Service', function() {
                     tick();
                     expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
                     expect(service.setEntityUsages).toHaveBeenCalledWith(id, service.listItem);
-                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem, true);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4351,7 +4351,7 @@ describe('Ontology State Service', function() {
                     tick();
                     expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
                     expect(service.setEntityUsages).not.toHaveBeenCalled();
-                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem, true);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4365,7 +4365,7 @@ describe('Ontology State Service', function() {
                     tick();
                     expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
                     expect(service.setEntityUsages).not.toHaveBeenCalled();
-                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem, true);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4378,7 +4378,7 @@ describe('Ontology State Service', function() {
                     tick();
                     expect(service.getActiveEntityIRI).toHaveBeenCalledWith(service.listItem);
                     expect(service.setEntityUsages).not.toHaveBeenCalled();
-                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
+                    expect(service.afterSave).toHaveBeenCalledWith(service.listItem, true);
                     expect(service.isCommittable).toHaveBeenCalledWith(service.listItem);
                     expect(service.listItem.isSaved).toEqual(true);
                 }));
@@ -4392,7 +4392,7 @@ describe('Ontology State Service', function() {
                         expect(response).toEqual(error);
                     });
                 tick();
-                expect(service.afterSave).toHaveBeenCalledWith(service.listItem);
+                expect(service.afterSave).toHaveBeenCalledWith(service.listItem, true);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
                 expect(service.listItem.isSaved).toEqual(false);
             }));
