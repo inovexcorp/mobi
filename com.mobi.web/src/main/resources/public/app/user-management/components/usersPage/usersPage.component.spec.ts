@@ -119,17 +119,36 @@ describe('Users Page component', function() {
         user = null;
     });
 
-    it('initializes with the correct values', function() {
-        spyOn(component, 'setAdmin');
-        userManagerStub.isAdmin.and.returnValue(true);
-        userManagerStub.isAdminUser.and.returnValue(true);
-        userManagerStub.users = [user];
-        userManagerStub.filterUsers.and.returnValue([user]);
-        component.ngOnInit();
-        expect(component.filteredUsers).toEqual([user]);
-        expect(component.setAdmin).toHaveBeenCalledWith();
-        expect(userManagerStub.isAdminUser).toHaveBeenCalledWith(loginManagerStub.currentUserIRI);
-        expect(userManagerStub.isAdmin).toHaveBeenCalledWith(loginManagerStub.currentUser);
+    describe('initializes with the correct values when', function() {
+        it('no user is selected in state', function() {
+            spyOn(component, 'setAdmin');
+            spyOn(component, 'selectUser');
+            userStateStub.selectedUser = undefined;
+            userManagerStub.isAdmin.and.returnValue(true);
+            userManagerStub.isAdminUser.and.returnValue(true);
+            userManagerStub.users = [user];
+            userManagerStub.filterUsers.and.returnValue([user]);
+            component.ngOnInit();
+            expect(component.filteredUsers).toEqual([user]);
+            expect(component.setAdmin).toHaveBeenCalledWith();
+            expect(userManagerStub.isAdminUser).toHaveBeenCalledWith(loginManagerStub.currentUserIRI);
+            expect(userManagerStub.isAdmin).toHaveBeenCalledWith(loginManagerStub.currentUser);
+        });
+        it('a user is selected in state', function() {
+            spyOn(component, 'setAdmin');
+            spyOn(component, 'selectUser');
+            userStateStub.selectedUser = user;
+            userManagerStub.isAdmin.and.returnValue(true);
+            userManagerStub.isAdminUser.and.returnValue(true);
+            userManagerStub.users = [user];
+            userManagerStub.filterUsers.and.returnValue([user]);
+            component.ngOnInit();
+            expect(component.filteredUsers).toEqual([user]);
+            expect(component.setAdmin).not.toHaveBeenCalled();
+            expect(userManagerStub.isAdminUser).toHaveBeenCalledWith(loginManagerStub.currentUserIRI);
+            expect(userManagerStub.isAdmin).toHaveBeenCalledWith(loginManagerStub.currentUser);
+            expect(component.selectUser).toHaveBeenCalledWith(user);
+        });
     });
     describe('controller methods', function() {
         describe('should select a user', function() {
@@ -390,17 +409,18 @@ describe('Users Page component', function() {
                 title: 'group',
                 description: '',
                 roles: [],
-                members: [],
+                members: ['batman'],
                 external: false
             };
             const group2: Group = {
                 title: 'group',
                 description: '',
                 roles: ['admin'],
-                members: [],
+                members: ['batman'],
                 external: false
             };
-            component.groups = [group1, group2];
+            userManagerStub.groups = [group1, group2];
+            component.ngOnInit();
             fixture.detectChanges();
             const list = element.query(By.css('.user-groups-list'));
             expect(list).toBeDefined();
