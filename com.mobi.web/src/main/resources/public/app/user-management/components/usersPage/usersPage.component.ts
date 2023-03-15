@@ -64,9 +64,14 @@ export class UsersPageComponent implements OnInit {
 
     ngOnInit(): void {
         this.setUsers();
-        this.setAdmin();
         this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
         this.isAdmin = this.um.isAdmin(this.lm.currentUser);
+
+        if (this.state.selectedUser) {
+            this.selectUser(this.state.selectedUser);
+        } else {
+            this.setAdmin();
+        }
     }
     selectUser(user: User): void {
         this.state.selectedUser = user;
