@@ -172,7 +172,6 @@ describe('Upload Record Modal component', function() {
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
                 expect(utilStub.createWarningToast).not.toHaveBeenCalled();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                console.log(component.error)
                 expect(component.error).toEqual({error: '', errorDetails: [], errorMessage: 'No changes'});
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));

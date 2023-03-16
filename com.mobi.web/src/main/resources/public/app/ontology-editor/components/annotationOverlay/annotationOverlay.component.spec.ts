@@ -45,6 +45,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
 import { AnnotationOverlayComponent } from './annotationOverlay.component';
+import { IriSelectOntologyComponent } from "../iriSelectOntology/iriSelectOntology.component";
 
 describe('Annotation Overlay component', function() {
     let component: AnnotationOverlayComponent;
@@ -76,6 +77,7 @@ describe('Annotation Overlay component', function() {
             declarations: [
                 AnnotationOverlayComponent,
                 MockComponent(LanguageSelectComponent),
+                MockComponent(IriSelectOntologyComponent)
             ],
             providers: [
                 MockProvider(OntologyManagerService),
@@ -141,7 +143,7 @@ describe('Annotation Overlay component', function() {
             expect(component.annotationForm.controls.annotation.value).toEqual('');
             expect(component.annotationForm.controls.annotation.disabled).toBeFalse();
             expect(component.annotationForm.controls.value.value).toEqual('');
-            expect(component.annotationForm.controls.type.value).toEqual('');
+            expect(component.annotationForm.controls.type.value).toEqual(XSD + 'string');
             expect(component.annotationForm.controls.language.value).toEqual('');
         });
     });
@@ -187,7 +189,7 @@ describe('Annotation Overlay component', function() {
         it('depending on whether owl:deprecated is selected', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('textarea')).length).toEqual(1);
-            expect(element.queryAll(By.css('language-select')).length).toEqual(1);
+            expect(element.queryAll(By.css('language-select')).length).toEqual(0);
             expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(0);
             
             component.annotationForm.controls.annotation.setValue(OWL + 'deprecated');
@@ -256,8 +258,8 @@ describe('Annotation Overlay component', function() {
                     }
                 } as MatAutocompleteSelectedEvent;
                 component.selectProp(event);
-                expect(component.annotationForm.controls.type.value).toEqual('');
-                expect(component.annotationForm.controls.language.value).toEqual('en');
+                expect(component.annotationForm.controls.type.value).toEqual(XSD + 'string');
+                expect(component.annotationForm.controls.language.value).toEqual('');
             });
         });
         describe('should submit the modal if the annotation is being', function() {

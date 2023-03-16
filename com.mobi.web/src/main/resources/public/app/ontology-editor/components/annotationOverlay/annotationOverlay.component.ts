@@ -28,12 +28,13 @@ import { union, has, get, groupBy, sortBy } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
-import { OWL, XSD } from '../../../prefixes';
+import { OWL, RDF, XSD } from '../../../prefixes';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { UtilService } from '../../../shared/services/util.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { datatype } from "../../../shared/validators/datatype.validator";
 
 interface AnnotationGroup {
     namespace: string,
@@ -69,11 +70,11 @@ interface AnnotationOption {
 export class AnnotationOverlayComponent implements OnInit {
     deprecatedIri = OWL + 'deprecated';
     annotations: string[] = [];
-
+    type: string = XSD + 'string';
     annotationForm = this.fb.group({
         annotation: ['', [Validators.required]],
-        value: ['', [Validators.required]],
-        type: [''],
+        value: ['', [Validators.required, datatype(() => this.type)]],
+        type: [this.type],
         language: ['']
     });
 
@@ -95,6 +96,7 @@ export class AnnotationOverlayComponent implements OnInit {
             this.annotationForm.controls.annotation.disable();
             this.annotationForm.controls.value.setValue(this.data.value);
             this.annotationForm.controls.type.setValue(this.data.type);
+            this.type = this.data.type;
             this.annotationForm.controls.language.setValue(this.data.language);
         } else {
             // Should already be enabled on startup, mostly here for test purposes
@@ -127,8 +129,8 @@ export class AnnotationOverlayComponent implements OnInit {
             this.annotationForm.controls.type.setValue(XSD + 'boolean');
             this.annotationForm.controls.language.setValue('');
         } else {
-            this.annotationForm.controls.type.setValue('');
-            this.annotationForm.controls.language.setValue('en');
+            this.annotationForm.controls.type.setValue(XSD + 'string');
+            this.annotationForm.controls.language.setValue('');
         }
     }
     submit(): void {
@@ -181,6 +183,20 @@ export class AnnotationOverlayComponent implements OnInit {
     }
     getName(iri: string): string {
         return this.os.getEntityNameByListItem(iri);
+    }
+
+    validateValue(newValue: string[]): void {
+        this.type = newValue[0];
+        this.annotationForm.controls.type.setValue(this.type);
+        this.annotationForm.controls.value.updateValueAndValidity();
+
+        if (!this.isLangString()) {
+            this.annotationForm.controls.language.setValue('');
+        }
+    }
+
+    isLangString(): boolean {
+        return RDF + 'langString' === (this.annotationForm.controls.type.value ? this.annotationForm.controls.type.value: '');
     }
 
     private _createJson(value, type, language): JSONLDObject {
