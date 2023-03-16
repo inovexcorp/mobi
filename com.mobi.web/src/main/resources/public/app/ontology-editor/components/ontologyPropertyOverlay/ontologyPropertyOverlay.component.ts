@@ -29,10 +29,11 @@ import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
 import { REGEX } from '../../../constants';
-import { OWL, XSD } from '../../../prefixes';
+import { OWL, RDF, XSD } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
+import { datatype } from "../../../shared/validators/datatype.validator";
 
 interface PropertyGroup {
     namespace: string,
@@ -72,11 +73,12 @@ export class OntologyPropertyOverlayComponent implements OnInit {
     annotations = [];
     properties = [];
     isOntologyProperty = false;
+    type: string = XSD + 'string';
 
     propertyForm = this.fb.group({
         property: ['', [Validators.required]],
-        value: ['', [Validators.required]],
-        type: [''],
+        value: ['', [Validators.required, datatype(() => this.type)]],
+        type: [this.type],
         language: ['']
     });
 
@@ -99,6 +101,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             this.propertyForm.controls.value.setValue(this.data.value);
             this.propertyForm.controls.type.setValue(this.data.type);
             this.propertyForm.controls.language.setValue(this.data.language);
+            this.type = this.data.type;
         } else {
             // Should already be enabled on startup, mostly here for test purposes
             this.propertyForm.controls.property.enable();
@@ -130,17 +133,18 @@ export class OntologyPropertyOverlayComponent implements OnInit {
         const selectedProperty: string = event.option.value;
         this.isOntologyProperty = !!selectedProperty && some(this.pm.ontologyProperties, property => selectedProperty === property);
         if (this.isOntologyProperty) {
-            this.propertyForm.controls.value.setValidators([Validators.required, Validators.pattern(this.iriPattern)]);
+            this.type = XSD + 'anyURI';
+            this.propertyForm.controls.type.setValue(this.type);
+            this.propertyForm.controls.value.setValidators([Validators.required, Validators.pattern(this.iriPattern), datatype(() => this.type)]);
         } else {
-            this.propertyForm.controls.value.setValidators([Validators.required]);
+            this.propertyForm.controls.value.setValidators([Validators.required, datatype(() => this.type)]);
+            this.propertyForm.controls.type.setValue(XSD + 'string');
+            this.propertyForm.controls.language.setValue('');
         }
         this.propertyForm.controls.value.setValue('');
         if (selectedProperty === OWL + 'deprecated') {
             this.propertyForm.controls.type.setValue(XSD + 'boolean');
             this.propertyForm.controls.language.setValue('');
-        } else {
-            this.propertyForm.controls.type.setValue('');
-            this.propertyForm.controls.language.setValue('en');
         }
     }
     addProperty(): void {
@@ -184,6 +188,20 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             this.util.createWarningToast('Duplicate property values not allowed');
         }
         this.dialogRef.close(edited);
+    }
+
+    validateValue(newValue: string[]): void {
+        this.type = newValue[0];
+        this.propertyForm.controls.type.setValue(this.type);
+        this.propertyForm.controls.value.updateValueAndValidity();
+
+        if (!this.isLangString()) {
+            this.propertyForm.controls.language.setValue('');
+        }
+    }
+
+    isLangString(): boolean {
+        return RDF + 'langString' === (this.propertyForm.controls.type.value ? this.propertyForm.controls.type.value: '');
     }
 
     private _createJson(value, type, language) {

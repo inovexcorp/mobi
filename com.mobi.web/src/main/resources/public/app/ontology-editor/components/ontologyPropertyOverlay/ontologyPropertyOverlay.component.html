@@ -50,8 +50,13 @@
             <mat-form-field class="w-100">
                 <mat-label>Value</mat-label>
                 <textarea matInput name="value" formControlName="value" required></textarea>
+                <mat-error *ngIf="propertyForm.get('value').errors?.datatype">Value is invalid for the chosen datatype</mat-error>
             </mat-form-field>
-            <language-select [parentForm]="propertyForm"></language-select>
+            <!-- datatype -->
+            <iri-select-ontology [selected]="[propertyForm.controls.type.value]" (selectedChange)="validateValue($event)" [selectList]="os.listItem.dataPropertyRange" displayText="Type" [singleSelect]="true"></iri-select-ontology>
+
+            <!-- language -->
+            <language-select *ngIf="isLangString()" [parentForm]="propertyForm" [disableClear]="true">></language-select>
         </ng-template>
     </ng-template>
 </form>

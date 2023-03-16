@@ -44,10 +44,14 @@
         <mat-form-field class="w-100">
             <mat-label>Value</mat-label>
             <textarea matInput name="value" formControlName="value" required></textarea>
+            <mat-error *ngIf="annotationForm.get('value').errors?.datatype">Value is invalid for the chosen datatype</mat-error>
         </mat-form-field>
-        <language-select [parentForm]="annotationForm"></language-select>
+        <!-- datatype -->
+        <iri-select-ontology [selected]="[annotationForm.controls.type.value]" (selectedChange)="validateValue($event)" [selectList]="os.listItem.dataPropertyRange" displayText="Type" [singleSelect]="true"></iri-select-ontology>
+
+        <!-- language -->
+        <language-select *ngIf="isLangString()" [parentForm]="annotationForm" [disableClear]="true">></language-select>
     </ng-template>
-    <!--<iri-select bind-model="os.annotationType" change-event="os.annotationType = value" display-text="'Type'" select-list="os.listItem.dataPropertyRange"></iri-select>-->
 </form>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>

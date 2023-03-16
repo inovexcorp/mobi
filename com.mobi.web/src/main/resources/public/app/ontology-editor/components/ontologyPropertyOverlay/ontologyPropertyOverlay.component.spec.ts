@@ -44,6 +44,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
 import { OntologyPropertyOverlayComponent } from './ontologyPropertyOverlay.component';
+import { IriSelectOntologyComponent } from "../iriSelectOntology/iriSelectOntology.component";
 
 describe('Ontology Property Overlay component', function() {
     let component: OntologyPropertyOverlayComponent;
@@ -74,6 +75,7 @@ describe('Ontology Property Overlay component', function() {
             declarations: [
                 OntologyPropertyOverlayComponent,
                 MockComponent(LanguageSelectComponent),
+                MockComponent(IriSelectOntologyComponent)
             ],
             providers: [
                 MockProvider(OntologyStateService),
@@ -139,7 +141,7 @@ describe('Ontology Property Overlay component', function() {
             expect(component.propertyForm.controls.property.value).toEqual('');
             expect(component.propertyForm.controls.property.disabled).toBeFalse();
             expect(component.propertyForm.controls.value.value).toEqual('');
-            expect(component.propertyForm.controls.type.value).toEqual('');
+            expect(component.propertyForm.controls.type.value).toEqual(XSD + 'string');
             expect(component.propertyForm.controls.language.value).toEqual('');
         });
     });
@@ -184,7 +186,7 @@ describe('Ontology Property Overlay component', function() {
         it('depending on whether owl:deprecated is selected', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('textarea')).length).toEqual(1);
-            expect(element.queryAll(By.css('language-select')).length).toEqual(1);
+            expect(element.queryAll(By.css('language-select')).length).toEqual(0);
             expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(0);
             
             component.propertyForm.controls.property.setValue(OWL + 'deprecated');
@@ -274,8 +276,8 @@ describe('Ontology Property Overlay component', function() {
                 propertyManagerStub.ontologyProperties = ['test'];
                 component.selectProp(event);
                 expect(component.isOntologyProperty).toBeTrue();
-                expect(component.propertyForm.controls.type.value).toEqual('');
-                expect(component.propertyForm.controls.language.value).toEqual('en');
+                expect(component.propertyForm.controls.type.value).toEqual(XSD + 'anyURI');
+                expect(component.propertyForm.controls.language.value).toEqual('');
             });
         });
         describe('addProperty calls the correct manager functions', function() {
