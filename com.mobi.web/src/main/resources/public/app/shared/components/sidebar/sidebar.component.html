@@ -47,7 +47,7 @@
             <li class="nav-item help">
                 <a class="nav-link" [matMenuTriggerFor]="helpMenu"><i class="fa fa-question-circle"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Help</span></a>
                 <mat-menu #helpMenu="matMenu" [overlapTrigger]="false">
-                    <a mat-menu-item href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a>
+                    <a mat-menu-item href="{{docSite}}" target="_blank">Documentation</a>
                     <mat-divider></mat-divider>
                     <a mat-menu-item href="https://inovexirad.atlassian.net/servicedesk" target="_blank">Support</a>
                 </mat-menu>
