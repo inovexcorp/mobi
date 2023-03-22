@@ -98,7 +98,7 @@ describe('Discover Dataset Select Component', function() {
             component.clear();
             expect(component.recordId).toBe('');
             fixture.detectChanges(); // component.$digest();
-            expect(component.recordIdChange.emit).toHaveBeenCalledWith('');
+            expect(component.recordIdChange.emit).toHaveBeenCalledWith({});
             expect(component.recordId).toBe('');
         });
         it('onChange should call the correct methods', function() {

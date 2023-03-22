@@ -21,10 +21,9 @@
  * #L%
  */
 
-import { TestBed } from "@angular/core/testing";
-import { forEach } from "lodash";
-import { ShowPropertiesPipe } from "./showProperties.pipe";
-
+import { TestBed } from '@angular/core/testing';
+import { forEach } from 'lodash';
+import { ShowPropertiesPipe } from './showProperties.pipe';
 
 describe('Show Properties filter', function() {
     let pipe: ShowPropertiesPipe;
@@ -50,17 +49,17 @@ describe('Show Properties filter', function() {
     describe('returns an empty array', function() {
         it('if properties is not an array', function() {
             forEach([false, '', 0, undefined, null], function(value) {
-                var result = pipe.transform(entity, value);
+                const result = pipe.transform(entity, value);
                 expect(result).toEqual([]);
             });
         });
         it('if entity does not have the property', function() {
-            var result = pipe.transform(entity, ['prop3', 'prop4']);
+            const result = pipe.transform(entity, ['prop3', 'prop4']);
             expect(result).toEqual([]);
         });
     });
     it('returns an array of items that are validated', function() {
-        var result = pipe.transform(entity, properties);
+        let result = pipe.transform(entity, properties);
         expect(result.length).toBe(2);
 
         result = pipe.transform(entity, ['prop1', 'prop2', 'prop3', 'prop4']);

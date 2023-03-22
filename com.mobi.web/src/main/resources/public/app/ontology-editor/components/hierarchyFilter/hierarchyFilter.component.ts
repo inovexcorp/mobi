@@ -54,10 +54,14 @@ export class HierarchyFilterComponent implements OnChanges {
         this.numFilters = 0;
     }
     dropdownClosed(): void {
-        this.filters.forEach(filter => { filter.checked = filter.flag; });
+        this.filters.forEach(filter => {
+            filter.checked = filter.flag;
+        });
     }
     apply(): void {
-        this.filters.forEach(filter => { filter.flag = filter.checked; });
+        this.filters.forEach(filter => {
+            filter.flag = filter.checked;
+        });
         this.trigger.closeMenu();
         this.updateFilters.emit(this.filters);
         this.numFilters = filter(this.filters, 'flag').length;

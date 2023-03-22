@@ -365,7 +365,7 @@ describe('Ontology State Service', function() {
                 }));
             });
             it('and getRecordBranch rejects', fakeAsync(function() {
-                spyOn(service, 'createState')
+                spyOn(service, 'createState');
                 catalogManagerStub.getRecordBranch.and.returnValue(throwError(error));
                 service.createOntology([ontologyObj], title, 'description', ['A', 'B'])
                     .subscribe(() => fail('Observable should have rejected'), response => {
@@ -4628,7 +4628,7 @@ describe('Ontology State Service', function() {
             expect(service.getEntityNameByListItem).toHaveBeenCalledWith(jasmine.any(String));
         });
         it('provided', function() {
-            spyOn(service, 'getEntityNameByListItem')
+            spyOn(service, 'getEntityNameByListItem');
             const getName = jasmine.createSpy('getName').and.callFake(a => a);
             expect(service.getGroupedSelectList(['Asecond', 'Bitem1', 'Bitem2', 'Afirst', 'Cwow'], 'I', getName)).toEqual([
                 { namespace: 'A', options: [

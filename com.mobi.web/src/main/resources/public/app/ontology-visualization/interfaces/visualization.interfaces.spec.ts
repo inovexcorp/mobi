@@ -31,7 +31,7 @@ const expectGraphStateDefault = (graphState: GraphState, overrideState = {}) => 
     const expectedGraphState = Object.assign({
         commitId: 'commitId',
         ontologyId: 'Ont1',
-        importedOntologies: [{id:'Ont2'},{id:'Ont4'}],
+        importedOntologies: [{id: 'Ont2'},{id: 'Ont4'}],
         allGraphNodes: [],
         isOverLimit: false,
         data: undefined,
@@ -57,7 +57,7 @@ const expectGraphStateDefault = (graphState: GraphState, overrideState = {}) => 
     expect(graphState.nodeLimit).toEqual(expectedGraphState.nodeLimit);
 };
 
-const cru1: ControlRecordI = { type: ControlRecordType.NODE, id: '0.0', name: "A",  isImported: undefined,  ontologyId: undefined, onGraph: true};
+const cru1: ControlRecordI = { type: ControlRecordType.NODE, id: '0.0', name: 'A',  isImported: undefined,  ontologyId: undefined, onGraph: true};
 const cru2: ControlRecordI = { type: ControlRecordType.NODE, id: '0.1', name: undefined,  isImported: undefined,  ontologyId: undefined, onGraph: true};
 const cr1: ControlRecordI = { type: ControlRecordType.NODE, id: '1.1', name: 'A',  isImported: false,  ontologyId: 'Ont1', onGraph: true};
 const cr21: ControlRecordI = { type: ControlRecordType.NODE, id: '2.1', name: 'A',  isImported: true,  ontologyId: 'Ont2', onGraph: true};
@@ -76,13 +76,13 @@ describe('Visualization Interface', () => {
         actualControlRecords = [ cru1, cr21, cru2, cr22, cr41, cr410 ,cr1 ];
         expectedControlRecords = [ cr1, cr21, cr22, cr41, cr410, cru1, cru2 ];
         ontologyColorMap = new Map([['Ont1', 'blue'], ['Ont2', 'red'], ['Ont4', 'green']]);
-        controlRecordSubject$ = new Subject<ControlRecordSearchResultI>()
+        controlRecordSubject$ = new Subject<ControlRecordSearchResultI>();
 
         graphState = new GraphState({
             commitId: 'commitId',
             ontologyId: 'Ont1',
             recordId: 'recordId',
-            importedOntologies: [{id:'Ont2'},{id:'Ont4'}],
+            importedOntologies: [{id: 'Ont2'},{id: 'Ont4'}],
             isOverLimit: false,
             positioned: false,
             allGraphNodes: [],
@@ -135,7 +135,7 @@ describe('Visualization Interface', () => {
         describe('getElementsLength method', () => {
             it('when data is undefined', fakeAsync(() => {
                 graphState.data = undefined;
-                graphState.allGraphNodes = []
+                graphState.allGraphNodes = [];
                 expect(graphState.getElementsLength()).toEqual(0);
             }));
             it('when data has two StateNode', fakeAsync(() => {
@@ -147,7 +147,7 @@ describe('Visualization Interface', () => {
                 const c2 = s2.asControlRecord(true);
                 c1.onGraph = true;
                 c2.onGraph = true;
-                graphState.allGraphNodes = [ c1, c2 ]
+                graphState.allGraphNodes = [ c1, c2 ];
                 // graphState.data = { nodes: [  ], edges: []};
                 expect(graphState.getElementsLength()).toEqual(2);
             }));
@@ -156,7 +156,7 @@ describe('Visualization Interface', () => {
                 s1.data = { id: '1', ontologyId: 'ont1' };
                 const c1 = s1.asControlRecord(true);
                 c1.onGraph = true;
-                graphState.allGraphNodes = [ c1 ]
+                graphState.allGraphNodes = [ c1 ];
                 expect(graphState.getElementsLength()).toEqual(1);
             }));
         });
@@ -164,9 +164,9 @@ describe('Visualization Interface', () => {
             it('successfully', fakeAsync(() => { 
                 expect(controlRecordSubject$.observers.length).toBe(0);
                 
-                let subCount = [];
+                const subCount = [];
                 graphState.allGraphNodes = actualControlRecords;
-                const controlRecordSearch: ControlRecordSearchI = {}
+                const controlRecordSearch: ControlRecordSearchI = {};
                 const sub1$: Subscription = graphState.controlRecordObservable$.subscribe((controlRecordSearchResultI) => {
                     subCount.push(controlRecordSearchResultI.count);
                     expect(controlRecordSearchResultI.count).toEqual(6);
@@ -199,7 +199,7 @@ describe('Visualization Interface', () => {
             const actualSortedControlRecords = [...actualControlRecords].sort(ObjectComparer.ControlRecordI);
             const actualSortedIds = actualSortedControlRecords.map(x => x.id);
             const expectedControlIds = expectedControlRecords.map(x => x.id);
-            expect(actualSortedIds.join("|")).toEqual(expectedControlIds.join("|"));
+            expect(actualSortedIds.join('|')).toEqual(expectedControlIds.join('|'));
         });
     });
     describe('StateNode class ', () => {

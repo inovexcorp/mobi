@@ -235,7 +235,7 @@ export class ExploreUtilsService {
         const props = [];
         properties.forEach(property => {
                 if ( !includes(Object.keys(entity), property.propertyIRI) ) {
-                    props.push(property)
+                    props.push(property);
                 }
             });
         return text ? filter(props, property => this.contains(property.propertyIRI.toLowerCase(), text.toLowerCase())) : props;

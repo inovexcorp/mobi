@@ -20,14 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {AbstractControl, ValidationErrors, ValidatorFn} from "@angular/forms";
-import {includes} from "lodash";
+import {AbstractControl, ValidationErrors, ValidatorFn} from '@angular/forms';
+import {includes} from 'lodash';
 
 export function datatypeValidator(datatypes: string[]): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
         if (control.value) {
-            let validity = includes(datatypes, control.value);
-            return validity ? null : { invalidDatatype: !validity }
+            const validity = includes(datatypes, control.value);
+            return validity ? null : { invalidDatatype: !validity };
         }
         return null;
     };

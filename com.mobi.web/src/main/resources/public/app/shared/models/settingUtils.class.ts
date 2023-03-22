@@ -64,6 +64,6 @@ export class SettingUtils {
             } else {
                 return 0;
             }
-        }
+        };
     }
 }

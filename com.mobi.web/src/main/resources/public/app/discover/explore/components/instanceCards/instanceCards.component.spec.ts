@@ -68,7 +68,7 @@ describe('Instance Cards component', function() {
             title: 'My Instance 3'
         }
     ];
-    let record = {
+    const record = {
         description: 'Test data 1',
         instanceIRI: 'http://www.mombi.com/ontologies/2022/test.owl#MyInstace1',
         title: 'My Instance 1'
@@ -151,7 +151,7 @@ describe('Instance Cards component', function() {
 
        discoverStateStub.explore.recordId = 'recordId1';
 
-       let chunks = [[
+       const chunks = [[
            {
                classIRI: 'www.test3.com',
                classDescription: 'test 3 desc',
@@ -219,7 +219,7 @@ describe('Instance Cards component', function() {
 
                      const response = {
                          body: data,
-                         header: new HttpHeaders({'x-total-count':''})
+                         header: new HttpHeaders({'x-total-count': ''})
                      };
 
                     discoverStateStub.explore.breadcrumbs = ['', ''];

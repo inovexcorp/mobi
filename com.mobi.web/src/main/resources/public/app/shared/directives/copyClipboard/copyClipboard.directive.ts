@@ -56,7 +56,7 @@ export class CopyClipboardDirective {
             this.toastr.success('', 'Copied', {timeOut: 2000});
         };
 
-        document.addEventListener('copy', listener, false)
+        document.addEventListener('copy', listener, false);
         document.execCommand('copy');
         document.removeEventListener('copy', listener, false);
     }

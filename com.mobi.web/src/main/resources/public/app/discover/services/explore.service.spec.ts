@@ -100,7 +100,7 @@ describe('Explore Service', function() {
     });
     describe('getClassDetails calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/class-details', function() {
         it('succeeds', function() {
-            let data: ClassDetails[]= [obj];
+            const data: ClassDetails[]= [obj];
             const url = service.prefix + encodeURIComponent('recordId') + '/class-details';
             service.getClassDetails('recordId')
                 .subscribe(function(response) {
@@ -227,7 +227,7 @@ describe('Explore Service', function() {
                   '@id': ''
                 }
             ];
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId')
+            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
             service.getInstance('recordId', 'instanceId')
                 .subscribe(function(response) {
                     expect(response).toEqual(data);
@@ -239,7 +239,7 @@ describe('Explore Service', function() {
             req.flush(data);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId')
+            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
             service.getInstance('recordId', 'instanceId')
                 .subscribe(function() {
                     fail('Should have been rejected.');

@@ -213,8 +213,9 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         return {
             next: (payload: SidePanelPayload) => {
                 try {
-                    if (!self.status.loaded || !self.status.initialized)
+                    if (!self.status.loaded || !self.status.initialized) {
                         return;
+                    }
                     switch (payload.action) {
                         case SidePanelAction.ONTOLOGY_SELECT: {
                             // need to figure out how to ont node
@@ -319,7 +320,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             this.updateMessages(commitGraphState.isOverLimit, commitGraphState.nodeLimit);
         }
         if (commitGraphState.positionData != undefined) {
-            this.cyChart.json(commitGraphState.positionData )
+            this.cyChart.json(commitGraphState.positionData );
         } else {
             // https://js.cytoscape.org/#cy.fit
             this.cyChart.fit();
@@ -396,7 +397,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             'highlighted': 'focused',
             'focused': 'highlighted',
         };
-        let exClass = getExclusiveState[classes];
+        const exClass = getExclusiveState[classes];
         if (collection.size > 0) {
             collection.forEach(entry => {
                 // check if entry is a single node or collection.
@@ -416,7 +417,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                 }
             });
         }
-    };
+    }
     /**
      * Focus Cytoscape Elements
      * - https://js.cytoscape.org/#eles.select
@@ -436,7 +437,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         this.removeCollectionClass(highlighted, 'highlighted');
         this.removeCollectionClass(selectedNeighbor, 'highlighted');
         this.removeCollectionClass(selectedNode, 'highlighted');
-
 
         if (target) {
             if (action === 'select') {

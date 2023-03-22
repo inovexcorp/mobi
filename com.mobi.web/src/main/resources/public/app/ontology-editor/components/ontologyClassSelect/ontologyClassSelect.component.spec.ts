@@ -144,7 +144,7 @@ describe('Ontology Class Select component', function() {
                 expect(component.selectedChange.emit).not.toHaveBeenCalled();
                 expect(component.clazzControl.value).toEqual(null);
             });
-        })
+        });
         it('remove should handle removing a class', function() {
             component.remove(classOption);
             expect(component.selected).toEqual([]);

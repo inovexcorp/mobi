@@ -25,17 +25,17 @@
  */
 import Yasr from '@triply/yasr/build/yasr.min.js';
 import { Plugin } from '@triply/yasr/src/plugins';
-import { drawFontAwesomeIconAsSvg, drawSvgStringAsElement } from "../utils/yasguiUtil";
-import * as faIcon from "@fortawesome/free-solid-svg-icons/faLink";
+import { drawFontAwesomeIconAsSvg, drawSvgStringAsElement } from '../utils/yasguiUtil';
+import * as faIcon from '@fortawesome/free-solid-svg-icons/faLink';
 
-const CodeMirror = require("codemirror");
-require("codemirror/addon/fold/foldcode.js");
-require("codemirror/addon/fold/foldgutter.js");
-require("codemirror/addon/fold/xml-fold.js");
-require("codemirror/addon/fold/brace-fold.js");
-require("codemirror/addon/edit/matchbrackets.js");
-require("codemirror/mode/javascript/javascript.js");
-require("codemirror/lib/codemirror.css");
+const CodeMirror = require('codemirror');
+require('codemirror/addon/fold/foldcode.js');
+require('codemirror/addon/fold/foldgutter.js');
+require('codemirror/addon/fold/xml-fold.js');
+require('codemirror/addon/fold/brace-fold.js');
+require('codemirror/addon/edit/matchbrackets.js');
+require('codemirror/mode/javascript/javascript.js');
+require('codemirror/lib/codemirror.css');
 
 export interface PlugingConfig {
     maxLines: number
@@ -60,7 +60,7 @@ export default class JsonLD implements Plugin<PlugingConfig> {
     };
     // public attributes
     public priority = 11;
-    public label = "JSON-LD";
+    public label = 'JSON-LD';
     public getIcon() {
         return drawSvgStringAsElement(drawFontAwesomeIconAsSvg(faIcon));
     }
@@ -73,14 +73,14 @@ export default class JsonLD implements Plugin<PlugingConfig> {
             this.config = {
                 ...this.config,
                 ...yasr.config.plugins['jsonLD'].dynamicConfig
-            }
+            };
         }
     }
 
     draw() {
         // When the original response is empty, use an empty string
-        let value = this.yasr.results?.getOriginalResponseAsString() || "";
-        let contentType = this.yasr.results?.getContentType();
+        let value = this.yasr.results?.getOriginalResponseAsString() || '';
+        const contentType = this.yasr.results?.getContentType();
         if ( contentType === 'application/ld+json') {
             value = JSON.stringify(value, null, 4);
         }
@@ -89,36 +89,46 @@ export default class JsonLD implements Plugin<PlugingConfig> {
             lineNumbers: true,
             lineWrapping: true,
             foldGutter: true,
-            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
             value: value
         };
 
         codemirrorOpts['mode'] = contentType,
-        this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);``
+        this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
     }
 
     download() {
-        if (!this.yasr.results) return;
+        if (!this.yasr.results) {
+            return;
+        }
         const contentType = this.yasr.results.getContentType();
         const type = this.yasr.results.getType();
         return {
             getData: () => {
-                return this.yasr.results?.getOriginalResponseAsString() || "";
+                return this.yasr.results?.getOriginalResponseAsString() || '';
             },
-            filename: "queryResults" + (type ? "." + type : ""),
-            contentType: contentType ? contentType : "text/plain",
-            title: "Download result"
+            filename: 'queryResults' + (type ? '.' + type : ''),
+            contentType: contentType ? contentType : 'text/plain',
+            title: 'Download result'
         };
     }
 
     // A required function, used to indicate whether this plugin can draw the current
     // resultset from yasr
     canHandleResults() {
-        if (!this.yasr.results) return false;
-        if (!this.yasr.results.getOriginalResponseAsString) return false;
-        if (this.yasr.results?.getContentType() === 'application/json') return false;
+        if (!this.yasr.results) {
+            return false;
+        }
+        if (!this.yasr.results.getOriginalResponseAsString) {
+            return false;
+        }
+        if (this.yasr.results?.getContentType() === 'application/json') {
+            return false;
+        }
         const response = this.yasr.results.getOriginalResponseAsString();
-        if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
+        if ((!response || response.length == 0) && this.yasr.results.getError()) {
+            return false;
+        } //in this case, show exception instead, as we have nothing to show anyway
         return true;
     }
    

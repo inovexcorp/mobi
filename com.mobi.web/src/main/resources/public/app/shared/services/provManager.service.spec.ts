@@ -89,7 +89,7 @@ import { ProvManagerService } from './provManager.service';
                 request.flush('flush', { status: 400, statusText: error });
             });
             it('with all config passed', function() {
-                service.getActivities({offset:2, limit: 5}, isTracked)
+                service.getActivities({offset: 2, limit: 5}, isTracked)
                     .subscribe((response: HttpResponse<{activities: any, entities: any}>) => {
                         expect(response.body).toEqual({activities: '', entities: ''});
                     });
@@ -118,7 +118,7 @@ import { ProvManagerService } from './provManager.service';
                 request.flush('flush', { status: 400, statusText: error });
             });
             it('with all config passed', function() {
-                service.getActivities({offset:2, limit: 5})
+                service.getActivities({offset: 2, limit: 5})
                     .subscribe((response: HttpResponse<{activities: any, entities: any}>) => {
                         expect(response.body).toEqual({activities: '', entities: ''});
                     });

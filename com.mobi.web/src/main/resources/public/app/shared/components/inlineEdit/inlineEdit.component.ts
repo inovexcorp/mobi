@@ -70,7 +70,7 @@ export class InlineEditComponent {
     saveChanges(): void {
         if (this.required && this.editedText === '') {
             this.onBlur();
-            this.util.createWarningToast('Text input must not be empty')
+            this.util.createWarningToast('Text input must not be empty');
         } else {
             this.edit = false;
             this.saveEvent.emit(this.editedText);

@@ -42,7 +42,6 @@ export class DiscoverStateService {
     constructor() {
         this._setStates();
     }
-    
 
     /**
      * 'explore' is an object which holds properties associated with the {@link explore.ExploreTabDirective}.

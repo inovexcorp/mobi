@@ -32,7 +32,6 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { Commit } from '../../../shared/models/commit.interface';
 import { UtilService } from '../../../shared/services/util.service';
 
-
 /**
  * @class merge-requests.RequestBranchSelectComponent
  *

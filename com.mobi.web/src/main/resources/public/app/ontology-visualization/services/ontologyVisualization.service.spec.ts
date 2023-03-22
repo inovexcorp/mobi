@@ -46,8 +46,8 @@ describe('OntologyVisualization Service', () => {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let mockRequest = (obj) => of(obj);
-    let inProgressCommitObj = {
+    const mockRequest = (obj) => of(obj);
+    const inProgressCommitObj = {
         additions: [],
         deletions: []
     };
@@ -177,13 +177,13 @@ describe('OntologyVisualization Service', () => {
                 elementsLength: state.getElementsLength(),
                 positioned: state.positioned,
                 isOverLimit: state.isOverLimit
-            }
+            };
             const expectState = {
                 allGraphNodesLength: 100,
                 elementsLength: 100,
                 positioned: false,
                 isOverLimit: false
-            }
+            };
             expect(actualState).toEqual(expectState);
             const nodesLenght = Object.keys(state.data.nodes).length;
             const edgesLenght = Object.keys(state.data.edges).length;
@@ -198,8 +198,8 @@ describe('OntologyVisualization Service', () => {
                 expect(throwError).toHaveBeenCalled();
             }, () => {
                 expect((err) => {
-                  expect(err).toEqual('No classes defined')
-                })
+                  expect(err).toEqual('No classes defined');
+                });
             });
             flush(); // draining the macrotask queue until it is empty
         }));

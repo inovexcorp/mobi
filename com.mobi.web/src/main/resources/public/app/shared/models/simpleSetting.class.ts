@@ -171,7 +171,7 @@ export class SimpleSetting implements Setting {
     }
 
     public buildForm(): FormGroup {
-        let form = new FormGroup({
+        const form = new FormGroup({
             formBlocks: new FormArray([])
         });
 

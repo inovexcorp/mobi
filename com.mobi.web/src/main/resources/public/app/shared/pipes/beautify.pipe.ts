@@ -37,7 +37,7 @@ import { toUpper } from 'lodash';
     name: 'beautify'
 })
 export class BeautifyPipe implements PipeTransform {
-    public transform(value: string | number | boolean | {}): string {
+    public transform(value: string | number | boolean | Record<string, unknown>): string {
         if (value && typeof value === 'string') {
             return value
                 // insert a space between lower & upper

@@ -52,6 +52,6 @@ export class StateNode implements StateNodeI {
             onGraph: onGraph,
             stateNode: this
         };
-        return controlRecord
+        return controlRecord;
     }
 }

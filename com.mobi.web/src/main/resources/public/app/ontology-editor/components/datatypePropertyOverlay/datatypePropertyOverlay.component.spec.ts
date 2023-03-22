@@ -58,7 +58,7 @@ describe('Datatype Property Overlay component', function() {
     let utilStub: jasmine.SpyObj<UtilService>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
 
-    let data = {
+    const data = {
         editingProperty: false,
         propertySelect: 'id',
         propertyValue: 'sd',

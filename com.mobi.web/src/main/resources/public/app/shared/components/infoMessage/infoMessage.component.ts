@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 /**
  * @name shared.InfoMessageComponent

@@ -21,7 +21,6 @@
  * #L%
  */
 
-
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ValueDisplayComponent } from './valueDisplay.component';
 import { DebugElement } from '@angular/core';

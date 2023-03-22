@@ -74,7 +74,7 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
     }
     ngOnChanges(): void {
         this.chunks = this.getChunks(this.instanceData);
-        const index = this.datasource.adapter.firstVisible.$index ? this.datasource.adapter.firstVisible.$index : this.datasource.adapter.lastVisible.$index
+        const index = this.datasource.adapter.firstVisible.$index ? this.datasource.adapter.firstVisible.$index : this.datasource.adapter.lastVisible.$index;
         this.datasource.adapter.reload(index);
     }
     view(item: InstanceDetails): void {

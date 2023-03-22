@@ -21,10 +21,9 @@
  * #L%
  */
 
-import { TestBed } from "@angular/core/testing";
-import { forEach } from "lodash";
-import { BeautifyPipe } from "./beautify.pipe";
-
+import { TestBed } from '@angular/core/testing';
+import { forEach } from 'lodash';
+import { BeautifyPipe } from './beautify.pipe';
 
 describe('Beautify filter', function() {
     let pipe: BeautifyPipe;
@@ -43,21 +42,21 @@ describe('Beautify filter', function() {
     });
 
     it('returns an empty string when given a falsy value', function() {
-        var result;
+        let result;
         forEach([false, '', 0, undefined, null], function(value) {
             result = pipe.transform(value);
             expect(result).toEqual('');
         });
     });
     it('returns an empty string when passed an object or an array', function() {
-        var result;
+        let result;
         forEach([[], {}], function(value) {
             result = pipe.transform(value);
             expect(result).toEqual('');
         });
     });
     it('returns a beautified string when passed a string', function() {
-        var tests = [{
+        const tests = [{
             value: 'abc',
             result: 'Abc'
         }, {

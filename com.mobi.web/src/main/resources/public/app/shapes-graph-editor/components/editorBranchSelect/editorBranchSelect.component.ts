@@ -132,12 +132,12 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
                 .then(headCommit => {
                     return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, undefined, headCommit['@id'], event.option.value.tagIri, event.option.value.title);
                 }, (error) => {
-                   return Promise.reject(error)
+                   return Promise.reject(error);
                 })
                 .then(() =>  {
-                   return this.resetSearch()
+                   return this.resetSearch();
                 }, error => { 
-                    this.util.createErrorToast(error)
+                    this.util.createErrorToast(error);
                 });
         }
     }

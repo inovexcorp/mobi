@@ -297,7 +297,7 @@ describe('Manchester Converter service', function() {
             };
             let idx = 0;
             utilStub.getSkolemizedIRI.and.callFake(function() {
-                let id = '_:genid' + idx;
+                const id = '_:genid' + idx;
                 idx++;
                 return id;
             });
@@ -306,14 +306,14 @@ describe('Manchester Converter service', function() {
             });
         });
         it('unless the string is invalid', function() {
-            let str = '1 test 2';
-            let result = service.manchesterToJsonld(str, this.localNameMap);
+            const str = '1 test 2';
+            const result = service.manchesterToJsonld(str, this.localNameMap);
             expect(result.jsonld).toBeUndefined();
             expect(result.errorMessage).toBeTruthy();
         });
         it('unless an invalid local name is used', function() {
-            let str = 'test min 0';
-            let result = service.manchesterToJsonld(str, this.localNameMap);
+            const str = 'test min 0';
+            const result = service.manchesterToJsonld(str, this.localNameMap);
             expect(result.jsonld).toBeUndefined();
             expect(result.errorMessage).toContain('"test" does not correspond to a known IRI');
         });
@@ -335,8 +335,8 @@ describe('Manchester Converter service', function() {
                     [RDF+ 'rest']: [{ '@list': [] }]
                 });
                 this.expected[0][OWL + 'unionOf'] = [{ '@id': '_:genid1' }];
-                let str = 'ClassA or ClassB';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'ClassA or ClassB';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
@@ -354,15 +354,15 @@ describe('Manchester Converter service', function() {
                     [RDF+ 'rest']: [{ '@list': [] }]
                 });
                 this.expected[0][OWL + 'intersectionOf'] = [{ '@id': '_:genid1' }];
-                let str = 'ClassA and ClassB';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'ClassA and ClassB';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with complementOf', function() {
                 this.expected[0][OWL+ 'complementOf'] = [{'@id': this.localNameMap['ClassA']}];
-                let str = 'not ClassA';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'not ClassA';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
@@ -380,8 +380,8 @@ describe('Manchester Converter service', function() {
                     [RDF + 'rest']: [{ '@list': [] }]
                 });
                 this.expected[0][OWL + 'oneOf'] = [{ '@id': '_:genid1' }];
-                let str = '{IndvA, IndvB}';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = '{IndvA, IndvB}';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
@@ -396,15 +396,15 @@ describe('Manchester Converter service', function() {
             });
             it('with someValuesFrom', function() {
                 this.expected[0][OWL + 'someValuesFrom'] = [{'@id': this.localNameMap['ClassA']}];
-                let str = 'PropA some ClassA';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA some ClassA';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with someValuesFrom', function() {
                 this.expected[0][OWL + 'allValuesFrom'] = [{'@id': this.localNameMap['ClassA']}];
-                let str = 'PropA only ClassA';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA only ClassA';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
@@ -412,83 +412,83 @@ describe('Manchester Converter service', function() {
                 describe('and a literal', function() {
                     it('with a language', function() {
                         this.expected[0][OWL + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
-                        let str = 'PropA value "test"@en';
-                        let result = service.manchesterToJsonld(str, this.localNameMap);
+                        const str = 'PropA value "test"@en';
+                        const result = service.manchesterToJsonld(str, this.localNameMap);
                         expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                     it('without a language or type', function() {
                         this.expected[0][OWL + 'hasValue'] = [{'@value': 'test'}];
-                        let str = 'PropA value "test"';
-                        let result = service.manchesterToJsonld(str, this.localNameMap);
+                        const str = 'PropA value "test"';
+                        const result = service.manchesterToJsonld(str, this.localNameMap);
                         expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                     it('with a prefixed type', function() {
                         this.expected[0][OWL + 'hasValue'] = [{'@value': 'true', '@type': XSD + 'boolean'}];
-                        let str = 'PropA value "true"^^xsd:boolean';
-                        let result = service.manchesterToJsonld(str, this.localNameMap);
+                        const str = 'PropA value "true"^^xsd:boolean';
+                        const result = service.manchesterToJsonld(str, this.localNameMap);
                         expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                     it('with a unprefixed type', function() {
                         this.expected[0][OWL + 'hasValue'] = [{'@value': 'true', '@type': 'http://test.com/datatype'}];
-                        let str = 'PropA value "true"^^<http://test.com/datatype>';
-                        let result = service.manchesterToJsonld(str, this.localNameMap);
+                        const str = 'PropA value "true"^^<http://test.com/datatype>';
+                        const result = service.manchesterToJsonld(str, this.localNameMap);
                         expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                 });
                 it('and a resource', function() {
                     this.expected[0][OWL + 'hasValue'] = [{'@id': this.localNameMap['ClassA']}];
-                    let str = 'PropA value ClassA';
-                    let result = service.manchesterToJsonld(str, this.localNameMap);
+                    const str = 'PropA value ClassA';
+                    const result = service.manchesterToJsonld(str, this.localNameMap);
                     expect(result.jsonld).toEqual(this.expected);
                     expect(result.errorMessage).toEqual('');
                 });
             });
             it('with minCardinality', function() {
                 this.expected[0][OWL + 'minCardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
-                let str = 'PropA min 1';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA min 1';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with maxCardinality', function() {
                 this.expected[0][OWL + 'maxCardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
-                let str = 'PropA max 1';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA max 1';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with cardinality', function() {
                 this.expected[0][OWL + 'cardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
-                let str = 'PropA exactly 1';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA exactly 1';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with minCardinality', function() {
                 this.expected[0][OWL + 'onClass'] = [{'@id': this.localNameMap['ClassA']}];
                 this.expected[0][OWL + 'minCardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
-                let str = 'PropA min 1 ClassA';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA min 1 ClassA';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with maxCardinality', function() {
                 this.expected[0][OWL + 'onClass'] = [{'@id': this.localNameMap['ClassA']}];
                 this.expected[0][OWL + 'maxCardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
-                let str = 'PropA max 1 ClassA';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA max 1 ClassA';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with cardinality', function() {
                 this.expected[0][OWL + 'onClass'] = [{'@id': this.localNameMap['ClassA']}];
                 this.expected[0][OWL + 'cardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
-                let str = 'PropA exactly 1 ClassA';
-                let result = service.manchesterToJsonld(str, this.localNameMap);
+                const str = 'PropA exactly 1 ClassA';
+                const result = service.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
@@ -511,14 +511,14 @@ describe('Manchester Converter service', function() {
                     [RDF + 'rest']: [{ '@list': [] }]
                 });
                 this.expected[0][OWL + 'oneOf'] = [{ '@id': '_:genid1' }];
-                let str = '{"A", "B"}';
-                let result = service.manchesterToJsonld(str, this.localNameMap, true);
+                const str = '{"A", "B"}';
+                const result = service.manchesterToJsonld(str, this.localNameMap, true);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toBe('');
             });
         });
         it('with nested blank nodes', function() {
-            let str = '(not ClassA) or ((PropD min 1) and (PropE exactly 10)) or (PropA some ClassB) or (PropC value IndvA) or (PropB only {"A", "B"})';
+            const str = '(not ClassA) or ((PropD min 1) and (PropE exactly 10)) or (PropA some ClassB) or (PropC value IndvA) or (PropB only {"A", "B"})';
             this.expected = [
                 {
                     '@id': '_:genid0',
@@ -625,14 +625,14 @@ describe('Manchester Converter service', function() {
                     [RDF + 'rest']: [{ '@list': [] }]
                 }
             ];
-            let result = service.manchesterToJsonld(str, this.localNameMap);
+            const result = service.manchesterToJsonld(str, this.localNameMap);
             expect(result.jsonld).toEqual(this.expected);
             expect(result.errorMessage).toBe('');
         });
     });
     describe('should convert JSON-LD into Manchester syntax', function() {
         it('if given a list expression with a blank @list', function () {
-            let bnodes = [
+            const bnodes = [
                 {
                     '@id': '_:genid0',
                     '@type': [OWL + 'Class'],
@@ -649,16 +649,16 @@ describe('Manchester Converter service', function() {
                     [RDF + 'rest']: [{ '@list': [] }]
                 }
             ];
-            let index = {
+            const index = {
                 '_:genid0': { position: 0 },
                 '_:genid1': { position: 1 },
                 '_:genid2': { position: 2 }
             };
-            let result = service.jsonldToManchester(bnodes[0]['@id'], bnodes, index);
+            const result = service.jsonldToManchester(bnodes[0]['@id'], bnodes, index);
             expect(result).toBe('ClassA or ClassB');
         });
         it('if given a list expression with a nil', function () {
-            let bnodes = [
+            const bnodes = [
                 {
                     '@id': '_:genid0',
                     '@type': [OWL + 'Class'],
@@ -675,12 +675,12 @@ describe('Manchester Converter service', function() {
                     [RDF + 'rest']: [{ '@id': RDF + 'nil' }]
                 }
             ];
-            let index = {
+            const index = {
                 '_:genid0': { position: 0 },
                 '_:genid1': { position: 1 },
                 '_:genid2': { position: 2 }
             };
-            let result = service.jsonldToManchester(bnodes[0]['@id'], bnodes, index);
+            const result = service.jsonldToManchester(bnodes[0]['@id'], bnodes, index);
             expect(result).toBe('ClassA or ClassB');
         });
         describe('if given a class expression', function() {
@@ -703,11 +703,11 @@ describe('Manchester Converter service', function() {
                     this.index['_:genid1'] = {position: 1};
                 });
                 it('and HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('ClassA<span class="manchester-expr"> or </span>ClassB');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('ClassA or ClassB');
                 });
             });
@@ -722,11 +722,11 @@ describe('Manchester Converter service', function() {
                     this.index['_:genid1'] = {position: 1};
                 });
                 it('and HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('ClassA<span class="manchester-expr"> and </span>ClassB');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('ClassA and ClassB');
                 });
             });
@@ -735,11 +735,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'complementOf'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('<span class="manchester-expr">not </span>ClassA');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('not ClassA');
                 });
             });
@@ -754,16 +754,16 @@ describe('Manchester Converter service', function() {
                     this.index['_:genid1'] = {position: 1};
                 });
                 it('and HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('{ClassA, ClassB}');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('{ClassA, ClassB}');
                 });
             });
             it('unless it is invalid', function() {
-                let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                 expect(result).toBe(this.blankNode['@id']);
             });
         });
@@ -782,11 +782,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'someValuesFrom'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> some </span>ClassA');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA some ClassA');
                 });
 
@@ -796,11 +796,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'allValuesFrom'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> only </span>ClassA');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA only ClassA');
                 });
             });
@@ -808,23 +808,23 @@ describe('Manchester Converter service', function() {
                 describe('and a literal', function() {
                     it('with a language', function() {
                         this.blankNode[OWL + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
-                        let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                        const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                         expect(result).toBe('PropA value "test"@en');
                     });
                     it('without a language or type', function() {
                         this.blankNode[OWL + 'hasValue'] = [{'@value': 'test', '@type': XSD + 'string'}];
-                        let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                        const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                         expect(result).toBe('PropA value "test"');
                     });
                     it('with a type', function() {
                         this.blankNode[OWL + 'hasValue'] = [{'@value': 'true', '@type': XSD + 'boolean'}];
-                        let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                        const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                         expect(result).toBe('PropA value "true"^^xsd:boolean');
                     });
                 });
                 it('and a resource', function() {
                     this.blankNode[OWL + 'hasValue'] = [{'@id': 'ClassA'}];
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA value ClassA');
                 });
             });
@@ -833,11 +833,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'minCardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> min </span><span class="manchester-lit">1</span>');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA min 1');
                 });
             });
@@ -846,11 +846,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'maxCardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> max </span><span class="manchester-lit">1</span>');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA max 1');
                 });
             });
@@ -859,11 +859,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'cardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> exactly </span><span class="manchester-lit">1</span>');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA exactly 1');
                 });
             });
@@ -873,11 +873,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> min </span><span class="manchester-lit">1</span> ClassA');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA min 1 ClassA');
                 });
             });
@@ -887,11 +887,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> max </span><span class="manchester-lit">1</span> ClassA');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA max 1 ClassA');
                 });
             });
@@ -901,11 +901,11 @@ describe('Manchester Converter service', function() {
                     this.blankNode[OWL + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> exactly </span><span class="manchester-lit">1</span> ClassA');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA exactly 1 ClassA');
                 });
             });
@@ -929,7 +929,7 @@ describe('Manchester Converter service', function() {
 
                 this.blankNode[OWL + 'minCardinality'] = [{'@value': '1', '@type': XSD + 'nonNegativeInteger'}];
                 this.blankNode[OWL + 'onClass'] = [{'@id': '_:genid1'}];
-                let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                 expect(result).toBe('PropA min 1 (ClassA or ClassB)');
             });
         });
@@ -956,16 +956,16 @@ describe('Manchester Converter service', function() {
                     this.index['_:genid1'] = {position: 1};
                 });
                 it('and HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('{<span class="manchester-lit">"A"</span>, <span class="manchester-lit">"B"</span>}');
                 });
                 it('without HTML', function() {
-                    let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                    const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('{"A", "B"}');
                 });
             });
             it('unless it is invalid', function() {
-                let result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                const result = service.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                 expect(result).toBe(this.blankNode['@id']);
             });
         });
@@ -1034,7 +1034,7 @@ describe('Manchester Converter service', function() {
 
             });
             it('and HTML', function() {
-                let result = service.jsonldToManchester(this.jsonld[0]['@id'], this.jsonld, this.index, true);
+                const result = service.jsonldToManchester(this.jsonld[0]['@id'], this.jsonld, this.index, true);
                 expect(result).toBe('(<span class="manchester-expr">not </span>ClassA)<span class="manchester-expr"> or </span>'
                     + '((PropD<span class="manchester-rest"> min </span><span class="manchester-lit">1</span>)'
                     + '<span class="manchester-expr"> and </span>(PropE<span class="manchester-rest"> exactly </span><span class="manchester-lit">10</span>))'
@@ -1043,7 +1043,7 @@ describe('Manchester Converter service', function() {
                     + '(PropC<span class="manchester-rest"> value </span>ClassC))');
             });
             it('without HTML', function() {
-                let result = service.jsonldToManchester(this.jsonld[0]['@id'], this.jsonld, this.index);
+                const result = service.jsonldToManchester(this.jsonld[0]['@id'], this.jsonld, this.index);
                 expect(result).toBe('(not ClassA) or ((PropD min 1) and (PropE exactly 10)) '
                     + 'or (PropA some ClassB) or (PropB only (PropC value ClassC))');
             });

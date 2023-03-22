@@ -52,7 +52,7 @@ export class YateComponent implements OnChanges, AfterViewInit {
     }
    
     initUI(content: string): void {
-        delete YATE.Autocompleters.prefixes
+        delete YATE.Autocompleters.prefixes;
         this.yate = (<any>YATE).default(this.shapesGraphContent.nativeElement,
             {
                 tabMode: 'indent',

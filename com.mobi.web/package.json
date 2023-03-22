@@ -11,9 +11,9 @@
   },
   "scripts": {
     "antlr": "rimraf ./src/main/resources/public/vendor/antlr4/dist && cd ./src/main/antlr4 && antlr4ts -o ../resources/public/vendor/antlr4/dist ./MOS.g4",
-    "build": "ng build",
-    "build:prod": "npm run build --prod --env=prod --aot=true --buildOptimizer=true",
-    "build:dev": "npm run build --dev --env=dev --named-chunks --vendor-chunks",
+    "build": "npm run antlr && ng build",
+    "build:prod": "npm run lint && npm run antlr && npm run build --prod --env=prod --aot=true --buildOptimizer=true",
+    "build:dev": "npm run antlr && npm run build --dev --env=dev --named-chunks --vendor-chunks",
     "lint": "ng lint",
     "ng": "ng",
     "start": "ng serve",
@@ -118,7 +118,6 @@
     "protractor": "~5.4.0",
     "ts-node": "~7.0.0",
     "tslib": "^2.0.0",
-    "tslint": "~5.11.0",
     "typescript": "^3.8.3",
     "uuid": "^8.3.2"
   },

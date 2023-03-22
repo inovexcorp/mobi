@@ -32,7 +32,6 @@ import { CreateDataPropertyOverlayComponent } from '../createDataPropertyOverlay
 import { CreateIndividualOverlayComponent } from '../createIndividualOverlay/createIndividualOverlay.component';
 import { CreateObjectPropertyOverlayComponent } from '../createObjectPropertyOverlay/createObjectPropertyOverlay.component';
 
-
 /**
  * @class ontology-editor.CreateEntityModalComponent
  *

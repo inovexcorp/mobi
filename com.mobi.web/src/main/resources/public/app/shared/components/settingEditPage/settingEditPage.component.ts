@@ -57,7 +57,7 @@ export class SettingEditPageComponent implements OnInit {
 
     addTab(settingGroup: any): void {
         if (!settingGroup[RDFS + 'label']) {
-            this.util.createErrorToast('Setting Group not configured with label.')
+            this.util.createErrorToast('Setting Group not configured with label.');
             return;
         }
         this.tabs.push({

@@ -127,22 +127,22 @@ describe('Tree Item component', function() {
                 component.currentIri = 'id';
                 component.inProgressCommit = {
                     additions: [{'@id': '12345'}]
-                }
+                };
                 expect(component.isSaved()).toEqual(false);
                 component.inProgressCommit = {
                     additions: [{'@id': 'id'}]
-                }
+                };
                 expect(component.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.deletions is returned', function() {
                 component.currentIri = 'id';
                 component.inProgressCommit = {
                     deletions: [{'@id': '12345'}]
-                }
+                };
                 expect(component.isSaved()).toEqual(false);
                 component.inProgressCommit = {
                     deletions: [{'@id': 'id'}]
-                }
+                };
                 expect(component.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.additions and inProgress deletions is returned', function() {

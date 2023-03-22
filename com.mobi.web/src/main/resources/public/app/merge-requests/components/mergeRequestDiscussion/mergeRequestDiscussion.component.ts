@@ -27,7 +27,6 @@ import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { UtilService } from '../../../shared/services/util.service';
 
-
 /**
  * @class merge-requests.MergeRequestDiscussionComponent
  *

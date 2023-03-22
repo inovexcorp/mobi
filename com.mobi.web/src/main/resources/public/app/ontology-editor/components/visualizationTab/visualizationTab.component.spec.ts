@@ -26,12 +26,11 @@ import {
     OntologyVisualization
 } from '../../../ontology-visualization/components/visualization/ontologyVisualization.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { VisualizationTabComponent } from "./visualizationTab.component";
+import { VisualizationTabComponent } from './visualizationTab.component';
 import {
     VisualizationSidebar
 } from '../../../ontology-visualization/components/visualizationSidebar/visualizationSidebar.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-
 
 describe('Visualization Tab component', function() {
     let component: VisualizationTabComponent;

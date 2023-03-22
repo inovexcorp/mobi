@@ -40,7 +40,6 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
 
-
 /**
  * @class ontology-editor.ImportsOverlayComponent
  *

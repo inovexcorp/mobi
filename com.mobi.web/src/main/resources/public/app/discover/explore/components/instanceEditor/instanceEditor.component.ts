@@ -67,7 +67,7 @@ export class InstanceEditorComponent {
 
                     this.es.updateInstance(this.ds.explore.recordId, this.ds.explore.instance.metadata.instanceIRI, this.ds.explore.instance.entity)
                         .pipe(switchMap(() => {
-                            return this.es.getClassInstanceDetails(this.ds.explore.recordId, this.ds.explore.classId, {offset: this.ds.explore.instanceDetails.currentPage * this.ds.explore.instanceDetails.limit, limit: this.ds.explore.instanceDetails.limit})
+                            return this.es.getClassInstanceDetails(this.ds.explore.recordId, this.ds.explore.classId, {offset: this.ds.explore.instanceDetails.currentPage * this.ds.explore.instanceDetails.limit, limit: this.ds.explore.instanceDetails.limit});
                         }))
                         .subscribe((response) => {
                             this.ds.explore.instanceDetails.data = response.body;

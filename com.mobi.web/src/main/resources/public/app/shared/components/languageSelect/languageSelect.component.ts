@@ -26,7 +26,6 @@ import { FormGroup } from '@angular/forms';
 
 import { PropertyManagerService } from '../../services/propertyManager.service';
 
-
 /**
  * @class shared.LanguageSelect
  *

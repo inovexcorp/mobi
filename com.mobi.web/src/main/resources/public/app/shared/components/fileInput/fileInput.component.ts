@@ -77,7 +77,7 @@ export class FileInputComponent implements OnInit {
         }
     }
     update(event) {
-        let files: File[] = [...event.target.files];
+        const files: File[] = [...event.target.files];
         if (files.length) {
             if (this.multiple) {
                 this.selected = true;

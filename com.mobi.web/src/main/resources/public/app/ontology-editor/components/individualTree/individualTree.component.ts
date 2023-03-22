@@ -252,7 +252,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
         if (this.os.listItem.selected) {
             selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
                 if (entity.entityIRI === this.os.listItem.selected['@id']) {
-                    return true
+                    return true;
                 } else {
                     return false;
                 }
@@ -260,5 +260,6 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
             selectedIndex < 0 ? this.datasource.adapter.reload(0) : this.datasource.adapter.reload(selectedIndex);
         } else {
             this.datasource.adapter.reload(this.index);
-        }    }
+        }    
+    }
 }
