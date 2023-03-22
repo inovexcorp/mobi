@@ -190,52 +190,22 @@
                 <artifactId>karaf-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
-                    <startupRepositories>
-                        <startupRepository>mvn:org.apache.karaf.features/spring/${karaf.version}/xml/features</startupRepository>
-                        <startupRepository>mvn:org.apache.karaf.features/standard/${karaf.version}/xml/features</startupRepository>
-                        <startupRepository>mvn:org.apache.karaf.features/enterprise/${karaf.version}/xml/features</startupRepository>
-                        <startupRepository>mvn:org.apache.karaf.features/framework/${karaf.version}/xml/features</startupRepository>
-                        <startupRepository>mvn:org.apache.karaf.features/specs/${karaf.version}/xml/features</startupRepository>
-                    </startupRepositories>
-                    <startupFeatures>
-                        <feature>eventadmin</feature>
-                        <feature>instance</feature>
-                        <feature>eventadmin</feature>
-                        <feature>log</feature>
-                        <feature>framework</feature>
-                        <feature>ssh</feature>
-                        <feature>feature</feature>
-                        <feature>service-wrapper</feature>
-                        <feature>jaas</feature>
-                        <feature>deployer</feature>
-                        <feature>diagnostic</feature>
-                        <feature>bundle</feature>
-                        <feature>kar</feature>
-                        <feature>scr</feature>
-                        <feature>package</feature>
-                        <feature>system</feature>
-                        <feature>shell</feature>
-                        <feature>management</feature>
-                        <feature>service</feature>
-                        <feature>http</feature>
-                        <feature>http-whiteboard</feature>
-                        <feature>pax-web-karaf</feature>
-                        <feature>asm</feature>
-                        <feature>spifly</feature>
-                        <feature>shell-compat</feature>
-                        <feature>config</feature>
-                        <feature>wrap</feature>
-                        <feature>obr</feature>
-                        <feature>transaction-api</feature>
-                        <feature>transaction</feature>
-                        <feature>eclipselink</feature>
-                        <feature>jasypt-encryption</feature>
-                        <feature>scheduler</feature>
-                    </startupFeatures>
                     <bootRepositories>
+                        <bootRepository>mvn:org.apache.karaf.features/spring/${karaf.version}/xml/features</bootRepository>
+                        <bootRepository>mvn:org.apache.karaf.features/standard/${karaf.version}/xml/features</bootRepository>
+                        <bootRepository>mvn:org.apache.karaf.features/enterprise/${karaf.version}/xml/features</bootRepository>
+                        <bootRepository>mvn:org.apache.karaf.features/framework/${karaf.version}/xml/features</bootRepository>
+                        <bootRepository>mvn:org.apache.karaf.features/specs/${karaf.version}/xml/features</bootRepository>
                         <bootRepository>mvn:com.mobi/mobi-karaf-feature/${project.version}/xml/features</bootRepository>
                     </bootRepositories>
                     <bootFeatures>
+                        <feature>standard</feature>
+                        <feature>scr</feature>
+                        <feature>http</feature>
+                        <feature>http-whiteboard</feature>
+                        <feature>pax-web-karaf</feature>
+                        <feature>spifly</feature>
+                        <feature>scheduler</feature>
                         <feature>aries-blueprint</feature>
                         <feature>mobi-community</feature>
                     </bootFeatures>
