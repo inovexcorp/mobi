@@ -51,7 +51,7 @@ export class IndividualsTabComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.os.listItem.editorTabStates.individuals.element = this.individualsTab;
-        this.highlightText = this.os.listItem.editorTabStates.individuals.searchText
+        this.highlightText = this.os.listItem.editorTabStates.individuals.searchText;
     }
     ngOnDestroy(): void {
         if (this.os.listItem) {

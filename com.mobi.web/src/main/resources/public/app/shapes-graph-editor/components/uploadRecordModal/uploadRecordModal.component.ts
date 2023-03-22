@@ -31,7 +31,7 @@ import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphM
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { UtilService } from '../../../shared/services/util.service';
-import { RESTError } from "../../../shared/models/RESTError.interface";
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class shapes-graph-editor.UploadRecordModalComponent

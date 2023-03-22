@@ -129,7 +129,7 @@ describe('Create branch component', function() {
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless an error occurs', async function() {
-                    shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+                    shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
                     await component.createBranch();
 
                     expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith('recordId', 'catalog', this.branchConfig, 'commitId');

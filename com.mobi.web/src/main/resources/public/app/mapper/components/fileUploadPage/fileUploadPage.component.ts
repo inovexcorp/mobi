@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';;
+import { MatDialog } from '@angular/material/dialog';
 import { uniq, get, head } from 'lodash';
 
 import { Mapping } from '../../../shared/models/mapping.class';

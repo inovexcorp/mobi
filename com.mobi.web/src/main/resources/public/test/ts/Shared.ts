@@ -42,9 +42,9 @@ export class mockWindowRef {
 }
 
 export class MockOntologyVisualizationService {
-    ERROR_MESSAGE: "ERROR_MESSAGE_1";
-    IN_PROGRESS_COMMIT_MESSAGE: "IN_PROGRESS_COMMIT_MESSAGE_2";
-    NO_CLASS_MESSAGE: "NO_CLASS_MESSAGE";
+    ERROR_MESSAGE: 'ERROR_MESSAGE_1';
+    IN_PROGRESS_COMMIT_MESSAGE: 'IN_PROGRESS_COMMIT_MESSAGE_2';
+    NO_CLASS_MESSAGE: 'NO_CLASS_MESSAGE';
     spinnerId: 'ontology-visualization';
     DEFAULT_NODE_LIMIT: 100;
 
@@ -173,9 +173,9 @@ export class MockOntologyVisualizationService {
 export class mockStateManager {
     states = [];
     initialize = jasmine.createSpy('initialize');
-    getStates = jasmine.createSpy('getStates').and.returnValue(Promise.resolve());
-    createState = jasmine.createSpy('createState').and.returnValue(Promise.resolve());
-    getState = jasmine.createSpy('getState').and.returnValue(Promise.resolve());
-    updateState = jasmine.createSpy('updateState').and.returnValue(Promise.resolve());
-    deleteState = jasmine.createSpy('deleteState').and.returnValue(Promise.resolve());
+    getStates = jasmine.createSpy('getStates').and.resolveTo();
+    createState = jasmine.createSpy('createState').and.resolveTo();
+    getState = jasmine.createSpy('getState').and.resolveTo();
+    updateState = jasmine.createSpy('updateState').and.resolveTo();
+    deleteState = jasmine.createSpy('deleteState').and.resolveTo();
 }

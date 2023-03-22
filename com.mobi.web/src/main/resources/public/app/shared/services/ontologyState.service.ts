@@ -2340,7 +2340,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      */
     removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue> {
         const remove = (bnodeId) => {
-            let matchingBlankNodeIndex = this.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === bnodeId);
+            const matchingBlankNodeIndex = this.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === bnodeId);
             if (matchingBlankNodeIndex >= 0) {
                 const entity = this.listItem.selectedBlankNodes.splice(matchingBlankNodeIndex, 1)[0];
                 this.addToDeletions(this.listItem.versionedRdfRecord.recordId, entity);
@@ -2479,8 +2479,11 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         return scrollIndex;
     }
     private _getOpenPath(key = undefined, ...args): string {
-        if (key) return this.getActiveKey(this.listItem, key) + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
-        else return this.getActiveKey() + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
+        if (key) {
+            return this.getActiveKey(this.listItem, key) + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
+        } else {
+            return this.getActiveKey() + '.' + join(args.map(arg => encodeURIComponent(arg)), '.');
+        }
     }
     private _setupListItem(recordId: string, branchId: string, commitId: string, inProgressCommit: Difference, upToDate: boolean, title: string): OntologyListItem {
         const listItem = new OntologyListItem();

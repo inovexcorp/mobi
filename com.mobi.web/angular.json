@@ -117,42 +117,11 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:eslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "./tsconfig.app.json",
-              "./tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
-        }
-      }
-    },
-    "mobi-e2e": {
-      "root": "e2e/",
-      "projectType": "application",
-      "prefix": "",
-      "architect": {
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "mobi:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "mobi:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": "e2e/tsconfig.e2e.json",
-            "exclude": [
-              "**/node_modules/**"
+            "eslintConfig": ".eslintrc.js",
+            "lintFilePatterns": [
+              "**/*.ts"
             ]
           }
         }

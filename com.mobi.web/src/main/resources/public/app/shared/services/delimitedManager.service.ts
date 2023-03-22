@@ -130,7 +130,7 @@ export class DelimitedManagerService {
                         this.dataRows = undefined;
                         return throwError('No rows were found');
                     } else {
-                        this.containsHeaders = !response[0].every( item => item ==="");
+                        this.containsHeaders = !response[0].every( item => item ==='');
                         this.dataRows = response;
                         return of(null);
                     }

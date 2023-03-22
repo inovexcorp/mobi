@@ -38,7 +38,6 @@ import { InstancesDisplayComponent } from '../instancesDisplay/instancesDisplay.
 import { InstanceViewComponent } from '../instanceView/instanceView.component';
 import { ExploreTabComponent } from './exploreTab.component';
 
-
 describe('Explore Tab component', function() {
     let component: ExploreTabComponent;
     let element: DebugElement;

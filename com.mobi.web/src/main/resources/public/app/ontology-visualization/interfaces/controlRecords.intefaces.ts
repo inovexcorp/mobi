@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ControlRecordI } from "./visualization.interfaces";
+import { ControlRecordI } from './visualization.interfaces';
 
 export interface ControlRecordSearchResultI {
     records: ControlRecordI[];

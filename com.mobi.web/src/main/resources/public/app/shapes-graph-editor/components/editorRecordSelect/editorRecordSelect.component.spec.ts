@@ -69,9 +69,9 @@ describe('Editor Record Select component', function() {
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let utilStub: jasmine.SpyObj<UtilService>;
 
-    let record1Item = new ShapesGraphListItem();
-    let record2Item = new ShapesGraphListItem();
-    let record3Item = new ShapesGraphListItem();
+    const record1Item = new ShapesGraphListItem();
+    const record2Item = new ShapesGraphListItem();
+    const record3Item = new ShapesGraphListItem();
 
     const record1: RecordSelectFiltered = {
         title: 'Record One',

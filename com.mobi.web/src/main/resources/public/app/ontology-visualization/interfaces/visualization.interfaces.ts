@@ -26,7 +26,7 @@ import {
     StateEdge,
     StateNode
 } from '../classes';
-import {HierarchyNode} from "../../shared/models/hierarchyNode.interface";
+import {HierarchyNode} from '../../shared/models/hierarchyNode.interface';
 
 export interface ParentMapI {
     [key: string]: Array<string>

@@ -43,12 +43,12 @@ import { FormGroup } from '@angular/forms';
 export class DiscoverDatasetSelectComponent {
     @Input() parentForm: FormGroup;
     @Input() recordId: string;
-    @Output() recordIdChange = new EventEmitter<{}>();
+    @Output() recordIdChange = new EventEmitter<Record<string, unknown>>();
 
     clear(): void {
         this.parentForm.controls.datasetSelect.setValue('');
         this.recordId = '';
-        this.recordIdChange.emit('');
+        this.recordIdChange.emit({});
     }
     onChange(recordObject): void {
         this.recordId = recordObject.recordId;

@@ -52,7 +52,7 @@ describe('Instances Display component', function() {
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let utilStub: jasmine.SpyObj<UtilService>;
     let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
-    let page: PageEvent = new PageEvent();
+    const page: PageEvent = new PageEvent();
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
     const response = {

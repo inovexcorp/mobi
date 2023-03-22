@@ -60,7 +60,7 @@ describe('Yate component', function() {
             component.content = 'content to display';
             fixture.autoDetectChanges();
             fixture.whenStable();
-            jasmine.createSpy(YATE.getPrefixesFromDocument).and.returnValue(Promise.resolve());
+            jasmine.createSpy(YATE.getPrefixesFromDocument).and.resolveTo();
             const nativeEle = fixture.elementRef.nativeElement.querySelectorAll('.yate');
 
             expect(nativeEle.length).toEqual(1);

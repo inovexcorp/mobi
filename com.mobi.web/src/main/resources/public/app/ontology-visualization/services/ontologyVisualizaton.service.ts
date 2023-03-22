@@ -228,7 +228,9 @@ export class OntologyVisualizationService {
                 this.os.listItem.versionedRdfRecord.commitId,
                 false)]
         ).pipe(
-            catchError(error => { throw 'Network Issue in Source. Details: ' + error; } ),
+            catchError(error => {
+                throw 'Network Issue in Source. Details: ' + error;
+            }),
             map((networkData): any =>{
                 const classHierarchy: HierarchyResponse = networkData[0];
                 const propertyRanges: {[key: string]: string[]} = networkData[1].propertyToRanges;
@@ -266,7 +268,7 @@ export class OntologyVisualizationService {
                     entityInfo: listItem.entityInfo,
                     ranges: ranges
                 };
-             })
+            })
         )).pipe(catchError(this.util.handleError));
     }
 

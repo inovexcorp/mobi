@@ -52,7 +52,7 @@ describe('Info Message component', function() {
             expect(element.queryAll(By.css('.text-info')).length).toEqual(1);
         });
         it('with a i.fa-info', function() {
-            var item = element.query(By.css('i'));
+            const item = element.query(By.css('i'));
             expect(item).toBeTruthy();
             expect(item.attributes.class.includes('fa-info')).toBeTruthy();
         });

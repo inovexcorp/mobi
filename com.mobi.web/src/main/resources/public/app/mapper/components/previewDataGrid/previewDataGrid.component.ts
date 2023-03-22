@@ -85,7 +85,7 @@ export class PreviewDataGridComponent implements OnInit, OnChanges {
     createColumns(headers: string[]): any[] {
         if (this.highlightIndexes && this.highlightIndexes.length) {
             return headers.map((header, idx) => {
-                let obj: any = {
+                const obj: any = {
                     name: header
                 };
                 if (this.highlightIndexes.includes('' + idx)) {

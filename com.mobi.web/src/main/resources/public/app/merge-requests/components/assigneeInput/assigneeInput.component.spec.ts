@@ -41,7 +41,7 @@ describe('Assignee Input component', function() {
     let component: AssigneeInputComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<AssigneeInputComponent>;
-    let userManagerStub: jasmine.SpyObj<UserManagerService>
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

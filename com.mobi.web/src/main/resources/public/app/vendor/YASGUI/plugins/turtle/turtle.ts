@@ -35,7 +35,7 @@ require('codemirror/addon/fold/xml-fold.js');
 require('codemirror/addon/fold/brace-fold.js');
 require('codemirror/addon/edit/matchbrackets.js');
 require('codemirror/mode/xml/xml.js');
-require('codemirror/mode/turtle/turtle.js')
+require('codemirror/mode/turtle/turtle.js');
 require('codemirror/mode/javascript/javascript.js');
 require('codemirror/lib/codemirror.css');
 
@@ -75,7 +75,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
             this.config = {
                 ...this.config,
                 ...yasr.config.plugins['turtle'].dynamicConfig
-            }
+            };
         }
     }
 
@@ -83,7 +83,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || '';
-        let contentType = this.yasr.results?.getContentType();
+        const contentType = this.yasr.results?.getContentType();
         const type = this.yasr.results?.getType();
         
         if ( contentType === 'application/ld+json') {
@@ -91,7 +91,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
         }
 
         if (type === 'json') {
-            if( value.includes('contentType') && value.includes('status') && value.includes('executionTime')) {
+            if ( value.includes('contentType') && value.includes('status') && value.includes('executionTime')) {
                 value = '';
             }
         }
@@ -113,7 +113,9 @@ export default class Turtle implements Plugin<PlugingConfig> {
     }
 
     download() {
-        if (!this.yasr.results) return;
+        if (!this.yasr.results) {
+            return;
+        }
         const contentType = this.yasr.results.getContentType();
         const type = this.yasr.results.getType();
         return {
@@ -129,11 +131,19 @@ export default class Turtle implements Plugin<PlugingConfig> {
     // A required function, used to indicate whether this plugin can draw the current
     // resultset from yasr
     canHandleResults() {
-        if (!this.yasr.results) return false;
-        if (!this.yasr.results.getOriginalResponseAsString) return false;
-        if (this.yasr.results?.getContentType() === 'application/json') return false;
+        if (!this.yasr.results) {
+            return false;
+        }
+        if (!this.yasr.results.getOriginalResponseAsString) {
+            return false;
+        }
+        if (this.yasr.results?.getContentType() === 'application/json') {
+            return false;
+        }
         const response = this.yasr.results.getOriginalResponseAsString();
-        if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
+        if ((!response || response.length == 0) && this.yasr.results.getError()) {
+            return false;
+        } //in this case, show exception instead, as we have nothing to show anyway
         return true;
     }
 

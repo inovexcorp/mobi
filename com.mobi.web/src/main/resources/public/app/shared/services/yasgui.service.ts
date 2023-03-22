@@ -255,7 +255,7 @@ export class YasguiService {
     }
 
     private _updateResponseLimitMessage(limit = 0) {
-        this.reponseLimitElement.innerText = "";
+        this.reponseLimitElement.innerText = '';
         const className = 'hide';
         if (limit) {
             this.reponseLimitElement.classList.remove(className);
@@ -394,7 +394,7 @@ export class YasguiService {
             const hideBrackets = prefixed || this.persistentConfig.compact;
             return `${hideBrackets ? '': '&lt;'}<a class='iri' target='${
                 this.config.openIriInNewWindow ? '_blank' : '_self'
-            }'${this.config.openIriInNewWindow ? `ref='noopener noreferrer'` : ''} href='${href}'>${visibleString}</a>${
+            }'${this.config.openIriInNewWindow ? 'ref=\'noopener noreferrer\'' : ''} href='${href}'>${visibleString}</a>${
                 hideBrackets ? '' : '&gt;'
             }`;
         };

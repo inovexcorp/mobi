@@ -41,5 +41,5 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
     styleUrls: ['./visualizationTab.component.scss']
 })
 export class VisualizationTabComponent {
-    constructor(public os: OntologyStateService){};
+    constructor(public os: OntologyStateService){}
 }

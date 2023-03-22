@@ -121,7 +121,7 @@ describe('IRI Select component', function() {
         it('filter should return the correct value', function() {
             component.selectList = {iri: 'new'};
             utilServiceStub.getBeautifulIRI.and.returnValue('new');
-            let iriGrouping = component.filter('new');
+            const iriGrouping = component.filter('new');
             expect(iriGrouping).toEqual([{namespace: 'new', options: [{item: 'iri', name: 'new'}]}]);
         });
     });

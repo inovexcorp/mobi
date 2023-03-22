@@ -31,7 +31,6 @@ import { INDENT } from '../../../constants';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 import { UtilService } from '../../../shared/services/util.service';
 
-
 /**
  * @class ontology-editor.HierarchyTreeComponent
  * 
@@ -279,7 +278,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         if (this.os.listItem.selected) {
             selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
                 if (entity.entityIRI === this.os.listItem.selected['@id']) {
-                    return true
+                    return true;
                 } else {
                     return false;
                 }

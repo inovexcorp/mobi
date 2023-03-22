@@ -61,7 +61,7 @@ export class ClassCardsComponent implements OnChanges {
 
     ngOnChanges(): void {
         this.chunks = this._getChunks(this.classDetails);
-        const index = this.datasource.adapter.firstVisible.$index ? this.datasource.adapter.firstVisible.$index : this.datasource.adapter.lastVisible.$index
+        const index = this.datasource.adapter.firstVisible.$index ? this.datasource.adapter.firstVisible.$index : this.datasource.adapter.lastVisible.$index;
         this.datasource.adapter.reload(index);
     }
     exploreData(item: ClassDetails): void {

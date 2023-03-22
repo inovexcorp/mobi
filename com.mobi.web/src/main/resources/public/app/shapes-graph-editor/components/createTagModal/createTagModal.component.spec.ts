@@ -90,7 +90,7 @@ describe('Create tag component', function() {
         shapesGraphStateStub.listItem.shapesGraphId = 'shapesGraphId';
         shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
         shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'commitId';
-        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
+        shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
 
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.localCatalog = {'@id': 'catalog'};
@@ -163,7 +163,7 @@ describe('Create tag component', function() {
                 });
 
                 it('unless an error occurs', async function() {
-                    shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+                    shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
                     await component.createTag();
 
                     expect(catalogManagerStub.createRecordTag).toHaveBeenCalledWith('recordId', 'catalog', this.tagConfig);

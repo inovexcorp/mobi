@@ -39,7 +39,7 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
-import {datatypeValidator} from "./datatypeValidator.function";
+import {datatypeValidator} from './datatypeValidator.function';
 
 interface RangeClassOption {
     classMapping: JSONLDObject,

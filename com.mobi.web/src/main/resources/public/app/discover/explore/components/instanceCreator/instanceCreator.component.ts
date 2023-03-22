@@ -73,7 +73,7 @@ export class InstanceCreatorComponent {
                         }), switchMap(response => {
                             const resultsObject = this.es.createPagedResultsObject(response as HttpResponse<InstanceDetails[]>);
                             this.ds.explore.instanceDetails.data = resultsObject.data;
-                            let metadata: any = {instanceIRI: instance['@id']};
+                            const metadata: any = {instanceIRI: instance['@id']};
                             metadata.title = this.getPreferredValue(instance, [DCTERMS + 'title', RDFS + 'label'], this.util.getBeautifulIRI(instance['@id']));
                             metadata.description = this.getPreferredValue(instance, [DCTERMS + 'description', RDFS + 'comment'], '');
                             this.ds.explore.instance.metadata = metadata;

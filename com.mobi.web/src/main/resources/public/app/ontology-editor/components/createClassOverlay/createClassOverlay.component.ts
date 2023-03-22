@@ -115,8 +115,7 @@ export class CreateClassOverlayComponent implements OnInit {
             const superClassIds = map(clazz[RDFS + 'subClassOf'], '@id');
             if (this.os.containsDerivedConcept(superClassIds)) {
                 this.os.listItem.derivedConcepts.push(clazz['@id']);
-            }
-            else if (this.os.containsDerivedConceptScheme(superClassIds)) {
+            } else if (this.os.containsDerivedConceptScheme(superClassIds)) {
                 this.os.listItem.derivedConceptSchemes.push(clazz['@id']);
             }
             this.os.setSuperClasses(clazz['@id'], superClassIds);

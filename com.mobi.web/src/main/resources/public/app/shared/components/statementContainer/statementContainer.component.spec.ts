@@ -65,7 +65,7 @@ describe('Statement Container component', function() {
             component.ngOnInit();
             await fixture.detectChanges();
             expect(element.queryAll(By.css('.additions')).length).toEqual(1);
-            let h5 = element.queryAll(By.css('h5'));
+            const h5 = element.queryAll(By.css('h5'));
             expect(h5.length).toEqual(1);
             expect(h5[0].nativeElement.innerHTML).toEqual('Added Statements');
         });
@@ -74,7 +74,7 @@ describe('Statement Container component', function() {
             component.ngOnInit();
             await fixture.detectChanges();
             expect(element.queryAll(By.css('.deletions')).length).toEqual(1);
-            let h5 = element.queryAll(By.css('h5'));
+            const h5 = element.queryAll(By.css('h5'));
             expect(h5.length).toEqual(1);
             expect(h5[0].nativeElement.innerHTML).toEqual('Deleted Statements');
         });

@@ -32,7 +32,6 @@ import { CATALOG } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
 import { Commit } from '../../../shared/models/commit.interface';
 
-
 /**
  * @class ontology-editor.MergeBlockComponent
  *

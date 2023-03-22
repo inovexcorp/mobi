@@ -85,7 +85,7 @@ describe('New Shapes Graph Record Modal component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<NewShapesGraphRecordModalComponent>>;
         shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-        shapesGraphStateStub.uploadShapesGraph.and.returnValue(Promise.resolve());
+        shapesGraphStateStub.uploadShapesGraph.and.resolveTo();
     });
 
     afterEach(function() {

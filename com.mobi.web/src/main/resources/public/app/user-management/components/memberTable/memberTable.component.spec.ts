@@ -29,7 +29,6 @@ import { MatTableModule } from '@angular/material/table';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { MemberTableComponent } from './memberTable.component';
 

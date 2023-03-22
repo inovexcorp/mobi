@@ -37,7 +37,6 @@ import { RepositoryManagerService } from '../../../shared/services/repositoryMan
 import { UtilService } from '../../../shared/services/util.service';
 import { OntologyDetails } from '../../models/ontologyDetails.interface';
 
-
 /**
  * @class datasets.EditDatasetOverlayComponent
  *

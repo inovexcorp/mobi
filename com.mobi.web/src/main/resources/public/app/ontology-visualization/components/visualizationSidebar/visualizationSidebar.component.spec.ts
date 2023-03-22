@@ -89,7 +89,7 @@ describe('Visualization sidebar component', () => {
             }
         ];
         groupedOntologies =  [{
-            'ontologyId' : 'ont1',
+            'ontologyId': 'ont1',
             'classes': [
                 {
                     type: ControlRecordType.NODE,
@@ -148,15 +148,15 @@ describe('Visualization sidebar component', () => {
     });
     describe('component onClickRecordSelect method', () => {
         it('emits correctly', fakeAsync(() => {
-            component.onClickRecordSelect(controlRecords[0])
+            component.onClickRecordSelect(controlRecords[0]);
             expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.RECORD_SELECT, controlRecord: controlRecords[0]});
             expect(serviceStub.emitSelectAction).toHaveBeenCalledWith({ action: SidePanelAction.RECORD_SELECT, nodeId: controlRecords[0].id});
         }));
     });
     describe('component onRightClickRecordSelect method', () => {
         it('emits correctly', fakeAsync(() => {
-            const event = jasmine.createSpyObj('event', ['preventDefault'])
-            component.onRightClickRecordSelect(event, controlRecords[0])
+            const event = jasmine.createSpyObj('event', ['preventDefault']);
+            component.onRightClickRecordSelect(event, controlRecords[0]);
             expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.RECORD_CENTER, controlRecord: controlRecords[0]});
             expect(event.preventDefault).toHaveBeenCalled();
         }));

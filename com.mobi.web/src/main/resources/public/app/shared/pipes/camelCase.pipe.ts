@@ -40,7 +40,7 @@ export class CamelCasePipe implements PipeTransform {
                     capitalize = true;
                 } else if (value[i].match(alphaNumeric) === null) {
                     // do nothing with non letters
-                } else if( capitalize || (i === 0 && type === 'class')) {
+                } else if ( capitalize || (i === 0 && type === 'class')) {
                     result += value[i].toUpperCase();
                     capitalize = false;
                 } else if (i === 0 && type !== 'class') {
