@@ -7,7 +7,6 @@ import org.eclipse.rdf4j.model.Model
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
-import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 
 class DelimitedOntologySpec extends Specification {
@@ -65,7 +64,7 @@ class DelimitedOntologySpec extends Specification {
         vcr.registerValueConverter(new StringValueConverter())
         vcr.registerValueConverter(new ValueValueConverter())
 
-        InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
+        InputStream mappingFile = this.getClass().getResourceAsStream('/newestMapping.ttl');
         Model mapping = Rio.parse(mappingFile, "", RDFFormat.TURTLE)
         classMapping = classFactory.getExisting(vf.createIRI("http://mobi.com/mappings/demo/Material"), mapping, vf, vcr).get()
     }

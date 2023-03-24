@@ -57,6 +57,10 @@
             <artifactId>httpclient</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-cache</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>jaas.api</artifactId>
             <version>${project.version}</version>

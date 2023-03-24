@@ -32,7 +32,6 @@ import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.repository.RepositoryResult
 import org.eclipse.rdf4j.rio.RDFFormat
-import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 
 class RDFExportSpec extends Specification {
@@ -46,9 +45,9 @@ class RDFExportSpec extends Specification {
     def p = "http://test.com/p"
     def oIRI = "http://test.com/o"
     def oLit = "o"
-    def testFile = new ClassPathResource("exporter/testFile.trig").getFile()
-    def testFileWithoutQuads = new ClassPathResource("exporter/testFile.ttl").getFile()
-    def invalidFile = new ClassPathResource("exporter/testFile.txt").getFile()
+    def testFile = new File(this.getClass().getResource("/exporter/testFile.trig").toURI())
+    def testFileWithoutQuads = new File(this.getClass().getResource("/exporter/testFile.ttl").toURI())
+    def invalidFile = new File(this.getClass().getResource("/exporter/testFile.txt").toURI())
 
     def datasetManager = Mock(DatasetManager)
     def repo = Mock(OsgiRepository)

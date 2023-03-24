@@ -70,7 +70,7 @@
         <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
         <jose-jwt.version>9.22</jose-jwt.version>
         <junit.version>5.9.1</junit.version>
-        <karaf.version>4.4.1</karaf.version>
+        <karaf.version>4.4.3</karaf.version>
         <logback.version>1.2.11</logback.version>
         <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
         <mockito.version>4.6.1</mockito.version>
@@ -86,7 +86,7 @@
         <osgi.version>8.0.0</osgi.version>
         <owlapi.version>5.1.20</owlapi.version>
         <poi.version>3.14_1</poi.version>
-        <rdf4j.version>4.2.1</rdf4j.version>
+        <rdf4j.version>4.2.3</rdf4j.version>
         <servlet.version>3.1.0</servlet.version>  <!-- 4.0.1 with later pax web -->
         <swagger.version>2.2.0</swagger.version>
         <jsonld-java.version>0.13.5.2-MOBI</jsonld-java.version>
@@ -197,6 +197,17 @@
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-queryresultio-api</artifactId>
+                <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-spring</artifactId>
                 <version>${rdf4j.version}</version>
                 <exclusions>
                     <exclusion>
@@ -373,6 +384,16 @@
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient-cache</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpmime</artifactId>
                 <version>${httpclient.version}</version>
             </dependency>
             <dependency>
