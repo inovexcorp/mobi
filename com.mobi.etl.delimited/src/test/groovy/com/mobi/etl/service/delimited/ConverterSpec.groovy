@@ -11,7 +11,6 @@ import com.mobi.vocabularies.xsd.XSD
 import org.eclipse.rdf4j.model.Model
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
-import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
@@ -597,7 +596,7 @@ class ConverterSpec extends Specification {
     }
 
     private def getInputStream(String filename) {
-        new ClassPathResource(filename).getInputStream()
+        return this.getClass().getResourceAsStream('/' + filename);
     }
 
     private def loadModel(String filename) {

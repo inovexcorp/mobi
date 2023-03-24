@@ -27,8 +27,6 @@ import com.mobi.document.translator.expression.context.PropertyIriExpressionCont
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import org.eclipse.rdf4j.model.IRI;
 
-import javax.validation.constraints.NotNull;
-
 /**
  * The default implementation of the {@link PropertyIriExpressionContext}.
  */
@@ -42,8 +40,8 @@ public class DefaultPropertyIriExpressionContext extends AbstractIriExpressionCo
 
     private final IRI range;
 
-    public DefaultPropertyIriExpressionContext(@NotNull ExtractedOntology ontology, @NotNull String name,
-                                               @NotNull String comment, @NotNull IRI domain, @NotNull IRI range) {
+    public DefaultPropertyIriExpressionContext(ExtractedOntology ontology, String name,
+                                               String comment, IRI domain, IRI range) {
         super(ontology);
         this.name = name;
         this.comment = comment;

@@ -27,7 +27,6 @@ import com.mobi.document.translator.expression.context.IriExpressionContext;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 
 import java.util.UUID;
-import javax.validation.constraints.NotNull;
 
 /**
  * This abstract implementation of the {@link IriExpressionContext} provides the boilerplate code for the default
@@ -37,7 +36,7 @@ public class AbstractIriExpressionContext implements IriExpressionContext {
 
     protected final ExtractedOntology ontology;
 
-    public AbstractIriExpressionContext(@NotNull ExtractedOntology ontology) {
+    public AbstractIriExpressionContext(ExtractedOntology ontology) {
         this.ontology = ontology;
     }
 

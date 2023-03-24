@@ -31,7 +31,6 @@ import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.RDFParseException
 import org.eclipse.rdf4j.rio.Rio
-import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 
 class RDFImportSpec extends Specification {
@@ -40,7 +39,7 @@ class RDFImportSpec extends Specification {
 
     def repoId = "test"
     def datasetId = vf.createIRI("http://test.com/dataset-record")
-    def file = new ClassPathResource("importer/testFile.trig").getFile()
+    def file = new File(this.getClass().getResource("/importer/testFile.trig").toURI())
     def model = Rio.parse(new FileInputStream(file), "", RDFFormat.TRIG)
 
     def datasetManager = Mock(DatasetManager)
@@ -127,7 +126,7 @@ class RDFImportSpec extends Specification {
     def "Throws exception for repository if invalid file type"() {
         setup:
         def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
-        File f = new ClassPathResource("importer/testFile.txt").getFile()
+        File f = new File(this.getClass().getResource("/importer/testFile.txt").toURI())
 
         when:
         service.importFile(config, f)
@@ -139,8 +138,7 @@ class RDFImportSpec extends Specification {
     def "Throws exception for repository if invalid language tag"() {
         setup:
         def config = new ImportServiceConfig.Builder().continueOnError(false).repository(repoId).build()
-        File f = new ClassPathResource("importer/invalidlanguage.owl").getFile()
-
+        File f = new File(this.getClass().getResource("/importer/invalidlanguage.owl").toURI());
         when:
         service.importFile(config, f)
 
@@ -218,7 +216,7 @@ class RDFImportSpec extends Specification {
     def "Throws exception for dataset if invalid file type"(){
         setup:
         def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
-        File f = new ClassPathResource("importer/testFile.txt").getFile()
+        File f = new File(this.getClass().getResource("/importer/testFile.txt").toURI())
 
         when:
         service.importFile(config, f)

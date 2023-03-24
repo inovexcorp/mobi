@@ -26,8 +26,6 @@ package com.mobi.document.translator.expression.context.impl;
 import com.mobi.document.translator.expression.context.ClassIriExpressionContext;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 
-import javax.validation.constraints.NotNull;
-
 /**
  * The default implementation of the {@link ClassIriExpressionContext}.
  */
@@ -38,8 +36,8 @@ public class DefaultClassIriExpressionContext extends AbstractIriExpressionConte
 
     private final String comment;
 
-    public DefaultClassIriExpressionContext(@NotNull ExtractedOntology ontology, @NotNull String name,
-                                            @NotNull String comment) {
+    public DefaultClassIriExpressionContext(ExtractedOntology ontology, String name,
+                                            String comment) {
         super(ontology);
         this.name = name;
         this.comment = comment;
