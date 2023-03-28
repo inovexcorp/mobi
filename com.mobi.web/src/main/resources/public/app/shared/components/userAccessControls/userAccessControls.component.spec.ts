@@ -329,12 +329,12 @@ describe('User Access Controls component', function() {
             const option = document.querySelectorAll('mat-option');
             expect(option.length).toEqual(1);
             (option[0] as HTMLElement).click();
-            fixture.whenStable().then(() => {
-                expect(component.addGroup).toHaveBeenCalledWith(group);
-                expect(component.setGroups).toHaveBeenCalledWith();
-                expect(component.groupSearchControl.value).toEqual('');
-                expect(component.groupTrigger.openPanel).toHaveBeenCalledWith();
-            });
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.addGroup).toHaveBeenCalledWith(group);
+            expect(component.setGroups).toHaveBeenCalledWith();
+            expect(component.groupSearchControl.value).toEqual('');
+            expect(component.groupTrigger.openPanel).toHaveBeenCalledWith();
         });
         describe('should add a group to a policy', function() {
             beforeEach(function() {
