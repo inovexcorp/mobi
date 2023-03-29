@@ -20,38 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-export interface StateEdgeI {
-    position: any;
-    group: any;
-    removed: boolean;
-    selected: boolean;
-    selectable: boolean;
-    locked: boolean;
-    grabbed: boolean;
-    grabbable: boolean;
-    data: { 
-        id: string;
-        source: string;
-        target: string;
-        [key: string]: any;
-    }
-    classes?: any;
-}
 
-export class StateEdge implements StateEdgeI {
-    position: unknown;
-    group: 'edges';
-    removed: false;
-    selected: false;
-    selectable: true;
-    locked: false;
-    grabbed: false;
-    grabbable: true;
-    data: {
-        id: string,
-        source: string,
-        target: string,
-        [key: string]: any
-    } ;
-    classes?: any;
-}
+import { D3Link, D3Node } from './d3Classes';
+
+describe('D3Classes', () => {
+    it('D3Node constructor', () => {
+        const d3Node: D3Node = new D3Node('id', 1, 2);
+        expect(d3Node).toBeDefined();
+        expect(d3Node.id).toEqual('id');
+        expect(d3Node.x).toEqual(1);
+        expect(d3Node.y).toEqual(2);
+    });    
+    it('D3Link constructor', () => {
+        const d3Link: D3Link = new D3Link(10, 20);
+        expect(d3Link).toBeDefined();
+        expect(d3Link.source).toEqual(10);
+        expect(d3Link.target).toEqual(20);
+    });
+});

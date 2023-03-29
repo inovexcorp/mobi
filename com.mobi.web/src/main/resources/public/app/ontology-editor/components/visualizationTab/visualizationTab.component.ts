@@ -21,10 +21,14 @@
  * #L%
  */
 import {
-    Component
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component, DoCheck, KeyValueChangeRecord, KeyValueDiffer, KeyValueDiffers, OnInit
 } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+
+import { isEqual } from 'lodash';
 
 /**
  * @class ontology-editor.VisualizationTabComponent
@@ -38,8 +42,46 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 @Component({
     templateUrl: './visualizationTab.component.html',
     selector: 'visualization-tab',
-    styleUrls: ['./visualizationTab.component.scss']
+    styleUrls: ['./visualizationTab.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class VisualizationTabComponent {
-    constructor(public os: OntologyStateService){}
+export class VisualizationTabComponent implements OnInit, DoCheck {
+    private _differ: KeyValueDiffer<string, any>;
+
+    constructor(public os: OntologyStateService,
+                private _differsService: KeyValueDiffers,
+                private _cf: ChangeDetectorRef){
+    }
+    ngOnInit(): void {
+        const currentValues = {
+            ontologyId: undefined,
+            commitId: undefined,
+            branchId: undefined,
+            inProgressCommit: undefined
+        };
+        this._differ = this._differsService.find(currentValues).create();
+    }
+    ngDoCheck(): void {
+        if (this._differ) {
+            const currentValues = {
+                ontologyId: this.os.listItem.ontologyId,
+                commitId: this.os.listItem.versionedRdfRecord.commitId,
+                branchId: this.os.listItem.versionedRdfRecord.branchId,
+                inProgressCommit: this.os.listItem.inProgressCommit // Object are reference types
+            };
+            const changes = this._differ.diff({...currentValues}); // Comparison occur by Object.is()
+            if (changes) {
+                let isDifferent = false;
+                changes.forEachItem((changeRecord: KeyValueChangeRecord<string, any>) => {
+                    const isValueEqual = isEqual(changeRecord.previousValue, changeRecord.currentValue);
+                    if (!isValueEqual){
+                        isDifferent = true;
+                    }
+                });
+                if (isDifferent) {
+                    this._cf.markForCheck();
+                }
+            }
+        }
+    }
 }

@@ -334,7 +334,16 @@ ul {
 .material-icons {
     line-height: 1 !important; 
 }
-
+//ontology visualization
+.visualization-sidebar {
+    .sidebar-accordion__section.mat-list-item {
+        .mat-list-item-content {
+            padding:0;
+            flex-flow: row wrap;
+            flex-grow: 1;
+        }
+    }
+}
 login-layout {
     height: 100% !important;
     min-height: 0;

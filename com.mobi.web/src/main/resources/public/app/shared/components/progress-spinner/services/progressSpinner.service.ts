@@ -95,11 +95,14 @@ export class ProgressSpinnerService {
       }
     
       public finishLoadingForComponent(component: any): void {
-        const element: HTMLElement = this._getNativeElement(component);
-        const loadingCompTemplate = element.querySelector('#spinner-local');
-        if (element && loadingCompTemplate) {
-            this.renderer.removeChild(element, loadingCompTemplate);
+        if (component) {
+            const element: HTMLElement = this._getNativeElement(component);
+            const loadingCompTemplate = element.querySelector('#spinner-local');
+            if (element && loadingCompTemplate) {
+                this.renderer.removeChild(element, loadingCompTemplate);
+            }
         }
+
       }
 
       /**

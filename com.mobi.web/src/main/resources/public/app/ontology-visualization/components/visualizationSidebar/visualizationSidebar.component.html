@@ -10,12 +10,10 @@
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
@@ -29,68 +27,60 @@
     </div>
     <div class="sidebar-wrapper" [ngClass]="{'sidebar-toggled': toggled}">
         <div class="sidebar-content card">
-            <ul class="sidebar-accordion">
-                <li class="sidebar-accordion__section controllers">
-                    <div class="accordion__item__body section-collapse">
-                        <div class="sidebar-search">
-                            <form [formGroup]="searchForm">
-                                <div class="input-group">
-                                    <input type="text" class="form-control search-menu"  formControlName="searchText" placeholder="Search..." (keyup.enter)="searchRecords()">
-                                    <div class="input-group-append">
-                                        <span class="input-group-text">
-                                            <i class="fa fa-search" aria-hidden="true" (click)="searchRecords()"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <mat-form-field>
-                                    <mat-label>Filter</mat-label>
-                                    <mat-select (selectionChange)="searchRecords()" formControlName="importOption">
-                                        <mat-option *ngFor="let importOption of importOptions" [value]="importOption.value">{{importOption.text}}</mat-option>
-                                    </mat-select>
-                                </mat-form-field>
-                            </form>
-                        </div>
+            <visualization-sidebar-search [graphState]="graphState"></visualization-sidebar-search>
+            <mat-list class="sidebar-accordion">
+                <mat-list-item class="sidebar-accordion__section controllers">
+                    <div class="accordion__item__body section-collapse" cdkScrollable>
                         <div class="sidebar-records">
-                            <ng-container *ngIf="this.graphState.controlRecordObservable$ | async as results">
+                            <ng-container *ngIf="graphState.controlRecordObservable$ | async as searchResults">
                                 <mat-accordion>
                                     <mat-expansion-panel
                                             class="ontologyPanel"
                                             [expanded]="sidebarState?.selectedOntologyId === ontology.ontologyId"
-                                            *ngFor="let ontology of results.records"
-                                            (opened)="beforePanelOpened($event, ontology.ontologyId, true)"
-                                            (closed)="beforePanelClosed($event, ontology.ontologyId, false)">
-                                        <mat-expansion-panel-header>
-                                            <mat-panel-title>
-                                                <span type="button" class="ontology__color" [style.background-color]="ontology.ontologyColor"></span>
-                                                <span class="ontology__name" [title]="ontology.name">{{ontology.name}}</span>
-                                                <span class="ontology__imported" *ngIf="ontology.isImported" [title]="ontology.ontologyId">Imported</span>
+                                            *ngFor="let ontology of searchResults.records; trackBy:trackByClassId"
+                                            (closed)="beforePanelClosed(ontology.ontologyId)"
+                                            (opened)="beforePanelOpened(ontology.ontologyId)">
+                                        <mat-expansion-panel-header #panelHeader>
+                                            <mat-panel-title >
+                                                <div class="d-flex flex-1 panel-ontology-title" >
+                                                    <span type="button" class="ontology__color" [style.background-color]="ontology.ontologyColor"></span>
+                                                    <span class="ontology__name" [title]="ontology.name">{{ontology.name}}</span>
+                                                    <span class="ontology__imported" *ngIf="ontology.isImported" [title]="ontology.ontologyId">Imported</span>
+                                                </div>
+                                                <div class="ontology__actions d-flex">
+                                                    <mat-checkbox class="checkbox ontology__check"
+                                                        (click)="ontologyOnClick($event, searchResults, ontology)"
+                                                        [checked]="ontology.allClassesChecked"
+                                                        [indeterminate]="ontology.someClassesChecked && !ontology.allClassesChecked">
+                                                    </mat-checkbox>
+                                                </div>
                                             </mat-panel-title>
                                         </mat-expansion-panel-header>
-                                        <ul class="list-group list-group-flush" >
-                                            <li *ngFor="let record of ontology.classes" class="list-group-item ontologyClass"
-                                                (click)="onClickRecordSelect(record)"
-                                                (contextmenu)="onRightClickRecordSelect($event, record)"
-                                                [ngClass]="{'active': record?.id === (selectedRecord$ | async)?.nodeId}">
-                                                <div class="ontologyClass__info" >
-                                                    <span class="ontologyClass__name">{{ record.name }}</span>
-                                                </div>
-                                                <div class="ontologyClass__actions">
-                                                    <input type="checkbox" class="checkbox ontologyClass__check" [checked]="record.onGraph"  (click)="toggleClass(record)" disabled>
-                                                </div>
-                                            </li>
-                                        </ul>
+                                            <!-- Optimization to remove elements from DOM -->
+                                            <!-- Could be replaced by https://material.angular.io/components/expansion/overview#lazy-rendering -->
+                                            <ng-container *ngIf="sidebarState?.selectedOntologyId === ontology.ontologyId"> 
+                                                <visualization-class-list
+                                                    [ontology]="ontology"
+                                                    [selectedRecord]="selectedRecord$"
+                                                    (onClassToggled)="toggleClass(searchResults, $event)"
+                                                    (onClickRecordSelect)="onClickRecordSelect($event)"
+                                                    (onRightClickElement)="onRightClickRecordSelect($event)">
+                                                </visualization-class-list>
+                                            </ng-container>
                                     </mat-expansion-panel>
                                 </mat-accordion>
                                 <div class="sidebar__show-more">
-                                    <button *ngIf="results.count >= results.limit" class="load-button btn" (click)="searchRecords(results.limit)">
+                                    <button *ngIf="searchResults.count > searchResults.limit"
+                                            class="load-button btn"
+                                            (click)="loadMore()">
                                         <i class="fa fa-fw fa-plus"></i><span>Load More</span>
                                     </button>
                                 </div>
                             </ng-container>
                         </div>
                     </div>
-                </li> <!-- controls dropdown-->
-            </ul>
+                </mat-list-item>
+            </mat-list>
         </div>
         <div class="sidebar-footer">
         </div>

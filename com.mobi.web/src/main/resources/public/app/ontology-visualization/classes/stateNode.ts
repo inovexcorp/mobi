@@ -20,15 +20,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ControlRecordI, ControlRecordType, positionI, StateNodeI } from '../interfaces/visualization.interfaces';
+import { ControlRecordI, ControlRecordType } from './controlRecords';
+
+export interface NodePositionI {
+    /**
+    * Node’s current x-position
+    */
+   x?: number;
+   /**
+    * Node’s current y-position
+    */
+   y?: number;
+}
+
+export interface StateNodeI {
+    classes: any;
+    data: {
+        id: string;
+        [key: string]: any;
+    },
+    locked: boolean;
+    grabbed: boolean;
+    grabbable: boolean;
+    group: string;
+    position: NodePositionI;
+    pannable: boolean;
+    removed: boolean;
+    selectable: boolean;
+    selected: boolean;
+}
 
 export class StateNode implements StateNodeI {
-    position: positionI;
+    position: NodePositionI;
     classes: any;
     data: {
         id: string,
-        ontologyId:
-            string,
+        ontologyId: string,
         [key: string]: any
     }
     locked: false;
@@ -39,6 +66,8 @@ export class StateNode implements StateNodeI {
     group: 'nodes';
     selectable: true;
     selected: false;
+    inInitialGraph: false;
+    disabled: false;
 
     constructor() {}
 
@@ -50,7 +79,10 @@ export class StateNode implements StateNodeI {
             isImported: this.data.isImported,
             ontologyId: this.data.ontologyId,
             onGraph: onGraph,
-            stateNode: this
+            isChecked: onGraph,
+            disabled: !onGraph,
+            stateNode: this,
+            inInitialGraph: onGraph,
         };
         return controlRecord;
     }

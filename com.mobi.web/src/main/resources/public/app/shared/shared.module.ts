@@ -117,7 +117,6 @@ import { MergeRequestManagerService } from './services/mergeRequestManager.servi
 import { MergeRequestsStateService } from './services/mergeRequestsState.service';
 import { OntologyManagerService } from './services/ontologyManager.service';
 import { OntologyStateService } from './services/ontologyState.service';
-import { OntologyVisualizationService } from '../ontology-visualization/services/ontologyVisualizaton.service';
 import { PolicyEnforcementService } from './services/policyEnforcement.service';
 import { PolicyManagerService } from './services/policyManager.service';
 import { ProgressSpinnerService } from '../shared/components/progress-spinner/services/progressSpinner.service';
@@ -339,7 +338,6 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         MergeRequestsStateService,
         OntologyManagerService,
         OntologyStateService,
-        OntologyVisualizationService,
         PolicyEnforcementService,
         PolicyManagerService,
         ProgressSpinnerService,

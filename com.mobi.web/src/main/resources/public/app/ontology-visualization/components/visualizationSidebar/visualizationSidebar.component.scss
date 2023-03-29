@@ -58,16 +58,14 @@
       box-sizing: border-box;
       position: absolute;
       top: 40px;
-      overflow: hidden;
       z-index: 35;
-      overflow: visible;
       background-color: transparent;
       transition: background-color 100ms linear 0s,
                   color 100ms linear 0s,
                   opacity 350ms cubic-bezier(.2,0, 0,1)0s;
 
       &.toggle-hide {
-        right: 290px;
+        right: 303px;
       }
 
       &.toggle-show {
@@ -93,7 +91,7 @@
     overflow: hidden;
     background : #FAFbFC;
     display: none;
-    width: 300px;
+    width: 315px; 
     
     &.sidebar-toggled {
       display: block;
@@ -106,97 +104,84 @@
         background-color: transparent;
         height: 100%;
         .sidebar-accordion {
-            overflow-x: hidden;
-            &__section {
-              .accordion__item {
-                &__header {
-                  padding: 5px;
-                  display: flex;
-                  align-items: center;
-                  min-height: 16.43px;
-                  border-bottom: 1px solid #e5e5e5;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          height: 100%;
+          overflow-x: hidden;
+
+          &__section {
+            width: 100%;
+            height: fit-content;
+
+            .mat-list-item-content {
+              padding: 0;
+            }
+
+            .accordion__item {
+              &__body {
+                width: 100%;
+              }
+
+              &__header {
+                padding: 5px;
+                display: flex;
+                align-items: center;
+                min-height: 16.43px;
+                border-bottom: 1px solid #e5e5e5;
               }
             }
           }
+
+          .mat-content {
+            overflow: visible;
+          }
+
           .mat-expansion-panel-header-title {
-            align-items: center;
-            .ontology__color {
-              border-radius: 50%;
-              width: 1em;
-              height: 1em;
-            }
-            .ontology__name {
-              margin-left: .5em;
-              margin-right: .5rem;
-              width: 7.5rem;
-              overflow: hidden;
-              white-space: nowrap;
-              text-overflow: ellipsis;
-              box-sizing: border-box;
-            }
-            .ontology__imported {
-              display: block;
-              font-size: .8rem;
-              color: var(--secondary);
-            }
-          }
+            .panel-ontology-title {
+              align-items: center;
 
-          .ontologyClass {
-            background: transparent;
-            display: flex;
-            flex-flow: row wrap;
-            justify-content: flex-start;
-            align-items: center;
-            min-height: 1rem;
-
-            &:hover,  &.active {
-              cursor: pointer;
-              background-color: var(--state-list)
-            }
-
-            &__color {
-              margin-right: .5rem;
-              .btn-circle  {
-                box-sizing: border-box;
-                width: 30px;
-                height: 30px;
+              .ontology__color {
                 border-radius: 50%;
-                min-width: 1rem;
+                width: 1em;
+                height: 1em;
               }
-            }
 
-            &__info {
-              margin-right: .5rem;
-              flex: 1;
-              span {
-                display: inline-block;
-                max-width: 150px;
+              .ontology__name {
+                margin-left: .5em;
+                width: 7rem;
                 overflow: hidden;
                 white-space: nowrap;
                 text-overflow: ellipsis;
-                vertical-align: middle;
+                box-sizing: border-box;
+              }
+
+              .ontology__imported {
+                display: block;
+                font-size: .7rem;
+                color: var(--secondary);
+                margin: auto;
               }
             }
-
           }
+
           .sidebar-header {
-              }
+            > div {
+              text-transform: uppercase;
+              font-weight: bold;
+              flex-grow: 1;
+              text-decoration: none;
+            }
 
-              >div {
-                  text-transform: uppercase;
-                  font-weight: bold;
-                  flex-grow: 1;
-                  text-decoration: none;
-              }
-          
-              .close-sidebar {
-                  cursor: pointer;
-                  font-size: 20px;
-                  transition: color .3s ease;
-                  display: flex;
-                  justify-content: flex-end;
-              }
+            .close-sidebar {
+              cursor: pointer;
+              font-size: 20px;
+              transition: color .3s ease;
+              display: flex;
+              justify-content: flex-end;
+            }
           }
+        }
       }
       .sidebar-footer {
           position: absolute;

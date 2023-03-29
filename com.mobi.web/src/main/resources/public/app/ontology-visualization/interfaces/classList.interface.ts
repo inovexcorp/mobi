@@ -20,10 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ControlRecordI } from './visualization.interfaces';
 
-export interface ControlRecordSearchResultI {
-    records: ControlRecordI[];
-    limit: number;
-    count: number;
+import { ControlRecordI, GroupedRecord } from '../classes/controlRecords';
+
+export interface OnClassToggledEvent {
+    ontology: GroupedRecord;
+    checked: boolean;
+    record: ControlRecordI;
 }

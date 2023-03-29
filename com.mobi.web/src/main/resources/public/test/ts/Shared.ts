@@ -23,9 +23,10 @@
 
 import { Observable } from 'rxjs';
 import 'hammerjs';
+import { GraphState, StateEdge, StateNode } from '../../app/ontology-visualization/classes';
+import { ControlRecordI } from '../../app/ontology-visualization/classes/controlRecords';
 
-import { ControlRecordI } from '../../app/ontology-visualization/interfaces/visualization.interfaces';
-import { GraphState, StateNode, StateEdge } from '../../app/ontology-visualization/classes';
+
 
 export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];

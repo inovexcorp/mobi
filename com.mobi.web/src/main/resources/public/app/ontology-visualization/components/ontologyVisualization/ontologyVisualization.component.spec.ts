@@ -26,14 +26,15 @@ import { fakeAsync, TestBed, tick, ComponentFixture } from '@angular/core/testin
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { Subject } from 'rxjs';
 
-import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
+import { OntologyVisualizationService } from '../../services/ontologyVisualization.service';
+import { OntologyVisualization } from './ontologyVisualization.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
-import { cleanStylesFromDOM, MockOntologyVisualizationService } from '../../../../../public/test/ts/Shared';
-import { SidePanelPayloadI }  from '../../interfaces/visualization.interfaces';
+import { cleanStylesFromDOM, MockOntologyVisualizationService } from  '../../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { UtilService } from '../../../shared/services/util.service';
-import { OntologyVisualization } from './ontologyVisualization.component';
+import { SidePanelPayloadI } from '../../classes/sidebarState';
+import { D3SimulatorService } from '../../services/d3Simulator.service';
 
 describe('Ontology Visualization component', () => {
     let component: OntologyVisualization;
@@ -55,6 +56,7 @@ describe('Ontology Visualization component', () => {
                 MockProvider(ProgressSpinnerService),
                 { provide: OntologyVisualizationService, useClass: MockOntologyVisualizationService },
                 MockProvider(UtilService),
+                MockProvider(D3SimulatorService)
             ]
         }).compileComponents();
 
@@ -95,10 +97,10 @@ describe('Ontology Visualization component', () => {
         it('ngOnChanges', fakeAsync(() => {
             fixture.autoDetectChanges();
             tick(60000);
-            component.ontology = 1;
+            component.ontologyId = 'ontologyId';
             spyOn(component, 'updateCytoscapeGraph').and.callFake(() => {});
             component.ngOnChanges({
-                ontology: new SimpleChange(null, component.ontology, true)
+                ontology: new SimpleChange(null, component.ontologyId, true)
             });
             fixture.detectChanges();
             tick(5000);
