@@ -22,7 +22,18 @@
  */
 import * as d3 from 'd3-force';
 
+/**
+ * D3 Node Index use to store D3Node Id to D3Node
+ */
+export interface D3NodeIndex {
+    [key: string]: D3Node
+}
+
+/**
+ * Node type used for D3 Simulation
+ */
 export class D3Node implements d3.SimulationNodeDatum {
+    id: string;
     index?: number;
     x?: number;
     y?: number;
@@ -30,31 +41,29 @@ export class D3Node implements d3.SimulationNodeDatum {
     vy?: number;
     fx?: number | null;
     fy?: number | null;
-    id: string;
 
-    constructor(id) {
+    constructor(id:string, x?:number , y?:number) {
         this.id = id;
-    }
-}
-
-export class D3Link implements d3.SimulationLinkDatum<D3Node> {
-    index?: number;
-    source: D3Node | string | number;
-    target: D3Node | string | number;
-
-    constructor(source, target) {
-        this.source = source;
-        this.target = target;
+        this.x = x;
+        this.y = y;
     }
 }
 
 /**
- * d3-force API
- * - https://github.com/shichuanpo/cytoscape.js-d3-force/blob/master/src/defaults.js
- * - https://github.com/d3/d3-force
- * **/
-export class D3Forces {
-    forceManyBodyStrength = -700;
-    forceLinkDistance = 300;
-    forceLinkStrength = .5;
+ * The D3 graph edges can have these type of nodes as source and target
+ */
+type D3LinkNode = D3Node | string | number;
+
+/**
+ * Edge type used for D3 Simulation
+ */
+export class D3Link implements d3.SimulationLinkDatum<D3Node> {
+    index?: number;
+    source: D3LinkNode;
+    target: D3LinkNode;
+
+    constructor(source: D3LinkNode, target: D3LinkNode) {
+        this.source = source;
+        this.target = target;
+    }
 }

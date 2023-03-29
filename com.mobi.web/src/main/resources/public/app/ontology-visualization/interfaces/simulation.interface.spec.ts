@@ -20,38 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-export interface StateEdgeI {
-    position: any;
-    group: any;
-    removed: boolean;
-    selected: boolean;
-    selectable: boolean;
-    locked: boolean;
-    grabbed: boolean;
-    grabbable: boolean;
-    data: { 
-        id: string;
-        source: string;
-        target: string;
-        [key: string]: any;
-    }
-    classes?: any;
-}
 
-export class StateEdge implements StateEdgeI {
-    position: unknown;
-    group: 'edges';
-    removed: false;
-    selected: false;
-    selectable: true;
-    locked: false;
-    grabbed: false;
-    grabbable: true;
-    data: {
-        id: string,
-        source: string,
-        target: string,
-        [key: string]: any
-    } ;
-    classes?: any;
-}
+import {D3Forces, SimulationOptions} from './simulation.interface';
+
+describe('Simulation Interface', () => {
+    it('SimulationOptions interface', () => {
+        const simulationOptions: SimulationOptions = {};
+        expect(simulationOptions).toBeDefined();
+    });
+    it('new D3Forces', () => {
+        const d3Forces: D3Forces = new D3Forces;
+        expect(d3Forces).toBeDefined();
+    });
+});

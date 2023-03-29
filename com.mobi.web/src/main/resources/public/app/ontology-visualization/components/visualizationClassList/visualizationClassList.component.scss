@@ -21,37 +21,46 @@
  * #L%
  */
 
-import { GroupedRecord } from './controlRecords';
-import { ControlRecordI } from './controlRecords';
-
-export enum SidePanelAction {
-    RECORD_SELECT,
-    RECORD_CENTER,
-    RECORD_CHECKED,
-    RECORD_UNCHECKED,
-    ONTOLOGY_SELECT,
-    ONTOLOGY_CHECKED,
-    ONTOLOGY_UNCHECKED
+.mat-ripple-element {
+  transition-duration: 0ms !important;
 }
+.ontologyClass {
+  background: transparent;
+  height: fit-content;
+  box-sizing: border-box;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: center;
+  padding-right: 1rem;
+  padding-left: 1rem;
 
-export interface SidePanelPayloadI {
-    action: SidePanelAction;
-    controlRecord?: ControlRecordI;
-    ontology?: GroupedRecord;
-}
+  &:hover,  &.active {
+    cursor: pointer;
+    background-color: var(--state-list)
+  }
 
-export interface SidebarStateI {
-    selectedOntologyId?: string;
-    recordId: string;
-    commitId: string;
-}
-
-export class SidebarState implements SidebarStateI {
-    selectedOntologyId: string | null;
-    recordId: string;
-    commitId: string;
-    constructor(stateData: SidebarStateI) {
-        this.commitId = stateData.commitId;
-        this.recordId = stateData.recordId;
+  &__color {
+    margin-right: .5rem;
+    .btn-circle  {
+      box-sizing: border-box;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      min-width: 1rem;
     }
+  }
+
+  &__info {
+    margin-right: .5rem;
+    flex: 1;
+    span {
+      display: inline-block;
+      max-width: 150px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+  }
 }

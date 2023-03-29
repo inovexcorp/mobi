@@ -28,7 +28,7 @@ import { Router } from '@angular/router';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { PERSPECTIVES, RoutePerspective } from '../../models/routePerspective.interface';
-import { DOC_SITE } from "../../../documentation";
+import { DOC_SITE } from '../../../documentation';
 
 /**
  * @class shared.SidebarComponent

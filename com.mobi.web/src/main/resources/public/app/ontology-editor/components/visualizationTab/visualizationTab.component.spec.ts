@@ -22,15 +22,12 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-    OntologyVisualization
-} from '../../../ontology-visualization/components/visualization/ontologyVisualization.component';
+
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { VisualizationTabComponent } from './visualizationTab.component';
-import {
-    VisualizationSidebar
-} from '../../../ontology-visualization/components/visualizationSidebar/visualizationSidebar.component';
+import { VisualizationSidebar } from '../../../ontology-visualization/components/visualizationSidebar/visualizationSidebar.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyVisualization } from '../../../ontology-visualization/components/ontologyVisualization/ontologyVisualization.component';
 
 describe('Visualization Tab component', function() {
     let component: VisualizationTabComponent;
@@ -40,8 +37,8 @@ describe('Visualization Tab component', function() {
     beforeEach(async () =>  {
         await TestBed.configureTestingModule({
             declarations: [
-                MockComponent(OntologyVisualization),
                 VisualizationTabComponent,
+                MockComponent(OntologyVisualization),
                 MockComponent(VisualizationSidebar)
             ],
             providers: [
@@ -57,6 +54,11 @@ describe('Visualization Tab component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.nativeElement.querySelectorAll('.visualization-tab').length).toEqual(1);
+        });
+    });
+    describe('component', function() {
+        it('is defined', function() {
+            expect(component).toBeDefined();
         });
     });
 });

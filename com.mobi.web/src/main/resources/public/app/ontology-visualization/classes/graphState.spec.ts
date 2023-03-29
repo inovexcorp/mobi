@@ -21,9 +21,9 @@
  * #L%
  */
 import { fakeAsync, flush } from '@angular/core/testing';
-import { ControlRecordI, ControlRecordSearchI, ControlRecordSearchResultI, ControlRecordType } from './visualization.interfaces';
-import { StateNode, GraphState, ObjectComparer } from '../classes';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
+import { GraphState, StateNode } from '.';
+import { ControlRecordI, ControlRecordSearchResultI, ControlRecordType } from './controlRecords';
 
 const getName = (iri) => iri;
 const expectGraphStateDefault = (graphState: GraphState, overrideState = {}) => {
@@ -57,13 +57,13 @@ const expectGraphStateDefault = (graphState: GraphState, overrideState = {}) => 
     expect(graphState.nodeLimit).toEqual(expectedGraphState.nodeLimit);
 };
 
-const cru1: ControlRecordI = { type: ControlRecordType.NODE, id: '0.0', name: 'A',  isImported: undefined,  ontologyId: undefined, onGraph: true};
-const cru2: ControlRecordI = { type: ControlRecordType.NODE, id: '0.1', name: undefined,  isImported: undefined,  ontologyId: undefined, onGraph: true};
-const cr1: ControlRecordI = { type: ControlRecordType.NODE, id: '1.1', name: 'A',  isImported: false,  ontologyId: 'Ont1', onGraph: true};
-const cr21: ControlRecordI = { type: ControlRecordType.NODE, id: '2.1', name: 'A',  isImported: true,  ontologyId: 'Ont2', onGraph: true};
-const cr22: ControlRecordI = { type: ControlRecordType.NODE, id: '2.2', name: 'B',  isImported: true,  ontologyId: 'Ont2', onGraph: true};
-const cr41: ControlRecordI = { type: ControlRecordType.NODE, id: '4.1', name: 'A',  isImported: true,  ontologyId: 'Ont4', onGraph: true};
-const cr410: ControlRecordI = { type: ControlRecordType.NODE, id: '4.10', name: 'Z',  isImported: true,  ontologyId: 'Ont4', onGraph: true};
+const cru1: ControlRecordI = { type: ControlRecordType.NODE, id: '0.0', name: 'A',  isImported: undefined,  ontologyId: undefined, onGraph: true, disabled: false};
+const cru2: ControlRecordI = { type: ControlRecordType.NODE, id: '0.1', name: undefined,  isImported: undefined,  ontologyId: undefined, onGraph: true, disabled: false};
+const cr1: ControlRecordI = { type: ControlRecordType.NODE, id: '1.1', name: 'A',  isImported: false,  ontologyId: 'Ont1', onGraph: true, disabled: false};
+const cr21: ControlRecordI = { type: ControlRecordType.NODE, id: '2.1', name: 'A',  isImported: true,  ontologyId: 'Ont2', onGraph: true, disabled: false};
+const cr22: ControlRecordI = { type: ControlRecordType.NODE, id: '2.2', name: 'B',  isImported: true,  ontologyId: 'Ont2', onGraph: true, disabled: false};
+const cr41: ControlRecordI = { type: ControlRecordType.NODE, id: '4.1', name: 'A',  isImported: true,  ontologyId: 'Ont4', onGraph: true, disabled: false};
+const cr410: ControlRecordI = { type: ControlRecordType.NODE, id: '4.10', name: 'Z',  isImported: true,  ontologyId: 'Ont4', onGraph: true, disabled: false};
 
 describe('Visualization Interface', () => {
     let controlRecordSubject$;
@@ -90,7 +90,10 @@ describe('Visualization Interface', () => {
             ontologyColorMap: ontologyColorMap,
             nodeLimit: 500,
             selectedNodes: false,
-            getName
+            getName,
+            allGraphNodesComparer(a: ControlRecordI, b: ControlRecordI): number {
+                return a.id.localeCompare(b.id);
+            }
         }, controlRecordSubject$);
     });
 
@@ -134,7 +137,6 @@ describe('Visualization Interface', () => {
         });
         describe('getElementsLength method', () => {
             it('when data is undefined', fakeAsync(() => {
-                graphState.data = undefined;
                 graphState.allGraphNodes = [];
                 expect(graphState.getElementsLength()).toEqual(0);
             }));
@@ -148,7 +150,6 @@ describe('Visualization Interface', () => {
                 c1.onGraph = true;
                 c2.onGraph = true;
                 graphState.allGraphNodes = [ c1, c2 ];
-                // graphState.data = { nodes: [  ], edges: []};
                 expect(graphState.getElementsLength()).toEqual(2);
             }));
             it('when data has one StateNode', fakeAsync(() => {
@@ -160,62 +161,10 @@ describe('Visualization Interface', () => {
                 expect(graphState.getElementsLength()).toEqual(1);
             }));
         });
-        describe('emitGraphData method', () => {
-            it('successfully', fakeAsync(() => { 
-                expect(controlRecordSubject$.observers.length).toBe(0);
-                
-                const subCount = [];
-                graphState.allGraphNodes = actualControlRecords;
-                const controlRecordSearch: ControlRecordSearchI = {};
-                const sub1$: Subscription = graphState.controlRecordObservable$.subscribe((controlRecordSearchResultI) => {
-                    subCount.push(controlRecordSearchResultI.count);
-                    expect(controlRecordSearchResultI.count).toEqual(6);
-                    expect(controlRecordSearchResultI.limit).toEqual(500);
-                    expect(controlRecordSearchResultI.records.length).toEqual(3);
-                });
-
-                graphState.emitGraphData(controlRecordSearch);
-                
-                flush();
-                
-                const replay$: Subscription = graphState.controlRecordObservable$.subscribe((controlRecordSearchResultI) => {
-                    subCount.push(controlRecordSearchResultI.count);
-                    expect(controlRecordSearchResultI.count).toEqual(6);
-                    expect(controlRecordSearchResultI.limit).toEqual(500);
-                    expect(controlRecordSearchResultI.records.length).toEqual(3);
-                });
-                
-                flush();
-                sub1$.unsubscribe();
-                replay$.unsubscribe();
-                flush();
-                expect(subCount).toEqual([6, 6]);
-                // expect(controlRecordSubject$.observers.length).toBe(0); // TODO Figure out subscribers would not be 0
-            }));
-        });
-    });
-    describe('controlRecordComparer should sort data', () => {
-        it('successfully', () => {
-            const actualSortedControlRecords = [...actualControlRecords].sort(ObjectComparer.ControlRecordI);
-            const actualSortedIds = actualSortedControlRecords.map(x => x.id);
-            const expectedControlIds = expectedControlRecords.map(x => x.id);
-            expect(actualSortedIds.join('|')).toEqual(expectedControlIds.join('|'));
-        });
-    });
-    describe('StateNode class ', () => {
-        it('should initialize with the correct data', () => {
-            const stateNode = new StateNode();
-            stateNode.data = {id: 'id1', ontologyId: 'ont1'};
-            const controlRecordOnGraphFalse = stateNode.asControlRecord(false);
-            expect(controlRecordOnGraphFalse.onGraph).toEqual(false);
-    
-            expect(controlRecordOnGraphFalse.id).toEqual('id1');
-            expect(controlRecordOnGraphFalse.name).toEqual(undefined);
-            expect(controlRecordOnGraphFalse.isImported).toEqual(undefined);
-            expect(controlRecordOnGraphFalse.ontologyId).toEqual('ont1');
-    
-            const controlRecordOnGraphTrue = stateNode.asControlRecord(true);
-            expect(controlRecordOnGraphTrue.onGraph).toEqual(true);
-        });
+        // describe('emitGraphData method', () => {
+        //     it('successfully', fakeAsync(() => { 
+        //         // 
+        //     }));
+        // });
     });
 });

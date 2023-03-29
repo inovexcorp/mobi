@@ -20,9 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-export { StateNode } from './stateNode';
-export { StateEdge } from './stateEdge';
-export { D3Link, D3Node, D3Forces } from './d3Classes';
-export { SidebarState } from './sidebarState';
-export { GraphState } from './graphState';
-export { ObjectComparer } from './objectComparer';
+export { StateNodeI, StateNode } from './stateNode';
+export { StateEdgeI, StateEdge } from './stateEdge';
+export { D3Link, D3Node } from './d3Classes';
+export { SidebarStateI, SidebarState } from './sidebarState';
+export { GraphStateI, GraphState } from './graphState';

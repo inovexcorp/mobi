@@ -20,38 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-export interface StateEdgeI {
-    position: any;
-    group: any;
-    removed: boolean;
-    selected: boolean;
-    selectable: boolean;
-    locked: boolean;
-    grabbed: boolean;
-    grabbable: boolean;
-    data: { 
-        id: string;
-        source: string;
-        target: string;
-        [key: string]: any;
-    }
-    classes?: any;
-}
 
-export class StateEdge implements StateEdgeI {
-    position: unknown;
-    group: 'edges';
-    removed: false;
-    selected: false;
-    selectable: true;
-    locked: false;
-    grabbed: false;
-    grabbable: true;
-    data: {
-        id: string,
-        source: string,
-        target: string,
-        [key: string]: any
-    } ;
-    classes?: any;
-}
+import { StateEdge } from './stateEdge';
+
+describe('StateEdge', () => {
+    it('to be defined', () => {
+        expect(new StateEdge()).toBeDefined();
+    });
+});

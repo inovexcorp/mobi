@@ -20,38 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-export interface StateEdgeI {
-    position: any;
-    group: any;
-    removed: boolean;
-    selected: boolean;
-    selectable: boolean;
-    locked: boolean;
-    grabbed: boolean;
-    grabbable: boolean;
-    data: { 
-        id: string;
-        source: string;
-        target: string;
-        [key: string]: any;
-    }
-    classes?: any;
-}
 
-export class StateEdge implements StateEdgeI {
-    position: unknown;
-    group: 'edges';
-    removed: false;
-    selected: false;
-    selectable: true;
-    locked: false;
-    grabbed: false;
-    grabbable: true;
-    data: {
-        id: string,
-        source: string,
-        target: string,
-        [key: string]: any
-    } ;
-    classes?: any;
-}
+import { SidebarState, SidebarStateI } from './sidebarState';
+
+describe('SideBarState', () => {
+    it('to be defined', () => {
+        const sidebarStateI: SidebarStateI = {commitId: '1', recordId: '3'};
+        expect(new SidebarState(sidebarStateI)).toBeDefined();
+    });
+});

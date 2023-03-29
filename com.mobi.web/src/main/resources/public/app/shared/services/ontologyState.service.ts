@@ -113,7 +113,6 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 @Injectable()
 export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     catalogId = '';
-    
     // Only the service has access to the subject
     private _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
     private _updateRefsExclude = [

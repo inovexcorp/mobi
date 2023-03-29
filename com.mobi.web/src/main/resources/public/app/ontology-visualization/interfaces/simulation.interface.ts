@@ -20,38 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-export interface StateEdgeI {
-    position: any;
-    group: any;
-    removed: boolean;
-    selected: boolean;
-    selectable: boolean;
-    locked: boolean;
-    grabbed: boolean;
-    grabbable: boolean;
-    data: { 
-        id: string;
-        source: string;
-        target: string;
-        [key: string]: any;
+/**
+ * d3-force API
+ * - https://github.com/shichuanpo/cytoscape.js-d3-force/blob/master/src/defaults.js
+ * - https://github.com/d3/d3-force
+ * **/
+export class D3Forces {
+    alpha = 1;
+    alphaMin = 0.001;
+    alphaDecay = this.setAlphaDecay(300);
+    setAlphaDecay(iterations: number): number{
+        return 1 - Math.pow(this.alphaMin, 1/iterations);
     }
-    classes?: any;
+    forceManyBodyStrength = -700;
+    forceLinkDistance = 300;
+    forceLinkStrength = .5;
 }
 
-export class StateEdge implements StateEdgeI {
-    position: unknown;
-    group: 'edges';
-    removed: false;
-    selected: false;
-    selectable: true;
-    locked: false;
-    grabbed: false;
-    grabbable: true;
-    data: {
-        id: string,
-        source: string,
-        target: string,
-        [key: string]: any
-    } ;
-    classes?: any;
+export interface SimulationOptions {
+    useExistingNodeLocation?: boolean;
+    preProcessClustering?: boolean;
+    d3Forces?: D3Forces;
 }

@@ -22,34 +22,57 @@
  */
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { OntologyVisualization } from './components/visualization/ontologyVisualization.component';
-import { VisualizationSidebar } from './components/visualizationSidebar/visualizationSidebar.component';
-
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { SharedModule } from '../shared/shared.module';
 import { FormsModule } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatListModule } from '@angular/material/list';
+import { OntologyVisualization } from './components/ontologyVisualization/ontologyVisualization.component';
+import { VisualizationSidebar } from './components/visualizationSidebar/visualizationSidebar.component';
+import { VisualizationClassListComponent } from './components/visualizationClassList/visualizationClassList.component';
+import { VisualizationSidebarSearch } from './components/visualizationSidebarSearch/visualizationSidebarSearch.component';
+import { OntologyVisualizationService } from './services/ontologyVisualization.service';
+import { OntologyVisualizationDataService } from './services/ontologyVisualizationData.service';
+import { D3SimulatorService } from './services/d3Simulator.service';
+import { ControlRecordUtilsService } from './services/controlRecordUtils.service';
 
- @NgModule({
-     declarations: [
+@NgModule({
+    imports: [
+        BrowserModule,
+        SharedModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatExpansionModule,
+        MatCheckboxModule,
+        MatListModule,
+    ],
+    declarations: [
         OntologyVisualization,
-        VisualizationSidebar
+        VisualizationSidebar,
+        VisualizationSidebarSearch,
+        VisualizationClassListComponent,
+    ],
+    exports: [
+        MatExpansionModule,
+        VisualizationSidebar,
+        OntologyVisualization
      ],
-     imports: [
-         BrowserModule,
-         SharedModule,
-         BrowserAnimationsModule,
-         FormsModule,
-         ReactiveFormsModule,
-         MatExpansionModule
-     ],
-     exports: [
-         MatExpansionModule,
-         VisualizationSidebar,
-         OntologyVisualization
-     ]
+    entryComponents: [
+        OntologyVisualization,
+        VisualizationSidebar,
+        VisualizationSidebarSearch,
+        VisualizationClassListComponent
+    ],
+    providers: [
+        ControlRecordUtilsService,
+        D3SimulatorService,
+        OntologyVisualizationService,
+        OntologyVisualizationDataService,
+    ]
 })
 
 export class OntologyVisualizationModule {}

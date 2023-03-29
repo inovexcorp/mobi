@@ -18,8 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div #ontologyVis class="ontology-visualization-container h-100">
+<div #ontologyVis class="ontology-visualization-container">
   <info-message *ngIf="!cyChartSize">(No classes defined)</info-message>
-  <div class="ontology-visualization h-100" [ngClass]="{ invisible: !status.loaded, 'd-none': cyChartSize === 0 && status.loaded }"></div>
+  <div class="ontology-visualization" [ngClass]="{ invisible: !status.loaded, hide: cyChartSize === 0 && status.loaded }"></div>
 </div>
 

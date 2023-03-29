@@ -22,6 +22,8 @@
  */
 import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
 import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     ElementRef,
     Input,
@@ -31,13 +33,18 @@ import {
     SimpleChanges,
     ViewChild
 } from '@angular/core';
-import { Subscription } from 'rxjs';
 
-import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
-import { SidePanelAction, SidePanelPayloadI as SidePanelPayload } from '../../interfaces/visualization.interfaces';
-import { GraphState } from '../../classes';
+import { Subscription } from 'rxjs';
+import { OntologyVisualizationService } from '../../services/ontologyVisualization.service';
+import { SidePanelAction, SidePanelPayloadI } from '../../classes/sidebarState';
+import { GraphState, StateNode } from '../../classes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { UtilService } from '../../../shared/services/util.service';
+import { D3SimulatorService } from '../../services/d3Simulator.service';
+import { SimulationOptions } from '../../interfaces/simulation.interface';
+
+import { D3Node, D3NodeIndex } from '../../classes/d3Classes';
+import { GraphStateDataI } from '../../classes/graphState';
 
 /**
  * @class OntologyVisualization
@@ -50,14 +57,15 @@ import { UtilService } from '../../../shared/services/util.service';
 @Component({
     selector: 'ontology-visualization',
     templateUrl: './ontologyVisualization.component.html',
-    styleUrls: ['./ontologyVisualization.component.scss']
+    styleUrls: ['./ontologyVisualization.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Default
 })
-export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
-    @Input() ontology;
+export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
+    @Input() ontologyId;
     @Input() commitId;
     @Input() branchId;
     @Input() inProgress;
-    @ViewChild('ontologyVis', { static: true }) ontoVis: ElementRef;
+    @ViewChild('ontologyVis') ontoVis: ElementRef;
 
     public readonly spinnerId = 'ontology-visualization';
     private _toastrConfig = {
@@ -71,9 +79,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     public cyChart: any; // cytoscape instance
     public cyChartSize = 1;
     public cyLayout: any; // cytoscape layout
-
     private debounceTimeId: any;
-    
     public graphCollections = {
         highlighted: new Set(),
         selectedNode: new Set(),
@@ -84,15 +90,43 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         initialized: false, // Cytoscape chart has been initialized
         hasWarningsMsg: false 
     }
-
     sidePanelActionSub$: Subscription; // Subscription to control cytoscape graph from different components
+    newNodeWithPositionAdded = false;
 
-    constructor(private ovis: OntologyVisualizationService,  private util: UtilService, 
+    constructor(private ovis: OntologyVisualizationService,  
+        private d3Simulator: D3SimulatorService,
+        private util: UtilService, 
+        private cf: ChangeDetectorRef,
         private spinnerSrv : ProgressSpinnerService) {}
 
+    ngOnInit(): void {
+        const self = this;
+        this.cyChart = this.createCytoscapeInstance();
+        this.cyChart.ready(this.setChartBindings());
+        this.sidePanelActionSub$ = this.ovis.sidePanelActionAction$
+            .subscribe(this.sidePanelActionObserver());
+        // inProgress really only matters when initially creating the commitId graphState
+        // Changes in ngOnChanges for inProgress does not affect the commit graphState
+        this.ovis.init(this.commitId, this.inProgress).subscribe({
+            next(commitGraphState: GraphState) {
+                self.initGraph(commitGraphState);
+                self.updateMessages(commitGraphState.isOverLimit, commitGraphState.nodeLimit);
+            },
+            error(reason) {
+                self.status.initialized = true;
+                self.util.clearToast();
+                self.initFailed(reason);
+            }
+        });
+    }
+    /**
+     * ngOnChanges Lifecycle hook 
+     * Occurs when: (ontology, commitId, branchId, inProgress) are changed
+     * - Switching between ontologies
+     * @param changes SimpleChanges
+     */
     ngOnChanges(changes: SimpleChanges): void {
         //@TODO Fix double loader indicator
-        this.spinnerSrv.startLoadingForComponent(this.ontoVis);
         if (changes?.inProgress?.currentValue) {
             if (changes.inProgress.currentValue['additions'].length > 0  || 
                 changes.inProgress.currentValue['deletions'].length > 0) {
@@ -107,9 +141,8 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         if (this.status.initialized) {
             this.clearErrorToasts();
             if (!changes.commitId && changes.branchId) {
-                this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
                 this.status.loaded = true; 
-            } else if (changes.ontology || changes.commitId ) {
+            } else if (changes.ontologyId || changes.commitId ) {
                 this.status.loaded = false;
                 if (changes.commitId && this.cyChart) {
                     this.updateGraphState(changes.commitId.previousValue);
@@ -119,54 +152,22 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                 this.ovis.init(this.commitId, changes?.inProgress?.currentValue).subscribe({
                     next(commitGraphState: GraphState) { 
                        if (self.cyChart && commitGraphState.positioned) {
-                           self.updateCytoscapeGraph(commitGraphState);
+                           self.updateCytoscapeGraph(commitGraphState, false, {preProcessClustering: true});
                         } else {
                             self.initGraph(commitGraphState);
-                        }
-                        if (this.spinnerSrv) {
-                            // TODO why would spinnerSrv be null
-                            this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
                         }
                     },
                     error(reason) { 
                         self.clearGraph();
                         self.initFailed(reason);
-                        self.spinnerSrv.finishLoadingForComponent(this.ontoVis);
                     }
                 });
             } else if (this.hasInProgressCommit) {
                 const state = this.ovis.getGraphState(this.commitId);
                 this.updateMessages(state.isOverLimit, state.nodeLimit);
-                this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
             }
         } 
     }
-    
-    ngOnInit(): void {
-        const self = this;
-        this.cyChart = this.createCytoscapeInstance();
-        this.cyChart.ready(this.setChartBindings());
-        this.sidePanelActionSub$ = this.ovis.sidePanelActionAction$
-            .subscribe(this.sidePanelActionObserver());
-
-        // inProgress really only matters when initially creating the commitId graphState
-        // Changes in ngOnChanges for inProgress does not affect the commit graphState
-        this.ovis.init(this.commitId, this.inProgress).subscribe({
-            next(commitGraphState: GraphState) {
-                self.initGraph(commitGraphState);
-                self.updateMessages(commitGraphState.isOverLimit, commitGraphState.nodeLimit);
-                self.spinnerSrv.finishLoadingForComponent(self.ontoVis);
-            },
-            error(reason) {
-                self.spinnerSrv.finishLoadingForComponent(self.ontoVis);
-                self.status.initialized = true;
-                self.util.clearToast();
-                self.initFailed(reason);
-
-            }
-        });
-    }
-
     ngOnDestroy(): void {
         this.util.clearToast();
         if (this.sidePanelActionSub$) {
@@ -176,22 +177,20 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             this.updateGraphState(this.commitId);
         }
     }
-    
     /**
      * Create Cytoscape Instance
      * https://js.cytoscape.org/#core/initialisation
      * @returns cytoscape instance 
      */
-    createCytoscapeInstance(){
+    createCytoscapeInstance():any {
         const container = <HTMLElement>document.querySelector('.ontology-visualization');
         return cytoscape({ // Recyling an instance will help to keep memory usage lower
             container,
             // textureOnViewport: true, // Option makes large graphs more responsive
-            maxZoom: 5, // Helps with preventing user getting lost in the viewpoint
+            maxZoom: 8, // Helps with preventing user getting lost in the viewpoint
             minZoom: 0.05 
         });
     }
-
     /**
      * Graph Init Failed
      * @param reason reason of failure
@@ -203,19 +202,23 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         this.status.hasWarningsMsg = true;
         this.status.loaded = true;
     }
-
     /**
-     * Observer Function for sidePanelActionSub
+     * Observer Function for SidePanelAction subject
+     * 
+     * Respond to {@link SidePanelAction} actions
+     * 
      * @returns Observer
      */
-    sidePanelActionObserver() {
+    sidePanelActionObserver(): { next: any } {
         const self = this;
         return {
-            next: (payload: SidePanelPayload) => {
+            next: (payload: SidePanelPayloadI) => {
                 try {
-                    if (!self.status.loaded || !self.status.initialized) {
+                    if (!self.status.initialized) {
+                        console.info('OntologyVisualization component was not initialized');
                         return;
                     }
+                    const currentGraphState = this.ovis.getGraphState(this.commitId);
                     switch (payload.action) {
                         case SidePanelAction.ONTOLOGY_SELECT: {
                             // need to figure out how to ont node
@@ -223,33 +226,87 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                             // cy.filter('node[name = "Jerry"]')
                             break;
                         }
+                        case SidePanelAction.ONTOLOGY_CHECKED: {
+                            self.status.loaded = false;
+                            const ontologyId = payload.ontology.ontologyId;
+                            const graphStateDataOntology: GraphStateDataI = currentGraphState.getFilteredGraphData({ontologyId});
+                            this.cyChart.add(graphStateDataOntology);
+                            const options: SimulationOptions = {
+                                useExistingNodeLocation: true,
+                            };
+                            this.runSimulationOnGraphState(currentGraphState, options);
+                            self.status.loaded = true;
+                            self.cf.markForCheck();
+                            break;
+                        }
+                        case SidePanelAction.ONTOLOGY_UNCHECKED: {
+                            const record = payload.ontology;
+                            const elesNodes = this.getOntologyGraphElements(record.ontologyId);
+                            elesNodes.elements.remove();
+                            self.cf.markForCheck();
+                            break;
+                        }
                         case SidePanelAction.RECORD_SELECT: {
-                            const target = self.cyChart.$id(payload.controlRecord.id);
                             self.cyChart.elements().unselect();
                             self.clearNodeStyle();
+                            const target = self.cyChart.$id(payload.controlRecord.id);
                             target.select();
                             self.focusElement(target, 'select', self.graphCollections);
+                            self.cf.markForCheck();
                             break;
                         }
                         case SidePanelAction.RECORD_CENTER: {
                             self.cyChart.animate({
                                 fit: {
                                     eles: self.cyChart.$id(payload.controlRecord.id),
-                                    padding: 300
+                                    padding: 100,
                                 }
                             }, {
                                 duration: 1000
                             });
+                            self.cf.markForCheck();
                             break;
                         }
+                        /**
+                         * Need to add node type to controlRecord
+                         * checkbox next to an ontology will update the graph by adding nodes for all the classes listed beneath
+                         * Selecting the checkbox next to a class will update the graph by adding a new node
+                         */
                         case SidePanelAction.RECORD_CHECKED: {
-                            // Need to add node type to controlRecord 
-                            // checkbox next to an ontology will update the graph by adding nodes for all the classes listed beneath
-                            // Selecting the checkbox next to a class will update the graph by adding a new node
+                            self.status.loaded = false;
+                            const record = payload.controlRecord;
+                            const graphStateDataI: GraphStateDataI = currentGraphState.getFilteredGraphData({recordId: record.id});
+                            this.cyChart.add(graphStateDataI);
+        
+                            if (!Object.prototype.hasOwnProperty.call(record.stateNode, 'position') || self.newNodeWithPositionAdded ===true) {
+                                const options: SimulationOptions = {
+                                    useExistingNodeLocation: true,
+                                };
+                                this.runSimulationOnGraphState(currentGraphState, options);
+                                self.newNodeWithPositionAdded = true;
+                            } else if (self.newNodeWithPositionAdded) {
+                                // Needed because past simulation could conflict with existing nodes that are positioned but not on the graph
+                                // Nodes that are not on the graph but have position data are not used for simulation
+                                const options: SimulationOptions = {
+                                    useExistingNodeLocation: true,
+                                };
+                                this.runSimulationOnGraphState(currentGraphState, options);
+                                self.newNodeWithPositionAdded = false;
+                            }
+                            self.status.loaded = true;
                             break;
                         }
+                        /**
+                         * checkbox next to a class is unchecked, the node is removed along with any incoming/outgoing links
+                         */
                         case SidePanelAction.RECORD_UNCHECKED: {
-                            // checkbox next to a class is unchecked, the node is removed along with any incoming/outgoing links
+                            self.cyChart.elements().unselect();
+                            self.clearNodeAndSelectAction();
+                            const record = payload.controlRecord;
+                            record.inInitialGraph = false;
+                            record.onGraph = false;
+                            const elements = this.cyChart.elements().nodes(`[id="${record.id}"]`);
+                            this.cyChart.remove(elements);
                             break;
                         }
                         default: {
@@ -263,17 +320,28 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             }
         };
     }
-    
+    /**
+     * Search cyChart for nodes with ontologyId
+     * @param ontologyId 
+     * @returns elements
+     */
+    private getOntologyGraphElements(ontologyId:string): {elements: any} {
+        const selector = `[ontologyId="${ontologyId}"]`;
+        const elements = this.cyChart.elements(selector);
+        const collection = {
+            elements
+        };
+        return collection;
+    }
     /**
      * Clear Error Toasts from UI
      */
-    private clearErrorToasts() {
+    private clearErrorToasts(): void {
         if (this.status.hasWarningsMsg) {
             this.util.clearToast();
             this.status.hasWarningsMsg = false;
         }
     }
-
     /**
      * Initialization of cytoscape's graph instance, data was initialized using this.ovis.init()
      * 
@@ -283,7 +351,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         const layoutName = 'preset'; 
         const layout = this.createLayoutOptions(layoutName);
         this.cyLayout = this.cyChart.layout(layout);
-        this.updateCytoscapeGraph(commitGraphState, true);
+        this.updateCytoscapeGraph(commitGraphState, true, {preProcessClustering: true});
         this.cyLayout.run();
         this.status.initialized = true;
         if (commitGraphState.selectedNodes) {
@@ -299,35 +367,63 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             });
         }
     }
-
+    /**
+     * Run D3-Force Simulation On GraphState
+     * Info about Cytoscape node positions: https://js.cytoscape.org/#nodes.positions
+     * 
+     * NOTE: Mutating state by object references
+     * @return Time it took to run simulation
+     */
+    runSimulationOnGraphState(graphState: GraphState, simulationOptions?: SimulationOptions, refreshPositions=true): number {
+        const start = new Date().getTime();
+        const graphStateData: GraphStateDataI = graphState.getFilteredGraphData();
+        const nodePositionMapping: D3NodeIndex = this.d3Simulator.runSimulation(graphStateData, simulationOptions);
+        graphStateData.nodes.forEach((stateNode: StateNode) => {
+            stateNode.position = nodePositionMapping[stateNode.data.id];  // Mutating by Object Reference
+        });
+        if (this.cyChart && refreshPositions) {
+            this.cyChart.nodes().positions(function(node){
+                const d3NodePosition: D3Node = nodePositionMapping[node.id()];
+                if (d3NodePosition){
+                    return {
+                        x: d3NodePosition?.x || 0,
+                        y: d3NodePosition?.y || 0
+                    };
+                } else {
+                    return node.position();
+                }
+            });
+        }
+        graphState.positioned = true; // The idea of positioned graph should be check as nodes check added to graph 
+        return new Date().getTime() - start;
+    }
     /**
      * Update Cytoscape Graph
      * This function is used to update the current cytoscape graph with new state
      * 
      * @param commitGraphState 
      */
-    public updateCytoscapeGraph(commitGraphState: GraphState, init = false): void {
+    public updateCytoscapeGraph(commitGraphState: GraphState, init = false, simulationOptions?: SimulationOptions): void {
         if (!commitGraphState.positioned) {
-            commitGraphState.d3ForceStaticLoad();
+            this.runSimulationOnGraphState(commitGraphState, simulationOptions, false);
         }
         this.cyChartSize = commitGraphState.getElementsLength();
         this.clearGraph();
-        this.cyChart.add(commitGraphState.data);
+        this.cyChart.add(commitGraphState.getFilteredGraphData());
         this.cyChart.json({
             style: commitGraphState.style
         });
         if (!init) {
             this.updateMessages(commitGraphState.isOverLimit, commitGraphState.nodeLimit);
         }
-        if (commitGraphState.positionData != undefined) {
+        if (commitGraphState.positionData !== undefined) {
             this.cyChart.json(commitGraphState.positionData );
         } else {
-            // https://js.cytoscape.org/#cy.fit
-            this.cyChart.fit();
+            this.cyChart.fit(); // https://js.cytoscape.org/#cy.fit
         }
+        this.cf.markForCheck(); // Needed so that graph shows
         this.status.loaded = true;
     }
-
     /**
      * Update Graph State
      * Before loading next graph commit the current state should be saved
@@ -339,18 +435,11 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
      * @param commitId commit Id
      */
     updateGraphState(commitId: string): void {
-        const cyChartJson = this.cyChart.json();
-        const elements = cyChartJson.elements;
-        const graphElements = {
-            nodes: elements.nodes ? elements.nodes : [],
-            edges: elements.edges ? elements.edges : []
-        };
         const commitGraphState: GraphState = this.ovis.getGraphState(commitId);
-        commitGraphState.data = graphElements;
         commitGraphState.selectedNodes = this.graphCollections.selectedNode.size > 0;
+        const cyChartJson = this.cyChart.json();
         commitGraphState.positionData = { pan: cyChartJson.pan, zoom: cyChartJson.zoom };
     }
-
     /**
      * Add ClassToCollection 
      * @param collection 
@@ -361,26 +450,23 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         collection.add(nodes);
         nodes.addClass(classes);
     }
-
     /**
      * clearCollectionElements
      * Info https://github.com/cytoscape/cytoscape.js/blob/master/src/collection/index.js
      * @param collection Set of https://github.com/cytoscape/cytoscape.js/blob/master/src/collection/element.js
-     * @param classes 
      */
-    private clearCollectionElements(collection: Set<any>): void {
+    clearCollectionElements(collection: Set<any>): void {
         if (collection.size > 0) {
             collection.clear();
         } 
     }
-
     /**
      * Remove class from element.
      * ClassName { string } represents the token to be removed.
      * @param collection 
      * @param className 
      */
-    private removeItemFormCollection(collection, className : string): void {
+    private removeItemFormCollection(collection, className: string): void {
         if (collection.hasClass(className)) {
             collection.removeClass(className);
         }
@@ -392,7 +478,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
      * @param action
      * @private
      */
-    private removeCollectionClass(collection: Set<any>, classes, action = 'select'): void {
+    private removeCollectionClass(collection: Set<any>, classes): void {
         const getExclusiveState = {
             'highlighted': 'focused',
             'focused': 'highlighted',
@@ -428,7 +514,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
      * @param selectedNeighbor set of edges that are selected
      * @param selectedNode set of nodes that are selected
      */
-    private focusElement(target, action: string, graphCollections): void{
+    private focusElement(target: any, action: string, graphCollections: any): void{
         const highlighted = graphCollections.highlighted;
         const selectedNeighbor = graphCollections.selectedNeighbor;
         const selectedNode = graphCollections.selectedNode;
@@ -450,8 +536,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             }
         }
     }
-
-    private clearNodeStyle() {
+    private clearNodeStyle():void{
         if (this.graphCollections.selectedNeighbor.size > 0) {
             this.graphCollections.selectedNeighbor.forEach((item:any) => {
                 item.unselect();
@@ -468,6 +553,15 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             });
             this.removeCollectionClass(this.graphCollections.selectedNode, 'focused');
         }
+    }
+    /**
+     *  Clear node style
+     *  Clear sidePanel selected node
+     * @private
+     */
+    private clearNodeAndSelectAction() {
+        this.clearNodeStyle();
+        this.ovis.emitSelectAction({action: SidePanelAction.RECORD_SELECT, nodeId: ''});
     }
     /**
      * Set Chart User Event Bindings, method gets called when cy.ready occurs
@@ -487,37 +581,31 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         return (readyEvent) => {
             const chart = readyEvent.cy;
             chart.unbind('click');
-
             chart.bind('mouseover', 'node', function (event: { target: any }) {
                 self.focusElement(event.target, 'highlight', self.graphCollections);
             });
-
             chart.bind('mouseout', 'node', function (event) {
                 clearTimeout(self.debounceTimeId);
-                self.removeCollectionClass(self.graphCollections.selectedNode, 'highlighted', event.type);
-                self.removeCollectionClass(self.graphCollections.highlighted, 'highlighted', event.type);
+                self.removeCollectionClass(self.graphCollections.selectedNode, 'highlighted');
+                self.removeCollectionClass(self.graphCollections.highlighted, 'highlighted');
             });
-
             // bind tap to edges and add the highlighted class to connected nodes
             chart.bind('tap', 'edge', function (event: { target: any }) {
                 const target = event.target;
                 // clear style
-                self.removeCollectionClass(self.graphCollections.highlighted, 'highlighted', 'tap');
-                self.removeCollectionClass(self.graphCollections.selectedNeighbor, 'highlighted', 'tap');
+                self.removeCollectionClass(self.graphCollections.highlighted, 'highlighted');
+                self.removeCollectionClass(self.graphCollections.selectedNeighbor, 'highlighted');
                 if (target.hasClass('ranges')) {
                     //add Style
                     self.addClassToCollection(self.graphCollections.selectedNeighbor, target.edges(), 'highlighted');
                     self.addClassToCollection(self.graphCollections.highlighted, target.connectedNodes(), 'highlighted');
                 }
             });
-
             chart.on('tap', function (event: { target: any }) {
                 if (self.graphCollections.selectedNeighbor.size > 0 || self.graphCollections.selectedNode.size > 0) {
-                    self.clearNodeStyle();
-                    self.ovis.emitSelectAction({action: SidePanelAction.RECORD_SELECT, nodeId: ''});
+                   self.clearNodeAndSelectAction();
                 }
             });
-
             chart.on('click', 'node', function (event: { target: any }) {
                 clearTimeout(self.debounceTimeId);
                 self.debounceTimeId = setTimeout(function () {
@@ -527,7 +615,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             });
         };
     }
-
     /**
      * Create Layout Object
      * 
@@ -538,30 +625,25 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
      */
     private createLayoutOptions(layoutName: string) {
         const self = this;
-  
         return {
             name: layoutName,
             animate: false,
             fit: true,
             randomize: false,
             infinite: true,
-
             linkId: function id(d) { // https://github.com/d3/d3-force#link_id
                 return d.id;
             },
             ready: function () {
-                // empty
             },
-            stop: function (nodes) {
+            stop: function () {
                 self.status.loaded = true;
                 self.spinnerSrv.finishLoadingForComponent(self.ontoVis);
             },
-            tick: function (progress) {
-                //empty
+            tick: function () {
             }
         };
     }
-
     /**
      * Clear Cytoscape chart elements
      * @returns true if graph was cleared, false if it could not clear graph
@@ -574,14 +656,12 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             return false;
         }
     }
-
     /**
      * Update Messages
      * @param isOverLimit If has isOverLimit then warn user
      */
     public updateMessages(isOverLimit: boolean, nodeLimit: number): void {
         this.clearErrorToasts();
-        
         if (this.hasInProgressCommit) {
             this.status.hasWarningsMsg = true;
             this.util.createWarningToast('Uncommitted changes will not appear in the graph', this._toastrConfig);
@@ -591,5 +671,4 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             this.util.createWarningToast(`Maximum number of nodes reached. Only ${nodeLimit} nodes are being displayed`, this._toastrConfig);
         }
     }
-
 }

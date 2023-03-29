@@ -1,0 +1,44 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<mat-list class="list-group list-group-flush" >
+    <mat-list-item #classList
+                   *ngFor="let record of ontology.classes; trackBy: trackByClassId"
+                   class="list-group-item ontologyClass"
+                   (click)="recordSelected($event, record);"
+                   (contextmenu)="onRightClickRecordSelect($event, record)"
+                   [ngClass]="{'active': record?.id === (selectedRecord | async)?.nodeId}">
+        <div class="ontologyClass__info" >
+            <span class="ontologyClass__name"
+                  [title]="record.name"
+                  aria-label="A label that displays a tooltip that can with the ontology class name">
+                {{ record.name }}
+            </span>
+        </div>
+        <div class="ontologyClass__actions">
+            <mat-checkbox class="ontologyClass__check"
+                          [disabled]="record.disabled"
+                          [checked]="record.onGraph && record.isChecked"
+                          (change)="toggleClass($event, record)"></mat-checkbox>
+        </div>
+    </mat-list-item>
+</mat-list>
