@@ -99,9 +99,11 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             this.propertyForm.controls.property.setValue(this.data.property);
             this.propertyForm.controls.property.disable();
             this.propertyForm.controls.value.setValue(this.data.value);
-            this.propertyForm.controls.type.setValue(this.data.type);
+            if (this.data.type) {
+                this.propertyForm.controls.type.setValue(this.data.type);
+                this.type = this.data.type;
+            }
             this.propertyForm.controls.language.setValue(this.data.language);
-            this.type = this.data.type;
         } else {
             // Should already be enabled on startup, mostly here for test purposes
             this.propertyForm.controls.property.enable();

@@ -23,6 +23,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { get, has, sortBy, union } from 'lodash';
+import { RDF } from '../../../prefixes';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -79,13 +80,15 @@ export class AnnotationBlockComponent implements OnChanges {
     }
     editClicked(input: {property: string, index: number}): void {
         const annotationObj = this.os.listItem.selected[input.property][input.index];
+        const propertyType = get(annotationObj, '@type');
+        const propertyLanguage = get(annotationObj, '@language');
         this.dialog.open(AnnotationOverlayComponent, {data: {
             editing: true,
             annotation: input.property,
             value: annotationObj['@value'],
-            type: get(annotationObj, '@type', ''),
+            type: propertyType ? propertyType : (propertyLanguage ? RDF + 'langString' : ''),
             index: input.index,
-            language: get(annotationObj, '@language', '')
+            language: propertyLanguage
         }}).afterClosed().subscribe(result => {
             if (result) {
                 this.updatePropertiesFiltered();
