@@ -95,8 +95,10 @@ export class AnnotationOverlayComponent implements OnInit {
             this.annotationForm.controls.annotation.setValue(this.data.annotation);
             this.annotationForm.controls.annotation.disable();
             this.annotationForm.controls.value.setValue(this.data.value);
-            this.annotationForm.controls.type.setValue(this.data.type);
-            this.type = this.data.type;
+            if (this.data.type) {
+                this.annotationForm.controls.type.setValue(this.data.type);
+                this.type = this.data.type;
+            }
             this.annotationForm.controls.language.setValue(this.data.language);
         } else {
             // Should already be enabled on startup, mostly here for test purposes

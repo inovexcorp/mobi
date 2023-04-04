@@ -73,6 +73,7 @@ export class DatatypePropertyBlockComponent implements OnChanges {
     }
     editDataProp(input: {property: string, index: number}): void {
         const propertyObj = this.os.listItem.selected[input.property][input.index];
+        const propertyType = get(propertyObj, '@type');
         const propertyLanguage = get(propertyObj, '@language');
         const data = {
             editingProperty: true,
@@ -80,7 +81,7 @@ export class DatatypePropertyBlockComponent implements OnChanges {
             propertyValue: propertyObj['@value'],
             propertyIndex: input.index,
             propertyLanguage: propertyLanguage,
-            propertyType: propertyLanguage? RDF + 'langString' : get(propertyObj, '@type')
+            propertyType: propertyType ? propertyType : (propertyLanguage ? RDF + 'langString' : '') 
         };
         this.dialog.open(DatatypePropertyOverlayComponent, {data: data}).afterClosed().subscribe(result => {
             if (result) {

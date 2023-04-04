@@ -133,6 +133,20 @@ describe('Ontology Property Overlay component', function() {
             expect(component.propertyForm.controls.type.value).toEqual('type');
             expect(component.propertyForm.controls.language.value).toEqual('en');
         });
+        it('if an property is being edited and input data type value is empty', function() {
+            component.data.editing = true;
+            component.data.property = property;
+            component.data.value = 'value';
+            component.data.type = '';
+            component.ngOnInit();
+            expect(component.annotations).toEqual(['default1', 'default2', 'owl1', 'owl2', property]);
+            expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
+            expect(component.propertyForm.controls.property.value).toEqual(property);
+            expect(component.propertyForm.controls.property.disabled).toBeTrue();
+            expect(component.propertyForm.controls.value.value).toEqual('value');
+            expect(component.propertyForm.controls.type.value).toEqual(XSD + 'string');
+            expect(component.propertyForm.controls.language.value).toEqual(undefined);
+        });
         it('if a new property is being added', function() {
             component.data.editing = false;
             component.ngOnInit();

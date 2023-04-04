@@ -136,6 +136,19 @@ describe('Annotation Overlay component', function() {
             expect(component.annotationForm.controls.type.value).toEqual('type');
             expect(component.annotationForm.controls.language.value).toEqual('en');
         });
+        it('if an annotation is being edited and input data type value is empty', function() {
+            component.data.editing = true;
+            component.data.annotation = annotation;
+            component.data.value = 'value';
+            component.data.type = '';
+            component.ngOnInit();
+            expect(component.annotations).toEqual([annotation, 'default2', 'owl2', 'default1', 'owl1']);
+            expect(component.annotationForm.controls.annotation.value).toEqual(annotation);
+            expect(component.annotationForm.controls.annotation.disabled).toBeTrue();
+            expect(component.annotationForm.controls.value.value).toEqual('value');
+            expect(component.annotationForm.controls.type.value).toEqual(XSD + 'string');
+            expect(component.annotationForm.controls.language.value).toEqual(undefined);
+        });
         it('if a new annotation is being added', function() {
             component.data.editing = false;
             component.ngOnInit();
