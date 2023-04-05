@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as chroma from 'chroma-js';
+import chroma from 'chroma-js';
 type StyleCyto = {selector: string, style: {[key: string]: any}};
 
 const colors = chroma.cubehelix()
