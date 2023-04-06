@@ -85,10 +85,11 @@ export class AnnotationBlockComponent implements OnChanges {
         this.dialog.open(AnnotationOverlayComponent, {data: {
             editing: true,
             annotation: input.property,
-            value: annotationObj['@value'],
+            value: annotationObj['@value'] ||  annotationObj['@id'],
             type: propertyType ? propertyType : (propertyLanguage ? RDF + 'langString' : ''),
             index: input.index,
-            language: propertyLanguage
+            language: propertyLanguage,
+            isIRIProperty: !annotationObj['@value'] && annotationObj['@id'] ? true : false
         }}).afterClosed().subscribe(result => {
             if (result) {
                 this.updatePropertiesFiltered();
