@@ -179,7 +179,8 @@ describe('Annotation Block component', function() {
                 value: 'value2',
                 index: 0,
                 type: 'type',
-                language: 'language'
+                language: 'language',
+                isIRIProperty: false
             }});
             expect(component.updatePropertiesFiltered).toHaveBeenCalledWith();
         }));

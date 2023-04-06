@@ -36,21 +36,27 @@
             </mat-optgroup>
         </mat-autocomplete>
     </mat-form-field>
-    <mat-radio-group *ngIf="annotationForm.controls.annotation.value === deprecatedIri; else notDeprecated" formControlName="value">
-        <mat-radio-button value="true">True</mat-radio-button>
-        <mat-radio-button value="false">False</mat-radio-button>
-    </mat-radio-group>
-    <ng-template #notDeprecated>
-        <mat-form-field class="w-100">
-            <mat-label>Value</mat-label>
-            <textarea matInput name="value" formControlName="value" required></textarea>
-            <mat-error *ngIf="annotationForm.get('value').errors?.datatype">Value is invalid for the chosen datatype</mat-error>
-        </mat-form-field>
-        <!-- datatype -->
-        <iri-select-ontology [selected]="[annotationForm.controls.type.value]" (selectedChange)="validateValue($event)" [selectList]="os.listItem.dataPropertyRange" displayText="Type" [singleSelect]="true"></iri-select-ontology>
-
-        <!-- language -->
-        <language-select *ngIf="isLangString()" [parentForm]="annotationForm" [disableClear]="true">></language-select>
+    <mat-form-field *ngIf="isIRIProperty; else notOntIriProp" class="w-100">
+        <mat-label>IRI</mat-label>
+        <input matInput type="text" aria-label="Value" formControlName="value" required/>
+        <mat-error *ngIf="annotationForm.get('value').errors?.pattern">The value provided is not a valid IRI</mat-error>
+    </mat-form-field>
+    <ng-template #notOntIriProp>
+        <mat-radio-group *ngIf="annotationForm.controls.annotation.value === deprecatedIri; else notDeprecated" formControlName="value">
+            <mat-radio-button value="true">True</mat-radio-button>
+            <mat-radio-button value="false">False</mat-radio-button>
+        </mat-radio-group>
+        <ng-template #notDeprecated>
+            <mat-form-field class="w-100">
+                <mat-label>Value</mat-label>
+                <textarea matInput name="value" formControlName="value" required></textarea>
+                <mat-error *ngIf="annotationForm.get('value').errors?.datatype">Value is invalid for the chosen datatype</mat-error>
+            </mat-form-field>
+            <!-- datatype -->
+            <iri-select-ontology [selected]="[annotationForm.controls.type.value]" (selectedChange)="validateValue($event)" [selectList]="os.listItem.dataPropertyRange" displayText="Type" [singleSelect]="true"></iri-select-ontology>
+            <!-- language -->
+            <language-select *ngIf="isLangString()" [parentForm]="annotationForm" [disableClear]="true">></language-select>
+        </ng-template>
     </ng-template>
 </form>
 <div mat-dialog-actions>

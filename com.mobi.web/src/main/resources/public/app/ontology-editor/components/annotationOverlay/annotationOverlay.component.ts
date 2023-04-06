@@ -35,6 +35,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { UtilService } from '../../../shared/services/util.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { datatype } from "../../../shared/validators/datatype.validator";
+import { REGEX } from '../../../constants';
+import { PropertyOverlayDataOptions } from '../../../shared/models/propertyOverlayDataOptions.interface';
 
 interface AnnotationGroup {
     namespace: string,
@@ -62,6 +64,7 @@ interface AnnotationOption {
  * @param {string} data.type The type of the annotation value being edited
  * @param {number} data.index The index of the annotation value being edited within the annotation array
  * @param {string} data.language The language of the annotation value being edited
+ * @param {string} data.isIRIProperty Whether an annoation is an IRI type
  */
 @Component({
     selector: 'annotation-overlay',
@@ -77,15 +80,19 @@ export class AnnotationOverlayComponent implements OnInit {
         type: [this.type],
         language: ['']
     });
-
+    isIRIProperty = false;
     filteredAnnotations: Observable<AnnotationGroup[]>;
 
     constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
-        @Inject(MAT_DIALOG_DATA) public data: { editing: boolean, annotation?: string, value?: string, type?: string, index?: number, language?: string},
+        @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
         private om: OntologyManagerService, public os: OntologyStateService,
         public pm: PropertyManagerService, public util: UtilService) {}
     
     ngOnInit(): void {
+        if (this.data.isIRIProperty) {
+            this.isIRIProperty = this.data.isIRIProperty;
+            this.annotationForm.controls.value.setValidators([Validators.required, Validators.pattern(REGEX.IRI)]);
+        }
         this.annotations = union(Object.keys(this.os.listItem.annotations.iris), this.pm.defaultAnnotations, this.pm.owlAnnotations);
         this.filteredAnnotations = this.annotationForm.controls.annotation.valueChanges.pipe(
             startWith(''),
@@ -147,9 +154,12 @@ export class AnnotationOverlayComponent implements OnInit {
         const value = this.annotationForm.controls.value.value;
         const language = this.annotationForm.controls.language.value;
         const type = language ? '' : this.annotationForm.controls.type.value;
-        
-        const added = this.pm.addValue(this.os.listItem.selected, annotation, value, type, language);
-        
+        let added = false;
+        if (this.isIRIProperty) {
+            added = this.pm.addId(this.os.listItem.selected, annotation, value);
+        } else {
+            added = this.pm.addValue(this.os.listItem.selected, annotation, value, type, language);
+        }
         if (added) {
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
@@ -168,10 +178,14 @@ export class AnnotationOverlayComponent implements OnInit {
         const language = this.annotationForm.controls.language.value;
         const type = language ? '' : this.annotationForm.controls.type.value;
         const oldObj = Object.assign({}, get(this.os.listItem.selected, `['${annotation}']['${this.data.index}']`));
-        const edited = this.pm.editValue(this.os.listItem.selected, annotation, this.data.index, value, type, language);
-        
+        let edited = false;
+        if (this.isIRIProperty) {
+            edited = this.pm.editId(this.os.listItem.selected, annotation, this.data.index, value);
+        } else {
+            edited = this.pm.editValue(this.os.listItem.selected, annotation, this.data.index, value, type, language);
+        }
         if (edited) {
-            this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(get(oldObj, '@value'), get(oldObj, '@type'), get(oldObj, '@language')));
+            this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
             if (this.om.entityNameProps.includes(annotation)) {
@@ -186,7 +200,6 @@ export class AnnotationOverlayComponent implements OnInit {
     getName(iri: string): string {
         return this.os.getEntityNameByListItem(iri);
     }
-
     validateValue(newValue: string[]): void {
         this.type = newValue[0];
         this.annotationForm.controls.type.setValue(this.type);
@@ -196,13 +209,11 @@ export class AnnotationOverlayComponent implements OnInit {
             this.annotationForm.controls.language.setValue('');
         }
     }
-
     isLangString(): boolean {
         return RDF + 'langString' === (this.annotationForm.controls.type.value ? this.annotationForm.controls.type.value: '');
     }
-
     private _createJson(value, type, language): JSONLDObject {
-        const valueObj = this.pm.createValueObj(value, type, language);
+        const valueObj = this.isIRIProperty ? {'@id': value} : this.pm.createValueObj(value, type, language);
         return this.util.createJson(this.os.listItem.selected['@id'], this.annotationForm.controls.annotation.value, valueObj);
     }
 }
