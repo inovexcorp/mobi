@@ -44,7 +44,7 @@ import { VisualizationClassListComponent } from '../visualizationClassList/visua
 import { MatListModule } from '@angular/material/list';
 import { VisualizationSidebarSearch } from '../visualizationSidebarSearch/visualizationSidebarSearch.component';
 import { ControlGroupRecordI, ControlRecordI, ControlRecordSearchGroupedI, ControlRecordSearchResultI, ControlRecordType, GroupedRecord } from '../../classes/controlRecords';
-import { MockOntologyVisualizationService } from 'src/main/resources/public/test/ts/Shared';
+import { MockOntologyVisualizationService } from '../../../../../public/test/ts/Shared';
 import { SidePanelAction } from '../../classes/sidebarState';
 import { MatSelectModule } from '@angular/material/select';
 import { OnClassToggledEvent } from '../../interfaces/classList.interface';
