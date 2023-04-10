@@ -284,9 +284,15 @@ describe('Individual Tree component', function() {
                     });
                     describe('do not have a matching text value', function () {
                         beforeEach(function () {
-                            this.filterNode.entityInfo = {
-                                names: [],
-                                imported: false
+                            this.filterNode = {
+                                indent: 1,
+                                entityIRI: 'iri',
+                                hasChildren: false,
+                                path: ['recordId', 'otherIri', 'iri'],
+                                entityInfo: {
+                                    names: [],
+                                    imported: false
+                                }
                             };
                         });
                         it('and does not have a matching entity local name', function () {
