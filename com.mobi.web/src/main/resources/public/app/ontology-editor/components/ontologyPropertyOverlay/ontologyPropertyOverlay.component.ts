@@ -30,6 +30,7 @@ import { map, startWith } from 'rxjs/operators';
 
 import { REGEX } from '../../../constants';
 import { OWL, RDF, XSD } from '../../../prefixes';
+import { PropertyOverlayDataOptions } from '../../../shared/models/propertyOverlayDataOptions.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
@@ -62,6 +63,7 @@ interface PropertyOption {
  * @param {string} data.type The type of the property value being edited
  * @param {number} data.index The index of the property value being edited within the property array
  * @param {string} data.language The language of the property value being edited
+ * @param {string} data.isIRIProperty Whether a property is an IRI type
  */
 @Component({
     selector: 'ontology-property-overlay',
@@ -85,7 +87,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
     filteredProperties: Observable<PropertyGroup[]>;
 
     constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<OntologyPropertyOverlayComponent>, 
-        @Inject(MAT_DIALOG_DATA) public data: { editing: boolean, property?: string, value?: string, type?: string, index?: number, language?: string},
+        @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
         public os: OntologyStateService, public pm: PropertyManagerService, public util: UtilService) {}
     
     ngOnInit(): void {
@@ -99,9 +101,11 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             this.propertyForm.controls.property.setValue(this.data.property);
             this.propertyForm.controls.property.disable();
             this.propertyForm.controls.value.setValue(this.data.value);
-            this.propertyForm.controls.type.setValue(this.data.type);
+            if (this.data.type) {
+                this.propertyForm.controls.type.setValue(this.data.type);
+                this.type = this.data.type;
+            }
             this.propertyForm.controls.language.setValue(this.data.language);
-            this.type = this.data.type;
         } else {
             // Should already be enabled on startup, mostly here for test purposes
             this.propertyForm.controls.property.enable();

@@ -23,6 +23,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { union, sortBy, has, get } from 'lodash';
+import { RDF } from '../../../prefixes';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -79,13 +80,16 @@ export class OntologyPropertiesBlockComponent implements OnChanges {
     }
     editClicked(input: {property: string, index: number}): void {
         const propertyObj = this.ontology[input.property][input.index];
+        const propertyType = get(propertyObj, '@type');
+        const propertyLanguage = get(propertyObj, '@language');
         this.dialog.open(OntologyPropertyOverlayComponent, {data: {
             editing: true,
             property: input.property,
             value: propertyObj['@value'] || propertyObj['@id'],
-            type: get(propertyObj, '@type', ''),
+            type: propertyType ? propertyType : (propertyLanguage ? RDF + 'langString' : ''),
             index: input.index,
-            language: get(propertyObj, '@language', '')
+            language: propertyLanguage,
+            isIRIProperty: !propertyObj['@value'] && propertyObj['@id'] ? true : false
         }}).afterClosed().subscribe(result => {
             if (result) {
                 this.updatePropertiesFiltered();
