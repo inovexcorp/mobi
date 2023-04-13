@@ -38,6 +38,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 import { UtilService } from '../../../shared/services/util.service';
 import { PropertyTreeComponent } from './propertyTree.component';
+import { ScrollingModule } from "@angular/cdk/scrolling";
 
 describe('Property Tree component', function() {
     let component: PropertyTreeComponent;
@@ -65,7 +66,7 @@ describe('Property Tree component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, ScrollingModule ],
             declarations: [
                 PropertyTreeComponent,
                 MockComponent(HierarchyFilterComponent),
@@ -145,10 +146,10 @@ describe('Property Tree component', function() {
     });
 
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            spyOn(component, 'isShown').and.returnValue(true);
+        beforeEach(async function() {
             component.datatypeProps = propsList;
             fixture.detectChanges();
+            await fixture.whenStable();
         });
         it('with a .repeater-container', function() {
             expect(element.queryAll(By.css('.repeater-container')).length).toEqual(1);
@@ -156,7 +157,7 @@ describe('Property Tree component', function() {
         it('with a .tree-item-wrapper', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(7);
+            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(3);
         });
     });
     describe('controller methods', function() {

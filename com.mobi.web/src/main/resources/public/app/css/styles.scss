@@ -334,6 +334,14 @@ ul {
 .material-icons {
     line-height: 1 !important; 
 }
+
+//makes all mat-tabs take up the full height of the screen. Prevents issues in the Discover Module
+.mat-tab-body-wrapper {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
 //ontology visualization
 .visualization-sidebar {
     .sidebar-accordion__section.mat-list-item {

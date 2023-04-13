@@ -38,6 +38,7 @@ import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
 import { UtilService } from '../../../../shared/services/util.service';
 import { ClassCardsComponent } from './classCards.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 describe('Class Cards component', function() {
     let component: ClassCardsComponent;
@@ -50,7 +51,7 @@ describe('Class Cards component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, ScrollingModule ],
             declarations: [
                 ClassCardsComponent,
                 MockComponent(InstanceFormComponent)

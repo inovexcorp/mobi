@@ -38,6 +38,7 @@ import { InstanceEditorComponent } from './components/instanceEditor/instanceEdi
 import { InstanceFormComponent } from './components/instanceForm/instanceForm.component';
 import { InstanceCreatorComponent } from './components/instanceCreator/instanceCreator.component';
 import { NewInstancePropertyOverlayComponent } from './components/newInstancePropertyOverlay/newInstancePropertyOverlay.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 /**
  * @namespace explore
@@ -47,7 +48,8 @@ import { NewInstancePropertyOverlayComponent } from './components/newInstancePro
 @NgModule({
     imports: [
         SharedModule,
-        DiscoverSharedModule
+        DiscoverSharedModule,
+        ScrollingModule
     ],
     declarations: [
         ClassCardsComponent,

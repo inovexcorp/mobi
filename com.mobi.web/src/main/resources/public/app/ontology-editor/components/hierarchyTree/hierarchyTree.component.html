@@ -25,9 +25,9 @@
         <search-bar class="flex-1 remove-min-width" [bindModel]="searchText" (bindModelChange)="updateSearchText($event)" (submitEvent)="onKeyup()"></search-bar>
         <hierarchy-filter [filters]="dropdownFilters" (updateFilters)="updateDropdownFilters($event)" (submitEvent)="onKeyup()"></hierarchy-filter>
     </div>
-    <div class="flex-1 repeater-container w-100 remove-min-height">
+    <cdk-virtual-scroll-viewport itemSize="26" #hierarchyVirtualScroll class="flex-1 repeater-container w-100 remove-min-height">
         <info-message *ngIf="!filteredHierarchy.length && (!!filterText.length || dropdownFilterActive)" class="no-match">No {{ parentLabel }} match your filter.</info-message>
-        <div *uiScroll="let node of datasource" class="tree-item-wrapper">
+        <div *cdkVirtualFor="let node of filteredHierarchy" class="tree-item-wrapper">
             <div [ngStyle]="{'padding-left': (indent * node.indent) + 'em'}">
                 <tree-item [isActive]="os.getActiveEntityIRI() === node.entityIRI"
                     [entityInfo]="node.entityInfo"
@@ -39,5 +39,5 @@
                     [currentIri]="node.entityIRI"></tree-item>
             </div>
         </div>
-    </div>
+    </cdk-virtual-scroll-viewport>
 </div>

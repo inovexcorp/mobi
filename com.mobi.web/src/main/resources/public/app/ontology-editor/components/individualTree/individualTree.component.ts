@@ -21,10 +21,21 @@
  * #L%
  */
 // other Libs
-import { Datasource, IDatasource } from 'ngx-ui-scroll';
-import {every, filter, some, get, cloneDeep, findIndex} from 'lodash';
+import { every, filter, some, get, cloneDeep, findIndex } from 'lodash';
 // Angular Imports
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import {
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    AfterContentChecked,
+    AfterViewInit
+} from '@angular/core';
 // Services
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { UtilService } from '../../../shared/services/util.service';
@@ -46,24 +57,14 @@ import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
     templateUrl: 'individualTree.component.html',
     selector: 'individual-tree'
 })
-export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
+export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit, AfterContentChecked {
     @Input() branchId;
     @Input() key;
     @Input() index: number;
     @Input() hierarchy: HierarchyNode[];
     @Output() updateSearch = new EventEmitter<string>();
+    @ViewChild('propertyVirtualScroll') virtualScroll
 
-    datasource: IDatasource = new Datasource({
-        get: (index, count, success) => {
-            const data = this.filteredHierarchy.slice(index, index + count);
-            success(data);
-        },
-        settings: {
-            bufferSize: 35,
-            startIndex: 0,
-            minIndex: 0
-        }
-    });
 
     indent = INDENT;
     searchText = '';
@@ -77,6 +78,8 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
     activeEntityFilter;
     deprecatedEntityFilter;
     chunks = [];
+    visibleIndex = 0;
+    renderedHierarchy = false;
 
     constructor(public om:OntologyStateService, public os: OntologyStateService, public util: UtilService) {}
 
@@ -109,6 +112,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.dropdownFilters = [cloneDeep(this.activeEntityFilter), cloneDeep(this.deprecatedEntityFilter)];
         this.activeTab = this.os.getActiveKey();
         setTimeout( () => {
+            this.renderedHierarchy = false;
             this.update();
         }, 500);
     }
@@ -118,8 +122,20 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
                 this.removeFilters();
             }
             setTimeout( () => {
+                this.renderedHierarchy = false;
                 this.update();
             }, 500);
+        }
+    }
+    ngAfterViewInit(): void {
+        this.virtualScroll?.scrolledIndexChange.subscribe(index => {
+            this.visibleIndex = index;
+        });
+    }
+    ngAfterContentChecked(): void {
+        if (this.filteredHierarchy.length == this.virtualScroll?.getDataLength() && !this.renderedHierarchy) {
+            this.createHierarchy();
+            this.renderedHierarchy = true;
         }
     }
     ngOnDestroy(): void {
@@ -133,6 +149,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
     onKeyup(): void {
         this.filterText = this.searchText;
         this.dropdownFilterActive = some(this.dropdownFilters, 'flag');
+        this.renderedHierarchy = false;
         this.update();
     }
     matchesDropdownFilters(node: HierarchyNode): boolean {
@@ -148,7 +165,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
         }
         node.isOpened ? this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = true : delete this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
         this.filteredHierarchy = filter(this.preFilteredHierarchy, node => this.isShown(node));
-        this.datasource.adapter.reload(this.datasource.adapter.firstVisible.$index);
+        this.virtualScroll?.scrollToIndex(this.visibleIndex);
     }
     matchesSearchFilter(node: HierarchyNode): boolean {
         let searchMatch = false;
@@ -248,6 +265,10 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.preFilteredHierarchy = this.hierarchy.filter(node => this.searchFilter(node));
         this.midFilteredHierarchy = this.preFilteredHierarchy.filter(node => this.openEntities(node));
         this.filteredHierarchy = this.midFilteredHierarchy.filter(node => this.isShown(node));
+        this.createHierarchy();
+    }
+
+    private createHierarchy():void {
         let selectedIndex;
         if (this.os.listItem.selected) {
             selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
@@ -257,9 +278,9 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy {
                     return false;
                 }
             });
-            selectedIndex < 0 ? this.datasource.adapter.reload(0) : this.datasource.adapter.reload(selectedIndex);
+            selectedIndex < 0 ? this.virtualScroll?.scrollToIndex(0) : this.virtualScroll?.scrollToIndex(selectedIndex);
         } else {
-            this.datasource.adapter.reload(this.index);
-        }    
+            this.virtualScroll?.scrollToIndex(this.index);
+        }
     }
 }

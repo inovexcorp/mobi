@@ -20,9 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Datasource, IDatasource } from 'ngx-ui-scroll';
 import { filter, has, findIndex, some, get, every, cloneDeep } from 'lodash';
-import { Component, EventEmitter, Input, OnInit, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    OnChanges,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    AfterViewInit
+} from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { INDENT } from '../../../constants';
@@ -43,22 +52,11 @@ import { UtilService } from '../../../shared/services/util.service';
     selector: 'everything-tree',
     templateUrl: './everythingTree.component.html'
 })
-export class EverythingTreeComponent implements OnInit, OnChanges {
+export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit {
     @Input() hierarchy = [];
     @Input() branchId = '';
     @Output() updateSearch = new EventEmitter<string>();
-
-    datasource: IDatasource = new Datasource({
-        get: (index, count, success) => {
-            const data = this.filteredHierarchy.slice(index, index + count);
-            success(data);
-        },
-        settings: {
-            bufferSize: 35,
-            startIndex: 0,
-            minIndex: 0
-        }
-    });
+    @ViewChild('virtualScroll') virtualScroll;
 
     indent = INDENT;
     searchText = '';
@@ -72,7 +70,8 @@ export class EverythingTreeComponent implements OnInit, OnChanges {
     activeEntityFilter;
     deprecatedEntityFilter;
     chunks = [];
-    
+    visibleIndex = 0;
+
     constructor(public os: OntologyStateService, private util: UtilService) {}
 
     ngOnInit(): void {
@@ -106,6 +105,13 @@ export class EverythingTreeComponent implements OnInit, OnChanges {
         this.activeTab = this.os.getActiveKey();
         this.update();
     }
+
+    ngAfterViewInit(): void {
+        this.virtualScroll?.scrolledIndexChange.subscribe(index => {
+            this.visibleIndex = index;
+        });
+    }
+
     ngOnChanges(changesObj: SimpleChanges): void {
         if (changesObj.hierarchy && !changesObj.hierarchy.isFirstChange()) {
             if (changesObj.branchId) {
@@ -129,7 +135,7 @@ export class EverythingTreeComponent implements OnInit, OnChanges {
         }
         node.isOpened ? this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = true : delete this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
         this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this));
-        this.datasource.adapter.reload(this.datasource.adapter.firstVisible.$index);
+        this.virtualScroll?.scrollToIndex(this.visibleIndex);
     }
     matchesSearchFilter(node: HierarchyNode): boolean {
         let searchMatch = false;
@@ -190,7 +196,6 @@ export class EverythingTreeComponent implements OnInit, OnChanges {
             if (this.os.listItem.editorTabStates[this.activeTab].open[fullPath]) {
                 break;
             }
-
             this.os.listItem.editorTabStates[this.activeTab].open[fullPath] = true;
         }
     }
@@ -237,7 +242,7 @@ export class EverythingTreeComponent implements OnInit, OnChanges {
         this.preFilteredHierarchy = this.hierarchy.filter(this.searchFilter.bind(this));
         this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
         this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
-        this.datasource.adapter.reload(0);
+        this.virtualScroll?.scrollToIndex(0);
     }
     private removeFilters() {
         this.dropdownFilterActive = false;

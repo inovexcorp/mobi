@@ -24,11 +24,14 @@
 @import "../../../css/variables";
 
 .discover {
+    flex: 1 1 100%;
     .mat-tab-labels {
         justify-content: center;
     }
-    .mat-tab-body-wrapper {
-        flex: 1;
-        min-height: 0;
+    #tab-group{
+        height: 100%;
+    }
+    #tab-group mat-tab-body {
+        flex-grow: 1;
     }
 }

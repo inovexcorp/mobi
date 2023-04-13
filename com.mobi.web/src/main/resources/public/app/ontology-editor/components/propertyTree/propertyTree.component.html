@@ -30,9 +30,9 @@
                           (submitEvent)="onKeyup()">
         </hierarchy-filter>
     </div>
-    <div class="repeater-container w-100 flex-1 remove-min-height">
+    <cdk-virtual-scroll-viewport itemSize="26" #propertyVirtualScroll class="repeater-container w-100 flex-1 remove-min-height">
         <info-message *ngIf="!filteredHierarchy.length && (filterText || dropdownFilterActive)" class="no-match">No properties match your filter.</info-message>
-        <div *uiScroll="let node of datasource" class="tree-item-wrapper">
+        <div *cdkVirtualFor="let node of filteredHierarchy" class="tree-item-wrapper">
             <div *ngIf="!node.entityIRI" class="tree-item">
                 <a (click)="toggleOpen(node); $event.stopPropagation()">
                     <i class="fa fa-fw" [ngClass]="{'fa-folder-open-o': node.isOpened, 'fa-folder-o': !node.isOpened}"></i>
@@ -50,5 +50,5 @@
                        [currentIri]="node.entityIRI"></tree-item>
             </div>
         </div>
-    </div>
+    </cdk-virtual-scroll-viewport>
 </div>

@@ -57,7 +57,6 @@ import { ShowdownModule } from 'ngx-showdown';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatMarkdownEditorModule } from 'mat-markdown-editor/dist';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { UiScrollModule } from 'ngx-ui-scroll';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 
@@ -191,7 +190,6 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         MatTooltipModule,
         ReactiveFormsModule,
         ShowdownModule.forRoot({flavor: 'github'}),
-        UiScrollModule
     ],
     declarations: [
         BlankNodeValueDisplayComponent,
@@ -278,7 +276,6 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         MatTooltipModule,
         ReactiveFormsModule,
         ShowdownModule,
-        UiScrollModule,
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
         BreadcrumbsComponent,

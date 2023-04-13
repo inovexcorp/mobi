@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="class-cards">
-    <div *uiScroll="let chunk of datasource" class="row">
+<cdk-virtual-scroll-viewport itemSize="205" #classVirtualScroll class="class-cards">
+    <div *cdkVirtualFor="let chunk of chunks" class="row">
         <div *ngFor="let item of chunk" class="card-container col-4">
             <mat-card>
                 <mat-card-title class="text-truncate">
@@ -39,4 +39,4 @@
             </mat-card>
         </div>
     </div>
-</div>
+</cdk-virtual-scroll-viewport>

@@ -21,11 +21,10 @@
  * #L%
 */
 import { initial, chunk, orderBy, has, forEach, last } from 'lodash';
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { switchMap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
-import {Datasource, IDatasource} from 'ngx-ui-scroll';
 
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreService } from '../../../services/explore.service';
@@ -54,15 +53,9 @@ import { UtilService } from '../../../../shared/services/util.service';
 export class InstanceCardsComponent implements OnInit, OnChanges {
     classTitle = '';
     chunks: InstanceDetails[][] = [];
-    datasource: IDatasource = new Datasource({
-        get: (index, count, success) => {
-            // Index seems to start at 1 instead of 0
-            const data = this.chunks.slice(index - 1, (index - 1) + count);
-            success(data);
-        }
-    });
 
     @Input() instanceData: InstanceDetails[];
+    @ViewChild('instanceVirtualScroll') virtualScroll;
 
     constructor(private ds: DiscoverStateService, private es: ExploreService, private eu: ExploreUtilsService,
                 private dialog: MatDialog, private util: UtilService, private pep: PolicyEnforcementService) {
@@ -74,8 +67,7 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
     }
     ngOnChanges(): void {
         this.chunks = this.getChunks(this.instanceData);
-        const index = this.datasource.adapter.firstVisible.$index ? this.datasource.adapter.firstVisible.$index : this.datasource.adapter.lastVisible.$index;
-        this.datasource.adapter.reload(index);
+        this.virtualScroll?.scrollToIndex(0);
     }
     view(item: InstanceDetails): void {
         const pepRequest = {

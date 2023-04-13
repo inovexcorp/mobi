@@ -40,6 +40,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 import { UtilService } from '../../../shared/services/util.service';
 import { EverythingTreeComponent } from './everythingTree.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 describe('Everything Tree component', function() {
     let component: EverythingTreeComponent;
@@ -51,7 +52,7 @@ describe('Everything Tree component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, ScrollingModule ],
             declarations: [
                 EverythingTreeComponent,
                 MockComponent(HierarchyFilterComponent),
@@ -124,9 +125,9 @@ describe('Everything Tree component', function() {
     });
 
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            spyOn(component, 'isShown').and.returnValue(true);
+        beforeEach(async function() {
             fixture.detectChanges();
+            await fixture.whenStable();
         });
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.tree')).length).toEqual(1);
