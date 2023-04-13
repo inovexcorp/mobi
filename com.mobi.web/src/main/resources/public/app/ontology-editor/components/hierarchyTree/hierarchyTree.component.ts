@@ -21,9 +21,20 @@
  * #L%
  */
 import { first } from 'rxjs/operators';
-import {filter, some, every, findIndex} from 'lodash';
-import { Component, OnInit, OnChanges, Input, EventEmitter, Output, OnDestroy, SimpleChanges } from '@angular/core';
-import { Datasource, IDatasource } from 'ngx-ui-scroll';
+import { filter, some, every, findIndex } from 'lodash';
+import {
+    Component,
+    OnInit,
+    OnChanges,
+    Input,
+    EventEmitter,
+    Output,
+    OnDestroy,
+    SimpleChanges,
+    ViewChild,
+    AfterContentChecked,
+    AfterViewInit
+} from '@angular/core';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -54,7 +65,7 @@ interface HierarchyFilterI{
     templateUrl: './hierarchyTree.component.html',
     styleUrls: ['./hierarchyTree.component.scss']
 })
-export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
+export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit ,AfterContentChecked {
     @Input() parentLabel: string;
     @Input() hierarchy: HierarchyNode[];
     @Input() index: number;
@@ -63,17 +74,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
     @Output() resetIndex = new EventEmitter<null>();
     @Output() updateSearch = new EventEmitter<string>();
 
-    datasource: IDatasource = new Datasource({
-        get: (index, count, success) => {
-            const data = this.filteredHierarchy.slice(index, index + count);
-            success(data);
-        },
-        settings: {
-            bufferSize: 35,
-            startIndex: 0,
-            minIndex: 0
-        }
-    });
+    @ViewChild('hierarchyVirtualScroll') virtualScroll;
 
     indent = INDENT;
     searchText = '';
@@ -82,12 +83,13 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
     preFilteredHierarchy = [];
     midFilteredHierarchy = [];
     activeTab = '';
-    neverToggled = false;
     dropdownFilterActive = false;
     dropdownFilters: HierarchyFilterI[] = [];
     activeEntityFilter: HierarchyFilterI;
     deprecatedEntityFilter: HierarchyFilterI;
     chunks = [];
+    visibleIndex = 0;
+    renderedHierarchy = false;
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private util: UtilService) {}
 
@@ -119,21 +121,24 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.dropdownFilters = [Object.assign({}, this.activeEntityFilter), Object.assign({}, this.deprecatedEntityFilter)];
         this.activeTab = this.os.getActiveKey();
         setTimeout( () => {
+            this.renderedHierarchy = false;
             this.update();
         }, 500);
     }
-    private removeFilters(): void {
-        this.dropdownFilterActive = false;
-        this.dropdownFilters = [Object.assign({}, this.activeEntityFilter), Object.assign({}, this.deprecatedEntityFilter)];
-        this.searchText = '';
-        this.filterText = '';
+
+    ngAfterViewInit(): void {
+        this.virtualScroll?.scrolledIndexChange.subscribe(index => {
+            this.visibleIndex = index;
+        });
     }
+
     ngOnChanges(changesObj: SimpleChanges): void {
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             if (changesObj.branchId) {
                 this.removeFilters();
             }
             setTimeout( () => {
+                this.renderedHierarchy = false;
                 this.update();
             }, 500);
         }
@@ -150,6 +155,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.filterText = this.searchText;
         this.dropdownFilterActive = some(this.dropdownFilters, 'flag');
         setTimeout( () => {
+            this.renderedHierarchy = false;
             this.update();
         }, 500);
     }
@@ -162,7 +168,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
             this.expandChildren(node.joinedPath);
         }
         this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this, Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0));
-        this.datasource.adapter.reload(this.datasource.adapter.firstVisible.$index);
+        this.virtualScroll?.scrollToIndex(this.visibleIndex);
     }
     collapseChildren(nodeJoinedPath: string): void {
         this.preFilteredHierarchy = filter(this.preFilteredHierarchy, aNode => {
@@ -274,6 +280,18 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.preFilteredHierarchy = this.hierarchy.filter(this.searchFilter.bind(this));
         this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this, Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0));
         this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this, Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0));
+        this.createHierarchy();
+    }
+
+    updateDropdownFilters(value): void {
+        this.dropdownFilters = value;
+    }
+
+    updateSearchText(value: string): void {
+        this.searchText = value;
+    }
+
+    private createHierarchy():void {
         let selectedIndex;
         if (this.os.listItem.selected) {
             selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
@@ -283,17 +301,23 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy {
                     return false;
                 }
             });
-            selectedIndex < 0 ? this.datasource.adapter.reload(0) : this.datasource.adapter.reload(selectedIndex);
+            selectedIndex < 0 ? this.virtualScroll?.scrollToIndex(0) : this.virtualScroll?.scrollToIndex(selectedIndex);
         } else {
-            this.datasource.adapter.reload(this.index);
+            this.virtualScroll?.scrollToIndex(this.index);
         }
     }
 
-    updateDropdownFilters(value): void {
-        this.dropdownFilters = value;
+    private removeFilters(): void {
+        this.dropdownFilterActive = false;
+        this.dropdownFilters = [Object.assign({}, this.activeEntityFilter), Object.assign({}, this.deprecatedEntityFilter)];
+        this.searchText = '';
+        this.filterText = '';
     }
 
-    updateSearchText(value: string): void {
-        this.searchText = value;
+    ngAfterContentChecked(): void {
+        if (this.filteredHierarchy.length == this.virtualScroll?.getDataLength() && !this.renderedHierarchy) {
+            this.createHierarchy();
+            this.renderedHierarchy = true;
+        }
     }
 }

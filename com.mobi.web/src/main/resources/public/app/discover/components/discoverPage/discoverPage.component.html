@@ -21,10 +21,10 @@
   #L%
   -->
 <div class="discover clearfix h-100">
-    <mat-tab-group dynamicHeight="true" mat-align-tabs="center" class="h-100" [(selectedIndex)]="state.tabIndex">
-        <mat-tab label="Explore">
-            <ng-template matTabContent>
-                <explore-tab></explore-tab>
+    <mat-tab-group id="tab-group" mat-align-tabs="center" class="h-100" [(selectedIndex)]="state.tabIndex">
+        <mat-tab class="h-100" label="Explore">
+            <ng-template class="h-100" matTabContent>
+                <explore-tab class="h-100"></explore-tab>
             </ng-template>
         </mat-tab>
         <mat-tab label="Query">

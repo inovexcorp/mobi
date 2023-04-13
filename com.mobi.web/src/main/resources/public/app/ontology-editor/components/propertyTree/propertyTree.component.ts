@@ -20,10 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Datasource, IDatasource } from 'ngx-ui-scroll';
 import { first } from 'rxjs/operators';
-import {every, filter, some, has, concat, map, merge, findIndex} from 'lodash';
-import { Component, EventEmitter, Input, OnInit, OnChanges, Output, OnDestroy, SimpleChanges } from '@angular/core';
+import { every, filter, some, has, concat, map, merge, findIndex } from 'lodash';
+import {
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    OnChanges,
+    Output,
+    OnDestroy,
+    SimpleChanges,
+    ViewChild,
+    AfterContentChecked,
+    AfterViewInit
+} from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { INDENT } from '../../../constants';
@@ -47,25 +58,14 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
     selector: 'property-tree',
     templateUrl: './propertyTree.component.html'
 })
-export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
+export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit, AfterContentChecked {
     @Input() datatypeProps;
     @Input() objectProps;
     @Input() annotationProps;
     @Input() index;
     @Input() branchId;
     @Output() updateSearch = new EventEmitter<string>();
-
-    datasource: IDatasource = new Datasource({
-        get: (index, count, success) => {
-            const data = this.filteredHierarchy.slice(index, index + count);
-            success(data);
-        },
-        settings: {
-            bufferSize: 35,
-            startIndex: 0,
-            minIndex: 0
-        }
-    });
+    @ViewChild('propertyVirtualScroll') virtualScroll;
 
     indent = INDENT;
     searchText = '';
@@ -80,11 +80,12 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
     activeEntityFilter;
     deprecatedEntityFilter;
     chunks = [];
+    visibleIndex = 0;
+    renderedHierarchy = false;
 
     constructor(public os: OntologyStateService, private util: UtilService) {}
 
     ngOnInit(): void {
-
         this.activeEntityFilter = {
             name: 'Hide unused imports',
             checked: false,
@@ -115,6 +116,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.activeTab = this.os.getActiveKey();
         this.flatPropertyTree = this.constructFlatPropertyTree();
         setTimeout( () => {
+            this.renderedHierarchy = false;
             this.update();
         }, 500);
     }
@@ -125,9 +127,21 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
             }
             this.flatPropertyTree = this.constructFlatPropertyTree();
             setTimeout( () => {
+                this.renderedHierarchy = false;
                 this.update();
             }, 500);
         }
+    }
+    ngAfterContentChecked(): void {
+        if (this.filteredHierarchy.length == this.virtualScroll?.getDataLength() && !this.renderedHierarchy) {
+            this.createHierarchy();
+            this.renderedHierarchy = true;
+        }
+    }
+    ngAfterViewInit(): void {
+        this.virtualScroll?.scrolledIndexChange.subscribe(index => {
+            this.visibleIndex = index;
+        });
     }
     ngOnDestroy(): void {
         if (this.os.listItem?.editorTabStates) {
@@ -141,6 +155,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.filterText = this.searchText;
         this.dropdownFilterActive = some(this.dropdownFilters, 'flag');
         setTimeout( () => {
+            this.renderedHierarchy = false;
             this.update();
         }, 500);
     }
@@ -153,7 +168,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
             this.os.listItem.editorTabStates[this.activeTab].open[node.title] = node.isOpened;
         }
         this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this));
-        this.datasource.adapter.reload(this.datasource.adapter.firstVisible.$index);
+        this.virtualScroll?.scrollToIndex(this.visibleIndex);
     }
     matchesSearchFilter(node: HierarchyNode): boolean {
         let searchMatch = false;
@@ -273,19 +288,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
         this.preFilteredHierarchy = this.flatPropertyTree.filter(this.searchFilter.bind(this));
         this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
         this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
-        let selectedIndex;
-        if (this.os.listItem.selected) {
-            selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
-                if (entity.entityIRI === this.os.listItem.selected['@id']) {
-                    return true;
-                } else {
-                    return false;
-                }
-            });
-            selectedIndex < 0 ? this.datasource.adapter.reload(0) : this.datasource.adapter.reload(selectedIndex);
-        } else {
-            this.datasource.adapter.reload(this.index);
-        }
+        this.createHierarchy();
     }
     private addGetToArrayItems(array, get) {
         return map(array, item => merge(item, {get}));
@@ -330,5 +333,20 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy {
     }
     updateDropdownFilters(value): void {
         this.dropdownFilters = value;
+    }
+    private createHierarchy():void {
+        let selectedIndex;
+        if (this.os.listItem.selected) {
+            selectedIndex = findIndex(this.filteredHierarchy, (entity) => {
+                if (entity.entityIRI === this.os.listItem.selected['@id']) {
+                    return true
+                } else {
+                    return false;
+                }
+            });
+            selectedIndex < 0 ? this.virtualScroll?.scrollToIndex(0) : this.virtualScroll?.scrollToIndex(selectedIndex);
+        } else {
+            this.virtualScroll?.scrollToIndex(this.index);
+        }
     }
 }

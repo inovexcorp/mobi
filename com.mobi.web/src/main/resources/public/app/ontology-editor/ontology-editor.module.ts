@@ -105,6 +105,7 @@ import { VisualizationTabComponent } from './components/visualizationTab/visuali
 import { OntologyVisualizationModule } from '../ontology-visualization/ontologyVisualization.module';
 import { MergeBlockComponent } from './components/mergeBlock/mergeBlock.component';
 import { MergeTabComponent } from './components/mergeTab/mergeTab.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 /**
  * @namespace ontology-editor
@@ -116,6 +117,7 @@ import { MergeTabComponent } from './components/mergeTab/mergeTab.component';
     imports: [
         SharedModule,
         OntologyVisualizationModule,
+        ScrollingModule,
     ],
     declarations: [
         AdvancedLanguageSelectComponent,

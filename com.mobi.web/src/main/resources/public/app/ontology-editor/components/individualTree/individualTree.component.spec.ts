@@ -39,6 +39,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 import { UtilService } from '../../../shared/services/util.service';
 import { IndividualTreeComponent } from './individualTree.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 describe('Individual Tree component', function() {
     let component: IndividualTreeComponent;
@@ -50,7 +51,7 @@ describe('Individual Tree component', function() {
     
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, ScrollingModule ],
             declarations: [
                 IndividualTreeComponent,
                 MockComponent(HierarchyFilterComponent),
@@ -161,9 +162,9 @@ describe('Individual Tree component', function() {
     });
 
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            spyOn(component, 'isShown').and.returnValue(true);
+        beforeEach(async function() {
             fixture.detectChanges();
+            await fixture.whenStable();
         });
         it('with wrapping containers', function() {
             expect(element.queryAll(By.css('.tree')).length).toEqual(1);
@@ -175,7 +176,7 @@ describe('Individual Tree component', function() {
         it('with tree-items', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(element.queryAll(By.css('.tree-item')).length).toEqual(1);
+            expect(element.queryAll(By.css('.tree-item')).length).toEqual(2);
         });
         it('with a .tree-item-wrapper', async function() {
             fixture.detectChanges();

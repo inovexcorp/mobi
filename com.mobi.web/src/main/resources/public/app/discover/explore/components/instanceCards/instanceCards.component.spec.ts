@@ -43,6 +43,7 @@ import { ConfirmModalComponent } from '../../../../shared/components/confirmModa
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
 import { UtilService } from '../../../../shared/services/util.service';
 import { InstanceCardsComponent } from './instanceCards.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 describe('Instance Cards component', function() {
     let component: InstanceCardsComponent;
@@ -94,7 +95,7 @@ describe('Instance Cards component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, ScrollingModule ],
             declarations: [
                 InstanceCardsComponent,
                 MockComponent(InstanceFormComponent)
@@ -150,36 +151,6 @@ describe('Instance Cards component', function() {
         };
 
        discoverStateStub.explore.recordId = 'recordId1';
-
-       const chunks = [[
-           {
-               classIRI: 'www.test3.com',
-               classDescription: 'test 3 desc',
-               instancesCount: 2,
-               classTitle: 'c',
-               ontologyRecordTitle: 'testOntology',
-               deprecated: false,
-               classExamples: ['test5', 'test6'],
-           },
-           {
-               classIRI: 'www.test2.com',
-               classDescription: 'test 4 desc',
-               instancesCount: 2,
-               classTitle: 'b',
-               ontologyRecordTitle: 'testOntology',
-               deprecated: false,
-               classExamples: ['test3', 'test4'],
-           },
-           {
-               classIRI: 'www.test1.com',
-               classDescription: 'test 1 desc',
-               instancesCount: 1,
-               classTitle: 'a',
-               ontologyRecordTitle: 'testOntology',
-               deprecated: false,
-               classExamples: ['test1', 'test2'],
-           }
-       ]];
     });
 
     afterEach(function() {
@@ -194,8 +165,11 @@ describe('Instance Cards component', function() {
     });
 
     describe('contains the correct html', function() {
+        beforeEach(async function() {
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
         it('for wrapping containers', async () =>  {
-            component.ngOnInit();
             fixture.detectChanges();
             await fixture.whenStable();
             expect(element.queryAll(By.css('.instance-cards')).length).toEqual(1);
@@ -205,7 +179,6 @@ describe('Instance Cards component', function() {
         });
     });
     it('properly defines controller.chunks on load', async function() {
-        component.ngOnInit();
         fixture.detectChanges();
         await fixture.whenStable();
         expect(component.chunks.length).toEqual(1);
@@ -216,12 +189,6 @@ describe('Instance Cards component', function() {
         describe('view should set the correct variables', function() {
             describe('when getInstance is resolved and getReferencedTitles is', function() {
                 beforeEach(function() {
-
-                     const response = {
-                         body: data,
-                         header: new HttpHeaders({'x-total-count': ''})
-                     };
-
                     discoverStateStub.explore.breadcrumbs = ['', ''];
                     exploreServiceStub.getInstance.and.returnValue(of(responseBody));
                 });

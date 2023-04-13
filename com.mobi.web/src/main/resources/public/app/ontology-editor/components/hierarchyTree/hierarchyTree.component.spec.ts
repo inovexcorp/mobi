@@ -39,6 +39,7 @@ import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 import { UtilService } from '../../../shared/services/util.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { HierarchyTreeComponent } from './hierarchyTree.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 describe('Hierarchy Tree component', function() {
     let component: HierarchyTreeComponent;
@@ -49,7 +50,7 @@ describe('Hierarchy Tree component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [ SharedModule, ScrollingModule ],
             declarations: [
                 HierarchyTreeComponent,
                 MockComponent(TreeItemComponent),
@@ -122,9 +123,9 @@ describe('Hierarchy Tree component', function() {
     });
 
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            spyOn(component, 'isShown').and.returnValue(true);
+        beforeEach(async function() {
             fixture.detectChanges();
+            await fixture.whenStable();
         });
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.hierarchy-tree')).length).toEqual(1);
@@ -135,12 +136,12 @@ describe('Hierarchy Tree component', function() {
         it('based on tree-items', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(element.queryAll(By.css('tree-item')).length).toEqual(3);
+            expect(element.queryAll(By.css('tree-item')).length).toEqual(2);
         });
         it('based on .tree-item-wrapper', async function() {
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(3);
+            expect(element.queryAll(By.css('.tree-item-wrapper')).length).toEqual(2);
         });
     });
     describe('controller methods', function() {

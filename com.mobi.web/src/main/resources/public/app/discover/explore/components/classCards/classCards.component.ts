@@ -20,9 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, ViewChild } from '@angular/core';
 import { merge, chunk, orderBy } from 'lodash';
-import { Datasource, IDatasource } from 'ngx-ui-scroll';
 
 import { POLICY } from '../../../../prefixes';
 import { ExploreService } from '../../../services/explore.service';
@@ -46,23 +45,16 @@ import { UtilService } from '../../../../shared/services/util.service';
 })
 export class ClassCardsComponent implements OnChanges {
     @Input() classDetails: ClassDetails[];
+    @ViewChild('classVirtualScroll') virtualScroll;
 
     chunks: ClassDetails[][] = [];
-    datasource: IDatasource = new Datasource({
-        get: (index, count, success) => {
-            // Index seems to start at 1 instead of 0
-            const data = this.chunks.slice(index - 1, (index - 1) + count);
-            success(data);
-        }
-    });
 
     constructor(private state: DiscoverStateService, private es: ExploreService, private pep: PolicyEnforcementService,
         private util: UtilService) {}
 
     ngOnChanges(): void {
         this.chunks = this._getChunks(this.classDetails);
-        const index = this.datasource.adapter.firstVisible.$index ? this.datasource.adapter.firstVisible.$index : this.datasource.adapter.lastVisible.$index;
-        this.datasource.adapter.reload(index);
+        this.virtualScroll?.scrollToIndex(0);
     }
     exploreData(item: ClassDetails): void {
         const pepRequest = {

@@ -24,6 +24,8 @@
 @import "../../../../css/variables";
 
 .instance-cards {
+    min-height: 1px;
+    height: 100%;
     .row {
         margin: 0;
         padding-left: 7.5px;
