@@ -13,6 +13,7 @@ WHERE {
 
     %RECORDS_FILTER%
     %KEYWORDS_FILTER%
+    %CREATORS_FILTER%
     FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord,
         mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
     FILTER EXISTS { ?record a ?type_filter . }

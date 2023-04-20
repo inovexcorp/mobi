@@ -305,7 +305,8 @@ describe('Catalog Manager service', function() {
                 ascending: true,
                 type: CATALOG + 'Record',
                 searchText: 'Text',
-                keywords: ['A', 'B']
+                keywords: ['A', 'B'],
+                creators: ['urn:userA', 'urn:userB'],
             };
             service.sortOptions = [sortOption];
         });
@@ -330,6 +331,7 @@ describe('Catalog Manager service', function() {
                     expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
                     expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
                     expect(request.request.params.getAll('keywords')).toEqual(this.config.keywords);
+                    expect(request.request.params.getAll('creators')).toEqual(this.config.creators);
                     expect(request.request.params.get('type')).toEqual(this.config.type);
                     expect(request.request.params.get('sort')).toEqual(this.config.sort);
                     expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
@@ -346,6 +348,7 @@ describe('Catalog Manager service', function() {
                     expect(request.request.params.get('offset')).toBeNull();
                     expect(request.request.params.get('searchText')).toBeNull();
                     expect(request.request.params.get('keywords')).toBeNull();
+                    expect(request.request.params.get('creators')).toBeNull();
                     expect(request.request.params.get('type')).toBeNull();
                     expect(request.request.params.get('sort')).toEqual(sortOption.field);
                     expect(request.request.params.get('ascending')).toEqual('' + sortOption.asc);
@@ -364,6 +367,7 @@ describe('Catalog Manager service', function() {
                     expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
                     expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
                     expect(request.request.params.getAll('keywords')).toEqual(this.config.keywords);
+                    expect(request.request.params.getAll('creators')).toEqual(this.config.creators);
                     expect(request.request.params.get('type')).toEqual(this.config.type);
                     expect(request.request.params.get('sort')).toEqual(this.config.sort);
                     expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);

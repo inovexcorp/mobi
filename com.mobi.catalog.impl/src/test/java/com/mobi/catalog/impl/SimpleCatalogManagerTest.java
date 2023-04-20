@@ -349,6 +349,25 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testFindRecordsReturnsCorrectDataCreatorFirstPage() throws Exception {
+        // Setup:
+        int limit = 1;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .limit(limit)
+                .offset(offset).creators(Collections.singletonList(USER_IRI)).build();
+
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
     public void testFindRecordsReturnsCorrectDataSecondPage() throws Exception {
         // Setup:
         int limit = 1;
@@ -373,6 +392,25 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
                 .limit(limit)
                 .offset(offset).keywords(Collections.singletonList("111")).build();
+
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(2, records.getPageNumber());
+    }
+
+    @Test
+    public void testFindRecordsReturnsCorrectDataCreatorSecondPage() throws Exception {
+        // Setup:
+        int limit = 1;
+        int offset = 1;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .limit(limit)
+                .offset(offset).creators(Collections.singletonList(USER_IRI)).build();
 
         // when
         PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
@@ -550,6 +588,22 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testFindRecordsWithSearchTextCreator() throws Exception {
+        // given
+        int limit = 10;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset)
+                .searchText("Versioned").creators(Collections.singletonList(USER_IRI)).build();
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals(1, records.getTotalSize());
+        assertEquals(10, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
     public void testFindRecordWithEmptyRepository() throws Exception {
         // Setup:
         MemoryRepositoryWrapper repo2 = new MemoryRepositoryWrapper();
@@ -630,9 +684,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         String queryTest = "PREFIX mcat: <http://mobi.com/ontologies/catalog#>\n" +
                 "SELECT * WHERE { %KEYWORDS_FILTER% }".replace("%KEYWORDS_FILTER%", keywordFilterActual);
 
-        try(RepositoryConnection conn = repo.getConnection()) {
+        try (RepositoryConnection conn = repo.getConnection()) {
             conn.prepareTupleQuery(queryTest);
-        }catch(MalformedQueryException e){
+        } catch(MalformedQueryException e){
             fail("Query is Malformed: " + queryTest);
         }
     }
@@ -642,7 +696,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         String[] characters = new String[]{ "'", "~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_",
                 "=", "+", "[", "{", "]", "}", "\\", "|", ";", ":", ",", "<", ".", ">", "?"};
 
-        for(String character: characters){
+        for (String character: characters){
             PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
                     .searchText("searchText").limit(1).offset(2)
                     .keywords(Arrays.asList("111", "22,2", character)).build();
@@ -654,9 +708,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             String queryTest = "PREFIX mcat: <http://mobi.com/ontologies/catalog#>\n" +
                     "SELECT * WHERE { %KEYWORDS_FILTER% }".replace("%KEYWORDS_FILTER%", keywordFilterActual);
 
-            try(RepositoryConnection conn = repo.getConnection()) {
+            try (RepositoryConnection conn = repo.getConnection()) {
                 conn.prepareTupleQuery(queryTest);
-            }catch(MalformedQueryException e){
+            } catch(MalformedQueryException e){
                 fail("Query is Malformed: " + queryTest);
             }
         }
@@ -666,6 +720,27 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testEscapeKeywordComma() throws Exception {
         assertEquals("\\'", SimpleCatalogManager.escapeKeyword("'"));
         assertEquals("\\\\", SimpleCatalogManager.escapeKeyword("\\"));
+    }
+
+    /* findRecord - replaceCreatorFilter */
+    @Test
+    public void testReplaceCreatorFilter() throws Exception {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("searchText").limit(1).offset(2)
+                .creators(Arrays.asList(USER_IRI, vf.createIRI("http://mobi.com/ontologies/user/management#tester"))).build();
+
+        String keywordFilterExpect = "?record dc:publisher ?creator .\nFILTER(?creator IN (<" + USER_IRI + ">,<http://mobi.com/ontologies/user/management#tester>))";
+        String keywordFilterActual = SimpleCatalogManager.replaceCreatorFilter(searchParams, "%CREATORS_FILTER%");
+        assertEquals(keywordFilterExpect, keywordFilterActual);
+
+        String queryTest = "PREFIX dc: <http://purl.org/dc/terms/>\n" +
+                "SELECT * WHERE { %CREATORS_FILTER% }".replace("%CREATORS_FILTER%", keywordFilterActual);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.prepareTupleQuery(queryTest);
+        } catch(MalformedQueryException e){
+            fail("Query is Malformed: " + queryTest);
+        }
     }
 
     /* getKeywords */

@@ -266,8 +266,8 @@ public class SimpleCatalogManager implements CatalogManager {
         Optional<Resource> typeParam = searchParams.getTypeFilter();
         Optional<String> searchTextParam = searchParams.getSearchText();
 
-        String queryString = replaceRecordsFilter(new ArrayList<>(), replaceKeywordFilter(searchParams,
-                FIND_RECORDS_QUERY));
+        String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
+                replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY)));
 
         log.debug("Query String:\n" + queryString);
 
@@ -351,6 +351,8 @@ public class SimpleCatalogManager implements CatalogManager {
             String queryString = replaceKeywordFilter(searchParams,
                     FIND_RECORDS_QUERY + querySuffix.toString());
 
+            queryString = replaceCreatorFilter(searchParams, queryString);
+
             queryString = replaceRecordsFilter(viewableRecords, queryString);
 
             log.debug("Query String:\n" + queryString);
@@ -395,7 +397,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
             String queryStr = replaceRecordsFilter(new ArrayList<>(), COUNT_RECORDS_QUERY);
             // Get Total Count
-            TupleQuery countQuery = conn.prepareTupleQuery(replaceKeywordFilter(searchParams, queryStr));
+            TupleQuery countQuery = conn.prepareTupleQuery(replaceCreatorFilter(searchParams,
+                    replaceKeywordFilter(searchParams, queryStr)));
             countQuery.setBinding(CATALOG_BINDING, catalogId);
             typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
             searchTextParam.ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
@@ -440,8 +443,8 @@ public class SimpleCatalogManager implements CatalogManager {
             }
             querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
 
-            String queryString = replaceRecordsFilter(new ArrayList<>(), replaceKeywordFilter(searchParams,
-                    FIND_RECORDS_QUERY + querySuffix.toString()));
+            String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
+                    replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY + querySuffix.toString())));
 
             log.debug("Query String:\n" + queryString);
 
@@ -520,6 +523,22 @@ public class SimpleCatalogManager implements CatalogManager {
             queryString = queryString.replace("%KEYWORDS_FILTER%", keywordFilter.toString());
         } else {
             queryString = queryString.replace("%KEYWORDS_FILTER%", "");
+        }
+        return queryString;
+    }
+
+    public static String replaceCreatorFilter(PaginatedSearchParams searchParams, String queryString) {
+        if (searchParams.getCreators().isPresent() && !searchParams.getCreators().get().isEmpty()) {
+            StringBuilder creatorFilter = new StringBuilder();
+            creatorFilter.append("?record dc:publisher ?creator .\n");
+            creatorFilter.append("FILTER(?creator IN (");
+
+            String creators = searchParams.getCreators().get().stream()
+                    .map(iri -> "<" + iri + ">").collect(Collectors.joining(","));
+            creatorFilter.append(creators).append("))");
+            queryString = queryString.replace("%CREATORS_FILTER%", creatorFilter.toString());
+        } else {
+            queryString = queryString.replace("%CREATORS_FILTER%", "");
         }
         return queryString;
     }

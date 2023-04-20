@@ -40,6 +40,10 @@ import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { UtilService } from '../../../shared/services/util.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { DCTERMS } from '../../../prefixes';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { User } from '../../../shared/models/user.interface';
 import { RecordFiltersComponent } from './recordFilters.component';
 
 describe('Record Filters component', function() {
@@ -48,14 +52,26 @@ describe('Record Filters component', function() {
     let fixture: ComponentFixture<RecordFiltersComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let utilStub: jasmine.SpyObj<UtilService>;
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
 
     const catalogId = 'catalogId';
+    const keyword = 'keyword1';
+    const user: User = {
+      iri: 'urn:userA',
+      username: 'userA',
+      firstName: 'Joe',
+      lastName: 'Davis'
+    };
     const keywordObject = function(keyword, count): KeywordCount {
         return { 'http://mobi.com/ontologies/catalog#keyword': keyword, 'count': count };
     };
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
-    const records = [keywordObject('keyword1', 6)];
+    const records: JSONLDObject[] = [{
+      '@id': 'record1',
+      [DCTERMS + 'publisher']: [{'@id': user.iri}]
+    }];
+    const keywords = [keywordObject(keyword, 6)];
     
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -74,6 +90,7 @@ describe('Record Filters component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
+                MockProvider(UserManagerService),
                 MockProvider(UtilService),
             ],
         }).compileComponents();
@@ -81,17 +98,24 @@ describe('Record Filters component', function() {
         fixture = TestBed.createComponent(RecordFiltersComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         utilStub.getBeautifulIRI.and.callFake(a => a);
 
         catalogManagerStub.recordTypes = ['test1', 'test2'];
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
-        catalogManagerStub.getKeywords.and.returnValue(of(new HttpResponse<KeywordCount[]>({body: records, headers: new HttpHeaders(headers)})));
+        catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: records, headers: new HttpHeaders(headers)})));
+        catalogManagerStub.getKeywords.and.returnValue(of(new HttpResponse<KeywordCount[]>({body: keywords, headers: new HttpHeaders(headers)})));
+        
+        userManagerStub.users = [user];
+        userManagerStub.getUserDisplay.and.callFake(user => user.username);
+        userManagerStub.filterUsers.and.callFake((users) => users);
 
         component.catalogId = catalogId;
         component.recordType = 'test1';
-        component.keywordFilterList = ['keyword1'];
+        component.keywordFilterList = [keyword];
+        component.creatorFilterList = [user.iri];
     });
 
     afterEach(function() {
@@ -116,10 +140,18 @@ describe('Record Filters component', function() {
             expect(recordTypeFilter.title).toEqual('Record Type');
             expect(recordTypeFilter.filterItems).toEqual(expectedFilterItems);
         });
+        it('with creatorFilter', function() {
+          const creatorFilter = component.filters[1];
+          const expectedFilterItems = [
+              {value: { user, count: 1 }, checked: true},
+          ];
+          expect(creatorFilter.title).toEqual('Creators');
+          expect(creatorFilter.filterItems).toEqual(expectedFilterItems);
+      });
         it('with keywordsFilter', function() {
-            const keywordsFilter = component.filters[1];
+            const keywordsFilter = component.filters[2];
             const expectedFilterItems = [
-                {value: keywordObject('keyword1', 6), checked: true}
+                {value: keywordObject(keyword, 6), checked: true}
             ];
             expect(keywordsFilter.title).toEqual('Keywords');
             expect(keywordsFilter.filterItems).toEqual(expectedFilterItems);
@@ -133,43 +165,64 @@ describe('Record Filters component', function() {
             this.recordTypeFilter = component.filters[0];
             this.recordTypeFilter.filterItems = [this.firstRecordFilterItem, this.secondRecordFilterItem];
 
-            this.firstFilterItem = {value: keywordObject('keyword1', 6), checked: true};
-            this.secondFilterItem = {value: keywordObject('keyword2', 7), checked: true};
-            this.keywordsFilter = component.filters[1];
-            this.keywordsFilter.filterItems = [this.firstFilterItem, this.secondFilterItem];
+            this.firstCreatorFilterItem = {value: {user, count: 1}, checked: true};
+            this.secondCreatorFilterItem = {value: {user: {iri: 'urn:userB', username: 'userB', firstName: 'Jane', lastName: 'Davis'}, count: 10}, checked: true};
+            this.creatorTypeFilter = component.filters[1];
+            this.creatorTypeFilter.filterItems = [this.firstCreatorFilterItem, this.secondCreatorFilterItem];
+
+            this.firstKeywordFilterItem = {value: keywordObject(keyword, 6), checked: true};
+            this.secondKeywordFilterItem = {value: keywordObject('keyword2', 7), checked: true};
+            this.keywordsFilter = component.filters[2];
+            this.keywordsFilter.filterItems = [this.firstKeywordFilterItem, this.secondKeywordFilterItem];
             spyOn(component.changeFilter, 'emit');
         });
         describe('recordTypeFilter should filter records', function() {
             it('if the filter has been checked', function() {
                 this.recordTypeFilter.filter(this.firstRecordFilterItem);
                 expect(this.secondRecordFilterItem.checked).toEqual(false);
-                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: this.firstRecordFilterItem.value, keywordFilterList: ['keyword1']});
+                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: this.firstRecordFilterItem.value, keywordFilterList: [keyword], creatorFilterList: [user.iri]});
             });
             it('if the filter has been unchecked', function() {
                 this.firstRecordFilterItem.checked = false;
                 component.recordType = this.firstRecordFilterItem.value;
                 this.recordTypeFilter.filter(this.firstRecordFilterItem);
-                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: '', keywordFilterList: ['keyword1']});
+                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: '', keywordFilterList: [keyword], creatorFilterList: [user.iri]});
             });
         });
         it('recordTypeFilter filter text method returns correctly', function() {
             expect(this.recordTypeFilter.getItemText(this.firstRecordFilterItem)).toEqual('test1');
         });
+        describe('creatorTypeFilter should filter records', function() {
+          it('if the filter has been checked', function() {
+              this.creatorTypeFilter.filter(this.firstCreatorFilterItem);
+              expect(this.secondCreatorFilterItem.checked).toEqual(true);
+              expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: 'test1', keywordFilterList: [keyword], creatorFilterList: [user.iri, 'urn:userB']});
+          });
+          it('if the filter has been unchecked', function() {
+              this.firstCreatorFilterItem.checked = false;
+              component.creatorFilterList = [];
+              this.creatorTypeFilter.filter(this.firstRecordFilterItem);
+              expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: 'test1', keywordFilterList: [keyword], creatorFilterList: ['urn:userB']});
+          });
+      });
+      it('creatorTypeFilter filter text method returns correctly', function() {
+          expect(this.creatorTypeFilter.getItemText(this.firstCreatorFilterItem)).toEqual('userA (1)');
+      });
         describe('keywordsFilter should filter records', function() {
             it('if the keyword filter has been checked', function() {
                 this.keywordsFilter.filter(this.firstFilter);
-                expect(this.secondFilterItem.checked).toEqual(true);
-                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: 'test1', keywordFilterList: [ 'keyword1', 'keyword2' ]});
+                expect(this.secondKeywordFilterItem.checked).toEqual(true);
+                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: 'test1', keywordFilterList: [ keyword, 'keyword2' ], creatorFilterList: [user.iri]});
             });
             it('if the keyword filter has been unchecked', function() {
-                this.firstFilterItem.checked = false;
+                this.firstKeywordFilterItem.checked = false;
                 component.keywordFilterList = [];
-                this.keywordsFilter.filter(this.firstFilter);
-                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: 'test1', keywordFilterList: [ 'keyword2' ]});
+                this.keywordsFilter.filter(this.firstKeywordFilterItem);
+                expect(component.changeFilter.emit).toHaveBeenCalledWith({recordType: 'test1', keywordFilterList: [ 'keyword2' ], creatorFilterList: [user.iri]});
             });
         });
         it('keywordsFilter filter text method returns correctly', function() {
-            expect(this.keywordsFilter.getItemText(this.firstFilterItem)).toEqual('keyword1 (6)');
+            expect(this.keywordsFilter.getItemText(this.firstKeywordFilterItem)).toEqual(`${keyword} (6)`);
         });
     });
     describe('contains the correct html', function() {
@@ -189,7 +242,7 @@ describe('Record Filters component', function() {
             component.ngOnInit();
             fixture.detectChanges();
             expect(element.queryAll(By.css('.record-filters')).length).toEqual(1);
-            const expectedHtmlResults = [[ 'Record Type', 'test1,test2', 0, 0 ], [ 'Keywords', 'keyword1 (6)', 1, 1 ]];
+            const expectedHtmlResults = [[ 'Record Type', 'test1,test2', 0, 0 ], [ 'Creators', `${user.username} (1)`, 1, 0 ], [ 'Keywords', `${keyword} (6)`, 1, 1 ]];
             expect(this.getHtmlResults(this)).toEqual(expectedHtmlResults);
         });
     });

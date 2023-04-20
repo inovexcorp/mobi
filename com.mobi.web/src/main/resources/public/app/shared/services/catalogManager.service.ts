@@ -224,7 +224,10 @@ export class CatalogManagerService {
             params.type = paginatedConfig.type;
         }
         if (get(paginatedConfig, 'keywords')) {
-           params.keywords = paginatedConfig.keywords;
+            params.keywords = paginatedConfig.keywords;
+        }
+        if (get(paginatedConfig, 'creators')) {
+            params.creators = paginatedConfig.creators;
         }
         const url = this.prefix + '/' + encodeURIComponent(catalogId) + '/records';
         const request =  this.http.get<JSONLDObject[]>(url, {params: this.util.createHttpParams(params), observe: 'response'})

@@ -77,10 +77,21 @@ export class CatalogStateService {
      */
     keywordFilterList = [];
     /**
-     * `keywordSearchText` holds a keyword search string {@link catalog.RecordsViewComponent}.
+     * `keywordSearchText` holds a keyword search string for {@link catalog.RecordsViewComponent}.
      * @type {string}
      */
     keywordSearchText = '';
+    /**
+     * `creatorFilterList` holds a list of User IRI string values to be used to filter the results in the
+     * {@link catalog.RecordsViewComponent}.
+     * @type {string[]}
+     */
+    creatorFilterList = [];
+    /**
+     * `creatorSearchText` holds a creator search string for {@link catalog.RecordsViewComponent}.
+     * @type {string}
+     */
+    creatorSearchText = '';
     /**
      * `recordSearchText` holds a search text to be used when retrieving catalog Records in the
      * {@link catalog.RecordsViewComponent}.
@@ -154,6 +165,9 @@ export class CatalogStateService {
         this.currentRecordPage = 1;
         this.recordFilterType = '';
         this.keywordFilterList = [];
+        this.keywordSearchText = '';
+        this.creatorFilterList = [];
+        this.creatorSearchText = '';
         this.recordSearchText = '';
         this.initializeRecordSortOption();
         this.selectedRecord = undefined;

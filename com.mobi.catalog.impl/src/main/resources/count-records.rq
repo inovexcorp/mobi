@@ -1,3 +1,4 @@
+PREFIX dc: <http://purl.org/dc/terms/>
 PREFIX mcat: <http://mobi.com/ontologies/catalog#>
 PREFIX dataset: <http://mobi.com/ontologies/dataset#>
 
@@ -10,6 +11,7 @@ WHERE {
 
     %RECORDS_FILTER%
     %KEYWORDS_FILTER%
+    %CREATORS_FILTER%
     FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord,
         mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
     FILTER EXISTS { ?record a ?type_filter . }

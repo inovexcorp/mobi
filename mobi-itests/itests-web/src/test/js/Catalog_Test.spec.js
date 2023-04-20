@@ -68,7 +68,7 @@ CatalogPage.prototype.getAllElementsTextValues = function(browser, selector, tar
 CatalogPage.prototype.createRecordFiltersXPathSelector = function(filterTypeHeader, filterType) {
     var selectors = ['//catalog-page',
         '//records-view//record-filters//div[contains(@class, "record-filters")]//mat-expansion-panel-header',
-        '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::div[contains(@class, "record-filters")]',
+        '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
         '//div[contains(@class, "mat-expansion-panel-content")]',
         '//div[contains(@class, "filter-option")]//mat-checkbox']
     if (filterType) {
@@ -138,7 +138,7 @@ CatalogPage.prototype.leaveCatalogRecord = function(browser) {
 CatalogPage.prototype.verifyRecordFilters = function(browser, noKeywords) {
     var cp = this;
     browser.expect.element(this.recordFiltersCssSelector).to.be.present;
-    browser.expect.elements(this.recordFiltersCssSelector + ' div.record-filters mat-expansion-panel-header mat-panel-title').count.to.equal(2);
+    browser.expect.elements(this.recordFiltersCssSelector + ' div.record-filters mat-expansion-panel-header mat-panel-title').count.to.equal(3);
 
     CatalogPage.prototype.getAllElementsTextValues(browser, 'xpath', this.createRecordFiltersXPathSelector('Record Type'))
         .then(function(values) {
@@ -148,7 +148,7 @@ CatalogPage.prototype.verifyRecordFilters = function(browser, noKeywords) {
 
     CatalogPage.prototype.getAllElementsTextValues(browser, 'css selector', this.recordFiltersCssSelector + ' mat-panel-title')
         .then(function(values) {
-            browser.assert.equal(values, 'Record Type,Keywords')
+            browser.assert.equal(values, 'Record Type,Creators,Keywords')
         });
 
     if (noKeywords) {
