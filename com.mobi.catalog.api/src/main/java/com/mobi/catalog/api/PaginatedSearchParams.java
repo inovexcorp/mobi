@@ -34,18 +34,20 @@ import java.util.Optional;
  * optional ascending parameters.
  */
 public class PaginatedSearchParams {
-    private String searchText;
-    private Resource typeFilter;
-    private List<String> keywords;
-    private Resource sortBy;
-    private Boolean ascending;
-    private Integer limit;
-    private int offset;
+    private final String searchText;
+    private final Resource typeFilter;
+    private final List<Resource> creators;
+    private final List<String> keywords;
+    private final Resource sortBy;
+    private final Boolean ascending;
+    private final Integer limit;
+    private final int offset;
 
     private PaginatedSearchParams(Builder builder) {
         this.searchText = builder.searchText;
         this.typeFilter = builder.typeFilter;
         this.keywords = builder.keywords;
+        this.creators = builder.creators;
         this.sortBy = builder.sortBy;
         this.ascending = builder.ascending;
         this.limit = builder.limit;
@@ -62,6 +64,10 @@ public class PaginatedSearchParams {
 
     public Optional<List<String>> getKeywords() {
         return Optional.ofNullable(keywords);
+    }
+
+    public Optional<List<Resource>> getCreators() {
+        return Optional.ofNullable(creators);
     }
 
     public Optional<Resource> getSortBy() {
@@ -87,6 +93,7 @@ public class PaginatedSearchParams {
         private String searchText = null;
         private Resource typeFilter = null;
         private List<String> keywords = null;
+        private List<Resource> creators = null;
         private Boolean ascending = null;
 
         public Builder() {}
@@ -121,6 +128,11 @@ public class PaginatedSearchParams {
             return this;
         }
 
+        public Builder creators(List<Resource> creators) {
+            this.creators = creators;
+            return this;
+        }
+
         public Builder ascending(boolean val) {
             this.ascending = val;
             return this;
@@ -133,30 +145,35 @@ public class PaginatedSearchParams {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
         PaginatedSearchParams otherObject = (PaginatedSearchParams) other;
-        return offset == otherObject.offset && Objects.equals(searchText, otherObject.searchText) &&
-                Objects.equals(typeFilter, otherObject.typeFilter) && Objects.equals(keywords, otherObject.keywords) &&
-                Objects.equals(sortBy, otherObject.sortBy) && Objects.equals(ascending, otherObject.ascending) &&
-                Objects.equals(limit, otherObject.limit);
+        return offset == otherObject.offset && Objects.equals(searchText, otherObject.searchText)
+                && Objects.equals(typeFilter, otherObject.typeFilter) && Objects.equals(keywords, otherObject.keywords)
+                && Objects.equals(creators, otherObject.creators) && Objects.equals(sortBy, otherObject.sortBy)
+                && Objects.equals(ascending, otherObject.ascending) && Objects.equals(limit, otherObject.limit);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(searchText, typeFilter, keywords, sortBy, ascending, limit, offset);
+        return Objects.hash(searchText, typeFilter, keywords, creators, sortBy, ascending, limit, offset);
     }
 
     @Override
     public String toString() {
-        return "PaginatedSearchParams{" +
-                "searchText='" + searchText + '\'' +
-                ", typeFilter=" + typeFilter +
-                ", keywords=" + keywords +
-                ", sortBy=" + sortBy +
-                ", ascending=" + ascending +
-                ", limit=" + limit +
-                ", offset=" + offset +
-                '}';
+        return "PaginatedSearchParams{"
+                + "searchText='" + searchText + '\''
+                + ", typeFilter=" + typeFilter
+                + ", keywords=" + keywords
+                + ", creators=" + creators
+                + ", sortBy=" + sortBy
+                + ", ascending=" + ascending
+                + ", limit=" + limit
+                + ", offset=" + offset
+                + '}';
     }
 }

@@ -68,6 +68,10 @@ describe('Catalog State service', function() {
         service.currentRecordPage = 10;
         service.recordFilterType = 'test';
         service.recordSearchText = 'test';
+        service.keywordFilterList = ['keyword1'];
+        service.keywordSearchText = 'key';
+        service.creatorFilterList = ['urn:userA'];
+        service.creatorSearchText = 'user';
         service.selectedRecord = {'@id': ''};
         service.reset();
         expect(service.totalRecordSize).toEqual(0);
@@ -75,6 +79,10 @@ describe('Catalog State service', function() {
         expect(service.initializeRecordSortOption).toHaveBeenCalledWith();
         expect(service.recordFilterType).toEqual('');
         expect(service.recordSearchText).toEqual('');
+        expect(service.keywordFilterList).toEqual([]);
+        expect(service.keywordSearchText).toEqual('');
+        expect(service.creatorFilterList).toEqual([]);
+        expect(service.creatorSearchText).toEqual('');
         expect(service.selectedRecord).toBeUndefined();
     });
     describe('should retrieve record type for a record', function() {

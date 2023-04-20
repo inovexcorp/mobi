@@ -55,44 +55,51 @@ export class RecordsViewComponent implements OnInit {
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
         this.state.currentRecordPage = 0;
-        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, this.state.recordSortOption);
+        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+          this.state.creatorFilterList, this.state.recordSortOption);
     }
     openRecord(record: JSONLDObject): void {
         this.state.selectedRecord = record;
     }
     changeSort(): void {
         this.state.currentRecordPage = 0;
-        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, this.state.recordSortOption);
+        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+          this.state.creatorFilterList, this.state.recordSortOption);
     }
-    changeFilter(changeDetails: {recordType: string, keywordFilterList: string[]}): void {
+    changeFilter(changeDetails: {recordType: string, keywordFilterList: string[], creatorFilterList: string[]}): void {
         this.state.currentRecordPage = 0;
-        this.setRecords(this.state.recordSearchText, changeDetails.recordType, changeDetails.keywordFilterList, this.state.recordSortOption);
+        this.setRecords(this.state.recordSearchText, changeDetails.recordType, changeDetails.keywordFilterList, 
+          changeDetails.creatorFilterList, this.state.recordSortOption);
     }
     searchRecords(): void {
         this.search(this.state.recordSearchText);
     }
     search(searchText: string): void {
         this.state.currentRecordPage = 0;
-        this.setRecords(searchText, this.state.recordFilterType, this.state.keywordFilterList, this.state.recordSortOption);
+        this.setRecords(searchText, this.state.recordFilterType, this.state.keywordFilterList, 
+          this.state.creatorFilterList, this.state.recordSortOption);
     }
     getRecordPage(pageEvent: PageEvent): void {
         this.state.currentRecordPage = pageEvent.pageIndex;
-        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, this.state.recordSortOption);
-    }
-    setRecords(searchText: string, recordType: string, keywordFilterList: string[], sortOption: SortOption): void {
+        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+          this.state.creatorFilterList, this.state.recordSortOption);
+      }
+    setRecords(searchText: string, recordType: string, keywordFilterList: string[], creatorFilterList: string[], sortOption: SortOption): void {
         const paginatedConfig: PaginatedConfig = {
             pageIndex: this.state.currentRecordPage,
             limit: this.state.recordLimit,
             sortOption,
             type: recordType,
             searchText,
-            keywords: keywordFilterList
+            keywords: keywordFilterList,
+            creators: creatorFilterList,
         };
 
         this.cm.getRecords(this.catalogId, paginatedConfig)
             .subscribe((response: HttpResponse<JSONLDObject[]>) => {
                 this.state.recordFilterType = recordType;
                 this.state.keywordFilterList = keywordFilterList;
+                this.state.creatorFilterList = creatorFilterList;
                 this.state.recordSearchText = searchText;
                 this.state.recordSortOption = sortOption;
                 this.records = response.body;

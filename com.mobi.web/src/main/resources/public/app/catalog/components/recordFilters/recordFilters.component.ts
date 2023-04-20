@@ -24,7 +24,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { forEach, map, filter, includes} from 'lodash';
 
-import { CATALOG } from '../../../prefixes';
+import { CATALOG, DCTERMS } from '../../../prefixes';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
@@ -32,6 +32,7 @@ import { UtilService } from '../../../shared/services/util.service';
 import { FilterItem } from '../../models/filterItem.interface';
 import { RecordFilter } from '../../models/recordFilter.interface';
 import { SearchableRecordFilter } from '../../models/searchableRecordFilter.interface';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 /**
  * @class catalog.RecordFiltersComponent
@@ -49,6 +50,7 @@ import { SearchableRecordFilter } from '../../models/searchableRecordFilter.inte
  * `keywordFilterList` binding.
  * @param {string} recordType The selected record type filter. Should be a catalog Record type string.
  * @param {string[]} keywordFilterList The selected keywords list for filter. Should be a list of strings.
+ * @param {string[]} creatorFilterList The selected creators list for filter. Should be a list of IRI strings.
  * @param {string} catalogId The catalog ID.
  */
 @Component({
@@ -59,12 +61,14 @@ import { SearchableRecordFilter } from '../../models/searchableRecordFilter.inte
 export class RecordFiltersComponent implements OnInit {
     filters: RecordFilter[] = [];
 
-    @Input() recordType: string;
     @Input() catalogId: string;
+    @Input() recordType: string;
     @Input() keywordFilterList: string[];
-    @Output() changeFilter = new EventEmitter<{recordType: string, keywordFilterList: string[]}>();
+    @Input() creatorFilterList: string[];
+    @Output() changeFilter = new EventEmitter<{recordType: string, keywordFilterList: string[], creatorFilterList: string[]}>();
 
-    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public util: UtilService) {}
+    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public util: UtilService, 
+      private _um: UserManagerService) {}
 
     ngOnInit(): void {
         const componentContext = this;
@@ -93,12 +97,78 @@ export class RecordFiltersComponent implements OnInit {
                             typeFilter.checked = false;
                         }
                     });
-                    componentContext.changeFilter.emit({recordType: filterItem.value, keywordFilterList: componentContext.keywordFilterList});
+                    componentContext.changeFilter.emit({recordType: filterItem.value, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList});
                 } else {
                     if (componentContext.recordType === filterItem.value) {
-                        componentContext.changeFilter.emit({recordType: '', keywordFilterList: componentContext.keywordFilterList});
+                        componentContext.changeFilter.emit({recordType: '', keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList});
                     }
                 }
+            }
+        };
+
+        const creatorFilter: SearchableRecordFilter = {
+            title: 'Creators',
+            hide: false,
+            pageable: true,
+            searchable: true,
+            pagingData: {
+              limit: 10,
+              totalSize: 0,
+              currentPage: 1,
+              hasNextPage: false
+            },
+            rawFilterItems: [],
+            filterItems: [],
+            onInit: function() {
+                this.setFilterItems();
+            },
+            searchModel: componentContext.state.creatorSearchText,
+            searchChanged: function(value: string){
+                componentContext.state.creatorSearchText = value;
+            },
+            searchSubmitted: function() {
+                this.pagingData['totalSize'] = 0;
+                this.pagingData['currentPage'] = 1;
+                this.pagingData['hasNextPage'] = false;
+                this.nextPage();
+            },
+            nextPage: function() {
+                const filtered = componentContext._um.filterUsers(this.rawFilterItems.map(item => item.value.user), componentContext.state.creatorSearchText);
+                this.pagingData['totalSize'] = filtered.length;
+
+                const offset = this.pagingData.limit * (this.pagingData.currentPage - 1);
+                this.filterItems = filtered.slice(0, offset + this.pagingData.limit).map(user => this.rawFilterItems.find(item => user === item.value.user));
+                this.pagingData['hasNextPage'] = filtered.length > this.filterItems.length;
+            },
+            getItemText: function(filterItem: FilterItem) {
+                const userDisplay = componentContext._um.getUserDisplay(filterItem.value['user']);
+                const count = filterItem.value['count'];
+                return `${userDisplay} (${count})`;
+            },
+            setFilterItems: function() {
+                const filterInstance = this;
+                componentContext.cm.getRecords(componentContext.catalogId, {}).subscribe(response => {
+                    const userMap: {[key: string]: string[]} = {};
+                    response.body.forEach(record => {
+                        if (!userMap[record[DCTERMS + 'publisher'][0]['@id']]) {
+                            userMap[record[DCTERMS + 'publisher'][0]['@id']] = [];
+                        }
+                        userMap[record[DCTERMS + 'publisher'][0]['@id']].push(record['@id']);
+                    });
+                    filterInstance.rawFilterItems = Object.keys(userMap).map(userIri => ({
+                        value: {
+                            user: componentContext._um.users.find(user => user.iri === userIri),
+                            count: userMap[userIri].length
+                        },
+                        checked: componentContext.creatorFilterList.includes(userIri)
+                    })).sort((item1, item2) => item1.value.user.username.localeCompare(item2.value.user.username));
+                    filterInstance.nextPage();
+                });
+            },
+            filter: function() {
+                const checkedCreatorObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
+                const creators = map(checkedCreatorObjects, currentFilterItem => currentFilterItem.value['user'].iri);
+                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: creators});
             }
         };
 
@@ -162,16 +232,16 @@ export class RecordFiltersComponent implements OnInit {
                 const keywords = filter(componentContext.state.keywordFilterList, keyword => {
                     return this.filterItems.filter(currentFilterItem => currentFilterItem.value[CATALOG + 'keyword'].indexOf(keyword) !== -1).length;
                 });
-                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords});
+                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
             },
-            filter: function(filterItem: FilterItem) {
+            filter: function() {
                 const checkedKeywordObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
                 const keywords = map(checkedKeywordObjects, currentFilterItem => currentFilterItem.value[CATALOG + 'keyword']);
-                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords});
+                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
             }
         };
 
-        this.filters = [recordTypeFilter, keywordsFilter];
+        this.filters = [recordTypeFilter, creatorFilter, keywordsFilter];
         forEach(this.filters, filter => {
             if ('onInit' in filter) {
                 filter.onInit();

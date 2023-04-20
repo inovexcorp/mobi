@@ -119,7 +119,7 @@ describe('Records View component', function() {
         it('with the list of records', function() {
             spyOn(component, 'setRecords');
             component.ngOnInit();
-            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.recordSortOption);
+            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.creatorFilterList, catalogStateStub.recordSortOption);
             expect(catalogStateStub.currentRecordPage).toEqual(0);
         });
     });
@@ -133,13 +133,13 @@ describe('Records View component', function() {
             spyOn(component, 'setRecords');
             component.changeSort();
             expect(catalogStateStub.currentRecordPage).toEqual(0);
-            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, sortOption);
+            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.creatorFilterList, sortOption);
         });
         it('should change the filter', function() {
             spyOn(component, 'setRecords');
-            component.changeFilter({recordType: 'test', keywordFilterList: ['keyword1']});
+            component.changeFilter({recordType: 'test', keywordFilterList: ['keyword1'], creatorFilterList: ['urn:userA']});
             expect(catalogStateStub.currentRecordPage).toEqual(0);
-            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, 'test', ['keyword1'], catalogStateStub.recordSortOption);
+            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, 'test', ['keyword1'], ['urn:userA'], catalogStateStub.recordSortOption);
         });
         it('should search for records', function() {
             spyOn(component, 'search');
@@ -150,7 +150,7 @@ describe('Records View component', function() {
             spyOn(component, 'setRecords');
             component.search('test');
             expect(catalogStateStub.currentRecordPage).toEqual(0);
-            expect(component.setRecords).toHaveBeenCalledWith('test', catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.recordSortOption);
+            expect(component.setRecords).toHaveBeenCalledWith('test', catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.creatorFilterList, catalogStateStub.recordSortOption);
         });
         it('should get the provided page of records', function() {
             const event = new PageEvent();
@@ -158,7 +158,7 @@ describe('Records View component', function() {
             spyOn(component, 'setRecords');
             component.getRecordPage(event);
             expect(catalogStateStub.currentRecordPage).toEqual(10);
-            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.recordSortOption);
+            expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.creatorFilterList, catalogStateStub.recordSortOption);
         });
         describe('should set the list of records', function() {
             beforeEach(function() {
@@ -172,9 +172,10 @@ describe('Records View component', function() {
                 this.searchText = 'search';
                 this.recordType = 'type';
                 this.keywords = ['keyword1'];
+                this.creators = ['urn:userA'];
             });
             it('if getRecords resolves', fakeAsync(function() {
-                component.setRecords(this.searchText, this.recordType, this.keywords, sortOption);
+                component.setRecords(this.searchText, this.recordType, this.keywords, this.creators, sortOption);
                 tick();
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, {
                     pageIndex: catalogStateStub.currentRecordPage,
@@ -182,7 +183,8 @@ describe('Records View component', function() {
                     sortOption: sortOption,
                     type: this.recordType,
                     searchText: this.searchText,
-                    keywords: this.keywords
+                    keywords: this.keywords,
+                    creators: this.creators
                 });
                 expect(catalogStateStub.recordFilterType).toEqual(this.recordType);
                 expect(catalogStateStub.recordSearchText).toEqual(this.searchText);
@@ -193,7 +195,7 @@ describe('Records View component', function() {
             }));
             it('unless getRecords rejects', fakeAsync(function() {
                 catalogManagerStub.getRecords.and.returnValue(throwError('Error Message'));
-                component.setRecords(this.searchText, this.recordType, this.keywords, sortOption);
+                component.setRecords(this.searchText, this.recordType, this.keywords, this.creators, sortOption);
                 tick();
                 expect(catalogStateStub.recordFilterType).toEqual('');
                 expect(catalogStateStub.recordSearchText).toEqual('');

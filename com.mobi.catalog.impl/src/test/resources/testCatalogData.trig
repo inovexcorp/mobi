@@ -48,7 +48,7 @@ GRAPH records:record {
         dc:description "Description" ;
         dc:issued "2016-01-02T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-03T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher muser:tester .
+        dc:publisher <http://mobi.com/test#user> .
 }
 
 GRAPH records:unversioned-record {
@@ -90,7 +90,7 @@ GRAPH records:versioned-record {
         dc:description "Description" ;
         dc:issued "2017-03-03T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher muser:tester ;
+        dc:publisher <http://mobi.com/test#user> ;
         mcat:keyword "111" ;
         mcat:version versions:version ;
         mcat:version versions:latest-version ;

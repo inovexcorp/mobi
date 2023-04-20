@@ -582,6 +582,41 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
+    public void getRecordsWithCreatorsTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
+                .queryParam("sort", DCTERMS.TITLE.stringValue())
+                .queryParam("type", Record.TYPE)
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .queryParam("ascending", false)
+                .queryParam("searchText", "test")
+                .queryParam("creators", USER_IRI)
+                .queryParam("creators", "http://test.com/anotherUser")
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+
+        PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
+                .searchText("test")
+                .typeFilter(vf.createIRI("http://mobi.com/ontologies/catalog#Record"))
+                .creators(Stream.of(vf.createIRI(USER_IRI), vf.createIRI("http://test.com/anotherUser")).collect(Collectors.toList()))
+                .sortBy(vf.createIRI("http://purl.org/dc/terms/title"))
+                .offset(0)
+                .limit(10)
+                .ascending(false);
+
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user), eq(pdp));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), recordResults.getPage().size());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void getRecordsWithLinksTest() {
         // Setup:
         when(recordResults.getPageNumber()).thenReturn(1);

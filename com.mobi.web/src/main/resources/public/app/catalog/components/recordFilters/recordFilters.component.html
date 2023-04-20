@@ -35,7 +35,7 @@
                     <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
                 </div>
             </div>
-            <a *ngIf="currentFilter.pageable && currentFilter.pagingData.hasNextPage" (click)="currentFilter.nextPage()">
+            <a *ngIf="currentFilter.pageable && currentFilter.pagingData.hasNextPage" (click)="currentFilter.pagingData.currentPage = currentFilter.pagingData.currentPage + 1; currentFilter.nextPage()">
                 <i class="fa fa-fw fa-plus"></i><span>Load More</span>
             </a>
         </div>

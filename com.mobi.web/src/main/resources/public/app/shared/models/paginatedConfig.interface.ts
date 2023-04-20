@@ -34,5 +34,6 @@ export interface PaginatedConfig {
     sortOption?: SortOption,
     searchText?: string,
     type?: string,
-    keywords?: string[]
+    keywords?: string[],
+    creators?: string[],
 }

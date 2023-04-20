@@ -379,6 +379,8 @@ public class CatalogRest {
             @QueryParam("type") String recordType,
             @Parameter(description = "List of keywords", required = false)
             @QueryParam("keywords") List<String> keywords,
+            @Parameter(description = "List of creator IRIs", required = false)
+            @QueryParam("creators") List<String> creators,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page", required = true)
@@ -407,6 +409,9 @@ public class CatalogRest {
             }
             if (keywords != null && keywords.size() > 0) {
                 builder.keywords(keywords);
+            }
+            if (creators != null && creators.size() > 0) {
+                builder.creators(creators.stream().map(vf::createIRI).collect(Collectors.toList()));
             }
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
                     builder.build(), getActiveUser(servletRequest, engineManager), pdp);
