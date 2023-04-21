@@ -64,8 +64,7 @@ describe('Preview Block component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(OntologyManagerService),
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
+                MockProvider(OntologyManagerService)
             ]
         }).compileComponents();
 
@@ -74,7 +73,6 @@ describe('Preview Block component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
 
         ontologyStateStub.listItem = new OntologyListItem();
     });
@@ -185,11 +183,10 @@ describe('Preview Block component', function() {
             });
         });
         it('should download the ontology', function() {
-            splitIRIStub.transform.and.returnValue({begin: '', then: '', end: 'test'});
+            ontologyStateStub.listItem.versionedRdfRecord.title = 'This %$#is*&)( a<>{}//?Title';
             component.activePage = {serialization: 'jsonld'};
             component.download();
-            expect(splitIRIStub.transform).toHaveBeenCalledWith(ontologyStateStub.listItem.ontologyId);
-            expect(ontologyManagerStub.downloadOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'jsonld', 'test');
+            expect(ontologyManagerStub.downloadOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'jsonld', 'ThisisaTitle');
         });
     });
     it('should call getPreview when the button is clicked', function() {

@@ -55,6 +55,7 @@ import { UtilService } from '../../../shared/services/util.service';
 import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOverlay.component';
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
 import { UploadSnackbarComponent } from '../uploadSnackbar/uploadSnackbar.component';
+import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontology-download-modal.component';
 import { OpenOntologyTabComponent } from './openOntologyTab.component';
 
 describe('Open Ontology Tab component', function() {
@@ -104,6 +105,7 @@ describe('Open Ontology Tab component', function() {
                 MockComponent(SearchBarComponent),
                 MockComponent(UploadOntologyOverlayComponent),
                 MockComponent(NewOntologyOverlayComponent),
+                MockComponent(OntologyDownloadModalComponent),
                 MockComponent(ConfirmModalComponent),
                 MockComponent(InfoMessageComponent),
                 MockComponent(UploadSnackbarComponent),
@@ -277,6 +279,12 @@ describe('Open Ontology Tab component', function() {
                 });
                 expect(component.deleteOntology).toHaveBeenCalledWith(recordId);
             }));
+        });
+        it('should open the ontology download overlay', function() {
+            component.showDownloadOverlay(displayItem);
+            expect(matDialog.open).toHaveBeenCalledWith(OntologyDownloadModalComponent, {
+                data: { record: displayItem }
+            });
         });
         describe('should delete an ontology', function() {
             beforeEach(function() {

@@ -44,6 +44,7 @@
                     <div>
                         <button class="menu-button" mat-icon-button [matMenuTriggerFor]="ontologyActions"><mat-icon>more_vert</mat-icon></button>
                         <mat-menu #ontologyActions="matMenu">
+                            <button mat-menu-item (click)="showDownloadOverlay(record)" class="download-record"><i class="fa fa-fw fa-download"></i> Download</button>
                             <button mat-menu-item (click)="showDeleteConfirmationOverlay(record)" class="delete-record"><i class="fa fa-fw fa-trash-o"></i> Delete</button>
                         </mat-menu>
                     </div>
