@@ -25,7 +25,6 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 
 /**
  * @class ontology-editor.PreviewBlockComponent
@@ -56,8 +55,7 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
         serialization: ['']
     });
 
-    constructor(private fb: FormBuilder, public os: OntologyStateService, private om: OntologyManagerService,
-        private splitIRI: SplitIRIPipe) {}
+    constructor(private fb: FormBuilder, public os: OntologyStateService, private om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.previewForm.controls.serialization.setValue(this.activePage.serialization);
@@ -81,7 +79,7 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
             });
     }
     download(): void {
-        const fileName = this.splitIRI.transform(this.os.listItem.ontologyId).end;
+        const fileName = this.os.listItem.versionedRdfRecord.title.replace(/[ &\/\\#,+()$~%.'":*?<>{}]/g, '');
         this.om.downloadOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.activePage.serialization, fileName);
     }
 

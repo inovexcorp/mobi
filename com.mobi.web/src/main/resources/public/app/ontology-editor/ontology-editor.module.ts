@@ -21,6 +21,7 @@
  * #L%
 */
 import { NgModule } from '@angular/core';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -105,7 +106,7 @@ import { VisualizationTabComponent } from './components/visualizationTab/visuali
 import { OntologyVisualizationModule } from '../ontology-visualization/ontologyVisualization.module';
 import { MergeBlockComponent } from './components/mergeBlock/mergeBlock.component';
 import { MergeTabComponent } from './components/mergeTab/mergeTab.component';
-import { ScrollingModule } from '@angular/cdk/scrolling';
+import { OntologyDownloadModalComponent } from './components/ontology-download-modal/ontology-download-modal.component';
 
 /**
  * @namespace ontology-editor
@@ -199,6 +200,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
         UploadSnackbarComponent,
         UsagesBlockComponent,
         VisualizationTabComponent,
+        OntologyDownloadModalComponent,
     ]
 })
 export class OntologyEditorModule {}

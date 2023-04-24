@@ -43,8 +43,8 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
+import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
 import { OntologyPropertyOverlayComponent } from './ontologyPropertyOverlay.component';
-import { IriSelectOntologyComponent } from "../iriSelectOntology/iriSelectOntology.component";
 
 describe('Ontology Property Overlay component', function() {
     let component: OntologyPropertyOverlayComponent;

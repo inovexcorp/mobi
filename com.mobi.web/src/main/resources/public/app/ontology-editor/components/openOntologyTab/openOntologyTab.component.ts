@@ -41,8 +41,9 @@ import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOv
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
 import { UtilService } from '../../../shared/services/util.service';
 import { SettingManagerService } from '../../../shared/services/settingManager.service';
+import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontology-download-modal.component';
 
-interface OntologyRecordDisplay {
+export interface OntologyRecordDisplay {
     title: string,
     ontologyIRI: string,
     description: string,
@@ -150,6 +151,9 @@ export class OpenOntologyTabComponent implements OnInit {
                 this.deleteOntology(recordId);
             }
         });
+    }
+    showDownloadOverlay(record: OntologyRecordDisplay): void {
+        this.dialog.open(OntologyDownloadModalComponent, { data: { record } });
     }
     deleteOntology(recordId: string): void {
         this.om.deleteOntology(recordId)
