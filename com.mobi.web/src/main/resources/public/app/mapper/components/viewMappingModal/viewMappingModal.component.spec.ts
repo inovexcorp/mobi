@@ -118,7 +118,7 @@ describe('View Mapping Modal component', function() {
     });
     it('should call cancel when the button is clicked', function() {
         const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
-        cancelButton.triggerEventHandler('click', null);
+        cancelButton.triggerEventHandler('click', {});
         fixture.detectChanges();
         expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
     });

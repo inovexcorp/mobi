@@ -27,7 +27,7 @@ var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf'
 var OntoCSV= process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
 
 module.exports = {
-    '@tags': ['mapping-tool', 'sanity', "ontology-editor"],
+    '@tags': ['mapping-tool', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -117,7 +117,7 @@ module.exports = {
             .waitForElementNotPresent('#spinner-full')
             .waitForElementVisible('mapping-config-overlay')
             .waitForElementNotPresent('#spinner-full')
-            .setValue('div.mat-dialog-content input[placeholder="Search..."]', 'uhtc')
+            .setValue('div.mat-dialog-content input[data-placeholder="Search..."]', 'uhtc')
             .keys(browser.Keys.ENTER)
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-list-option//h4[text()[contains(.,"uhtc")]]'})
             .click('xpath', '//mat-list-option//h4[text()[contains(.,"uhtc")]]')

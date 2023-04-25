@@ -173,7 +173,7 @@ module.exports = {
             .waitForElementPresent('axiom-overlay') // ensure still on overlay
             .assert.not.elementPresent('mat-optgroup') // ensure list is hidden
             .useXpath()
-            .click('//axiom-overlay//input[contains(@placeholder, "Values")]');
+            .click('//axiom-overlay//input[contains(@data-placeholder, "Values")]');
         // after clicking select value, then ul.ui-select-choices should not be hidden anymore
         browser
             .useCss()
