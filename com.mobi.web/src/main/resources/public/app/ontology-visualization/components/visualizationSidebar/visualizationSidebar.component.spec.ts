@@ -138,7 +138,7 @@ describe('Visualization sidebar component', () => {
             loadMoreRecords: jasmine.createSpy()
         });
         element = fixture.debugElement;
-        serviceStub = TestBed.get(OntologyVisualizationService);
+        serviceStub = TestBed.inject(OntologyVisualizationService);
         serviceStub.getGraphState = jasmine.createSpy('getGraphState').and.returnValue(component.graphState);
         serviceStub.getSidebarState = jasmine.createSpy('getSidebarState').and.returnValue({
             commitId: 'commitId1',
