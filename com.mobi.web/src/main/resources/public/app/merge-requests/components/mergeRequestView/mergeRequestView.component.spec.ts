@@ -49,6 +49,11 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { UtilService } from '../../../shared/services/util.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { MergeRequestViewComponent } from './mergeRequestView.component';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { User } from '../../../shared/models/user.interface';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 
 describe('Merge Request View component', function() {
     let component: MergeRequestViewComponent;
@@ -58,14 +63,31 @@ describe('Merge Request View component', function() {
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let utilStub: jasmine.SpyObj<UtilService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
+    let nativeElement: HTMLElement;
 
     const error = 'Error Message';
     const requestId = 'requestId';
     const recordId = 'recordId';
     const branchId = 'branchId';
     const jsonld = {'@id': requestId};
+    const userIri = 'urn:test';
+    const assignees = ['bruce', 'clark'];
+
+    const user: User = {
+        iri: userIri,
+        firstName: 'Bruce',
+        external: false,
+        username: 'bruce',
+        lastName: '',
+        email: '',
+        roles: []
+    };
+
     const conflict: Conflict = {iri: 'iri', left: new Difference(), right: new Difference()};
 
     beforeEach(async () => {
@@ -88,6 +110,9 @@ describe('Merge Request View component', function() {
                 MockProvider(MergeRequestsStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
+                MockProvider(UserManagerService),
+                MockProvider(LoginManagerService),
+                MockProvider(PolicyEnforcementService),
                 MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
@@ -104,8 +129,13 @@ describe('Merge Request View component', function() {
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+        loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
+        userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>
+        mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
         utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
+        nativeElement = element.nativeElement as HTMLElement;
 
         mergeRequestManagerStub.getRequest.and.returnValue(of(jsonld));
         mergeRequestsStateStub.setRequestDetails.and.returnValue(of(null));
@@ -120,6 +150,12 @@ describe('Merge Request View component', function() {
             assignees: [],
             jsonld
         };
+        loginManagerStub.currentUserIRI = userIri;
+        userManagerStub.users = [user];
+        policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
+        userManagerStub.isAdminUser.and.returnValue(false);
     });
 
     afterEach(function() {
@@ -133,6 +169,9 @@ describe('Merge Request View component', function() {
         ontologyStateStub = null;
         ontologyManagerStub = null;
         matDialog = null;
+        userManagerStub = null;
+        loginManagerStub = null;
+        policyEnforcementStub = null;
     });
 
     describe('should initialize correctly if getRequest', function() {
@@ -141,12 +180,15 @@ describe('Merge Request View component', function() {
             mergeRequestManagerStub.isAccepted.and.returnValue(true);
         });
         it('resolves', fakeAsync(function() {
+            mergeRequestsStateStub.selected.assignees = assignees;
+            fixture.detectChanges();
             component.ngOnInit();
             tick();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
             expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(jsonld);
             expect(component.isAccepted).toBeTrue();
+            expect(component.isSubmitDisabled).toBeFalsy();
             expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
             expect(utilStub.createWarningToast).not.toHaveBeenCalled();
             expect(mergeRequestsStateStub.selected).toBeDefined();
@@ -618,6 +660,16 @@ describe('Merge Request View component', function() {
             fixture.detectChanges();
             expect(indicator.classes['mat-primary']).toBeTruthy();
             expect(indicator.nativeElement.innerHTML).toContain('Accepted');
+        });
+        it('depending on whether the user is not authorize', async function() {
+            mergeRequestsStateStub.selected.assignees = ['user1', 'user2'];
+            fixture.detectChanges();
+            component.ngOnInit();
+            await fixture.whenStable();
+            const button: HTMLElement = nativeElement.querySelector('.button-accept');
+            expect(button.title).toEqual(component.userAccessMsg);
+            expect(component.isSubmitDisabled).toBeTruthy();
+            expect(button.getAttribute('disabled')).toBeTruthy();
         });
     });
     it('should call showResolutionForm when the resolve button is clicked in the alert', function() {

@@ -31,6 +31,9 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { CATALOG } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
 import { Commit } from '../../../shared/models/commit.interface';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import {UserManagerService} from '../../../shared/services/userManager.service';
+import {LoginManagerService} from '../../../shared/services/loginManager.service';
 
 /**
  * @class ontology-editor.MergeBlockComponent
@@ -48,7 +51,14 @@ import { Commit } from '../../../shared/models/commit.interface';
     styleUrls: ['./mergeBlock.component.scss']
 })
 export class MergeBlockComponent implements OnInit, OnDestroy {
-    constructor(public os: OntologyStateService, public cm: CatalogManagerService, public util: UtilService, private fb: FormBuilder) {}
+
+    constructor(public os: OntologyStateService,
+                public cm: CatalogManagerService,
+                public util: UtilService,
+                private pep: PolicyEnforcementService,
+                public um: UserManagerService,
+                private lm: LoginManagerService,
+                private fb: FormBuilder) {}
 
     catalogId = '';
     error = '';
@@ -57,6 +67,10 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
     targetHeadCommitId = undefined;   
     commits = [];
     mergeRequestForm = this.fb.group({});
+    isSubmitDisabled: boolean;
+    permissionMessage = 'You do not have permission to perform this merge';
+
+    private isAdminUser: boolean;
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -80,10 +94,33 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
 
     }
     changeTarget(value): void {
+
         this.os.listItem.merge.difference = undefined;
         this.os.listItem.merge.startIndex = 0;
         this.os.listItem.merge.target = value;
+
         if (this.os.listItem.merge.target) {
+
+            this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
+            if (!this.isAdminUser) {
+                const managePermissionRequest = {
+                    resourceId: this.os.listItem.versionedRdfRecord.recordId,
+                    actionId: CATALOG + 'Modify',
+                    actionAttrs: {
+                        [CATALOG + 'branch']: this.os.listItem.merge.target['@id']
+                    }
+                };
+
+                this.pep.evaluateRequest(managePermissionRequest).subscribe(decision => {
+                    this.isSubmitDisabled = decision === this.pep.deny;
+                    if (this.isSubmitDisabled) {
+                        this.error = this.permissionMessage;
+                    }
+                }, () => {
+                    this.isSubmitDisabled = false;
+                });
+            }
+
             this.cm.getRecordBranch(this.os.listItem.merge.target['@id'], this.os.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
                 flatMap(target => {
                     this.targetHeadCommitId = this.util.getPropertyId(target, CATALOG + 'head');

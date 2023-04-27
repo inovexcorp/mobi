@@ -77,7 +77,11 @@
     <div class="buttons">
         <div class="view-buttons" *ngIf="!resolveConflicts">
             <button mat-raised-button (click)="back()">Back</button>
-            <button mat-raised-button class="float-right" color="primary" *ngIf="!isAccepted" [disabled]="state.selected.conflicts?.length || !state.selected.targetTitle" (click)="showAccept()">Accept</button>
+            <button mat-raised-button class="float-right button-accept" color="primary"
+                    *ngIf="!isAccepted"
+                    [disabled]="state.selected.conflicts?.length > 0|| !state.selected.targetTitle||  isSubmitDisabled"
+                    [title]="buttonTitle"
+                    (click)="showAccept()">Accept</button>
             <button mat-raised-button class="float-right" color="warn" (click)="showDelete()">Delete</button>
         </div>
         <div class="conflicts-buttons" *ngIf="resolveConflicts">
