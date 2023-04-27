@@ -38,6 +38,9 @@ import { UtilService } from '../../../shared/services/util.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { MergeBlockComponent } from './mergeBlock.component';
 import { Difference } from '../../../shared/models/difference.class';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import {UserManagerService} from '../../../shared/services/userManager.service';
+import {LoginManagerService} from '../../../shared/services/loginManager.service';
 
 describe('Merge Block component', function() {
     let component: MergeBlockComponent;
@@ -45,6 +48,7 @@ describe('Merge Block component', function() {
     let fixture: ComponentFixture<MergeBlockComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let utilStub: jasmine.SpyObj<UtilService>;
 
     beforeEach(async () => {
@@ -63,6 +67,9 @@ describe('Merge Block component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService),
+                MockProvider(PolicyEnforcementService),
+                MockProvider(UserManagerService),
+                MockProvider(LoginManagerService),
                 MockProvider(UtilService)
             ]
         });
@@ -74,14 +81,18 @@ describe('Merge Block component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>
         utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.versionedRdfRecord.branchId = 'branchId';
         ontologyStateStub.listItem.branches = [{'@id': 'branchId'}];
         ontologyStateStub.listItem.merge.checkbox = false;
+        ontologyStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
         catalogManagerStub.localCatalog = {'@id': 'catalogId'};
-
+        policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
         fixture.detectChanges();
     });
 
@@ -163,6 +174,7 @@ describe('Merge Block component', function() {
                 it('unless an error occurs', function() {
                     catalogManagerStub.getRecordBranch.and.returnValue(of({'@id': 'branch1', 'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
                     ontologyStateStub.getMergeDifferences.and.returnValue(throwError('Error'));
+                    policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
                     component.changeTarget(this.branch);
                     fixture.detectChanges();
                     expect(ontologyStateStub.listItem.merge.target).toEqual(this.branch);
@@ -170,6 +182,8 @@ describe('Merge Block component', function() {
                     expect(ontologyStateStub.getMergeDifferences).toHaveBeenCalledWith('', '', catalogManagerStub.differencePageSize, 0);
                     expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
                     expect(ontologyStateStub.listItem.merge.difference).toBeUndefined();
+                    expect(component.isSubmitDisabled).toBeTruthy();
+                    expect(component.error).toEqual(component.permissionMessage);
                 });
                 it('successfully', function() {
                     catalogManagerStub.getRecordBranch.and.returnValue(of({'@id': 'branch1', 'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
@@ -180,6 +194,8 @@ describe('Merge Block component', function() {
                     expect(catalogManagerStub.getRecordBranch).toHaveBeenCalled();
                     expect(ontologyStateStub.getMergeDifferences).toHaveBeenCalledWith('', '', catalogManagerStub.differencePageSize, 0);
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(component.isSubmitDisabled).toBeFalse();
+                    expect(component.error).not.toEqual(component.permissionMessage);
                 });
             });
         });

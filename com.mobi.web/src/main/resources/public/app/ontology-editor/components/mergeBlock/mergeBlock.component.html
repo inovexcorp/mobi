@@ -24,7 +24,11 @@
     <div class="row justify-content-center m-0">
         <div class="w-100" [formGroup]="mergeRequestForm">
             <span class="merge-message">Merge <strong>Branch: {{branchTitle}}</strong> into</span>
-            <branch-select [model]="os.listItem.merge.target" [required]="true" class="select-branch" [isDisabledWhen]="os.listItem.userBranch" (modelChange)="changeTarget($event)" [branches]="branches"></branch-select>
+            <branch-select
+                    [model]="os.listItem.merge.target"
+                    [required]="true" class="select-branch"
+                    [isDisabledWhen]="os.listItem.userBranch"
+                    (modelChange)="changeTarget($event)" [branches]="branches"></branch-select>
             <div class="w-100">
                 <mat-checkbox *ngIf="branchTitle !== 'MASTER' && !os.listItem.userBranch" [(ngModel)]="os.listItem.merge.checkbox" [ngModelOptions]="{standalone: true}">
                     <div class="checkbox-contents">Remove Branch: {{branchTitle}} after merge</div>
@@ -46,7 +50,11 @@
                                   (receiveCommits)="receiveCommits($event)"></commit-difference-tabset>
     </div>
     <div class="btn-container pt-2">
-        <button mat-raised-button color="primary" class="float-right" (click)="submit()" [disabled]="!(commits.length > 0) || !os.listItem.merge.target || !os.listItem.upToDate">Submit</button>
+        <button mat-raised-button color="primary" class="float-right" (click)="submit()"
+                [disabled]="!(commits.length > 0) ||
+                !os.listItem.merge.target ||
+                !os.listItem.upToDate ||
+                isSubmitDisabled">Submit</button>
         <!-- TODO Validate this -->
         <!-- <button mat-raised-button color="primary" class="float-right" (click)="submit()" [disabled]="isDisabled() || !os.listItem.merge.target || !os.listItem.upToDate">Submit</button> -->
         <button mat-raised-button class="float-right mr-2" (click)="os.cancelMerge()">Cancel</button>

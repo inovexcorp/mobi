@@ -30,6 +30,9 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import {UserManagerService} from '../../../shared/services/userManager.service';
+import {LoginManagerService} from '../../../shared/services/loginManager.service';
 
 /**
  * @class shapes-graph-editor.ShapesGraphMergePageComponent
@@ -51,13 +54,22 @@ import { UtilService } from '../../../shared/services/util.service';
     styleUrls: ['./shapesGraphMergePage.component.scss']
 })
 export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
-    constructor(private cm: CatalogManagerService, private util: UtilService, public state: ShapesGraphStateService) {}
+
+    constructor(private cm: CatalogManagerService,
+                private util: UtilService,
+                public state: ShapesGraphStateService,
+                public um: UserManagerService,
+                private lm: LoginManagerService,
+                private pep: PolicyEnforcementService) {}
 
     catalogId = '';
     error = '';
     branches: JSONLDObject[] = [];
     branchTitle = '';
     targetHeadCommitId = undefined;
+    isSubmitDisabled = false;
+    permissionMessage = 'You do not have permission to perform this merge';
+    private isAdminUser: boolean;
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -91,6 +103,27 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
                     this.util.createErrorToast(errorMessage);
                     this.state.listItem.merge.difference = undefined;
                 });
+
+            this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
+            if (!this.isAdminUser) {
+                const managePermissionRequest = {
+                    resourceId: this.state.listItem.versionedRdfRecord.recordId,
+                    actionId: CATALOG + 'Modify',
+                    actionAttrs: {
+                        [CATALOG + 'branch']: this.state.listItem.merge.target['@id']
+                    }
+                };
+
+                this.pep.evaluateRequest(managePermissionRequest).subscribe(decision => {
+                    this.isSubmitDisabled = decision === this.pep.deny;
+                    if (this.isSubmitDisabled) {
+                        this.error = this.permissionMessage;
+                    }
+                }, () => {
+                    this.isSubmitDisabled = false;
+                });
+            }
+
         } else {
             this.state.listItem.merge.difference = undefined;
         }
@@ -106,4 +139,8 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
                 this.state.cancelMerge();
             }, error => this.error = error);
     }
+    private _setErrorMessage(msg) {
+        this.error = msg;
+    }
+
 }
