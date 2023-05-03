@@ -25,6 +25,8 @@ package com.mobi.prov.api;
 
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.prov.api.builder.ActivityConfig;
+import java.util.List;
+import java.util.Map;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
@@ -81,4 +83,9 @@ public interface ProvenanceService {
      * @param activityIRI The IRI of an Activity
      */
     void deleteActivity(Resource activityIRI);
+
+    /**
+     * @return A map of activity type to the action display word associated with it
+     */
+    List<ProvActivityAction> getActionWords();
 }

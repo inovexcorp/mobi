@@ -1,5 +1,3 @@
-@Version("2.1.0.${build}")
-
 package com.mobi.prov.api;
 
 /*-
@@ -25,4 +23,41 @@ package com.mobi.prov.api;
  * #L%
  */
 
-import org.osgi.annotation.versioning.Version;
+/**
+ * Class representing a Prov Activity type and the predicate and action word associated with the Activity.
+ */
+public class ProvActivityAction {
+    private String type;
+    private String word;
+    private String pred;
+
+    public ProvActivityAction(String type, String word, String pred) {
+        this.type = type;
+        this.word = word;
+        this.pred = pred;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getWord() {
+        return word;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
+    }
+
+    public String getPred() {
+        return pred;
+    }
+
+    public void setPred(String pred) {
+        this.pred = pred;
+    }
+}

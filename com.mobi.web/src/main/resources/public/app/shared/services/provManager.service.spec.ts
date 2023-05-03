@@ -67,7 +67,7 @@ describe('Prov Manager service', function() {
                     }
                 }
             });
-        
+
             return httpParams;
         });
         utilStub.handleError.and.callFake(error => {
@@ -165,4 +165,52 @@ describe('Prov Manager service', function() {
             });
         });
     });
+     describe('should retrieve a list of action words and activities', function() {
+         let isTracked: boolean;
+         beforeEach(function() {
+             isTracked = true;
+         });
+         describe('with isTracked is true', function() {
+             it('unless an error occurs', function() {
+                 service.getActionWords(isTracked)
+                     .subscribe(() => {
+                         fail('Promise should have rejected');
+                     }, (e) => {
+                         expect(e).toEqual(error);
+                     });
+
+                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 request.flush('flush', { status: 400, statusText: error });
+             });
+             it('successfully', function() {
+                 service.getActionWords(isTracked)
+                     .subscribe((response: any) => {
+                         expect(response).toEqual([]);
+                     });
+                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 request.flush([]);
+             });
+         });
+         describe('without isTracked', function() {
+             it('unless an error occurs', function() {
+                 service.getActionWords()
+                     .subscribe(() => {
+                         fail('Promise should have rejected');
+                     }, (e) => {
+                         expect(e).toEqual(error);
+                     });
+
+                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 request.flush('flush', { status: 400, statusText: error });
+             });
+             it('successfully', function() {
+                 service.getActionWords()
+                     .subscribe((response: any) => {
+                         expect(response).toEqual([]);
+                     });
+                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 request.flush([]);
+             });
+         });
+     });
 });

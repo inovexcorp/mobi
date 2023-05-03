@@ -17,10 +17,22 @@
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
     dct:modified "2017-08-02"^^xsd:date .
 
+:actionWord a owl:AnnotationProperty, owl:FunctionalProperty;
+    rdfs:domain prov:Activity;
+    dct:title "Activity Action"@en ;
+    dct:description "The action word associated with the Activity type"@en .
+    
+:provAction a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:domain prov:Activity;
+    dct:title "Prov Action"@en ;
+    dct:description "The prov action associated with the Activity type"@en .
+
 # CreateActivity
 
 :CreateActivity a owl:Class ;
     rdfs:subClassOf prov:Activity ;
+    :actionWord "created"@en ;
+    :provAction prov:generated ;
     dct:title "Create Activity"@en ;
     dct:description "A CreateActivity represents an event that caused the creation of a new resource. An example would be creating a new Record."@en .
 
@@ -28,6 +40,8 @@
 
 :DeleteActivity a owl:Class ;
     rdfs:subClassOf prov:Activity ;
+    :actionWord "deleted"@en;
+    :provAction prov:invalidated ;
     dct:title "Delete Activity"@en ;
     dct:description "A DeleteActivity represents an event that caused the deletion of a resource. An example would be deleting a Record."@en .
 
@@ -35,6 +49,8 @@
 
 :UpdateActivity a owl:Class ;
     rdfs:subClassOf prov:Activity ;
+    :actionWord "updated"@en;
+    :provAction prov:used ;
     dct:title "Update Activity"@en ;
     dct:description "An UpdateActivity represents an event that caused a resource to be updated. An example would be when a Record's metadata is updated."@en .
 
@@ -42,6 +58,8 @@
 
 :UseActivity a owl:Class ;
     rdfs:subClassOf prov:Activity ;
+    :actionWord "used"@en;
+    :provAction prov:used ;
     dct:title "Utilization Activity"@en ;
     dct:description "A UseActivity represents an event where a resource was utilized in some process. An example would be when a Mapping is run against some data."@en .
 
@@ -49,5 +67,7 @@
 
 :SystemActivity a owl:Class ;
     rdfs:subClassOf prov:Activity ;
+    :actionWord "interacted with"@en;
+    :provAction prov:used ;
     dct:title "System Activity"@en ;
     dct:description "A SystemActivity represents an event relating to the application as a whole. Examples would be when a user logs in or data is uploaded through the admin command line."@en .

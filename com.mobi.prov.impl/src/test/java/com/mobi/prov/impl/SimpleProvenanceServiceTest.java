@@ -34,11 +34,13 @@ import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
+import com.mobi.prov.api.ProvActivityAction;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import java.util.List;
 import junit.framework.TestCase;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -246,5 +248,12 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
             used2.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
             other.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
         }
+    }
+
+    @Test
+    public void getActionWordsTest() {
+        service.start();
+        List<ProvActivityAction> activityActions = service.getActionWords();
+        assertEquals(5, activityActions.size());
     }
 }

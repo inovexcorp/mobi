@@ -1,10 +1,6 @@
-@Version("2.1.0.${build}")
-
-package com.mobi.prov.rest;
-
 /*-
  * #%L
- * com.mobi.prov.rest
+ * com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,5 +20,11 @@ package com.mobi.prov.rest;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import org.osgi.annotation.versioning.Version;
+/**
+ * An object representing a Prov Activity type and the predicate and action word associated with the Activity.
+ */
+export interface ActivityAction {
+    type: string,
+    word: string,
+    pred: string
+}

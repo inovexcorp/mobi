@@ -27,10 +27,10 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { REST_PREFIX } from '../../constants';
-import { MATPROV, PROV } from '../../prefixes';
 import { UtilService } from './util.service';
 import { ActivityPaginatedConfig } from '../models/activity-paginated-config';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { ActivityAction } from '../models/activityAction.interface';
 
 /**
  * @class shared.ProvManagerService
@@ -48,34 +48,23 @@ export class ProvManagerService {
      * `activityTypes` is an array of objects that represent the different subclasses of `prov:Activity`
      * that Mobi supports ordered such that subclasses are first. Each object contains the type IRI, the
      * associated active word, and associated predicate for linking to the affected `prov:Entity(s)`.
-     * @type {Object[]}
+     * @type {ActivityAction[]}:
      */
-    activityTypes = [
-        {
-            type: MATPROV + 'CreateActivity',
-            word: 'created',
-            pred: PROV + 'generated'
-        },
-        {
-            type: MATPROV + 'UpdateActivity',
-            word: 'updated',
-            pred: PROV + 'used'
-        },
-        {
-            type: MATPROV + 'UseActivity',
-            word: 'used',
-            pred: PROV + 'used'
-        },
-        {
-            type: MATPROV + 'DeleteActivity',
-            word: 'deleted',
-            pred: PROV + 'invalidated'
-        }
-    ];
+    activityTypes: ActivityAction[] = [];
+
+    initialize(): void {
+        this.getActionWords().subscribe(result => {
+            this.activityTypes = result;
+        });
+    }
+
+    reset(): void {
+        this.activityTypes = null;
+    }
 
     /**
      * Makes a call to GET /mobirest/provenance-data to get a paginated list of `Activities` and their associated
-     * `Entities`. Returns the paginated response for the query using the passed page index and limit and optional 
+     * `Entities`. Returns the paginated response for the query using the passed page index and limit and optional
      * entity IRI to filter on. The data of the response will be an object with the array of `activities` and the array
      * of associated `entities`, the "x-total-count" headers will contain the total number of `Activities` matching the
      * query, and the "link" header will contain the URLs for the next and previous page if present. Can be optionally
@@ -95,6 +84,11 @@ export class ProvManagerService {
             params.agent = paginatedConfig.agent;
         }
         return this.util.trackedRequest(this.http.get(this.prefix, {params: this.util.createHttpParams(params), observe: 'response'}), isTracked)
+            .pipe(catchError(this.util.handleError));
+    }
+
+    getActionWords(isTracked = false): Observable<ActivityAction[]> {
+        return this.util.trackedRequest(this.http.get(this.prefix + '/actions'), isTracked)
             .pipe(catchError(this.util.handleError));
     }
 }
