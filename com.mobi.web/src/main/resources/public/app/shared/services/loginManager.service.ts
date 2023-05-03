@@ -45,6 +45,7 @@ import { YasguiService } from './yasgui.service';
 import { OntologyStateService } from './ontologyState.service';
 import { REST_PREFIX } from '../../constants';
 import { UtilService } from './util.service';
+import { ProvManagerService } from './provManager.service';
 
 /**
  * @class shared.LoginManagerService
@@ -64,7 +65,7 @@ export class LoginManagerService {
         private mrs: MergeRequestsStateService, private om: OntologyManagerService,
         private os: OntologyStateService, private sgs: ShapesGraphStateService,
         private sm: StateManagerService, private um: UserManagerService,
-        private us: UserStateService, private util: UtilService, private yasgui: YasguiService) {}
+        private us: UserStateService, private util: UtilService, private yasgui: YasguiService, private prov: ProvManagerService) {}
     
     /**
      * `currentUser` holds the username of the user that is currently logged into Mobi.
@@ -133,6 +134,7 @@ export class LoginManagerService {
         this.sgs.reset();
         this.cs.reset();
         this.yasgui.reset();
+        this.prov.reset();
         this.http.delete(this.prefix)
             .subscribe(() => {
                 this.currentUser = '';
@@ -174,6 +176,7 @@ export class LoginManagerService {
                             this.om.initialize();
                             this.os.initialize();
                             this.sgs.initialize();
+                            this.prov.initialize();
                         })),
                         this.dm.initialize()
                     ]);

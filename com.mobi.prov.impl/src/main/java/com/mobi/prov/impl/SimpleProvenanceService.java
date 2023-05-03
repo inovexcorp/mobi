@@ -23,25 +23,44 @@ package com.mobi.prov.impl;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.ActivityFactory;
 import com.mobi.ontologies.provo.Entity;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
 import com.mobi.persistence.utils.Statements;
+import com.mobi.prov.api.ProvActivityAction;
+import com.mobi.prov.api.ProvOntologyLoader;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.OsgiRepository;
+import java.io.IOException;
+import java.util.ArrayList;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModel;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParser;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -59,6 +78,7 @@ public class SimpleProvenanceService implements ProvenanceService {
 
     private static String ACTIVITY_NAMESPACE = "http://mobi.com/activities/";
 
+
     @Reference(target = "(id=prov)")
     OsgiRepository repo;
 
@@ -71,6 +91,11 @@ public class SimpleProvenanceService implements ProvenanceService {
 
     @Reference
     ActivityFactory activityFactory;
+
+    @Activate
+    public void start() {
+        ProvOntologyLoader.loadOntology(repo, ProvenanceService.class.getResourceAsStream("/mobi_prov.ttl"));
+    }
 
     @Override
     public RepositoryConnection getConnection() {
@@ -157,6 +182,24 @@ public class SimpleProvenanceService implements ProvenanceService {
             invalided.forEach(resource -> removeIfNotReferenced(resource, conn));
             used.forEach(resource -> removeIfNotReferenced(resource, conn));
             conn.commit();
+        }
+    }
+
+    @Override
+    public List<ProvActivityAction> getActionWords() {
+        String getActionWords = "SELECT ?activity ?action ?pred WHERE "
+                + "{ ?activity <http://mobi.com/ontologies/prov#actionWord> ?action ;"
+                + " <http://mobi.com/ontologies/prov#provAction> ?pred . }";
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<ProvActivityAction> activities = new ArrayList<>();
+            TupleQuery query = conn.prepareTupleQuery(getActionWords);
+            query.evaluate().forEach(bindingSet -> {
+                String type = Bindings.requiredResource(bindingSet, "activity").stringValue();
+                String word = Bindings.requiredLiteral(bindingSet, "action").stringValue();
+                String pred = Bindings.requiredResource(bindingSet, "pred").stringValue();
+                activities.add(new ProvActivityAction(type, word, pred));
+            });
+            return activities;
         }
     }
 

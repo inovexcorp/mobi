@@ -28,9 +28,13 @@ import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.prov.api.ProvActivityAction;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
@@ -95,6 +99,9 @@ public class ProvRest {
     private ProvenanceService provService;
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private RepositoryManager repositoryManager;
 
     private static final String GET_ACTIVITIES_QUERY;
@@ -260,6 +267,36 @@ public class ProvRest {
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * @return Returns a JSON object of the action words, predicate, and types.
+     */
+    @GET
+    @Path("/actions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "provenance-data",
+            summary = "Retrieves a JSON object of the action words for activities",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object containing the action words, predicate, and types."),
+                    @ApiResponse(responseCode = "404", description = "Activity actions not found"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getActionWords() {
+        try {
+            List<ProvActivityAction> activityToAction = provService.getActionWords();
+            String json = mapper.writeValueAsString(activityToAction);
+            return Response.ok(json).build();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | JsonProcessingException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

@@ -48,6 +48,7 @@ import { UserStateService } from './userState.service';
 import { UtilService } from './util.service';
 import { YasguiService } from './yasgui.service';
 import { LoginManagerService } from './loginManager.service';
+import {ProvManagerService} from './provManager.service';
 
 describe('Login Manager service', function() {
     let service: LoginManagerService;
@@ -70,6 +71,7 @@ describe('Login Manager service', function() {
     let userStateStub: jasmine.SpyObj<UserStateService>;
     let utilStub: jasmine.SpyObj<UtilService>;
     let yasguiStub: jasmine.SpyObj<YasguiService>;
+    let provManagerStub: jasmine.SpyObj<ProvManagerService>;
 
     const error = 'Error Message';
     const user: User = {
@@ -103,7 +105,8 @@ describe('Login Manager service', function() {
                 MockProvider(UserManagerService),
                 MockProvider(UserStateService),
                 MockProvider(UtilService),
-                MockProvider(YasguiService)
+                MockProvider(YasguiService),
+                MockProvider(ProvManagerService)
             ]
         });
 
@@ -128,6 +131,7 @@ describe('Login Manager service', function() {
         userStateStub = TestBed.inject(UserStateService) as jasmine.SpyObj<UserStateService>;
         utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         yasguiStub = TestBed.inject(YasguiService) as jasmine.SpyObj<YasguiService>;
+        provManagerStub = TestBed.inject(ProvManagerService) as jasmine.SpyObj<ProvManagerService>;
 
         utilStub.createHttpParams.and.callFake(params => {
             let httpParams: HttpParams = new HttpParams();
@@ -169,6 +173,7 @@ describe('Login Manager service', function() {
         userStateStub = null;
         utilStub = null;
         yasguiStub = null;
+        provManagerStub = null;
     });
 
     describe('should log into an account', function() {
@@ -249,6 +254,7 @@ describe('Login Manager service', function() {
         expect(userStateStub.reset).toHaveBeenCalledWith();
         expect(catalogStateStub.reset).toHaveBeenCalledWith();
         expect(yasguiStub.reset).toHaveBeenCalledWith();
+        expect(provManagerStub.reset).toHaveBeenCalledWith();
         expect(service.currentUser).toBe('');
         expect(service.currentUserIRI).toBe('');
         expect(router.navigate).toHaveBeenCalledWith(['/login']);
@@ -334,6 +340,7 @@ describe('Login Manager service', function() {
                 expect(userManagerStub.getUser).toHaveBeenCalledWith('user');
                 expect(stateManagerStub.initialize).toHaveBeenCalledWith();
                 expect(datasetManagerStub.initialize).toHaveBeenCalledWith();
+                expect(provManagerStub.initialize).toHaveBeenCalledWith();
                 expect(router.navigate).not.toHaveBeenCalled();
                 expect(service.checkMergedAccounts).toHaveBeenCalledWith();
             }));
@@ -357,6 +364,7 @@ describe('Login Manager service', function() {
                 expect(userManagerStub.initialize).toHaveBeenCalledWith();
                 expect(stateManagerStub.initialize).toHaveBeenCalledWith();
                 expect(datasetManagerStub.initialize).not.toHaveBeenCalled();
+                expect(provManagerStub.initialize).not.toHaveBeenCalledWith();
                 expect(router.navigate).not.toHaveBeenCalled();
                 expect(service.checkMergedAccounts).toHaveBeenCalledWith();
             }));
