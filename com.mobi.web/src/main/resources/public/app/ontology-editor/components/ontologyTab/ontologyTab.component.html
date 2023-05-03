@@ -24,8 +24,6 @@
     <see-history *ngIf="os.listItem.seeHistory"></see-history>
     <merge-tab *ngIf="os.listItem.merge.active"></merge-tab>
     <div class="main-tabs h-100" *ngIf="!os.listItem.merge.active && !os.listItem.seeHistory">
-        <ng-container #outlet [ngTemplateOutlet]="content">
-        </ng-container>
         <mat-tab-group dynamicHeight="true" class="h-100" [(selectedIndex)]="os.listItem.tabIndex" (selectedTabChange)="onTabChanged($event)">
             <mat-tab label="Project">
                 <ng-template matTabContent>
@@ -52,18 +50,16 @@
                     <individuals-tab></individuals-tab>
                 </ng-template>
             </mat-tab>
-            <ng-template #content>
-                <mat-tab label="Schemes" [aria-labelledby]="!isVocab ? 'hidden' : undefined">
-                    <ng-template matTabContent>
-                        <concept-schemes-tab></concept-schemes-tab>
-                    </ng-template>
-                </mat-tab>
-                <mat-tab label="Concepts" [aria-labelledby]="!isVocab ? 'hidden' : undefined">
-                    <ng-template matTabContent>
-                        <concepts-tab></concepts-tab>
-                    </ng-template>
-                </mat-tab>
-            </ng-template>
+            <mat-tab label="Schemes" [aria-labelledby]="!isVocab ? 'hidden' : undefined">
+                <ng-template matTabContent>
+                    <concept-schemes-tab></concept-schemes-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Concepts" [aria-labelledby]="!isVocab ? 'hidden' : undefined">
+                <ng-template matTabContent>
+                    <concepts-tab></concepts-tab>
+                </ng-template>
+            </mat-tab>
             <mat-tab label="Search">
                 <ng-template matTabContent>
                     <search-tab></search-tab>

@@ -337,8 +337,12 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 }),
                 map(() => {
                     const tabIndex = oldListItem.tabIndex;
+                    const prevActiveKey = this.getActiveKey();
                     assign(oldListItem, listItem);
-                    oldListItem.tabIndex = tabIndex;
+                    console.log(!listItem.isVocabulary)
+                    if (!listItem.isVocabulary && (prevActiveKey === 'concepts' || prevActiveKey === 'schemes')) {
+                        oldListItem.tabIndex = 0;
+                    } else { oldListItem.tabIndex = tabIndex }
                     return null;
                 })
             );
@@ -373,8 +377,11 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 }),
                 map(() => {
                     const tabIndex = oldListItem.tabIndex;
+                    const prevActiveKey = this.getActiveKey();
                     assign(oldListItem, listItem);
-                    oldListItem.tabIndex = tabIndex;
+                    if (!listItem.isVocabulary && (prevActiveKey === 'concepts' || prevActiveKey === 'schemes')) {
+                        oldListItem.tabIndex = 0;
+                    } else { oldListItem.tabIndex = tabIndex }
                     return null;
                 })
             );
