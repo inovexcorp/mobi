@@ -224,7 +224,7 @@ describe('Ontology State Service', function() {
         };
         listItem.branches = [branch];
         listItem.tags = [tag];
-        listItem.iriList = [ontologyId, classId, dataPropertyId],
+        listItem.iriList = [ontologyId, classId, dataPropertyId];
         listItem.propertyIcons = {
             'iri1': 'icon',
             'iri2': 'icon',
@@ -460,6 +460,7 @@ describe('Ontology State Service', function() {
                     spyOn(service, 'updateState').and.returnValue(of(null));
                 });
                 it('and the ontologyId changed', fakeAsync(function() {
+                    spyOn(service, 'getActiveKey').and.returnValue('key');
                     this.oldListItem.ontologyId = 'old';
                     service.updateOntology(recordId, branchId, commitId, listItem.upToDate)
                         .subscribe(() => {}, () => fail('Observable should have resolved'));
@@ -470,6 +471,7 @@ describe('Ontology State Service', function() {
                     expect(this.oldListItem.tabIndex).toEqual(1);
                 }));
                 it('and the ontologyId is the same', fakeAsync(function() {
+                    spyOn(service, 'getActiveKey').and.returnValue('key');
                     this.oldListItem.selected = {'@id': 'old'};
                     this.oldListItem.selectedBlankNodes = [{'@id': 'bnode'}];
                     this.oldListItem.blankNodes = {bnode: 'bnode'};
@@ -484,6 +486,32 @@ describe('Ontology State Service', function() {
                     expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
                     expect(this.oldListItem.tabIndex).toEqual(1);
                 }));
+                describe('and the ontology is no longer a vocabulary', function() {
+                    it('and the ontology was open to concepts or schemes', fakeAsync(function() {
+                        spyOn(service, 'getActiveKey').and.returnValue('concepts');
+                        listItem.isVocabulary = false;
+                        this.oldListItem.ontologyId = 'old';
+                        service.updateOntology(recordId, branchId, commitId, listItem.upToDate)
+                            .subscribe(() => {}, () => fail('Observable should have resolved'));
+                        tick();
+                        expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, branchId, commitId, difference, listItem.upToDate, listItem.versionedRdfRecord.title, clearCache);
+                        expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
+                        expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
+                        expect(this.oldListItem.tabIndex).toEqual(0);
+                    }));
+                    it('and the ontology was not open to concepts or schemes', fakeAsync(function() {
+                        spyOn(service, 'getActiveKey').and.returnValue('overview');
+                        listItem.isVocabulary = false;
+                        this.oldListItem.ontologyId = 'old';
+                        service.updateOntology(recordId, branchId, commitId, listItem.upToDate)
+                            .subscribe(() => {}, () => fail('Observable should have resolved'));
+                        tick();
+                        expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, branchId, commitId, difference, listItem.upToDate, listItem.versionedRdfRecord.title, clearCache);
+                        expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
+                        expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
+                        expect(this.oldListItem.tabIndex).toEqual(1);
+                    }));
+                });
             });
             it('and updateState rejects', fakeAsync(function() {
                 this.oldListItem.ontologyId = 'old';
@@ -526,6 +554,7 @@ describe('Ontology State Service', function() {
                         spyOn(service, 'updateState').and.returnValue(of(null));
                     });
                     it('and the ontologyId changed', fakeAsync(function() {
+                        spyOn(service, 'getActiveKey').and.returnValue('key');
                         this.oldListItem.ontologyId = 'old';
                         service.updateOntologyWithCommit(recordId, commitId, tagId)
                             .subscribe(() => {}, () => fail('Observable should have resolved'));
@@ -536,6 +565,7 @@ describe('Ontology State Service', function() {
                         expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
                     it('and the ontologyId is the same', fakeAsync(function() {
+                        spyOn(service, 'getActiveKey').and.returnValue('key');
                         this.oldListItem.selected = {'@id': 'old'};
                         this.oldListItem.selectedBlankNodes = [{'@id': 'bnode'}];
                         this.oldListItem.blankNodes = {bnode: 'bnode'};
@@ -550,6 +580,32 @@ describe('Ontology State Service', function() {
                         expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, tagId });
                         expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
+                    describe('and the ontology is no longer a vocabulary', function() {
+                        it('and the ontology was open to concepts or schemes', fakeAsync(function() {
+                            spyOn(service, 'getActiveKey').and.returnValue('concepts');
+                            listItem.isVocabulary = false;
+                            this.oldListItem.ontologyId = 'old';
+                            service.updateOntology(recordId, branchId, commitId, listItem.upToDate)
+                                .subscribe(() => {}, () => fail('Observable should have resolved'));
+                            tick();
+                            expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, branchId, commitId, difference, listItem.upToDate, listItem.versionedRdfRecord.title, clearCache);
+                            expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
+                            expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
+                            expect(this.oldListItem.tabIndex).toEqual(0);
+                        }));
+                        it('and the ontology was not open to concepts or schemes', fakeAsync(function() {
+                            spyOn(service, 'getActiveKey').and.returnValue('overview');
+                            listItem.isVocabulary = false;
+                            this.oldListItem.ontologyId = 'old';
+                            service.updateOntology(recordId, branchId, commitId, listItem.upToDate)
+                                .subscribe(() => {}, () => fail('Observable should have resolved'));
+                            tick();
+                            expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, branchId, commitId, difference, listItem.upToDate, listItem.versionedRdfRecord.title, clearCache);
+                            expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
+                            expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId });
+                            expect(this.oldListItem.tabIndex).toEqual(1);
+                        }));
+                    });
                 });
                 it('and updateState rejects', fakeAsync(function() {
                     this.oldListItem.ontologyId = 'old';
@@ -572,6 +628,7 @@ describe('Ontology State Service', function() {
                     });
                     it('and the ontologyId changed', fakeAsync(function() {
                         this.oldListItem.ontologyId = 'old';
+                        spyOn(service, 'getActiveKey').and.returnValue('key');
                         service.updateOntologyWithCommit(recordId, commitId)
                             .subscribe(() => {}, () => fail('Observable should have resolved'));
                         tick();
@@ -581,6 +638,7 @@ describe('Ontology State Service', function() {
                         expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
                     it('and the ontologyId is the same', fakeAsync(function() {
+                        spyOn(service, 'getActiveKey').and.returnValue('key');
                         this.oldListItem.selected = {'@id': 'old'};
                         this.oldListItem.selectedBlankNodes = [{'@id': 'bnode'}];
                         this.oldListItem.blankNodes = {bnode: 'bnode'};
@@ -595,6 +653,42 @@ describe('Ontology State Service', function() {
                         expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId });
                         expect(this.oldListItem.tabIndex).toEqual(1);
                     }));
+                    describe('and the ontology is no longer a vocabulary', function() {
+                        it('and the ontology was open to concepts or schemes', fakeAsync(function() {
+                            spyOn(service, 'getActiveKey').and.returnValue('concepts');
+                            listItem.isVocabulary = false;
+                            this.oldListItem.selected = {'@id': 'old'};
+                            this.oldListItem.selectedBlankNodes = [{'@id': 'bnode'}];
+                            this.oldListItem.blankNodes = {bnode: 'bnode'};
+                            service.updateOntologyWithCommit(recordId, commitId)
+                                .subscribe(() => {}, () => fail('Observable should have resolved'));
+                            tick();
+                            expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, '', commitId, difference, true, listItem.versionedRdfRecord.title, clearCache);
+                            expect(service.resetStateTabs).not.toHaveBeenCalled();
+                            expect(listItem.selected).toEqual({'@id': 'old'});
+                            expect(listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
+                            expect(listItem.blankNodes).toEqual({bnode: 'bnode'});
+                            expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId });
+                            expect(this.oldListItem.tabIndex).toEqual(0);
+                        }));
+                        it('and the ontology was not open to concepts or schemes', fakeAsync(function() {
+                            spyOn(service, 'getActiveKey').and.returnValue('overview');
+                            listItem.isVocabulary = false;
+                            this.oldListItem.selected = {'@id': 'old'};
+                            this.oldListItem.selectedBlankNodes = [{'@id': 'bnode'}];
+                            this.oldListItem.blankNodes = {bnode: 'bnode'};
+                            service.updateOntologyWithCommit(recordId, commitId)
+                                .subscribe(() => {}, () => fail('Observable should have resolved'));
+                            tick();
+                            expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, '', commitId, difference, true, listItem.versionedRdfRecord.title, clearCache);
+                            expect(service.resetStateTabs).not.toHaveBeenCalled();
+                            expect(listItem.selected).toEqual({'@id': 'old'});
+                            expect(listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
+                            expect(listItem.blankNodes).toEqual({bnode: 'bnode'});
+                            expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId });
+                            expect(this.oldListItem.tabIndex).toEqual(1);
+                        }));
+                    });
                 });
                 it('and updateState rejects', fakeAsync(function() {
                     this.oldListItem.ontologyId = 'old';
@@ -1508,7 +1602,7 @@ describe('Ontology State Service', function() {
     it('createFlatEverythingTree creates the correct array', function() {
         listItem.classes = {iris: {[classId]: ontologyId}, childMap: {}, parentMap: {}, circularMap: {}, flat: []};
         listItem.classToChildProperties = {'https://classId.com': ['property1']};
-        listItem.noDomainProperties = ['property2'],
+        listItem.noDomainProperties = ['property2'];
         listItem.entityInfo = {
             'https://classId.com': {
                 label: 'class',
