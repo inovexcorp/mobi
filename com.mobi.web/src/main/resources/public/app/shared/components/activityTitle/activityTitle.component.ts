@@ -23,12 +23,12 @@
 import { get } from 'lodash';
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 
-import { UserManagerService } from '../../../shared/services/userManager.service';
-import { User } from '../../../shared/models/user.interface';
+import { UserManagerService } from '../../services/userManager.service';
+import { User } from '../../models/user.interface';
 import { PROV } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
-import { ProvManagerService } from '../../../shared/services/provManager.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UtilService } from '../../services/util.service';
+import { ProvManagerService } from '../../services/provManager.service';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 /**
  * @class home.ActivityTitleComponent

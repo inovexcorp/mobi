@@ -20,15 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<mat-card class="activity-card h-100">
-    <mat-card-content class="h-100">
-        <mat-tab-group class="h-100" [(selectedIndex)]="tabIndex">
-            <mat-tab label="Recent Activity">
-                <app-activity-list></app-activity-list>
-            </mat-tab>
-            <mat-tab label="My Activity">
-                <app-activity-list [userIri]="lm.currentUserIRI"></app-activity-list>
-            </mat-tab>
-        </mat-tab-group>
-    </mat-card-content>
-</mat-card>
+<div class="activity-list h-100 vertical-scroll py-2" #activityList>
+    <div class="activity pb-3" *ngFor="let activity of activities; trackBy: trackByFn">
+        <activity-title [activity]="activity.jsonld" [entities]="entities"></activity-title>
+        <div class="timestamp text-muted">{{activity.timestamp}}</div>
+    </div>
+    <button mat-raised-button *ngIf="totalSize > activities.length" (click)="loadMore()">Load More</button>
+</div>

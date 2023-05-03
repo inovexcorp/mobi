@@ -64,7 +64,7 @@ import { RecordTypeComponent } from './components/recordType/recordType.componen
         RecordsViewComponent,
         RecordViewComponent,
         RecordViewTabsetComponent,
-        RecordTypeComponent
+        RecordTypeComponent,
     ]
 })
 export class CatalogModule {}

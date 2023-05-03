@@ -28,8 +28,9 @@ import { catchError } from 'rxjs/operators';
 
 import { REST_PREFIX } from '../../constants';
 import { MATPROV, PROV } from '../../prefixes';
-import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { UtilService } from './util.service';
+import { ActivityPaginatedConfig } from '../models/activity-paginated-config';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 
 /**
  * @class shared.ProvManagerService
@@ -74,19 +75,25 @@ export class ProvManagerService {
 
     /**
      * Makes a call to GET /mobirest/provenance-data to get a paginated list of `Activities` and their associated
-     * `Entities`. Returns the paginated response for the query using the passed page index and limit. The
-     * data of the response will be an object with the array of `Activities` and the array of associated
-     * `Entities`, the "x-total-count" headers will contain the total number of `Activities` matching the
-     * query, and the "link" header will contain the URLs for the next and previous page if present. Can
-     * optionally be a cancel-able request by passing a request id.
+     * `Entities`. Returns the paginated response for the query using the passed page index and limit and optional 
+     * entity IRI to filter on. The data of the response will be an object with the array of `activities` and the array
+     * of associated `entities`, the "x-total-count" headers will contain the total number of `Activities` matching the
+     * query, and the "link" header will contain the URLs for the next and previous page if present. Can be optionally
+     * tracked elsewhere by providing `true` at the end of the arguments.
      *
-     * @param {PaginatedConfig} paginatedConfig A configuration object for paginated requests.
+     * @param {ActivityPaginatedConfig} paginatedConfig A configuration object for paginated requests on activities.
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    getActivities(paginatedConfig: PaginatedConfig, isTracked = false): Observable<HttpResponse<{activities: any, entities: any}>> {
+    getActivities(paginatedConfig: ActivityPaginatedConfig, isTracked = false): Observable<HttpResponse<{activities: JSONLDObject[], entities: JSONLDObject[]}>> {
         const params = this.util.paginatedConfigToParams(paginatedConfig);
+        if (paginatedConfig.entity) {
+            params.entity = paginatedConfig.entity;
+        }
+        if (paginatedConfig.agent) {
+            params.agent = paginatedConfig.agent;
+        }
         return this.util.trackedRequest(this.http.get(this.prefix, {params: this.util.createHttpParams(params), observe: 'response'}), isTracked)
             .pipe(catchError(this.util.handleError));
     }

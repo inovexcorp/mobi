@@ -20,3 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { PaginatedConfig } from './paginatedConfig.interface';
+
+/**
+ * A specific type of PaginatedConfig for lists of Activities.
+ */
+export interface ActivityPaginatedConfig extends PaginatedConfig {
+    entity?: string,
+    agent?: string,
+}

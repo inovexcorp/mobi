@@ -73,6 +73,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -87,7 +88,6 @@ public class ProvRestTest extends MobiRestTestCXF {
     private OrmFactory<Activity> activityFactory;
     private OrmFactory<Entity> entityFactory;
 
-    private String provData;
     private List<String> activityIRIs;
     private List<String> entityIRIs;
     private final String ACTIVITY_NAMESPACE = "http://test.org/activities#";
@@ -129,11 +129,10 @@ public class ProvRestTest extends MobiRestTestCXF {
         activityFactory = getRequiredOrmFactory(Activity.class);
         entityFactory = getRequiredOrmFactory(Entity.class);
 
-        provData = IOUtils.toString(getClass().getResourceAsStream("/prov-data.ttl"), StandardCharsets.UTF_8);
+        String provData = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/prov-data.ttl")), StandardCharsets.UTF_8);
         activityIRIs = IntStream.range(0, 10)
                 .mapToObj(i -> ACTIVITY_NAMESPACE + "Activity" + i)
                 .collect(Collectors.toList());
-        Collections.reverse(activityIRIs);
 
         entityIRIs = IntStream.range(0, 5)
                 .mapToObj(i -> ENTITY_NAMESPACE + "Entity" + i)
@@ -174,6 +173,8 @@ public class ProvRestTest extends MobiRestTestCXF {
         closeable.close();
     }
 
+    // getActivities
+
     @Test
     public void getActivitiesWithNoneTest() throws Exception {
         // Setup:
@@ -203,8 +204,10 @@ public class ProvRestTest extends MobiRestTestCXF {
         assertEquals(headers.get("X-Total-Count").get(0), "10");
         verify(provService, times(10)).getActivity(any(Resource.class));
         try {
+            List<String> expected = new ArrayList<>(activityIRIs);
+            Collections.reverse(expected);
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertActivities(result, activityIRIs);
+            assertActivities(result, expected);
             assertEntities(result, entityIRIs);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -224,12 +227,51 @@ public class ProvRestTest extends MobiRestTestCXF {
         verify(provService, times(2)).getActivity(any(Resource.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertActivities(result, activityIRIs.subList(2, 4));
-            assertEntities(result, Stream.of(entityIRIs.get(1), entityIRIs.get(2), entityIRIs.get(3)).collect(Collectors.toList()));
+            assertActivities(result, Stream.of(activityIRIs.get(7), activityIRIs.get(6)).collect(Collectors.toList()));
+            assertEntities(result, Stream.of(entityIRIs.get(3), entityIRIs.get(4)).collect(Collectors.toList()));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
     }
+
+    @Test
+    public void getActivitiesWithAgentTest() throws Exception {
+        String USER_1_IRI = "http://test.org/users#1";
+        Response response = target().path("provenance-data").queryParam("agent", USER_1_IRI).request().get();
+        assertEquals(response.getStatus(), 200);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "6");
+        verify(provService, times(6)).getActivity(any(Resource.class));
+        try {
+            List<String> expected = Stream.of(activityIRIs.get(2), activityIRIs.get(4), activityIRIs.get(5), activityIRIs.get(6), activityIRIs.get(8), activityIRIs.get(9)).collect(Collectors.toList());
+            Collections.reverse(expected);
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertActivities(result, expected);
+            assertEntities(result, Stream.of(entityIRIs.get(0), entityIRIs.get(1), entityIRIs.get(2), entityIRIs.get(3), entityIRIs.get(4)).collect(Collectors.toList()));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getActivitiesWithEntityTest() throws Exception {
+        Response response = target().path("provenance-data").queryParam("entity", entityIRIs.get(0)).request().get();
+        assertEquals(response.getStatus(), 200);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "3");
+        verify(provService, times(3)).getActivity(any(Resource.class));
+        try {
+            List<String> expected = Stream.of(activityIRIs.get(0), activityIRIs.get(1), activityIRIs.get(5)).collect(Collectors.toList());
+            Collections.reverse(expected);
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertActivities(result, expected);
+            assertEntities(result, Stream.of(entityIRIs.get(0)).collect(Collectors.toList()));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    // getActivity
 
     @Test
     public void getActivityWithoutErrorTest() {
@@ -263,6 +305,8 @@ public class ProvRestTest extends MobiRestTestCXF {
         Response response = target().path("provenance-data").request().get();
         assertEquals(response.getStatus(), 500);
     }
+
+    // Helper methods
 
     private void assertResourceOrder(JSONArray array, List<String> expectedOrder) {
         List<String> resources = getResources(array);

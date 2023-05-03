@@ -37,8 +37,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
  */
 @Component({
   selector: 'app-ontology-download-modal',
-  templateUrl: './ontology-download-modal.component.html',
-  styleUrls: ['./ontology-download-modal.component.scss']
+  templateUrl: './ontology-download-modal.component.html'
 })
 export class OntologyDownloadModalComponent {
 

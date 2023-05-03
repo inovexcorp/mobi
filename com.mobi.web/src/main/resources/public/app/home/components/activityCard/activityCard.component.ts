@@ -20,78 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { Component } from '@angular/core';
 
-import { PROV } from '../../../prefixes';
-import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
-import { ProvManagerService } from '../../../shared/services/provManager.service';
-import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
  * @class home.ActivityCardComponent
  *
- * `activity-card` is a component which creates a Bootstrap `.card` containing a infinite scrolled list of the
- * most recent activities in the application. The activities are loaded 10 at a time and are displayed using
- * {@link home.ActivityTitleComponent activityTitles}.
+ * A component which creates a `mat-card` containing infinite scrolled lists of the activities in the application. The 
+ * activity lists are Recent across the application and those targeted to the currently logged in 
+ * {@link shared.LoginManagerService#currentUserIri user} and are displayed with {@link shared.ActivityListComponent}.
  */
 @Component({
     selector: 'activity-card',
     templateUrl: './activityCard.component.html'
 })
-export class ActivityCardComponent implements OnInit, OnDestroy {
-    private increment = 10;
-
-    limit = this.increment;
-    activities = [];
-    entities = [];
-    totalSize = 0;
-
-    subscription: Subscription;
-
-    @ViewChild('cardBody', { static: true }) cardBody: ElementRef;
+export class ActivityCardComponent {
+    tabIndex = 0;
     
-    constructor(public pm: ProvManagerService, public util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
-    
-    ngOnInit(): void {
-        this.setPage();
-    }
-    ngOnDestroy(): void {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
-    }
-    loadMore(): void {
-        this.limit += this.increment;
-        this.setPage();
-    }
-    setPage(): void {
-        this.spinnerSvc.startLoadingForComponent(this.cardBody);
-        this.subscription = this.pm.getActivities(this.getConfig())
-            .pipe(finalize(() => {
-                this.spinnerSvc.finishLoadingForComponent(this.cardBody);
-            }))
-            .subscribe(response => {
-                this.activities = response.body.activities;
-                this.entities = response.body.entities;
-                this.totalSize = Number(response.headers.get('x-total-count')) || 0;
-            }, errorMessage => {
-                if (errorMessage) {
-                    this.util.createErrorToast(errorMessage);
-                }
-            });
-    }
-    getTimeStamp(activity: JSONLDObject): string {
-        const dateStr = this.util.getPropertyValue(activity, PROV + 'endedAtTime');
-        return this.util.getDate(dateStr, 'short');
-    }
-    getConfig(): PaginatedConfig {
-        return {pageIndex: 0, limit: this.limit};
-    }
-    trackByFn(index: number, item: JSONLDObject): string {
-        return item['@id'];
-    }
+    constructor(public lm: LoginManagerService) {}
 }
