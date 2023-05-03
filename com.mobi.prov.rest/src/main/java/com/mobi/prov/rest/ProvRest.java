@@ -45,6 +45,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -71,6 +72,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -100,6 +102,8 @@ public class ProvRest {
     private static final String GET_ENTITIES_QUERY;
     private static final String ACTIVITY_COUNT_BINDING = "count";
     private static final String ACTIVITY_BINDING = "activity";
+    private static final String ENTITY_FILTER = "%ENTITY_FILTER%";
+    private static final String AGENT_BINDING = "agent";
 
     static {
         try {
@@ -154,18 +158,31 @@ public class ProvRest {
     )
     public Response getActivities(
             @Context UriInfo uriInfo,
+            @Parameter(description = "An entity IRI to filter the results by", required = false)
+            @QueryParam("entity") String entityIri,
+            @Parameter(description = "An entity IRI to filter the results by", required = false)
+            @QueryParam("agent") String agentIri,
             @Parameter(schema = @Schema(type = "integer", description = "The URI information of the request "
                     + "to be used in creating links to other pages of Activities", required = false))
             @DefaultValue("0") @QueryParam("offset") int offset,
             @Parameter(schema = @Schema(type = "integer", description = "The offset for the page", required = false))
             @DefaultValue("50") @QueryParam("limit") int limit) {
         validateParams(limit, offset);
+        Resource entity = null;
+        if ( StringUtils.isNotEmpty(entityIri)) {
+            entity = vf.createIRI(entityIri);
+        }
+        Resource agent = null;
+        if ( StringUtils.isNotEmpty(agentIri)) {
+            agent = vf.createIRI(agentIri);
+        }
         List<Activity> activityList = new ArrayList<>();
         try (RepositoryConnection conn = provService.getConnection()) {
             StopWatch watch = new StopWatch();
             LOG.trace("Start collecting prov activities count");
             watch.start();
-            TupleQuery countQuery = conn.prepareTupleQuery(GET_ACTIVITIES_COUNT_QUERY);
+            TupleQuery countQuery = conn.prepareTupleQuery(replaceEntityFilter(GET_ACTIVITIES_COUNT_QUERY, entity));
+            replaceAgentFilter(countQuery, agent);
             TupleQueryResult countResult = countQuery.evaluate();
             int totalCount;
             BindingSet bindingSet;
@@ -182,8 +199,10 @@ public class ProvRest {
             watch.reset();
             LOG.trace("Start collecting prov activities");
             watch.start();
-            String queryStr = GET_ACTIVITIES_QUERY + "\nLIMIT " + limit + "\nOFFSET " + offset;
+            String queryStr = replaceEntityFilter(GET_ACTIVITIES_QUERY, entity)
+                    + "\nLIMIT " + limit + "\nOFFSET " + offset;
             TupleQuery query = conn.prepareTupleQuery(queryStr);
+            replaceAgentFilter(query, agent);
             TupleQueryResult result = query.evaluate();
             result.forEach(bindings -> {
                 Resource resource = vf.createIRI(Bindings.requiredResource(bindings, ACTIVITY_BINDING).stringValue());
@@ -288,5 +307,19 @@ public class ProvRest {
         object.element("activities", activityArr);
         object.element("entities", RestUtils.modelToJsonld(entitiesModel));
         return object;
+    }
+
+    private String replaceEntityFilter(String query, @Nullable Resource entity) {
+        if (entity == null) {
+            return query.replace(ENTITY_FILTER, "");
+        } else {
+            return query.replace(ENTITY_FILTER, "FILTER(?entity = <" + entity + ">)\n");
+        }
+    }
+
+    private void replaceAgentFilter(TupleQuery query, @Nullable Resource agent) {
+        if (agent != null) {
+            query.setBinding(AGENT_BINDING, agent);
+        }
     }
 }

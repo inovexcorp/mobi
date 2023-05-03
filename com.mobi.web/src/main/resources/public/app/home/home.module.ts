@@ -23,7 +23,6 @@
 import { NgModule } from '@angular/core';
 
 import { ActivityCardComponent } from './components/activityCard/activityCard.component';
-import { ActivityTitleComponent } from './components/activityTitle/activityTitle.component';
 import { HomePageComponent } from './components/homePage/homePage.component';
 import { QuickActionGridComponent } from './components/quickActionGrid/quickActionGrid.component';
 import { SharedModule } from '../shared/shared.module';
@@ -41,7 +40,6 @@ import { RouterModule } from '@angular/router';
     ],
     declarations: [
         ActivityCardComponent,
-        ActivityTitleComponent,
         HomePageComponent,
         QuickActionGridComponent
     ],

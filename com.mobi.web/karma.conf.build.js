@@ -45,7 +45,7 @@ module.exports = function (config) {
       // Increased timeouts for connecting to the browser
       captureTimeout: 210000,
       browserDisconnectTolerance: 3,
-      browserDisconnectTimeout : 210000,
-      browserNoActivityTimeout : 210000
+      browserDisconnectTimeout: 210000,
+      browserNoActivityTimeout: 210000
     });
   };

@@ -23,6 +23,8 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
@@ -30,9 +32,9 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { SharedModule } from '../../../shared/shared.module';
 import { BranchListComponent } from '../branchList/branchList.component';
 import { RecordMarkdownComponent } from '../recordMarkdown/recordMarkdown.component';
+import { ActivityListComponent } from '../../../shared/components/activity-list/activity-list.component';
 import { RecordViewTabsetComponent } from './recordViewTabset.component';
 
 describe('Record View Tabset component', function() {
@@ -45,11 +47,15 @@ describe('Record View Tabset component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [
+                NoopAnimationsModule,
+                MatTabsModule
+            ],
             declarations: [
                 RecordViewTabsetComponent,
                 MockComponent(BranchListComponent),
-                MockComponent(RecordMarkdownComponent)
+                MockComponent(RecordMarkdownComponent),
+                MockComponent(ActivityListComponent)
             ],
             providers: [
                 MockProvider(CatalogManagerService)
@@ -97,20 +103,27 @@ describe('Record View Tabset component', function() {
             component.record = record;
             fixture.detectChanges();
             tick();
-            expect(element.queryAll(By.css('mat-tab-body')).length).toBe(2);
+            expect(element.queryAll(By.css('mat-tab-body')).length).toBe(3);
         }));
-        it('with a tab for users-page', fakeAsync(function() {
+        it('with a tab for Overview', fakeAsync(function() {
             component.record = record;
             fixture.detectChanges();
             tick();
             expect(element.queryAll(By.css('record-markdown')).length).toBe(1);
         }));
-        it('with a tab for groups-page', fakeAsync(function() {
+        it('with a tab for Branches', fakeAsync(function() {
             component.record = record;
             component.tabIndex = 1;
             fixture.detectChanges();
             tick();
             expect(element.queryAll(By.css('branch-list')).length).toBe(1);
+        }));
+        it('with a tab for Activity', fakeAsync(function() {
+            component.record = record;
+            component.tabIndex = 2;
+            fixture.detectChanges();
+            tick();
+            expect(element.queryAll(By.css('app-activity-list')).length).toBe(1);
         }));
     });
 });

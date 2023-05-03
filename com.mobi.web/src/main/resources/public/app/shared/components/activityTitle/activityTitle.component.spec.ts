@@ -28,11 +28,10 @@ import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM
-} from '../../../../../public/test/ts/Shared'; 
-import { SharedModule } from '../../../shared/shared.module';
-import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
-import { ProvManagerService } from '../../../shared/services/provManager.service';
+} from '../../../../test/ts/Shared'; 
+import { UserManagerService } from '../../services/userManager.service';
+import { UtilService } from '../../services/util.service';
+import { ProvManagerService } from '../../services/provManager.service';
 import { ActivityTitleComponent } from './activityTitle.component';
 
 describe('Activity Title component', function() {
@@ -45,7 +44,6 @@ describe('Activity Title component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
             declarations: [
                 ActivityTitleComponent
             ],

@@ -1,8 +1,12 @@
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
-SELECT ?activity
+SELECT DISTINCT ?activity
 WHERE {
 	?activity a prov:Activity ;
-        prov:endedAtTime ?end .
+        prov:wasAssociatedWith ?agent ;
+        prov:endedAtTime ?end ;
+        prov:used|prov:invalidated|prov:generated ?entity .
+
+    %ENTITY_FILTER%
 }
 ORDER BY DESC(?end)

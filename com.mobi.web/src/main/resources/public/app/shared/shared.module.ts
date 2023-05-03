@@ -60,6 +60,7 @@ import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 
+import { ActivityTitleComponent } from './components/activityTitle/activityTitle.component';
 import { BlankNodeValueDisplayComponent } from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
 import { BranchSelectComponent } from './components/branchSelect/branchSelect.component';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
@@ -144,6 +145,7 @@ import { SplitIRIPipe } from './pipes/splitIRI.pipe';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
+import { ActivityListComponent } from './components/activity-list/activity-list.component';
 
 /**
  * @namespace shared
@@ -192,6 +194,8 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         ShowdownModule.forRoot({flavor: 'github'}),
     ],
     declarations: [
+        ActivityListComponent,
+        ActivityTitleComponent,
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
         BreadcrumbsComponent,
@@ -238,7 +242,7 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         SplitIRIPipe,
         TrustedHtmlPipe,
         CircleButtonStackComponent,
-        LanguageSelectComponent
+        LanguageSelectComponent,
     ],
     exports: [
         BrowserAnimationsModule,
@@ -276,6 +280,8 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         MatTooltipModule,
         ReactiveFormsModule,
         ShowdownModule,
+        ActivityListComponent,
+        ActivityTitleComponent,
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
         BreadcrumbsComponent,
