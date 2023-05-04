@@ -1977,6 +1977,42 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         assertFalse(revision.getProperty(provWasDerivedFrom).isPresent());
     }
 
+    /* createInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user,
+                                                   @Nullable File additionsFile, @Nullable File deletionsFile,
+                                                   RepositoryConnection conn)
+    */
+    @Test
+    public void testCreateInProgressCommitWithFiles() throws Exception {
+        // Setup:
+        IRI provWasDerivedFrom = VALUE_FACTORY.createIRI(Entity.wasDerivedFrom_IRI);
+        IRI provGenerated = VALUE_FACTORY.createIRI(Activity.generated_IRI);
+        IRI provWasAssociatedWith = VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI);
+        IRI provWasInformedBy = VALUE_FACTORY.createIRI(Activity.wasInformedBy_IRI);
+        User user = userFactory.createNew(USER_IRI);
+        when(utilsService.getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            InProgressCommit result = manager.createInProgressCommit(localCatalogId, VERSIONED_RDF_RECORD_IRI, user, null, null, conn);
+            assertTrue(result.getProperty(provWasAssociatedWith).isPresent());
+            assertEquals(USER_IRI.stringValue(), result.getProperty(provWasAssociatedWith).get().stringValue());
+            assertTrue(result.getProperty(provGenerated).isPresent());
+            Revision revision = revisionFactory.createNew((Resource) result.getProperty(provGenerated).get(),
+                    result.getModel());
+            assertTrue(revision.getAdditions().isPresent());
+            assertTrue(revision.getDeletions().isPresent());
+
+            result = manager.createInProgressCommit(localCatalogId, VERSIONED_RDF_RECORD_IRI, user, null, null, conn);
+            assertEquals(USER_IRI.stringValue(), result.getProperty(provWasAssociatedWith).get().stringValue());
+            assertTrue(result.getProperty(provGenerated).isPresent());
+            assertFalse(result.getProperty(provWasInformedBy).isPresent());
+            revision = revisionFactory.createNew((Resource) result.getProperty(provGenerated).get(),
+                    result.getModel());
+            assertTrue(revision.getAdditions().isPresent());
+            assertTrue(revision.getDeletions().isPresent());
+            assertFalse(revision.getProperty(provWasDerivedFrom).isPresent());
+        }
+    }
+
     /* updateInProgressCommit(Resource, Resource, Resource, Model, Model) */
 
     @Test

@@ -36,25 +36,9 @@ public interface ImportsResolver {
      * Attempts to retrieve an ontology from the web given an IRI.
      *
      * @param ontologyIRI The IRI of the Ontology to resolve from the web
-     * @return An Optional of the Model representing the ontology of the provided IRI
-     */
-    Optional<Model> retrieveOntologyFromWeb(Resource ontologyIRI);
-
-    /**
-     * Attempts to retrieve an ontology from the web given an IRI.
-     *
-     * @param ontologyIRI The IRI of the Ontology to resolve from the web
      * @return An Optional of the File representing the ontology of the provided IRI
      */
     Optional<File> retrieveOntologyFromWebFile(Resource ontologyIRI);
-
-    /**
-     * Attempts to retrieve an ontology from the local catalog given an IRI.
-     * @param ontologyIRI The IRI of the Ontology to resolve from the local catalog
-     * @param ontologyManager The OntologyManager used to check if the IRI exists in the catalog
-     * @return An Optional of the Model representing the ontology of the provided IRI
-     */
-    Optional<Model> retrieveOntologyLocal(Resource ontologyIRI, OntologyManager ontologyManager);
 
     /**
      * Attempts to retrieve an ontology from the local catalog given an IRI.

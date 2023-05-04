@@ -44,16 +44,6 @@ public interface VersioningService<T extends VersionedRDFRecord> {
     String getTypeIRI();
 
     /**
-     * Retrieves the source {@link Branch} for a merge process identified by the provided Resource IDs.
-     *
-     * @param record The VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The source Branch for a merge process
-     */
-    Branch getSourceBranch(T record, Resource branchId, RepositoryConnection conn);
-
-    /**
      * Retrieves the target {@link Branch} for a commit or merge process identified by the provided Resource IDs.
      *
      * @param record The VersionedRDFRecord which has the Branch.
@@ -61,7 +51,7 @@ public interface VersioningService<T extends VersionedRDFRecord> {
      * @param conn A RepositoryConnection to use for lookup.
      * @return The target Branch for a commit or merge process
      */
-    Branch getTargetBranch(T record, Resource branchId, RepositoryConnection conn);
+    Branch getBranch(T record, Resource branchId, RepositoryConnection conn);
 
     /**
      * Retrieves the head {@link Commit} of the provided {@link Branch}. Returns null if the Branch has no head Commit.

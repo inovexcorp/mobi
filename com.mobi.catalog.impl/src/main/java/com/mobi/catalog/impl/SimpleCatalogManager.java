@@ -25,30 +25,6 @@ package com.mobi.catalog.impl;
 
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
-import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.ConnectionUtils;
-import com.mobi.persistence.utils.Statements;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.QueryResults;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
@@ -94,6 +70,9 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.security.policy.api.PDP;
@@ -101,7 +80,28 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.xacml.XACML;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1191,6 +1191,35 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public InProgressCommit createInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user,
+                                                   @Nullable File additionsFile, @Nullable File deletionsFile,
+                                                   RepositoryConnection conn) {
+        InProgressCommit inProgressCommit = createInProgressCommit(user);
+        addInProgressCommit(catalogId, versionedRDFRecordId, inProgressCommit, conn);
+        Resource resource = inProgressCommit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
+        Revision revision = revisionFactory.getExisting(resource, inProgressCommit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
+                new IllegalStateException("Additions not set on Commit " + inProgressCommit.getResource()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
+                new IllegalStateException("Deletions not set on Commit " + inProgressCommit.getResource()));
+        try {
+            if (additionsFile != null) {
+                conn.add(additionsFile, additionsGraph);
+                additionsFile.delete();
+            }
+            if (deletionsFile != null) {
+                conn.add(deletionsFile, deletionsGraph);
+                deletionsFile.delete();
+            }
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        return inProgressCommit;
+    }
+
+    @Override
     public void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource commitId,
                                        @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -1229,21 +1258,26 @@ public class SimpleCatalogManager implements CatalogManager {
     public void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                     InProgressCommit inProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Resource userIRI = (Resource) inProgressCommit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
-                    .orElseThrow(() -> new IllegalArgumentException("User not set on InProgressCommit "
-                            + inProgressCommit.getResource()));
-            if (utils.getInProgressCommitIRI(versionedRDFRecordId, userIRI, conn).isPresent()) {
-                throw new IllegalStateException("User " + userIRI + " already has an InProgressCommit for Record "
-                        + versionedRDFRecordId);
-            }
-            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
-                    conn);
-            if (ConnectionUtils.containsContext(conn, inProgressCommit.getResource())) {
-                throw utils.throwAlreadyExists(inProgressCommit.getResource(), inProgressCommitFactory);
-            }
-            inProgressCommit.setOnVersionedRDFRecord(record);
-            utils.addObject(inProgressCommit, conn);
+            addInProgressCommit(catalogId, versionedRDFRecordId, inProgressCommit, conn);
         }
+    }
+
+    private void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+                                    InProgressCommit inProgressCommit, RepositoryConnection conn) {
+        Resource userIRI = (Resource) inProgressCommit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
+                .orElseThrow(() -> new IllegalArgumentException("User not set on InProgressCommit "
+                        + inProgressCommit.getResource()));
+        if (utils.getInProgressCommitIRI(versionedRDFRecordId, userIRI, conn).isPresent()) {
+            throw new IllegalStateException("User " + userIRI + " already has an InProgressCommit for Record "
+                    + versionedRDFRecordId);
+        }
+        VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
+                conn);
+        if (ConnectionUtils.containsContext(conn, inProgressCommit.getResource())) {
+            throw utils.throwAlreadyExists(inProgressCommit.getResource(), inProgressCommitFactory);
+        }
+        inProgressCommit.setOnVersionedRDFRecord(record);
+        utils.addObject(inProgressCommit, conn);
     }
 
     @Override

@@ -168,7 +168,7 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
     @Test
     public void getSourceBranchTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(branch, service.getSourceBranch(record, branch.getResource(), conn));
+            assertEquals(branch, service.getBranch(record, branch.getResource(), conn));
             verify(catalogUtils).getBranch(record, branch.getResource(), branchFactory, conn);
         }
     }
@@ -176,7 +176,7 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
     @Test
     public void getTargetBranchTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(branch, service.getTargetBranch(record, branch.getResource(), conn));
+            assertEquals(branch, service.getBranch(record, branch.getResource(), conn));
             verify(catalogUtils).getBranch(record, branch.getResource(), branchFactory, conn);
         }
     }

@@ -495,7 +495,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 case XSD.DATE_TIME:
                 case XSD.DATE_TIME_STAMP:
                 case XSD.TIME:
-                    literal.temporalAccessorValue(); // TODO: NOT SURE
+                    literal.temporalAccessorValue();
                     return true;
                 case XSD.ANYURI:
                     valueFactory.createIRI(literal.stringValue());

@@ -37,6 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -53,6 +54,7 @@ import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -71,6 +73,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
@@ -154,6 +157,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private CatalogConfigProvider configProvider;
 
     @Mock
+    private CatalogManager catalogManager;
+
+    @Mock
     private EngineManager engineManager;
 
     @Mock
@@ -196,7 +202,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
 
         closeable = MockitoAnnotations.openMocks(this);
-        when(versioningManager.commit(any(IRI.class), any(IRI.class), any(IRI.class), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
+        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
@@ -225,6 +231,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.engineManager = engineManager;
         recordService.configProvider = configProvider;
         recordService.recordFactory = recordService.versionedRDFRecordFactory;
+        recordService.catalogManager = catalogManager;
     }
 
     @After
@@ -282,6 +289,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, new LinkedHashModel());
 
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
@@ -289,8 +297,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         verify(utilsService, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
-        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
-                anyString(), any(), eq(null));
+        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));

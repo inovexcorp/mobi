@@ -28,13 +28,10 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.ontology.utils.imports.ImportsResolverConfig;
-import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -49,9 +46,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.OPTIONAL,
@@ -66,8 +60,7 @@ public class ImportsResolverImpl implements ImportsResolver {
     private static final String ACCEPT_HEADERS = "application/rdf+xml, application/xml; q=0.7, text/xml; q=0.6,"
             + "text/turtle; q=0.5, application/ld+json; q=0.4, application/trig; q=0.3, application/n-triples; q=0.2,"
             + " application/n-quads; q=0.19, text/n3; q=0.18, text/plain; q=0.1, */*; q=0.09";
-    protected static Set<String> formats = Stream.of(".rdf", ".ttl", ".owl", ".xml", ".jsonld", ".trig", ".json", ".n3",
-            ".nq", ".nt").collect(Collectors.toSet());
+
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
 
     @Reference
@@ -75,8 +68,6 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Reference
     CatalogManager catalogManager;
-
-    final ModelFactory mf = new DynamicModelFactory();
 
     @Activate
     protected void activate(final ImportsResolverConfig config) {
@@ -87,19 +78,6 @@ public class ImportsResolverImpl implements ImportsResolver {
         }
     }
 
-    @Override
-    public Optional<Model> retrieveOntologyFromWeb(Resource resource) {
-        long startTime = getStartTime();
-        Model model = mf.createEmptyModel();
-        String urlStr = resource.stringValue();
-        Optional<Model> modelOpt = getModel(urlStr);
-        if (modelOpt.isPresent()) {
-            model = modelOpt.get();
-        }
-        logDebug("Retrieving " + resource + " from web", startTime);
-        return !model.isEmpty() ? Optional.of(model) : Optional.empty();
-    }
-
     /**
      * Retrieves the {@link InputStream} for the provided urlStr.
      *
@@ -107,7 +85,7 @@ public class ImportsResolverImpl implements ImportsResolver {
      * @return A {@link InputStream} of the Ontology from the web.
      * @throws IOException if there is an error connecting to the online resource.
      */
-    private InputStream getWebInputStream(String urlStr) throws IOException {
+    private HttpURLConnection getWebInputStream(String urlStr) throws IOException {
         String actualUrlStr = urlStr.endsWith("/") ? urlStr.substring(0, urlStr.lastIndexOf("/")) : urlStr;
         URL url = new URL(actualUrlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -133,23 +111,7 @@ public class ImportsResolverImpl implements ImportsResolver {
                 conn.setConnectTimeout(3000);
             }
         }
-        return conn.getInputStream();
-    }
-
-    /**
-     * Attempts to build a {@link Model} from the urlStr representing a web resource.
-     *
-     * @param urlStr The String representation of a URL.
-     * @return An {@link Optional} of the {@link Model} if resolved and parsed. Otherwise, an empty {@link Optional}.
-     */
-    private Optional<Model> getModel(String urlStr) {
-        Model model = mf.createEmptyModel();
-        try {
-            model = Models.createModel(getWebInputStream(urlStr));
-        } catch (IOException | IllegalArgumentException e) {
-            log.debug("Could not parse InputStream to model from URL: " + urlStr);
-        }
-        return model.isEmpty() ? Optional.empty() : Optional.of(model);
+        return conn;
     }
 
     @Override
@@ -158,8 +120,16 @@ public class ImportsResolverImpl implements ImportsResolver {
         try {
             String urlStr = resource.stringValue();
             try {
-                File tempFile = RDFFiles.writeStreamToTempFile(getWebInputStream(urlStr));
-                return RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.NQUADS);
+                HttpURLConnection conn = getWebInputStream(urlStr);
+                RDFFormat format = RDFFiles.getFormatForMIMEType(conn.getContentType())
+                        .or(() -> RDFFiles.getFormatForFileName(conn.getURL().getPath()))
+                        .orElseThrow(() -> new IllegalStateException("Could not retrieve RDFFormat for " + resource));
+                File tempFile = RDFFiles.writeStreamToTempFile(conn.getInputStream(), format);
+                try {
+                    return Optional.of(RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.NQUADS));
+                } catch (RDFParseException e) {
+                    return Optional.empty();
+                }
             } catch (IOException e) {
                 log.error("Error opening InputStream from web ontology", e);
             }
@@ -167,23 +137,6 @@ public class ImportsResolverImpl implements ImportsResolver {
         } finally {
             logDebug("Retrieving ontology File from web", startTime);
         }
-    }
-
-    @Override
-    public Optional<Model> retrieveOntologyLocal(Resource ontologyIRI, OntologyManager ontologyManager) {
-        Long startTime = getStartTime();
-        Model model = mf.createEmptyModel();
-        Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(ontologyIRI);
-        if (recordIRIOpt.isPresent()) {
-            Resource recordIRI = recordIRIOpt.get();
-            Optional<Resource> masterHead = catalogManager.getMasterBranch(
-                    catalogConfigProvider.getLocalCatalogIRI(), recordIRI).getHead_resource();
-            if (masterHead.isPresent()) {
-                model = catalogManager.getCompiledResource(masterHead.get());
-            }
-        }
-        logDebug("Retrieving ontology from local catalog", startTime);
-        return model.size() > 0 ? Optional.of(model) : Optional.empty();
     }
 
     @Override

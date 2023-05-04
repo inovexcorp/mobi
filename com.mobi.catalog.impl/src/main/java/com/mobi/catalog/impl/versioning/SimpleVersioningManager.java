@@ -82,54 +82,21 @@ public class SimpleVersioningManager implements VersioningManager {
     CatalogConfigProvider config;
 
     @Override
-    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message) {
-        try (RepositoryConnection conn = getCatalogRepoConnection()) {
-            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
-            VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
-            VersioningService<VersionedRDFRecord> service =
-                    versioningServices.get(correctFactory.getTypeIRI().stringValue());
-            conn.begin();
-            Resource commitResource = commitToBranch(record, service, branchId, user, message, conn);
-            conn.commit();
-            return commitResource;
-        }
-    }
-
-    @Override
-    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user,
-                                            String message, RepositoryConnection conn) {
+    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
+                           RepositoryConnection conn) {
+        boolean isActive = conn.isActive();
         OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
         VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
         VersioningService<VersionedRDFRecord> service =
                 versioningServices.get(correctFactory.getTypeIRI().stringValue());
-        
-        return commitToBranch(record, service, branchId, user, message, conn);
-    }
-
-    @Override
-    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
-                           Model additions, Model deletions) {
-        try (RepositoryConnection conn = getCatalogRepoConnection()) {
-            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
-            VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
-            VersioningService<VersionedRDFRecord> service =
-                    versioningServices.get(correctFactory.getTypeIRI().stringValue());
+        if (!isActive) {
             conn.begin();
-            Resource commitId = commitToBranch(record, service, branchId, user, message, additions, deletions, conn);
-            conn.commit();
-            return commitId;
         }
-    }
-
-    @Override
-    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
-                           Model additions, Model deletions, RepositoryConnection conn) {
-        OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
-        VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
-        VersioningService<VersionedRDFRecord> service =
-                versioningServices.get(correctFactory.getTypeIRI().stringValue());
-
-        return commitToBranch(record, service, branchId, user, message, additions, deletions, conn);
+        Resource commitResource = commitToBranch(record, service, branchId, user, message, conn);
+        if (!isActive) {
+            conn.commit();
+        }
+        return commitResource;
     }
 
     @Override
@@ -148,17 +115,6 @@ public class SimpleVersioningManager implements VersioningManager {
         }
     }
 
-    @Override
-    public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
-                          User user, Model additions, Model deletions, RepositoryConnection conn) {
-        OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
-        VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
-        VersioningService<VersionedRDFRecord> service =
-                versioningServices.get(correctFactory.getTypeIRI().stringValue());
-
-        return mergeBranches(record, service, sourceBranchId, targetBranchId, user, additions, deletions, conn);
-    }
-
     /**
      * Creates and adds a new Commit to Branch with the specified branchId. Uses the provided VersioningService to
      * perform operations.
@@ -173,7 +129,7 @@ public class SimpleVersioningManager implements VersioningManager {
      */
     private Resource commitToBranch(VersionedRDFRecord record, VersioningService<VersionedRDFRecord> service,
                                     Resource branchId, User user, String message, RepositoryConnection conn) {
-        Branch branch = service.getTargetBranch(record, branchId, conn);
+        Branch branch = service.getBranch(record, branchId, conn);
         Commit head = service.getBranchHeadCommit(branch, conn);
         InProgressCommit inProgressCommit = service.getInProgressCommit(record.getResource(), user, conn);
         Commit newCommit = service.createCommit(inProgressCommit, message, head, null);
@@ -200,7 +156,7 @@ public class SimpleVersioningManager implements VersioningManager {
     private Resource commitToBranch(VersionedRDFRecord record, VersioningService<VersionedRDFRecord> service,
                                     Resource branchId, User user, String message, Model additions, Model deletions,
                                     RepositoryConnection conn) {
-        Branch branch = service.getTargetBranch(record, branchId, conn);
+        Branch branch = service.getBranch(record, branchId, conn);
         Commit head = service.getBranchHeadCommit(branch, conn);
 
         return service.addCommit(branch, user, message, additions, deletions, head, null, conn);
@@ -223,8 +179,8 @@ public class SimpleVersioningManager implements VersioningManager {
     private Resource mergeBranches(VersionedRDFRecord record, VersioningService<VersionedRDFRecord> service,
                                    Resource sourceBranchId, Resource targetBranchId, User user, Model additions,
                                    Model deletions, RepositoryConnection conn) {
-        Branch source = service.getSourceBranch(record, sourceBranchId, conn);
-        Branch target = service.getTargetBranch(record, targetBranchId, conn);
+        Branch source = service.getBranch(record, sourceBranchId, conn);
+        Branch target = service.getBranch(record, targetBranchId, conn);
 
         return service.addCommit(target, user, getMergeMessage(source, target), additions, deletions,
                 service.getBranchHeadCommit(target, conn), service.getBranchHeadCommit(source, conn), conn);

@@ -23,15 +23,15 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import static java.util.Arrays.asList;
-
 import com.mobi.exception.MobiException;
 import com.mobi.owlapi.utils.OwlApiUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
+import org.eclipse.rdf4j.rio.RDFParserRegistry;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 
@@ -40,18 +40,40 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 /**
  * Utility class for handling InputStreams of RDF and creating files.
  */
 public class RDFFiles {
+    public static final RDFFormat OWL_XML =
+            new RDFFormat("OWL/XML Syntax", List.of("application/owl+xml"), StandardCharsets.UTF_8,
+                    List.of("owx"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
+
+    public static final RDFFormat MANCHESTER_OWL = new RDFFormat(
+            "Manchester OWL Syntax", List.of("text/owl-manchester"), StandardCharsets.UTF_8,
+            List.of("omn"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
+
+    public static final RDFFormat OWL_FUNCTIONAL = new RDFFormat(
+            "OWL Functional Syntax", List.of("text/owl-functional"), StandardCharsets.UTF_8,
+            List.of("ofn"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
+
+    public static final RDFFormat OBO = new RDFFormat(
+            "Open Biological and Biomedical Ontologies", List.of(""), StandardCharsets.UTF_8,
+            List.of("obo"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
+
+    private static final List<RDFFormat> owlFormats = List.of(OWL_XML, MANCHESTER_OWL, OWL_FUNCTIONAL, OBO);
 
     /**
      * Writes the provided InputStream to a temporary file.
@@ -59,9 +81,9 @@ public class RDFFiles {
      * @param inputStream The InputStream to write to a temporary file.
      * @return A temporary {@link File} of the provided InputStream.
      */
-    public static File writeStreamToTempFile(InputStream inputStream) {
+    public static File writeStreamToTempFile(InputStream inputStream, RDFFormat format) {
         try {
-            Path tmpFile = Files.createTempFile(null, null);
+            Path tmpFile = Files.createTempFile(null, "." + format.getDefaultFileExtension());
             OutputStream outStream = Files.newOutputStream(tmpFile);
 
             byte[] buffer = new byte[8 * 1024];
@@ -84,46 +106,59 @@ public class RDFFiles {
      *
      * @param tempFile The temporary {@link File} to parse into a file of the specified format.
      * @param destFormat The {@link RDFFormat} to parse the temporary file into.
-     * @param parsers The optional list of additional parsers to use when default formats cannot parse.
      * @return An {@link Optional} of the resulting file. If unsuccessful, returns empty Optional.
      */
-    public static Optional<File> parseFileToFileFormat(File tempFile, RDFFormat destFormat, RDFParser... parsers) {
+    public static File parseFileToFileFormat(File tempFile, RDFFormat destFormat) throws RDFParseException {
         try {
-            Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
-                    RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
             String tmpDir = System.getProperty("java.io.tmpdir");
             Path path = Paths.get(tmpDir + File.separator + UUID.randomUUID() + "."
                     + destFormat.getDefaultFileExtension());
-            for (RDFFormat format : formats) {
-                RDFParser rdfParser = Rio.createParser(format);
-                boolean success = tryParse(tempFile, rdfParser, destFormat, path);
-                if (success) {
-                    return Optional.of(path.toFile());
-                }
-            }
-            for (RDFParser rdfParser : parsers) {
-                boolean success = tryParse(tempFile, rdfParser, destFormat, path);
-                if (success) {
-                    return Optional.of(path.toFile());
-                }
-            }
+            RDFFormat sourceFormat = getFormatForFileName(tempFile.getName())
+                    .orElseThrow(() -> new IllegalArgumentException("Could not retrieve RDFFormat for file name "
+                            + tempFile.getName()));
 
-            if (OwlApiUtils.tryParseOWLXML(tempFile, destFormat.getDefaultMIMEType(), path)) {
-                return Optional.of(path.toFile());
+            ParsedFile parsedFile = new ParsedFile();
+            boolean success;
+            if (owlFormats.contains(sourceFormat)) {
+                success = parseOWLFormats(sourceFormat, destFormat, tempFile, path, parsedFile);
+            } else {
+                RDFParser rdfParser = Rio.createParser(sourceFormat);
+                success = tryParse(tempFile, rdfParser, destFormat, path, parsedFile);
             }
-            if (OwlApiUtils.tryParseObo(tempFile, destFormat.getDefaultMIMEType(), path)) {
-                return Optional.of(path.toFile());
+            if (success) {
+                return path.toFile();
             }
-            if (OwlApiUtils.tryParseManchester(tempFile, destFormat.getDefaultMIMEType(), path)) {
-                return Optional.of(path.toFile());
+            Optional<RDFParseException> exception = parsedFile.getRdfParseException();
+            if (exception.isPresent()) {
+                throw exception.get();
+            } else {
+                throw new IllegalStateException("Could not parse file.");
             }
-            if (OwlApiUtils.tryParseFunctional(tempFile, destFormat.getDefaultMIMEType(), path)) {
-                return Optional.of(path.toFile());
-            }
-
-            return Optional.empty();
         } finally {
             tempFile.delete();
+        }
+    }
+
+    private static boolean parseOWLFormats(RDFFormat sourceFormat, RDFFormat destFormat, File tempFile, Path path,
+                                           ParsedFile parsedFile) {
+        try {
+            int i = owlFormats.indexOf(sourceFormat);
+            if (i == 0) {
+                OwlApiUtils.parseOWLXML(getInputStream(tempFile), destFormat.getDefaultMIMEType(), path);
+            } else if (i == 1) {
+                OwlApiUtils.parseManchester(getInputStream(tempFile), destFormat.getDefaultMIMEType(), path);
+            } else if (i == 2) {
+                OwlApiUtils.parseFunctional(getInputStream(tempFile), destFormat.getDefaultMIMEType(), path);
+            } else if (i == 3) {
+                OwlApiUtils.parseOBO(getInputStream(tempFile), destFormat.getDefaultMIMEType(), path);
+            } else {
+                throw new IllegalStateException("Unexpected value: " + sourceFormat.getName());
+            }
+            return true;
+        } catch (Exception e) {
+            tempFile.delete();
+            parsedFile.addFormatToError(sourceFormat.getName(), e.getMessage());
+            return false;
         }
     }
 
@@ -136,21 +171,35 @@ public class RDFFiles {
      * @param path The {@link Path} to write the destination file to.
      * @return A boolean indicating the success of the parse operation.
      */
-    private static boolean tryParse(File tempFile, RDFParser rdfParser, RDFFormat destFormat, Path path) {
+    private static boolean tryParse(File tempFile, RDFParser rdfParser, RDFFormat destFormat, Path path,
+                                    ParsedFile parsedFile) {
         try {
             Path filePath = Files.createFile(path);
             RDFWriter rdfWriter = Rio.createWriter(destFormat, Files.newOutputStream(filePath));
             rdfParser.setRDFHandler(rdfWriter);
-            rdfParser.parse(new FileInputStream(tempFile), "");
+            rdfParser.parse(getInputStream(tempFile), "");
             return true;
         } catch (Exception e) {
             try {
+                parsedFile.addFormatToError(rdfParser.getRDFFormat().getName(), e.getMessage());
                 Files.delete(path);
             } catch (IOException ex) {
-                throw new MobiException("Could not delete file " + path.toString(), ex);
+                throw new MobiException("Could not delete file " + path, ex);
             }
             return false;
         }
+    }
+
+    /**
+     * Checks to see if a file is an OWL file format.
+     * @param file The file to test
+     * @return boolean true if owl format, false otherwise
+     */
+    public static boolean isOwlFile(File file) {
+        RDFFormat format = getFormatForFileName(file.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Could not retrieve RDFFormat for file name "
+                        + file.getName()));
+        return owlFormats.contains(format);
     }
 
     /**
@@ -172,5 +221,62 @@ public class RDFFiles {
             fileExtension = fileExtensionNoCompress + "." + fileExtension;
         }
         return fileExtension;
+    }
+
+    /**
+     * Retrieves the {@link RDFFormat} associated with the given file name
+     * @param fileName The name of the file
+     * @return An {@link Optional} of the {@link RDFFormat} if found
+     */
+    public static Optional<RDFFormat> getFormatForFileName(String fileName) {
+        return RDFFormat.matchFileName(fileName, getFormats());
+    }
+
+    /**
+     * Retrieves the {@link RDFFormat} associated with the given mime type
+     * @param mimeType The name of the file
+     * @return An {@link Optional} of the {@link RDFFormat} if found
+     */
+    public static Optional<RDFFormat> getFormatForMIMEType(String mimeType) {
+        return RDFFormat.matchMIMEType(mimeType, getFormats());
+    }
+
+    private static boolean isGzip(File file) {
+        try {
+            RandomAccessFile raf = new RandomAccessFile(file, "r");
+            int magic = raf.read() & 0xff | (raf.read() << 8) & 0xff00;
+            raf.close();
+            return magic == GZIPInputStream.GZIP_MAGIC;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static boolean isZip(File file) throws IOException {
+        return new ZipInputStream(new FileInputStream(file)).getNextEntry() != null;
+    }
+
+    private static Set<RDFFormat> getFormats() {
+        Set<RDFFormat> formats = new HashSet<>(RDFParserRegistry.getInstance().getKeys());
+        formats.addAll(owlFormats);
+        return formats;
+    }
+
+    private static InputStream getInputStream(File file) {
+        try {
+            InputStream inputStream;
+            if (isZip(file)) {
+                inputStream = new ZipInputStream(new FileInputStream(file));
+                ((ZipInputStream) inputStream).getNextEntry();
+            } else if (isGzip(file)) {
+                inputStream = new GZIPInputStream(new FileInputStream(file));
+            } else {
+                inputStream = new FileInputStream(file);
+            }
+            return inputStream;
+        } catch (IOException e) {
+            file.delete();
+            throw new IllegalStateException("Could not open file " + file.getName());
+        }
     }
 }

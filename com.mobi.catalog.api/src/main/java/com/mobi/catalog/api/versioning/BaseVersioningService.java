@@ -46,12 +46,7 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
     protected CatalogUtilsService catalogUtils;
 
     @Override
-    public Branch getSourceBranch(T record, Resource branchId, RepositoryConnection conn) {
-        return catalogUtils.getBranch(record, branchId, branchFactory, conn);
-    }
-
-    @Override
-    public Branch getTargetBranch(T record, Resource branchId, RepositoryConnection conn) {
+    public Branch getBranch(T record, Resource branchId, RepositoryConnection conn) {
         return catalogUtils.getBranch(record, branchId, branchFactory, conn);
     }
 

@@ -30,12 +30,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -60,7 +56,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -96,170 +91,6 @@ public class Models {
     }
 
     protected Models(){}
-
-    /**
-     * Retrieves an Object (Value) from the statements in a model.
-     * Only one value is picked from the model and returned.
-     *
-     * @param model The model to retrieve the value from
-     * @return an object value from a model or an empty Optional.
-     */
-    public static Optional<Value> object(Model model) {
-        return model.stream().map(Statement::getObject).findAny();
-    }
-
-    /**
-     * Retrieves an Object (Literal) from the statements in a model.
-     * Only one value is picked from the model and returned.
-     *
-     * @param model The model to retrieve the object literal from
-     * @return an object literal from a model or an empty Optional.
-     */
-    public static Optional<Literal> objectLiteral(Model model) {
-        return model.stream().map(Statement::getObject)
-                .filter(Literal.class::isInstance)
-                .map(Literal.class::cast)
-                .findAny();
-    }
-
-    /**
-     * Retrieves an Object (IRI) from the statements in a model.
-     * Only one value is picked from the model and returned.
-     *
-     * @param model The model to retrieve the object iri from
-     * @return an object iri from a model or an empty Optional.
-     */
-    public static Optional<IRI> objectIRI(Model model) {
-        return model.stream()
-                .map(Statement::getObject)
-                .filter(IRI.class::isInstance)
-                .map(IRI.class::cast)
-                .findAny();
-    }
-
-    /**
-     * Retrieves an Object (Resource) from the statements in a model.
-     * Only one value is picked from the model and returned.
-     *
-     * @param model The model to retrieve the object resource from
-     * @return an object resource from a model or an empty Optional.
-     */
-    public static Optional<Resource> objectResource(Model model) {
-        return model.stream()
-                .map(Statement::getObject)
-                .filter(Resource.class::isInstance)
-                .map(Resource.class::cast)
-                .findAny();
-    }
-
-    /**
-     * Retrieves an Object (String) from the statements in a model.
-     * Only one value is picked from the model and returned.
-     *
-     * @param model The model to retrieve the object string from
-     * @return an object string from a model or an empty Optional.
-     */
-    public static Optional<String> objectString(Model model) {
-        return model.stream()
-                .map(st -> st.getObject().stringValue())
-                .findAny();
-
-    }
-
-    /**
-     * Retrieves an Subject (Resource) from the statements in a model.
-     * Only one resource is picked from the model and returned.
-     *
-     * @param model The model to retrieve the subject from
-     * @return a subject resource from a model or an empty Optional.
-     */
-    public static Optional<Resource> subject(Model model) {
-        return model.stream()
-                .map(Statement::getSubject)
-                .findAny();
-    }
-
-    /**
-     * Retrieves an Subject (IRI) from the statements in a model.
-     * Only one IRI is picked from the model and returned.
-     *
-     * @param model The model to retrieve the subject from
-     * @return a subject IRI from a model or an empty Optional.
-     */
-    public static Optional<IRI> subjectIRI(Model model) {
-        return model.stream()
-                .map(Statement::getSubject)
-                .filter(IRI.class::isInstance)
-                .map(IRI.class::cast)
-                .findAny();
-
-    }
-
-    /**
-     * Retrieves an Subject (BNode) from the statements in a model.
-     * Only one BNode is picked from the model and returned.
-     *
-     * @param model The model to retrieve the subject from
-     * @return a subject BNode from a model or an empty Optional.
-     */
-    public static Optional<BNode> subjectBNode(Model model) {
-        return model.stream()
-                .map(Statement::getSubject)
-                .filter(BNode.class::isInstance)
-                .map(BNode.class::cast)
-                .findAny();
-    }
-
-    /**
-     * Retrieves an Predicate (IRI) from the statements in a model.
-     * Only one predicate is picked from the model and returned.
-     *
-     * @param model The model to retrieve the predicate from
-     * @return a predicate IRI from a model or an empty Optional.
-     */
-    public static Optional<IRI> predicate(Model model) {
-        return model.stream()
-                .map(Statement::getPredicate)
-                .findAny();
-    }
-
-    /**
-     * Finds the first subject in the provided Model that has the given predicate and object.
-     *
-     * @param model The Model to filter
-     * @param predicate The predicate to filter by
-     * @param object The object to filter by
-     * @return An Optional Resource of the first subject found with the given predicate and object
-     */
-    public static Optional<Resource> findFirstSubject(Model model, IRI predicate, IRI object) {
-        Model filteredModel = model.filter(null, predicate, object);
-        if (!filteredModel.isEmpty()) {
-            Statement statement = filteredModel.stream()
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Model cannot be empty"));
-            return Optional.of(statement.getSubject());
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Finds the first object in the provided Model that has the given subject and predicate.
-     *
-     * @param model The Model to filter
-     * @param subject The subject to filter by
-     * @param predicate The predicate to filter by
-     * @return An Optional Value of the first object found with the given subject and predicate
-     */
-    public static Optional<Value> findFirstObject(Model model, IRI subject, IRI predicate) {
-        Model filteredModel = model.filter(subject, predicate, null);
-        if (!filteredModel.isEmpty()) {
-            Statement statement = filteredModel.stream()
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Model cannot be empty"));
-            return Optional.of(statement.getObject());
-        }
-        return Optional.empty();
-    }
 
     /**
      * Create a {@link ParsedModel} instance with Mobi Model from an InputStream.
@@ -404,25 +235,6 @@ public class Models {
     public static Model createModel(InputStream inputStream, RDFParser... parsers) throws IOException {
         StatementCollector stmtCollector = new StatementCollector();
         return createModel(inputStream, stmtCollector, parsers).getModel();
-    }
-
-    /**
-     * Create a Skolemized Mobi Model from an InputStream. Will attempt to parse the stream using the passed in
-     * RDFParsers
-     *
-     * @param inputStream the InputStream to parse
-     * @param modelFactory the {@link ModelFactory} help build the {@link StatementCollector}
-     * @param bNodeService the {@link BNodeService} used for skolemizing bnodes
-     * @param skolemizedBNodes map of BNodes to their corresponding deterministically skolemized IRI.
-     * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
-     * @throws IOException if a error occurs when accessing the InputStream contents
-     */
-    public static ParsedModel createSkolemizedModel(InputStream inputStream, ModelFactory modelFactory,
-                                                    BNodeService bNodeService, Map<BNode, IRI> skolemizedBNodes,
-                                                    RDFParser... parsers) throws IOException {
-        StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, bNodeService,
-                skolemizedBNodes);
-        return createModel(inputStream, stmtCollector, parsers);
     }
 
     /**

@@ -2223,9 +2223,11 @@ public class CatalogRest {
         try {
             checkStringParam(message, "Commit message is required");
             User activeUser = getActiveUser(servletRequest, engineManager);
-            Resource newCommitId = versioningManager.commit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId), activeUser, message);
-            return Response.status(201).entity(newCommitId.stringValue()).build();
+            try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+                Resource newCommitId = versioningManager.commit(vf.createIRI(catalogId), vf.createIRI(recordId),
+                        vf.createIRI(branchId), activeUser, message, conn);
+                return Response.status(201).entity(newCommitId.stringValue()).build();
+            }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
