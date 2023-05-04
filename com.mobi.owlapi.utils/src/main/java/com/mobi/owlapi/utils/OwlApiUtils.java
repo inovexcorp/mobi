@@ -47,8 +47,6 @@ import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.semanticweb.owlapi.rio.RioRenderer;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -213,102 +211,6 @@ public class OwlApiUtils {
         format.setAddMissingTypes(false);
         RioRenderer renderer = new RioRenderer(ontology, rdfWriter, format);
         renderer.render();
-    }
-
-    /**
-     * Attempts to parse as Functional. Not performant as it loads file into memory.
-     *
-     * @param tempFile The temporary {@link File} to parse.
-     * @param mimeType The MimeType associated with the {@link RDFFormat} of the destination file.
-     * @param path The {@link Path} to write the destination file to.
-     * @return A boolean indicating the success of the parse operation.
-     */
-    public static boolean tryParseFunctional(File tempFile, String mimeType, Path path) {
-        try {
-            parseFunctional(new FileInputStream(tempFile), mimeType, path);
-            return true;
-        } catch (Exception e) {
-            try {
-                if (Files.exists(path)) {
-                    Files.delete(path);
-                }
-            } catch (IOException ex) {
-                throw new IllegalStateException("Could not delete file " + path, ex);
-            }
-            return false;
-        }
-    }
-
-    /**
-     * Attempts to parse as OWLXML. Not performant as it loads file into memory.
-     *
-     * @param tempFile The temporary {@link File} to parse.
-     * @param mimeType The MimeType associated with the {@link RDFFormat} of the destination file.
-     * @param path The {@link Path} to write the destination file to.
-     * @return A boolean indicating the success of the parse operation.
-     */
-    public static boolean tryParseOWLXML(File tempFile, String mimeType, Path path) {
-        try {
-            parseOWLXML(new FileInputStream(tempFile), mimeType, path);
-            return true;
-        } catch (Exception e) {
-            try {
-                if (Files.exists(path)) {
-                    Files.delete(path);
-                }
-            } catch (IOException ex) {
-                throw new IllegalStateException("Could not delete file " + path, ex);
-            }
-            return false;
-        }
-    }
-
-    /**
-     * Attempts to parse as Manchester. Not performant as it loads file into memory.
-     *
-     * @param tempFile The temporary {@link File} to parse.
-     * @param mimeType The MimeType associated with the {@link RDFFormat} of the destination file.
-     * @param path The {@link Path} to write the destination file to.
-     * @return A boolean indicating the success of the parse operation.
-     */
-    public static boolean tryParseManchester(File tempFile, String mimeType, Path path) {
-        try {
-            parseManchester(new FileInputStream(tempFile), mimeType, path);
-            return true;
-        } catch (Exception e) {
-            try {
-                if (Files.exists(path)) {
-                    Files.delete(path);
-                }
-            } catch (IOException ex) {
-                throw new IllegalStateException("Could not delete file " + path, ex);
-            }
-            return false;
-        }
-    }
-
-    /**
-     * Attempts to parse as OBO. Not performant as it loads file into memory.
-     *
-     * @param tempFile The temporary {@link File} to parse.
-     * @param mimeType The MimeType associated with the {@link RDFFormat} of the destination file.
-     * @param path The {@link Path} to write the destination file to.
-     * @return A boolean indicating the success of the parse operation.
-     */
-    public static boolean tryParseObo(File tempFile, String mimeType, Path path) {
-        try {
-            parseOBO(new FileInputStream(tempFile), mimeType, path);
-            return true;
-        } catch (Exception e) {
-            try {
-                if (Files.exists(path)) {
-                    Files.delete(path);
-                }
-            } catch (IOException ex) {
-                throw new IllegalStateException("Could not delete file " + path, ex);
-            }
-            return false;
-        }
     }
     
     private static RDFFormat getFormatFromMime(String mimeType) {

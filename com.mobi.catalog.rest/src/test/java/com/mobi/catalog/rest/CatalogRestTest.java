@@ -386,7 +386,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(catalogManager.getDifference(any(Resource.class), any(Resource.class))).thenReturn(difference);
         when(catalogManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(OrmFactory.class))).thenReturn(testRecord);
 
-        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
+        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
         when(versioningManager.merge(any(), any(), any(), any(), any(), any(), any())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
 
         when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
@@ -2698,7 +2698,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), COMMIT_IRIS[0]);
-        verify(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
+        verify(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
     }
 
     @Test
@@ -2715,7 +2715,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void createBranchCommitWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class), eq("Message"));
+        doThrow(new IllegalArgumentException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits")
@@ -2726,14 +2726,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void createBranchCommitWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
+        doThrow(new MobiException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
+        doThrow(new IllegalStateException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));

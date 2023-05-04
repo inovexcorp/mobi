@@ -119,7 +119,7 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn){
         List<Model> states = getAllStateModelsForRecord(record, conn);
         List<Statement> statementsToRemove = new ArrayList<>();
-        for(Model stateModel: states){
+        for (Model stateModel: states){
             stateModel.forEach((statement) -> statementsToRemove.add(statement));
         }
         conn.remove(statementsToRemove);

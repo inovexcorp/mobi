@@ -36,6 +36,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -46,6 +47,7 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -65,6 +67,7 @@ import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
+import java.io.File;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -129,6 +132,8 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
 
+    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
+
     @Mock
     private CatalogUtilsService utilsService;
 
@@ -149,6 +154,9 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogConfigProvider configProvider;
+
+    @Mock
+    private CatalogManager catalogManager;
 
     @Mock
     private EngineManager engineManager;
@@ -204,7 +212,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setShapesGraphIRI(testIRI);
 
         closeable = MockitoAnnotations.openMocks(this);
-        when(versioningManager.commit(any(IRI.class), any(IRI.class), any(IRI.class), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
+        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
@@ -222,6 +230,14 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
         doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
 
+        when(catalogManager.createInProgressCommit(any(Resource.class), any(Resource.class), any(User.class), any(File.class), eq(null), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        IRI revisionIRI = VALUE_FACTORY.createIRI("urn:revision");
+        Revision revision = revisionFactory.createNew(revisionIRI);
+        IRI additions = VALUE_FACTORY.createIRI("urn:additions");
+        revision.setAdditions(additions);
+        when(inProgressCommit.getGenerated_resource()).thenReturn(Set.of(revisionIRI));
+        when(inProgressCommit.getModel()).thenReturn(revision.getModel());
+
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.utilsService = utilsService;
         recordService.provUtils = provUtils;
@@ -232,6 +248,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         recordService.configProvider = configProvider;
         recordService.recordFactory = recordService.shapesGraphRecordFactory;
         recordService.shapesGraphManager = shapesGraphManager;
+        recordService.catalogManager = catalogManager;
     }
 
     @After
@@ -365,7 +382,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optMasterBranch.isPresent());
         Optional<Resource> optShapesGraphIri = shaclRecord.getShapesGraphIRI();
         assertTrue(optShapesGraphIri.isPresent());
-        assertEquals("urn:testOntology", optShapesGraphIri.get().stringValue());
+        assertTrue(optShapesGraphIri.get().stringValue().startsWith("http://mobi.com/ontologies/shapes-graph/"));
 
         verify(utilsService, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
@@ -417,8 +434,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
 
         verify(utilsService, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
-        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
-                anyString(), any(Model.class), eq(null), any(RepositoryConnection.class));
+        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -470,7 +486,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
         } catch(IllegalArgumentException e) {
-            assertEquals("TriG data is not supported for upload.", e.getMessage());
+            assertEquals("Could not retrieve RDFFormat for file name testData.txt", e.getMessage());
             throw e;
         }
         fail("IllegalArgumentException was not thrown");
@@ -496,7 +512,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
         } catch(IllegalArgumentException e) {
-            assertEquals("TriG data is not supported for upload.", e.getMessage());
+            assertEquals("Could not retrieve RDFFormat for file name testData.txt.zip", e.getMessage());
             throw e;
         }
         fail("IllegalArgumentException was not thrown");

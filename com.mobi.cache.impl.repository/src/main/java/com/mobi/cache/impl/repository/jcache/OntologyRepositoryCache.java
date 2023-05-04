@@ -332,7 +332,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     public Iterator<Cache.Entry<String, Ontology>> iterator() {
         try (RepositoryConnection conn = repository.getConnection()) {
             Set<String> keys = QueryResults.asList(
-                    conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Dataset.TYPE)))
+                    conn.getStatements(null, RDF.TYPE, vf.createIRI(Dataset.TYPE)))
                     .stream()
                     .map(Statement::getSubject)
                     .map(Resource::stringValue)

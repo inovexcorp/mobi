@@ -43,6 +43,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.security.policy.api.PDP;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.File;
@@ -592,9 +593,25 @@ public interface CatalogManager {
      * InProgressCommit will be used to create a Commit with a provided message.
      *
      * @param user The User that this InProgressCommit is associated with.
-     * @return Optional with an InProgressCommit created using the provided metadata.
+     * @return InProgressCommit created using the provided metadata.
      */
     InProgressCommit createInProgressCommit(User user);
+
+    /**
+     * Creates an InProgressCommit which is a Commit that a User is actively working on. Once it is completed, the
+     * InProgressCommit will be used to create a Commit with a provided message.
+     *
+     * @param catalogId            The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
+     * @param user                 The User with the InProgressCommit.
+     * @param additionsFile        A File containing additions triples
+     * @param deletionsFile        A File containing deletions triples
+     * @param conn
+     * @return InProgressCommit created using the provided metadata.
+     */
+    InProgressCommit createInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user,
+                                            @Nullable File additionsFile, @Nullable File deletionsFile,
+                                            RepositoryConnection conn);
 
     /**
      * Updates the InProgressCommit identified by the provided Resources using the provided addition and deletion

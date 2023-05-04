@@ -23,6 +23,7 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -31,6 +32,7 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
@@ -44,8 +46,6 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.security.policy.api.ontologies.policy.Policy;
@@ -54,7 +54,6 @@ import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -64,6 +63,8 @@ import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,6 +136,12 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Reference
     public EngineManager engineManager;
 
+    @Reference
+    public CatalogManager catalogManager;
+
+    @Reference
+    public RevisionFactory revisionFactory;
+
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
         BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
@@ -155,10 +162,14 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                 new IllegalStateException("VersionedRDFRecord must have a master Branch"));
-        Model model = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
+
+        File versionedRdf = createDataFile(config);
+        catalogManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
+                versionedRdf, null, conn);
+        versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
+                "The initial commit.", conn);
+        versionedRdf.delete();
         conn.commit();
-        versioningManager.commit(catalogIdIRI, record.getResource(),
-                masterBranchId, user, "The initial commit.", model, null);
         writePolicies(user, record);
         return record;
     }
@@ -169,28 +180,35 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param config A {@link RecordOperationConfig} containing the Model or an InputStream to create a Model
      * @return parsed model
      */
-    protected Model createModel(RecordOperationConfig config) {
-        Model ontologyModel;
+    protected File createDataFile(RecordOperationConfig config) {
         String fileName = config.get(VersionedRDFRecordCreateSettings.FILE_NAME);
         InputStream inputStream = config.get(VersionedRDFRecordCreateSettings.INPUT_STREAM);
-
+        File file;
         if (fileName != null && inputStream != null) {
-            String fileExtension = RDFFiles.getFileExtension(fileName);
+            RDFFormat format =  RDFFiles.getFormatForFileName(fileName)
+                    .orElseThrow(() -> new IllegalArgumentException("Could not retrieve RDFFormat for file name "
+                            + fileName));
+            if (format.equals(RDFFormat.TRIG)) {
+                throw new IllegalArgumentException("TriG data is not supported for upload.");
+            }
+            File tempFile = RDFFiles.writeStreamToTempFile(inputStream, format);
+            if (RDFFiles.isOwlFile(tempFile)) {
+                file = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TURTLE);
+            } else {
+                file = tempFile;
+            }
+        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
             try {
-                ParsedModel parsedModel = Models.createModel(fileExtension, inputStream);
-                ontologyModel = parsedModel.getModel();
-                if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
-                    throw new IllegalArgumentException("TriG data is not supported for upload.");
-                }
+                Path tmpFile = Files.createTempFile(null, ".ttl");
+                Rio.write(config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA), Files.newOutputStream(tmpFile), RDFFormat.TURTLE);
+                file = tmpFile.toFile();
             } catch (IOException e) {
                 throw new MobiException("Could not parse input stream.", e);
             }
-        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
-            ontologyModel = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
         } else {
             throw new IllegalArgumentException("VersionedRDFRecord config does not have initial data.");
         }
-        return ontologyModel;
+        return file;
     }
 
     /**

@@ -31,9 +31,11 @@ import com.mobi.jaas.api.ontologies.usermanagement.User
 import com.mobi.ontologies.owl.Ontology
 import com.mobi.ontologies.rdfs.Resource
 import com.mobi.ontology.core.api.OntologyManager
+import com.mobi.repository.api.OsgiRepository
 import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
+import org.eclipse.rdf4j.repository.RepositoryConnection
 import spock.lang.Specification
 
 class OntologyImportServiceImplSpec extends Specification {
@@ -45,7 +47,9 @@ class OntologyImportServiceImplSpec extends Specification {
     def versioningManager = Mock(VersioningManager)
     def catalogManager = Mock(CatalogManager)
     def ontologyManager = Mock(OntologyManager)
-    def configProivder = Mock(CatalogConfigProvider)
+    def configProvider = Mock(CatalogConfigProvider)
+    def connMock = Mock(RepositoryConnection)
+    def repositoryMock = Mock(OsgiRepository)
 
     def ontologyIRI = Mock(IRI)
     def branch = Mock(Branch)
@@ -67,7 +71,10 @@ class OntologyImportServiceImplSpec extends Specification {
         service.setVersioningManager(versioningManager)
         service.setCatalogManager(catalogManager)
         service.setOntologyManager(ontologyManager)
-        service.setConfigProvider(configProivder)
+        service.setConfigProvider(configProvider)
+
+        configProvider.getRepository() >> repositoryMock
+        repositoryMock.getConnection() >> connMock
     }
 
     def "Service commits addition data"() {
@@ -86,7 +93,7 @@ class OntologyImportServiceImplSpec extends Specification {
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
         committedData.getDeletions() as Set == [] as Set
-        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", expectedCommit, null)
+        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
     }
 
     def "Service does not commit duplicate additions"() {
@@ -125,7 +132,7 @@ class OntologyImportServiceImplSpec extends Specification {
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
         committedData.getDeletions() as Set == [] as Set
-        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", expectedCommit, null)
+        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
     }
 
     def "Service commits update data"() {
@@ -149,7 +156,7 @@ class OntologyImportServiceImplSpec extends Specification {
         then:
         committedData.getAdditions() as Set == additions as Set
         committedData.getDeletions() as Set == deletions as Set
-        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", additions, deletions)
+        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
     }
 
     def "Service does not commit duplicate updates"() {
@@ -198,7 +205,7 @@ class OntologyImportServiceImplSpec extends Specification {
         then:
         committedData.getAdditions() as Set == additions as Set
         committedData.getDeletions() as Set == deletions as Set
-        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", additions, deletions)
+        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
     }
 
     def "Service commits update data with two ontology objects"() {
@@ -225,6 +232,6 @@ class OntologyImportServiceImplSpec extends Specification {
         then:
         committedData.getAdditions() as Set == additions as Set
         committedData.getDeletions() as Set == deletions as Set
-        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", additions, deletions)
+        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
     }
 }

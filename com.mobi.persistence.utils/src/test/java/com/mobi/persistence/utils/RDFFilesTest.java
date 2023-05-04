@@ -24,10 +24,153 @@ package com.mobi.persistence.utils;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.Test;
 
 public class RDFFilesTest {
+
+    @Test
+    public void writeSteamToTempFileTest() throws Exception {
+        Path file = Paths.get("src","test", "resources", "dcterms.ttl");
+        try (InputStream is = Files.newInputStream(file); InputStream is2 = Files.newInputStream(file)) {
+            File serializedFile = RDFFiles.writeStreamToTempFile(is, RDFFormat.TURTLE);
+            assertTrue(IOUtils.contentEquals(is2, Files.newInputStream(Paths.get(serializedFile.getPath()))));
+            assertEquals("ttl", RDFFiles.getFileExtension(serializedFile.getPath()));
+            serializedFile.delete();
+        }
+
+    }
+
+    @Test
+    public void parseFileToFormatTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".ttl");
+        Path file = Paths.get("src","test", "resources", "dcterms.ttl");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void parseFileToFormatRDFXMLTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".ttl");
+        Path file = Paths.get("src","test", "resources", "dcterms.ttl");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void parseFileToFormatFromOwltoRDFXMlTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".owl");
+        Path file = Paths.get("src","test", "resources", "bfo.owl");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void parseFileToFormatFromOBOtoRDFXMlTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".obo");
+        Path file = Paths.get("src","test", "resources", "bfo.obo");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void parseFileToFormatFromOMNtoRDFXMlTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".omn");
+        Path file = Paths.get("src","test", "resources", "manchester.omn");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void parseFileToFormatFromOFNtoRDFXMlTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".ofn");
+        Path file = Paths.get("src","test", "resources", "functional.ofn");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void parseFileToFormatFromOWXtoRDFXMlTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".owx");
+        Path file = Paths.get("src","test", "resources", "test.owx");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void isOwlFormatTtlTest() {
+        File file = Paths.get("src","test", "resources", "dcterms.ttl").toFile();
+        assertFalse(RDFFiles.isOwlFile(file));
+    }
+
+    @Test
+    public void isOwlFormatOwlTest() {
+        // OWL is handled by RDF4j
+        File file = Paths.get("src","test", "resources", "bfo.owl").toFile();
+        assertFalse(RDFFiles.isOwlFile(file));
+    }
+
+    @Test
+    public void isOwlFormatOwxTest() {
+        File file = Paths.get("src","test", "resources", "test.owx").toFile();
+        assertTrue(RDFFiles.isOwlFile(file));
+    }
+
+    @Test
+    public void isOwlFormatOfnTest() {
+        File file = Paths.get("src","test", "resources", "functional.ofn").toFile();
+        assertTrue(RDFFiles.isOwlFile(file));
+    }
+
+    @Test
+    public void isOwlFormatOmnTest() {
+        File file = Paths.get("src","test", "resources", "manchester.omn").toFile();
+        assertTrue(RDFFiles.isOwlFile(file));
+    }
+
+    @Test
+    public void isOwlFormatOboTest() {
+        File file = Paths.get("src","test", "resources", "bfo.obo").toFile();
+        assertTrue(RDFFiles.isOwlFile(file));
+    }
 
     @Test
     public void getFileExtensionTest() {

@@ -24,28 +24,26 @@ package com.mobi.shapes.api.record;
  */
 
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import java.io.File;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -63,10 +61,6 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
     private final Semaphore semaphore = new Semaphore(1, true);
 
     public static final String DEFAULT_PREFIX = "http://mobi.com/ontologies/shapes-graph/";
-    private static final String USER_IRI_BINDING = "%USERIRI%";
-    private static final String RECORD_IRI_BINDING = "%RECORDIRI%";
-    private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
-    private static final String MASTER_BRANCH_IRI_BINDING = "%MASTER%";
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -75,18 +69,23 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
         Branch masterBranch = createMasterBranch(record);
         try {
             semaphore.acquire();
-            Model shaclModel = createModel(config);
-            setShapesGraphToRecord(record, shaclModel);
+            File shaclFile = createDataFile(config);
+
             conn.begin();
             addRecord(record, masterBranch, conn);
 
             IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
             Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("ShaclRecord must have a master Branch"));
-            versioningManager.commit(catalogIdIRI, record.getResource(),
-                    masterBranchId, user, "The initial commit.", shaclModel, null, conn);
+            InProgressCommit commit = catalogManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
+                    shaclFile, null, conn);
+            setShapesGraphToRecord(record, commit, conn);
+
+            versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
+                    "The initial commit.", conn);
             conn.commit();
             writePolicies(user, record);
+            shaclFile.delete();
         } catch (InterruptedException e) {
             throw new MobiException(e);
         } finally {
@@ -101,20 +100,26 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
      * @param record the ShaclRecord to set the shapes graph IRI
      * @param shaclModel model representing a SHACL Shapes Graph
      */
-    private void setShapesGraphToRecord(T record, Model shaclModel) {
-        IRI typeIri = valueFactory.createIRI(RDF.TYPE.stringValue());
-        IRI ontologyType = valueFactory.createIRI(OWL.ONTOLOGY.stringValue());
+    private void setShapesGraphToRecord(T record, InProgressCommit inProgressCommit, RepositoryConnection conn) {
+        Resource resource = inProgressCommit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
+        Revision revision = revisionFactory.getExisting(resource, inProgressCommit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
+                new IllegalStateException("Additions not set on Commit " + inProgressCommit.getResource()));
+        Model shaclModel = QueryResults.asModel(conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, additionsGraph));
 
         Resource ontologyIRI = shaclModel
-                .filter(null, typeIri, ontologyType).stream()
+                .filter(null, RDF.TYPE, OWL.ONTOLOGY).stream()
                 .findFirst()
                 .flatMap(statement -> Optional.of(statement.getSubject()))
                 .orElse(valueFactory.createIRI(DEFAULT_PREFIX + UUID.randomUUID()));
 
-        shaclModel.add(ontologyIRI, typeIri, ontologyType);
+        conn.add(ontologyIRI,  RDF.TYPE, OWL.ONTOLOGY, additionsGraph);
 
         validateShapesGraph(ontologyIRI);
         record.setShapesGraphIRI(ontologyIRI);
+        utilsService.updateObject(record, conn);
     }
 
     /**

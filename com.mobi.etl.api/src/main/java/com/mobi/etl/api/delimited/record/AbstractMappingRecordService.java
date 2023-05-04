@@ -41,6 +41,8 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
@@ -75,8 +77,18 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                 new IllegalStateException("MappingRecord must have a master Branch"));
         Model model = mapping.getModel();
-        versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user, "The initial commit.", model,
-                null, conn);
+        try {
+            Path tmpFile = Files.createTempFile(null, ".ttl");
+            Rio.write(model, Files.newOutputStream(tmpFile), RDFFormat.TURTLE);
+            File file = tmpFile.toFile();
+            catalogManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
+                    tmpFile.toFile(), null, conn);
+            file.delete();
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
+                "The initial commit.", conn);
         conn.commit();
         writePolicies(user, record);
         return record;

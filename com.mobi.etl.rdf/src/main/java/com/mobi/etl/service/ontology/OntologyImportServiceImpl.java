@@ -37,9 +37,17 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Component
 public class OntologyImportServiceImpl implements OntologyImportService {
@@ -95,18 +103,36 @@ public class OntologyImportServiceImpl implements OntologyImportService {
 
             Difference diff = catalogManager.getDiff(existingData, newData);
             if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
-                versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user, commitMsg,
-                        diff.getAdditions(), diff.getDeletions());
+                try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+                    catalogManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
+                            createTempFileFromModel(diff.getAdditions()), createTempFileFromModel(diff.getAdditions()), conn);
+                    versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user,
+                            commitMsg, conn);
+                }
             }
             return diff;
         } else {
             newData.removeAll(existingData);
 
             if (!newData.isEmpty()) {
-                versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user, commitMsg,
-                        newData, null);
+                try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+                    catalogManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
+                            createTempFileFromModel(newData), null, conn);
+                    versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user,
+                            commitMsg, conn);
+                }
             }
             return new Difference.Builder().additions(newData).deletions(mf.createEmptyModel()).build();
+        }
+    }
+
+    private File createTempFileFromModel(Model model) {
+        try {
+            Path tmpFile = Files.createTempFile(null, ".ttl");
+            Rio.write(model, Files.newOutputStream(tmpFile), RDFFormat.TURTLE);
+            return tmpFile.toFile();
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not write data to file.");
         }
     }
 }

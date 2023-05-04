@@ -100,7 +100,7 @@ public class SimpleApplicationSettingService extends AbstractSettingService<Appl
         LOGGER.debug("Retrieving all ApplicationSettings");
         checkUser(user);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Set<Resource> applicationSettingIris = conn.getStatements(null, vf.createIRI(RDF.TYPE.toString()),
+            Set<Resource> applicationSettingIris = conn.getStatements(null, RDF.TYPE,
                     vf.createIRI(ApplicationSetting.TYPE), context)
                     .stream()
                     .map(Statement::getSubject)

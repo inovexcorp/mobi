@@ -33,6 +33,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -159,6 +160,9 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private CreateActivity createActivity;
 
+    @Mock
+    private CatalogManager catalogManager;
+
     @Before
     public void setUp() throws Exception {
         System.setProperty("karaf.etc", MappingRecordServiceTest.class.getResource("/").getPath());
@@ -222,6 +226,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         recordService.engineManager = engineManager;
         recordService.configProvider = configProvider;
         recordService.recordFactory = recordService.mappingRecordFactory;
+        recordService.catalogManager = catalogManager;
     }
 
     @After
@@ -288,7 +293,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         verify(mappingWrapper).getModel();
         verify(manager).createMapping(any(InputStream.class), eq(RDFFormat.TURTLE));
         verify(utilsService, times(2)).addObject(any(), any(RepositoryConnection.class));
-        verify(versioningManager).commit(eq(catalogIRI), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), eq(mappingModel), eq(null),  any(RepositoryConnection.class));
+        verify(versioningManager).commit(eq(catalogIRI), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
