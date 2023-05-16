@@ -100,6 +100,22 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Override
+    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
+                           Model additions, Model deletions) {
+        // This method is currently used in Enterprise VocabularySyncService. Do not remove
+        try (RepositoryConnection conn = getCatalogRepoConnection()) {
+            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
+            VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
+            VersioningService<VersionedRDFRecord> service =
+                    versioningServices.get(correctFactory.getTypeIRI().stringValue());
+            conn.begin();
+            Resource commitId = commitToBranch(record, service, branchId, user, message, additions, deletions, conn);
+            conn.commit();
+            return commitId;
+        }
+    }
+
+    @Override
     public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
                           User user, Model additions, Model deletions) {
         try (RepositoryConnection conn = getCatalogRepoConnection()) {

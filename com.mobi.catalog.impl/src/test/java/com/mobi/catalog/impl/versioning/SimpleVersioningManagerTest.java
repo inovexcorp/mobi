@@ -195,6 +195,52 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
+
+    /* commit(Resource, Resource, Resource, User, String, Model, Model) */
+
+    @Test
+    public void commitWithChangesToVersionedRDFRecordTest() throws Exception {
+        // Setup:
+        Model additions = MODEL_FACTORY.createEmptyModel();
+        Model deletions = MODEL_FACTORY.createEmptyModel();
+
+        Resource result = manager.commit(CATALOG_IRI, record.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void commitWithChangesToOntologyRecordTest() throws Exception {
+        // Setup:
+        Model additions = MODEL_FACTORY.createEmptyModel();
+        Model deletions = MODEL_FACTORY.createEmptyModel();
+
+        Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
+        verify(ontologyService).getBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void commitWithChangesToOntologyRecordWithoutServiceTest() throws Exception {
+        // Setup:
+        manager.removeVersioningService(ontologyService);
+        Model additions = MODEL_FACTORY.createEmptyModel();
+        Model deletions = MODEL_FACTORY.createEmptyModel();
+
+        Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+    }
+
     /* merge(Resource, Resource, Resource, Resource, User, Model, Model) */
 
     @Test

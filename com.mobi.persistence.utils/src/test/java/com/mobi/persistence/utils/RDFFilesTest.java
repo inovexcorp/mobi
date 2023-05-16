@@ -27,15 +27,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.junit.Test;
+
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.junit.Test;
 
 public class RDFFilesTest {
 
@@ -79,6 +80,18 @@ public class RDFFilesTest {
     public void parseFileToFormatFromOwltoRDFXMlTest() throws Exception {
         Path tempFilePath = Files.createTempFile(null, ".owl");
         Path file = Paths.get("src","test", "resources", "bfo.owl");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
+        assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
+        assertFalse(tempFile.exists());
+        serializedFile.delete();
+    }
+
+    @Test
+    public void parseFileToFormatFromOwl2toRDFXMlTest() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".owl");
+        Path file = Paths.get("src","test", "resources", "unresolvableImport.owl");
         Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
         File tempFile = tempFilePath.toFile();
         File serializedFile = RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.RDFXML);
@@ -145,7 +158,7 @@ public class RDFFilesTest {
     public void isOwlFormatOwlTest() {
         // OWL is handled by RDF4j
         File file = Paths.get("src","test", "resources", "bfo.owl").toFile();
-        assertFalse(RDFFiles.isOwlFile(file));
+        assertTrue(RDFFiles.isOwlFile(file));
     }
 
     @Test
