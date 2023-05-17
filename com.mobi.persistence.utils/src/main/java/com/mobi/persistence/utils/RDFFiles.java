@@ -45,10 +45,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
@@ -59,7 +58,7 @@ import java.util.zip.ZipInputStream;
 public class RDFFiles {
     public static final RDFFormat OWL_XML =
             new RDFFormat("OWL/XML Syntax", List.of("application/owl+xml"), StandardCharsets.UTF_8,
-                    List.of("owx"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
+                    List.of("owx", "owl"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
 
     public static final RDFFormat MANCHESTER_OWL = new RDFFormat(
             "Manchester OWL Syntax", List.of("text/owl-manchester"), StandardCharsets.UTF_8,
@@ -125,6 +124,10 @@ public class RDFFiles {
                 RDFParser rdfParser = Rio.createParser(sourceFormat);
                 success = tryParse(tempFile, rdfParser, destFormat, path, parsedFile);
             }
+            if (!success && sourceFormat.equals(RDFFiles.OWL_XML)) {
+                RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
+                success = tryParse(tempFile, rdfParser, destFormat, path, parsedFile);
+            }
             if (success) {
                 return path.toFile();
             }
@@ -156,7 +159,9 @@ public class RDFFiles {
             }
             return true;
         } catch (Exception e) {
-            tempFile.delete();
+            if (!sourceFormat.equals(RDFFiles.OWL_XML)) {
+                tempFile.delete();
+            }
             parsedFile.addFormatToError(sourceFormat.getName(), e.getMessage());
             return false;
         }
@@ -174,6 +179,9 @@ public class RDFFiles {
     private static boolean tryParse(File tempFile, RDFParser rdfParser, RDFFormat destFormat, Path path,
                                     ParsedFile parsedFile) {
         try {
+            if (Files.exists(path)) {
+                Files.delete(path);
+            }
             Path filePath = Files.createFile(path);
             RDFWriter rdfWriter = Rio.createWriter(destFormat, Files.newOutputStream(filePath));
             rdfParser.setRDFHandler(rdfWriter);
@@ -256,9 +264,9 @@ public class RDFFiles {
         return new ZipInputStream(new FileInputStream(file)).getNextEntry() != null;
     }
 
-    private static Set<RDFFormat> getFormats() {
-        Set<RDFFormat> formats = new HashSet<>(RDFParserRegistry.getInstance().getKeys());
-        formats.addAll(owlFormats);
+    private static List<RDFFormat> getFormats() {
+        List<RDFFormat> formats = new ArrayList<>(owlFormats);
+        formats.addAll(RDFParserRegistry.getInstance().getKeys());
         return formats;
     }
 
