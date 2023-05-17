@@ -144,7 +144,7 @@ module.exports = {
         browser
             .useXpath()
             .pause(1000)
-            .waitForElementVisible('//mat-optgroup/label[text()[contains(., "Unopened")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "Sem Ops Graph")]]/following::button[contains(@class,"delete-record")][@disabled]')
+            .waitForElementVisible('//mat-optgroup/span[text()[contains(., "Unopened")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "Sem Ops Graph")]]/following::button[contains(@class,"delete-record")][@disabled]')
             .click('//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]'); // click off dropdown
         browser.globals.wait_for_no_spinners(browser);
         browser

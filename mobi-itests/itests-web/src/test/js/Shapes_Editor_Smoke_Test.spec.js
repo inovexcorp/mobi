@@ -259,8 +259,8 @@ module.exports = {
         browser
             .click('shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
             .useXpath()
-            .assert.visible('//mat-optgroup//label[contains(text(), "Open")]/..//span[contains(text(), "UHTC Test Graph")]')
-            .assert.visible('//mat-optgroup//label[contains(text(), "Open")]/..//span[contains(text(), "Additional Test Graph")]')
+            .assert.visible('//mat-optgroup//span[contains(text(), "Open")]/..//span[contains(text(), "UHTC Test Graph")]')
+            .assert.visible('//mat-optgroup//span[contains(text(), "Open")]/..//span[contains(text(), "Additional Test Graph")]')
     },
 
     'Step 17: Delete the Records': function (browser) {

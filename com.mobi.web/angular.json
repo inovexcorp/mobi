@@ -18,6 +18,7 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "aot": true,
+            "preserveSymlinks": true,
             "outputPath": "target/classes/build",
             "index": "src/main/resources/public/index.html",
             "main": "src/main/resources/public/main.ts",
