@@ -34,6 +34,7 @@
     "@angular/platform-browser-dynamic": "~11.2.14",
     "@angular/router": "~11.2.14",
     "@ctrl/ngx-codemirror": "^4.1.1",
+    "@gitgraph/js": "^1.4.0",
     "@triply/yasgui": "^4.2.27",
     "@types/chroma-js": "^2.4.0",
     "@types/codemirror": "0.0.100",
@@ -73,7 +74,6 @@
     "rimraf": "^2.6.3",
     "rxjs": "^6.6.7",
     "showdown": "^1.9.0",
-    "snapsvg-cjs": "0.0.6",
     "sparqljs": "^1.5.1",
     "tslib": "^1.10.0",
     "zone.js": "~0.10.2"
@@ -117,8 +117,5 @@
     "tslib": "^2.0.0",
     "typescript": "~4.0.6",
     "uuid": "^8.3.2"
-  },
-  "resolutions": {
-    "snapsvg": "^0.5.1"
   }
 }

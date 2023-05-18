@@ -116,11 +116,8 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .useCss()
-            .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
-            .waitForElementVisible('commit-history-table .commit-message[title="commit123"]')
-            .assert.textContains('commit-history-table .commit-message[title="commit123"] span', 'commit123')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
     },
 
     'Step 9: Make Changes to Class': function(browser) {
@@ -174,11 +171,8 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .useCss()
-            .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
-            .waitForElementVisible('commit-history-table .commit-message[title="commit456"]')
-            .assert.textContains('commit-history-table .commit-message[title="commit456"] span', 'commit456')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The initial commit.")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit456")]]')
     },
 
     'Step 13: Close & Re-open Ontology' : function(browser) {

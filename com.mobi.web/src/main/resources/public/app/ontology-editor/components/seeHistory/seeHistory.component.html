@@ -55,8 +55,8 @@
             <div class="col remove-min-width h-100 vertical-scroll">
                 <commit-history-table [commitId]="os.listItem.versionedRdfRecord.commitId"
                                       [entityId]="os.listItem.selected['@id']"
-                                      (receiveCommits)="receiveCommits($event)"
-                                      [recordId]="os.listItem.versionedRdfRecord.recordId">
+                                      [recordId]="os.listItem.versionedRdfRecord.recordId"
+                                      (receiveCommits)="receiveCommits($event)">
                 </commit-history-table>
             </div>
         </div>

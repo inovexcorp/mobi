@@ -339,7 +339,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     const tabIndex = oldListItem.tabIndex;
                     const prevActiveKey = this.getActiveKey();
                     assign(oldListItem, listItem);
-                    console.log(!listItem.isVocabulary)
                     if (!listItem.isVocabulary && (prevActiveKey === 'concepts' || prevActiveKey === 'schemes')) {
                         oldListItem.tabIndex = 0;
                     } else { oldListItem.tabIndex = tabIndex }

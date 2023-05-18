@@ -145,6 +145,7 @@ import { SplitIRIPipe } from './pipes/splitIRI.pipe';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
+import { HistoryGraph } from '../history-graph/history-graph.module';
 import { ActivityListComponent } from './components/activity-list/activity-list.component';
 
 /**
@@ -192,6 +193,7 @@ import { ActivityListComponent } from './components/activity-list/activity-list.
         MatTooltipModule,
         ReactiveFormsModule,
         ShowdownModule.forRoot({flavor: 'github'}),
+        HistoryGraph
     ],
     declarations: [
         ActivityListComponent,

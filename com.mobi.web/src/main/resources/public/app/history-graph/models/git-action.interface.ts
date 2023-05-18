@@ -20,20 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Commit } from '../../shared/models/commit.interface';
 
-/**
- * Simplified representation of a Commit in the history of a VersionedRDFRecord
- */
-export interface Commit {
-    id: string,
-    creator: {
-        firstName: string,
-        lastName: string,
-        username: string,
-        email?: string
-    },
-    date: string,
-    message: string,
-    base: string,
-    auxiliary: string
+type GitActions = 'create-branch' | 'commit' | 'merge-commit';
+
+export interface GitAction {
+  action: GitActions;
+  branch: string;
+  commit?: Commit,
+  mergeTo?: string;
+  atCommit?: string;
+  sortFlag?: boolean; // used to detect if commit happens before branch creation
 }

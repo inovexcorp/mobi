@@ -27,7 +27,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
 
-import 'snapsvg-cjs';
+import '@gitgraph/js';
 import 'chroma-js';
 import 'lodash';
 import 'jquery';
@@ -61,6 +61,7 @@ import { OntologyEditorModule } from './ontology-editor/ontology-editor.module';
 import { AppRoutingModule } from './app-routing.module';
 import { LoginLayoutComponent } from './layouts/login-layout.component';
 import { MainLayoutComponent } from './layouts/main-layout.component';
+
 
 @NgModule({
     imports: [

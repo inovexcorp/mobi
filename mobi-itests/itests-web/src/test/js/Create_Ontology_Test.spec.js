@@ -292,11 +292,8 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .useCss()
-            .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
-            .waitForElementVisible('commit-history-table .commit-message[title="commit123"]')
-            .assert.textContains('commit-history-table .commit-message[title="commit123"] span', 'commit123')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
     },
 
     'Step 22: Verify Master Branch only has initial commit': function(browser) {
@@ -320,9 +317,8 @@ module.exports = {
                 this.assert.equal(result.status, 0);
                 this.assert.equal(result.value, "MASTER");
             })
-            .useCss()
-            .waitForElementNotPresent('commit-history-table .commit-message[title="commit123"]')
-            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
+            .waitForElementNotPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
+            .assert.elementPresent( '//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The initial commit.")]]')
     },
 
     'Step 23: Switch back to the other branch': function(browser) {
@@ -391,12 +387,8 @@ module.exports = {
             .waitForElementNotPresent('#spinner-full')
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .useCss()
-            .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
-            .waitForElementVisible('commit-history-table .commit-message[title="commit123"]')
-            .assert.textContains('commit-history-table .commit-message[title="commit123"] span', 'commit123')
-            .waitForElementVisible('commit-history-table .commit-message[title="Merge of newBranchTitle into MASTER"]')
-            .assert.textContains('commit-history-table .commit-message[title="Merge of newBranchTitle into MASTER"] span', 'Merge of newBranchTitle into MASTER')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The initial commit.")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "Merge of newBranchTitle into MASTER")]]')
     }
 }
