@@ -52,7 +52,7 @@ export class BranchListComponent {
     catalogId = '';
     increment = 10;
     limit = this.increment;
-    recordId: string = undefined;
+    recordId: string|undefined = undefined;
 
     private _record: JSONLDObject;
 

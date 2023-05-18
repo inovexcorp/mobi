@@ -31,7 +31,12 @@
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
                 <span>{{util.getDctermsValue(branch, 'description')}}</span>
-                <commit-history-table [headTitle]="util.getDctermsValue(branch, 'title')" [commitId]="util.getPropertyId(branch, catalogPrefix + 'head')" [recordId]="recordId" graph></commit-history-table>
+                <commit-history-table 
+                    [headTitle]="util.getDctermsValue(branch, 'title')"
+                    [commitId]="util.getPropertyId(branch, catalogPrefix + 'head')"
+                    [recordId]="recordId" 
+                    graph>
+                </commit-history-table>
             </ng-template>
         </mat-expansion-panel>
     </mat-accordion>

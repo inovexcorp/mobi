@@ -61,25 +61,13 @@
             <div class="col d-flex remove-min-width horizontal-scroll">
                 <commit-history-table class="flex-1"
                                       [commitId]="state.listItem.versionedRdfRecord.commitId"
+                                      [recordId]="state.listItem.versionedRdfRecord.recordId"
                                       [headTitle]="state?.listItem?.currentVersionTitle"
-                                      (receiveCommits)="commits = $event"graph>
+                                      (receiveCommits)="commits = $event"
+                                      (commitDotOnClick)="openCommit($event)"
+                                      dotClickable
+                                      graph>
                 </commit-history-table>
-                <div class="view-table" *ngIf="commits.length">
-                    <table class="table">
-                        <thead>
-                        <tr>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr *ngFor="let commit of commits; trackBy:getCommitId">
-                            <td class="p-0 align-middle">
-                                <button type="button" mat-button color="primary" class="remove-min-width" (click)="openCommit(commit)" [disabled]="this.state.isCommittable()">View</button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
     </div>

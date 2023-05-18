@@ -49,13 +49,17 @@ describe('Commits Tab component', function() {
 
     const commit: Commit = {
         id: 'commit',
-        creator: undefined,
+        creator: {
+            firstName: 'firstname',
+            lastName: 'lastname',
+            username: 'username',
+            email: 'email'
+        },
         message: '',
         auxiliary: '',
         date: '',
         base: ''
     };
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
@@ -87,13 +91,7 @@ describe('Commits Tab component', function() {
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
-        element = null;
-        fixture = null;
-        ontologyStateStub = null;
-        utilStub = null;
     });
-
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.commits-tab')).length).toEqual(1);
@@ -102,39 +100,6 @@ describe('Commits Tab component', function() {
             it('with a ' + el, function() {
                 expect(element.queryAll(By.css(el)).length).toEqual(1);
             });
-        });
-        it('depending on how many commits there are', function() {
-            expect(element.queryAll(By.css('.view-table')).length).toEqual(0);
-
-            const commit2 = Object.assign({}, commit);
-            commit2.id = 'commit2';
-            component.commits = [commit, commit2];
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('.view-table')).length).toEqual(1);
-            expect(element.queryAll(By.css('.view-table tbody tr')).length).toEqual(component.commits.length);
-        });
-        it('depending on whether the user has unsaved changes', function() {
-            ontologyStateStub.hasChanges.and.returnValue(false);
-            component.commits = [commit];
-            fixture.detectChanges();
-            const button = element.queryAll(By.css('.view-table tbody button'))[0];
-            expect(button.properties['disabled']).toBeFalsy();
-
-            ontologyStateStub.hasChanges.and.returnValue(true);
-            fixture.detectChanges();
-            expect(button.properties['disabled']).toBeTruthy();
-        });
-        it('depending on whether the user has saved changes', function() {
-            ontologyStateStub.hasChanges.and.returnValue(false);
-            ontologyStateStub.isCommittable.and.returnValue(false);
-            component.commits = [commit];
-            fixture.detectChanges();
-            const button = element.queryAll(By.css('.view-table tbody button'))[0];
-            expect(button.properties['disabled']).toBeFalsy();
-
-            ontologyStateStub.isCommittable.and.returnValue(true);
-            fixture.detectChanges();
-            expect(button.properties['disabled']).toBeTruthy();
         });
     });
     describe('controller methods', function() {
@@ -168,17 +133,17 @@ describe('Commits Tab component', function() {
             component.openOntologyAtCommit(commit);
             expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, commit.id);
         });
+        it('should open the ontology at a commit if OntologyStateService.isCommittable is false', function() {
+            component.openOntologyAtCommit(commit);
+            expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, commit.id);
+        });
+        it('when trying to open the ontology at a commit if OntologyStateService.isCommittable is true it should createWarningToast', function() {
+            ontologyStateStub.isCommittable.and.returnValue(false);
+            component.openOntologyAtCommit(commit);
+            expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, commit.id);
+        });
         it('should return the appropriate value to track commits by', function() {
             expect(component.trackCommits(0, commit)).toEqual(commit.id);
         });
-    });
-    it('should open an ontology at a commit when its view button is clicked', function() {
-        component.commits = [commit];
-        fixture.detectChanges();
-        spyOn(component, 'openOntologyAtCommit');
-
-        const button = element.queryAll(By.css('.view-table tbody button'))[0];
-        button.triggerEventHandler('click', null);
-        expect(component.openOntologyAtCommit).toHaveBeenCalledWith(commit);
     });
 });

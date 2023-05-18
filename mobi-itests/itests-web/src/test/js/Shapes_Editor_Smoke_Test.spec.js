@@ -115,15 +115,16 @@ module.exports = {
             .assert.not.elementPresent('mat-chip.uncommitted')
             .assert.not.elementPresent('shapes-graph-changes-page mat-expansion-panel')
             .assert.textContains('shapes-graph-changes-page info-message p', 'No Changes to Display')
-            .expect.elements('commit-history-table tbody tr').count.to.equal(2)
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2)
         browser
             .useXpath()
-            .assert.textContains('//commit-history-table//tbody//tr[1]//td[@class="commit-message"]//span', 'The first manual commit message')
-            .useCss()
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The first manual commit message")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
     },
 
     'Step 9: Upload merge conflict into master': function (browser) {
         browser
+            .useCss()
             .click('editor-branch-select mat-form-field mat-icon')
             .pause(1000)
             .useXpath()
@@ -138,9 +139,7 @@ module.exports = {
             .waitForElementVisible('upload-record-modal button.mat-primary')
             .uploadFile('upload-record-modal file-input input', shapes_graph_conflict)
             .click('upload-record-modal button.mat-primary');
-//        browser.globals.wait_for_no_spinners(browser)
         browser
-            // .pause(1000)
             .useCss()
             .waitForElementVisible('div.toast-success')
             .waitForElementNotPresent('div.toast-success')

@@ -20,20 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-/**
- * Simplified representation of a Commit in the history of a VersionedRDFRecord
- */
-export interface Commit {
-    id: string,
-    creator: {
-        firstName: string,
-        lastName: string,
-        username: string,
-        email?: string
-    },
-    date: string,
-    message: string,
-    base: string,
-    auxiliary: string
+export interface CommitColumn {
+    commitHashes: string[];
+    branchName?: string;
+    startCommitHash?: string;
+    mergeCommit: boolean;
 }

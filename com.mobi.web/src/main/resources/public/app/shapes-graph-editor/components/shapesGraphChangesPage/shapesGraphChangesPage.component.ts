@@ -60,10 +60,11 @@ interface CommitChanges {
     styleUrls: ['./shapesGraphChangesPage.component.scss']
 })
 export class ShapesGraphChangesPageComponent implements OnChanges {
-
     @Input() additions: JSONLDObject[];
     @Input() deletions: JSONLDObject[];
 
+    private readonly warningMessageCheckout = 'You will need to commit or remove all changes before checking out a commit';
+    private readonly errorMessageNoData = 'Error retrieving full entity information';
     catalogId: string = get(this.cm.localCatalog, '@id', '');
     typeIRI = RDF + 'type';
     types = [OWL + 'Class', OWL + 'ObjectProperty', OWL + 'DatatypeProperty',
@@ -78,7 +79,6 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         additions: [],
         deletions: []
     };
-
     index = 0;
     size = 100;
 
@@ -135,17 +135,26 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     getCommitId(commit: Commit): string {
         return commit.id;
     }
-    openCommit(commit: Commit): Promise<void> {
-        return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, this.util.condenseCommitId(commit.id))
+    openCommit(commit: Commit): void {
+        if(this.state.isCommittable()) {
+            this.util.createWarningToast(this.warningMessageCheckout);
+            return;
+        }
+        this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, this.util.condenseCommitId(commit.id))
             .then(() => {}, error => this.util.createErrorToast(error));
     }
     toggleFull(item: CommitChanges): void {
         if (item.showFull) {
             this.cm.getCompiledResource(this.state.listItem.versionedRdfRecord.commitId, item.id)
                 .subscribe((resources: JSONLDObject[]) => {
-                    item.resource = resources.find(obj => obj['@id'] === item.id);
+                    const resource = resources.find(obj => obj['@id'] === item.id);
+                    if(resource) {
+                        item.resource = resource;
+                    } else {
+                        this.util.createErrorToast(this.errorMessageNoData);
+                    }
                 }, () => {
-                    this.util.createErrorToast('Error retrieving full entity information');
+                    this.util.createErrorToast(this.errorMessageNoData);
                 });
         } else {
             item.resource = undefined;

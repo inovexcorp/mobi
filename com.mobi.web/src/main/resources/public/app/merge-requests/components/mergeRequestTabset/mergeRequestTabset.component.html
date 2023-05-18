@@ -37,6 +37,11 @@
         <ng-template #noChangesBlock><info-message>No changes to display</info-message></ng-template>
     </mat-tab>
     <mat-tab label="Commits">
-        <commit-history-table [headTitle]="request.sourceTitle" [commitId]="request.sourceCommit" [targetId]="request.targetCommit" [recordId]="request.recordIri"></commit-history-table>
+        <commit-history-table 
+            [headTitle]="request.sourceTitle" 
+            [commitId]="request.sourceCommit" 
+            [targetId]="request.targetCommit" 
+            [recordId]="request.recordIri">
+        </commit-history-table>
     </mat-tab>
 </mat-tab-group>

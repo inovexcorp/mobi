@@ -41,13 +41,14 @@ import { UtilService } from '../../../shared/services/util.service';
     styleUrls: ['./commitsTab.component.scss']
 })
 export class CommitsTabComponent {
+    private readonly warningMessageCheckout = 'You will need to commit or remove all changes before checking out a commit';
     commits: Commit[] = [];
-    
-    constructor(public os: OntologyStateService, public util: UtilService) {}
 
+    constructor(public os: OntologyStateService, public util: UtilService) {}
     getHeadTitle(): string {
         if (this.os.listItem.versionedRdfRecord.branchId) {
-            return this.util.getDctermsValue(find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId}), 'title');
+            const branch = find(this.os.listItem.branches, { '@id': this.os.listItem.versionedRdfRecord.branchId });
+            return this.util.getDctermsValue(branch, 'title');
         } else {
             const currentState = this.os.getCurrentStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);
             if (this.os.isStateTag(currentState)) {
@@ -60,6 +61,10 @@ export class CommitsTabComponent {
         }
     }
     openOntologyAtCommit(commit: Commit): void {
+        if(this.os.isCommittable(this.os.listItem)) {
+            this.util.createWarningToast(this.warningMessageCheckout);
+            return;
+        }
         this.os.updateOntologyWithCommit(this.os.listItem.versionedRdfRecord.recordId, commit.id).subscribe();
     }
     trackCommits(index: number, item: Commit): string {
