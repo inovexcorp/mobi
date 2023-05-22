@@ -21,10 +21,11 @@
  * #L%
  */
 
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -32,6 +33,7 @@ import { MergeBlockComponent } from '../mergeBlock/mergeBlock.component';
 import { ResolveConflictsBlock } from '../../../shared/components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { Difference } from '../../../shared/models/difference.class';
+import { UtilService } from '../../../shared/services/util.service';
 import { MergeTabComponent } from './mergeTab.component';
 
 describe('Merge Tab component', function() {
@@ -39,6 +41,7 @@ describe('Merge Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<MergeTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let utilStub: jasmine.SpyObj<UtilService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -49,7 +52,8 @@ describe('Merge Tab component', function() {
                 MockComponent(ResolveConflictsBlock)
             ],
             providers: [
-                MockProvider(OntologyStateService)
+                MockProvider(OntologyStateService),
+                MockProvider(UtilService)
             ],
         });
     });
@@ -60,6 +64,7 @@ describe('Merge Tab component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyStateStub.listItem = new OntologyListItem();
+        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         fixture.detectChanges();
     });
 
@@ -69,8 +74,37 @@ describe('Merge Tab component', function() {
         element = null;
         fixture = null;
         ontologyStateStub = null;
+        utilStub = null;
     });
 
+    describe('controller methods', function() {
+        describe('should submit a merge after resolving conflicts', function() {
+            it('successfully', fakeAsync(function() {
+                ontologyStateStub.merge.and.returnValue(of(null));
+                component.submitConflictMerge();
+                tick();
+                expect(ontologyStateStub.merge).toHaveBeenCalledWith();
+                expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
+                expect(component.error).toEqual('');
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                ontologyStateStub.merge.and.returnValue(throwError('Error Message'));
+                component.submitConflictMerge();
+                tick();
+                expect(ontologyStateStub.merge).toHaveBeenCalledWith();
+                expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(ontologyStateStub.cancelMerge).not.toHaveBeenCalled();
+                expect(component.error).toEqual('Error Message');
+            }));
+        });
+        it('should cancel a merge', function() {
+            component.cancelMerge();
+            expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.merge-tab')).length).toEqual(1);

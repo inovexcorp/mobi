@@ -42,10 +42,10 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG, DCTERMS } from '../../../prefixes';
 import { UtilService } from '../../../shared/services/util.service';
-import { ShapesGraphMergePageComponent } from './shapesGraphMergePage.component';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import {UserManagerService} from '../../../shared/services/userManager.service';
 import {LoginManagerService} from '../../../shared/services/loginManager.service';
+import { ShapesGraphMergePageComponent } from './shapesGraphMergePage.component';
 
 describe('Shapes Graph Merge Page component', function() {
     let component: ShapesGraphMergePageComponent;
@@ -167,6 +167,9 @@ describe('Shapes Graph Merge Page component', function() {
             expect(shapesGraphStateStub.listItem.merge.startIndex).toEqual(0);
         });
         describe('should change target', function() {
+            beforeEach(function() {
+                component.catalogId = 'catalog';
+            });
             it('unless an error occurs', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
                 catalogManagerStub.getRecordBranch.and.returnValue(of(branch2));
@@ -175,7 +178,7 @@ describe('Shapes Graph Merge Page component', function() {
                 tick();
 
                 expect(shapesGraphStateStub.listItem.merge.target).toEqual(branch2);
-                expect(catalogManagerStub.getRecordBranch).toHaveBeenCalled();
+                expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch2Iri, 'record1', 'catalog');
                 expect(shapesGraphStateStub.getMergeDifferences).toHaveBeenCalledWith('commit1', branch2Commit, catalogManagerStub.differencePageSize, 0);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
                 expect(shapesGraphStateStub.listItem.merge.difference).toBeUndefined();
@@ -189,7 +192,7 @@ describe('Shapes Graph Merge Page component', function() {
                 component.changeTarget(branch2);
                 tick();
                 expect(shapesGraphStateStub.listItem.merge.target).toEqual(branch2);
-                expect(catalogManagerStub.getRecordBranch).toHaveBeenCalled();
+                expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch2Iri, 'record1', 'catalog');
                 expect(shapesGraphStateStub.getMergeDifferences).toHaveBeenCalledWith('commit1', branch2Commit, catalogManagerStub.differencePageSize, 0);
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 expect(component.isSubmitDisabled).toBeFalsy();
@@ -219,7 +222,7 @@ describe('Shapes Graph Merge Page component', function() {
                 shapesGraphStateStub.attemptMerge.and.returnValue(throwError('Error message'));
                 component.submit();
                 tick();
-                expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalled();
+                expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalledWith();
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(shapesGraphStateStub.cancelMerge).not.toHaveBeenCalled();
                 expect(component.error).toEqual('Error message');
@@ -228,11 +231,35 @@ describe('Shapes Graph Merge Page component', function() {
                 shapesGraphStateStub.attemptMerge.and.returnValue(of(null));
                 component.submit();
                 tick();
-                expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalled();
+                expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalledWith();
                 expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(shapesGraphStateStub.cancelMerge).toHaveBeenCalled();
+                expect(shapesGraphStateStub.cancelMerge).toHaveBeenCalledWith();
                 expect(component.error).toEqual('');
             }));
+        });
+        describe('should submit a merge after resolving conflicts', function() {
+            it('successfully', fakeAsync(function() {
+                shapesGraphStateStub.merge.and.returnValue(of(null));
+                component.submitConflictMerge();
+                tick();
+                expect(shapesGraphStateStub.merge).toHaveBeenCalledWith();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(shapesGraphStateStub.cancelMerge).toHaveBeenCalledWith();
+                expect(component.conflictError).toEqual('');
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                shapesGraphStateStub.merge.and.returnValue(throwError('Error Message'));
+                component.submitConflictMerge();
+                tick();
+                expect(shapesGraphStateStub.merge).toHaveBeenCalledWith();
+                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(shapesGraphStateStub.cancelMerge).not.toHaveBeenCalled();
+                expect(component.conflictError).toEqual('Error Message');
+            }));
+        });
+        it('should cancel a merge', function() {
+            component.cancelMerge();
+            expect(shapesGraphStateStub.cancelMerge).toHaveBeenCalledWith();
         });
     });
 

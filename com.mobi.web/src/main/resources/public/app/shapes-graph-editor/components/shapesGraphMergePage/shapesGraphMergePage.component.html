@@ -49,6 +49,6 @@
                 </div>
             </div>
         </div>
-        <resolve-conflicts-block class="h-100" *ngIf="state.listItem.merge.conflicts.length" [state]="state"></resolve-conflicts-block>
+        <resolve-conflicts-block class="h-100" *ngIf="state.listItem.merge.conflicts.length" [listItem]="state.listItem" [error]="conflictError" (submitEvent)="submitConflictMerge()" (cancelEvent)="cancelMerge()"></resolve-conflicts-block>
     </div>
 </div>

@@ -30,15 +30,14 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { Difference } from '../../models/difference.class';
 import { UtilService } from '../../services/util.service';
-import { StatementContainerComponent } from '../statementContainer/statementContainer.component';
-import { StatementDisplayComponent } from '../statementDisplay/statementDisplay.component';
+import { CommitCompiledResourceComponent } from '../commitCompiledResource/commitCompiledResource.component';
+import { Conflict } from '../../models/conflict.interface';
 import { ResolveConflictsFormComponent } from './resolveConflictsForm.component';
 
 describe('Resolve Conflicts Form component', function() {
     let component: ResolveConflictsFormComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ResolveConflictsFormComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -47,8 +46,7 @@ describe('Resolve Conflicts Form component', function() {
             ],
             declarations: [
                 ResolveConflictsFormComponent,
-                MockComponent(StatementDisplayComponent),
-                MockComponent(StatementContainerComponent)
+                MockComponent(CommitCompiledResourceComponent),
             ],
             providers: [
                 MockProvider(UtilService)
@@ -58,10 +56,6 @@ describe('Resolve Conflicts Form component', function() {
         fixture = TestBed.createComponent(ResolveConflictsFormComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.getPredicateLocalNameOrdered.and.callFake(changes => {
-            return changes;
-        });
 
         component.branchTitle = '';
         component.targetTitle = '';
@@ -73,33 +67,21 @@ describe('Resolve Conflicts Form component', function() {
         component = null;
         fixture = null;
         element = null;
-        utilStub = null;
     });
 
-    describe('should initialize with the correct data for', function() {
-        it('branchTitle', function() {
-            expect(component.branchTitle).toEqual('');
-        });
-        it('targetTitle ', function() {
-            expect(component.targetTitle).toEqual('');
-        });
-        it('conflicts', function() {
-            expect(component.conflicts).toEqual([]);
-        });
-    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.resolve-conflicts-form')).length).toEqual(1);
         });
         it('depending on how many conflicts there are', async function() {
-            component.conflicts = [{}];
+            component.conflicts = [{iri: '', left: new Difference(), right: new Difference()}];
             fixture.detectChanges();
             await fixture.whenStable();
 
             expect(element.queryAll(By.css('.conflict-list-item')).length).toEqual(1);
         });
         it('depending on whether a conflict is resolved', async function() {
-            component.conflicts = [{resolved: false}, {resolved: true}];
+            component.conflicts = [{iri: '', left: new Difference(), right: new Difference(), resolved: false}, {iri: '', left: new Difference(), right: new Difference(), resolved: true}];
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -183,37 +165,20 @@ describe('Resolve Conflicts Form component', function() {
             expect(right.nativeElement.classList.contains('active')).toEqual(true);
             expect(right.nativeElement.classList.contains('not-selected')).toEqual(false);
         });
-        it('depending on whether a conflict has additions or deletions', async function() {
-            component.index = 0;
-            component.selected = {};
-            component.changes = {
-                left: {additions: [], deletions: [{o: {'@value': ''}, p: ''}]},
-                right: {additions: [{o: {'@value': ''}, p: ''}], deletions: []}
-            };
-
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(element.queryAll(By.css('.conflict.left statement-container[additions]')).length).toEqual(0);
-            expect(element.queryAll(By.css('.conflict.left statement-container[deletions]')).length).toEqual(1);
-            expect(element.queryAll(By.css('.conflict.right statement-container[additions]')).length).toEqual(1);
-            expect(element.queryAll(By.css('.conflict.right statement-container[deletions]')).length).toEqual(0);
-        });
     });
     describe('controller methods', function() {
         it('should select a conflict', function() {
-            component.conflicts = [{left: {}, right: {}}];
-            utilStub.getChangesById.and.returnValue([]);
+            const conflict: Conflict = {iri: '', left: new Difference(), right: new Difference()};
+            component.conflicts = [conflict];
             component.select(0);
             expect(component.index).toEqual(0);
-            expect(component.selected).toEqual({left: {}, right: {}});
-            expect(component.changes).toEqual({left: {additions: [], deletions: []}, right: {additions: [], deletions: []}});
+            expect(component.selected).toEqual(conflict);
         });
         it('should determine whether there is another conflict after the selected', function() {
             expect(component.hasNext()).toEqual(false);
 
             component.index = 0;
-            component.conflicts = [{}, {}];
+            component.conflicts = [{iri: '', left: new Difference(), right: new Difference()}, {iri: '', left: new Difference(), right: new Difference()}];
             expect(component.hasNext()).toEqual(true);
 
             component.index = 1;
@@ -225,11 +190,10 @@ describe('Resolve Conflicts Form component', function() {
             component.backToList();
             expect(component.index).toBeUndefined();
             expect(component.selected).toBeUndefined();
-            expect(component.changes).toBeUndefined();
         });
     });
     it('should select a conflict to resolve when clicked', async function() {
-        component.conflicts = [{}];
+        component.conflicts = [{iri: '', left: new Difference(), right: new Difference()}];
         fixture.detectChanges();
         await fixture.whenStable();
         spyOn(component, 'select');

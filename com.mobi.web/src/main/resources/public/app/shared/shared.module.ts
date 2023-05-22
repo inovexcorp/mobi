@@ -91,8 +91,6 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SpinnerComponent } from './components/progress-spinner/components/spinner/spinner.component';
-import { StatementDisplayComponent } from './components/statementDisplay/statementDisplay.component';
-import { StatementContainerComponent } from './components/statementContainer/statementContainer.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { UserAccessControlsComponent } from './components/userAccessControls/userAccessControls.component';
 import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.component';
@@ -227,8 +225,6 @@ import { ActivityListComponent } from './components/activity-list/activity-list.
         SettingGroupComponent,
         SidebarComponent,
         SpinnerComponent,
-        StatementContainerComponent,
-        StatementDisplayComponent,
         UnmaskPasswordComponent,
         UserAccessControlsComponent,
         ValueDisplayComponent,
@@ -308,8 +304,6 @@ import { ActivityListComponent } from './components/activity-list/activity-list.
         SettingEditPageComponent,
         SidebarComponent,
         SpinnerComponent,
-        StatementContainerComponent,
-        StatementDisplayComponent,
         UnmaskPasswordComponent,
         UserAccessControlsComponent,
         ValueDisplayComponent,
