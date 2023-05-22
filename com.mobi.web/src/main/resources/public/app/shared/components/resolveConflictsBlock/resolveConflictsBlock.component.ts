@@ -20,11 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { concat, forEach, find, some } from 'lodash';
 
-import { ShapesGraphStateService } from '../../services/shapesGraphState.service';
 import { UtilService } from '../../services/util.service';
+import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
+import { Difference } from '../../models/difference.class';
 
 /**
  * @class ontology-editor.ResolveConflictsBlockComponent
@@ -40,9 +41,11 @@ import { UtilService } from '../../services/util.service';
     templateUrl: './resolveConflictsBlock.component.html'
 })
 export class ResolveConflictsBlock implements OnInit {
-    @Input() state: any;
+    @Input() error: string;
+    @Input() listItem: VersionedRdfListItem;
+    @Output() cancelEvent = new EventEmitter<void>();
+    @Output() submitEvent = new EventEmitter<void>();
 
-    error = '';
     branchTitle = '';
     targetTitle = '';
 
@@ -50,46 +53,39 @@ export class ResolveConflictsBlock implements OnInit {
 
     ngOnInit(): void {
         let branchId;
-        if (this.state.listItem?.versionedRdfRecord?.branchId) { // Should be removed when ontologyState is updated to new service
-            branchId = this.state.listItem.versionedRdfRecord.branchId;
+        if (this.listItem.versionedRdfRecord?.branchId) { // Should be removed when ontologyState is updated to new service
+            branchId = this.listItem.versionedRdfRecord.branchId;
         }
-        if (this.state.listItem?.versionedRdfRecord?.branchId) {
-            branchId = this.state.listItem.versionedRdfRecord.branchId;
+        if (this.listItem?.versionedRdfRecord?.branchId) {
+            branchId = this.listItem.versionedRdfRecord.branchId;
         }
-        const branch = find(this.state.listItem.branches, {'@id': branchId});
+        const branch = find(this.listItem.branches, {'@id': branchId});
         this.branchTitle = this.util.getDctermsValue(branch, 'title');
-        this.targetTitle = this.util.getDctermsValue(this.state.listItem.merge.target, 'title');
+        this.targetTitle = this.util.getDctermsValue(this.listItem.merge.target, 'title');
     }
     allResolved(): boolean {
-        return !some(this.state.listItem.merge.conflicts, {resolved: false});
+        return !some(this.listItem.merge.conflicts, {resolved: false});
     }
     submit(): void {
-        this.state.listItem.merge.resolutions = {
-            additions: [],
-            deletions: []
-        };
-        forEach(this.state.listItem.merge.conflicts, conflict => {
+        this.listItem.merge.resolutions = new Difference();
+        forEach(this.listItem.merge.conflicts, conflict => {
             if (conflict.resolved === 'left') {
                 this.addToResolutions(conflict.right);
             } else if (conflict.resolved === 'right') {
                 this.addToResolutions(conflict.left);
             }
         });
-        this.state.merge()
-            .subscribe(() => {
-                if (!(this.state instanceof ShapesGraphStateService)) {
-                    this.state.resetStateTabs();
-                }
-                this.util.createSuccessToast('Your merge was successful with resolutions.');
-                this.state.cancelMerge();
-            }, error => this.error = error);
+        this.submitEvent.emit();
+    }
+    cancelMerge(): void {
+        this.cancelEvent.emit();
     }
 
     private addToResolutions(notSelected): void {
         if (notSelected.additions.length) {
-            this.state.listItem.merge.resolutions.deletions = concat(this.state.listItem.merge.resolutions.deletions, notSelected.additions);
+            this.listItem.merge.resolutions.deletions = concat(this.listItem.merge.resolutions.deletions, notSelected.additions);
         } else {
-            this.state.listItem.merge.resolutions.additions = concat(this.state.listItem.merge.resolutions.additions, notSelected.deletions);
+            this.listItem.merge.resolutions.additions = concat(this.listItem.merge.resolutions.additions, notSelected.deletions);
         }
     }
 }

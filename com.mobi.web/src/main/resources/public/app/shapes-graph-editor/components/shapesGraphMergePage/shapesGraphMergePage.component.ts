@@ -64,6 +64,7 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
 
     catalogId = '';
     error = '';
+    conflictError = '';
     branches: JSONLDObject[] = [];
     branchTitle = '';
     targetHeadCommitId = undefined;
@@ -139,8 +140,14 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
                 this.state.cancelMerge();
             }, error => this.error = error);
     }
-    private _setErrorMessage(msg) {
-        this.error = msg;
+    submitConflictMerge(): void {
+        this.state.merge()
+            .subscribe(() => {
+                this.util.createSuccessToast('Your merge was successful with resolutions.');
+                this.state.cancelMerge();
+            }, error => this.conflictError = error);
     }
-
+    cancelMerge(): void {
+        this.state.cancelMerge();
+    }
 }

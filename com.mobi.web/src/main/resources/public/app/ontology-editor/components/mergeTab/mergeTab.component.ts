@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { UtilService } from '../../../shared/services/util.service';
 
 /*-
  * #%L
@@ -37,5 +38,19 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
     templateUrl: './mergeTab.component.html'
 })
 export class MergeTabComponent {
-    constructor(public os: OntologyStateService) {}
+    error = '';
+    
+    constructor(public os: OntologyStateService, private _util: UtilService) {}
+
+    submitConflictMerge(): void {
+        this.os.merge()
+            .subscribe(() => {
+                this.os.resetStateTabs();
+                this._util.createSuccessToast('Your merge was successful with resolutions.');
+                this.os.cancelMerge();
+            }, error => this.error = error);
+    }
+    cancelMerge(): void {
+        this.os.cancelMerge();
+    }
 }

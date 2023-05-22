@@ -24,23 +24,20 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
-import { VersionedRdfState } from '../../services/versionedRdfState.service';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { ResolveConflictsFormComponent } from '../resolveConflictsForm/resolveConflictsForm.component';
-import { OntologyStateService } from '../../services/ontologyState.service';
 import { UtilService } from '../../services/util.service';
+import { Difference } from '../../models/difference.class';
+import { Conflict } from '../../models/conflict.interface';
 import { ResolveConflictsBlock } from './resolveConflictsBlock.component';
 
 describe('Resolve Conflicts Block component', function() {
     let component: ResolveConflictsBlock;
     let element: DebugElement;
     let fixture: ComponentFixture<ResolveConflictsBlock>;
-    let utilStub: jasmine.SpyObj<UtilService>;
-    let stateStub;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -51,7 +48,6 @@ describe('Resolve Conflicts Block component', function() {
                 MockComponent(ResolveConflictsFormComponent)
             ],
             providers: [
-                MockProvider(OntologyStateService),
                 MockProvider(UtilService)
             ],
         }).compileComponents();
@@ -59,13 +55,7 @@ describe('Resolve Conflicts Block component', function() {
         fixture = TestBed.createComponent(ResolveConflictsBlock);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        stateStub = MockProvider(VersionedRdfState).provide;
-        stateStub.listItem = new VersionedRdfListItem();
-        stateStub.merge = jasmine.createSpy('merge').and.returnValue(of(null));
-        stateStub.resetStateTabs = jasmine.createSpy('resetStateTabs');
-        stateStub.cancelMerge = jasmine.createSpy('cancelMerge');
-        component.state = stateStub;
+        component.listItem = new VersionedRdfListItem();
     });
 
     afterEach(function() {
@@ -73,15 +63,8 @@ describe('Resolve Conflicts Block component', function() {
         component = null;
         fixture = null;
         element = null;
-        utilStub = null;
-        stateStub = null;
     });
 
-    describe('should initialize with the correct data for', function() {
-        it('state', function() {
-            expect(component.state).toEqual(stateStub);
-        });
-    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.resolve-conflicts-block')).length).toEqual(1);
@@ -103,12 +86,12 @@ describe('Resolve Conflicts Block component', function() {
         });
         it('depending on the value of the merge checkbox', async function() {
             expect(element.queryAll(By.css('.merge-details p')).length).toEqual(1);
-            stateStub.listItem.merge.checkbox = true;
+            component.listItem.merge.checkbox = true;
             await fixture.detectChanges();
             expect(element.queryAll(By.css('.merge-details p')).length).toEqual(2);
         });
         it('depending on whether all conflicts are resolved', async function() {
-            stateStub.listItem.merge.conflicts = [{}];
+            component.listItem.merge.conflicts = [{iri: '', left: new Difference(), right: new Difference()}];
             const allResolvedSpy = spyOn(component, 'allResolved');
             allResolvedSpy.and.returnValue(false);
             await fixture.detectChanges();
@@ -124,7 +107,7 @@ describe('Resolve Conflicts Block component', function() {
             const button = element.queryAll(By.css('.btn-container button[color="primary"]'))[0];
             expect(button.properties['disabled']).toBeFalsy();
 
-            stateStub.listItem.upToDate = false;
+            component.listItem.upToDate = false;
             await fixture.detectChanges();
             expect(button.properties['disabled']).toBeTruthy();
         });
@@ -133,39 +116,26 @@ describe('Resolve Conflicts Block component', function() {
         it('should test whether all conflicts are resolved', function() {
             expect(component.allResolved()).toEqual(true);
 
-            stateStub.listItem.merge.conflicts = [{resolved: true}];
+            component.listItem.merge.conflicts = [{iri: '', left: new Difference(), right: new  Difference(), resolved: true}];
             expect(component.allResolved()).toEqual(true);
 
-            stateStub.listItem.merge.conflicts = [{resolved: false}];
+            component.listItem.merge.conflicts = [{iri: '', left: new Difference(), right: new  Difference(), resolved: false}];
             expect(component.allResolved()).toEqual(false);
         });
-        describe('should submit the merge', function() {
-            beforeEach(function() {
-                const selectedLeft = {resolved: 'left', right: {additions: ['add-right'], deletions: ['del-right']}};
-                const selectedRight = {resolved: 'right', left: {additions: ['add-left'], deletions: ['del-left']}};
-                stateStub.listItem.merge.conflicts = [selectedLeft, selectedRight];
-            });
-            it('unless merge rejects', async function() {
-                stateStub.merge.and.returnValue(throwError('Error message'));
-                await component.submit();
-                expect(stateStub.listItem.merge.resolutions.additions).toEqual([]);
-                expect(stateStub.listItem.merge.resolutions.deletions).toEqual(['add-right', 'add-left']);
-                expect(stateStub.merge).toHaveBeenCalledWith();
-                expect(stateStub.resetStateTabs).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(stateStub.cancelMerge).not.toHaveBeenCalled();
-                expect(component.error).toEqual('Error message');
-            });
-            it('if merge resolves', async function() {
-                await component.submit();
-                expect(stateStub.listItem.merge.resolutions.additions).toEqual([]);
-                expect(stateStub.listItem.merge.resolutions.deletions).toEqual(['add-right', 'add-left']);
-                expect(stateStub.merge).toHaveBeenCalledWith();
-                expect(stateStub.resetStateTabs).toHaveBeenCalledWith();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(stateStub.cancelMerge).toHaveBeenCalledWith();
-                expect(component.error).toEqual('');
-            });
+        it('should submit the merge', function() {
+            const selectedLeft: Conflict = {iri: '', resolved: 'left', right: new Difference([{'@id': 'add-right'}], [{'@id': 'del-right'}]), left: new Difference()};
+            const selectedRight: Conflict = {iri: '', resolved: 'right', right: new Difference(), left: new Difference([{'@id': 'add-left'}], [{'@id': 'del-left'}])};
+            component.listItem.merge.conflicts = [selectedLeft, selectedRight];
+            spyOn(component.submitEvent, 'emit');
+            component.submit();
+            expect(component.listItem.merge.resolutions.additions).toEqual([]);
+            expect(component.listItem.merge.resolutions.deletions).toEqual([{'@id': 'add-right'}, {'@id': 'add-left'}]);
+            expect(component.submitEvent.emit).toHaveBeenCalledWith();
+        });
+        it('should cancel the merge', function() {
+            spyOn(component.cancelEvent, 'emit');
+            component.cancelMerge();
+            expect(component.cancelEvent.emit).toHaveBeenCalledWith();
         });
     });
     it('should call submit when the button is clicked', function() {
@@ -174,9 +144,10 @@ describe('Resolve Conflicts Block component', function() {
         button.triggerEventHandler('click', null);
         expect(component.submit).toHaveBeenCalledWith();
     });
-    it('should call the correct method when the button is clicked', function() {
+    it('should call the cancelMerge when the button is clicked', function() {
+        spyOn(component, 'cancelMerge');
         const button = element.queryAll(By.css('.btn-container button:not([color="primary"])'))[0];
         button.triggerEventHandler('click', null);
-        expect(stateStub.cancelMerge).toHaveBeenCalledWith();
+        expect(component.cancelMerge).toHaveBeenCalledWith();
     });
 });

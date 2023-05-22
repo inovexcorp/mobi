@@ -23,6 +23,6 @@
 <div class="merge-tab row m-0 h-100 vertical-scroll">
     <div class="col p-3 h-100">
         <merge-block class="h-100" *ngIf="!os.listItem.merge.conflicts.length"></merge-block>
-        <resolve-conflicts-block class="h-100" *ngIf="os.listItem.merge.conflicts.length" [state]="os"></resolve-conflicts-block>
+        <resolve-conflicts-block class="h-100" *ngIf="os.listItem.merge.conflicts.length" [listItem]="os.listItem" [error]="error" (submitEvent)="submitConflictMerge()" (cancelEvent)="cancelMerge()"></resolve-conflicts-block>
     </div>
 </div>

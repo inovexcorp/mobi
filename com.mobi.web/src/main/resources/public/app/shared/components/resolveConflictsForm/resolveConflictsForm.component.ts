@@ -22,7 +22,7 @@
  */
 import { Component, Input } from '@angular/core';
 
-import { CommitChange } from '../../models/commitChange.interface';
+import { Conflict } from '../../models/conflict.interface';
 import { UtilService } from '../../services/util.service';
 
 /**
@@ -31,24 +31,9 @@ import { UtilService } from '../../services/util.service';
  * A component that creates displays of conflicts from a merge of VersionedRDFRecord branches and ways to resolve those
  * conflicts. The initial view is a list of the conflicts displayed as the entity titles and their resolution statuses.
  * Once a conflict is selected, the view changes to a side-by-side display of the changes from each branch in the
- * conflict. Clicking on one of the displays selects which changes to keep in the resolution. The conflicts should in
- * the form:
- * ```
- * {
- *     iri: '',
- *     resolved: '',
- *     left: {
- *         additions: [],
- *         deletions: []
- *     },
- *     right: {
- *         additions: [],
- *         deletions: []
- *     }
- * }
- * ```
+ * conflict. Clicking on one of the displays selects which changes to keep in the resolution. 
  * 
- * @param {Object[]} conflicts The conflicts to be resolved in the form
+ * @param {Conflict[]} conflicts The conflicts to be resolved in the form
  * @param {string} branchTitle The title of the source branch of the merge
  * @param {string} targetTitle The title of the target branch of the merge
  */
@@ -58,39 +43,18 @@ import { UtilService } from '../../services/util.service';
     styleUrls: ['./resolveConflictsForm.component.scss']
 })
 export class ResolveConflictsFormComponent {
-    @Input() conflicts;
+    @Input() conflicts: Conflict[];
     @Input() branchTitle: string;
     @Input() targetTitle: string;
     
-    index:number = undefined;
+    index: number = undefined;
     selected = undefined;
-    changes: {
-        left: {
-            additions: CommitChange[],
-            deletions: CommitChange[]
-        },
-        right: {
-            additions: CommitChange[],
-            deletions: CommitChange[]
-        }
-    } = undefined;
 
-    constructor(private util: UtilService) {
-    }
+    constructor(public util: UtilService) {}
 
     select(index: number): void {
         this.index = index;
         this.selected = this.conflicts[this.index];
-        this.changes = {
-            left: {
-                additions: this.util.getChangesById(this.selected.iri, this.selected.left.additions),
-                deletions: this.util.getChangesById(this.selected.iri, this.selected.left.deletions)
-            },
-            right: {
-                additions: this.util.getChangesById(this.selected.iri, this.selected.right.additions),
-                deletions: this.util.getChangesById(this.selected.iri, this.selected.right.deletions)
-            }
-        };
     }
     hasNext(): boolean {
         return (this.index + 1) < this.conflicts.length;
@@ -98,6 +62,5 @@ export class ResolveConflictsFormComponent {
     backToList(): void {
         this.index = undefined;
         this.selected = undefined;
-        this.changes = undefined;
     }
 }

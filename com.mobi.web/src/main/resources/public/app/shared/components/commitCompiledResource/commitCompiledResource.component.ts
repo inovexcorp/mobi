@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { has, map, get, forEach, omit, find, cloneDeep, mergeWith, isArray } from 'lodash';
+import { has, map, get, forEach, omit, find, cloneDeep } from 'lodash';
 
 import { Component, OnChanges, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 
