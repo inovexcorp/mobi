@@ -1204,6 +1204,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 new IllegalStateException("Additions not set on Commit " + inProgressCommit.getResource()));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
                 new IllegalStateException("Deletions not set on Commit " + inProgressCommit.getResource()));
+
         try {
             if (additionsFile != null) {
                 conn.add(additionsFile, additionsGraph);
@@ -1213,10 +1214,11 @@ public class SimpleCatalogManager implements CatalogManager {
                 conn.add(deletionsFile, deletionsGraph);
                 deletionsFile.delete();
             }
-        } catch (IOException e) {
+
+            return inProgressCommit;
+        } catch (Exception e) {
             throw new MobiException(e);
         }
-        return inProgressCommit;
     }
 
     @Override
@@ -1262,7 +1264,8 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    private void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+    @Override
+    public void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                     InProgressCommit inProgressCommit, RepositoryConnection conn) {
         Resource userIRI = (Resource) inProgressCommit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
                 .orElseThrow(() -> new IllegalArgumentException("User not set on InProgressCommit "

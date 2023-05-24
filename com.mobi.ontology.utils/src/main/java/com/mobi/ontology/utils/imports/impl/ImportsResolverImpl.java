@@ -31,7 +31,6 @@ import com.mobi.ontology.utils.imports.ImportsResolverConfig;
 import com.mobi.persistence.utils.RDFFiles;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParseException;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -57,9 +56,7 @@ public class ImportsResolverImpl implements ImportsResolver {
     private final Logger log = LoggerFactory.getLogger(ImportsResolverImpl.class);
 
     private String userAgent;
-    private static final String ACCEPT_HEADERS = "application/rdf+xml, application/xml; q=0.7, text/xml; q=0.6,"
-            + "text/turtle; q=0.5, application/ld+json; q=0.4, application/trig; q=0.3, application/n-triples; q=0.2,"
-            + " application/n-quads; q=0.19, text/n3; q=0.18, text/plain; q=0.1, */*; q=0.09";
+    private String acceptHeaders;
 
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
 
@@ -76,6 +73,17 @@ public class ImportsResolverImpl implements ImportsResolver {
         } else {
             userAgent = config.userAgent();
         }
+        StringBuilder sb = new StringBuilder();
+        RDFFiles.getFormats().forEach(format -> {
+            format.getMIMETypes().forEach(mimeType -> {
+                sb.append(mimeType);
+                if (RDFFiles.isOwlFormat(format)) {
+                    sb.append("; q=0.5");
+                }
+                sb.append(", ");
+            });
+        });
+        acceptHeaders = sb.toString();
     }
 
     /**
@@ -91,25 +99,26 @@ public class ImportsResolverImpl implements ImportsResolver {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestProperty("User-Agent", userAgent);
         conn.setConnectTimeout(3000);
-        conn.setRequestProperty("Accept", ACCEPT_HEADERS);
+        conn.setRequestProperty("Accept", acceptHeaders);
         conn.connect();
 
-        String originalProtocol = url.getProtocol();
         int status = conn.getResponseCode();
-        if (status == HttpURLConnection.HTTP_MOVED_TEMP
+        while (status == HttpURLConnection.HTTP_MOVED_TEMP
                 || status == HttpURLConnection.HTTP_MOVED_PERM
                 || status == HttpURLConnection.HTTP_SEE_OTHER
                 || status == 307 || status == 308) {
+            String originalProtocol = url.getProtocol();
             String location = conn.getHeaderField("Location");
             log.trace(actualUrlStr + " redirected to " + location);
             URL newURL = new URL(location);
             String newProtocol = newURL.getProtocol();
             if (!originalProtocol.equals(newProtocol)) {
                 log.trace("Protocol changed during redirect from " + originalProtocol + " to " + newProtocol);
-                conn = (HttpURLConnection) newURL.openConnection();
-                conn.addRequestProperty("Accept", ACCEPT_HEADERS);
-                conn.setConnectTimeout(3000);
             }
+            conn = (HttpURLConnection) newURL.openConnection();
+            conn.addRequestProperty("Accept", acceptHeaders);
+            conn.setConnectTimeout(3000);
+            status = conn.getResponseCode();
         }
         return conn;
     }
@@ -125,12 +134,8 @@ public class ImportsResolverImpl implements ImportsResolver {
                         .or(() -> RDFFiles.getFormatForFileName(conn.getURL().getPath()))
                         .orElseThrow(() -> new IllegalStateException("Could not retrieve RDFFormat for " + resource));
                 File tempFile = RDFFiles.writeStreamToTempFile(conn.getInputStream(), format);
-                try {
-                    return Optional.of(RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.NQUADS));
-                } catch (RDFParseException e) {
-                    return Optional.empty();
-                }
-            } catch (IOException e) {
+                return Optional.of(RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.NQUADS));
+            } catch (Exception e) {
                 log.error("Error opening InputStream from web ontology", e);
             }
             return Optional.empty();

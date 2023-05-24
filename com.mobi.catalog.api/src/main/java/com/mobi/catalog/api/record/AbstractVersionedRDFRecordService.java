@@ -32,6 +32,7 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -46,6 +47,8 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.persistence.utils.BatchGraphInserter;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.security.policy.api.ontologies.policy.Policy;
@@ -53,6 +56,7 @@ import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -63,7 +67,10 @@ import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.repository.util.RDFLoader;
+import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -472,6 +479,73 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                             masterIRI));
                 }
             }
+        }
+    }
+
+    protected InProgressCommit loadInProgressCommit(User user, File additionsFile) {
+        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user);
+        IRI additionsGraph = getRevisionGraph(inProgressCommit, true);
+
+        try (RepositoryConnection fileConn = configProvider.getRepository().getConnection()) {
+            if (additionsFile != null) {
+                RDFFormat format = RDFFiles.getFormatForFileName(additionsFile.getName()).orElseThrow(
+                        () -> new IllegalStateException("File does not have valid extension"));
+                BatchGraphInserter inserter = new BatchGraphInserter(fileConn, additionsGraph,
+                        IsolationLevels.READ_UNCOMMITTED);
+                RDFLoader loader = new RDFLoader(new ParserConfig(), valueFactory);
+                loader.load(additionsFile, null, format, inserter);
+
+                additionsFile.delete();
+            }
+            return inProgressCommit;
+        } catch (Exception e) {
+            clearAdditionsGraph(inProgressCommit);
+            throw new MobiException(e);
+        }
+    }
+
+    protected void handleError(InProgressCommit commit, File file, Exception e) {
+        if (commit != null) {
+            clearAdditionsGraph(commit);
+        }
+        if (e.getCause() instanceof RDFParseException && file != null) {
+            String format = RDFFiles.getFormatForFileName(file.getName())
+                    .orElseThrow(() -> new IllegalStateException("File has no format")).getName();
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("Error parsing format: %s.", format, " ,"));
+            sb.append(Models.ERROR_OBJECT_DELIMITER);
+            sb.append(format);
+            sb.append(": ");
+            sb.append(e.getCause().getMessage());
+            throw new RDFParseException(sb.toString());
+        }
+        if (e instanceof RuntimeException) {
+            throw (RuntimeException) e;
+        } else {
+            throw new MobiException(e);
+        }
+    }
+
+    protected IRI getRevisionGraph(InProgressCommit inProgressCommit, boolean additions) {
+        if (inProgressCommit == null) {
+            throw new IllegalArgumentException("Cannot retrieve additions graph from empty commit");
+        }
+        Resource resource = inProgressCommit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
+        Revision revision = revisionFactory.getExisting(resource, inProgressCommit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+        if (additions) {
+            return revision.getAdditions().orElseThrow(() ->
+                    new IllegalStateException("Additions not set on Commit " + inProgressCommit.getResource()));
+        } else {
+            return revision.getDeletions().orElseThrow(() ->
+                    new IllegalStateException("Deletions not set on Commit " + inProgressCommit.getResource()));
+        }
+    }
+
+    protected void clearAdditionsGraph(InProgressCommit inProgressCommit) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            conn.remove((IRI) null, null, null, getRevisionGraph(inProgressCommit, true));
         }
     }
 }

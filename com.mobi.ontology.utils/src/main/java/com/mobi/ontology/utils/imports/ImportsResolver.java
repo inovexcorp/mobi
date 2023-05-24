@@ -24,7 +24,6 @@ package com.mobi.ontology.utils.imports;
  */
 
 import com.mobi.ontology.core.api.OntologyManager;
-import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 
 import java.io.File;

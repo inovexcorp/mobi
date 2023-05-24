@@ -25,7 +25,6 @@ package com.mobi.shapes.api.record;
 
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -34,7 +33,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
-import java.io.File;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -44,6 +42,7 @@ import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -67,18 +66,20 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified);
         Branch masterBranch = createMasterBranch(record);
+        InProgressCommit commit = null;
+        File shaclFile = null;
         try {
             semaphore.acquire();
-            File shaclFile = createDataFile(config);
-
-            conn.begin();
-            addRecord(record, masterBranch, conn);
-
+            shaclFile = createDataFile(config);
             IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
             Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("ShaclRecord must have a master Branch"));
-            InProgressCommit commit = catalogManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
-                    shaclFile, null, conn);
+            commit = loadInProgressCommit(user, shaclFile);
+
+            conn.begin();
+            addRecord(record, masterBranch, conn);
+            catalogManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
+
             setShapesGraphToRecord(record, commit, conn);
 
             versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
@@ -88,6 +89,8 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
             shaclFile.delete();
         } catch (InterruptedException e) {
             throw new MobiException(e);
+        } catch (Exception e) {
+            handleError(commit, shaclFile, e);
         } finally {
             semaphore.release();
         }
@@ -98,15 +101,11 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
      * Validates and sets the shapes graph IRI to the ShaclRecord.
      *
      * @param record the ShaclRecord to set the shapes graph IRI
-     * @param shaclModel model representing a SHACL Shapes Graph
+     * @param inProgressCommit inProgressCommit with the loaded file
+     * @param conn RepositoryConnection with the transaction
      */
     private void setShapesGraphToRecord(T record, InProgressCommit inProgressCommit, RepositoryConnection conn) {
-        Resource resource = inProgressCommit.getGenerated_resource().stream().findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
-        Revision revision = revisionFactory.getExisting(resource, inProgressCommit.getModel())
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
-        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + inProgressCommit.getResource()));
+        IRI additionsGraph = getRevisionGraph(inProgressCommit, true);
         Model shaclModel = QueryResults.asModel(conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, additionsGraph));
 
         Resource ontologyIRI = shaclModel

@@ -23,18 +23,19 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
+import org.eclipse.rdf4j.common.transaction.IsolationLevel;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 
 public class BatchGraphInserter extends BatchInserter {
 
-    private ValueFactory sesameVf;
     private Resource graph;
+
+    private IsolationLevel isolationLevel = IsolationLevels.SNAPSHOT_READ;
 
     /**
      * Creates a new BatchGraphInserter that will use the provided RepositoryConnection to insert statements
@@ -42,11 +43,26 @@ public class BatchGraphInserter extends BatchInserter {
      * all the statements are added.
      *
      * @param conn The RepositoryConnection to use to add statements
+     * @param graph The Graph to insert the statements
      */
     public BatchGraphInserter(RepositoryConnection conn, Resource graph) {
         super(conn);
         this.graph = graph;
-        this.sesameVf = new ValidatingValueFactory();
+    }
+
+    /**
+     * Creates a new BatchGraphInserter that will use the provided RepositoryConnection to insert statements
+     * in batch chunks of the default size into the specified graph. The RepositoryConnection will not be closed after
+     * all the statements are added.
+     *
+     * @param conn The RepositoryConnection to use to add statements
+     * @param graph The Graph to insert the statements
+     * @param isolationLevel The IsolationLevel for the transactions
+     */
+    public BatchGraphInserter(RepositoryConnection conn, Resource graph, IsolationLevel isolationLevel) {
+        super(conn);
+        this.graph = graph;
+        this.isolationLevel = isolationLevel;
     }
 
     /**
@@ -55,12 +71,28 @@ public class BatchGraphInserter extends BatchInserter {
      * all the statements are added.
      *
      * @param conn The RepositoryConnection to use to add statements
-     * @param batchSize How may statemtns should be added at a time
+     * @param batchSize How may statements should be added at a time
+     * @param graph The Graph to insert the statements
      */
-    public BatchGraphInserter(RepositoryConnection conn,long batchSize, Resource graph) {
+    public BatchGraphInserter(RepositoryConnection conn, long batchSize, Resource graph) {
         super(conn, batchSize, false);
         this.graph = graph;
-        this.sesameVf = new ValidatingValueFactory();
+    }
+
+    /**
+     * Creates a new BatchGraphInserter that will use the provided RepositoryConnection to insert statements in the
+     * batch chunks of the provided size into the specified graph. The RepositoryConnection will not be closed after
+     * all the statements are added.
+     *
+     * @param conn The RepositoryConnection to use to add statements
+     * @param batchSize How may statements should be added at a time
+     * @param graph The Graph to insert the statements
+     * @param isolationLevel The IsolationLevel for the transactions
+     */
+    public BatchGraphInserter(RepositoryConnection conn, long batchSize, Resource graph, IsolationLevel isolationLevel) {
+        super(conn, batchSize, false);
+        this.graph = graph;
+        this.isolationLevel = isolationLevel;
     }
 
     /**
@@ -68,13 +100,12 @@ public class BatchGraphInserter extends BatchInserter {
      */
     @Override
     public void startRDF() throws RDFHandlerException {
-        conn.begin();
+        conn.begin(isolationLevel);
     }
 
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
-        Statement statement = sesameVf.createStatement(st.getSubject(), st.getPredicate(), st.getObject(), graph);
-        conn.add(statement);
+        conn.add(st.getSubject(), st.getPredicate(), st.getObject(), graph);
         count++;
         if (count % batchSize == 0) {
             try {
