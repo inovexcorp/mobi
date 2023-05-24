@@ -28,6 +28,7 @@ import com.mobi.owlapi.utils.OwlApiUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -46,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,6 +73,13 @@ public class RDFFiles {
     public static final RDFFormat OBO = new RDFFormat(
             "Open Biological and Biomedical Ontologies", List.of(""), StandardCharsets.UTF_8,
             List.of("obo"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
+
+    // Duplicate of RDF4j NTRIPLES but with text/plain mimetype removed
+    private static final RDFFormat NTRIPLES = new RDFFormat(
+            "N-Triples",Arrays.asList("application/n-triples"), StandardCharsets.UTF_8,
+            List.of("nt"), SimpleValueFactory.getInstance().createIRI("http://www.w3.org/ns/formats/N-Triples"),
+            false, false, false);
+
 
     private static final List<RDFFormat> owlFormats = List.of(OWL_XML, MANCHESTER_OWL, OWL_FUNCTIONAL, OBO);
 
@@ -207,6 +216,15 @@ public class RDFFiles {
         RDFFormat format = getFormatForFileName(file.getName())
                 .orElseThrow(() -> new IllegalArgumentException("Could not retrieve RDFFormat for file name "
                         + file.getName()));
+        return isOwlFormat(format);
+    }
+
+    /**
+     * Checks to see if a format is an OWLAPI format.
+     * @param format The format to test
+     * @return boolean true if owl format, false otherwise
+     */
+    public static boolean isOwlFormat(RDFFormat format) {
         return owlFormats.contains(format);
     }
 
@@ -249,6 +267,17 @@ public class RDFFiles {
         return RDFFormat.matchMIMEType(mimeType, getFormats());
     }
 
+    /**
+     * @return Retrieves a List of RDFFormats
+     */
+    public static List<RDFFormat> getFormats() {
+        List<RDFFormat> formats = new ArrayList<>(owlFormats);
+        formats.addAll(RDFParserRegistry.getInstance().getKeys());
+        formats.remove(RDFFormat.NTRIPLES);
+        formats.add(NTRIPLES);
+        return formats;
+    }
+
     private static boolean isGzip(File file) {
         try {
             RandomAccessFile raf = new RandomAccessFile(file, "r");
@@ -262,12 +291,6 @@ public class RDFFiles {
 
     private static boolean isZip(File file) throws IOException {
         return new ZipInputStream(new FileInputStream(file)).getNextEntry() != null;
-    }
-
-    private static List<RDFFormat> getFormats() {
-        List<RDFFormat> formats = new ArrayList<>(owlFormats);
-        formats.addAll(RDFParserRegistry.getInstance().getKeys());
-        return formats;
     }
 
     private static InputStream getInputStream(File file) {

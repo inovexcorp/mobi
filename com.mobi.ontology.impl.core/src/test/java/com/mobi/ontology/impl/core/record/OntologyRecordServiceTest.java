@@ -97,7 +97,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -276,7 +275,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
         doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
 
-        when(catalogManager.createInProgressCommit(any(Resource.class), any(Resource.class), any(User.class), any(File.class), eq(null), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         revisionIRI = VALUE_FACTORY.createIRI("urn:revision");
         Revision revision = revisionFactory.createNew(revisionIRI);
         IRI additions = VALUE_FACTORY.createIRI("urn:additions");
@@ -381,7 +380,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(catalogManager).createInProgressCommit(eq(catalogId), any(IRI.class), eq(user), any(File.class), eq(null), any(RepositoryConnection.class));
+        verify(catalogManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(ontologyId1, times(2)).getOntologyIRI();
         verify(ontologyId1).getOntologyIdentifier();
@@ -437,7 +436,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(catalogManager).createInProgressCommit(eq(catalogId), any(IRI.class), eq(user), any(File.class), eq(null), any(RepositoryConnection.class));
+        verify(catalogManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(ontologyId2, times(2)).getOntologyIRI();
         verify(ontologyId2).getOntologyIdentifier();
@@ -487,7 +486,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
 
-        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
+        verify(catalogManager).createInProgressCommit(eq(user));
         try (RepositoryConnection connection = repository.getConnection()) {
             Model ontologySubjects = QueryResults.asModel(connection.getStatements(null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
                     VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue())));
@@ -537,7 +536,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
 
-        verify(catalogManager).createInProgressCommit(eq(catalogId), any(IRI.class), eq(user), any(File.class), eq(null), any(RepositoryConnection.class));
+        verify(catalogManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
 
         try (RepositoryConnection connection = repository.getConnection()) {
@@ -596,7 +595,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(ontologyManager).createOntologyId(any(Model.class));
         verify(utilsService, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
-        verify(catalogManager).createInProgressCommit(eq(catalogId), any(IRI.class), eq(user), any(File.class), eq(null), any(RepositoryConnection.class));
+        verify(catalogManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));

@@ -664,6 +664,22 @@ public interface CatalogManager {
     void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, InProgressCommit inProgressCommit);
 
     /**
+     * Adds the provided InProgressCommit to the repository for the VersionedRDFRecord identified by the provided
+     * Resources.
+     *
+     * @param catalogId            The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get the new
+     *                             InProgressCommit.
+     * @param inProgressCommit     The InProgressCommit to add to the VersionedRDFRecord.
+     * @param conn                 The RepositoryConnection to add the commit with.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *                                  Record does not belong to the Catalog, or the InProgressCommit already exists
+     *                                  in the repository.
+     */
+    void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+                                    InProgressCommit inProgressCommit, RepositoryConnection conn);
+
+    /**
      * Gets the Commit identified by the provided Resource. The Model backing the commit will contain all the data in
      * the commit named graph. This includes the commit and revision metadata.
      *

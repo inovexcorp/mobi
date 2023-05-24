@@ -67,7 +67,6 @@ import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
-import java.io.File;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -224,13 +223,14 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
+        when(configProvider.getRepository()).thenReturn(repository);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
 
         // InProgressCommit deletion setup
         when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
         doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
 
-        when(catalogManager.createInProgressCommit(any(Resource.class), any(Resource.class), any(User.class), any(File.class), eq(null), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         IRI revisionIRI = VALUE_FACTORY.createIRI("urn:revision");
         Revision revision = revisionFactory.createNew(revisionIRI);
         IRI additions = VALUE_FACTORY.createIRI("urn:additions");
@@ -382,7 +382,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optMasterBranch.isPresent());
         Optional<Resource> optShapesGraphIri = shaclRecord.getShapesGraphIRI();
         assertTrue(optShapesGraphIri.isPresent());
-        assertTrue(optShapesGraphIri.get().stringValue().startsWith("http://mobi.com/ontologies/shapes-graph/"));
+        assertEquals("urn:testOntology", optShapesGraphIri.get().stringValue());
 
         verify(utilsService, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
