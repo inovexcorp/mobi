@@ -27,7 +27,7 @@
     <mat-tab *ngIf="isVersionedRDFRecord" label="Branches">
         <branch-list [record]="record"></branch-list>
     </mat-tab>
-    <mat-tab label="Activity">
+    <mat-tab label="Activity"  *ngIf="record">
         <app-activity-list [entityIri]="record['@id']"></app-activity-list>
     </mat-tab>
 </mat-tab-group>
