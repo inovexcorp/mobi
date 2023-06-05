@@ -21,7 +21,11 @@
       "esModuleInterop": true,
       "importHelpers": true,
       "allowSyntheticDefaultImports": true,
-      "paths": { "@angular/*": [ "./node_modules/@angular/*" ] },
+      "paths": {
+        "@angular/*": [ "./node_modules/@angular/*" ],
+        "assert": ["./node_modules/assert"],
+        "util": ["./node_modules/util"],
+      },
       "typeRoots": [
         "node_modules/@types"
       ]

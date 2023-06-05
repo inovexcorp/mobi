@@ -171,7 +171,8 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
         let searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
         some(node.entityInfo.names, name => {
-            if (name.toLowerCase().includes(this.filterText.toLowerCase())) {
+            if (name !== undefined && this.filterText!== undefined &&
+                    name.toLowerCase().includes(this.filterText.toLowerCase())) {
                 searchMatch = true;
             }
         });
@@ -180,8 +181,11 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
             return true;
         }
 
+        let beautifiedEntity = this.util.getBeautifulIRI(node.entityIRI);
+
         // Check if beautified entity id matches search text
-        if (this.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(this.filterText.toLowerCase())) {
+        if (beautifiedEntity !== undefined && this.filterText!= undefined &&
+                beautifiedEntity.toLowerCase().includes(this.filterText.toLowerCase())) {
             searchMatch = true;
         }
 

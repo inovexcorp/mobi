@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+@use '@angular/material' as mat;
+
 /* Core variables */
 @import "../../../css/variables";
 
@@ -79,7 +81,7 @@
     .nav-item.active,
     .current-user-box:hover,
     .current-user-box.active {
-        background-color: map-get($mobi-primary, 400);
+        background-color: mat.get-color-from-palette($mobi-primary, 400);
     }
     .current-user-box {
         .user-title {

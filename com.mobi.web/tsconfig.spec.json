@@ -5,7 +5,12 @@
     "types": [
       "jasmine",
       "node"
-    ]
+    ],
+    "paths": {
+      "@angular/*": [ "./node_modules/@angular/*" ],
+      "assert": ["./node_modules/assert"],
+      "util": ["./node_modules/util"],
+    }
   },
   "files": [
     "src/main/resources/public/test.ts",

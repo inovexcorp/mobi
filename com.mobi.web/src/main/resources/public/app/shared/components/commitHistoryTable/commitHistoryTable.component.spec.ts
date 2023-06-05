@@ -136,15 +136,6 @@ describe('Commit History Table component', function() {
     });
     describe('contains the correct html showgraph', function() {
         beforeEach(async function() {
-            component.showGraph = true;
-            component.commits = testData.commits;
-            fixture.detectChanges();
-            await fixture.whenStable();
-        });
-        
-    });
-    describe('contains the correct html showgraph', function() {
-        beforeEach(async function() {
             component.graph = true;
             component.showGraph = true;
             component.commits = testData.commits;

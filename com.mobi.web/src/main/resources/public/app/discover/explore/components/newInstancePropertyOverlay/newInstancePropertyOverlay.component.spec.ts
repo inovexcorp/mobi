@@ -74,6 +74,12 @@ describe('New Instance Property Overlay component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<NewInstancePropertyOverlayComponent>>;
         exploreUtilsStub = TestBed.inject(ExploreUtilsService) as jasmine.SpyObj<ExploreUtilsService>;
+        exploreUtilsStub.getNewProperties.and.returnValue([{
+            propertyIRI: 'test',
+            type: 'testType',
+            range: ['testRange'],
+            restrictions: [{ cardinality: 0, cardinalityType: 'cardinalityString'}]
+        }]);
     });
 
     afterEach(function() {
@@ -105,13 +111,6 @@ describe('New Instance Property Overlay component', function() {
     });
     describe('controller methods', function() {
         it('should get the list of properties', fakeAsync(function() {
-            exploreUtilsStub.getNewProperties.and.returnValue([{
-                propertyIRI: 'test',
-                type: 'testType',
-                range: ['testRange'],
-                restrictions: [{ cardinality: 0, cardinalityType: 'cardinalityString'}]
-            }]);
-
             component.ngOnInit();
             fixture.detectChanges();
 
