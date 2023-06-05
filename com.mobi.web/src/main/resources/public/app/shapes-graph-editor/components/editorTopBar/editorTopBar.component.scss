@@ -20,9 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+@use 'sass:map';
+@use '@angular/material' as mat;
+
 /* Core variables */
 @import "../../../css/variables";
-@import '~@angular/material/theming';
 
 .editor-top-bar {
     width: 100%;
@@ -37,7 +39,7 @@
             display: inline-block;
 
             .mat-chip.mat-warn {
-                background-color: map-get($mat-amber, 500);
+                background-color: mat.get-color-from-palette(mat.$amber-palette, 500);
                 color: white;
             }
         }

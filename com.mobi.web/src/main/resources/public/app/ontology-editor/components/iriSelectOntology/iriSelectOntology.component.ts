@@ -189,7 +189,7 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
         mapped.forEach(item => {
             if (array.length === 100) {
                 return;
-            } else if (includes(item.name.trim().toUpperCase(), searchText.trim().toUpperCase()) && !this.selected.includes(item.item)) {
+            } else if (item.name !== undefined && includes(item.name.trim().toUpperCase(), searchText.trim().toUpperCase()) && !this.selected.includes(item.item)) {
                 array.push(item);
             }
         });

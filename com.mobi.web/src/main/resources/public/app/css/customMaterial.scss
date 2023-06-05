@@ -20,21 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+@use '@angular/material' as mat;
+
 /* Core variables */
 @import "./variables";
 @import '~codemirror/lib/codemirror';
 @import '~codemirror/theme/material';
 
+
 $primary: (
-    color: map-get($mobi-primary, 500),
-    dark: map-get($mobi-primary, 700),
-    light: map-get($mobi-primary, 100)
+    color: mat.get-color-from-palette($mobi-primary, 500),
+    dark: mat.get-color-from-palette($mobi-primary, 700),
+    light: mat.get-color-from-palette($mobi-primary, 100)
 );
 
 $secondary: (
-    color: map-get($mobi-secondary, 500),
-    dark: map-get($mobi-secondary, 700),
-    light: map-get($mobi-secondary, 100)
+    color: mat.get-color-from-palette($mobi-secondary, 500),
+    dark: mat.get-color-from-palette($mobi-secondary, 700),
+    light: mat.get-color-from-palette($mobi-secondary, 100)
 );
 
 $colors: (

@@ -17,7 +17,6 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "aot": true,
             "preserveSymlinks": true,
             "outputPath": "target/classes/build",
             "index": "src/main/resources/public/index.html",
@@ -49,22 +48,29 @@
               "src/main/resources/public/app/css/manchestersyntax.scss",
               "src/main/resources/public/app/css/yasgui.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true,
+            "allowedCommonJsDependencies": ["assert", "util"]
           },
           "configurations": {
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
+                  "replace": "src/main/resources/public/environments/environment.ts",
+                  "with": "src/main/resources/public/environments/environment.prod.ts"
                 }
               ],
               "optimization": true,
+              "aot": true,
               "outputHashing": "all",
               "sourceMap": false,
               "extractCss": true,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -80,7 +86,8 @@
                 }
               ]
             }
-          }
+          },
+          "defaultConfiguration": ""
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",

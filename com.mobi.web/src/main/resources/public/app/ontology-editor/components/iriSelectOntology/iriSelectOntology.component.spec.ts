@@ -87,6 +87,13 @@ describe('IRI Select Ontology component', function() {
         spyOn(component.selectedChange, 'emit');
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.ontologyId = 'ontologyId';
+        component.selectList = {
+            'iri1': 'A',
+            'iri3': 'B',
+            'iri2': 'B',
+            'test1': 'A',
+            'test3': 'C'
+        };
     });
 
     afterEach(function() {
@@ -190,13 +197,6 @@ describe('IRI Select Ontology component', function() {
             });
         });
         it('filter should return the list of filtered grouped IRIs', function() {
-            component.selectList = {
-                'iri1': 'A',
-                'iri3': 'B',
-                'iri2': 'B',
-                'test1': 'A',
-                'test3': 'C'
-            };
             spyOn(component, 'getOntologyIri').and.callThrough();
             utilStub.isBlankNodeId.and.callFake(a => a === 'iri3');
             spyOn(component, 'getName').and.callFake(a => a);
