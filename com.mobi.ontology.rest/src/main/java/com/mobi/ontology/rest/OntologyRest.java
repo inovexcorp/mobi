@@ -12,12 +12,12 @@ package com.mobi.ontology.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -36,6 +36,8 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatForConstructQuery;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
+import static java.util.Arrays.asList;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -88,6 +90,9 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
@@ -105,6 +110,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
@@ -192,6 +198,7 @@ public class OntologyRest {
     private EngineManager engineManager;
     private OntologyCache ontologyCache;
     private BNodeService bNodeService;
+    private PDP pdp;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -253,6 +260,11 @@ public class OntologyRest {
     @Reference
     void setbNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
+    }
+
+    @Reference
+    void setPdp(PDP pdp) {
+        this.pdp = pdp;
     }
 
     /**
@@ -417,8 +429,7 @@ public class OntologyRest {
             @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
             @Parameter(description = "Whether or not any in progress commits by user should be applied "
                     + "to the return value")
-            @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                    boolean applyInProgressCommit
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
             if (clearCache) {
@@ -529,7 +540,7 @@ public class OntologyRest {
         try {
             Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
-                    Response.Status.BAD_REQUEST));
+                            Response.Status.BAD_REQUEST));
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
                 writer.write(getOntologyAsRdf(ontology, rdfFormat, false));
@@ -591,8 +602,7 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "String representing the edited entity id", required = true)
             @QueryParam("entityId") String entityIdStr,
-            @Parameter(description = "String representing the edited Resource", required = true)
-                    String entityJson) {
+            @Parameter(description = "String representing the edited Resource", required = true) String entityJson) {
         try {
             Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
@@ -1412,7 +1422,7 @@ public class OntologyRest {
                     + "IRI unless String begins with \"_:\"")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new annotation in JSON-LD", required = true)
-                    String annotationJson) {
+            String annotationJson) {
         verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(annotationJson));
@@ -1565,7 +1575,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new class model", required = true)
-                    String classJson) {
+            String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
         try {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(classJson));
@@ -1709,7 +1719,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new datatype model", required = true)
-                    String datatypeJson) {
+            String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(datatypeJson));
@@ -1853,7 +1863,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new property model", required = true)
-                    String objectPropertyJson) {
+            String objectPropertyJson) {
         verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(objectPropertyJson));
@@ -1997,7 +2007,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new property model", required = true)
-                    String dataPropertyJson) {
+            String dataPropertyJson) {
         verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(dataPropertyJson));
@@ -2141,7 +2151,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new individual model", required = true)
-                    String individualJson) {
+            String individualJson) {
         verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
         try {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(individualJson));
@@ -2473,7 +2483,7 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
-            ) {
+    ) {
         try {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getClassIRIArray, applyInProgressCommit);
@@ -2679,7 +2689,7 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
-            ) {
+    ) {
         try {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, applyInProgressCommit);
@@ -2740,8 +2750,8 @@ public class OntologyRest {
     ) {
         try {
             Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                            applyInProgressCommit).orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
-                            Response.Status.BAD_REQUEST));
+                    applyInProgressCommit).orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubClassesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {
@@ -3409,7 +3419,7 @@ public class OntologyRest {
         }
 
         return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                   includeImports, applyInProgressCommit,
+                includeImports, applyInProgressCommit,
                 acceptString, queryString, "", "").build();
     }
 
@@ -3488,7 +3498,7 @@ public class OntologyRest {
                     @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
                             + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
                             "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
-                    defaultValue = "false"), in = ParameterIn.QUERY),
+                            defaultValue = "false"), in = ParameterIn.QUERY),
                     @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
                             "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
                     @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
@@ -3957,8 +3967,7 @@ public class OntologyRest {
             @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
                     + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
-            @Parameter(description = "Filter JSON", required = true)
-                    String filterJson) {
+            @Parameter(description = "Filter JSON", required = true) String filterJson) {
         try {
             StopWatch watch = new StopWatch();
             log.trace("Start entityNames");
@@ -3999,6 +4008,95 @@ public class OntologyRest {
         } catch (MobiException | IOException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.
+     *
+     * @param servletRequest the HttpServletRequest.
+     * @param ontologyIRI    String representing the IRI of the requested ontology
+     * @param format    Optional string representing the format of the ontology
+     * @return The Ontology in the requested format. Format is turtle unless otherwise specified.
+     */
+    @GET
+    @Path("/ontology/{ontologyIRI}")
+    @Produces({TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE, MediaType.APPLICATION_OCTET_STREAM})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Retrieves the ontology associated with the requested ontology iri in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                            }
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getOntology(
+            @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the IRI of the requested ontology", required = true)
+            @PathParam("ontologyIRI") String ontologyIRI,
+            @Parameter(description = "Desired RDF return format",
+                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "turtle"}))
+            @QueryParam("format") String format
+    ) {
+        try {
+            IRI ontIRI = valueFactory.createIRI(ontologyIRI);
+            Optional<Resource> ontologyRecord = this.ontologyManager.getOntologyRecordResource(ontIRI);
+
+            if (!ontologyRecord.isPresent()) {
+                String fileExt = "." + RDFFiles.getFileExtension(ontologyIRI);
+                ontIRI = valueFactory.createIRI(ontologyIRI.replaceFirst(fileExt, ""));
+                ontologyRecord = this.ontologyManager.getOntologyRecordResource(ontIRI);
+            }
+
+            if (ontologyRecord.isPresent()) {
+                IRI recordIRI = (IRI) ontologyRecord.get();
+                Decision canRead = isReadable(getActiveUser(servletRequest, engineManager), recordIRI);
+
+                if (!(canRead == Decision.DENY)) {
+                    String finalFormat = (format != null ? format :
+                            RDFFiles.getFormatForFileName(ontologyIRI).isPresent() ?
+                                    RDFFiles.getFormatForFileName(ontologyIRI).get().getName() : "turtle");
+
+                    Optional<Ontology> ontology = this.ontologyManager.retrieveOntologyByIRI(ontIRI);
+
+                    StreamingOutput output = outputStream -> {
+                        writeOntologyToStream(ontology.get(), finalFormat, false, outputStream);
+                    };
+                    return Response.ok(output).build();
+                } else {
+                    throw ErrorUtils.sendError("User does not have permission to access ontology.",
+                            Response.Status.FORBIDDEN);
+                }
+            } else {
+                throw ErrorUtils.sendError("IRI does not correspond to any ontology record.",
+                        Response.Status.BAD_REQUEST);
+            }
+        } catch (MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    private Decision isReadable(User user, IRI recordIRI) {
+        IRI subjectId = (IRI) user.getResource();
+        IRI actionId = valueFactory.createIRI("http://mobi.com/ontologies/policy#Read");
+        Map<String, Literal> attributes = new HashMap<>();
+        Request request = pdp.createRequest(asList(subjectId), attributes, asList(recordIRI), new HashMap<>(),
+                asList(actionId), attributes);
+
+        com.mobi.security.policy.api.Response response = pdp.evaluate(request,
+                valueFactory.createIRI(POLICY_PERMIT_OVERRIDES));
+
+        return response.getDecision();
     }
 
     private RDFFormat getRdfFormat(String format){
