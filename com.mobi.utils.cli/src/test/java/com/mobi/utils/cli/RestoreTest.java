@@ -85,6 +85,7 @@ public class RestoreTest {
     private AutoCloseable closeable;
     private static final String POLICY_FILE_LOCATION = "testLocation";
     private MemoryRepositoryWrapper repo;
+    private MemoryRepositoryWrapper provRepo;
     private ValueFactory vf;
     private Restore restore;
 
@@ -140,6 +141,8 @@ public class RestoreTest {
 
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
+        provRepo = new MemoryRepositoryWrapper();
+        provRepo.setDelegate(new SailRepository(new MemoryStore()));
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
         when(catalogConfigProvider.getRepository()).thenReturn(repo);
 
@@ -158,6 +161,7 @@ public class RestoreTest {
 
         when(bundleContext.getServiceReference(eq(XACMLPolicyManager.class))).thenReturn(xacmlServiceRef);
         when(xacmlServiceRef.getProperty(eq("policyFileLocation"))).thenReturn(POLICY_FILE_LOCATION);
+        restore.provRepo = provRepo;
     }
 
     @After

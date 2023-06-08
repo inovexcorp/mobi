@@ -32,6 +32,25 @@
     rdfs:comment "An application setting that applies for all users within the Mobi framework"@en;
     rdfs:subClassOf :Setting .
 
+:PublishSetting a owl:Class;
+    rdfs:label "Publish Setting"@en;
+    rdfs:comment "A publish setting that applies for a given publish service within the Mobi framework"@en;
+    rdfs:subClassOf :Setting .
+
+:PublishService a owl:Class;
+    rdfs:label "Publish Service"@en;
+    rdfs:comment "A publish service type in the Mobi Framework"@en .
+
+:publishType a owl:AnnotationProperty, owl:FunctionalProperty;
+    rdfs:label "Publish Type"@en;
+    rdfs:range xsd:string;
+    rdfs:domain :PublishService .
+
+:concurrency a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "Concurrency"@en;
+    rdfs:range xsd:nonNegativeInteger;
+    rdfs:domain :PublishService .
+
 :hasDataValue a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "Has Data Value"@en;
     rdfs:domain :Setting;
@@ -64,6 +83,11 @@
     rdfs:subClassOf :SettingGroup ;
     rdfs:label "Application Setting Group"@en;
     rdfs:comment "The group of application settings that this application setting belongs to"@en.
+
+:PublishGroup a owl:Class;
+    rdfs:subClassOf :SettingGroup ;
+    rdfs:label "Publish Group"@en;
+    rdfs:comment "The group of publish settings that this publish setting belongs to"@en.
 
 :FormField a owl:Class .
 
