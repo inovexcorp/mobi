@@ -683,6 +683,31 @@ describe('Manchester Converter service', function() {
             const result = service.jsonldToManchester(bnodes[0]['@id'], bnodes, index);
             expect(result).toBe('ClassA or ClassB');
         });
+        it('if given a list expression with a broken node', function () {
+            const bnodes = [
+                {
+                    '@id': '_:genid0',
+                    '@type': [OWL + 'Class'],
+                    [OWL + 'unionOf']: [{'@id': '_:genid1'}]
+                },
+                {
+                    '@id': '_:genid1', '@type': [RDF + 'List'],
+                    [RDF + 'first']: [{ '@id': 'ClassA' }],
+                    [RDF + 'rest']: [{'@id': '_:genid2'}]
+                },
+                {
+                    '@id': '_:genid2', '@type': [RDF + 'List'],
+                    [RDF + 'first']: [{ '@id': 'ClassB' }]
+                }
+            ];
+            const index = {
+                '_:genid0': { position: 0 },
+                '_:genid1': { position: 1 },
+                '_:genid2': { position: 2 }
+            };
+            const result = service.jsonldToManchester(bnodes[0]['@id'], bnodes, index);
+            expect(result).toBe('ClassA or ClassB');
+        });
         describe('if given a class expression', function() {
             beforeEach(function() {
                 this.blankNode = {
