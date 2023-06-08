@@ -33,6 +33,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.platform.config.api.ontologies.platformconfig.State;
 import com.mobi.platform.config.api.state.StateManager;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
@@ -55,14 +56,15 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.apache.karaf.system.SystemService;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
-import org.apache.karaf.system.SystemService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
@@ -104,6 +106,8 @@ public class Restore implements Action {
     private static final String SEARCH_STATE_INSTANCES_NO_USER;
     private static final String CLEAR_POLICY_STATEMENTS;
     private static final String FIND_DATASET_NO_POLICIES;
+    private static final String UPDATE_SKOS_PUBLISH;
+    private static final String UPDATE_OWL_PUBLISH;
 
     static {
         try {
@@ -129,6 +133,14 @@ public class Restore implements Action {
             );
             FIND_DATASET_NO_POLICIES = IOUtils.toString(
                     Restore.class.getResourceAsStream("/findDatasetNoPolicy.rq"),
+                    StandardCharsets.UTF_8
+            );
+            UPDATE_SKOS_PUBLISH = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/skosPublishUpdate.rq"),
+                    StandardCharsets.UTF_8
+            );
+            UPDATE_OWL_PUBLISH = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/owlPublishUpdate.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -170,6 +182,9 @@ public class Restore implements Action {
 
     @Reference
     protected CatalogConfigProvider config;
+
+    @Reference(filter = "(id=prov)")
+    OsgiRepository provRepo;
 
     // Command Parameters
     @Argument(name = "BackupFile", description = "The Mobi backup to restore", required = true)
@@ -312,6 +327,15 @@ public class Restore implements Action {
                 }
             });
 
+            if (mobiVersions.indexOf(version) < mobiVersions.indexOf("2.3")) {
+                LOGGER.trace("Version lower than 2.3 detected. Removing files.");
+                // Remove AnzoPublish enterprise config files
+                Files.deleteIfExists(Paths.get(System.getProperty("karaf.etc") + File.separator
+                        + "com.mobi.enterprise.avm.publish.impl.anzo.AnzoSkosPublishService.cfg"));
+                Files.deleteIfExists(Paths.get(System.getProperty("karaf.etc") + File.separator
+                        + "com.mobi.enterprise.avm.publish.impl.anzo.AnzoOwlPublishService.cfg"));
+            }
+
             System.out.println("Waiting for services to restart after copying config files");
             TimeUnit.SECONDS.sleep(20);
 
@@ -421,6 +445,9 @@ public class Restore implements Action {
             cleanCatalogRepo(conn, backupVersion);
             cleanPolicies(conn, backupVersion, xacmlBundleContext);
         }
+        try (RepositoryConnection conn = provRepo.getConnection()) {
+            cleanProv(conn, backupVersion);
+        }
     }
 
     private void cleanCatalogRepo(RepositoryConnection conn, String backupVersion) {
@@ -446,7 +473,16 @@ public class Restore implements Action {
         }
     }
 
-    private void cleanPolicies(RepositoryConnection conn, String backupVersion, BundleContext bundleContext) {
+    private void cleanProv(RepositoryConnection conn, String backupVersion) {
+        if (mobiVersions.indexOf(backupVersion) < mobiVersions.indexOf("2.3")) {
+            Update skos = conn.prepareUpdate(UPDATE_SKOS_PUBLISH);
+            skos.execute();
+            Update owl = conn.prepareUpdate(UPDATE_OWL_PUBLISH);
+            owl.execute();
+        }
+    }
+
+        private void cleanPolicies(RepositoryConnection conn, String backupVersion, BundleContext bundleContext) {
         if (mobiVersions.indexOf(backupVersion) < 10) {
             LOGGER.trace("Remove old versions of admin policy and system repo query policy");
             // 1.20 changed admin policy and system repo query policy. Need to remove old versions so updated
