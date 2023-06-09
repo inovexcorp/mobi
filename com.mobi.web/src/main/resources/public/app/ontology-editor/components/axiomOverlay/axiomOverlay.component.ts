@@ -140,7 +140,8 @@ export class AxiomOverlayComponent implements OnInit {
         let values;
         // Collect values depending on current tab
         if (this.tabIndex === 1) {
-            const result = this.mc.manchesterToJsonld(this.expression, this.localNameMap, this.om.isDataTypeProperty(this.os.listItem.selected));
+            const usingDatatypeRange: boolean = (axiom === RDFS + "range" && this.om.isDataTypeProperty(this.os.listItem.selected));
+            const result = this.mc.manchesterToJsonld(this.expression, this.localNameMap, usingDatatypeRange);
             if (result.errorMessage) {
                 this.errorMessage = result.errorMessage;
                 return;

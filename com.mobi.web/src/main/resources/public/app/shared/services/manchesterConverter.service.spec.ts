@@ -493,7 +493,7 @@ describe('Manchester Converter service', function() {
                 expect(result.errorMessage).toEqual('');
             });
         });
-        describe('if given a datatype', function() {
+        describe('if given a datatype and the axiom is a range and the type is ', function() {
             beforeEach(function() {
                 this.expected = [{'@id': '_:genid0', '@type': [RDFS + 'Datatype']}];
             });
