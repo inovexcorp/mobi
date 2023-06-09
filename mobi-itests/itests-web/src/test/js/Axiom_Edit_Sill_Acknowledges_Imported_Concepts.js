@@ -138,16 +138,80 @@ module.exports = {
             .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Object Property 0")]]')
             .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Object Property 1")]]')
             .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Object Property 2")]]')
-            .pause(2000)
+    },
+
+    'Step 11: Click on Data Properties and ensure that correct Data properties are on page' : function (browser) {
+        var objectPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Data Properties")]]'
+        // click on 'Object Property 0' and ensure that selected-property has right property
+        browser
+            .useCss()
+            .waitForElementPresent('div.properties-tab property-hierarchy-block')
+            .useXpath()
+            .waitForElementVisible(objectPropertiesTreeXPath)
+            .click(objectPropertiesTreeXPath)
+            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Data Property 0")]]')
+            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Data Property 1")]]')
+            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Data Property 2")]]')
+            .click('//property-tree//tree-item//span[text()[contains(., "Data Property 0")]]')
+            .useCss()
+            .waitForElementVisible('properties-tab .selected-property')
+            .useXpath()
+            .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Data Property 0")]]')
+    },
+
+    'Step 12: Open Axiom Overlay for Data Property 0' : function (browser) {
+        browser
+            .useCss()
+            .waitForElementVisible('properties-tab .selected-property')
+            .useXpath()
+            .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Data Property 0")]]')
+            .click('//div[contains(@class, "section-header")]//h5[text()[contains(., "Axioms")]]//following-sibling::a[contains(@class, "fa-plus")]') // opens overlay
+            .useCss()
+            .waitForElementPresent('axiom-overlay')
+    },
+
+    'Step 13: Axiom Overlay - Edit Domain Property through Manchester Editor' : function (browser) {
+        browser
+            .waitForElementVisible('axiom-overlay')
+            .waitForElementVisible('mat-optgroup mat-option')
+            .useXpath()
+            .waitForElementVisible('//mat-option//span[text()[contains(.,"subPropertyOf")]]')
+            .click('//mat-option//span[text()[contains(.,"subPropertyOf")]]')
+            .useCss()
+            .waitForElementNotPresent('mat-optgroup')
+            .assert.not.elementPresent('mat-optgroup') // ensure list is hidden
+            .useXpath()
+            .click('//axiom-overlay//mat-tab-header//div[contains(@class, "mat-tab-label-content")][text()[contains(., "Editor")]]')
+            .waitForElementNotPresent('//axiom-overlay//input[contains(@data-placeholder, "Values")]')
+            .assert.not.elementPresent('//axiom-overlay//input[contains(@data-placeholder, "Values")]')
+            .waitForElementVisible('//axiom-overlay//ngx-codemirror')
+            .waitForElementPresent('//axiom-overlay//ngx-codemirror//div[contains(@Class, "CodeMirror")]//textarea')
+            .click('//axiom-overlay//ngx-codemirror//span[contains(@role, "presentation")]')
+            .sendKeys('//axiom-overlay//ngx-codemirror//div[contains(@Class, "CodeMirror")]//textarea' ,"DataProperty1 or DataProperty2")
+            .click('//axiom-overlay//button//span[text()[contains(.,"Submit")]]')
+            .useCss()
+            .waitForElementNotPresent('axiom-overlay')
+    },
+
+    'Step 14: Axiom Overlay - Verify Expression was added to data property' : function (browser) {
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useXpath()
+            .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Data Property 0")]]')
+            .waitForElementVisible('//div[contains(@class, "section-header")]//h5[text()[contains(., "Axioms")]]//following-sibling::a[contains(@class, "fa-plus")]') // opens overlay
+            .assert.visible('//axiom-block//datatype-property-axioms//property-values//p[text()[contains(., "Sub Property Of")]]')
+            .assert.visible('//axiom-block//datatype-property-axioms//property-values//ngx-codemirror//span[text()[contains(., "DataProperty1")]]')
+            .assert.visible('//axiom-block//datatype-property-axioms//property-values//ngx-codemirror//span[text()[contains(., "or")]]')
+            .assert.visible('//axiom-block//datatype-property-axioms//property-values//ngx-codemirror//span[text()[contains(., "DataProperty2")]]')
+    },
+    
+    'Step 15: Open Axiom Overlay for Object Property 0' : function (browser) {
+        browser
             .click('//property-tree//tree-item//span[text()[contains(., "Object Property 0")]]')
             .useCss()
             .waitForElementVisible('properties-tab .selected-property')
             .useXpath()
             .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Object Property 0")]]')
-    },
-    
-    'Step 11: Open Axiom Overlay for Object Property 0' : function (browser) {
-        browser
             .useCss()
             .waitForElementVisible('properties-tab .selected-property')
             .useXpath()
@@ -157,7 +221,7 @@ module.exports = {
             .waitForElementPresent('axiom-overlay')
     },
 
-    'Step 12: Axiom Overlay - Edit SubProperty Axiom for Object Property' : function (browser) {
+    'Step 16: Axiom Overlay - Edit SubProperty Axiom for Object Property' : function (browser) {
         browser
             .waitForElementVisible('axiom-overlay')
             .waitForElementVisible('mat-optgroup mat-option')
@@ -168,7 +232,7 @@ module.exports = {
             .waitForElementNotPresent('mat-optgroup')
     },
 
-    'Step 13: Axiom Overlay - Edit SubProperty values for Object Property' : function (browser) {
+    'Step 17: Axiom Overlay - Edit SubProperty values for Object Property' : function (browser) {
         browser
             .waitForElementPresent('axiom-overlay') // ensure still on overlay
             .assert.not.elementPresent('mat-optgroup') // ensure list is hidden
@@ -187,7 +251,7 @@ module.exports = {
             .waitForElementNotPresent('mat-optgroup mat-option')
     },
 
-    'Step 14: Axiom Overlay - Submit data' : function (browser) {
+    'Step 18: Axiom Overlay - Submit data' : function (browser) {
         browser
             .useCss()
             .waitForElementPresent('axiom-overlay')
@@ -199,7 +263,7 @@ module.exports = {
             .waitForElementNotPresent('axiom-overlay')
     },
 
-    'Step 15: Click the concepts tab' : function (browser) {
+    'Step 19: Click the concepts tab' : function (browser) {
         var conceptTabXpath = '//mat-tab-header//div[text()[contains(., "Concepts")]]';
         browser
             .useXpath()
@@ -209,7 +273,7 @@ module.exports = {
             .waitForElementPresent('div.concepts-tab concept-hierarchy-block')
     },
 
-    'Step 16: Check for Imported Concept' : function (browser) {
+    'Step 20: Check for Imported Concept' : function (browser) {
         var concept1Xpath = '//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]'
         browser
             .useCss()
