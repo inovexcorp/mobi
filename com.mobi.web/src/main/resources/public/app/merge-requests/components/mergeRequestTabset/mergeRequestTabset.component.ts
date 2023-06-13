@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
@@ -40,16 +40,19 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
     templateUrl: './mergeRequestTabset.component.html',
     styleUrls: ['./mergeRequestTabset.component.scss']
 })
-export class MergeRequestTabsetComponent {
+export class MergeRequestTabsetComponent implements OnInit {
     tabIndex = 0;
-
+    branchList = [];
     @Input() request: MergeRequest;
     
     @Output() requestChange = new EventEmitter<MergeRequest>();
 
     constructor(public state: MergeRequestsStateService) {}
-
     getEntityName(iri: string): string {
         return this.state.getEntityNameLabel(iri);
+    }
+
+    ngOnInit(): void {
+        this.branchList = [this.request.targetBranch,this.request.sourceBranch];
     }
 }

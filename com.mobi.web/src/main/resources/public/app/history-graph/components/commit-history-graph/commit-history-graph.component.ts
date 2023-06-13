@@ -181,7 +181,6 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
     this.gitGraphBranches.push(createdBranch);
   }
   commitAction(gitAction: GitAction, index: number): void {
-    console.log(gitAction, 'GitAction')
     const branchToCommit = find(this.gitGraphBranches, (branch: GitGraphBranch) => branch.name === gitAction.branch);
     if (!branchToCommit) {
       throw Error(`commitAction[${index}]: branchToCommit does not exist: ${gitAction.branch}`);
