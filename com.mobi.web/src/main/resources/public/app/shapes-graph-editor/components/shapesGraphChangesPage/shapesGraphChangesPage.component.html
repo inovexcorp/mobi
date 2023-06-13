@@ -64,6 +64,7 @@
                                       [recordId]="state.listItem.versionedRdfRecord.recordId"
                                       [headTitle]="state?.listItem?.currentVersionTitle"
                                       (receiveCommits)="commits = $event"
+                                      [branches]="state.listItem.branches"
                                       (commitDotOnClick)="openCommit($event)"
                                       dotClickable
                                       graph>

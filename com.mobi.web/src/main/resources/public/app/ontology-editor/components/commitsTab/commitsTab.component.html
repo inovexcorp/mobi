@@ -26,8 +26,9 @@
             <h5>Commits</h5>
         </div>
         <div class="flex-1 vertical-scroll d-flex">
-            <commit-history-table class="flex-1" [commitId]="os.listItem.versionedRdfRecord.commitId" 
+            <commit-history-table class="flex-1" [commitId]="os.listItem.versionedRdfRecord.commitId"
                 [recordId]="os.listItem.versionedRdfRecord.recordId"
+                [branches]="os.listItem.branches"
                 [headTitle]="getHeadTitle()"
                 (commitDotOnClick)="openOntologyAtCommit($event)"
                 (receiveCommits)="commits = $event"

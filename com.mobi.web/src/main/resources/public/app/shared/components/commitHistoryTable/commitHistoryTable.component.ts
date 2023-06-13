@@ -42,6 +42,7 @@ import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 import { UtilService } from '../../services/util.service';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 
 /**
@@ -74,7 +75,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     @Input() recordId?: string;
     @Input() dotClickable: boolean;
     @Input() graph: boolean;
-    
+    @Input() branches:JSONLDObject[] = [];
     @Output() receiveCommits = new EventEmitter<Commit[]>();
     @Output() commitDotOnClick = new EventEmitter<Commit>();
 

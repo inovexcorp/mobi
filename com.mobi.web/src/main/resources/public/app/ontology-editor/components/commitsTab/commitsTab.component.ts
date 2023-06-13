@@ -43,11 +43,13 @@ import { UtilService } from '../../../shared/services/util.service';
 export class CommitsTabComponent {
     private readonly warningMessageCheckout = 'You will need to commit or remove all changes before checking out a commit';
     commits: Commit[] = [];
+    versionedRdfRecord;
 
     constructor(public os: OntologyStateService, public util: UtilService) {}
     getHeadTitle(): string {
         if (this.os.listItem.versionedRdfRecord.branchId) {
             const branch = find(this.os.listItem.branches, { '@id': this.os.listItem.versionedRdfRecord.branchId });
+            this.versionedRdfRecord = branch;
             return this.util.getDctermsValue(branch, 'title');
         } else {
             const currentState = this.os.getCurrentStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);

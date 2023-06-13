@@ -43,9 +43,10 @@
               </tr>
           </tbody>
       </table>
-      <commit-history-graph *ngIf="showGraph" 
+      <commit-history-graph *ngIf="showGraph"
+        [branches]="branches"
         [commits]="commits" 
-        [headTitle]="headTitle" 
+        [headTitle]="headTitle"
         [commitDotClickable]="commitDotClickable"
         (commitDotOnClick)="commitDotClicked($event)">
       </commit-history-graph>

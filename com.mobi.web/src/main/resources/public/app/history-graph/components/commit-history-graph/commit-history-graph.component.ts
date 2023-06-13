@@ -38,6 +38,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { CommitInfoOverlayComponent } from '../../../shared/components/commitInfoOverlay/commitInfoOverlay.component';
 import { GraphHelperService } from '../../services/graph-helper.service';
 import { GitAction } from '../../models/git-action.interface';
+import { CATALOG } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { BranchNames } from '../../models/branch-names.interface';
 
 /**
  * @class history-graph.CommitHistoryGraphComponent
@@ -64,6 +67,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
   @Input() headTitle?: string;
   @Input() recordId?: string;
   @Input() commitDotClickable: boolean;
+  @Input() branches:JSONLDObject[] = [];
   @Output() commitDotOnClick = new EventEmitter<Commit>();
 
   constructor(private util: UtilService,
@@ -76,6 +80,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
   componentUuidId = `${v4()}`; // Used to differentiate multiple gitgraph containers in the same html page 
   gitGraph: GitgraphUserApi<SVGElement>;
   gitGraphBranches: GitGraphBranch[] = [];
+  branchesNames: BranchNames[] = []
   gitGraphHtmlContainer: HTMLElement;
   gitGraphHtmlContainerId = `gitgraph-container-id-${this.componentUuidId}`; 
   gitGraphOptions: GitgraphOptions = {
@@ -122,6 +127,8 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
   ngAfterViewInit(): void {
     this.afterViewInitCalled = true;
     const gitGraphHtmlContainerIdTemp = document.getElementById(this.gitGraphHtmlContainerId);
+    this.branchesNames = this.getBranchesName();
+
     if (!this.gitGraph && gitGraphHtmlContainerIdTemp) {
       this.gitGraphHtmlContainer = gitGraphHtmlContainerIdTemp;
       this.gitGraph = createGitgraph(this.gitGraphHtmlContainer, this.gitGraphOptions);
@@ -162,10 +169,19 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
       name: gitAction.branch || 'unknown branch',
       renderLabel: this.svgElementHelperService.renderBranchLabel
     };
+
+    if (!this.branchesNames.find(item => item.name === branchOptions.name))  {
+      branchOptions.style = {
+        label: {
+          display: false
+        }
+      };
+    }
     const createdBranch = this.gitGraph.branch(branchOptions);
     this.gitGraphBranches.push(createdBranch);
   }
   commitAction(gitAction: GitAction, index: number): void {
+    console.log(gitAction, 'GitAction')
     const branchToCommit = find(this.gitGraphBranches, (branch: GitGraphBranch) => branch.name === gitAction.branch);
     if (!branchToCommit) {
       throw Error(`commitAction[${index}]: branchToCommit does not exist: ${gitAction.branch}`);
@@ -219,5 +235,12 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
   reset(): void {
     this.gitGraph.clear();
     this.gitGraphBranches = [];
+  }
+  getBranchesName() : BranchNames[] {
+    return this.branches.map (branch => {
+      return  {
+        name: this.util.getDctermsValue(branch, 'title') || ''
+      };
+    });
   }
 }
