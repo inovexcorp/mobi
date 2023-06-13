@@ -98,6 +98,9 @@ import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.TestQueryResult;
 import com.mobi.rest.test.util.UsernameTestFilter;
+import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -215,6 +218,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     private JSONArray importedOntologyResults;
     private JSONArray importsClosureResults;
     private OutputStream ontologyJsonLd;
+    private OutputStream ontologyTurtle;
     private OutputStream importedOntologyJsonLd;
     private static OsgiRepositoryWrapper repo;
     private static String INVALID_JSON = "{id: 'invalid";
@@ -233,6 +237,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     private static EngineManager engineManager;
     private static OntologyCache ontologyCache;
     private static SimpleBNodeService bNodeService;
+    private static PDP pdp;
 
     @Mock
     private OntologyId ontologyId;
@@ -252,6 +257,12 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @Mock
     private Cache<String, Ontology> mockCache;
 
+    @Mock
+    private Request request;
+
+    @Mock
+    private com.mobi.security.policy.api.Response response;
+
     @BeforeClass
     public static void startServer() {
         vf = getValueFactory();
@@ -261,6 +272,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         ontologyManager = Mockito.mock(OntologyManager.class);
         engineManager = Mockito.mock(EngineManager.class);
+        pdp = Mockito.mock(PDP.class);
 
         ontologyCache = Mockito.mock(OntologyCache.class);
 
@@ -270,6 +282,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         rest.setCatalogManager(catalogManager);
         rest.setEngineManager(engineManager);
         rest.setOntologyCache(ontologyCache);
+        rest.setPdp(pdp);
 
         bNodeService = new SimpleBNodeService();
         rest.setbNodeService(bNodeService);
@@ -320,6 +333,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
         ontologyModel = mf.createEmptyModel();
         ontologyModel.addAll(Rio.parse(testOntology, "", RDFFormat.TURTLE));
+        ontologyTurtle = new ByteArrayOutputStream();
+        Rio.write(ontologyModel, ontologyTurtle, RDFFormat.TURTLE);
         ontologyJsonLd = new ByteArrayOutputStream();
         Rio.write(ontologyModel, ontologyJsonLd, RDFFormat.JSONLD, config);
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
@@ -413,6 +428,12 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
             Rio.write(ontologyModel, os, RDFFormat.JSONLD, config);
             return os;
         });
+        when(ontology.asTurtle(any())).thenAnswer((Answer<OutputStream>) invocation -> {
+            Object[] args = invocation.getArguments();
+            OutputStream os = (OutputStream) args[0];
+            Rio.write(ontologyModel, os, RDFFormat.TURTLE);
+            return os;
+        });
         when(ontology.getUnloadableImportIRIs()).thenReturn(failedImports);
         when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new EmptyQueryResult());
         Model queryResultModel = mf.createEmptyModel();
@@ -500,6 +521,9 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         entityUsagesConstruct = modelToJsonld(constructs);
 
         when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
+
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
+        when(pdp.evaluate(any(), any(IRI.class))).thenReturn(response);
 
         testQueryRepo = new MemoryRepositoryWrapper();
         testQueryRepo.setDelegate(new SailRepository(new MemoryStore()));
@@ -6426,6 +6450,75 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .post(Entity.json(new JSONObject().toString()));
 
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetOntologyFromIRI() {
+        when(response.getDecision()).thenReturn(Decision.PERMIT);
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(ontologyManager.retrieveOntologyByIRI(any(Resource.class))).thenReturn(Optional.of(ontology));
+
+        Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue())).request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+        assertEquals(response.readEntity(String.class), ontologyTurtle.toString());
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void testGetOntologyFromIRIWithFormat() {
+        when(response.getDecision()).thenReturn(Decision.PERMIT);
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(ontologyManager.retrieveOntologyByIRI(any(Resource.class))).thenReturn(Optional.of(ontology));
+
+        Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()))
+                .queryParam("format", "jsonld").request().get();
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void testGetOntologyFromIRIwithFileExtension() {
+        when(response.getDecision()).thenReturn(Decision.PERMIT);
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(ontologyManager.retrieveOntologyByIRI(any(Resource.class))).thenReturn(Optional.of(ontology));
+
+        Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()) + ".jsonld")
+                .request().get();
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void testGetOntologyFromIRINoPermissions() {
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(response.getDecision()).thenReturn(Decision.DENY);
+
+        Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()))
+                .request().get();
+
+        assertEquals(response.getStatus(), 403);
+    }
+
+    @Test
+    public void testGetOntologyFromIRINoRecord() {
+        when(response.getDecision()).thenReturn(Decision.PERMIT);
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("ontologies/ontology/" + encode("https://www.non-exists.com")).request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+        assertEquals("", response.readEntity(String.class));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetOntologyFromIRIInvalidIRI() {
+        when(response.getDecision()).thenReturn(Decision.PERMIT);
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("ontologies/ontology/" + encode("www.non-exists.com")).request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+        assertEquals("", response.readEntity(String.class));
+        assertEquals(response.getStatus(), 500);
     }
 
     private void setupEntityNamesRepo() throws Exception {

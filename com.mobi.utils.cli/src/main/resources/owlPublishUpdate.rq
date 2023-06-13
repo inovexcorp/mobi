@@ -1,0 +1,9 @@
+DELETE {
+      ?activity a <http://mobi.com/ontologies/anzo/publish/prov#AnzoOwlPublishActivity>, <http://mobi.com/ontologies/anzo/publish/prov#AnzoPublishActivity> .
+}
+INSERT {
+      ?activity <http://mobi.com/ontologies/setting#publishType> "Publish to Anzo as OWL Dataset/Model" .
+}
+WHERE {
+      ?activity a <http://mobi.com/ontologies/anzo/publish/prov#AnzoOwlPublishActivity>, <http://mobi.com/ontologies/anzo/publish/prov#AnzoPublishActivity> .
+}

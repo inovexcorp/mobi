@@ -91,11 +91,11 @@ export class ManchesterConverterService {
      *
      * @param {string} str The Manchester Syntax string to convert
      * @param {{[key: string]: string}} localNameMap A map of local names to their full IRIs
-     * @param {boolean} [dataProp=false] Whether this Manchester Syntax String is for a data property
+     * @param {boolean} [usingDatatypeRange=false] Whether this Manchester Syntax String is for a data property
      * @return {JSONLDObject[]} An object with a key containing any error message thrown and a key for the resulting
      * array of blank nodes.
      */
-    manchesterToJsonld(str: string, localNameMap: {[key: string]: string}, dataProp = false): {errorMessage: string, jsonld: JSONLDObject[]} {
+    manchesterToJsonld(str: string, localNameMap: {[key: string]: string}, usingDatatypeRange = false): {errorMessage: string, jsonld: JSONLDObject[]} {
         const result = {errorMessage: '', jsonld: []};
         const chars = new ANTLRInputStream(str);
         const lexer = new MOSLexer(chars);
@@ -104,7 +104,7 @@ export class ManchesterConverterService {
         parser.removeErrorListeners();
         parser.addErrorListener(new BlankNodesErrorListener(result));
         const blankNodes: MOSListener = new BlankNodesListener(result.jsonld, localNameMap, this.util);
-        const start = dataProp ? parser.dataRange() : parser.description();
+        const start = usingDatatypeRange ? parser.dataRange() : parser.description();
         try {
             ParseTreeWalker.DEFAULT.walk(blankNodes, start);
         } catch (ex) {
@@ -277,7 +277,7 @@ export class ManchesterConverterService {
                     result += this._getValue(rest['@list'][0], jsonld, index, html);
                 }
                 end = true;
-            } else if (rest['@id'] === RDF + 'nil') {
+            } else if ( rest === undefined || rest['@id'] === RDF + 'nil') {
                 end = true;
             } else {
                 result += listKeyword;
