@@ -38,7 +38,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { CommitInfoOverlayComponent } from '../../../shared/components/commitInfoOverlay/commitInfoOverlay.component';
 import { GraphHelperService } from '../../services/graph-helper.service';
 import { GitAction } from '../../models/git-action.interface';
-import { CATALOG } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { BranchNames } from '../../models/branch-names.interface';
 
@@ -67,7 +66,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
   @Input() headTitle?: string;
   @Input() recordId?: string;
   @Input() commitDotClickable: boolean;
-  @Input() branches:JSONLDObject[] = [];
+  @Input() branches: JSONLDObject[] = [];
   @Output() commitDotOnClick = new EventEmitter<Commit>();
 
   constructor(private util: UtilService,
@@ -235,7 +234,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
     this.gitGraph.clear();
     this.gitGraphBranches = [];
   }
-  getBranchesName() : BranchNames[] {
+  getBranchesName(): BranchNames[] {
     return this.branches.map (branch => {
       return  {
         name: this.util.getDctermsValue(branch, 'title') || ''

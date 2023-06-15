@@ -44,7 +44,6 @@ import { ProgressSpinnerService } from '../progress-spinner/services/progressSpi
 import { UtilService } from '../../services/util.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
-
 /**
  * @class shared.CommitHistoryTableComponent
  *
@@ -75,7 +74,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     @Input() recordId?: string;
     @Input() dotClickable: boolean;
     @Input() graph: boolean;
-    @Input() branches:JSONLDObject[] = [];
+    @Input() branches: JSONLDObject[] = [];
     @Output() receiveCommits = new EventEmitter<Commit[]>();
     @Output() commitDotOnClick = new EventEmitter<Commit>();
 
@@ -97,7 +96,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         this.commitDotClickable = this.dotClickable !== undefined;
     }
     ngOnChanges(changesObj: SimpleChanges): void {
-        if (changesObj?.headTitle || changesObj?.commitId || changesObj?.targetId || changesObj?.entityId) {
+        if (changesObj?.headTitle || changesObj?.commitId || changesObj?.targetId || changesObj?.entityId || changesObj?.branches) {
             this.getCommits();
         }
     }

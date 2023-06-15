@@ -53,6 +53,6 @@ export class MergeRequestTabsetComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.branchList = [this.request.targetBranch,this.request.sourceBranch];
+        this.branchList = [this.request.targetBranch, this.request.sourceBranch];
     }
 }
