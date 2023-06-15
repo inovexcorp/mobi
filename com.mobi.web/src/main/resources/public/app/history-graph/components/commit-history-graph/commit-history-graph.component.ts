@@ -235,12 +235,10 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
     this.gitGraphBranches = [];
   }
   getBranchesName(): BranchNames[] {
-    let b =  this.branches.map (branch => {
+    return this.branches.map (branch => {
       return  {
         name: this.util.getDctermsValue(branch, 'title') || ''
       };
     });
-    console.log(b);
-    return b;
   }
 }
