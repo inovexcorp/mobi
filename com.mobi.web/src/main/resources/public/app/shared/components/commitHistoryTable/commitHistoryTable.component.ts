@@ -22,10 +22,15 @@
  */
 
 import {
+    ChangeDetectionStrategy,
     Component,
     ElementRef,
     EventEmitter,
     Input,
+    IterableDiffer,
+    IterableDiffers,
+    KeyValueDiffer,
+    KeyValueDiffers,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -64,9 +69,12 @@ import { JSONLDObject } from '../../models/JSONLDObject.interface';
 @Component({
     selector: 'commit-history-table',
     templateUrl: './commitHistoryTable.component.html',
-    styleUrls: ['./commitHistoryTable.component.scss']
+    styleUrls: ['./commitHistoryTable.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy {
+    private differ: KeyValueDiffer<string, any>;
+    
     @Input() commitId: string;
     @Input() headTitle?: string;
     @Input() targetId?: string;
@@ -77,12 +85,14 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     @Input() branches: JSONLDObject[] = [];
     @Output() receiveCommits = new EventEmitter<Commit[]>();
     @Output() commitDotOnClick = new EventEmitter<Commit>();
+   
 
     @ViewChild('commitHistoryTable', { static: true }) commitHistoryTable: ElementRef;
 
     constructor(public util: UtilService,
         private cm: CatalogManagerService,
         private spinnerSvc: ProgressSpinnerService,
+        private differsService: KeyValueDiffers,
         public um: UserManagerService) {
     }
     error = '';
@@ -94,12 +104,37 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     ngOnInit(): void {
         this.showGraph = this.graph !== undefined;
         this.commitDotClickable = this.dotClickable !== undefined;
+        const obj = {
+            headTitle: undefined,
+            commitId: undefined,
+            targetId: undefined,
+            entityId: undefined,
+            branches: undefined
+        };
+        this.differ =  this.differsService.find(obj).create();
     }
     ngOnChanges(changesObj: SimpleChanges): void {
         if (changesObj?.headTitle || changesObj?.commitId || 
             changesObj?.targetId || changesObj?.entityId || changesObj?.branches) {
             this.getCommits();
         }
+    }
+    ngDoCheck(): void {
+        if (this.differ) {
+            const obj = {
+                headTitle: this.headTitle,
+                commitId: this.commitId,
+                targetId: this.targetId,
+                entityId: this.entityId,
+                branches: this.branches
+            };
+            const changes = this.differ.diff(obj);
+            console.log(changes);
+            // if (changes) {
+            //     this.getCommits();
+            // }
+        }
+       
     }
     ngOnDestroy(): void {
         this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);

@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { forkJoin, throwError, from, Observable, of, Subject, noop } from 'rxjs';
+import { forkJoin, throwError, from, Observable, of, Subject, noop, BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
     assign,
@@ -115,6 +115,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     catalogId = '';
     // Only the service has access to the subject
     private _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
+    private _branchActionSubject = new Subject<JSONLDObject[]>();
     private _updateRefsExclude = [
         'element',
         'usagesElement',
@@ -159,6 +160,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
 
     ontologyRecordAction$ = this._ontologyRecordActionSubject.asObservable();
+    branchRecordAction$ = this._branchActionSubject.asObservable();
     
     /**
      * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
@@ -874,6 +876,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     removeBranch(recordId: string, branchId: string): Observable<null> {
         const listItem = this.getListItemByRecordId(recordId);
         remove(listItem.branches, {'@id': branchId});
+        this._branchActionSubject.next(listItem.branches);
         return this.cm.getRecordVersions(recordId, this.catalogId)
             .pipe(map((response: HttpResponse<JSONLDObject[]>) => {
                 listItem.tags = filter(response.body, version => includes(get(version, '@type'), CATALOG + 'Tag'));
