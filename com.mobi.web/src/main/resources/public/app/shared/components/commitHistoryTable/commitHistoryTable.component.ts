@@ -43,6 +43,7 @@ import { UserManagerService } from '../../services/userManager.service';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 import { UtilService } from '../../services/util.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { OntologyStateService } from '../../services/ontologyState.service';
 
 
 /**
@@ -97,7 +98,8 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         this.commitDotClickable = this.dotClickable !== undefined;
     }
     ngOnChanges(changesObj: SimpleChanges): void {
-        if (changesObj?.headTitle || changesObj?.commitId || changesObj?.targetId || changesObj?.entityId) {
+        if (changesObj?.headTitle || changesObj?.commitId || 
+            changesObj?.targetId || changesObj?.entityId || changesObj?.branches) {
             this.getCommits();
         }
     }
@@ -128,6 +130,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             this.receiveCommits.emit([]);
         }
     }
+    
     getCommitId(index: number, commit: Commit): string {
         return commit.id;
     }

@@ -20,13 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { find } from 'lodash';
 
 import { ONTOLOGYSTATE } from '../../../prefixes';
 import { Commit } from '../../../shared/models/commit.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { UtilService } from '../../../shared/services/util.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
  * @class ontology-editor.CommitsTabComponent
@@ -43,13 +44,13 @@ import { UtilService } from '../../../shared/services/util.service';
 export class CommitsTabComponent {
     private readonly warningMessageCheckout = 'You will need to commit or remove all changes before checking out a commit';
     commits: Commit[] = [];
-    versionedRdfRecord;
+    @Input() branches: JSONLDObject[] = []; 
 
     constructor(public os: OntologyStateService, public util: UtilService) {}
+    
     getHeadTitle(): string {
         if (this.os.listItem.versionedRdfRecord.branchId) {
             const branch = find(this.os.listItem.branches, { '@id': this.os.listItem.versionedRdfRecord.branchId });
-            this.versionedRdfRecord = branch;
             return this.util.getDctermsValue(branch, 'title');
         } else {
             const currentState = this.os.getCurrentStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);
@@ -63,7 +64,7 @@ export class CommitsTabComponent {
         }
     }
     openOntologyAtCommit(commit: Commit): void {
-        if(this.os.isCommittable(this.os.listItem)) {
+        if (this.os.isCommittable(this.os.listItem)) {
             this.util.createWarningToast(this.warningMessageCheckout);
             return;
         }
