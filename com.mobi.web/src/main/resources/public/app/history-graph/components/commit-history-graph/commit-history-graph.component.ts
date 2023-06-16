@@ -20,7 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DoCheck,
+  EventEmitter,
+  Input,
+  IterableDiffer, IterableDiffers,
+  OnChanges, OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { SVGElementHelperService } from '../../services/svgelement-helper.service';
 
 import { find } from 'lodash';
@@ -61,7 +71,7 @@ import { BranchNames } from '../../models/branch-names.interface';
   templateUrl: './commit-history-graph.component.html',
   styleUrls: ['./commit-history-graph.component.scss']
 })
-export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
+export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, DoCheck, OnInit  {
   @Input() commits: Commit[];
   @Input() headTitle?: string;
   @Input() recordId?: string;
@@ -72,7 +82,9 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
   constructor(private util: UtilService,
     private dialog: MatDialog, 
     private svgElementHelperService: SVGElementHelperService,
-    private graphHelperService: GraphHelperService) {}
+    private graphHelperService: GraphHelperService, private iterableDiffers: IterableDiffers) {}
+
+  branchesDiffer: IterableDiffer<JSONLDObject>;
   errors: string[] = [];
   afterViewInitCalled = false;
   dataBindingsChanged = false;
@@ -114,6 +126,11 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
         }
     })
   }
+
+  ngOnInit() {
+    this.branchesDiffer = this.iterableDiffers.find([]).create(null);
+  }
+
   ngOnChanges(changesObj: SimpleChanges): void {
     if (changesObj?.commits || changesObj?.headTitle || changesObj?.recordId || changesObj?.commitDotClickable || changesObj?.branches) {
       this.dataBindingsChanged = true;
@@ -123,6 +140,19 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
       }
     }
   }
+
+  ngDoCheck() {
+    const changes = this.branchesDiffer.diff(this.branches);
+    if (changes) {
+      this.dataBindingsChanged = true;
+      if (this.afterViewInitCalled) {
+        this.branchesNames = this.getBranchesName();
+        this.drawGraph();
+        this.dataBindingsChanged = false;
+      }
+    }
+  }
+
   ngAfterViewInit(): void {
     this.afterViewInitCalled = true;
     const gitGraphHtmlContainerIdTemp = document.getElementById(this.gitGraphHtmlContainerId);
