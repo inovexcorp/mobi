@@ -115,7 +115,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
     })
   }
   ngOnChanges(changesObj: SimpleChanges): void {
-    if (changesObj?.commits || changesObj?.headTitle || changesObj?.recordId || changesObj?.commitDotClickable) {
+    if (changesObj?.commits || changesObj?.headTitle || changesObj?.recordId || changesObj?.commitDotClickable || changesObj?.branches) {
       this.dataBindingsChanged = true;
       if (this.afterViewInitCalled) {
         this.drawGraph();
