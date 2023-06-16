@@ -26,7 +26,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import 'ng-mocks/dist/jasmine'; // Ensures every method in Mocked Components are Jasmine spies
+import { ngMocks } from 'ng-mocks';; // Ensures every method in Mocked Components are Jasmine spies
 
 import { cleanStylesFromDOM} from '../../../../../public/test/ts/Shared';
 import { SettingEditPageComponent } from '../../../shared/components/settingEditPage/settingEditPage.component';
@@ -36,6 +36,9 @@ import { GroupsPageComponent } from '../groupsPage/groupsPage.component';
 import { PermissionsPageComponent } from '../permissionsPage/permissionsPage.component';
 import { UsersPageComponent } from '../usersPage/usersPage.component';
 import { UserManagementPageComponent } from './userManagementPage.component';
+
+// auto spy
+ngMocks.autoSpy('jasmine');
 
 describe('User Management Page component', function() {
     let component: UserManagementPageComponent;

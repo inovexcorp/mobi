@@ -26,7 +26,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider, MockDirective } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
@@ -75,7 +75,7 @@ describe('Commit Info Overlay component', function() {
             declarations: [
                 CommitInfoOverlayComponent,
                 MockComponent(CommitChangesDisplayComponent),
-                MockComponent(CopyClipboardDirective)
+                MockDirective(CopyClipboardDirective)
             ],
             providers: [
                 MockProvider(CatalogManagerService),

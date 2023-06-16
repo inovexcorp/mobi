@@ -45,7 +45,7 @@ describe('Discover Page component', function() {
             imports: [ SharedModule ],
             declarations: [
                 DiscoverPageComponent,
-                MockDirective(ExploreTabComponent),
+                MockComponent(ExploreTabComponent),
                 MockComponent(QueryTabComponent)
             ],
             providers: [
