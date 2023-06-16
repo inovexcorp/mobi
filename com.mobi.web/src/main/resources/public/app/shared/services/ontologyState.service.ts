@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { forkJoin, throwError, from, Observable, of, Subject, noop } from 'rxjs';
+import { forkJoin, throwError, from, Observable, of, Subject, noop, BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
     assign,

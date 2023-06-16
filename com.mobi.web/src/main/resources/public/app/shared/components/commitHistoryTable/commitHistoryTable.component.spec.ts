@@ -102,7 +102,7 @@ describe('Commit History Table component', function() {
             commit: commit,
             commits: [commit],
             recordId: 'record'
-        }
+        };
         component.headTitle = 'title';
         component.commitId = testData.commitId;
         component.targetId = testData.commitId;
@@ -340,6 +340,12 @@ describe('Commit History Table component', function() {
         it('entityId', function() {
             component.ngOnChanges({
                 entityId: new SimpleChange(null, 'new', true)
+            });
+            expect(component.getCommits).toHaveBeenCalledWith();
+        });
+        it('branches', function() {
+            component.ngOnChanges({
+                branches: new SimpleChange(null, 'new', true)
             });
             expect(component.getCommits).toHaveBeenCalledWith();
         });

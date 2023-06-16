@@ -36,6 +36,7 @@ import { CommitHistoryGraphComponent } from './commit-history-graph.component';
 import { Branch as GitGraphBranch } from '@gitgraph/js';
 import { GitAction } from '../../models/git-action.interface';
 import { GitgraphCommitOptions } from '@gitgraph/core';
+import { BranchNames } from '../../models/branch-names.interface';
 
 describe('CommitHistoryGraphComponent', () => {
   let component: CommitHistoryGraphComponent;
@@ -50,6 +51,7 @@ describe('CommitHistoryGraphComponent', () => {
   let commit: Commit;
   let commits: Commit[];
   let gitActions: GitAction[];
+  let branchNames: BranchNames[];
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -76,7 +78,16 @@ describe('CommitHistoryGraphComponent', () => {
     utilServiceMock = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
     graphHelperServiceMock = TestBed.inject(GraphHelperService) as jasmine.SpyObj<GraphHelperService>;
     svgElementHelperServiceMock = TestBed.inject(SVGElementHelperService) as jasmine.SpyObj<SVGElementHelperService>;
+   
     commitId = 'commitId';
+    branchNames = [
+        {
+          'name': 'MASTER'
+        },
+        {
+          'name': '3'
+        }
+      ];
     commit = {
         id: commitId,
         creator: {

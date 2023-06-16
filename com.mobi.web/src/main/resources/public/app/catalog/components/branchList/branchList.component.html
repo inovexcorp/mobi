@@ -34,7 +34,8 @@
                 <commit-history-table 
                     [headTitle]="util.getDctermsValue(branch, 'title')"
                     [commitId]="util.getPropertyId(branch, catalogPrefix + 'head')"
-                    [recordId]="recordId" 
+                    [recordId]="recordId"
+                    [branches]="branches"
                     graph>
                 </commit-history-table>
             </ng-template>

@@ -107,6 +107,7 @@ export class SVGElementHelperService {
         stroke: gitGraphBranch.style.label.strokeColor || gitGraphBranch.computedColor,
         fill: gitGraphBranch.style.label.bgColor
     });
+
     const text = createText({
         content: gitGraphBranch.name,
         translate: {

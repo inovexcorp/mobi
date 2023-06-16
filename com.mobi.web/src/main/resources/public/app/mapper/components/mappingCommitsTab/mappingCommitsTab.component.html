@@ -23,7 +23,11 @@
 <div class="mapping-commits-tab container-fluid h-100">
     <div class="row h-100">
         <div class="col-8 offset-2">
-            <commit-history-table [commitId]="commitId" [headTitle]="branchTitle" graph></commit-history-table>
+            <commit-history-table
+                    [commitId]="commitId"
+                    [headTitle]="branchTitle"
+                    [branches]="this.branchList"
+                    graph></commit-history-table>
         </div>
     </div>
 </div>

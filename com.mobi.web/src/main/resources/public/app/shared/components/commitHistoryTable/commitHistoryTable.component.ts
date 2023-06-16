@@ -42,7 +42,7 @@ import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 import { UtilService } from '../../services/util.service';
-
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 /**
  * @class shared.CommitHistoryTableComponent
@@ -74,7 +74,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     @Input() recordId?: string;
     @Input() dotClickable: boolean;
     @Input() graph: boolean;
-    
+    @Input() branches: JSONLDObject[] = [];
     @Output() receiveCommits = new EventEmitter<Commit[]>();
     @Output() commitDotOnClick = new EventEmitter<Commit>();
 
@@ -95,8 +95,10 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         this.showGraph = this.graph !== undefined;
         this.commitDotClickable = this.dotClickable !== undefined;
     }
+    
     ngOnChanges(changesObj: SimpleChanges): void {
-        if (changesObj?.headTitle || changesObj?.commitId || changesObj?.targetId || changesObj?.entityId) {
+        if (changesObj?.headTitle || changesObj?.commitId || 
+            changesObj?.targetId || changesObj?.entityId || changesObj?.branches) {
             this.getCommits();
         }
     }
@@ -127,6 +129,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             this.receiveCommits.emit([]);
         }
     }
+    
     getCommitId(index: number, commit: Commit): string {
         return commit.id;
     }

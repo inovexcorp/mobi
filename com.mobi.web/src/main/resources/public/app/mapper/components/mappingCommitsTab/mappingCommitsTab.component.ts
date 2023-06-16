@@ -40,12 +40,13 @@ import { UtilService } from '../../../shared/services/util.service';
 export class MappingCommitsTabComponent implements OnInit {
     commitId = '';
     branchTitle = '';
-
+    branchList = [];
     constructor(public state: MapperStateService, private util: UtilService) {}
 
     ngOnInit(): void {
         if (!this.state.newMapping) {
             if (!this.state.selected.branch) {
+                this.branchList.push(this.state.selected.branch);
                 this.state.setMasterBranch().subscribe(() => {
                     this.commitId = this.util.getPropertyId(this.state.selected.branch, CATALOG + 'head');
                     this.branchTitle = this.util.getDctermsValue(this.state.selected.branch, 'title');

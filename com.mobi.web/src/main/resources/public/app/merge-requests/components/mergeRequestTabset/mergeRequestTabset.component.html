@@ -40,7 +40,8 @@
         <commit-history-table 
             [headTitle]="request.sourceTitle" 
             [commitId]="request.sourceCommit" 
-            [targetId]="request.targetCommit" 
+            [targetId]="request.targetCommit"
+            [branches]="branchList"
             [recordId]="request.recordIri">
         </commit-history-table>
     </mat-tab>

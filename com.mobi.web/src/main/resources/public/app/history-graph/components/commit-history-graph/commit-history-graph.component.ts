@@ -20,7 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DoCheck,
+  EventEmitter,
+  Input,
+  IterableDiffer, IterableDiffers,
+  OnChanges, OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { SVGElementHelperService } from '../../services/svgelement-helper.service';
 
 import { find } from 'lodash';
@@ -38,6 +48,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { CommitInfoOverlayComponent } from '../../../shared/components/commitInfoOverlay/commitInfoOverlay.component';
 import { GraphHelperService } from '../../services/graph-helper.service';
 import { GitAction } from '../../models/git-action.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { BranchNames } from '../../models/branch-names.interface';
 
 /**
  * @class history-graph.CommitHistoryGraphComponent
@@ -59,23 +71,27 @@ import { GitAction } from '../../models/git-action.interface';
   templateUrl: './commit-history-graph.component.html',
   styleUrls: ['./commit-history-graph.component.scss']
 })
-export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
+export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, DoCheck, OnInit  {
   @Input() commits: Commit[];
   @Input() headTitle?: string;
   @Input() recordId?: string;
   @Input() commitDotClickable: boolean;
+  @Input() branches: JSONLDObject[] = [];
   @Output() commitDotOnClick = new EventEmitter<Commit>();
 
   constructor(private util: UtilService,
     private dialog: MatDialog, 
     private svgElementHelperService: SVGElementHelperService,
-    private graphHelperService: GraphHelperService) {}
+    private graphHelperService: GraphHelperService, private iterableDiffers: IterableDiffers) {}
+
+  branchesDiffer: IterableDiffer<JSONLDObject>;
   errors: string[] = [];
   afterViewInitCalled = false;
   dataBindingsChanged = false;
   componentUuidId = `${v4()}`; // Used to differentiate multiple gitgraph containers in the same html page 
   gitGraph: GitgraphUserApi<SVGElement>;
   gitGraphBranches: GitGraphBranch[] = [];
+  branchesNames: BranchNames[] = []
   gitGraphHtmlContainer: HTMLElement;
   gitGraphHtmlContainerId = `gitgraph-container-id-${this.componentUuidId}`; 
   gitGraphOptions: GitgraphOptions = {
@@ -110,8 +126,13 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
         }
     })
   }
+
+  ngOnInit() {
+    this.branchesDiffer = this.iterableDiffers.find([]).create(null);
+  }
+
   ngOnChanges(changesObj: SimpleChanges): void {
-    if (changesObj?.commits || changesObj?.headTitle || changesObj?.recordId || changesObj?.commitDotClickable) {
+    if (changesObj?.commits || changesObj?.headTitle || changesObj?.recordId || changesObj?.commitDotClickable || changesObj?.branches) {
       this.dataBindingsChanged = true;
       if (this.afterViewInitCalled) {
         this.drawGraph();
@@ -119,9 +140,24 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
       }
     }
   }
+
+  ngDoCheck() {
+    const changes = this.branchesDiffer.diff(this.branches);
+    if (changes) {
+      this.dataBindingsChanged = true;
+      if (this.afterViewInitCalled) {
+        this.branchesNames = this.getBranchesName();
+        this.drawGraph();
+        this.dataBindingsChanged = false;
+      }
+    }
+  }
+
   ngAfterViewInit(): void {
     this.afterViewInitCalled = true;
     const gitGraphHtmlContainerIdTemp = document.getElementById(this.gitGraphHtmlContainerId);
+    this.branchesNames = this.getBranchesName();
+
     if (!this.gitGraph && gitGraphHtmlContainerIdTemp) {
       this.gitGraphHtmlContainer = gitGraphHtmlContainerIdTemp;
       this.gitGraph = createGitgraph(this.gitGraphHtmlContainer, this.gitGraphOptions);
@@ -162,6 +198,14 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
       name: gitAction.branch || 'unknown branch',
       renderLabel: this.svgElementHelperService.renderBranchLabel
     };
+
+    if (!this.branchesNames.find(item => item.name === branchOptions.name))  {
+      branchOptions.style = {
+        label: {
+          display: false
+        }
+      };
+    }
     const createdBranch = this.gitGraph.branch(branchOptions);
     this.gitGraphBranches.push(createdBranch);
   }
@@ -219,5 +263,12 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit  {
   reset(): void {
     this.gitGraph.clear();
     this.gitGraphBranches = [];
+  }
+  getBranchesName(): BranchNames[] {
+    return this.branches.map (branch => {
+      return  {
+        name: this.util.getDctermsValue(branch, 'title') || ''
+      };
+    });
   }
 }
