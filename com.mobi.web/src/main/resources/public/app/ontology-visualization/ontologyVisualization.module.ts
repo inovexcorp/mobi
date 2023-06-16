@@ -60,12 +60,6 @@ import { ControlRecordUtilsService } from './services/controlRecordUtils.service
         MatExpansionModule,
         VisualizationSidebar,
         OntologyVisualization
-     ],
-    entryComponents: [
-        OntologyVisualization,
-        VisualizationSidebar,
-        VisualizationSidebarSearch,
-        VisualizationClassListComponent
     ],
     providers: [
         ControlRecordUtilsService,

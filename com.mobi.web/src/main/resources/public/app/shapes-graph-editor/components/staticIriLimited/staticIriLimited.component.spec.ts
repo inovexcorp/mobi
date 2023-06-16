@@ -23,7 +23,7 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
-import { MockPipe, MockComponent } from 'ng-mocks';
+import { MockPipe, MockDirective } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
@@ -41,7 +41,7 @@ describe('Static IRI Limited component', function() {
         await TestBed.configureTestingModule({
             declarations: [
                 StaticIriLimitedComponent,
-                MockComponent(CopyClipboardDirective),
+                MockDirective(CopyClipboardDirective),
                 MockPipe(SplitIRIPipe, () => {
                     return {
                         begin: '',
