@@ -22,18 +22,10 @@
  */
 
 import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     ElementRef,
     EventEmitter,
     Input,
-    IterableDiffer,
-    IterableDiffers,
-    KeyValueChangeRecord,
-    KeyValueDiffer,
-    KeyValueDiffers,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -51,8 +43,6 @@ import { UserManagerService } from '../../services/userManager.service';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 import { UtilService } from '../../services/util.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { OntologyStateService } from '../../services/ontologyState.service';
-import { isEqual } from 'lodash';
 
 /**
  * @class shared.CommitHistoryTableComponent
@@ -74,12 +64,9 @@ import { isEqual } from 'lodash';
 @Component({
     selector: 'commit-history-table',
     templateUrl: './commitHistoryTable.component.html',
-    styleUrls: ['./commitHistoryTable.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    styleUrls: ['./commitHistoryTable.component.scss']
 })
 export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy {
-    private differ: KeyValueDiffer<string, any>;
-    
     @Input() commitId: string;
     @Input() headTitle?: string;
     @Input() targetId?: string;
@@ -96,9 +83,6 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     constructor(public util: UtilService,
         private cm: CatalogManagerService,
         private spinnerSvc: ProgressSpinnerService,
-        private differsService: KeyValueDiffers,
-        private os: OntologyStateService,
-        private _cf: ChangeDetectorRef,
         public um: UserManagerService) {
     }
     error = '';
@@ -110,17 +94,6 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     ngOnInit(): void {
         this.showGraph = this.graph !== undefined;
         this.commitDotClickable = this.dotClickable !== undefined;
-        const obj = {
-            headTitle: undefined,
-            commitId: undefined,
-            targetId: undefined,
-            entityId: undefined,
-            branches: undefined
-        };
-        this.differ =  this.differsService.find(obj).create();
-        this.os.branchRecordAction$.subscribe( val => {
-            this.branches = val;
-        });
     }
     
     ngOnChanges(changesObj: SimpleChanges): void {
@@ -128,33 +101,6 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             changesObj?.targetId || changesObj?.entityId || changesObj?.branches) {
             this.getCommits();
         }
-    }
-    ngDoCheck(): void {
-        if (this.differ) {
-            const self = this;
-            const values = {
-                headTitle: self.headTitle,
-                commitId: self.commitId,
-                targetId: self.targetId,
-                entityId: self.entityId,
-                branches: self.branches
-            };
-            const changes = this.differ.diff({...values}); // Comparison occur by Object.is()
-            if (changes) {
-                let isDifferent = false;
-                changes.forEachItem((changeRecord: KeyValueChangeRecord<string, any>) => {
-                    const isValueEqual = isEqual(changeRecord.previousValue, changeRecord.currentValue);
-                    if (!isValueEqual){
-                        isDifferent = true;
-                    }
-                });
-                if (isDifferent) {
-                    this.getCommits();
-                    this._cf.markForCheck();
-                }
-            }
-        }
-       
     }
     ngOnDestroy(): void {
         this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
