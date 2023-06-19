@@ -124,6 +124,7 @@ export class LoginManagerService {
      * the login page.
      */
     logout(): void {
+        this.weGood = false;
         this.ds.reset();
         this.dlm.reset();
         this.dis.reset();
