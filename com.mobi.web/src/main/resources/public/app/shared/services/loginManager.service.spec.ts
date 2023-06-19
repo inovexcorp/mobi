@@ -258,6 +258,7 @@ describe('Login Manager service', function() {
         expect(service.currentUser).toBe('');
         expect(service.currentUserIRI).toBe('');
         expect(router.navigate).toHaveBeenCalledWith(['/login']);
+        expect(service.weGood).toBe(false);
     });
     describe('should get the current login', function() {
         it('unless an error occurs', function() {
