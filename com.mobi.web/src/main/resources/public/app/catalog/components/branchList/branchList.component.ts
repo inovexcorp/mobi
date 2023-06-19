@@ -22,9 +22,9 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, Input } from '@angular/core';
-import { isEmpty, find, filter } from 'lodash';
+import { isEmpty, find, filter, includes, get } from 'lodash';
 
-import { CATALOG, DCTERMS } from '../../../prefixes';
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -74,7 +74,7 @@ export class BranchListComponent {
         this.setBranches();
     }
     setBranches(): void {
-        this.recordId = this.om.isOntologyRecord(this.record) ? this.record['@id'] : undefined;
+        this.recordId = this.isOntOrShapes() ? this.record['@id'] : undefined;
         if (this.cm.isVersionedRDFRecord(this.record)) {
             const paginatedConfig: PaginatedConfig = {
                 pageIndex: 0,
@@ -87,5 +87,10 @@ export class BranchListComponent {
                     this.totalSize = Number(response.headers.get('x-total-count')) || 0 - (response.body.length - this.branches.length);
                 }, this.util.createErrorToast);
         }
+    }
+
+    private isOntOrShapes(): boolean {
+        return this.om.isOntologyRecord(this.record)
+            || includes(get(this.record, '@type', []), SHAPESGRAPHEDITOR + 'ShapesGraphRecord');
     }
 }

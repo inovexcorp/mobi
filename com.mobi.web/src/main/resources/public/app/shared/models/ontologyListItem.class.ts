@@ -112,7 +112,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     blankNodes: {[key: string]: string}
     entityInfo: EntityNames
     branches: JSONLDObject[]
-    tags: JSONLDObject[]
     classesAndIndividuals: {[key: string]: string[]}
     classesWithIndividuals: string[]
     individualsParentPath: string[]
@@ -207,7 +206,6 @@ export class OntologyListItem extends VersionedRdfListItem {
         this.blankNodes = {};
         this.entityInfo = {};
         this.branches = [];
-        this.tags = [];
         this.classesAndIndividuals = {};
         this.classesWithIndividuals = [];
         this.individualsParentPath = [];

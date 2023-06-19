@@ -37,6 +37,7 @@ import { Branch as GitGraphBranch } from '@gitgraph/js';
 import { GitAction } from '../../models/git-action.interface';
 import { GitgraphCommitOptions } from '@gitgraph/core';
 import { BranchNames } from '../../models/branch-names.interface';
+import { Tag } from '../../../shared/models/tag.interface';
 
 describe('CommitHistoryGraphComponent', () => {
   let component: CommitHistoryGraphComponent;
@@ -50,6 +51,8 @@ describe('CommitHistoryGraphComponent', () => {
   let recordId: string;
   let commit: Commit;
   let commits: Commit[];
+  let tag1: Tag;
+  let tag2: Tag;
   let gitActions: GitAction[];
   let branchNames: BranchNames[];
 
@@ -78,7 +81,7 @@ describe('CommitHistoryGraphComponent', () => {
     utilServiceMock = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
     graphHelperServiceMock = TestBed.inject(GraphHelperService) as jasmine.SpyObj<GraphHelperService>;
     svgElementHelperServiceMock = TestBed.inject(SVGElementHelperService) as jasmine.SpyObj<SVGElementHelperService>;
-   
+
     commitId = 'commitId';
     branchNames = [
         {
@@ -101,6 +104,18 @@ describe('CommitHistoryGraphComponent', () => {
         auxiliary: 'auxiliaryHash'
     };
     commits = [commit];
+    tag1 = {
+      tagIri: 'urn:tag1',
+      commitIri: commitId,
+      title: 'tag1',
+      description: ''
+    } as Tag;
+    tag2 = {
+      tagIri: 'urn:tag2',
+      commitIri: commitId,
+      title: 'tag2',
+      description: ''
+    } as Tag;
     gitActions = [
       {
         'action': 'create-branch',
@@ -120,6 +135,7 @@ describe('CommitHistoryGraphComponent', () => {
         'branch': 'BRANCH-0002'
       },
     ];
+    component.tags = [tag1, tag2];
     fixture.detectChanges();
   });
   it('should create', () => {
@@ -134,8 +150,13 @@ describe('CommitHistoryGraphComponent', () => {
       expect(commit.id).toEqual(commitId);
     }, error: (error) => {
       fail('commitDotOnClick should not fail');
-    }})
+    }});
     component.commitDotOnClick.emit(commit);
+  });
+  it('ngOnInit initializes tag map', function() {
+    spyOn<any>(component, 'tagMapInit');
+    component.ngOnInit();
+    expect(component['tagMapInit']).toHaveBeenCalledWith([tag1, tag2]);
   });
   describe('ngOnChanges triggers when changing the', function() {
     beforeEach(function() {
@@ -256,13 +277,13 @@ describe('CommitHistoryGraphComponent', () => {
       it('successfully', async function() {
         const mockGitBranch0001: jasmine.SpyObj<GitGraphBranch> = jasmine.createSpyObj('GitGraphBranch', ['commit', 'merge'], {name: 'BRANCH-0001'});
         const mockGitBranch0002: jasmine.SpyObj<GitGraphBranch> = jasmine.createSpyObj('GitGraphBranch', ['commit'], {name: 'BRANCH-0002'});
-        component.gitGraphBranches = [mockGitBranch0001 , mockGitBranch0002]
+        component.gitGraphBranches = [mockGitBranch0001 , mockGitBranch0002];
         const gitAction: GitAction = {
           action: 'merge-commit',
           commit: commit,
           mergeTo: 'BRANCH-0001',
           branch: 'BRANCH-0002'
-        }
+        };
         component.mergeCommitAction(gitAction, 0);
         expect(component.createCommitOptions).toHaveBeenCalledWith(gitAction);
         expect(mockGitBranch0001.merge).toHaveBeenCalledWith({ 
@@ -273,13 +294,13 @@ describe('CommitHistoryGraphComponent', () => {
       it('branchToCommit does not exist', async function() {
         const mockGitBranch0001: jasmine.SpyObj<GitGraphBranch> = jasmine.createSpyObj('GitGraphBranch', ['commit', 'merge'], {name: 'BRANCH-0001'});
         const mockGitBranch0002: jasmine.SpyObj<GitGraphBranch> = jasmine.createSpyObj('GitGraphBranch', ['commit'], {name: 'BRANCH-0002'});
-        component.gitGraphBranches = [mockGitBranch0001 , mockGitBranch0002]
+        component.gitGraphBranches = [mockGitBranch0001 , mockGitBranch0002];
         const gitAction: GitAction = {
           action: 'merge-commit',
           commit: commit,
           mergeTo: 'BRANCH-0003',
           branch: 'BRANCH-0002'
-        }
+        };
         expect(() => component.mergeCommitAction(gitAction, 0) ).toThrow(new Error('mergeCommitAction[0]: branchToCommit does not exist: BRANCH-0003'));
         expect(component.createCommitOptions).not.toHaveBeenCalledWith(gitAction);
         expect(mockGitBranch0001.merge).not.toHaveBeenCalled();
@@ -287,13 +308,13 @@ describe('CommitHistoryGraphComponent', () => {
       it('branchToMerge does not exist', async function() {
         const mockGitBranch0001: jasmine.SpyObj<GitGraphBranch> = jasmine.createSpyObj('GitGraphBranch', ['commit', 'merge'], {name: 'BRANCH-0001'});
         const mockGitBranch0002: jasmine.SpyObj<GitGraphBranch> = jasmine.createSpyObj('GitGraphBranch', ['commit'], {name: 'BRANCH-0002'});
-        component.gitGraphBranches = [mockGitBranch0001 , mockGitBranch0002]
+        component.gitGraphBranches = [mockGitBranch0001 , mockGitBranch0002];
         const gitAction: GitAction = {
           action: 'merge-commit',
           commit: commit,
           mergeTo: 'BRANCH-0001',
           branch: 'BRANCH-0010'
-        }
+        };
         expect(() => component.mergeCommitAction(gitAction, 0) ).toThrow(new Error('mergeCommitAction[0]: branchToMerge does not exist: BRANCH-0010'));
         expect(component.createCommitOptions).not.toHaveBeenCalledWith(gitAction);
         expect(mockGitBranch0001.merge).not.toHaveBeenCalled();
@@ -307,6 +328,7 @@ describe('CommitHistoryGraphComponent', () => {
           subject: 'message',
           hash: 'hash',
           author: 'user',
+          tag: tag1.title + ' | ' + tag2.title,
           renderDot: jasmine.any(Function),
           renderMessage: jasmine.any(Function),
           onMessageClick: jasmine.any(Function),

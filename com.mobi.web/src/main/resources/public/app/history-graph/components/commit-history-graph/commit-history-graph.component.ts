@@ -50,6 +50,7 @@ import { GraphHelperService } from '../../services/graph-helper.service';
 import { GitAction } from '../../models/git-action.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { BranchNames } from '../../models/branch-names.interface';
+import { Tag } from '../../../shared/models/tag.interface';
 
 /**
  * @class history-graph.CommitHistoryGraphComponent
@@ -77,6 +78,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
   @Input() recordId?: string;
   @Input() commitDotClickable: boolean;
   @Input() branches: JSONLDObject[] = [];
+  @Input() tags: Tag[] = [];
   @Output() commitDotOnClick = new EventEmitter<Commit>();
 
   constructor(private util: UtilService,
@@ -85,6 +87,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     private graphHelperService: GraphHelperService, private iterableDiffers: IterableDiffers) {}
 
   branchesDiffer: IterableDiffer<JSONLDObject>;
+  tagMap: Map<string, string[]>;
   errors: string[] = [];
   afterViewInitCalled = false;
   dataBindingsChanged = false;
@@ -129,10 +132,12 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
 
   ngOnInit() {
     this.branchesDiffer = this.iterableDiffers.find([]).create(null);
+    this.tagMapInit(this.tags);
   }
 
   ngOnChanges(changesObj: SimpleChanges): void {
-    if (changesObj?.commits || changesObj?.headTitle || changesObj?.recordId || changesObj?.commitDotClickable || changesObj?.branches) {
+    if (changesObj?.commits || changesObj?.headTitle || changesObj?.recordId || changesObj?.commitDotClickable || changesObj?.branches || changesObj?.tags) {
+      this.tagMapInit(this.tags);
       this.dataBindingsChanged = true;
       if (this.afterViewInitCalled) {
         this.drawGraph();
@@ -242,7 +247,8 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
       subject: gitAction.commit.message,
       hash: this.util.condenseCommitId(commitId),
       author: gitAction.commit.creator.username,
-      renderDot: (svgCommit: GitGraphCommit) => { 
+      tag: this.getTags(commitId),
+      renderDot: (svgCommit: GitGraphCommit) => {
         return this.svgElementHelperService.renderCommitDot(svgCommit, this.componentUuidId, this.commitDotClickable); 
       },
       renderMessage: (svgCommit: GitGraphCommit) => { 
@@ -270,5 +276,25 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
         name: this.util.getDctermsValue(branch, 'title') || ''
       };
     });
+  }
+
+  private tagMapInit(tags: Tag[]): void {
+    this.tagMap = new Map<string, string[]>();
+    tags.forEach(tag => {
+      let tagArray: string[] = [];
+      if (this.tagMap.has(tag.commitIri)) {
+        tagArray = this.tagMap.get(tag.commitIri);
+        tagArray.push(tag.title);
+      } else {
+        tagArray = [tag.title];
+      }
+      this.tagMap.set(tag.commitIri, tagArray);
+    });
+  }
+  private getTags(commitId: string): string {
+    if (this.tagMap.has(commitId)) {
+      return this.tagMap.get(commitId).join(' | ');
+    }
+    return undefined;
   }
 }

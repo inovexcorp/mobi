@@ -23,9 +23,12 @@
 
 import {
     Component,
+    DoCheck,
     ElementRef,
     EventEmitter,
     Input,
+    IterableDiffer,
+    IterableDiffers,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -43,6 +46,10 @@ import { UserManagerService } from '../../services/userManager.service';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 import { UtilService } from '../../services/util.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { Tag } from '../../models/tag.interface';
+import { CATALOG } from '../../../prefixes';
+import { HttpResponse } from '@angular/common/http';
+import { get } from 'lodash';
 
 /**
  * @class shared.CommitHistoryTableComponent
@@ -66,12 +73,13 @@ import { JSONLDObject } from '../../models/JSONLDObject.interface';
     templateUrl: './commitHistoryTable.component.html',
     styleUrls: ['./commitHistoryTable.component.scss']
 })
-export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy {
+export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy, DoCheck {
     @Input() commitId: string;
     @Input() headTitle?: string;
     @Input() targetId?: string;
     @Input() entityId?: string;
     @Input() recordId?: string;
+    @Input() tags?: JSONLDObject[];
     @Input() dotClickable: boolean;
     @Input() graph: boolean;
     @Input() branches: JSONLDObject[] = [];
@@ -83,23 +91,34 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     constructor(public util: UtilService,
         private cm: CatalogManagerService,
         private spinnerSvc: ProgressSpinnerService,
-        public um: UserManagerService) {
+        public um: UserManagerService,
+        private iterableDiffers: IterableDiffers) {
     }
     error = '';
     commits: Commit[] = [];
+    tagObjects: Tag[] = [];
     id = 'commit-history-table' + v4();
     showGraph: boolean;
     commitDotClickable: boolean;
+    tagDiffer: IterableDiffer<JSONLDObject>;
 
     ngOnInit(): void {
+        this.tagDiffer = this.iterableDiffers.find([]).create(null);
         this.showGraph = this.graph !== undefined;
         this.commitDotClickable = this.dotClickable !== undefined;
     }
-    
+
     ngOnChanges(changesObj: SimpleChanges): void {
-        if (changesObj?.headTitle || changesObj?.commitId || 
-            changesObj?.targetId || changesObj?.entityId || changesObj?.branches) {
+        if (changesObj?.headTitle || changesObj?.commitId ||
+            changesObj?.targetId || changesObj?.entityId || changesObj?.branches || changesObj?.tags) {
             this.getCommits();
+            this.getTags();
+        }
+    }
+    ngDoCheck() {
+        const changes = this.tagDiffer.diff(this.tags);
+        if (changes) {
+            this.getTags();
         }
     }
     ngOnDestroy(): void {
@@ -129,7 +148,38 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             this.receiveCommits.emit([]);
         }
     }
-    
+    getTags(): void {
+        if (this.tags) {
+            this.tagObjects = this.tags.map(tag => {
+                return {
+                    tagIri: tag['@id'],
+                    commitIri: this.util.getPropertyId(tag, CATALOG + 'commit'),
+                    title: this.util.getDctermsValue(tag, 'title'),
+                    description: this.util.getDctermsValue(tag, 'description')
+                } as Tag;
+            });
+        } else if (this.recordId) {
+            this.spinnerSvc.startLoadingForComponent(this.commitHistoryTable, 30);
+            this.cm.getRecordVersions(this.recordId, get(this.cm.localCatalog, '@id', '')).pipe(first()).subscribe(
+                (response: HttpResponse<JSONLDObject[]>) => {
+                    this.tagObjects = response.body.map(tag => {
+                        return {
+                            tagIri: tag['@id'],
+                            commitIri: this.util.getPropertyId(tag, CATALOG + 'commit'),
+                            title: this.util.getDctermsValue(tag, 'title'),
+                            description: this.util.getDctermsValue(tag, 'description')
+                        } as Tag;
+                    });
+                    this.error = '';
+                    this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
+                }, errorMessage => {
+                    this.error = errorMessage;
+                    this.tags = [];
+                    this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
+                }
+            );
+        }
+    }
     getCommitId(index: number, commit: Commit): string {
         return commit.id;
     }

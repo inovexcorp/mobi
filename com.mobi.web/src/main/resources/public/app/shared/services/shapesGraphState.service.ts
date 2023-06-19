@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Injectable } from '@angular/core';
-import { find, get, remove } from 'lodash';
+import { Injectable } from '@angular/core';
+import { filter, find, get, includes, remove } from 'lodash';
 import { first, switchMap } from 'rxjs/operators';
 import { from, Observable, of } from 'rxjs';
 
@@ -217,6 +217,10 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
             .then(decision => {
                 this.listItem.userCanModifyMaster = decision === this.pep.permit;
                 this.list.push(this.listItem);
+                return this.cm.getRecordVersions(this.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise();
+            })
+            .then(response => {
+                this.listItem.tags = filter(response.body, version => includes(get(version, '@type'), CATALOG + 'Tag'));
                 return Promise.resolve();
             })
             .catch(error => Promise.reject(error));

@@ -53,6 +53,7 @@ export class VersionedRdfListItem {
         startIndex: number
     }
     selectedCommit?: Commit
+    tags: JSONLDObject[]
 
     constructor() {
         this.active = true;
@@ -81,5 +82,6 @@ export class VersionedRdfListItem {
             startIndex: 0
         };
         this.selectedCommit = undefined;
+        this.tags = [];
     }
 }
