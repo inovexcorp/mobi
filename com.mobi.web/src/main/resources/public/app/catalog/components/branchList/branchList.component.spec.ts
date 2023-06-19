@@ -32,7 +32,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
-import { CATALOG, DCTERMS } from '../../../prefixes';
+import { CATALOG, DCTERMS, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { UtilService } from '../../../shared/services/util.service';
 import { BranchListComponent } from './branchList.component';
@@ -124,7 +124,18 @@ describe('Branch List component', function() {
                 component.totalSize = 0;
             });
             describe('if the record is a VersionedRDFRecord', function() {
-                it('successfully', fakeAsync(function() {
+                it('and an OntologyRecord successfully', fakeAsync(function() {
+                    component.setBranches();
+                    tick();
+                    expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId, {pageIndex: 0, limit: component.limit, sortOption: sortOption});
+                    expect(component.branches).toEqual(branches);
+                    expect(component.totalSize).toEqual(totalSize);
+                    expect(ontologyManagerStub.isOntologyRecord).toHaveBeenCalledWith(record);
+                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                }));
+                it('and a ShapesGraphRecord successfully', fakeAsync(function() {
+                    ontologyManagerStub.isOntologyRecord.and.returnValue(false);
+                    component.record['@type'].push(SHAPESGRAPHEDITOR + 'ShapesGraphRecord');
                     component.setBranches();
                     tick();
                     expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId, {pageIndex: 0, limit: component.limit, sortOption: sortOption});

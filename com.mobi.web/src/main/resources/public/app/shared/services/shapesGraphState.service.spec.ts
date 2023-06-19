@@ -89,6 +89,7 @@ describe('Shapes Graph State service', function() {
         });
         catalogManagerStub.localCatalog = {'@id': catalogId};
         catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': catalogId, data: branches}]})));
+        catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': 'urn:tag'}]})));
         service.initialize();
     });
     

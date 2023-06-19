@@ -63,6 +63,7 @@
                                       [commitId]="state.listItem.versionedRdfRecord.commitId"
                                       [recordId]="state.listItem.versionedRdfRecord.recordId"
                                       [headTitle]="state?.listItem?.currentVersionTitle"
+                                      [tags]="state.listItem.tags"
                                       (receiveCommits)="commits = $event"
                                       [branches]="state.listItem.branches"
                                       (commitDotOnClick)="openCommit($event)"

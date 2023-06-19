@@ -45,7 +45,8 @@
       </table>
       <commit-history-graph *ngIf="showGraph"
         [branches]="branches"
-        [commits]="commits" 
+        [commits]="commits"
+        [tags]="tagObjects"
         [headTitle]="headTitle"
         [commitDotClickable]="commitDotClickable"
         (commitDotOnClick)="commitDotClicked($event)">

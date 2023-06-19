@@ -25,7 +25,7 @@ import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChi
 import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatAutocompleteTrigger, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { find, get, noop } from 'lodash';
+import { find, get, noop, remove } from 'lodash';
 import { forkJoin, Observable } from 'rxjs';
 import { first, map, startWith } from 'rxjs/operators';
 
@@ -249,7 +249,10 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
     }
     private deleteShapesGraphTag(tagId: string): void {
         this.cm.deleteRecordVersion(tagId, this.recordIri, get(this.cm.localCatalog, '@id', '')).pipe(first()).toPromise()
-            .then(() => this.util.createSuccessToast('Tag ' + tagId + ' deleted successfully!'), this.util.createErrorToast);
+            .then(() => {
+                remove(this.state.listItem.tags, {'@id': tagId});
+                this.util.createSuccessToast('Tag ' + tagId + ' deleted successfully!');
+            }, this.util.createErrorToast);
     }
     protected setFilteredOptions(): void {
         this.filteredOptions = this.branchSearchControl.valueChanges

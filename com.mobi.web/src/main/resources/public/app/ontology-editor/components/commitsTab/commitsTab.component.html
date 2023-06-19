@@ -29,6 +29,7 @@
             <commit-history-table class="flex-1" [commitId]="os.listItem.versionedRdfRecord.commitId"
                 [recordId]="os.listItem.versionedRdfRecord.recordId"
                 [branches]="os.listItem.branches"
+                [tags]="os.listItem.tags"
                 [headTitle]="getHeadTitle()"
                 (commitDotOnClick)="openOntologyAtCommit($event)"
                 (receiveCommits)="commits = $event"

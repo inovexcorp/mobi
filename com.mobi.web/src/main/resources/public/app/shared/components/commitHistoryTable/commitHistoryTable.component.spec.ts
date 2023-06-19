@@ -42,6 +42,9 @@ import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 import { CommitHistoryTableComponent } from './commitHistoryTable.component';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { Tag } from '../../models/tag.interface';
+import { HttpResponse } from '@angular/common/http';
 
 describe('Commit History Table component', function() {
     let component: CommitHistoryTableComponent;
@@ -95,19 +98,24 @@ describe('Commit History Table component', function() {
             base: 'baseHash',
             auxiliary: 'auxiliaryHash'
         };
+        const tag = {
+            '@id': 'urn:tagId'
+        } as JSONLDObject;
         testData = {
             error: 'error',
             commitId: commitId,
             entityId: 'entity',
             commit: commit,
             commits: [commit],
-            recordId: 'record'
+            recordId: 'record',
+            tags: [tag]
         };
         component.headTitle = 'title';
         component.commitId = testData.commitId;
         component.targetId = testData.commitId;
         component.entityId = testData.entityId;
         component.recordId = testData.recordId;
+        component.tags = testData.tags;
         spyOn<EventEmitter<Commit[]>>(component.receiveCommits, 'emit');
     });
     afterEach(function() {
@@ -312,6 +320,71 @@ describe('Commit History Table component', function() {
                         expect(component.commits).toEqual([]);
                     });
                 });
+            });
+        });
+        describe('should get the list of Tags', function() {
+            beforeEach(function() {
+                component.tags = undefined;
+            });
+            describe('unless Tags have not been passed and a record is', function() {
+                describe('provided and tags are retrieved', function() {
+                    beforeEach(function() {
+                       component.recordId = 'urn:record';
+                    });
+                    it('successfully', async function() {
+                        catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse({body: [{
+                                '@id': 'urn:tagId'
+                            } as JSONLDObject]})));
+                        await component.getTags();
+
+                        expect(catalogManagerStub.getRecordVersions).toHaveBeenCalledWith('urn:record', '');
+                        expect(component.error).toEqual('');
+                        const tag = {
+                            tagIri: 'urn:tagId',
+                            commitIri: undefined,
+                            title: undefined,
+                            description: undefined
+                        } as Tag;
+                        expect(component.tagObjects).toEqual([tag]);
+                    });
+                    it('unless an error occurs', async function() {
+                        catalogManagerStub.getRecordVersions.and.returnValue(throwError(testData.error));
+                        await component.getTags();
+
+                        expect(catalogManagerStub.getRecordVersions).toHaveBeenCalledWith('urn:record', '');
+                        expect(component.error).toEqual(testData.error);
+                        expect(component.tagObjects).toEqual([]);
+                    });
+                });
+                it('not provided', async function() {
+                    catalogManagerStub.getRecordVersions.calls.reset();
+                    component.tags = undefined;
+                    component.recordId = undefined;
+                    fixture.detectChanges();
+                    await fixture.whenStable();
+
+                    component.getTags();
+                    expect(catalogManagerStub.getRecordVersions).not.toHaveBeenCalled();
+                    expect(component.tagObjects).toEqual([]);
+                });
+            });
+            it('if Tags have been passed', async function() {
+                catalogManagerStub.getRecordVersions.calls.reset();
+                component.tags = [{
+                    '@id': 'urn:tagId'
+                } as JSONLDObject];
+                component.recordId = undefined;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                expect(catalogManagerStub.getRecordVersions).not.toHaveBeenCalled();
+                const tag = {
+                    tagIri: 'urn:tagId',
+                    commitIri: undefined,
+                    title: undefined,
+                    description: undefined
+                } as Tag;
+                expect(component.tagObjects).toEqual([tag]);
             });
         });
     });
