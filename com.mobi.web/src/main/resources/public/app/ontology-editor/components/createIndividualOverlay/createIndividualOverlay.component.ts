@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -56,7 +56,7 @@ export class CreateIndividualOverlayComponent implements OnInit {
         title: ['', [ Validators.required, noWhitespaceValidator()]],
     });
     
-    constructor(private fb: FormBuilder,
+    constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateIndividualOverlayComponent>,
         public os: OntologyStateService,
         private camelCasePipe: CamelCasePipe,

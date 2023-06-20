@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { get } from 'lodash';
 import { switchMap } from 'rxjs/operators';
@@ -52,7 +52,7 @@ export class CreateBranchOverlayComponent implements OnInit {
         description: [''],
     });
     
-    constructor(private fb: FormBuilder,
+    constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateBranchOverlayComponent>, 
         private os: OntologyStateService, 
         private cm: CatalogManagerService) {}

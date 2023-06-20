@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { find } from 'lodash';
 
@@ -42,10 +42,10 @@ import { UtilService } from '../../../shared/services/util.service';
     templateUrl: './editGroupInfoOverlay.component.html'
 })
 export class EditGroupInfoOverlayComponent {
-    editGroupInfoForm: FormGroup;
+    editGroupInfoForm: UntypedFormGroup;
     errorMessage = '';
 
-    constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, private fb: UntypedFormBuilder,
         private state: UserStateService, private um: UserManagerService, private util: UtilService) {
             this.editGroupInfoForm = this.fb.group({
                 description: [this.state.selectedGroup.description]

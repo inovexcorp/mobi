@@ -36,7 +36,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { FormArray, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormArray, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { get, has, set } from 'lodash';
@@ -249,7 +249,7 @@ describe('Setting Form component', function() {
                     component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
-                    expect((component.form.get('formBlocks') as FormArray).length).toEqual(1);
+                    expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(1);
                     expect(component.form.get('formBlocks').get(['0', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('first');
                 });
                 it('when a multiple preference values exists', function() {
@@ -268,7 +268,7 @@ describe('Setting Form component', function() {
                     component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
-                    expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
+                    expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(3);
                     expect(component.form.get('formBlocks').get(['0', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('first');
                     expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('second');
                     expect(component.form.get('formBlocks').get(['2', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('third');
@@ -280,14 +280,14 @@ describe('Setting Form component', function() {
             component.setting = testSetting;
             fixture.detectChanges();
             component.ngOnChanges();
-            expect((component.form.get('formBlocks') as FormArray).length).toEqual(1);
+            expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(1);
             expect(testSetting.values[0][SettingConstants.HAS_DATA_VALUE].length).toEqual(1);
             expect(component.numValues).toEqual(1);
             expect(component.form.dirty).toEqual(false);
 
             component.addFormBlock();
             fixture.detectChanges();
-            expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
+            expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(2);
             expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('');
             expect(testSetting.values[0][SettingConstants.HAS_DATA_VALUE].length).toEqual(2);
             expect(component.numValues).toEqual(2);
@@ -295,7 +295,7 @@ describe('Setting Form component', function() {
 
             component.addFormBlock();
             fixture.detectChanges();
-            expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
+            expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(3);
             expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('');
             expect(component.form.get('formBlocks').get(['2', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('');
             expect(component.numValues).toEqual(3);
@@ -319,11 +319,11 @@ describe('Setting Form component', function() {
             fixture.detectChanges();
             component.ngOnChanges();
 
-            expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
+            expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(3);
 
             component.deleteFormBlock(1);
             fixture.detectChanges();
-            expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
+            expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(2);
             
             expect(component.form.get('formBlocks').get(['0', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('first');
             expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('third');
@@ -360,7 +360,7 @@ describe('Setting Form component', function() {
             component.ngOnChanges();
             fixture.detectChanges();
             expect(component.maxBlocks).toEqual(2);
-            expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
+            expect((component.form.get('formBlocks') as UntypedFormArray).length).toEqual(2);
             expect(element.queryAll(By.css('form')).length).toEqual(1);
             expect(element.queryAll(By.css('setting-form-field')).length).toEqual(2);
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();

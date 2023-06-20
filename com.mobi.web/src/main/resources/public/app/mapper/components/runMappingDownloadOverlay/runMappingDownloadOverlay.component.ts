@@ -22,7 +22,7 @@
  */
 
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
@@ -50,7 +50,7 @@ export class RunMappingDownloadOverlayComponent implements OnInit {
         serialization: ['turtle', Validators.required]
     });
 
-    constructor(private dialogRef: MatDialogRef<RunMappingDownloadOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<RunMappingDownloadOverlayComponent>, private fb: UntypedFormBuilder,
         private state: MapperStateService, private dm: DelimitedManagerService,
         private camelCasePipe: CamelCasePipe, private util: UtilService) {}
 

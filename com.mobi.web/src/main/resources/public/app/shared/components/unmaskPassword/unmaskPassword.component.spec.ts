@@ -22,7 +22,7 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -56,8 +56,8 @@ describe('Unmask Password component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
 
-        component.parentForm = new FormGroup({
-            unmaskPassword: new FormControl('', Validators.required)
+        component.parentForm = new UntypedFormGroup({
+            unmaskPassword: new UntypedFormControl('', Validators.required)
         });
         component.label = 'Test';
         fixture.detectChanges();

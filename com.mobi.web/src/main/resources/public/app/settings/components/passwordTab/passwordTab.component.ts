@@ -22,7 +22,7 @@
  */
 import { find } from 'lodash';
 import { OnInit, Component } from '@angular/core';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, Validators, UntypedFormGroup } from '@angular/forms';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.interface';
@@ -50,7 +50,7 @@ export class PasswordTabComponent implements OnInit {
     currentPasswordErrorMessage: string;
    
     constructor(private um: UserManagerService, private lm: LoginManagerService,
-        private util: UtilService, private fb: FormBuilder) {}
+        private util: UtilService, private fb: UntypedFormBuilder) {}
 
     ngOnInit(): void {
         this.currentUser = find(this.um.users, { username: this.lm.currentUser });
@@ -82,10 +82,10 @@ export class PasswordTabComponent implements OnInit {
             });
     }
 
-    disableAllFields(formGroup: FormGroup): void {
+    disableAllFields(formGroup: UntypedFormGroup): void {
         Object.keys(formGroup.controls).forEach(controlName => {
             const temp = formGroup.get(controlName);
-            if (temp instanceof FormGroup) {
+            if (temp instanceof UntypedFormGroup) {
                 this.disableAllFields(temp);
             } else {
                 temp.disable();

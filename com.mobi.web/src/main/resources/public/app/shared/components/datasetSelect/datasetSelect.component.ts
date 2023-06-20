@@ -21,14 +21,14 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import {FormGroup} from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { Observable } from 'rxjs';
 import { debounceTime, finalize, map, startWith, switchMap } from 'rxjs/operators';
 
 import { DCTERMS } from '../../../prefixes';
 import { DatasetManagerService } from '../../services/datasetManager.service';
-import {DiscoverStateService} from '../../services/discoverState.service';
+import { DiscoverStateService } from '../../services/discoverState.service';
 import { UtilService } from '../../services/util.service';
 
 interface DatasetPreview {
@@ -44,7 +44,7 @@ interface DatasetPreview {
 export class DatasetSelectComponent implements OnInit {
     loading = false;
 
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Input() recordId: string;
     @Output() recordIdChange = new EventEmitter<{recordId: string, recordTitle: string}>();
 

@@ -21,7 +21,7 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { FormGroup, FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -105,8 +105,8 @@ describe('Setting Form Field component', function() {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
         });
 
-        formGroup = new FormGroup({
-            [SETTING + 'hasDataValue']: new FormControl('firstVal')
+        formGroup = new UntypedFormGroup({
+            [SETTING + 'hasDataValue']: new UntypedFormControl('firstVal')
         });
 
         field = SettingConstants.HAS_DATA_VALUE;

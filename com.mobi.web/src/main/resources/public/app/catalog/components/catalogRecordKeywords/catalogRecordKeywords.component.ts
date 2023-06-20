@@ -22,7 +22,7 @@
  */
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { map, get } from 'lodash';
 
@@ -70,7 +70,7 @@ export class CatalogRecordKeywordsComponent {
     @Input() canEdit: boolean;
     @Output() saveEvent = new EventEmitter<JSONLDObject>();
 
-    constructor(private fb: FormBuilder) {}
+    constructor(private fb: UntypedFormBuilder) {}
 
     addKeyword(event: MatChipInputEvent): void {
         const value = (event.value || '').trim();

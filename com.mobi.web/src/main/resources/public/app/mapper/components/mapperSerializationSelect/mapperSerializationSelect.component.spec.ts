@@ -22,7 +22,7 @@
 */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormGroup, FormControl } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
@@ -50,8 +50,8 @@ describe('Mapper Serialization Select component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
 
-        component.parentForm = new FormGroup({
-            serialization: new FormControl('jsonld')
+        component.parentForm = new UntypedFormGroup({
+            serialization: new UntypedFormControl('jsonld')
         });
     });
 

@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { map, without } from 'lodash';
 
@@ -52,7 +52,7 @@ export class CreateGroupOverlayComponent implements OnInit {
         admin: ''
     });
 
-    constructor(private dialogRef: MatDialogRef<CreateGroupOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<CreateGroupOverlayComponent>, private fb: UntypedFormBuilder,
         private um: UserManagerService, private lm: LoginManagerService, private util: UtilService) {}
     
     ngOnInit(): void {

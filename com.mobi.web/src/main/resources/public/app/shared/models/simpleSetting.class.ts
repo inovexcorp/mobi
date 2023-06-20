@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormArray, UntypedFormControl, Validators } from '@angular/forms';
 
 import { forEach, filter, sortBy } from 'lodash';
 
@@ -170,29 +170,29 @@ export class SimpleSetting implements Setting {
         return blankValExists;
     }
 
-    public buildForm(): FormGroup {
-        const form = new FormGroup({
-            formBlocks: new FormArray([])
+    public buildForm(): UntypedFormGroup {
+        const form = new UntypedFormGroup({
+            formBlocks: new UntypedFormArray([])
         });
 
         this.values[0][SettingConstants.HAS_DATA_VALUE].forEach(value => {
-            const fg: FormGroup = new FormGroup({});
+            const fg: UntypedFormGroup = new UntypedFormGroup({});
             const fieldsTemplate = {};
             this.formFieldPropertyShapes.forEach(field => {
                 fieldsTemplate[this.util.getPropertyId(field, SHACL + 'path')] = value['@value'];
             });
             for (const control in fieldsTemplate) {
-                const newFormGroup: FormGroup = new FormGroup({});
-                newFormGroup.addControl(control, new FormControl(fieldsTemplate[control], Validators.required));
+                const newFormGroup: UntypedFormGroup = new UntypedFormGroup({});
+                newFormGroup.addControl(control, new UntypedFormControl(fieldsTemplate[control], Validators.required));
                 fg.addControl(control, newFormGroup);
             }
-            (form.get('formBlocks') as FormArray).push(fg);
+            (form.get('formBlocks') as UntypedFormArray).push(fg);
         });
 
         return form;
     }
 
-    public updateWithFormValues(form: FormGroup) {
+    public updateWithFormValues(form: UntypedFormGroup) {
         this.values[0][SettingConstants.HAS_DATA_VALUE] = [];
         form.get('formBlocks').value.forEach((value) => {
             this.util.setPropertyValue(this.values[0], SettingConstants.HAS_DATA_VALUE, String(value[SettingConstants.HAS_DATA_VALUE][SettingConstants.HAS_DATA_VALUE]));

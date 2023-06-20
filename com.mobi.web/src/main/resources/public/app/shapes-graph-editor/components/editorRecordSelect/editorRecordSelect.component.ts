@@ -22,7 +22,7 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
@@ -66,7 +66,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     @ViewChild('textInput', { static: true }) textInput: ElementRef;
     @ViewChild('editorRecordSelectSpinner', { static: true }) editorRecordSelectSpinner: ElementRef;
 
-    recordSearchControl: FormControl = new FormControl();
+    recordSearchControl: UntypedFormControl = new UntypedFormControl();
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
     opened: RecordSelectFiltered[] = [];

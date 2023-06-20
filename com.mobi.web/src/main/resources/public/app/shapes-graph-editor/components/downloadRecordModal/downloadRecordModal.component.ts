@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { RdfDownload } from '../../../shared/models/rdfDownload.interface';
@@ -44,7 +44,7 @@ export class DownloadRecordModalComponent implements OnInit {
     rdfFormats: string[] = ['turtle', 'rdf/xml', 'jsonld'];
 
     constructor(private dialogRef: MatDialogRef<DownloadRecordModalComponent>, @Inject(MAT_DIALOG_DATA) public data: any,
-                private fb: FormBuilder, private sm: ShapesGraphManagerService) {}
+                private fb: UntypedFormBuilder, private sm: ShapesGraphManagerService) {}
 
     ngOnInit() {
         this.downloadRecordForm.controls.fileName.setValue(this.data.title);

@@ -24,7 +24,7 @@ import { pullAt, map, trim, uniq, set, find } from 'lodash';
 import { MatDialogRef } from '@angular/material/dialog';
 import { finalize, shareReplay, startWith } from 'rxjs/operators';
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
@@ -53,7 +53,7 @@ export class UploadOntologyOverlayComponent implements OnInit {
     total = 0;
     index = 0;
 
-    uploadOntologyForm: FormGroup = this.fb.group({
+    uploadOntologyForm: UntypedFormGroup = this.fb.group({
         title: ['', [ Validators.required]],
         description: [''],
         keywords: [[]],
@@ -61,7 +61,7 @@ export class UploadOntologyOverlayComponent implements OnInit {
 
     @Output() uploadStarted = new EventEmitter<boolean>();
 
-    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<UploadOntologyOverlayComponent>, 
+    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<UploadOntologyOverlayComponent>, 
         private om: OntologyManagerService, private os: OntologyStateService) {}
 
     ngOnInit(): void {

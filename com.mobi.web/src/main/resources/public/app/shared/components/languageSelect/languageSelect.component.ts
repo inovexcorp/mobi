@@ -22,7 +22,7 @@
  */
 
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 
 import { PropertyManagerService } from '../../services/propertyManager.service';
 
@@ -43,7 +43,7 @@ import { PropertyManagerService } from '../../services/propertyManager.service';
     styleUrls: ['./languageSelect.component.scss']
 })
 export class LanguageSelectComponent implements OnInit {
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Input() disableClear: boolean;
     
     languages: {label: string, value: string}[] = [];

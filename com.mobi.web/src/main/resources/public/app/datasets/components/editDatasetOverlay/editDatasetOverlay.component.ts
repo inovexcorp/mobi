@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { map, get, sortBy, remove, difference, includes, forEach, concat, find } from 'lodash';
 import { forkJoin, of } from 'rxjs';
@@ -58,9 +58,9 @@ export class EditDatasetOverlayComponent implements OnInit {
     repository: Repository;
     keywords = [];
     selectedOntologies: OntologyDetails[] = [];
-    editDatasetForm: FormGroup;
+    editDatasetForm: UntypedFormGroup;
 
-    constructor(private dialogRef: MatDialogRef<EditDatasetOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<EditDatasetOverlayComponent>, private fb: UntypedFormBuilder,
         public state: DatasetStateService, public dm: DatasetManagerService, public cm: CatalogManagerService, 
         public util: UtilService, private rm: RepositoryManagerService) {}
 

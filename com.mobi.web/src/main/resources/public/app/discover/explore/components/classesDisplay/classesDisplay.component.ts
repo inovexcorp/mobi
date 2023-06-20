@@ -22,7 +22,7 @@
  */
 
 import { Component } from '@angular/core';
-import { FormBuilder, FormControl } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 
 import { CATALOG, POLICY } from '../../../../prefixes';
@@ -48,11 +48,11 @@ import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/new
 })
 export class ClassesDisplayComponent {
     datasetSearchForm = this.fb.group({
-        datasetSelect: new FormControl(),
+        datasetSelect: new UntypedFormControl(),
         formName: 'classesDisplay'
     });
 
-    constructor(private fb: FormBuilder, public state: DiscoverStateService, public dm: DatasetManagerService,
+    constructor(private fb: UntypedFormBuilder, public state: DiscoverStateService, public dm: DatasetManagerService,
         private eu: ExploreUtilsService, private es: ExploreService, private matDialog: MatDialog,
         private pep: PolicyEnforcementService, private util: UtilService) {}
 

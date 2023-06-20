@@ -22,7 +22,7 @@
  */
 
 import { Component, Input, EventEmitter, Output, OnChanges } from '@angular/core';
-import { FormArray, FormGroup } from '@angular/forms';
+import { UntypedFormArray, UntypedFormGroup } from '@angular/forms';
 import { filter } from 'lodash';
 
 import { SHACL } from '../../../prefixes';
@@ -46,8 +46,8 @@ export class SettingFormComponent implements OnChanges {
     maxBlocks = 1000;
     numValues = 0;
     
-    form = new FormGroup({
-        formBlocks: new FormArray([])
+    form = new UntypedFormGroup({
+        formBlocks: new UntypedFormArray([])
     });
         
     constructor(private util: UtilService) {}
@@ -86,12 +86,12 @@ export class SettingFormComponent implements OnChanges {
         this.form.markAsDirty(); // Enable the submit button
     }
 
-    get formBlocks(): FormArray {
-        return this.form.get('formBlocks') as FormArray;
+    get formBlocks(): UntypedFormArray {
+        return this.form.get('formBlocks') as UntypedFormArray;
     }
 
     formBlockKeys(n: number): Array<string> {
-        const formBlock: FormGroup = (this.form.get(['formBlocks', String(n)]) as FormGroup);
+        const formBlock: UntypedFormGroup = (this.form.get(['formBlocks', String(n)]) as UntypedFormGroup);
         return Object.keys(formBlock.controls);
     }
 

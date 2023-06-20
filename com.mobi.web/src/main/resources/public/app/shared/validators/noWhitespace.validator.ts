@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { UntypedFormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 /**
  * Validator that ensures the control value isn't an empty string after being trimmed
@@ -28,7 +28,7 @@ import { FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
  * @param control The FormControl to apply this validator to
  */
 export function noWhitespaceValidator(): ValidatorFn {
-    return (control: FormControl): ValidationErrors | null => {
+    return (control: UntypedFormControl): ValidationErrors | null => {
         const isWhitespace = (control.value || '').trim().length === 0;
         const isValid = !isWhitespace;
         return isValid ? null : { 'whitespace': true };

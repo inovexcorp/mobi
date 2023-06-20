@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
@@ -41,11 +41,11 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 })
 export class OntologyDownloadModalComponent {
 
-    downloadForm: FormGroup = this._fb.group({
+    downloadForm: UntypedFormGroup = this._fb.group({
         serialization: ['turtle', [Validators.required]]
     });
 
-    constructor(private _fb: FormBuilder, private _dialogRef: MatDialogRef<OntologyDownloadModalComponent>,
+    constructor(private _fb: UntypedFormBuilder, private _dialogRef: MatDialogRef<OntologyDownloadModalComponent>,
         @Inject(MAT_DIALOG_DATA) public data: {record: OntologyRecordDisplay}, private _om: OntologyManagerService) { }
 
     download(): void {

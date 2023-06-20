@@ -24,7 +24,7 @@ import { get, reject, find, noop } from 'lodash';
 import { flatMap } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { throwError } from 'rxjs';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -58,7 +58,7 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
                 private pep: PolicyEnforcementService,
                 public um: UserManagerService,
                 private lm: LoginManagerService,
-                private fb: FormBuilder) {}
+                private fb: UntypedFormBuilder) {}
 
     catalogId = '';
     error = '';

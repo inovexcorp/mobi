@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FormControl, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
 import { REGEX } from '../../constants';
 
 describe('IRI REGEX Validator', function() {
@@ -102,12 +102,12 @@ describe('IRI REGEX Validator', function() {
 
     successCases.forEach(test => {
         it('correctly validates ' + test, function() {
-            expect(validator(new FormControl(test))).toBeNull();
+            expect(validator(new UntypedFormControl(test))).toBeNull();
         });
     });
     failureCases.forEach(test => {
         it('correctly invalidates ' + test, function() {
-            expect(validator(new FormControl(test))).toBeTruthy();
+            expect(validator(new UntypedFormControl(test))).toBeTruthy();
         });
     });
 });

@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { includes, groupBy } from 'lodash';
 import { Observable } from 'rxjs';
@@ -49,7 +49,7 @@ interface ClassGroup {
     templateUrl: './classSelect.component.html'
 })
 export class ClassSelectComponent implements OnInit {
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Input() classes: MappingClass[];
     @Input() selectedClass: MappingClass;
 

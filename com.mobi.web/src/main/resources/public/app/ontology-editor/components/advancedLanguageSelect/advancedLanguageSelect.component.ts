@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 
 /**
  * @class ontology-editor.AdvancedLanguageSelectComponent
@@ -36,7 +36,7 @@ import { FormGroup } from '@angular/forms';
     templateUrl: './advancedLanguageSelect.component.html'
 })
 export class AdvancedLanguageSelectComponent {
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
 
     isShown = false;
 

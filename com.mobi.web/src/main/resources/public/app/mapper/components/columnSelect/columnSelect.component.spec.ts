@@ -22,7 +22,7 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -67,8 +67,8 @@ describe('Column Select component', function() {
         element = fixture.debugElement;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
 
-        component.parentForm = new FormGroup({
-            column: new FormControl('')
+        component.parentForm = new UntypedFormGroup({
+            column: new UntypedFormControl('')
         });
         delimitedManagerStub.dataRows = [['HeaderA', 'HeaderB'], ['A', 'B']];
     });

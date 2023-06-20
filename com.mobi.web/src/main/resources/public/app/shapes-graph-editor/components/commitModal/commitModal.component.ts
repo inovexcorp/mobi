@@ -22,7 +22,7 @@
  */
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { get } from 'lodash';
 import { first } from 'rxjs/operators';
 
@@ -51,7 +51,7 @@ export class CommitModalComponent {
     });
 
     constructor(private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
-        private fb: FormBuilder, private dialogRef: MatDialogRef<CommitModalComponent>) {}
+        private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CommitModalComponent>) {}
 
     commit(): void {
         this.cm.getRecordBranch(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId)

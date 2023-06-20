@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 
 import { POLICY } from '../../../../prefixes';
 import { ProgressSpinnerService } from '../../../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -53,7 +53,7 @@ export class QueryTabComponent implements OnInit {
 
     @ViewChild('discoverQuery', { static: true }) discoverQuery: ElementRef;
 
-    constructor(private fb: FormBuilder, public yasgui: YasguiService, public state: DiscoverStateService, 
+    constructor(private fb: UntypedFormBuilder, public yasgui: YasguiService, public state: DiscoverStateService, 
         private spinnerSvc: ProgressSpinnerService, private util: UtilService, private pep: PolicyEnforcementService) {}
 
     ngOnInit(): void {

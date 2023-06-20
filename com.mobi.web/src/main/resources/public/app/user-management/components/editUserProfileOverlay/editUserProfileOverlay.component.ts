@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { cloneDeep, find } from 'lodash';
 
@@ -43,9 +43,9 @@ import { UtilService } from '../../../shared/services/util.service';
 })
 export class EditUserProfileOverlayComponent {
     errorMessage = '';
-    editProfileForm: FormGroup;
+    editProfileForm: UntypedFormGroup;
 
-    constructor(private dialogRef: MatDialogRef<EditUserProfileOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<EditUserProfileOverlayComponent>, private fb: UntypedFormBuilder,
         private state: UserStateService, private um: UserManagerService, private util: UtilService) {
             this.editProfileForm = this.fb.group({
                 firstName: [this.state.selectedUser.firstName],

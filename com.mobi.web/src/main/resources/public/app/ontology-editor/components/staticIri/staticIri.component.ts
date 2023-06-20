@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 
 import { EditIriOverlayComponent } from '../../../shared/components/editIriOverlay/editIriOverlay.component';
@@ -84,7 +84,7 @@ export class StaticIriComponent implements OnInit, OnChanges {
             iriEnd: this.iriEnd,
         };
         if (this.duplicateCheck) {
-            dataObj.validator = (g: FormGroup) => {
+            dataObj.validator = (g: UntypedFormGroup) => {
                 const fullIRI = g.get('iriBegin').value + g.get('iriThen').value + g.get('iriEnd').value;
                 // If the IRI doesn't exist in the ontology and isn't the original input IRI, then it's valid
                 return fullIRI === this.iri || !this.os.checkIri(fullIRI) ? null : { iri: true };

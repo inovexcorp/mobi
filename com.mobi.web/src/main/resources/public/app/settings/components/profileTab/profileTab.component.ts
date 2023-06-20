@@ -22,7 +22,7 @@
  */
 import { find, cloneDeep, replace } from 'lodash';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.interface';
@@ -50,7 +50,7 @@ export class ProfileTabComponent implements OnInit {
     });
 
     constructor(private um: UserManagerService, private lm: LoginManagerService,
-        private fb: FormBuilder) {}
+        private fb: UntypedFormBuilder) {}
 
     ngOnInit(): void {
         this.currentUser = cloneDeep(find(this.um.users, { username: this.lm.currentUser }));

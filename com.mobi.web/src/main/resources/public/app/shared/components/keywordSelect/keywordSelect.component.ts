@@ -23,7 +23,7 @@
 
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 
 /**
@@ -44,7 +44,7 @@ import { MatChipInputEvent } from '@angular/material/chips';
 export class KeywordSelectComponent {
     readonly separatorKeysCodes: number[] = [ENTER];
     
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Output() cancelEvent = new EventEmitter<null>();
     
     constructor() {}

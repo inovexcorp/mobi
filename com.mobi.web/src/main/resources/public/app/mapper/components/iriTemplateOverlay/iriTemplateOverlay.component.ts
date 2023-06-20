@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { DELIM } from '../../../prefixes';
@@ -55,7 +55,7 @@ export class IriTemplateOverlayComponent implements OnInit {
         endsWith: ['', Validators.required]
     })
 
-    constructor(private dialogRef: MatDialogRef<IriTemplateOverlayComponent>, private fb: FormBuilder, 
+    constructor(private dialogRef: MatDialogRef<IriTemplateOverlayComponent>, private fb: UntypedFormBuilder, 
         public state: MapperStateService, public mm: MappingManagerService, public dm: DelimitedManagerService, 
         private util: UtilService) {}
 

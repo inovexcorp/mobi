@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { get, find } from 'lodash';
 import { switchMap } from 'rxjs/operators';
@@ -45,11 +45,11 @@ export class CommitOverlayComponent implements OnInit {
     catalogId = '';
     error = '';
 
-    commitForm: FormGroup = this.fb.group({
+    commitForm: UntypedFormGroup = this.fb.group({
         comment: ['', [Validators.required]]
     });
 
-    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<CommitOverlayComponent>,
+    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CommitOverlayComponent>,
         public os: OntologyStateService, private cm: CatalogManagerService, private util: UtilService) {}
     
     ngOnInit(): void {

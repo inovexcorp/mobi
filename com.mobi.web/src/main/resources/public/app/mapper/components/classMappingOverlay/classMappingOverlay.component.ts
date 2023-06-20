@@ -22,7 +22,7 @@
  */
 
 import { Component } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
@@ -46,7 +46,7 @@ export class ClassMappingOverlayComponent {
         class: [{value: '', disabled: !this.state.availableClasses.length}]
     });
     
-    constructor(private dialogRef: MatDialogRef<ClassMappingOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<ClassMappingOverlayComponent>, private fb: UntypedFormBuilder,
         public state: MapperStateService) {}
 
     addClass(): void {

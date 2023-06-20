@@ -22,7 +22,7 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { get } from 'lodash';
 
@@ -52,9 +52,9 @@ export class EditRequestOverlayComponent implements OnInit {
     errorMessage = '';
     assignees: string[] = [];
     targetBranch: JSONLDObject;
-    editRequestForm: FormGroup;
+    editRequestForm: UntypedFormGroup;
 
-    constructor(private dialogRef: MatDialogRef<EditRequestOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<EditRequestOverlayComponent>, private fb: UntypedFormBuilder,
         public state: MergeRequestsStateService, public mm: MergeRequestManagerService,
         public cm: CatalogManagerService, public um: UserManagerService, public util: UtilService) {}
     

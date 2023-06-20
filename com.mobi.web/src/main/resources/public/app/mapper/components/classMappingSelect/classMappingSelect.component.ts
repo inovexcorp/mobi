@@ -22,7 +22,7 @@
  */
 
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { UntypedFormControl, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { includes } from 'lodash';
@@ -51,7 +51,7 @@ export class ClassMappingSelectComponent implements OnInit, OnChanges {
     @ViewChild(MatAutocompleteTrigger, { static: true }) autocompleteTrigger: MatAutocompleteTrigger;
     @ViewChild('textInput', { static: true }) textInput: ElementRef;
 
-    classMappingControl: FormControl = new FormControl({value: '', disabled: true}, Validators.required)
+    classMappingControl: UntypedFormControl = new UntypedFormControl({value: '', disabled: true}, Validators.required)
 
     @Input() classMappings: JSONLDObject[] = [];
     @Input() classMappingId: string;

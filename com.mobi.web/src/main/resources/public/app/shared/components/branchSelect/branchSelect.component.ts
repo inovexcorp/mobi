@@ -22,7 +22,7 @@
  */
 
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
@@ -56,7 +56,7 @@ export class BranchSelectComponent implements OnInit, OnChanges {
     @Input() required: boolean;
     @Input() isDisabledWhen: boolean;
 
-    branchControl = new FormControl();
+    branchControl = new UntypedFormControl();
     filteredBranches: Observable<JSONLDObject[]>;
 
     constructor(public util: UtilService) {

@@ -25,7 +25,7 @@ import { find, get, noop, remove } from 'lodash';
 import { switchMap, startWith, map } from 'rxjs/operators';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -91,7 +91,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     currentState: JSONLDObject = undefined;
     catalogId = '';
 
-    ontologySearchControl: FormControl = new FormControl();
+    ontologySearchControl: UntypedFormControl = new UntypedFormControl();
     filteredOptions: Observable<OptionGroup[]>
 
     @ViewChild('ontologySearch', { static: true }) ontologySearch: ElementRef;

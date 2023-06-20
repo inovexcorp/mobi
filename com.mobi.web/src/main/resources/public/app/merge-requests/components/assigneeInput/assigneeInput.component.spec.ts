@@ -23,7 +23,7 @@
 
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -70,8 +70,8 @@ describe('Assignee Input component', function() {
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
 
-        component.parentForm = new FormGroup({
-            assignees: new FormControl('')
+        component.parentForm = new UntypedFormGroup({
+            assignees: new UntypedFormControl('')
         });
         component.selected = [];
         spyOn(component.selectedChange, 'emit');
@@ -88,7 +88,7 @@ describe('Assignee Input component', function() {
 
     describe('controller methods', function() {
         it('should handle adding a chip', function() {
-            component.add({input: null, value: 'user'});
+            component.add({chipInput: null, input: null, value: 'user'});
             expect(component.selected).toEqual(['user']);
             expect(component.selectedChange.emit).toHaveBeenCalledWith(['user']);
             expect(component.parentForm.controls.assignees.value).toEqual(null);

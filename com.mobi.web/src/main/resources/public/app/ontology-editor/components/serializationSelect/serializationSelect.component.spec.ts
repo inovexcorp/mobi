@@ -23,7 +23,7 @@
 
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, UntypedFormGroup, UntypedFormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
@@ -55,8 +55,8 @@ describe('Serialization Select component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
 
-        component.parentForm = new FormGroup({
-            serialization: new FormControl('')
+        component.parentForm = new UntypedFormGroup({
+            serialization: new UntypedFormControl('')
         });
     });
 

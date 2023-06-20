@@ -22,7 +22,7 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, UntypedFormGroup, UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -68,8 +68,8 @@ describe('Class Select component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
 
-        component.parentForm = new FormGroup({
-            class: new FormControl('')
+        component.parentForm = new UntypedFormGroup({
+            class: new UntypedFormControl('')
         });
         spyOn(component.selectedClassChange, 'emit');
     });

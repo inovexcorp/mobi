@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { merge, head, filter, set } from 'lodash';
@@ -50,7 +50,7 @@ import { ExploreService } from '../../../services/explore.service';
 export class NewInstanceClassOverlayComponent implements OnInit {
     searchText = '';
     selectedClass: {id: string, title: string, deprecated: boolean} = undefined;
-    classControl = new FormControl();
+    classControl = new UntypedFormControl();
     filteredClasses: Observable<{id: string, title: string, deprecated: boolean}[]>;
 
     constructor(private dialogRef: MatDialogRef<NewInstanceClassOverlayComponent>,

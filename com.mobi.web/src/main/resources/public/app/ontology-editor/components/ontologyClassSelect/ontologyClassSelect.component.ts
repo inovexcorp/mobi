@@ -22,7 +22,7 @@
  */
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import {MatAutocompleteSelectedEvent, MatAutocompleteTrigger} from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable } from 'rxjs';
@@ -67,7 +67,7 @@ export class OntologyClassSelectComponent implements OnInit {
     filteredClasses: Observable<ClassGrouping[]>;
     selectedOptions: ClassOption[] = [];
 
-    clazzControl: FormControl = new FormControl();
+    clazzControl: UntypedFormControl = new UntypedFormControl();
     
     constructor(public os: OntologyStateService) {}
 

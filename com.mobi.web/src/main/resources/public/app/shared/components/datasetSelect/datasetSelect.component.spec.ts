@@ -23,7 +23,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -90,8 +90,8 @@ describe('Dataset Select component', function() {
         datasetManagerStub.getRecordFromArray.and.returnValue(record);
         utilStub.getDctermsValue.and.returnValue('title');
 
-        component.parentForm = new FormGroup({
-            datasetSelect: new FormControl('')
+        component.parentForm = new UntypedFormGroup({
+            datasetSelect: new UntypedFormControl('')
         });
         spyOn(component.recordIdChange, 'emit');
         component.loading = false;

@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { trim, map, uniq } from 'lodash';
 
@@ -59,7 +59,7 @@ export class NewOntologyOverlayComponent implements OnInit {
         language: ['']
     });
 
-    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<NewOntologyOverlayComponent>, 
+    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<NewOntologyOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: {defaultNamespace: string}, public os: OntologyStateService,
         private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
 

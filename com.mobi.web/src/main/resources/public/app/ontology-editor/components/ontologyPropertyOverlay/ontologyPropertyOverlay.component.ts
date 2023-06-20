@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { some, union, get, groupBy, sortBy } from 'lodash';
@@ -86,7 +86,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
 
     filteredProperties: Observable<PropertyGroup[]>;
 
-    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<OntologyPropertyOverlayComponent>, 
+    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<OntologyPropertyOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
         public os: OntologyStateService, public pm: PropertyManagerService, public util: UtilService) {}
     

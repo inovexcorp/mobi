@@ -22,7 +22,7 @@
  */
 import { unset } from 'lodash';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -57,7 +57,7 @@ export class CreateAnnotationPropertyOverlayComponent implements OnInit {
         language: ['']
     });
     
-    constructor(private fb: FormBuilder,
+    constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateAnnotationPropertyOverlayComponent>, 
         public os: OntologyStateService,
         private camelCasePipe: CamelCasePipe,

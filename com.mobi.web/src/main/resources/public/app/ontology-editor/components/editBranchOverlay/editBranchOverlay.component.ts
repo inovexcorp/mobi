@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { unset, get } from 'lodash';
 
@@ -47,12 +47,12 @@ import { UtilService } from '../../../shared/services/util.service';
 export class EditBranchOverlayComponent implements OnInit {
     error = '';
 
-    editBranchForm: FormGroup = this.fb.group({
+    editBranchForm: UntypedFormGroup = this.fb.group({
         title: ['', [Validators.required]],
         description: ['']
     });
 
-    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<EditBranchOverlayComponent>, 
+    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<EditBranchOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: {branch: JSONLDObject},
         private cm: CatalogManagerService, private os: OntologyStateService, public util: UtilService) {}
         

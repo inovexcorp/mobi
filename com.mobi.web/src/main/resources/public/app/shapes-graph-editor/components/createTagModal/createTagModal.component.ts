@@ -23,7 +23,7 @@
 import { get } from 'lodash';
 import { Component, OnInit } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { first } from 'rxjs/operators';
 
 import { REGEX } from '../../../constants';
@@ -62,7 +62,7 @@ export class CreateTagModal implements OnInit {
     });
 
     constructor(private state: ShapesGraphStateService, private cm: CatalogManagerService,
-                private fb: FormBuilder, private dialogRef: MatDialogRef<CreateTagModal>,
+                private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CreateTagModal>,
                 private splitIRI: SplitIRIPipe, private camelCase: CamelCasePipe) {}
 
     ngOnInit(): void {

@@ -238,7 +238,7 @@ describe('IRI Select Ontology component', function() {
         it('add should handle adding a chip', function() {
             utilStub.isBlankNodeId.and.returnValue(false);
             spyOn(component, 'getName').and.returnValue('name');
-            component.add({input: null, value: iriOption.item});
+            component.add({chipInput: null, input: null, value: iriOption.item});
             expect(component.selected).toEqual([iriOption.item]);
             expect(component.selectedOptions).toEqual([iriOption]);
             expect(component.selectedChange.emit).toHaveBeenCalledWith([iriOption.item]);

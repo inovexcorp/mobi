@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { union, has, get, groupBy, sortBy } from 'lodash';
@@ -83,7 +83,7 @@ export class AnnotationOverlayComponent implements OnInit {
     isIRIProperty = false;
     filteredAnnotations: Observable<AnnotationGroup[]>;
 
-    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
+    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
         private om: OntologyManagerService, public os: OntologyStateService,
         public pm: PropertyManagerService, public util: UtilService) {}

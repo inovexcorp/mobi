@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -51,11 +51,11 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
     @Input() activePage: any;
     @Output() activePageChange = new EventEmitter<any>();
 
-    previewForm: FormGroup = this.fb.group({
+    previewForm: UntypedFormGroup = this.fb.group({
         serialization: ['']
     });
 
-    constructor(private fb: FormBuilder, public os: OntologyStateService, private om: OntologyManagerService) {}
+    constructor(private fb: UntypedFormBuilder, public os: OntologyStateService, private om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.previewForm.controls.serialization.setValue(this.activePage.serialization);

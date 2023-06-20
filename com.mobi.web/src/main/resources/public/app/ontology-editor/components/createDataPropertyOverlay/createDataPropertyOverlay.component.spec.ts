@@ -32,7 +32,7 @@ import { MatInputModule } from '@angular/material/input';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { FormArray, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormArray, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { 
@@ -269,7 +269,7 @@ describe('Create Data Property Overlay component', function() {
             });
             describe('if characteristics', function() {
                 it('are set', fakeAsync(function() {
-                    (component.createForm.controls.characteristics as FormArray).controls.forEach(obj => {
+                    (component.createForm.controls.characteristics as UntypedFormArray).controls.forEach(obj => {
                         obj.setValue(true);
                     });
                     component.create();

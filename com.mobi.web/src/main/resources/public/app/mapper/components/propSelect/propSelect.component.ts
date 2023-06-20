@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, UntypedFormGroup } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { includes, groupBy } from 'lodash';
 import { Observable } from 'rxjs';
@@ -52,7 +52,7 @@ interface PropertyGroup {
 export class PropSelectComponent implements OnInit {
     private _selectedProp:MappingProperty;
     @Input() isReadOnly: boolean;
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Input() properties: MappingProperty[];
     @Input() set selectedProp (value: MappingProperty) {
         this._selectedProp = value;

@@ -22,7 +22,7 @@
  */
 
 import { Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 
 /**
  * @class mapper.MapperSerializationSelectComponent
@@ -54,7 +54,7 @@ export class MapperSerializationSelectComponent {
         }
     ];
 
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Input() label: string;
     
     constructor() {}

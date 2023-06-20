@@ -302,9 +302,10 @@ describe('Mapping Config Overlay component', function() {
         });
         it('should handle changing of the ontology', function() {
             const event = {
-                option: {
+                source: null,
+                options: [{
                     value: selectedOntology
-                }
+                }]
             } as MatSelectionListChange;
             spyOn(component, 'toggleOntology');
             component.ontologyChange(event);
