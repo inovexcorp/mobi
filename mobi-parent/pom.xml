@@ -52,11 +52,11 @@
 
         <antlr.version>4.6</antlr.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
-        <commons-codec.version>1.10</commons-codec.version>
+        <commons-codec.version>1.15</commons-codec.version>
         <commons-collections.version>3.2.1</commons-collections.version>
-        <commons-io.version>2.7</commons-io.version>
+        <commons-io.version>2.11.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <commons-lang3.version>3.8.1</commons-lang3.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-rdf-api.version>0.5.0</commons-rdf-api.version>
         <commons-validator.version>1.6</commons-validator.version>
         <cxf.version>3.4.3</cxf.version>
@@ -87,7 +87,7 @@
         <owlapi.version>5.5.0</owlapi.version>
         <owlapi.rdf4j.version>4.2.0</owlapi.rdf4j.version>
         <poi.version>3.14_1</poi.version>
-        <rdf4j.version>4.2.3</rdf4j.version>
+        <rdf4j.version>4.3.2</rdf4j.version>
         <servlet.version>3.1.0</servlet.version>  <!-- 4.0.1 with later pax web -->
         <swagger.version>2.2.0</swagger.version>
         <jsonld-java.version>0.13.5.2-MOBI</jsonld-java.version>

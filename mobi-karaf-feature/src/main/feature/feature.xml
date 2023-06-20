@@ -80,8 +80,8 @@
     </feature>
     <feature name="mobi-jaxb" description="JAXB bundles" version="${project.version}">
         <bundle start-level="10">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.activation-api-1.2.1/1.2.1_4-MOBI</bundle>
-        <bundle start-level="10">mvn:jakarta.xml.bind/jakarta.xml.bind-api/2.3.3</bundle>
-        <bundle start-level="20">mvn:com.sun.xml.bind/jaxb-osgi/2.3.3</bundle>
+        <bundle start-level="10">mvn:jakarta.xml.bind/jakarta.xml.bind-api/${jaxb.version}</bundle>
+        <bundle start-level="20">mvn:com.sun.xml.bind/jaxb-osgi/${jaxb.version}</bundle>
         <bundle start-level="20">mvn:org.glassfish.hk2/osgi-resource-locator/1.0.3</bundle>
     </feature>
     <feature name="mobi-jaxws" description="JAX-WS (SOAP) bundles" version="${project.version}">
