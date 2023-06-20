@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 
 /**
  * @class discover.DiscoverDatasetSelectComponent
@@ -41,7 +41,7 @@ import { FormGroup } from '@angular/forms';
     styleUrls: ['./discoverDatasetSelect.component.scss']
 })
 export class DiscoverDatasetSelectComponent {
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Input() recordId: string;
     @Output() recordIdChange = new EventEmitter<Record<string, unknown>>();
 

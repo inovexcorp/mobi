@@ -141,9 +141,7 @@ export class MappingConfigOverlayComponent implements OnInit {
         return this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI');
     }
     ontologyChange(event: MatSelectionListChange): void {
-        if (event.option && event.option.value) {
-            this.toggleOntology(event.option.value);
-        }
+        this.toggleOntology(event.options[0].value);
     }
     setOntologies(): void {
         this.spinnerSvc.startLoadingForComponent(this.ontologyListBox);

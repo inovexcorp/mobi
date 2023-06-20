@@ -170,7 +170,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
     matchesSearchFilter(node: HierarchyNode): boolean {
         let searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
-        some(node.entityInfo.names, name => {
+        some(node.entityInfo?.names, name => {
             if (name !== undefined && this.filterText!== undefined &&
                     name.toLowerCase().includes(this.filterText.toLowerCase())) {
                 searchMatch = true;

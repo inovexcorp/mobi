@@ -22,7 +22,7 @@
  */
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatSelectionListChange } from '@angular/material/list';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatTabChangeEvent } from '@angular/material/tabs';
@@ -71,13 +71,13 @@ export class ImportsOverlayComponent implements OnInit {
     };
     tabIndex = 0;
 
-    importForm: FormGroup = this.fb.group({
+    importForm: UntypedFormGroup = this.fb.group({
         url: ['', [Validators.required, Validators.pattern(REGEX.IRI)]]
     });
 
     @ViewChild('ontologiesList') ontologiesList: ElementRef;
     
-    constructor(private fb: FormBuilder, private http: HttpClient, private dialogRef: MatDialogRef<ImportsOverlayComponent>,
+    constructor(private fb: UntypedFormBuilder, private http: HttpClient, private dialogRef: MatDialogRef<ImportsOverlayComponent>,
         private os: OntologyStateService, private spinnerSvc: ProgressSpinnerService, private cm: CatalogManagerService,
         public util: UtilService, private pm: PropertyManagerService) {}
     
@@ -99,7 +99,7 @@ export class ImportsOverlayComponent implements OnInit {
             error => this._onError(error, 1));
     }
     selectedUpdate(event: MatSelectionListChange): void {
-        this.toggleOntology(event.option.value);
+        this.toggleOntology(event.options[0].value);
     }
     toggleOntology(ontology: OntologyDetails): void {
         ontology.selected = !ontology.selected;

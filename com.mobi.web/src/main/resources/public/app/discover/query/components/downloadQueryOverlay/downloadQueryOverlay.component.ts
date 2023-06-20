@@ -23,7 +23,7 @@
  */
 
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import { SparqlManagerService } from '../../../../shared/services/sparqlManager.service';
@@ -61,7 +61,7 @@ export class DownloadQueryOverlayComponent implements OnInit {
         fileType: ['', Validators.required]
     })
 
-    constructor(private dialogRef: MatDialogRef<DownloadQueryOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<DownloadQueryOverlayComponent>, private fb: UntypedFormBuilder,
         @Inject(MAT_DIALOG_DATA) public data: {query: string, queryType?: string, datasetRecordIRI?: string}, 
         private sm: SparqlManagerService) {}
     

@@ -22,7 +22,7 @@
  */
 
 import { Component, Inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MappingRecord } from '../../../shared/models/mappingRecord.interface';
 
@@ -40,11 +40,11 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
     templateUrl: './downloadMappingOverlay.component.html'
 })
 export class DownloadMappingOverlayComponent {
-    downloadMappingForm: FormGroup = this.fb.group({
+    downloadMappingForm: UntypedFormGroup = this.fb.group({
         serialization: ['turtle', Validators.required]
     });
 
-    constructor(private dialogRef: MatDialogRef<DownloadMappingOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<DownloadMappingOverlayComponent>, private fb: UntypedFormBuilder,
         @Inject(MAT_DIALOG_DATA) public data: {record: MappingRecord}, private mm: MappingManagerService) {}
 
     download(): void {

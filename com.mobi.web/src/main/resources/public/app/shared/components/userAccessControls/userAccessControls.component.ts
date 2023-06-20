@@ -22,7 +22,7 @@
  */
 
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { filter, remove, set, get, find } from 'lodash';
 import { Observable } from 'rxjs';
@@ -71,10 +71,10 @@ export class UserAccessControlsComponent implements OnInit {
     groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + FOAF + 'member' + '>') + ')';
     userRole = 'http://mobi.com/roles/user';
 
-    userSearchControl: FormControl = new FormControl();
+    userSearchControl: UntypedFormControl = new UntypedFormControl();
     availableUsers: User[] = [];
     filteredAvailableUsers: Observable<User[]>;
-    groupSearchControl: FormControl = new FormControl();
+    groupSearchControl: UntypedFormControl = new UntypedFormControl();
     availableGroups: Group[] = [];
     filteredAvailableGroups: Observable<Group[]>;
 

@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
@@ -43,7 +43,7 @@ export class LoginPageComponent {
     });
     errorMessage = '';
 
-    constructor(private loginManagerService: LoginManagerService, private fb: FormBuilder) {}
+    constructor(private loginManagerService: LoginManagerService, private fb: UntypedFormBuilder) {}
 
     login(): void {
         this.loginManagerService.login(this.loginForm.controls.username.value, this.loginForm.controls.password.value)

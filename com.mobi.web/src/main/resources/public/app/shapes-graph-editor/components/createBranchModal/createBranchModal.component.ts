@@ -23,7 +23,7 @@
 import { get } from 'lodash';
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { first } from 'rxjs/operators';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -54,7 +54,7 @@ export class CreateBranchModal {
     });
 
     constructor(private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
-        private fb: FormBuilder, private dialogRef: MatDialogRef<CreateBranchModal>) {}
+        private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CreateBranchModal>) {}
 
     createBranch(): Promise<any> {
         const branchConfig: BranchConfig = {

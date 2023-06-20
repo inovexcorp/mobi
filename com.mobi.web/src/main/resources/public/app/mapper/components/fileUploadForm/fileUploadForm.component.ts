@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { includes, get } from 'lodash';
 
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
@@ -47,7 +47,7 @@ export class FileUploadFormComponent implements OnInit {
     });
     isExcel = false;
 
-    constructor(public dm: DelimitedManagerService, public state: MapperStateService, private fb: FormBuilder) {}
+    constructor(public dm: DelimitedManagerService, public state: MapperStateService, private fb: UntypedFormBuilder) {}
 
     ngOnInit(): void {
         this.uploadFileForm.controls.containsHeaders.valueChanges

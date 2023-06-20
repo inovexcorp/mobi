@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { toString } from 'lodash';
 
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
@@ -53,7 +53,7 @@ export class RdfPreviewTabComponent implements OnInit {
         preview: [this.dm.preview]
     });
     
-    constructor(private fb: FormBuilder, public dm: DelimitedManagerService, public state: MapperStateService) {}
+    constructor(private fb: UntypedFormBuilder, public dm: DelimitedManagerService, public state: MapperStateService) {}
     
     ngOnInit(): void {
         this._setMode();

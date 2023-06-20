@@ -22,7 +22,7 @@
  */
 
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
@@ -61,7 +61,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
 
     filteredDatasets: Observable<DatasetPreview[]>;
 
-    constructor(private dialogRef: MatDialogRef<RunMappingDatasetOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<RunMappingDatasetOverlayComponent>, private fb: UntypedFormBuilder,
         private state: MapperStateService, private dm: DelimitedManagerService, private dam: DatasetManagerService,
         private util: UtilService) {}
 

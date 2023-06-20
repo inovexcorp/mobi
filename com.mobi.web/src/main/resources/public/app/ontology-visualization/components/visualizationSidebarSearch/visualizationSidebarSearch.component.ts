@@ -27,7 +27,7 @@ import {
     OnChanges,
     SimpleChanges,
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { GraphState } from '../../classes';
 import { ControlRecordUtilsService } from '../../services/controlRecordUtils.service';
 
@@ -45,11 +45,11 @@ export class VisualizationSidebarSearch implements OnChanges {
     @Input() graphState: GraphState;
 
     constructor(
-        public fb: FormBuilder,
+        public fb: UntypedFormBuilder,
         private controlRecordUtils: ControlRecordUtilsService
     ) {}
 
-    searchForm: FormGroup = this.fb.group({
+    searchForm: UntypedFormGroup = this.fb.group({
         searchText: [''],
         importOption: ['', [Validators.required]]
     })

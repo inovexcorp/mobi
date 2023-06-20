@@ -43,10 +43,12 @@
               "node_modules/font-awesome/css/font-awesome.min.css",
               "node_modules/@triply/yasgui/build/yasgui.min.css",
               "node_modules/gridjs/dist/theme/mermaid.min.css",
+              "node_modules/codemirror/lib/codemirror.css",
               "src/main/resources/public/app/css/angular-material.scss",
               "src/main/resources/public/app/css/customMaterial.scss",
               "src/main/resources/public/app/css/manchestersyntax.scss",
-              "src/main/resources/public/app/css/yasgui.scss"
+              "src/main/resources/public/app/css/yasgui.scss",
+              "src/main/resources/public/app/shared/directives/dragFile/dragFile.directive.scss"
             ],
             "scripts": [],
             "vendorChunk": true,
@@ -114,7 +116,9 @@
             "tsConfig": "./tsconfig.spec.json",
             "karmaConfig": "./karma.conf.js",
             "styles": [
-              "src/main/resources/public/app/css/styles.scss"
+              "src/main/resources/public/app/css/styles.scss",
+              "node_modules/codemirror/lib/codemirror.css",
+              "src/main/resources/public/app/shared/directives/dragFile/dragFile.directive.scss"
             ],
             "scripts": [],
             "assets": [
@@ -135,7 +139,6 @@
       }
     }
   },
-  "defaultProject": "mobi",
   "cli": {
     "analytics": false
   }

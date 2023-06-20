@@ -23,7 +23,7 @@
 
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -61,8 +61,8 @@ describe('Keyword Select component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
 
-        component.parentForm = new FormGroup({
-            keywords: new FormControl([])
+        component.parentForm = new UntypedFormGroup({
+            keywords: new UntypedFormControl([])
         });
     });
 
@@ -75,10 +75,10 @@ describe('Keyword Select component', function() {
 
     describe('controller method', function() {
         it('should add a keyword', function() {
-            component.addKeyword({input: null, value: ' A'});
+            component.addKeyword({chipInput: null, input: null, value: ' A'});
             expect(component.parentForm.controls.keywords.value).toEqual(['A']);
 
-            component.addKeyword({input: null, value: 'B '});
+            component.addKeyword({chipInput: null, input: null, value: 'B '});
             expect(component.parentForm.controls.keywords.value).toEqual(['A', 'B']);
         });
         it('should remove a keyword', function() {

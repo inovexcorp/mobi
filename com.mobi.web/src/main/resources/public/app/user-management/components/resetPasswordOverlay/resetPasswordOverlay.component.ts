@@ -22,7 +22,7 @@
  */
 
 import { Component } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
@@ -46,7 +46,7 @@ export class ResetPasswordOverlayComponent {
         unmaskPassword: ['', [Validators.required]],
     });
 
-    constructor(private dialogRef: MatDialogRef<ResetPasswordOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<ResetPasswordOverlayComponent>, private fb: UntypedFormBuilder,
         private state: UserStateService, private um: UserManagerService, private util: UtilService) {}
 
     set(): void {

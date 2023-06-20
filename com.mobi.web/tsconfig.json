@@ -4,7 +4,7 @@
       "baseUrl": "./",
       "downlevelIteration": true,
       "outDir": "./target/classes/build/out-tsc",
-      "target": "es2015",
+      "target": "es2020",
       "declaration": false,
       "module": "esnext",
       "skipLibCheck": true,

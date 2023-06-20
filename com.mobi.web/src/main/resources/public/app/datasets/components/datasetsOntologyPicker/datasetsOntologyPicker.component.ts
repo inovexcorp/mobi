@@ -85,7 +85,7 @@ export class DatasetsOntologyPickerComponent implements OnInit {
             error => this._onError(error));
     }
     selectedUpdate(event: MatSelectionListChange): void {
-        this.toggleOntology(event.option.value);
+        this.toggleOntology(event.options[0].value);
     }
     parseOntologyResults(response: HttpResponse<JSONLDObject[]>): void {
         this.error = '';

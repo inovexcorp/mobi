@@ -22,7 +22,7 @@
  */
 
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { unset, isEqual, map } from 'lodash';
 
@@ -62,7 +62,7 @@ export class CreateClassOverlayComponent implements OnInit {
         language: ['']
     });
 
-    constructor(private fb: FormBuilder,
+    constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateClassOverlayComponent>, 
         public os: OntologyStateService, 
         private camelCasePipe: CamelCasePipe,

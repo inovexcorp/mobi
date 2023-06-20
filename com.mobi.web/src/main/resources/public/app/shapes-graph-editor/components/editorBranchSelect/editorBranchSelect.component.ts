@@ -22,7 +22,7 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatAutocompleteTrigger, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { find, get, noop, remove } from 'lodash';
@@ -64,7 +64,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
     @ViewChild(MatAutocompleteTrigger, { static: true }) autocompleteTrigger: MatAutocompleteTrigger;
     @ViewChild('textInput', { static: true }) textInput: ElementRef;
 
-    branchSearchControl: FormControl = new FormControl();
+    branchSearchControl: UntypedFormControl = new UntypedFormControl();
    
     branches: Option[] = [];
     tags: Option[] = [];

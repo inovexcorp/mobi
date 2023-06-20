@@ -144,7 +144,7 @@ describe('Super Property Select component', function() {
             expect(result).toEqual([group]);
         });
         it('add should handle adding a chip', function() {
-            component.add({input: null, value: propOption.item});
+            component.add({chipInput: null, input: null, value: propOption.item});
             expect(component.selected).toEqual([idObj]);
             expect(component.selectedOptions).toEqual([propOption]);
             expect(component.selectedChange.emit).toHaveBeenCalledWith([idObj]);

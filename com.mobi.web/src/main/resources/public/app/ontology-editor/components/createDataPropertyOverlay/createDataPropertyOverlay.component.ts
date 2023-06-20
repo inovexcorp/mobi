@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import {  MatDialogRef } from '@angular/material/dialog';
 import { unset, map } from 'lodash';
 
@@ -77,7 +77,7 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
         characteristics: this.fb.array(this.characteristics.map(() => false))
     });
     
-    constructor(private fb: FormBuilder,
+    constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateDataPropertyOverlayComponent>, 
         public os: OntologyStateService,
         private camelCasePipe: CamelCasePipe,

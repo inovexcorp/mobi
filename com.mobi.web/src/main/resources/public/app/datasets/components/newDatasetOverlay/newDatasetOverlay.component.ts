@@ -22,7 +22,7 @@
  */
 import { OnInit } from '@angular/core';
 import { Component } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { trim, map } from 'lodash';
 
@@ -59,7 +59,7 @@ export class NewDatasetOverlayComponent implements OnInit {
     selectedOntologies: OntologyDetails[] = [];
     repositories: Repository[] = [];
 
-    constructor(private dialogRef: MatDialogRef<NewDatasetOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<NewDatasetOverlayComponent>, private fb: UntypedFormBuilder,
         public dm: DatasetManagerService, public util: UtilService, private rm: RepositoryManagerService) {}
     
     ngOnInit(): void {

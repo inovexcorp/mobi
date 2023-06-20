@@ -22,7 +22,7 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef } from '@angular/material/dialog';
 import { find, get } from 'lodash';
@@ -68,7 +68,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
     ontology: OntologyPreview = undefined;
     update = false;
 
-    ontologyControl = new FormControl();
+    ontologyControl = new UntypedFormControl();
     filteredOntologies: Observable<OntologyPreview[]>;
 
     constructor(private dialogRef: MatDialogRef<RunMappingOntologyOverlayComponent>, private state: MapperStateService,

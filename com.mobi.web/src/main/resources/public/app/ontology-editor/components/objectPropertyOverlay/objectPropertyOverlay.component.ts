@@ -23,7 +23,7 @@
 import { cloneDeep } from 'lodash';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { debounceTime, startWith, map } from 'rxjs/operators';
 
@@ -67,7 +67,7 @@ export class ObjectPropertyOverlayComponent implements OnInit {
     constructor(public os:OntologyStateService,
                 private util: UtilService,
                 private pm: PropertyManagerService,
-                private fb: FormBuilder,
+                private fb: UntypedFormBuilder,
                 private dialogRef: MatDialogRef<ObjectPropertyBlockComponent>) {}
 
     ngOnInit(): void {

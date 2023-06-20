@@ -22,7 +22,7 @@
  */
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete'; 
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable } from 'rxjs';
@@ -39,7 +39,7 @@ export class AssigneeInputComponent implements OnInit {
     filteredUsers: Observable<User[]>;
     separatorKeysCodes: number[] = [ENTER, COMMA];
    
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
     @Input() selected: string[];
 
     @Output() selectedChange = new EventEmitter<string[]>();

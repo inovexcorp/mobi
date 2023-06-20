@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { map } from 'lodash';
 
@@ -54,7 +54,7 @@ export class CreateUserOverlayComponent {
         admin: ''
     });
 
-    constructor(private dialogRef: MatDialogRef<CreateUserOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<CreateUserOverlayComponent>, private fb: UntypedFormBuilder,
         private um: UserManagerService, private util: UtilService) {}
 
     getUsernames(): string[] {

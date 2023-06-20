@@ -23,7 +23,7 @@
 
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 
 import { REGEX } from '../../../constants';
 import { OnEditEventI } from '../../models/onEditEvent.interface';
@@ -55,7 +55,7 @@ export class EditIriOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<EditIriOverlayComponent, OnEditEventI | boolean>, 
                 @Inject(MAT_DIALOG_DATA) public data: { iriBegin: string, iriThen: string, iriEnd: string, validator?: ValidatorFn, validatorMsg?: string, validatorKey?: string},
-                private fb: FormBuilder) {}
+                private fb: UntypedFormBuilder) {}
 
     namespacePattern = REGEX.IRI;
     localNamePattern = REGEX.LOCALNAME;

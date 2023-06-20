@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Input, OnChanges } from '@angular/core';
-import { Validators, ValidatorFn, FormControl, FormGroup } from '@angular/forms';
+import { Validators, ValidatorFn, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 
 import { SETTING, SHACL, XSD } from '../../../prefixes';
 import { UtilService } from '../../services/util.service';
@@ -36,7 +36,7 @@ import { UtilService } from '../../services/util.service';
     templateUrl: './settingFormField.component.html'
 })
 export class SettingFormFieldComponent implements OnChanges {
-    @Input() fieldFormGroup: FormGroup;
+    @Input() fieldFormGroup: UntypedFormGroup;
     @Input() fieldShaclProperty: string;
     @Input() shaclShape: any;
 
@@ -97,7 +97,7 @@ export class SettingFormFieldComponent implements OnChanges {
         this.fieldFormControl.setValue(this.fieldFormControl.value === 'true');
     }
 
-    get fieldFormControl(): FormControl {
-        return this.fieldFormGroup.get([this.fieldShaclProperty]) as FormControl;
+    get fieldFormControl(): UntypedFormControl {
+        return this.fieldFormGroup.get([this.fieldShaclProperty]) as UntypedFormControl;
     }
 }

@@ -23,7 +23,7 @@
 
 import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { get } from 'lodash';
 
 import { CATALOG } from '../../../prefixes';
@@ -50,13 +50,13 @@ export class RequestDetailsFormComponent implements OnInit, OnDestroy {
     targetCommitId = '';
     branchTitle = '';
     targetBranchTitle = '';
-    detailsForm: FormGroup = this.fb.group({
+    detailsForm: UntypedFormGroup = this.fb.group({
         assignees: [''],
     });
 
     @ViewChild('assigneeInput') assigneeInput: ElementRef;
 
-    constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService, private fb: FormBuilder, 
+    constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService, private fb: UntypedFormBuilder, 
         public util: UtilService) {}
 
     ngOnInit(): void {

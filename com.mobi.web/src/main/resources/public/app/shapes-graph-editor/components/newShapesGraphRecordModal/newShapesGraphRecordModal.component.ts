@@ -22,7 +22,7 @@
  */
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Component } from '@angular/core';
-import { FormArray, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
@@ -52,7 +52,7 @@ export class NewShapesGraphRecordModalComponent {
     addOnBlur = true;
     readonly separatorKeysCodes = [ENTER, COMMA] as const;
 
-    constructor(private dialogRef: MatDialogRef<NewShapesGraphRecordModalComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<NewShapesGraphRecordModalComponent>, private fb: UntypedFormBuilder,
                 private state: ShapesGraphStateService) {}
 
     create(): void {
@@ -89,7 +89,7 @@ export class NewShapesGraphRecordModalComponent {
         }
     }
 
-    get keywordControls(): FormArray {
-        return this.createRecordForm.controls.keywords as FormArray;
+    get keywordControls(): UntypedFormArray {
+        return this.createRecordForm.controls.keywords as UntypedFormArray;
     }
 }

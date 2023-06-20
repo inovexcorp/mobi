@@ -131,14 +131,14 @@ describe('Ontology Class Select component', function() {
         describe('add should handle adding a chip when', function() {
             it('the class exists', function() {
                 ontologyStateStub.listItem.classes.iris = { [classOption.item]: 'ontologyId' };
-                component.add({input: null, value: classOption.item});
+                component.add({chipInput: null, input: null, value: classOption.item});
                 expect(component.selected).toEqual([classOption.item]);
                 expect(component.selectedOptions).toEqual([classOption]);
                 expect(component.selectedChange.emit).toHaveBeenCalledWith([classOption.item]);
                 expect(component.clazzControl.value).toEqual(null);
             });
             it('the class does not exist', function() {
-                component.add({input: null, value: classOption.item});
+                component.add({chipInput: null, input: null, value: classOption.item});
                 expect(component.selected).toEqual([]);
                 expect(component.selectedOptions).toEqual([]);
                 expect(component.selectedChange.emit).not.toHaveBeenCalled();

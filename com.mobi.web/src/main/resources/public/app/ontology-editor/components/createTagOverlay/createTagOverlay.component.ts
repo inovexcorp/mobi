@@ -23,7 +23,7 @@
 import { get } from 'lodash';
 import { switchMap } from 'rxjs/operators';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -57,7 +57,7 @@ export class CreateTagOverlayComponent implements OnInit {
         iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]],
     });
 
-    constructor(private fb: FormBuilder, private dialogRef: MatDialogRef<CreateTagOverlayComponent>,
+    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CreateTagOverlayComponent>,
         private cm: CatalogManagerService, public os: OntologyStateService,
         private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
 

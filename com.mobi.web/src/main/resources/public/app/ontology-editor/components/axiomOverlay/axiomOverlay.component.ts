@@ -24,7 +24,7 @@ import { get, has, intersection, filter, forEach, some, isArray, sortBy, groupBy
 import { Component, Inject, OnInit } from '@angular/core';
 import { first, startWith, map, debounceTime } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 
@@ -79,7 +79,7 @@ export class AxiomOverlayComponent implements OnInit {
         localNames: {}
     };
 
-    axiomChoice = new FormControl('');
+    axiomChoice = new UntypedFormControl('');
 
     constructor( private os: OntologyStateService, private om: OntologyManagerService, private splitIRI: SplitIRIPipe,
                  private dialogRef: MatDialogRef<AxiomOverlayComponent>, private util: UtilService,

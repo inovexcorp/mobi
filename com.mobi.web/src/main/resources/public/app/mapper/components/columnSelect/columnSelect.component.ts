@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { get } from 'lodash';
 
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
@@ -47,7 +47,7 @@ export class ColumnSelectComponent implements OnInit {
     columns: ColumnOption[] = [];
     preview = '';
 
-    @Input() parentForm: FormGroup;
+    @Input() parentForm: UntypedFormGroup;
 
     constructor(public dm: DelimitedManagerService) {}
 

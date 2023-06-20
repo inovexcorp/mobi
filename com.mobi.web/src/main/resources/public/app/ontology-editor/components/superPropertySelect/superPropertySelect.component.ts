@@ -23,7 +23,7 @@
 
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete'; 
 import { MatChipInputEvent } from '@angular/material/chips';
 import { findIndex, includes } from 'lodash';
@@ -68,7 +68,7 @@ export class SuperPropertySelectComponent implements OnInit {
     filteredProperties: Observable<PropGrouping[]>;
     selectedOptions: PropOption[] = [];
 
-    propControl: FormControl = new FormControl();
+    propControl: UntypedFormControl = new UntypedFormControl();
 
     @ViewChild('propInput') propInput: ElementRef;
 

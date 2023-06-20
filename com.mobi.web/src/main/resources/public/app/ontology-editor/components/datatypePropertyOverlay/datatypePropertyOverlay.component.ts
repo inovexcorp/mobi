@@ -22,7 +22,7 @@
  */
 import { cloneDeep } from 'lodash';
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, startWith } from 'rxjs/operators';
 
@@ -69,7 +69,7 @@ export class DatatypePropertyOverlayComponent implements OnInit {
     constructor(private dialogRef: MatDialogRef<DatatypePropertyOverlayComponent>,
                 public os: OntologyStateService,
                 private pm: PropertyManagerService,
-                private fb: FormBuilder,
+                private fb: UntypedFormBuilder,
                 public util: UtilService,
                 @Inject(MAT_DIALOG_DATA) public data: { editingProperty: boolean,
                     propertySelect: string,

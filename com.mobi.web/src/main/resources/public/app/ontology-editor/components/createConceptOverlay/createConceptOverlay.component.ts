@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
@@ -59,7 +59,7 @@ export class CreateConceptOverlayComponent implements OnInit {
         language: ['']
     });
     
-    constructor(private fb: FormBuilder,
+    constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateConceptOverlayComponent>, 
         public os: OntologyStateService,  
         private camelCasePipe: CamelCasePipe,

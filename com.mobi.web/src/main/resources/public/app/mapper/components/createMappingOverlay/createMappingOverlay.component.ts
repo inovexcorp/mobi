@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { map, trim, uniq } from 'lodash';
 
@@ -49,7 +49,7 @@ export class CreateMappingOverlayComponent implements OnInit {
         keywords: [[]]
     });
 
-    constructor(private mm: MappingManagerService, private state: MapperStateService, private fb: FormBuilder,
+    constructor(private mm: MappingManagerService, private state: MapperStateService, private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateMappingOverlayComponent>,) {}
     
     ngOnInit(): void {

@@ -22,7 +22,7 @@
  */
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { UntypedFormControl, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete'; 
 import { MatChipInputEvent } from '@angular/material/chips';
 import { get, groupBy, includes, sortBy } from 'lodash';
@@ -80,8 +80,8 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
     separatorKeysCodes: number[] = [ENTER];
     filteredIris: Observable<IriGrouping[]>;
 
-    singleControl: FormControl = new FormControl();
-    multiControl: FormControl = new FormControl();
+    singleControl: UntypedFormControl = new UntypedFormControl();
+    multiControl: UntypedFormControl = new UntypedFormControl();
 
     @ViewChild('multiInput') multiInput: ElementRef;
 

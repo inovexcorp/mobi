@@ -31,7 +31,7 @@ import {
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
 import { DiscoverDatasetSelectComponent } from './discoverDatasetSelect.component';
 import { DatasetSelectComponent } from '../../../shared/components/datasetSelect/datasetSelect.component';
-import { FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 
 describe('Discover Dataset Select Component', function() {
     let component: DiscoverDatasetSelectComponent;
@@ -59,8 +59,8 @@ describe('Discover Dataset Select Component', function() {
         spyOn(component.recordIdChange, 'emit');
 
         component.recordId = '';
-        component.parentForm = new FormGroup({
-            datasetSelect: new FormControl(''),
+        component.parentForm = new UntypedFormGroup({
+            datasetSelect: new UntypedFormControl(''),
         });
     });
 

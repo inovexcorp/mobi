@@ -22,7 +22,7 @@
  */
 
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { UntypedFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef } from '@angular/material/dialog';
 import { get, remove, find, has, invertBy, pick } from 'lodash';
@@ -91,7 +91,7 @@ export class PropMappingOverlayComponent implements OnInit {
 
     filteredDatatypes: Observable<DatatypeGroup[]>;
 
-    constructor(private dialogRef: MatDialogRef<PropMappingOverlayComponent>, private fb: FormBuilder,
+    constructor(private dialogRef: MatDialogRef<PropMappingOverlayComponent>, private fb: UntypedFormBuilder,
         public state: MapperStateService, private mm: MappingManagerService,
         public om: OntologyManagerService, private pm: PropertyManagerService,
         private util: UtilService) {}

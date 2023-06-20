@@ -22,7 +22,7 @@
  */
 
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -51,7 +51,7 @@ import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
 export class NewInstancePropertyOverlayComponent implements OnInit {
     searchText = '';
     selectedProperty: PropertyDetails = undefined;
-    propertyControl = new FormControl();
+    propertyControl = new UntypedFormControl();
     filteredProperties: Observable<PropertyDetails[]>;
 
     constructor(private dialogRef: MatDialogRef<NewInstancePropertyOverlayComponent>,
