@@ -26,9 +26,18 @@
     </div>
     <div *ngIf="imports.length" class="direct-imports-container">
         <p *ngFor="let imported of imports" class="import">
-            <a *ngIf="!failed(imported['@id']); else failedImport" [href]="imported['@id']" target="_blank" class="import-iri text-truncate flex-1">{{imported['@id']}}</a>
+            <a *ngIf="!failed(imported['@id']); else failedImport"
+               [href]="imported['@id']"
+               target="_blank"
+               class="import-iri text-truncate flex-1"
+               matTooltip="{{imported['@id']}}"
+               matTooltipClass="unset-max-width"
+               matTooltipPosition="above">{{imported['@id']}}</a>
             <ng-template #failedImport>
-                <span class="w-100 text-truncate text-danger">{{imported['@id']}}</span>
+                <span class="w-100 text-truncate text-danger"
+                      matTooltip="{{imported['@id']}}"
+                      matTooltipClass="unset-max-width"
+                      matTooltipPosition="above">{{imported['@id']}}</span>
                 <strong class="text-danger"> (failed)</strong>
             </ng-template>
             <a mat-icon-button color="primary" *ngIf="os.canModify()" (click)="setupRemove(imported['@id'])" title="Delete"><mat-icon>delete</mat-icon></a>
@@ -37,9 +46,18 @@
     <div *ngIf="indirectImports.length" class="indirect-import-container">
         <p *ngFor="let iri of indirectImports" class="indirect import">
             <span class="font-italic mr-1">Indirect:</span>
-            <a *ngIf="!failed(iri); else failedIndirectImport" [href]="iri" target="_blank" class="import-iri text-truncate flex-1">{{iri}}</a>
+            <a *ngIf="!failed(iri); else failedIndirectImport"
+               [href]="iri"
+               target="_blank"
+               class="import-iri text-truncate flex-1"
+               matTooltip="{{iri}}"
+               matTooltipClass="unset-max-width"
+               matTooltipPosition="above">{{iri}}</a>
             <ng-template #failedIndirectImport>
-                <span class="text-danger text-truncate flex-1">{{iri}}</span>
+                <span class="text-danger text-truncate flex-1"
+                      matTooltip="{{iri}}"
+                      matTooltipClass="unset-max-width"
+                      matTooltipPosition="above">{{iri}}</span>
                 <strong class="text-danger"> (failed)</strong>
             </ng-template>
         </p>
