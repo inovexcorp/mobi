@@ -116,12 +116,13 @@ NOTE: Predefined Property Groups coming soon
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix setting: <http://mobi.com/ontologies/preference#>.
+@prefix dct: <http://purl.org/dc/terms/> .
 @prefix : <http://mobi.com/ontologies/test#>.
 @base <http://mobi.com/ontologies/test>.
 
 :MyBooleanPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf setting:Preference;
-    sh:description "What value do you want for your Boolean Preference?" ;
+    dct:description "What value do you want for your Boolean Preference?" ;
     sh:property :MyBooleanPreferencePropertyShape;
     setting:inGroup :MyTestPreferenceGroup .
 
@@ -267,13 +268,14 @@ The following is an example:
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix setting: <http://mobi.com/ontologies/preference#>.
+@prefix dct: <http://purl.org/dc/terms/> .
 @prefix : <http://mobi.com/ontologies/test#>.
 @base <http://mobi.com/ontologies/test>.
 
 <http://mobi.com/setting-management> {
 :MyBooleanPreference a owl:Class, sh:NodeShape;
 rdfs:subClassOf setting:Preference;
-sh:description "What value do you want for your Boolean Preference?" ;
+dct:description "What value do you want for your Boolean Preference?" ;
 sh:property :MyBooleanPreferencePropertyShape;
 setting:inGroup :MyTestPreferenceGroup .
 

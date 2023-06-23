@@ -19,7 +19,7 @@
 
 :DefaultOntologyNamespaceApplicationSetting a owl:Class, sh:NodeShape;
     rdfs:subClassOf setting:ApplicationSetting;
-    sh:description "Default Ontology Namespace";
+    dct:description "Default Ontology Namespace";
     rdfs:comment "An Application Setting an organization can have within the Mobi framework that signifies the namespace to be used for created ontology IRIs."@en;
     sh:property :DefaultOntologyNamespaceApplicationSettingPropertyShape;
     setting:inGroup :NamespaceApplicationSettingGroup .

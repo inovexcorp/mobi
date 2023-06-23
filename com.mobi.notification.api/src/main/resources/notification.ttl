@@ -19,7 +19,7 @@
 
 :EmailNotificationPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf setting:Preference;
-    sh:description "Receive email notifications" ;
+    dct:description "Receive email notifications" ;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;
     sh:property :EmailNotificationPreferencePropertyShape;
     setting:inGroup :NotificationPreferenceGroup .
