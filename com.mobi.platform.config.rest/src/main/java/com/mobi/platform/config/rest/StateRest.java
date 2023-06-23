@@ -23,6 +23,7 @@ package com.mobi.platform.config.rest;
  * #L%
  */
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -125,7 +126,11 @@ public class StateRest {
             results.keySet().forEach(resource -> {
                 ObjectNode state = mapper.createObjectNode();
                 state.put("id", resource.stringValue());
-                state.put("model", convertModel(results.get(resource)));
+                try {
+                    state.set("model", mapper.readTree(convertModel(results.get(resource))));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
                 array.add(state);
             });
             return Response.ok(array.toString()).build();
