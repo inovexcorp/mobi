@@ -314,11 +314,25 @@ public class RestoreTest {
                 "http://mobi.com/states#0002").collect(Collectors.toList());
         Assert.assertEquals(graphExpect, queryResource("/queries/searchStateInstanceNoUser.rq", "state"));
 
-        restore.restorePostProcess(bundleContext, "1.20");
+        restore.restorePostProcess(bundleContext, "2.3");
 
         Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0002"));
         Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0001"));
         Assert.assertEquals(2, Mockito.mockingDetails(stateManager).getInvocations().size());
+    }
+
+    @Test
+    public void cleanGraphStateInstanceTest() {
+        loadFiles("/systemState.trig");
+        List<String> graphExpect = Stream.of("http://mobi.com/states#0001",
+                "http://mobi.com/states#0002").collect(Collectors.toList());
+        Assert.assertEquals(graphExpect, queryResource("/queries/searchStateInstanceNoUser.rq", "state"));
+
+        restore.restorePostProcess(bundleContext, "1.20");
+
+        Mockito.verify(stateManager, times(2)).deleteState(vf.createIRI("http://mobi.com/states#0002"));
+        Mockito.verify(stateManager, times(2)).deleteState(vf.createIRI("http://mobi.com/states#0001"));
+        Assert.assertEquals(8, Mockito.mockingDetails(stateManager).getInvocations().size());
     }
 
     @Test

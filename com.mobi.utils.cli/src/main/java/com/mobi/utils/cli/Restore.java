@@ -61,6 +61,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -464,10 +465,9 @@ public class Restore implements Action {
         TupleQueryResult results = conn.prepareTupleQuery(SEARCH_STATE_INSTANCES_NO_USER).evaluate();
         results.forEach(bindingSet -> stateManager.deleteState(Bindings.requiredResource(bindingSet, "state")));
 
-        if (mobiVersions.indexOf(backupVersion) < 2) {
+        if (mobiVersions.indexOf(backupVersion) < mobiVersions.indexOf("2.3")) {
             // Clear ontology editor state
-            RepositoryResult<Statement> stateResults = conn.getStatements(null,
-                    vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE));
+            RepositoryResult<Statement> stateResults = conn.getStatements(null, RDF.TYPE, vf.createIRI(State.TYPE));
             stateResults.forEach(statement -> stateManager.deleteState(statement.getSubject()));
             LOGGER.trace("Remove state statements");
         }
