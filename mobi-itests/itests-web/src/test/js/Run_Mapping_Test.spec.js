@@ -193,7 +193,7 @@ module.exports = {
                 browser.click('div.mat-dialog-actions button.mat-primary');
                 browser.globals.wait_for_no_spinners(browser);
                 browser.useXpath();
-                browser.assert.visible('//div[contains(@class, "mat-list-item")]//h4[text()[contains(., "' + properties[i] + '")]]');
+                browser.assert.visible('//class-mapping-details//mat-list-item//h4[text()[contains(., "' + properties[i] + '")]]');
                 browser.useCss()
         }
     },
@@ -231,7 +231,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()
-            .assert.visible('//div[contains(@class, "mat-list-item")]//h4[text()[contains(., "Crystal")]]')
+            .assert.visible('//class-mapping-details//mat-list-item//h4[text()[contains(., "Crystal")]]')
             .useCss()
     },
 
@@ -267,7 +267,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()
-            .assert.visible('//div[contains(@class, "mat-list-item")]//h4[text()[contains(., "Crystal")]]')
+            .assert.visible('//class-mapping-details//mat-list-item//h4[text()[contains(., "Crystal")]]')
             .useCss()
     },
 

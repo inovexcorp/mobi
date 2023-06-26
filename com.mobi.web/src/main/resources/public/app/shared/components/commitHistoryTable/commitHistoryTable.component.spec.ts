@@ -24,6 +24,7 @@
 import { DebugElement, EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { forEach } from 'lodash';
@@ -120,6 +121,10 @@ describe('Commit History Table component', function() {
     });
     afterEach(function() {
         cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
+        catalogManagerStub = null;
     });
     describe('should initialize with the correct data for', function() {
         it('headTitle', function() {
@@ -203,6 +208,16 @@ describe('Commit History Table component', function() {
         });
     });
     describe('controller methods', function() {
+        it('should open the commitInfoOverlay', async function() {
+            component.commits = testData.commits;
+            testData.headers = {'has-more-results': 'false'};
+            component.openCommitOverlay(testData.commitId);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {
+                data: { commit: testData.commit, ontRecordId: testData.recordId }
+            });
+        });
         describe('should get the list of commits', function() {
             it('unless a commit has not been passed', async function() {
                 catalogManagerStub.getDifference.calls.reset();
@@ -421,6 +436,15 @@ describe('Commit History Table component', function() {
                 branches: new SimpleChange(null, 'new', true)
             });
             expect(component.getCommits).toHaveBeenCalledWith();
+        });
+        it('should call openModal for commitInfoOverlay when an id is clicked', async function() {
+            component.commits = [testData.commit];
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const id = element.queryAll(By.css('table tr td.commit-id a'))[0];
+            id.triggerEventHandler('click', null);
+            expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {data: {commit: testData.commit, ontRecordId: testData.recordId}});
         });
     });
 });

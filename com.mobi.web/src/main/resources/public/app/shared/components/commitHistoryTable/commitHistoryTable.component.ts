@@ -36,6 +36,8 @@ import {
     SimpleChanges,
     ViewChild
 } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
 import { v4 } from 'uuid';
 
 import { first } from 'rxjs/operators';
@@ -49,13 +51,15 @@ import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { Tag } from '../../models/tag.interface';
 import { CATALOG } from '../../../prefixes';
 import { HttpResponse } from '@angular/common/http';
-import { get } from 'lodash';
+import { get, find } from 'lodash';
 
 /**
  * @class shared.CommitHistoryTableComponent
  *
  * A directive that creates a table containing the commit chain of the provided commit. Can optionally also display a
- * SVG graph generated using commit-history-graph component
+ * SVG graph generated using commit-history-graph component. Clicking on a commit id or its corresponding circle in the graph will open up a
+ * {@link shared.CommitInfoOverlayComponent commit info overlay}. Can optionally provide a variable to bind the
+ * retrieved commits to. The directive is replaced by the content of the template.
  *
  * @param {string} commitId The IRI string of a commit in the local catalog
  * @param {string} [headTitle=''] headTitle The optional title to put on the top commit
@@ -92,7 +96,8 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         private cm: CatalogManagerService,
         private spinnerSvc: ProgressSpinnerService,
         public um: UserManagerService,
-        private iterableDiffers: IterableDiffers) {
+        private iterableDiffers: IterableDiffers,
+        private dialog: MatDialog) {
     }
     error = '';
     commits: Commit[] = [];
@@ -123,6 +128,14 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     }
     ngOnDestroy(): void {
         this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
+    }
+    openCommitOverlay(commitId: string): void {
+        this.dialog.open(CommitInfoOverlayComponent, {
+            data: {
+                commit: find(this.commits, {id: commitId}),
+                ontRecordId: this.recordId
+            }
+        });
     }
     commitDotClicked(commit): void {
         this.commitDotOnClick.emit(commit);
