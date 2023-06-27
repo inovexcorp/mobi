@@ -23,6 +23,7 @@ package com.mobi.shapes.impl.record;
  * #L%
  */
 
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
@@ -58,6 +59,7 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.orm.OrmFactory;
@@ -646,8 +648,14 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         ShapesGraphRecord deletedRecord;
         try (RepositoryConnection connection = repository.getConnection()) {
             connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(branch.getModel(), branch.getResource());
+            connection.add(headCommit.getModel(), headCommit.getResource());
             connection.add(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), testRecord.getResource());
             deletedRecord = recordService.delete(testIRI, user, connection);
+
+            assertEquals(testRecord, deletedRecord);
+            assertFalse(ConnectionUtils.containsContext(connection, branch.getResource()));
+            assertFalse(ConnectionUtils.containsContext(connection, commitIRI));
         }
 
         assertEquals(testRecord, deletedRecord);
@@ -655,7 +663,6 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
         verify(utilsService).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
         verify(utilsService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));

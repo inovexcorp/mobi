@@ -1,0 +1,66 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?graph WHERE {
+  {
+    ?recordId a mcat:VersionedRDFRecord ;
+  		mcat:branch ?graph .
+    ?graph a mcat:Branch .
+  }
+  UNION
+  {
+    ?recordId mcat:branch ?branch .
+    ?branch mcat:head ?graph .
+    ?graph a mcat:Commit .
+  }
+  UNION
+  {
+    ?recordId mcat:branch ?branch .
+    ?branch mcat:head ?headCommit .
+    ?headCommit a mcat:Commit ;
+            (mcat:baseCommit | mcat:auxiliaryCommit)+ ?graph .
+    ?graph a mcat:Commit .
+  }
+  UNION
+  {
+    ?recordId mcat:branch ?branch .
+    ?branch mcat:head ?headCommit .
+    ?headCommit a mcat:Commit ;
+            prov:generated ?revision .
+    ?revision a mcat:Revision ;
+            mcat:additions ?graph .
+  }
+  UNION
+  {
+    ?recordId mcat:branch ?branch .
+    ?branch mcat:head ?headCommit .
+    ?headCommit a mcat:Commit ;
+            prov:generated ?revision .
+    ?revision a mcat:Revision ;
+            mcat:deletions ?graph .
+  }
+  UNION
+  {
+    ?recordId mcat:branch ?branch .
+    ?branch mcat:head ?headCommit .
+    ?headCommit a mcat:Commit ;
+            (mcat:baseCommit | mcat:auxiliaryCommit)+ ?commit .
+    ?commit a mcat:Commit ;
+             prov:generated ?revision .
+    ?revision a mcat:Revision ;
+            mcat:additions ?graph .
+  }
+  UNION
+  {
+    ?recordId mcat:branch ?branch .
+    ?branch mcat:head ?headCommit .
+    ?headCommit a mcat:Commit ;
+            (mcat:baseCommit | mcat:auxiliaryCommit)+ ?commit .
+    ?commit a mcat:Commit ;
+             prov:generated ?revision .
+    ?revision a mcat:Revision ;
+            mcat:deletions ?graph .
+  }
+}
