@@ -48,6 +48,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.BatchGraphInserter;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.ResourceUtils;
@@ -84,9 +85,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -110,11 +109,16 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     private static final String ENCODED_POLICY_IRI_BINDING = "%POLICYIRIENCODED%";
     private static final String MASTER_BRANCH_IRI_BINDING = "%MASTER%";
     private static final String RECORD_NO_POLICY_QUERY;
+    private static final String GET_GRAPHS_TO_DELETE;
 
     static {
         try {
             RECORD_NO_POLICY_QUERY = IOUtils.toString(
                     AbstractVersionedRDFRecordService.class.getResourceAsStream("/record-no-policy.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_GRAPHS_TO_DELETE = IOUtils.toString(
+                    AbstractVersionedRDFRecordService.class.getResourceAsStream("/get-graphs-to-delete.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -401,12 +405,14 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         mergeRequestManager.deleteMergeRequestsWithRecordId(record.getResource(), conn);
         record.getVersion_resource().forEach(resource -> utilsService.removeVersion(record.getResource(),
                 resource, conn));
-        conn.remove(record.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
-                null, record.getResource());
-        List<Resource> deletedCommits = new ArrayList<>();
-        record.getBranch_resource().forEach(resource -> utilsService.removeBranch(record.getResource(),
-                resource, deletedCommits, conn));
+
         Resource recordIri = record.getResource();
+        TupleQuery getGraphsQuery = conn.prepareTupleQuery(GET_GRAPHS_TO_DELETE);
+        getGraphsQuery.setBinding("recordId", recordIri);
+        getGraphsQuery.evaluate().forEach(bindingSet -> {
+            Resource graph = Bindings.requiredResource(bindingSet, "graph");
+            conn.clear(graph);
+        });
         Set<Resource> inProgressCommitIris = new HashSet<>();
         conn.getStatements(null, valueFactory.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), recordIri)
                 .forEach(result -> inProgressCommitIris.add(result.getSubject()));

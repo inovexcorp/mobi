@@ -23,6 +23,7 @@ package com.mobi.etl.service.delimited.record;
  * #L%
  */
 
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -56,6 +57,7 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.orm.OrmFactory;
@@ -88,7 +90,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -387,15 +388,18 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     public void deleteTest() throws Exception {
         try (RepositoryConnection connection = repository.getConnection()) {
             connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(branch.getModel(), branch.getResource());
+            connection.add(headCommit.getModel(), headCommit.getResource());
             connection.add(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), testRecord.getResource());
             MappingRecord deletedRecord = recordService.delete(recordIRI, user, connection);
 
             assertEquals(testRecord, deletedRecord);
+            assertFalse(ConnectionUtils.containsContext(connection, branch.getResource()));
+            assertFalse(ConnectionUtils.containsContext(connection, commitIRI));
         }
         verify(utilsService).optObject(eq(recordIRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(provUtils).startDeleteActivity(user, recordIRI);
         verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(recordIRI), any(RepositoryConnection.class));
-        verify(utilsService).removeBranch(eq(recordIRI), eq(branchIRI), any(List.class), any(RepositoryConnection.class));
         verify(utilsService).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
         verify(utilsService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
