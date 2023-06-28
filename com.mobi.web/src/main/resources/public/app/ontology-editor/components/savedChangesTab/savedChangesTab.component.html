@@ -41,7 +41,12 @@
                                 <div class="text-truncate">{{item.entityName}}</div>
                             </mat-panel-title>
                             <mat-panel-description class="remove-min-width text-truncate" title="{{item.id}}">
-                                <small class="text-truncate"><a (click)="go($event, item.id)">{{item.id}}</a></small>
+                                <small class="text-truncate">
+                                    <a *ngIf="os.isLinkable(item.id); else notLinkable" (click)="go($event, item.id)">{{item.id}}</a>
+                                    <ng-template #notLinkable>
+                                        <span>{{item.id}}</span>
+                                    </ng-template>
+                                </small>
                             </mat-panel-description>
                         </mat-expansion-panel-header>
                         <ng-template matExpansionPanelContent>

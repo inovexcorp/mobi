@@ -58,7 +58,8 @@ export interface ChangesItem {
  */
 @Component({
     selector: 'saved-changes-tab',
-    templateUrl: './savedChangesTab.component.html'
+    templateUrl: './savedChangesTab.component.html',
+    styleUrls: ['./savedChangesTab.component.scss']
 })
 export class SavedChangesTabComponent implements OnInit, OnChanges {
     @Input() difference: Difference;

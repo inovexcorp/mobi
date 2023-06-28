@@ -58,4 +58,8 @@
         padding-bottom: .25rem !important;
         margin-bottom: 0 !important;
     }
+    a {
+        color: var(--primary);
+        text-decoration: underline;
+    }
 }

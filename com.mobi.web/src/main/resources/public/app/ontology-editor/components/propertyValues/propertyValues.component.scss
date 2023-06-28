@@ -63,5 +63,9 @@
                 opacity: 1;
             }
         }
+        a {
+            color: var(--primary) !important;
+            text-decoration: underline;
+        }
     }
 }
