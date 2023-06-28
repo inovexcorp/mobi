@@ -47,4 +47,8 @@
             font-size: 14px !important;
         }
     }
+    a {
+        color: var(--primary);
+        text-decoration: underline;
+    }
 }
