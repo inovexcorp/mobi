@@ -54,7 +54,8 @@
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-collections.version>3.2.1</commons-collections.version>
-        <commons-io.version>2.11.0</commons-io.version>
+        <commons-fileupload.version>1.5</commons-fileupload.version>
+        <commons-io.version>2.13.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-rdf-api.version>0.5.0</commons-rdf-api.version>
@@ -63,8 +64,8 @@
         <ehcache.version>3.3.1</ehcache.version> <!-- 3.10.0 is out, but causes unsatisfied ehcache services -->
         <httpclient.version>4.5.13</httpclient.version>
         <httpcore.version>4.4.15</httpcore.version>
-        <jackson.version>2.13.2</jackson.version>
-        <jackson-databind.version>2.13.2.1</jackson-databind.version>
+        <jackson.version>2.15.2</jackson.version>
+        <jackson-databind.version>2.15.2</jackson-databind.version>
         <javax.cache.version>1.1.1</javax.cache.version>
         <jaxb.version>2.3.3</jaxb.version>
         <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
