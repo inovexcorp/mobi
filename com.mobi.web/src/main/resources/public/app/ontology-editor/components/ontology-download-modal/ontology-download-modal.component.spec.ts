@@ -95,7 +95,7 @@ describe('OntologyDownloadModalComponent', function() {
     describe('controller methods', function() {
         it('should download the ontology with the selected serialization', function() {
             component.download();
-            expect(ontologyManagerStub.downloadOntology).toHaveBeenCalledWith(recordId, '', '', 'turtle', 'ThisisaTitle');
+            expect(ontologyManagerStub.downloadOntology).toHaveBeenCalledWith(recordId, '', '', 'turtle', 'ThisisaTitle', false);
             expect(matDialogRef.close).toHaveBeenCalledWith();
         });
     });

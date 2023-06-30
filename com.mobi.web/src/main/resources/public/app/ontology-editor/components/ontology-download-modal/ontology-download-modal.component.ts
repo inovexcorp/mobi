@@ -50,7 +50,7 @@ export class OntologyDownloadModalComponent {
 
     download(): void {
         const fileName = this.data.record.title.replace(/[ &/\\#,+()$~%.'":*?<>{}]/g, '');
-        this._om.downloadOntology(this.data.record.jsonld['@id'], '', '', this.downloadForm.controls.serialization.value, fileName);
+        this._om.downloadOntology(this.data.record.jsonld['@id'], '', '', this.downloadForm.controls.serialization.value, fileName, false);
         this._dialogRef.close();
     }
 }

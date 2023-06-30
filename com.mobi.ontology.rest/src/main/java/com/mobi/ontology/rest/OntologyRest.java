@@ -501,6 +501,7 @@ public class OntologyRest {
      *                    otherwise, nothing will be returned.
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param fileName    the file name for the ontology file
+     * @param applyInProgressCommit whether to apply the InProgessCommit to the downlaod.
      * @return the ontology associated with requested record ID to download.
      */
     @GET
@@ -535,10 +536,12 @@ public class OntologyRest {
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "File name for the ontology file")
-            @DefaultValue("ontology") @QueryParam("fileName") String fileName
+            @DefaultValue("ontology") @QueryParam("fileName") String fileName,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             StreamingOutput stream = os -> {

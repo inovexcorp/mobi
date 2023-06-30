@@ -462,7 +462,8 @@ describe('Ontology Manager service', function() {
                     branchId,
                     commitId,
                     rdfFormat: 'turtle',
-                    fileName: 'ontology'
+                    fileName: 'ontology',
+                    applyInProgressCommit: true
                 }
             });
             service.downloadOntology(recordId, branchId, commitId, 'turtle');
@@ -474,7 +475,8 @@ describe('Ontology Manager service', function() {
                     branchId,
                     commitId,
                     rdfFormat: 'jsonld',
-                    fileName: 'ontology'
+                    fileName: 'ontology',
+                    applyInProgressCommit: true
                 }
             });
             service.downloadOntology(recordId, branchId, commitId);
@@ -486,7 +488,8 @@ describe('Ontology Manager service', function() {
                     branchId,
                     commitId,
                     rdfFormat: 'turtle',
-                    fileName: 'fileName'
+                    fileName: 'fileName',
+                    applyInProgressCommit: true
                 }
             });
             service.downloadOntology(recordId, branchId, commitId, 'turtle', 'fileName');
@@ -498,10 +501,24 @@ describe('Ontology Manager service', function() {
                     branchId,
                     commitId,
                     rdfFormat: 'jsonld',
-                    fileName: 'fileName'
+                    fileName: 'fileName',
+                    applyInProgressCommit: true
                 }
             });
             service.downloadOntology(recordId, branchId, commitId, undefined, 'fileName');
+            expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
+        });
+        it('without applying the inProgressCommit', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId,
+                    commitId,
+                    rdfFormat: 'turtle',
+                    fileName: 'fileName',
+                    applyInProgressCommit: false
+                }
+            });
+            service.downloadOntology(recordId, branchId, commitId, 'turtle', 'fileName', false);
             expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
         });
     });
