@@ -217,13 +217,15 @@ export class OntologyManagerService {
      * @param {string} commitId The id of the Commit to retrieve the ontology from
      * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
      * @param {string} [fileName='ontology'] The name given to the downloaded file
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the InProgessCommit
      */
-    downloadOntology(recordId: string, branchId: string, commitId: string, rdfFormat = 'jsonld', fileName = 'ontology'): void {
+    downloadOntology(recordId: string, branchId: string, commitId: string, rdfFormat = 'jsonld', fileName = 'ontology', applyInProgressCommit = true): void {
         const params = this.util.createHttpParams({
             branchId,
             commitId,
             rdfFormat: rdfFormat || 'jsonld',
-            fileName: fileName || 'ontology'
+            fileName: fileName || 'ontology',
+            applyInProgressCommit
         });
         window.open(this.prefix + '/' + encodeURIComponent(recordId) + '?' + params.toString());
     }
