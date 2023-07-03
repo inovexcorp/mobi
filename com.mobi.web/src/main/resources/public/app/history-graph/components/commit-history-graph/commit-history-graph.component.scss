@@ -23,4 +23,9 @@
 .commit-graph-wrapper {
     overflow: auto;
     white-space: nowrap;
+
+    ::ng-deep text.commit-hash-string {
+        color: var(--primary);
+        text-decoration: underline;
+    }
 }
