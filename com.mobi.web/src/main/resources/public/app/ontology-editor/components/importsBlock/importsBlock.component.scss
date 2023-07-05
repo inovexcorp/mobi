@@ -47,7 +47,7 @@
             font-size: 14px !important;
         }
     }
-    a {
+    a:not(.fa) {
         color: var(--primary);
         text-decoration: underline;
     }

@@ -1,4 +1,4 @@
-![Mobi Logo](com.mobi.web/src/main/resources/public/images/mobi-primary-logo.png?raw=true "Mobi")
+![Mobi Logo](com.mobi.web/src/main/resources/public/app/images/mobi-primary-logo.png?raw=true "Mobi")
 ***
 
 Mobi is a collaborative knowledge graph platform for teams and communities to develop and publish semantic data and models.
@@ -10,12 +10,12 @@ See https://mobi.inovexcorp.com/ for more information.
 
 To build the Mobi source code, you must have the following software and tools installed.
 
-| Technology  | Version  | Download Link  |
-| ----------- | -------- | -------------- |
-| Java        | 11        | http://www.oracle.com/technetwork/java/javase/downloads/index.html  |
-| Maven       | 3.6.3+      | https://maven.apache.org/download.cgi  |
-| Node.js     | 14+      | https://nodejs.org/en/download/  |
-| Google Chrome | 103+ | https://www.google.com/chrome/ |
+| Technology  | Version | Download Link  |
+| ----------- |---------| -------------- |
+| Java        | 17      | http://www.oracle.com/technetwork/java/javase/downloads/index.html  |
+| Maven       | 3.6.3+  | https://maven.apache.org/download.cgi  |
+| Node.js     | 14+     | https://nodejs.org/en/download/  |
+| Google Chrome | 114+    | https://www.google.com/chrome/ |
 
 Clone the Mobi project from git and navigate to that directory on your machine. Run the following command to build the source:
 
