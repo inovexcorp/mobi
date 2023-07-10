@@ -156,7 +156,7 @@ describe('Datasets Ontology Picker component', function() {
 
     it('should initialize correctly', function() {
         spyOn(component, 'setOntologies');
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.catalogId).toEqual(catalogId);
         expect(component.ontologySearchConfig).toEqual({
             pageIndex: 0,
