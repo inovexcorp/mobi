@@ -21,9 +21,9 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, OnChanges } from '@angular/core';
 import { MatSelectionListChange } from '@angular/material/list';
-import { find, get, remove, some, sortBy } from 'lodash';
+import { find, get, remove, some, sortBy, filter } from 'lodash';
 import { finalize } from 'rxjs/operators';
 
 import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
@@ -47,7 +47,7 @@ import { OntologyDetails } from '../../models/ontologyDetails.interface';
     templateUrl: './datasetsOntologyPicker.component.html',
     styleUrls: ['./datasetsOntologyPicker.component.scss']
 })
-export class DatasetsOntologyPickerComponent implements OnInit {
+export class DatasetsOntologyPickerComponent implements OnChanges {
     catalogId = '';
     error = '';
     ontologies: OntologyDetails[] = [];
@@ -68,7 +68,7 @@ export class DatasetsOntologyPickerComponent implements OnInit {
     constructor(public cm: CatalogManagerService, public util: UtilService, 
         private spinnerSvc: ProgressSpinnerService) {}
 
-    ngOnInit(): void {
+    ngOnChanges(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
         this.ontologySearchConfig.sortOption = find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true});
         this.ontologySearchConfig.type = ONTOLOGYEDITOR + 'OntologyRecord';
@@ -104,7 +104,9 @@ export class DatasetsOntologyPickerComponent implements OnInit {
             this.selected.push(ontology);
             this.selected = sortBy(this.selected, 'title');
         } else {
-            remove(this.selected, {recordId: ontology.recordId});
+            this.selected = filter(this.selected, function(selectedRecord) {
+                return ontology.recordId !== selectedRecord.recordId;
+            });
         }
         this.selectedChange.emit(this.selected);
     }
