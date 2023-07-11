@@ -198,6 +198,10 @@
                         <bootRepository>mvn:org.apache.karaf.features/specs/${karaf.version}/xml/features</bootRepository>
                         <bootRepository>mvn:com.mobi/mobi-karaf-feature/${project.version}/xml/features</bootRepository>
                     </bootRepositories>
+                    <startupBundles>
+                        <bundle>mvn:org.apache.felix/org.apache.felix.metatype/1.2.4</bundle>
+                        <bundle>mvn:org.apache.karaf.services/org.apache.karaf.services.eventadmin/${karaf.version}</bundle>
+                    </startupBundles>
                     <bootFeatures>
                         <feature>standard</feature>
                         <feature>scr</feature>

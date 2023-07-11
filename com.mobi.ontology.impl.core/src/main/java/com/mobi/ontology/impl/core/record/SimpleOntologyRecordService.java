@@ -52,6 +52,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Component(
@@ -61,14 +62,14 @@ import java.util.Set;
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
-    private final static  String FIND_PLATFORM_STATES_FOR_ONTOLOGY_RECORD;
+    private static final String FIND_PLATFORM_STATES_FOR_ONTOLOGY_RECORD;
     ModelFactory mf = new DynamicModelFactory();
 
     static {
         try {
             FIND_PLATFORM_STATES_FOR_ONTOLOGY_RECORD = IOUtils.toString(
-                    SimpleOntologyRecordService.class
-                            .getResourceAsStream("/find-platform-states-for-ontology-record.rq"),
+                    Objects.requireNonNull(SimpleOntologyRecordService.class
+                            .getResourceAsStream("/find-platform-states-for-ontology-record.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -103,7 +104,7 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
 
     @Override
     protected void deleteRecord(OntologyRecord record, RepositoryConnection conn) {
-        long start = getStartTime();
+        final long start = getStartTime();
         deleteVersionedRDFData(record, conn);
         deleteRecordObject(record, conn);
         deletePolicies(record, conn);
@@ -116,11 +117,11 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
      * Delete Ontology State.  When an OntologyRecord is deleted, all State data associated with that
      * Record is deleted from the application for all users.
      */
-    protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn){
+    protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn) {
         List<Model> states = getAllStateModelsForRecord(record, conn);
         List<Statement> statementsToRemove = new ArrayList<>();
-        for (Model stateModel: states){
-            stateModel.forEach((statement) -> statementsToRemove.add(statement));
+        for (Model stateModel: states) {
+            statementsToRemove.addAll(stateModel);
         }
         conn.remove(statementsToRemove);
     }
@@ -146,7 +147,7 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         List<Model> states = new ArrayList<>();
         List<Model> stateResourceModels = new ArrayList<>();
 
-        for(Resource recordId: platformStateIds){
+        for (Resource recordId: platformStateIds) {
             Model model = QueryResults.asModel(conn.getStatements(recordId, null, null), mf);
             states.add(model);
 

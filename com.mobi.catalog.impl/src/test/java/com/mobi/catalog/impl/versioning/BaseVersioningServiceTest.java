@@ -24,6 +24,7 @@ package com.mobi.catalog.impl.versioning;
  */
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,6 +39,7 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.provo.Agent;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.eclipse.rdf4j.model.Model;
@@ -48,12 +50,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
+
+import java.util.Collections;
 
 public class BaseVersioningServiceTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
     private SimpleVersioningService service;
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
-    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private final OrmFactory<Agent> agentFactory = getRequiredOrmFactory(Agent.class);
 
     private User user;
     private VersionedRDFRecord record;
@@ -70,6 +79,15 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
     @Mock
     private RepositoryConnection conn;
 
+    @Mock
+    private EventAdmin eventAdmin;
+
+    @Mock
+    private BundleContext context;
+
+    @Mock
+    private ServiceReference<EventAdmin> serviceReference;
+
     @Before
     public void setUp() {
         OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
@@ -79,7 +97,9 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#user"));
         record = versionedRDFRecordFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#record"));
         branch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#branch"));
+        record.setMasterBranch(branch);
         commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#commit"));
+        commit.setWasAssociatedWith(Collections.singleton(agentFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#user"))));
         branch.setHead(commit);
         inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#in-progress-commit"));
 
@@ -91,10 +111,14 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
         when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
+        when(context.getServiceReference(EventAdmin.class)).thenReturn(serviceReference);
+        when(context.getService(serviceReference)).thenReturn(eventAdmin);
+
         service = new SimpleVersioningService();
         injectOrmFactoryReferencesIntoService(service);
         service.setCatalogManager(catalogManager);
         service.setCatalogUtils(catalogUtils);
+        service.start(context);
     }
 
     @After
@@ -133,7 +157,8 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void getBranchHeadCommitNotSetTest() throws Exception {
-        assertEquals(null, service.getBranchHeadCommit(branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/#new-branch")), conn));
+        Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/#new-branch"));
+        assertNull(service.getBranchHeadCommit(newBranch, conn));
         verify(catalogUtils, times(0)).getObject(commit.getResource(), commitFactory, conn);
     }
 
@@ -155,16 +180,18 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
-        assertEquals(commit.getResource(), service.addCommit(branch, user, "Message", additions, deletions, commit, null, conn));
+        assertEquals(commit.getResource(), service.addCommit(record, branch, user, "Message", additions, deletions, commit, null, conn));
         verify(catalogManager).createInProgressCommit(user);
         verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
         verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
         verify(catalogUtils).addCommit(branch, commit, conn);
+        verify(eventAdmin).postEvent(any(Event.class));
     }
 
     @Test
     public void addCommitWithCommitTest() throws Exception {
-        service.addCommit(branch, commit, conn);
+        service.addCommit(record, branch, commit, conn);
         verify(catalogUtils).addCommit(branch, commit, conn);
+        verify(eventAdmin).postEvent(any(Event.class));
     }
 }

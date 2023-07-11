@@ -84,6 +84,7 @@
         <osgi-versioning.version>1.1.2</osgi-versioning.version>
         <osgi-whiteboard.version>1.1.0</osgi-whiteboard.version>
         <osgi-http.version>1.2.2</osgi-http.version>
+        <osgi-event.version>1.4.0</osgi-event.version>
         <osgi.version>8.0.0</osgi.version>
         <owlapi.version>5.5.0</owlapi.version>
         <owlapi.rdf4j.version>4.2.0</owlapi.rdf4j.version>
@@ -309,6 +310,11 @@
                 <groupId>org.osgi</groupId>
                 <artifactId>osgi.annotation</artifactId>
                 <version>${osgi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.event</artifactId>
+                <version>${osgi-event.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
