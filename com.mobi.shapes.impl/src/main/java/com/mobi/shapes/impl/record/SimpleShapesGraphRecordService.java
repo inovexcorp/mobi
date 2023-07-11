@@ -32,7 +32,6 @@ import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecordFactory;
 import com.mobi.shapes.api.record.AbstractShapesGraphRecordService;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
@@ -40,6 +39,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -49,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -58,14 +59,14 @@ import java.util.Set;
 )
 public class SimpleShapesGraphRecordService extends AbstractShapesGraphRecordService<ShapesGraphRecord> {
 
-    private final static  String FIND_PLATFORM_STATES_FOR_SHAPE_GRAPH_RECORD;
+    private static final String FIND_PLATFORM_STATES_FOR_SHAPE_GRAPH_RECORD;
     ModelFactory mf = new DynamicModelFactory();
 
     static {
         try {
             FIND_PLATFORM_STATES_FOR_SHAPE_GRAPH_RECORD = IOUtils.toString(
-                    SimpleShapesGraphRecordService.class
-                            .getResourceAsStream("/find-platform-states-for-shape-record.rq"),
+                    Objects.requireNonNull(SimpleShapesGraphRecordService.class
+                            .getResourceAsStream("/find-platform-states-for-shape-record.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -106,11 +107,11 @@ public class SimpleShapesGraphRecordService extends AbstractShapesGraphRecordSer
      * Delete Ontology State.  When an OntologyRecord is deleted, all State data associated with that
      * Record is deleted from the application for all users.
      */
-    protected void deleteShapeGraphState(ShapesGraphRecord record, RepositoryConnection conn){
+    protected void deleteShapeGraphState(ShapesGraphRecord record, RepositoryConnection conn) {
         List<Model> states = getAllStateModelsForRecord(record, conn);
         List<Statement> statementsToRemove = new ArrayList<>();
-        for(Model stateModel: states){
-            stateModel.forEach((statement) -> statementsToRemove.add(statement));
+        for (Model stateModel: states) {
+            statementsToRemove.addAll(stateModel);
         }
         conn.remove(statementsToRemove);
     }
@@ -136,7 +137,7 @@ public class SimpleShapesGraphRecordService extends AbstractShapesGraphRecordSer
         List<Model> states = new ArrayList<>();
         List<Model> stateResourceModels = new ArrayList<>();
 
-        for(Resource recordId: platformStateIds){
+        for (Resource recordId: platformStateIds) {
             Model model = QueryResults.asModel(conn.getStatements(recordId, null, null), mf);
             states.add(model);
 

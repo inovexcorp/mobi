@@ -23,8 +23,6 @@ package com.mobi.catalog.impl.versioning;
  * #L%
  */
 
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -32,6 +30,12 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.event.EventAdmin;
 
 @Component(
         immediate = true,
@@ -56,6 +60,14 @@ public class SimpleVersioningService extends BaseVersioningService<VersionedRDFR
     @Reference
     protected void setCatalogUtils(CatalogUtilsService catalogUtils) {
         this.catalogUtils = catalogUtils;
+    }
+
+    @Activate
+    void start(BundleContext context) {
+        final ServiceReference<EventAdmin> ref = context.getServiceReference(EventAdmin.class);
+        if (ref != null) {
+            this.eventAdmin = context.getService(ref);
+        }
     }
 
     @Override

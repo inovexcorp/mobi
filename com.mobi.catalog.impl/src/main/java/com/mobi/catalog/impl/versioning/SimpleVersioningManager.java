@@ -23,16 +23,6 @@ package com.mobi.catalog.impl.versioning;
  * #L%
  */
 
-
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.QueryResults;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -45,7 +35,16 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 
@@ -53,11 +52,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class SimpleVersioningManager implements VersioningManager {
-    private Map<String, VersioningService<VersionedRDFRecord>> versioningServices = new HashMap<>();
+    private final Map<String, VersioningService<VersionedRDFRecord>> versioningServices = new HashMap<>();
 
     final ValueFactory vf = new ValidatingValueFactory();
 
@@ -149,7 +147,7 @@ public class SimpleVersioningManager implements VersioningManager {
         Commit head = service.getBranchHeadCommit(branch, conn);
         InProgressCommit inProgressCommit = service.getInProgressCommit(record.getResource(), user, conn);
         Commit newCommit = service.createCommit(inProgressCommit, message, head, null);
-        service.addCommit(branch, newCommit, conn);
+        service.addCommit(record, branch, newCommit, conn);
         service.removeInProgressCommit(inProgressCommit, conn);
 
         return newCommit.getResource();
@@ -175,7 +173,7 @@ public class SimpleVersioningManager implements VersioningManager {
         Branch branch = service.getBranch(record, branchId, conn);
         Commit head = service.getBranchHeadCommit(branch, conn);
 
-        return service.addCommit(branch, user, message, additions, deletions, head, null, conn);
+        return service.addCommit(record, branch, user, message, additions, deletions, head, null, conn);
     }
 
     /**
@@ -198,7 +196,7 @@ public class SimpleVersioningManager implements VersioningManager {
         Branch source = service.getBranch(record, sourceBranchId, conn);
         Branch target = service.getBranch(record, targetBranchId, conn);
 
-        return service.addCommit(target, user, getMergeMessage(source, target), additions, deletions,
+        return service.addCommit(record, target, user, getMergeMessage(source, target), additions, deletions,
                 service.getBranchHeadCommit(target, conn), service.getBranchHeadCommit(source, conn), conn);
     }
 
@@ -219,7 +217,7 @@ public class SimpleVersioningManager implements VersioningManager {
     /**
      * Retrieves the appropriate {@link OrmFactory} for the {@link VersionedRDFRecord} with the passed ID based on its
      * types in the repository, the ordered list of OrmFactories of VersionedRDFRecord subclasses, and the available
-     * {@link VersioningService, VersioningServices}.
+     * {@link VersioningService VersioningServices}.
      *
      * @param recordId The Resource identifying the Record to retrieve the OrmFactory for.
      * @param conn A RepositoryConnection for lookup.
@@ -233,16 +231,16 @@ public class SimpleVersioningManager implements VersioningManager {
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
 
         List<OrmFactory<? extends VersionedRDFRecord>> orderedFactories =
                 factoryRegistry.getSortedFactoriesOfType(VersionedRDFRecord.class)
                 .stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
-                .collect(Collectors.toList());
+                .toList();
 
         for (OrmFactory<? extends VersionedRDFRecord> factory : orderedFactories) {
-            if (versioningServices.keySet().contains(factory.getTypeIRI().stringValue())) {
+            if (versioningServices.containsKey(factory.getTypeIRI().stringValue())) {
                 return factory;
             }
         }

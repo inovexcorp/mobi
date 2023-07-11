@@ -25,6 +25,7 @@ package com.mobi.ontology.impl.core.versioning;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -66,6 +67,10 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -76,10 +81,10 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
     private OsgiRepositoryWrapper repo;
     private OntologyRecordVersioningService service;
-    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
-    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
+    private final OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
+    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private final OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
 
     private final IRI originalIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
     private final IRI newIRI = VALUE_FACTORY.createIRI("http://test.com/ontology/new");
@@ -112,6 +117,15 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     @Mock
     private CatalogUtilsService catalogUtils;
 
+    @Mock
+    private EventAdmin eventAdmin;
+
+    @Mock
+    private BundleContext context;
+
+    @Mock
+    private ServiceReference<EventAdmin> serviceReference;
+
     @Before
     public void setUp() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
@@ -131,11 +145,13 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit"));
         revision = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revision"));
         commit.setGenerated(Collections.singleton(revision));
+        commit.setWasAssociatedWith(Collections.singleton(user));
 
         branch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch"));
         branch.setHead(commit);
         record = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record"));
         record.setOntologyIRI(originalIRI);
+        record.setMasterBranch(branch);
         additions = Stream.of(VALUE_FACTORY.createStatement(newIRI, typeIRI, ontologyIRI));
         additionsUsed = Stream.of(VALUE_FACTORY.createStatement(usedIRI, typeIRI, ontologyIRI));
         additionsNoIRI = Stream.of(VALUE_FACTORY.createStatement(originalIRI, VALUE_FACTORY.createIRI(_Thing.title_IRI), VALUE_FACTORY.createLiteral("Title")));
@@ -153,12 +169,16 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
+        when(context.getServiceReference(EventAdmin.class)).thenReturn(serviceReference);
+        when(context.getService(serviceReference)).thenReturn(eventAdmin);
+
         service = new OntologyRecordVersioningService();
         injectOrmFactoryReferencesIntoService(service);
         service.setCatalogUtils(catalogUtils);
         service.setCatalogManager(catalogManager);
         service.setOntologyManager(ontologyManager);
         service.setOntologyCache(ontologyCache);
+        service.start(context);
     }
 
     @After
@@ -206,7 +226,8 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     @Test
     public void getBranchHeadCommitNotSetTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(null, service.getBranchHeadCommit(branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new-branch")), conn));
+            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new-branch"));
+            assertNull(service.getBranchHeadCommit(newBranch, conn));
             verify(catalogUtils, times(0)).getObject(commit.getResource(), commitFactory, conn);
         }
     }
@@ -233,7 +254,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             // Setup:
             Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
 
-            service.addCommit(newBranch, commit, conn);
+            service.addCommit(record, newBranch, commit, conn);
             verify(catalogUtils).addCommit(newBranch, commit, conn);
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
@@ -242,13 +263,14 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
             verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
     @Test
     public void addCommitToMasterWithCommitWithNoBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(branch, commit, conn);
+            service.addCommit(record, branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
@@ -256,6 +278,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
             verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -265,7 +288,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             // Setup:
             commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
 
-            service.addCommit(branch, commit, conn);
+            service.addCommit(record, branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
@@ -274,6 +297,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogUtils).updateObject(record, conn);
             verify(ontologyCache).clearCacheImports(originalIRI);
             verify(ontologyCache).clearCacheImports(newIRI);
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -285,7 +309,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             OntologyRecord newRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
             when(catalogUtils.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
 
-            service.addCommit(branch, commit, conn);
+            service.addCommit(record, branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
             verify(catalogUtils).getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn));
             verify(ontologyManager).ontologyIriExists(newIRI);
@@ -293,6 +317,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(newIRI, newRecord.getOntologyIRI().get());
             verify(catalogUtils).updateObject(newRecord, conn);
             verify(ontologyCache).clearCacheImports(newIRI);
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -306,7 +331,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(branch, commit, conn);
+            service.addCommit(record, branch, commit, conn);
         } finally {
             verify(catalogUtils).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
             verify(catalogUtils, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
@@ -315,6 +340,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
             verify(ontologyCache).clearCacheImports(originalIRI);
+            verify(eventAdmin, times(0)).postEvent(any(Event.class));
         }
     }
 
@@ -326,7 +352,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             Revision revisionNoChange = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revision2"));
             commit.setGenerated(Collections.singleton(revisionNoChange));
 
-            service.addCommit(branch, commit, conn);
+            service.addCommit(record, branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(any(IRI.class));
@@ -334,6 +360,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
             verify(ontologyCache).clearCacheImports(originalIRI);
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -347,7 +374,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             Model additions = MODEL_FACTORY.createEmptyModel();
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
-            service.addCommit(newBranch, user, "Message", additions, deletions, commit, null, conn);
+            service.addCommit(record, newBranch, user, "Message", additions, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
@@ -361,6 +388,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
             verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -371,7 +399,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             Model additions = MODEL_FACTORY.createEmptyModel();
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
-            service.addCommit(branch, user, "Message", additions, deletions, null, null, conn);
+            service.addCommit(record, branch, user, "Message", additions, deletions, null, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", null, null);
             verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
@@ -385,6 +413,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
             verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -396,7 +425,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             additionsModel.addAll(additions.collect(Collectors.toSet()));
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
-            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
+            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
@@ -411,6 +440,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogUtils).updateObject(record, conn);
             verify(ontologyCache).clearCacheImports(originalIRI);
             verify(ontologyCache).clearCacheImports(newIRI);
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -422,7 +452,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             additionsModel.addAll(additions.collect(Collectors.toSet()));
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
-            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, commit, conn);
+            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, commit, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, commit);
             verify(catalogUtils, times(2)).getCommitChain(commit.getResource(), false, conn);
@@ -437,6 +467,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogUtils).updateObject(record, conn);
             verify(ontologyCache).clearCacheImports(originalIRI);
             verify(ontologyCache).clearCacheImports(newIRI);
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -450,7 +481,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             additionsModel.addAll(additions.collect(Collectors.toSet()));
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
-            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
+            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
@@ -464,6 +495,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(newIRI, newRecord.getOntologyIRI().get());
             verify(catalogUtils).updateObject(newRecord, conn);
             verify(ontologyCache).clearCacheImports(newIRI);
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 
@@ -477,7 +509,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
+            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
         } finally {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
@@ -492,6 +524,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
             verify(ontologyCache).clearCacheImports(originalIRI);
+            verify(eventAdmin, times(0)).postEvent(any(Event.class));
         }
     }
 
@@ -503,7 +536,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             additionsModel.addAll(additionsNoIRI.collect(Collectors.toSet()));
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
-            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
+            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
@@ -518,6 +551,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
             verify(ontologyCache).clearCacheImports(originalIRI);
+            verify(eventAdmin).postEvent(any(Event.class));
         }
     }
 }

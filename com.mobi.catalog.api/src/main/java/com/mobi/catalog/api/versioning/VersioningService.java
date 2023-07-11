@@ -96,7 +96,7 @@ public interface VersioningService<T extends VersionedRDFRecord> {
      * @param commit The Commit to add to the Branch.
      * @param conn A RepositoryConnection to use for lookup.
      */
-    void addCommit(Branch branch, Commit commit, RepositoryConnection conn);
+    void addCommit(VersionedRDFRecord record, Branch branch, Commit commit, RepositoryConnection conn);
 
     /**
      * Adds a new {@link Commit} to the provided {@link Branch} created for the provided {@link User} using the provided
@@ -113,8 +113,9 @@ public interface VersioningService<T extends VersionedRDFRecord> {
      * @param conn A RepositoryConnection to use for lookup.
      * @return The Resource identifying the new Commit.
      */
-    Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
-                       @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn);
+    Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
+                       Model deletions, @Nullable Commit baseCommit, @Nullable Commit auxCommit,
+                       RepositoryConnection conn);
 
     /**
      * Removes the provided {@link InProgressCommit} from the Repository.

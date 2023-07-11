@@ -1,6 +1,4 @@
-@Version("4.0.0.${build}")
-
-package com.mobi.catalog.api.versioning;
+package com.mobi.catalog.api;
 
 /*-
  * #%L
@@ -25,4 +23,12 @@ package com.mobi.catalog.api.versioning;
  * #L%
  */
 
-import org.osgi.annotation.versioning.Version;
+public class CatalogTopics {
+    private CatalogTopics() {}
+
+    public static final String TOPIC_NAME = "com/mobi/catalog/commit";
+    public static final String PROPERTY_RECORD = "record";
+    public static final String PROPERTY_COMMIT = "commit";
+    public static final String PROPERTY_BRANCH = "branch";
+    public static final String PROPERTY_USER = "user";
+}

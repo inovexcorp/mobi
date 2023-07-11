@@ -30,6 +30,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.exception.MobiException;
@@ -52,12 +53,17 @@ import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.event.EventAdmin;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component(
@@ -66,22 +72,15 @@ import java.util.Optional;
 )
 public class ShapesGraphRecordVersioningService extends BaseVersioningService<ShapesGraphRecord> {
 
-    private static final String SHAPES_GRAPH_IRI_QUERY;
     private static final String ADDITION_SHAPES_GRAPH_IRI_QUERY;
-    private static final String BRANCH_BINDING = "branch";
-    private static final String RECORD_BINDING = "record";
     private static final String REVISION_BINDING = "revision";
     private static final String SHAPES_GRAPH_IRI_BINDING = "shapesGraphIRI";
 
     static {
         try {
-            SHAPES_GRAPH_IRI_QUERY = IOUtils.toString(
-                    ShapesGraphRecordVersioningService.class.getResourceAsStream("/record-with-master.rq"),
-                    StandardCharsets.UTF_8
-            );
             ADDITION_SHAPES_GRAPH_IRI_QUERY = IOUtils.toString(
-                    ShapesGraphRecordVersioningService.class
-                            .getResourceAsStream("/get-shapes-graph-iri-addition.rq"), StandardCharsets.UTF_8
+                    Objects.requireNonNull(ShapesGraphRecordVersioningService.class
+                            .getResourceAsStream("/get-shapes-graph-iri-addition.rq")), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -117,31 +116,44 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
         this.catalogUtils = catalogUtils;
     }
 
+    @Activate
+    void start(BundleContext context) {
+        final ServiceReference<EventAdmin> ref = context.getServiceReference(EventAdmin.class);
+        if (ref != null) {
+            this.eventAdmin = context.getService(ref);
+        }
+    }
+
     @Override
     public String getTypeIRI() {
         return ShapesGraphRecord.TYPE;
     }
 
     @Override
-    public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
-        Optional<Resource> recordOpt = getRecordIriIfMaster(branch, conn);
-        recordOpt.ifPresent(recordId -> commit.getBaseCommit_resource().ifPresent(baseCommit ->
-                updateShapesGraphIRI(recordId, commit, conn)));
+    public void addCommit(VersionedRDFRecord record, Branch branch, Commit commit, RepositoryConnection conn) {
+        if (isMasterBranch(record, branch)) {
+            commit.getBaseCommit_resource()
+                    .ifPresent(baseCommit -> updateShapesGraphIRI(record.getResource(), commit, conn));
+        }
         catalogUtils.addCommit(branch, commit, conn);
+        commit.getWasAssociatedWith_resource().stream().findFirst()
+                .ifPresent(userIri -> sendCommitEvent(record.getResource(), branch.getResource(), userIri,
+                        commit.getResource()));
     }
 
     @Override
-    public Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
-                              Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
+    public Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
+                              Model deletions, Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
         Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
         // Determine if branch is the master branch of a record
-        Optional<Resource> recordOpt = getRecordIriIfMaster(branch, conn);
-        recordOpt.ifPresent(recordId -> {
+        if (isMasterBranch(record, branch)) {
             if (baseCommit != null) {
                 // If this is not the initial commit
                 Model model;
-                Difference diff = new Difference.Builder().additions(additions == null ? mf.createEmptyModel() : additions)
-                        .deletions(deletions == null ? mf.createEmptyModel() : deletions).build();
+                Difference diff = new Difference.Builder()
+                        .additions(additions == null ? mf.createEmptyModel() : additions)
+                        .deletions(deletions == null ? mf.createEmptyModel() : deletions)
+                        .build();
                 if (auxCommit != null) {
                     // If this is a merge, collect all the additions from the aux branch and provided models
                     List<Resource> sourceChain = catalogUtils.getCommitChain(auxCommit.getResource(), false, conn);
@@ -151,11 +163,12 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
                     // Else, this is a regular commit. Make sure we remove duplicated add/del statements
                     model = catalogUtils.applyDifference(mf.createEmptyModel(), diff);
                 }
-                updateShapesGraphIRI(recordId, model, conn);
+                updateShapesGraphIRI(record.getResource(), model, conn);
             }
-        });
+        }
         catalogUtils.addCommit(branch, newCommit, conn);
         catalogUtils.updateCommit(newCommit, additions, deletions, conn);
+        sendCommitEvent(record.getResource(), branch.getResource(), user.getResource(), newCommit.getResource());
         return newCommit.getResource();
     }
 
@@ -167,13 +180,14 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
                 .orElseThrow(() -> new IllegalStateException("Commit is missing revision."));
         TupleQuery query = conn.prepareTupleQuery(ADDITION_SHAPES_GRAPH_IRI_QUERY);
         query.setBinding(REVISION_BINDING, revisionIRI);
-        TupleQueryResult result = query.evaluate();
-        if (result.hasNext()) {
-            Resource newIRI = Bindings.requiredResource(result.next(), SHAPES_GRAPH_IRI_BINDING);
-            if (!iri.isPresent() || !newIRI.equals(iri.get())) {
-                assertShapesGraphIRIUniqueness(newIRI);
-                record.setShapesGraphIRI(newIRI);
-                catalogUtils.updateObject(record, conn);
+        try (TupleQueryResult result = query.evaluate()) {
+            if (result.hasNext()) {
+                Resource newIRI = Bindings.requiredResource(result.next(), SHAPES_GRAPH_IRI_BINDING);
+                if (iri.isEmpty() || !newIRI.equals(iri.get())) {
+                    assertShapesGraphIRIUniqueness(newIRI);
+                    record.setShapesGraphIRI(newIRI);
+                    catalogUtils.updateObject(record, conn);
+                }
             }
         }
     }
@@ -188,7 +202,7 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
                 .findFirst();
         if (ontStmt.isPresent()) {
             Resource newIRI = ontStmt.get().getSubject();
-            if (!iri.isPresent() || !newIRI.equals(iri.get())) {
+            if (iri.isEmpty() || !newIRI.equals(iri.get())) {
                 assertShapesGraphIRIUniqueness(newIRI);
                 record.setShapesGraphIRI(newIRI);
                 catalogUtils.updateObject(record, conn);
@@ -202,16 +216,8 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
         }
     }
 
-    private Optional<Resource> getRecordIriIfMaster(Branch branch, RepositoryConnection conn) {
-        TupleQuery query = conn.prepareTupleQuery(SHAPES_GRAPH_IRI_QUERY);
-        query.setBinding(BRANCH_BINDING, branch.getResource());
-        TupleQueryResult result = query.evaluate();
-        if (!result.hasNext()) {
-            result.close();
-            return Optional.empty();
-        }
-        Optional<Resource> answer = Optional.of(Bindings.requiredResource(result.next(), RECORD_BINDING));
-        result.close();
-        return answer;
+    private boolean isMasterBranch(VersionedRDFRecord record, Branch branch) {
+        Optional<Resource> optMasterBranch = record.getMasterBranch_resource();
+        return optMasterBranch.isPresent() && optMasterBranch.get().equals(branch.getResource());
     }
 }
