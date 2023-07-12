@@ -20,9 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 
 import { OntologyStateService } from '../../services/ontologyState.service';
+import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
+import { PrefixationPipe } from '../../pipes/prefixation.pipe';
 
 /**
  * @name shared.BlankNodeValueDisplayComponent
@@ -37,24 +40,24 @@ import { OntologyStateService } from '../../services/ontologyState.service';
     templateUrl: './blankNodeValueDisplay.component.html',
     styleUrls: ['./blankNodeValueDisplay.component.scss']
 })
-export class BlankNodeValueDisplayComponent implements OnChanges {
-    @Input() nodeId: string;
+export class BlankNodeValueDisplayComponent implements OnInit {
+    @Input() node;
+    htmlValue: SafeHtml;
+    typeValue: SafeHtml;
+    langValue: SafeHtml;
 
-    editorOptions = {
-        mode: 'text/omn',
-        indentUnit: 4,
-        lineWrapping: true,
-        readOnly: true,
-        cursorBlinkRate: -1,
-        height: 'dynamic',
-        scrollbarStyle: 'null',
-        viewportMargin: Infinity
-    };
-    value = '';
+    constructor(public os: OntologyStateService,
+                private safeHtml: TrustedHtmlPipe,
+                private prefixation: PrefixationPipe
+    ) {}
 
-    constructor(public os: OntologyStateService) {}
+    ngOnInit() {
+        this.calcNodeProperties()
+    }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        this.value = this.os.getBlankNodeValue(changes.nodeId.currentValue);
+    private calcNodeProperties(): void {
+        this.htmlValue = this.safeHtml.transform(this.os.getBlankNodeValue(this.node['@id']) || this.node['@id'] || this.node['@value'], 'html');
+        this.typeValue = this.node['@type'] ? this.safeHtml.transform(this.prefixation.transform(this.node['@type']), 'html') : undefined;
+        this.langValue = this.node['@language'] ? this.safeHtml.transform(this.prefixation.transform(this.node['@language']), 'html') : undefined;
     }
 }

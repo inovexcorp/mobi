@@ -156,7 +156,8 @@ export class AxiomOverlayComponent implements OnInit {
                     this.os.addEntity(obj);
                     this.os.listItem.selectedBlankNodes.push(obj);
                 });
-                this.os.listItem.blankNodes[bnodeId] = this.expression;
+                const bnodeIndex = this.os.getBnodeIndex(this.os.listItem.selectedBlankNodes);
+                this.os.listItem.blankNodes[bnodeId] = this.mc.jsonldToManchester(bnodeId, this.os.listItem.selectedBlankNodes, bnodeIndex, true);
             }
         } else if (this.tabIndex === 0) {
             values = this.values;

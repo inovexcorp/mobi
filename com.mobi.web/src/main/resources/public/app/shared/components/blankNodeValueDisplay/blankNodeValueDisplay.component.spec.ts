@@ -20,26 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement, SimpleChange } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { BlankNodeValueDisplayComponent } from './blankNodeValueDisplay.component';
+import { PrefixationPipe } from '../../pipes/prefixation.pipe';
+import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
 
 describe('Blank Node Value Display component', function() {
     let component: BlankNodeValueDisplayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<BlankNodeValueDisplayComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let trustedHtmlStub: jasmine.SpyObj<TrustedHtmlPipe>;
 
-    const bnode = 'bnode';
+    const bnode = 'hasFin<span class="manchester-rest"> some </span>Fin';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -51,10 +53,11 @@ describe('Blank Node Value Display component', function() {
              ],
             declarations: [
                 BlankNodeValueDisplayComponent,
-                MockComponent(CodemirrorComponent),
             ],
             providers: [
                 MockProvider(OntologyStateService),
+                MockProvider(TrustedHtmlPipe),
+                MockProvider(PrefixationPipe)
             ]
         }).compileComponents();
 
@@ -62,8 +65,11 @@ describe('Blank Node Value Display component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+        trustedHtmlStub = TestBed.inject(TrustedHtmlPipe) as jasmine.SpyObj<TrustedHtmlPipe>;
 
+        component.node = {'@id': 'someId', name :'someName'};
         ontologyStateStub.getBlankNodeValue.and.returnValue(bnode);
+        trustedHtmlStub.transform.and.returnValue(bnode);
     });
 
     afterEach(function() {
@@ -72,20 +78,25 @@ describe('Blank Node Value Display component', function() {
         element = null;
         fixture = null;
         ontologyStateStub = null;
+        trustedHtmlStub = null;
     });
 
-    it('initializes value correctly', function() {
-        const change = new SimpleChange('', 'id', true);
-        component.ngOnChanges({nodeId: change});
-        expect(component.value).toEqual(bnode);
-        expect(ontologyStateStub.getBlankNodeValue).toHaveBeenCalledWith('id');
+    it('initializes values correctly', function() {
+        fixture.detectChanges();
+        expect(component.htmlValue).toEqual(bnode);
+        expect(ontologyStateStub.getBlankNodeValue).toHaveBeenCalledWith('someId');
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.blank-node-value-display')).length).toEqual(1);
         });
-        it('with a ngx-codemirror', function() {
-            expect(element.queryAll(By.css('ngx-codemirror')).length).toEqual(1);
+        it('with a value display', function() {
+            expect(element.queryAll(By.css('.value-display')).length).toEqual(1);
+        });
+        it('with a manchester-rest', function() {
+            fixture.detectChanges();
+            const manchesterSpan = element.queryAll(By.css('.value-display span'))[0];
+            expect(manchesterSpan.nativeElement.innerHTML).toEqual(bnode);
         });
     });
 });

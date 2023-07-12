@@ -1089,7 +1089,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     listItem.selectedBlankNodes = this._getArrWithoutEntity(entityIRI, arr);
                     const bnodeIndex = this.getBnodeIndex(listItem.selectedBlankNodes);
                     listItem.selectedBlankNodes.forEach(bnode => {
-                        listItem.blankNodes[bnode['@id']] = this.mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex);
+                        listItem.blankNodes[bnode['@id']] = this.mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex, true);
                     });
                     if (this.om.isIndividual(listItem.selected)) {
                         this._findValuesMissingDatatypes(listItem.selected);

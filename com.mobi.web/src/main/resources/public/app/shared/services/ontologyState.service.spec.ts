@@ -2356,7 +2356,7 @@ describe('Ontology State Service', function() {
             expect(listItem.selected).toEqual(object);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
-            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}});
+            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}}, true);
             expect(service.getActivePage).not.toHaveBeenCalled();
             expect(service.setEntityUsages).not.toHaveBeenCalled();
             expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
@@ -2369,7 +2369,7 @@ describe('Ontology State Service', function() {
             expect(listItem.selected).toEqual(object);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
-            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}});
+            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}}, true);
             expect(service.getActivePage).toHaveBeenCalledWith();
             expect(service.setEntityUsages).toHaveBeenCalledWith(id);
         }));
@@ -2380,7 +2380,7 @@ describe('Ontology State Service', function() {
             expect(listItem.selected).toEqual(object);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
-            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}});
+            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}}, true);
             expect(service.getActivePage).not.toHaveBeenCalled();
             expect(service.setEntityUsages).not.toHaveBeenCalled();
         }));
@@ -2394,7 +2394,7 @@ describe('Ontology State Service', function() {
             expect(listItem.selected['urn:prop']).toEqual([{'@value': 'test', '@type': XSD + 'string'}]);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
-            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}});
+            expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}}, true);
             expect(service.getActivePage).not.toHaveBeenCalled();
             expect(service.setEntityUsages).not.toHaveBeenCalled();
         }));

@@ -225,7 +225,7 @@ describe('Selected Details component', function() {
                 ontologyStateStub.listItem.selected['@type'] = ['test', 'test2'];
                 manchesterConverterStub.jsonldToManchester.and.callFake(a => a);
                 expect(component.getTypes()).toEqual(expected);
-                expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateStub.listItem.selectedBlankNodes, {});
+                expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateStub.listItem.selectedBlankNodes, {}, true);
                 expect(ontologyStateStub.getBnodeIndex).toHaveBeenCalledWith();
             });
         });

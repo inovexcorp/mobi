@@ -21,5 +21,9 @@
   #L%
   -->
 <div class="blank-node-value-display">
-    <ngx-codemirror [(ngModel)]="value" [options]="editorOptions"></ngx-codemirror>
+    <span class="value-display">
+        <span [innerHtml]="htmlValue"></span>
+        <small *ngIf="node['@type']" class="text-muted type-display"> [type: <span [innerHtml]="typeValue"></span>]</small>
+        <small *ngIf="node['@language']" class="text-muted type-display"> [language: <span [innerHtml]="langValue"></span>]</small>
+    </span>
 </div>
