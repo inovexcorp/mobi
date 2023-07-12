@@ -59,12 +59,15 @@ export class IndividualsTabComponent implements OnInit, OnDestroy {
         }
     }
     showDeleteConfirmation(): void {
-        this.dialog.open(ConfirmModalComponent,
-            { data:
-                    {  body:
-                        '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>',
-                    }
-        }).afterClosed().subscribe();
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: `<p>Are you sure you want to delete <strong>${this.os.listItem.selected['@id']}</strong>?</p>`
+            }
+        }).afterClosed().subscribe((result:boolean) => {
+            if (result) {
+                this.os.deleteIndividual();
+            }
+        });
     }
     seeHistory(): void {
         this.os.listItem.seeHistory = true;

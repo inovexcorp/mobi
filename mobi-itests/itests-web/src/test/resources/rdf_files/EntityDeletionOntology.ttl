@@ -1,0 +1,26 @@
+
+<https://mobi.com/ontologies/EntityDeletionOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/title> "Entity Deletion Ontology";
+  <http://www.w3.org/2002/07/owl#imports> <http://www.w3.org/2004/02/skos/core> .
+
+<https://mobi.com/ontologies/EntityDeletionOntology#TestClass> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Test Class" .
+
+<https://mobi.com/ontologies/EntityDeletionOntology#testDataProperty> a <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+  <http://purl.org/dc/terms/title> "Test Data Property" .
+
+<https://mobi.com/ontologies/EntityDeletionOntology#SecondTestClass> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Second Test Class" .
+
+<https://mobi.com/ontologies/EntityDeletionOntology#TestIndividual> a <https://mobi.com/ontologies/EntityDeletionOntology#SecondTestClass>,
+    <http://www.w3.org/2002/07/owl#NamedIndividual>;
+  <http://purl.org/dc/terms/title> "Test Individual" .
+
+<https://mobi.com/ontologies/EntityDeletionOntology#TestConcept> a <http://www.w3.org/2004/02/skos/core#Concept>,
+    <http://www.w3.org/2002/07/owl#NamedIndividual>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Test Concept" .
+
+<https://mobi.com/ontologies/EntityDeletionOntology#TestScheme> a <http://www.w3.org/2004/02/skos/core#ConceptScheme>,
+    <http://www.w3.org/2002/07/owl#NamedIndividual>;
+  <http://purl.org/dc/terms/title> "Test Scheme" .
+  

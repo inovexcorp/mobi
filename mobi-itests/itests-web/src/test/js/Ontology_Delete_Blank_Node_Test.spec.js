@@ -35,7 +35,7 @@ module.exports = {
         browser.globals.upload_ontologies(browser, Onto1)
     },
 
-    'Step 3: Open an Ontology called “ComplexBlankNodeChainDeletion.ttl': function (browser) {
+    'Step 3: Open an Ontology called ComplexBlankNodeChainDeletion.ttl': function (browser) {
         browser
             .setValue('open-ontology-tab search-bar input', '')
             .globals.open_ontology(browser, Onto1)
