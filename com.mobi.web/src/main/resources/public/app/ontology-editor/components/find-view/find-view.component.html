@@ -59,10 +59,14 @@
                 </div>
                 <div class="prop-value-container p-1 ml-3 mt-1" *ngFor="let item of selected.value">
                     <span class="value-display-wrapper">
-                        <span *ngIf="os.isLinkable(item['@id'])" class="value-display"><span [innerHtml]="os.getEntityNameByListItem(item['@id']) | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span> <small> &lt;<a (click)="os.goTo(item['@id'])" [innerHtml]="item['@id'] | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></a>&gt;</small></span>
-                        <span *ngIf="!os.isLinkable(item['@id'])" class="value-display"><span [innerHtml]="(os.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>
-                            <small *ngIf="item['@type']" class="text-muted type-display"> [type: <span [innerHtml]="item['@type'] | prefixation | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>]</small>
-                            <small *ngIf="item['@language']" class="text-muted type-display"> [language: <span [innerHtml]="item['@language'] | prefixation | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>]</small>
+                        <span *ngIf="os.isLinkable(item['@id'])" class="value-display">
+                            <span [innerHtml]="os.getEntityNameByListItem(item['@id']) | highlightText: os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>
+                            <small> &lt;<a (click)="os.goTo(item['@id'])" [innerHtml]="item['@id'] | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></a>&gt;</small>
+                        </span>
+                        <span *ngIf="!os.isLinkable(item['@id'])" class="value-display">
+                            <span [innerHtml]="(os.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlightText: os.listItem.editorTabStates.search.highlightText: true | safeHtml: 'html'"></span>
+                            <small *ngIf="item['@type']" class="text-muted type-display"> [type: <span [innerHtml]="item['@type'] | prefixation | highlightText: os.listItem.editorTabStates.search.highlightText: true | safeHtml: 'html'"></span>]</small>
+                            <small *ngIf="item['@language']" class="text-muted type-display"> [language: <span [innerHtml]="item['@language'] | prefixation | highlightText: os.listItem.editorTabStates.search.highlightText: true | safeHtml: 'html'"></span>]</small>
                         </span>
                     </span>
                 </div>
