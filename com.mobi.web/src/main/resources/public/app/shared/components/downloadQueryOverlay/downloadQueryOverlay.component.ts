@@ -26,7 +26,9 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { SparqlManagerService } from '../../../../shared/services/sparqlManager.service';
+import { SparqlManagerService } from '../../services/sparqlManager.service';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { Observable } from 'rxjs';
 
 interface FormatOption {
     id: string,
@@ -62,8 +64,8 @@ export class DownloadQueryOverlayComponent implements OnInit {
     })
 
     constructor(private dialogRef: MatDialogRef<DownloadQueryOverlayComponent>, private fb: UntypedFormBuilder,
-        @Inject(MAT_DIALOG_DATA) public data: {query: string, queryType?: string, datasetRecordIRI?: string}, 
-        private sm: SparqlManagerService) {}
+        @Inject(MAT_DIALOG_DATA) public data: {query: string, queryType?: string, recordId?: string, commitId?: string, isOntology: boolean},
+        private sm: SparqlManagerService, private om: OntologyManagerService) {}
     
     ngOnInit(): void {
         this.queryType = this.data.queryType || 'select';
@@ -73,11 +75,16 @@ export class DownloadQueryOverlayComponent implements OnInit {
     download(): void {
         const fileType = this.downloadResultsForm.controls.fileType.value;
         const fileName = this.downloadResultsForm.controls.fileName.value;
-        this.sm.downloadResultsPost(this.data.query, fileType, fileName, this.data.datasetRecordIRI)
-            .subscribe(() => {
-                this.dialogRef.close();
-            }, error => {
-                this.dialogRef.close(error);
-            });
+        let request: Observable<any>;
+        if (this.data.isOntology) {
+            request = this.om.downloadResultsPost(this.data.query, fileType, fileName, this.data.recordId, this.data.commitId);
+        } else {
+            request = this.sm.downloadResultsPost(this.data.query, fileType, fileName, this.data.recordId);
+        }
+        request.subscribe(() => {
+            this.dialogRef.close();
+        }, error => {
+            this.dialogRef.close(error);
+        });
     }
 }

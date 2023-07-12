@@ -25,7 +25,7 @@ import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { HttpParams, HttpHeaders } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { throwError } from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 
 import { OWL, ONTOLOGYEDITOR, SKOS, RDFS, DCTERMS, DC, SKOSXL } from '../../prefixes';
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
@@ -1275,6 +1275,66 @@ describe('Ontology Manager service', function() {
             expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
     
             request.flush('flush', { status: 400, statusText: error });
+        });
+    });
+    describe('should download query results', function() {
+        beforeEach(function() {
+            spyOn(window, 'open');
+            this.query = 'SELECT * WHERE { ?s ?p ?o }';
+        });
+        it('with only required fields', function() {
+            const aSpy = jasmine.createSpyObj('a', ['click']);
+            spyOn(document, 'createElement').and.returnValue(aSpy);
+            const expectedResult: ArrayBuffer = new ArrayBuffer(8);
+            service.downloadResultsPost(this.query, 'csv', 'filename', recordId, commitId)
+                .subscribe(response => {
+                    expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                    expect(response).toEqual(expectedResult);
+                    expect(document.createElement).toHaveBeenCalledWith('a');
+                    expect(aSpy.href).toBeTruthy();
+                    expect(aSpy.target).toEqual('_blank');
+                    expect(aSpy.download).toEqual('filename');
+                    expect(aSpy.click).toHaveBeenCalledWith();
+                }, () => {
+                    fail('Observable should have resolved');
+                });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/query') && req.method === 'POST');
+            expect(request.request.body).toEqual(this.query);
+            expect(request.request.params.get('fileType')).toEqual('csv');
+            expect(request.request.params.get('fileName')).toEqual('filename');
+            expect(request.request.params.get('commitId')).toEqual(commitId);
+            expect(request.request.params.get('applyInProgressCommit')).toEqual('true');
+            expect(request.request.params.get('includeImports')).toEqual('false');
+            expect(request.request.headers.get('Accept')).toEqual('application/octet-stream');
+            expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
+            request.flush(expectedResult);
+        });
+        it('with optional fields', function() {
+            const aSpy = jasmine.createSpyObj('a', ['click']);
+            spyOn(document, 'createElement').and.returnValue(aSpy);
+            const expectedResult: ArrayBuffer = new ArrayBuffer(8);
+            service.downloadResultsPost(this.query, 'csv', 'filename', recordId, commitId, false, true)
+                .subscribe(response => {
+                    expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                    expect(response).toEqual(expectedResult);
+                    expect(document.createElement).toHaveBeenCalledWith('a');
+                    expect(aSpy.href).toBeTruthy();
+                    expect(aSpy.target).toEqual('_blank');
+                    expect(aSpy.download).toEqual('filename');
+                    expect(aSpy.click).toHaveBeenCalledWith();
+                }, () => {
+                    fail('Observable should have resolved');
+                });
+            const request = httpMock.expectOne(req => req.url === ('/mobirest/ontologies/' + recordId + '/query') && req.method === 'POST');
+            expect(request.request.body).toEqual(this.query);
+            expect(request.request.params.get('fileType')).toEqual('csv');
+            expect(request.request.params.get('fileName')).toEqual('filename');
+            expect(request.request.params.get('commitId')).toEqual(commitId);
+            expect(request.request.params.get('applyInProgressCommit')).toEqual('false');
+            expect(request.request.params.get('includeImports')).toEqual('true');
+            expect(request.request.headers.get('Accept')).toEqual('application/octet-stream');
+            expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
+            request.flush(expectedResult);
         });
     });
     describe('getFailedImports calls the correct functions when GET /mobirest/ontologies/{recordId}/failed-imports', function() {

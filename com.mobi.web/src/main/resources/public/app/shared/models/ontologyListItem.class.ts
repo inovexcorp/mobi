@@ -29,6 +29,7 @@ import { HierarchyNode } from './hierarchyNode.interface';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { ParentNode } from './parentNode.interface';
 import { VersionedRdfListItem } from './versionedRdfListItem.class';
+import { YasguiQuery } from './yasguiQuery.class';
 
 const ontologyEditorTabStates = {
     project: {
@@ -75,7 +76,9 @@ const ontologyEditorTabStates = {
         element: undefined,
         usagesElement: undefined
     },
-    search: { },
+    search: {
+        openIndex: 0
+    },
     savedChanges: { },
     commits: { },
     visualization: {
@@ -128,6 +131,7 @@ export class OntologyListItem extends VersionedRdfListItem {
     openSnackbar: MatSnackBarRef<SimpleSnackBar>
     iriBegin: string
     iriThen: string
+    query: YasguiQuery
 
     static PROJECT_TAB = 0;
     static OVERVIEW_TAB = 1;
@@ -221,5 +225,6 @@ export class OntologyListItem extends VersionedRdfListItem {
         this.hasPendingRefresh = false;
         this.iriBegin = '';
         this.iriThen = '';
+        this.query = new YasguiQuery();
     }
 }

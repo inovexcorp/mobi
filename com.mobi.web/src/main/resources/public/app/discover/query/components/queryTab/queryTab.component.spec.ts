@@ -41,6 +41,7 @@ import { UtilService } from '../../../../shared/services/util.service';
 import { YasguiService } from '../../../../shared/services/yasgui.service';
 import { DiscoverDatasetSelectComponent} from '../../../components/discoverDatasetSelect/discoverDatasetSelect.component';
 import { QueryTabComponent } from './queryTab.component';
+import { YasguiQuery } from '../../../../shared/models/yasguiQuery.class';
 
 describe('Query Tab component', function() {
     let component: QueryTabComponent;
@@ -99,15 +100,7 @@ describe('Query Tab component', function() {
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
 
-        discoverStateStub.query = {
-            response: {},
-            queryString: '',
-            datasetRecordId: '',
-            datasetRecordTitle: '',
-            submitDisabled: false,
-            selectedPlugin: '',
-            executionTime: 0
-        };
+        discoverStateStub.query = new YasguiQuery();
 
         yasqe = {
             on: jasmine.createSpy('on'),
@@ -152,26 +145,23 @@ describe('Query Tab component', function() {
     describe('should initialize correctly', function() {
         beforeEach(function() {
             spyOn(component, 'setValues');
-            spyOn(component, 'initEventListener');
         });
         it('if yasgui was created', function() {
             component.ngOnInit();
-            expect(yasguiStub.initYasgui).toHaveBeenCalledWith(component.discoverQuery.nativeElement, {name: 'discoverQuery'});
+            expect(yasguiStub.initYasgui).toHaveBeenCalledWith(component.discoverQuery.nativeElement, {name: 'discoverQuery'}, discoverStateStub.query);
             expect(yasguiStub.getYasgui).toHaveBeenCalledWith();
             expect(yasguiInstance.getTab).toHaveBeenCalledWith();
             expect(component.tab).toEqual(tab);
-            expect(component.initEventListener).toHaveBeenCalledWith();
             expect(component.setValues).toHaveBeenCalledWith();
             expect(component.error).toEqual('');
         });
         it('unless yasgui was not created', function() {
             yasguiStub.getYasgui.and.returnValue(undefined);
             component.ngOnInit();
-            expect(yasguiStub.initYasgui).toHaveBeenCalledWith(component.discoverQuery.nativeElement, {name: 'discoverQuery'});
+            expect(yasguiStub.initYasgui).toHaveBeenCalledWith(component.discoverQuery.nativeElement, {name: 'discoverQuery'}, discoverStateStub.query);
             expect(yasguiStub.getYasgui).toHaveBeenCalledWith();
             expect(yasguiInstance.getTab).not.toHaveBeenCalled();
             expect(component.tab).toEqual({});
-            expect(component.initEventListener).not.toHaveBeenCalled();
             expect(component.setValues).not.toHaveBeenCalled();
             expect(component.error).toEqual(jasmine.stringContaining('Something went wrong'));
         });
@@ -180,11 +170,11 @@ describe('Query Tab component', function() {
         it('onSelect should handle selecting a dataset ', function() {
             spyOn(component, 'permissionCheck');
             discoverStateStub.query.submitDisabled = true;
-            discoverStateStub.query.datasetRecordId = '';
+            discoverStateStub.query.recordId = '';
             component.onSelect({'recordId': datasetRecordIRI, recordTitle: 'title'});
             expect(discoverStateStub.query.submitDisabled).toEqual(false);
-            expect(discoverStateStub.query.datasetRecordId).toEqual(datasetRecordIRI);
-            expect(discoverStateStub.query.datasetRecordTitle).toEqual('title');
+            expect(discoverStateStub.query.recordId).toEqual(datasetRecordIRI);
+            expect(discoverStateStub.query.recordTitle).toEqual('title');
             expect(component.permissionCheck).toHaveBeenCalledWith(datasetRecordIRI);
         });
         describe('submitQuery should handle submitting a query', function() {
@@ -193,7 +183,7 @@ describe('Query Tab component', function() {
             });
             describe('when a dataset is selected', function() {
                 beforeEach(function() {
-                    discoverStateStub.query.datasetRecordId = datasetRecordIRI;
+                    discoverStateStub.query.recordId = datasetRecordIRI;
                 });
                 it('unless an error occurs', fakeAsync(function() {
                     policyEnforcementStub.evaluateRequest.and.returnValue(throwError(error));
@@ -300,30 +290,6 @@ describe('Query Tab component', function() {
             expect(component.createPepReadRequest(datasetRecordIRI)).toEqual({
                 resourceId: datasetRecordIRI,
                 actionId: POLICY + 'Read'
-            });
-        });
-        it('isYasguiElementDrawn should test whether yasgui has been initialized', function() {
-            component.tab = tab;
-            expect(component.isYasguiElementDrawn()).toBeTrue();
-            tab.rootEl = document.createElement('div');
-            expect(component.isYasguiElementDrawn()).toBeFalse();
-        });
-        describe('initEventListener should setup the appropriate listeners for yasgui', function() {
-            beforeEach(function() {
-                component.tab = tab;
-            });
-            it('unless the element is not drawn', function() {
-                spyOn(component, 'isYasguiElementDrawn').and.returnValue(false);
-                component.initEventListener();
-                expect(yasqe.on).not.toHaveBeenCalled();
-                expect(yasr.on).not.toHaveBeenCalled();
-            });
-            it('successfully', function() {
-                spyOn(component, 'isYasguiElementDrawn').and.returnValue(true);
-                component.initEventListener();
-                expect(yasqe.on).toHaveBeenCalledWith('blur', jasmine.any(Function));
-                expect(yasqe.on).toHaveBeenCalledWith('queryResponse', jasmine.any(Function));
-                expect(yasr.on).toHaveBeenCalledWith('drawn', jasmine.any(Function));
             });
         });
         describe('setValues should initialize', function() {

@@ -24,6 +24,7 @@ import { Injectable } from '@angular/core';
 import { take, includes, get, find } from 'lodash';
 
 import { ExploreState } from '../models/exploreState.interface';
+import { YasguiQuery } from '../models/yasguiQuery.class';
 
 /**
  * @class shared.DiscoverStateService
@@ -80,15 +81,7 @@ export class DiscoverStateService {
      * 'query' is an object which holds properties associated with the {@link query.QueryTabComponent}.
      * @type {Object}
      */
-    query = {
-        datasetRecordId: '',
-        datasetRecordTitle: '',
-        submitDisabled: false,
-        queryString: '',
-        response: {},
-        selectedPlugin: '',
-        executionTime: 0
-    };
+    query = new YasguiQuery();
 
     /**
      * Resets all state variables.
@@ -188,15 +181,7 @@ export class DiscoverStateService {
             recordTitle: '',
             hasPermissionError: false
         };
-        this.query = {
-            datasetRecordId: '',
-            datasetRecordTitle: '',
-            submitDisabled: false,
-            queryString: '',
-            response: {},
-            selectedPlugin: '',
-            executionTime: 0
-        };
+        this.query = new YasguiQuery();
     }
     private _resetOnClear() {
         this.resetPagedInstanceDetails();
@@ -209,11 +194,6 @@ export class DiscoverStateService {
             objectMap: {},
             original: []
         };
-        this.query.datasetRecordId = '',
-        this.query.datasetRecordTitle = '',
-        this.query.submitDisabled = false;
-        this.query.queryString =  '';
-        this.query.response = {};
-        this.query.selectedPlugin = '';
-    }   
+        this.query = new YasguiQuery();
+    }
 }

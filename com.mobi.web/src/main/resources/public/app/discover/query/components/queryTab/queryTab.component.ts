@@ -57,12 +57,11 @@ export class QueryTabComponent implements OnInit {
         private spinnerSvc: ProgressSpinnerService, private util: UtilService, private pep: PolicyEnforcementService) {}
 
     ngOnInit(): void {
-        this.yasgui.initYasgui(this.discoverQuery.nativeElement, {name: 'discoverQuery'});
+        this.yasgui.initYasgui(this.discoverQuery.nativeElement, {name: 'discoverQuery'}, this.state.query);
         const yasgui = this.yasgui.getYasgui();
        
         if (yasgui && yasgui.getTab) {
             this.tab = yasgui.getTab();
-            this.initEventListener();
             this.setValues();
             this.error = '';
         } else {
@@ -71,13 +70,13 @@ export class QueryTabComponent implements OnInit {
     }
     onSelect(recordObject): void {
         this.state.query.submitDisabled = false;
-        this.state.query.datasetRecordId = recordObject.recordId;
-        this.state.query.datasetRecordTitle = recordObject.recordTitle;
+        this.state.query.recordId = recordObject.recordId;
+        this.state.query.recordTitle = recordObject.recordTitle;
         this.permissionCheck(recordObject.recordId);
     }
     submitQuery(): void {
-        if (this.state.query.datasetRecordId) {
-            const pepRequest = this.createPepReadRequest(this.state.query.datasetRecordId);
+        if (this.state.query.recordId) {
+            const pepRequest = this.createPepReadRequest(this.state.query.recordId);
 
             this.pep.evaluateRequest(pepRequest)
                 .subscribe(response => {
@@ -134,27 +133,6 @@ export class QueryTabComponent implements OnInit {
             resourceId: datasetRecordIRI,
             actionId: POLICY + 'Read'
         };
-    }
-    isYasguiElementDrawn(): boolean {
-        return !(Object.prototype.hasOwnProperty.call(this.tab, 'rootEl') && this.tab.rootEl instanceof HTMLElement);
-    }
-    initEventListener(): void {
-        if (!this.isYasguiElementDrawn() ) {
-            return;
-        }
-        // get YASGUI instance and cache Yasgui object
-        this.tab.yasqe.on('blur', () => {
-            this.state.query.queryString = this.tab.yasqe.getValue();
-        });
-
-        this.tab.yasr.on('drawn', (yasr) => {
-            this.state.query.selectedPlugin = yasr.drawnPlugin;
-        });
-
-        this.tab.yasqe.on('queryResponse', (instance, response: any, duration: number) => {
-            this.state.query.response = response;
-            this.state.query.executionTime = duration;
-        });
     }
     setValues(): void {
         if (Object.prototype.hasOwnProperty.call(this.tab.yasqe, 'setValue')) {

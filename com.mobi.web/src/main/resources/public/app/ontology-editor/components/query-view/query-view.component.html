@@ -20,18 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="query-tab h-100">
-    <form [formGroup]="queryForm" class="sparql-form h-100 d-flex flex-column p-2">
+<div class="query-view h-100">
+    <div class="h-100 d-flex flex-column p-2">
         <div class="top-section d-flex flex-row">
-            <discover-dataset-select class="col-4" [recordId]="state.query.recordId"
-                                     [parentForm]="queryForm" (recordIdChange)="onSelect($event)">
-            </discover-dataset-select>
             <div class="btn-container">
-                <button mat-raised-button color="primary" (click)="submitQuery()" [disabled]="state.query.submitDisabled"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
+                <button mat-raised-button color="primary" (click)="submitQuery()"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
             </div>
         </div>
-        <div class="flex-1 remove-min-height discover-query" #discoverQuery>
+        <div *ngIf="ready" class="flex-1 remove-min-height ontology-query" #ontologyQuery>
             <error-display *ngIf="error">{{error}}</error-display>
         </div>
-    </form>
+    </div>
 </div>

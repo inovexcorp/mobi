@@ -24,6 +24,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { DiscoverStateService } from './discoverState.service';
+import { YasguiQuery } from '../models/yasguiQuery.class';
 
 describe('Discover State Service', function() {
     let service: DiscoverStateService;
@@ -227,14 +228,6 @@ describe('Discover State Service', function() {
             recordTitle: '',
             hasPermissionError: false
         });
-        expect(service.query).toEqual({
-            datasetRecordId: '',
-            datasetRecordTitle: '',
-            submitDisabled: false,
-            queryString: '',
-            response: {},
-            selectedPlugin: '',
-            executionTime: 0
-        });
+        expect(service.query).toEqual(new YasguiQuery());
     }
 });

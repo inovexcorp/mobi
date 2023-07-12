@@ -60,11 +60,13 @@ import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 
+import { ActivityListComponent } from './components/activity-list/activity-list.component';
 import { ActivityTitleComponent } from './components/activityTitle/activityTitle.component';
 import { BlankNodeValueDisplayComponent } from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
 import { BranchSelectComponent } from './components/branchSelect/branchSelect.component';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { DatasetSelectComponent } from './components/datasetSelect/datasetSelect.component';
+import { DownloadQueryOverlayComponent } from './components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { CircleButtonStackComponent } from './components/circleButtonStack/circleButtonStack.component';
 import { CommitChangesDisplayComponent } from './components/commitChangesDisplay/commitChangesDisplay.component';
 import { CommitCompiledResourceComponent } from './components/commitCompiledResource/commitCompiledResource.component';
@@ -144,7 +146,6 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { HistoryGraph } from '../history-graph/history-graph.module';
-import { ActivityListComponent } from './components/activity-list/activity-list.component';
 
 /**
  * @namespace shared
@@ -206,6 +207,7 @@ import { ActivityListComponent } from './components/activity-list/activity-list.
         CommitInfoOverlayComponent,
         ConfirmModalComponent,
         DatasetSelectComponent,
+        DownloadQueryOverlayComponent,
         EditIriOverlayComponent,
         ErrorDisplayComponent,
         FileInputComponent,

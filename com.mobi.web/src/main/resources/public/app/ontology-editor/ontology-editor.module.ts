@@ -107,6 +107,8 @@ import { OntologyVisualizationModule } from '../ontology-visualization/ontologyV
 import { MergeBlockComponent } from './components/mergeBlock/mergeBlock.component';
 import { MergeTabComponent } from './components/mergeTab/mergeTab.component';
 import { OntologyDownloadModalComponent } from './components/ontology-download-modal/ontology-download-modal.component';
+import { FindViewComponent } from './components/find-view/find-view.component';
+import { QueryViewComponent } from './components/query-view/query-view.component';
 
 /**
  * @namespace ontology-editor
@@ -201,6 +203,8 @@ import { OntologyDownloadModalComponent } from './components/ontology-download-m
         UsagesBlockComponent,
         VisualizationTabComponent,
         OntologyDownloadModalComponent,
+        FindViewComponent,
+        QueryViewComponent,
     ]
 })
 export class OntologyEditorModule {}

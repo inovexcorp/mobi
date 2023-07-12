@@ -57,6 +57,7 @@ import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadO
 import { UploadSnackbarComponent } from '../uploadSnackbar/uploadSnackbar.component';
 import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontology-download-modal.component';
 import { OpenOntologyTabComponent } from './openOntologyTab.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 describe('Open Ontology Tab component', function() {
     let component: OpenOntologyTabComponent;
@@ -98,7 +99,8 @@ describe('Open Ontology Tab component', function() {
                 MatIconModule,
                 MatPaginatorModule,
                 MatMenuModule,
-                MatDividerModule
+                MatDividerModule,
+                MatTooltipModule
             ],
             declarations: [
                 OpenOntologyTabComponent,

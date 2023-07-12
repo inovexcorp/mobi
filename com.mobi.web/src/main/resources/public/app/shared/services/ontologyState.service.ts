@@ -103,6 +103,7 @@ import { ManchesterConverterService } from './manchesterConverter.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { YasguiQuery } from '../models/yasguiQuery.class';
 
 /**
  * @class shared.OntologyStateService
@@ -341,7 +342,9 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     assign(oldListItem, listItem);
                     if (!listItem.isVocabulary && (prevActiveKey === 'concepts' || prevActiveKey === 'schemes')) {
                         oldListItem.tabIndex = 0;
-                    } else { oldListItem.tabIndex = tabIndex }
+                    } else {
+                     oldListItem.tabIndex = tabIndex;
+                    }
                     return null;
                 })
             );
@@ -380,7 +383,9 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     assign(oldListItem, listItem);
                     if (!listItem.isVocabulary && (prevActiveKey === 'concepts' || prevActiveKey === 'schemes')) {
                         oldListItem.tabIndex = 0;
-                    } else { oldListItem.tabIndex = tabIndex }
+                    } else {
+                     oldListItem.tabIndex = tabIndex;
+                    }
                     return null;
                 })
             );
@@ -2498,6 +2503,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         listItem.versionedRdfRecord.commitId = commitId;
         listItem.inProgressCommit = inProgressCommit;
         listItem.upToDate = upToDate;
+        listItem.query = new YasguiQuery(recordId, commitId);
         this.pm.defaultDatatypes.forEach(iri => this._addIri(listItem, 'dataPropertyRange', iri));
         return listItem;
     }
