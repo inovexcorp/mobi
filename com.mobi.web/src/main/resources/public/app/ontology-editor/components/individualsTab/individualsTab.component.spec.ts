@@ -154,7 +154,7 @@ describe('Individuals Tab component', function() {
             component.showDeleteConfirmation();
             expect(dialogStub.open).toHaveBeenCalledWith(ConfirmModalComponent, {
                 data: {
-                    body: '<p>Are you sure that you want to delete <strong>individual</strong>?</p>'
+                    content: '<p>Are you sure you want to delete <strong>individual</strong>?</p>'
                 }
             });
         });
