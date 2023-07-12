@@ -41,6 +41,7 @@ import { PropertyManagerService } from '../../../shared/services/propertyManager
 import { UtilService } from '../../../shared/services/util.service';
 import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
 import { ImportsBlockComponent } from './importsBlock.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 describe('Imports Block component', function() {
     let component: ImportsBlockComponent;
@@ -66,6 +67,7 @@ describe('Imports Block component', function() {
                 MatDialogModule,
                 MatButtonModule,
                 MatIconModule,
+                MatTooltipModule
             ],
             declarations: [
                 ImportsBlockComponent,

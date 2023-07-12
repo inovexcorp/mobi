@@ -616,7 +616,7 @@ export class OntologyManagerService {
             );
     }
     /**
-     * Get the results of the provided SPARQL query.
+     * Get the results of the provided SPARQL query via a GET
      *
      * @param {string} recordId The record ID of the ontology to query.
      * @param {string} branchId The branch ID of the ontology to query.
@@ -653,6 +653,56 @@ export class OntologyManagerService {
                 }
             })
         );
+    }
+    /**
+     * Calls the POST /mobirest/ontologies/{recordId}/query endpoint with an Accept Header of application/octet-stream
+     * which will start a download of the results of running the provided query in the specified file type with an
+     * optional file name.
+     *
+     * @param {string} query The query to run
+     * @param {string} fileType The type of file to download based on file extension
+     * @param {string=''} fileName The optional name of the downloaded file
+     * @param {string} recordId the Ontology Record ID
+     * @param {string} commitId the Commit to run the query against
+     * @param {boolean} applyInProgressCommit whether to apply the InProgressCommit to the results
+     * @param {boolean} includeImports whether to include the imports closure in the results
+     */
+    downloadResultsPost(query: string, fileType: string, fileName = '', recordId = '', commitId = '', applyInProgressCommit = true, includeImports = false): Observable<any> {
+        const params: any = {
+            fileType,
+            fileName,
+            commitId,
+            applyInProgressCommit,
+            includeImports
+        };
+        let headers = new HttpHeaders();
+        headers = headers.append('Accept', 'application/octet-stream').append('Content-Type', 'application/sparql-query');
+
+        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(recordId) + '/query', query, {headers, params: this.util.createHttpParams(params), responseType: 'arraybuffer', observe: 'response'}))
+            .pipe(
+                catchError(this.util.handleError),
+                map((response: HttpResponse<any>) => {
+                    const file = new Blob([response.body], {
+                        type: response.headers.get('Content-Type')
+                    });
+                    const fileURL = URL.createObjectURL(file);
+                    const a = document.createElement('a');
+                    a.href = fileURL;
+                    a.target = '_blank';
+                    const respFilename = this._getFileName(response);
+                    a.download = respFilename || fileName || 'untitled';
+                    a.click(); //click the link "a"
+                    return response.body;
+                }));
+    }
+    private _getFileName(response: HttpResponse<any>): string {
+        try {
+            const contentDisposition: string = response.headers.get('content-disposition');
+            const matches = /filename=([^;]+)/ig.exec(contentDisposition);
+            return ((matches || [''])[1]).trim();
+        } catch (e) {
+            return '';
+        }
     }
     /**
      * Gets a list of imported ontology IRIs that failed to resolve.

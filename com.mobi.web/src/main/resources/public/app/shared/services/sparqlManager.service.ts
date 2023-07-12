@@ -159,9 +159,7 @@ export class SparqlManagerService {
                     a.target = '_blank';
                     const respFilename = this._getFileName(response);
                     a.download = respFilename || fileName || 'untitled';
-                    // document.body.appendChild(a); //create the link "a"
                     a.click(); //click the link "a"
-                    // document.body.removeChild(a); //remove the link "a"
                     return response.body;
                 }));
     }

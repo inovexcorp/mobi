@@ -34,9 +34,10 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM } from '../../../../../../public/test/ts/Shared';
-import { SparqlManagerService } from '../../../../shared/services/sparqlManager.service';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { SparqlManagerService } from '../../services/sparqlManager.service';
 import { DownloadQueryOverlayComponent } from './downloadQueryOverlay.component';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
 
 describe('Download Query Overlay component', function() {
     let component: DownloadQueryOverlayComponent;
@@ -44,15 +45,18 @@ describe('Download Query Overlay component', function() {
     let fixture: ComponentFixture<DownloadQueryOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<DownloadQueryOverlayComponent>>;
     let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
+    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
 
     const error = 'error';
-    const data = {
-        query: 'SELECT * WHERE {?s ?p ?o}',
-        datasetRecordIRI: 'datasetRecordIRI',
-        queryType: 'select'
-    };
+    let data;
 
     beforeEach(async () => {
+        data = {
+            query: 'SELECT * WHERE {?s ?p ?o}',
+            recordId: 'recordId',
+            queryType: 'select',
+            isOntology: false
+        };
         await TestBed.configureTestingModule({
             imports: [
                 NoopAnimationsModule,
@@ -70,6 +74,7 @@ describe('Download Query Overlay component', function() {
             ],
             providers: [
                 MockProvider(SparqlManagerService),
+                MockProvider(OntologyManagerService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -82,6 +87,7 @@ describe('Download Query Overlay component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<DownloadQueryOverlayComponent>>;
         sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
+        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
 
         component.data.queryType = 'select';
     });
@@ -93,6 +99,7 @@ describe('Download Query Overlay component', function() {
         fixture = null;
         matDialogRef = null;
         sparqlManagerStub = null;
+        ontologyManagerStub = null;
     });
 
     describe('should initialize correctly if the query type is', function() {
@@ -137,20 +144,42 @@ describe('Download Query Overlay component', function() {
                 component.downloadResultsForm.controls.fileName.setValue('name');
                 component.downloadResultsForm.controls.fileType.setValue('csv');
             });
-            it('unless an error occurs', fakeAsync(function() {
-                sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(error));
-                component.download();
-                tick();
-                expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.datasetRecordIRI);
-                expect(matDialogRef.close).toHaveBeenCalledWith(error);
-            }));
-            it('successfully', fakeAsync(function() {
-                sparqlManagerStub.downloadResultsPost.and.returnValue(of(null));
-                component.download();
-                tick();
-                expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query,'csv', 'name', data.datasetRecordIRI);
-                expect(matDialogRef.close).toHaveBeenCalledWith();
-            }));
+            describe('when it is not an ontology', function() {
+                it('unless an error occurs', fakeAsync(function() {
+                    sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(error));
+                    component.download();
+                    tick();
+                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.recordId);
+                    expect(matDialogRef.close).toHaveBeenCalledWith(error);
+                }));
+                it('successfully', fakeAsync(function() {
+                    sparqlManagerStub.downloadResultsPost.and.returnValue(of(null));
+                    component.download();
+                    tick();
+                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query,'csv', 'name', data.recordId);
+                    expect(matDialogRef.close).toHaveBeenCalledWith();
+                }));
+            });
+            describe('when it is not ontology', function() {
+                beforeEach(() => {
+                    data.isOntology = true;
+                    data.commitId = 'commitId';
+                });
+                it('unless an error occurs', fakeAsync(function() {
+                    ontologyManagerStub.downloadResultsPost.and.returnValue(throwError(error));
+                    component.download();
+                    tick();
+                    expect(ontologyManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.recordId, data.commitId);
+                    expect(matDialogRef.close).toHaveBeenCalledWith(error);
+                }));
+                it('successfully', fakeAsync(function() {
+                    ontologyManagerStub.downloadResultsPost.and.returnValue(of(null));
+                    component.download();
+                    tick();
+                    expect(ontologyManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query,'csv', 'name', data.recordId, data.commitId);
+                    expect(matDialogRef.close).toHaveBeenCalledWith();
+                }));
+            });
         });
     });
     describe('contains the correct html', function() {

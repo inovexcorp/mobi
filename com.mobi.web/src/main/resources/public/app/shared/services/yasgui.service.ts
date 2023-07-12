@@ -31,9 +31,9 @@ import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
 import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
 import { hasClass } from '../../vendor/YASGUI/plugins/utils/yasguiUtil';
 import { REST_PREFIX } from '../../constants';
-import { DiscoverStateService } from './discoverState.service';
-import { DownloadQueryOverlayComponent } from '../../discover/query/components/downloadQueryOverlay/downloadQueryOverlay.component';
+import { DownloadQueryOverlayComponent } from '../components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { UtilService } from './util.service';
+import { YasguiQuery } from '../models/yasguiQuery.class';
 
 /**
  * @class shared.YasguiService
@@ -57,10 +57,14 @@ export class YasguiService {
     reponseLimitElement = <HTMLElement>{};
     yasrRootElement : HTMLElement = <any>{};
     hasInitialized = false;
+    yasguiQuery: YasguiQuery;
+    isOntology = false;
 
-    constructor(private matDialog: MatDialog, private state: DiscoverStateService, private util: UtilService) {}
+    constructor(private matDialog: MatDialog, private util: UtilService) {}
 
-    initYasgui(element: HTMLElement, config: any = {}) : void{
+    initYasgui(element: HTMLElement, config: any = {}, query: YasguiQuery, isOntology = false) : void{
+        this.yasguiQuery = query;
+        this.isOntology = isOntology;
         const localConfig = this._getDefaultConfig();
         config.name = 'mobiQuery';
         config.tabName = 'mobiQuery';
@@ -100,7 +104,9 @@ export class YasguiService {
     }
 
     public reset(): void {
-        this.state.query.datasetRecordId = '';
+        if (!this.isOntology && this.yasguiQuery) {
+            this.yasguiQuery.recordId = '';
+        }
         if (Object.prototype.hasOwnProperty.call(this.yasgui, 'getTab')) {
             this.clearStorage();
         } else  {
@@ -115,7 +121,7 @@ export class YasguiService {
      * Clear Storage
      * https://github.com/TriplyDB/Yasgui/blob/master/packages/utils/src/Storage.ts
      */
-    public  clearStorage(): void {
+    public clearStorage(): void {
         this.yasgui.getTab().getYasr().storage.removeNamespace();
     }
     
@@ -143,7 +149,7 @@ export class YasguiService {
 
         // update query string value on blur
         tab.yasqe.on('blur', (yasqe: Yasgui.Yasqe) => {
-            this.state.query.queryString = yasqe.getValue();
+            this.yasguiQuery.queryString = yasqe.getValue();
         });
 
         // update plugin data on tab change
@@ -151,6 +157,11 @@ export class YasguiService {
             if (this._isPluginEnabled(instance?.selectedPlugin)) {
                 this._refreshPluginData();
             }
+        });
+
+        tab.yasqe.on('queryResponse', (instance, response: any, duration: number) => {
+            this.yasguiQuery.response = response;
+            this.yasguiQuery.executionTime = duration;
         });
 
         const downloadIcon = this.yasrRootElement.querySelector('.yasr_downloadIcon');
@@ -178,7 +189,6 @@ export class YasguiService {
         tab.yasr.on('drawn', (yasr: Yasgui.Yasr, plugin: Plugin) => {
             const drawnPlugin = yasr.drawnPlugin;
             const results = yasr.results;
-            this.state.query.selectedPlugin = drawnPlugin;
             const limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
             this._updateResponseLimitMessage(limit);
 
@@ -228,7 +238,9 @@ export class YasguiService {
             data: {
                 query: tab.yasqe.getQueryWithValues(),
                 queryType: tab.yasqe.getQueryType()?.toLowerCase(),
-                datasetRecordIRI: this.state.query.datasetRecordId
+                recordId: this.yasguiQuery.recordId,
+                commitId: this.yasguiQuery.commitId,
+                isOntology: this.isOntology
             }
         }).afterClosed().subscribe((errorMessage) => {
             if (errorMessage) {
@@ -285,7 +297,7 @@ export class YasguiService {
      * @param type format
      * @returns Accept Header Content Type
      */
-    private _getFormat(type) {
+    private _getFormat(type, query: string) {
         const format = type || this.yasgui.getTab().yasr.config.defaultPlugin;
         const formatType =  {
            'turtle': 'text/turtle',
@@ -293,22 +305,38 @@ export class YasguiService {
            'jsonLD': 'application/ld+json',
            'table': 'application/json'
         };
+        const selectIndex = query.toLowerCase().indexOf('select') === -1 ? 99999 : query.toLowerCase().indexOf('select');
+        const constructIndex = query.toLowerCase().indexOf('construct')  === -1 ? 99999 : query.toLowerCase().indexOf('construct');
+        if (format === 'table' && constructIndex < selectIndex) {
+            return formatType['turtle'];
+        }
         return formatType?.[format] || formatType.jsonLD;
     }
 
     // update yasr request configuration
     private _setRequestConfig() {
-        const url =  this.customURL || this.defaultUrl.href;
+        const datasetIri = this.isOntology ? undefined : this.yasguiQuery.recordId;
+        let url =  this.customURL || this.defaultUrl.href;
+        if (this.isOntology) {
+            url = new URL(REST_PREFIX + 'ontologies/' + encodeURIComponent(this.yasguiQuery.recordId) + '/query', window.location.origin).href;
+        }
         const { headers } = this.yasgui.getTab().getRequestConfig();
-        headers.Accept = this._getFormat(this.yasgui.getTab().yasr.selectedPlugin);
+        headers.Accept = this._getFormat(this.yasgui.getTab().yasr.selectedPlugin, this.yasguiQuery.queryString);
         headers['Content-Type'] = 'application/x-www-form-urlencoded';
         const requestConfig = {
             endpoint: url,
             headers: headers,
             method: 'POST'
         };
-        const datasetIri = this.state.query.datasetRecordId;
-        requestConfig['args'] = (datasetIri !== '') ? [{ name: 'dataset', value: datasetIri }] : [];
+        if (this.isOntology) {
+            requestConfig['args'] = [{name: 'applyInProgressCommit', value: true}, {name: 'includeImports', value: false}];
+            if (this.yasguiQuery.commitId !== '') {
+                requestConfig['args'].push({ name: 'commitId', value: this.yasguiQuery.commitId});
+            }
+        } else {
+            requestConfig['args'] = (datasetIri !== '') ? [{name: 'dataset', value: datasetIri}] : [];
+        }
+        
         this.yasgui.getTab().setRequestConfig(requestConfig);
     }
 

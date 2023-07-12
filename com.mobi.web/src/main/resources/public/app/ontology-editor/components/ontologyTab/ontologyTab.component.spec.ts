@@ -52,6 +52,7 @@ import { SeeHistoryComponent } from '../seeHistory/seeHistory.component';
 import { IndividualsTabComponent } from '../individualsTab/individualsTab.component';
 import { UtilService } from '../../../shared/services/util.service';
 import { OntologyTabComponent } from './ontologyTab.component';
+import { MatMenuModule } from '@angular/material/menu';
 
 describe('Ontology Tab component', function() {
     let component: OntologyTabComponent;
@@ -90,6 +91,7 @@ describe('Ontology Tab component', function() {
             imports: [
                 NoopAnimationsModule,
                 MatTabsModule,
+                MatMenuModule
             ],
             declarations: [
                 OntologyTabComponent,
@@ -373,6 +375,25 @@ describe('Ontology Tab component', function() {
             expect(element.queryAll(By.css('mat-tab-group')).length).toEqual(0);
             expect(element.queryAll(By.css('ontology-button-stack')).length).toEqual(0);
             expect(element.queryAll(By.css('see-history')).length).toEqual(1);
+        });
+    });
+    describe('should update the search index when', function() {
+       beforeEach(function() {
+           ontologyStateStub.listItem.tabIndex = 7;
+           fixture.detectChanges();
+           const optionsButton = element.queryAll(By.css('.search-options'))[0];
+           optionsButton.triggerEventHandler('click', null);
+           fixture.detectChanges();
+       });
+        it('the find button is clicked', function() {
+            const button = element.queryAll(By.css('.find-button'))[0];
+            button.triggerEventHandler('click', null);
+            expect(ontologyStateStub.listItem.editorTabStates.search.openIndex).toEqual(0);
+        });
+        it('the query button is clicked', function() {
+            const button = element.queryAll(By.css('.query-button'))[0];
+            button.triggerEventHandler('click', {});
+            expect(ontologyStateStub.listItem.editorTabStates.search.openIndex).toEqual(1);
         });
     });
 });

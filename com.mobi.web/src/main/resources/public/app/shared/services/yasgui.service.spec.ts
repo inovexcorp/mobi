@@ -37,6 +37,7 @@ import {
 import { DiscoverStateService } from './discoverState.service';
 import { UtilService } from './util.service';
 import { YasguiService } from './yasgui.service';
+import { YasguiQuery } from '../models/yasguiQuery.class';
 
 describe('YASGUI service', function() {
     let service: YasguiService;
@@ -62,15 +63,7 @@ describe('YASGUI service', function() {
         service = TestBed.inject(YasguiService);
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         
-        discoverStateStub.query = {
-            queryString: '',
-            response: undefined,
-            selectedPlugin: '',
-            submitDisabled: false,
-            datasetRecordId: '',
-            datasetRecordTitle: '',
-            executionTime: 0
-        };
+        discoverStateStub.query = new YasguiQuery();
 
         yasMock = yasguiMockResponse();
         turtleResponse = turtleResponseText();
@@ -78,7 +71,7 @@ describe('YASGUI service', function() {
         jsonLDResponse = getJsonLDResponseText();
     
         const element = document.createElement('div');
-        service.initYasgui(element, {endpoint: 'mobirest/sparql/limited-results?'});
+        service.initYasgui(element, {endpoint: 'mobirest/sparql/limited-results?'}, discoverStateStub.query);
         service.submitQuery = jasmine.createSpy('submitQuery');
     });
 

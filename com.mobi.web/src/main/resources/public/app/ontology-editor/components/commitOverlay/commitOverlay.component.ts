@@ -94,6 +94,7 @@ export class CommitOverlayComponent implements OnInit {
             .subscribe(() => {
                 this.os.listItem.versionedRdfRecord.branchId = branchId;
                 this.os.listItem.versionedRdfRecord.commitId = commitId;
+                this.os.listItem.query.commitId = commitId;
                 this.os.clearInProgressCommit();
                 this.util.createSuccessToast('Successfully Committed Changes');
                 this.dialogRef.close(true);

@@ -60,10 +60,15 @@
                     <concepts-tab></concepts-tab>
                 </ng-template>
             </mat-tab>
-            <mat-tab label="Search">
+            <mat-tab>
+                <ng-template mat-tab-label>Search <mat-icon class="search-options" [matMenuTriggerFor]="searchMenu">expand_more</mat-icon></ng-template>
                 <ng-template matTabContent>
                     <search-tab></search-tab>
                 </ng-template>
+                <mat-menu #searchMenu="matMenu">
+                    <button mat-menu-item class="find-button" (click)="os.listItem.editorTabStates.search.openIndex = 0">Find</button>
+                    <button mat-menu-item class="query-button" (click)="os.listItem.editorTabStates.search.openIndex = 1">Query</button>
+                </mat-menu>
             </mat-tab>
             <mat-tab>
                 <ng-template mat-tab-label><i class="fa fa-exclamation-triangle"></i> Changes</ng-template>

@@ -105,8 +105,8 @@ export class DatasetSelectComponent implements OnInit {
             this.parentForm.controls.datasetSelect.setValue({id: this.state.explore.recordTitle,
                 title: this.state.explore.recordTitle});
         } else if (status === 'closed' && this.parentForm.controls?.formName?.value === 'queryTab') {
-            this.parentForm.controls.datasetSelect.setValue({id: this.state.query.datasetRecordId,
-                title: this.state.query.datasetRecordTitle});
+            this.parentForm.controls.datasetSelect.setValue({id: this.state.query.recordId,
+                title: this.state.query.recordTitle});
         } else {
             this.parentForm.controls.datasetSelect.setValue({});
         }
@@ -116,9 +116,9 @@ export class DatasetSelectComponent implements OnInit {
         if (this?.state?.explore?.recordTitle && this.parentForm.controls?.formName?.value === 'classesDisplay') {
             this.parentForm.controls.datasetSelect.setValue({id: this.state.explore.recordTitle,
                 title: this.state.explore.recordTitle});
-        } else if (this.state.query?.datasetRecordTitle && this.parentForm.controls?.formName?.value === 'queryTab') {
-            this.parentForm.controls.datasetSelect.setValue({id: this.state.query.datasetRecordId,
-                title: this.state.query.datasetRecordTitle});
+        } else if (this.state.query?.recordTitle && this.parentForm.controls?.formName?.value === 'queryTab') {
+            this.parentForm.controls.datasetSelect.setValue({id: this.state.query.recordId,
+                title: this.state.query.recordTitle});
         } else {
             this.parentForm.controls.datasetSelect.setValue({id: '', title: ''});
         }
