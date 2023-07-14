@@ -35,7 +35,7 @@ module.exports = {
         browser.globals.upload_ontologies(browser, Onto1)
     },
 
-    'Step 3: Open an Ontology called geo.ttl': function (browser) {
+    'Step 3: Open an Ontology called EntityDeletionOntology.ttl': function (browser) {
         browser
             .setValue('open-ontology-tab search-bar input', '')
             .globals.open_ontology(browser, Onto1)
@@ -146,7 +146,33 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Concept")]]')
     },
 
-    'Step 14: Delete ontology concept': function (browser) {
+    'Step 14 : Add broader property to concept': function (browser) {
+        !browser
+            .useXpath()
+            .waitForElementVisible('//object-property-block//h5[text()[contains(., "Object Properties")]]')
+            .click('//object-property-block//h5[text()[contains(., "Object Properties")]]//following-sibling::a')
+            .waitForElementVisible('//object-property-overlay//form')
+            .waitForElementVisible('//object-property-overlay//div[contains(@class, "mat-dialog-actions")]')
+            .click('//object-property-overlay//form/mat-form-field')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" has broader "]')
+            .click('//mat-optgroup//mat-option//span[text()=" has broader "]')
+            .click('//object-property-overlay//form/iri-select-ontology//mat-form-field')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
+            .click('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
+    },
+
+    'Step 15 : Check if Value can be reselected': function (browser) {
+        !browser
+            .useXpath()
+            .waitForElementVisible('//object-property-overlay//form')
+            .waitForElementVisible('//object-property-overlay//div[contains(@class, "mat-dialog-actions")]')
+            .click('//object-property-overlay//form/iri-select-ontology//mat-form-field')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
+            .click('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
+            .click('//button//span[text()="Cancel"]')
+    },
+
+    'Step 16: Delete ontology concept': function (browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -157,14 +183,14 @@ module.exports = {
             .pause(2000)
     },
 
-    'Step 15: Verify concept deletion': function (browser) {
+    'Step 17: Verify concept deletion': function (browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()
             .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Concept")]]')
     },
 
-    'Step 16: Click schemes tab & open scheme': function (browser) {
+    'Step 18: Click schemes tab & open scheme': function (browser) {
         browser
             .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Schemes")]]')
@@ -175,7 +201,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Scheme")]]')
     },
 
-    'Step 17: Delete ontology scheme': function (browser) {
+    'Step 19: Delete ontology scheme': function (browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -185,7 +211,7 @@ module.exports = {
             .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 18: Verify scheme deletion': function (browser) {
+    'Step 20: Verify scheme deletion': function (browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()
