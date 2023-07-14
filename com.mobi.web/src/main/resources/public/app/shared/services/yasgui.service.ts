@@ -21,7 +21,7 @@
  * #L%
  */
 import { Injectable } from '@angular/core';
-import { merge } from 'lodash';
+import { merge, isEmpty } from 'lodash';
 import * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
 import { PersistedJson } from '@triply/yasgui/build/ts/src/PersistentConfig';
 import { MatDialog } from '@angular/material/dialog';
@@ -34,6 +34,7 @@ import { REST_PREFIX } from '../../constants';
 import { DownloadQueryOverlayComponent } from '../components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { UtilService } from './util.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
+import {query} from '@angular/animations';
 
 /**
  * @class shared.YasguiService
@@ -94,8 +95,8 @@ export class YasguiService {
     // fire a new query
     public submitQuery(queryConfig = {}): boolean {
         if (this.hasInitialized) {
-            this._setRequestConfig();
-            this.yasgui.getTab().yasqe.query(queryConfig);
+            this._setRequestConfig(queryConfig);
+            this.yasgui.getTab().yasqe.query();
             return true;
         } else {
             this.util.createErrorToast('Error: Yasgui has not been initialized');
@@ -314,7 +315,7 @@ export class YasguiService {
     }
 
     // update yasr request configuration
-    private _setRequestConfig() {
+    private _setRequestConfig(configVals) {
         const datasetIri = this.isOntology ? undefined : this.yasguiQuery.recordId;
         let url =  this.customURL || this.defaultUrl.href;
         if (this.isOntology) {
@@ -336,7 +337,32 @@ export class YasguiService {
         } else {
             requestConfig['args'] = (datasetIri !== '') ? [{name: 'dataset', value: datasetIri}] : [];
         }
-        
+        // only update arguments for now
+        if (!isEmpty(configVals) && Object.prototype.hasOwnProperty.call(configVals,'args')) {
+            // create a map to stores arguments names and values
+            // This allows constant values search
+            let argsMap = {};
+
+            requestConfig['args'].forEach(item => {
+                argsMap[item.name] =  item.value;
+            })
+
+            // no array search needed for each value.
+            configVals['args'].forEach(item => {
+                if (Object.prototype.hasOwnProperty.call(argsMap,item.name)) {
+                 argsMap[item.name] = item.value;
+                }
+            });
+
+            // Convert map to object again.
+            // In ES2019 We can convert array into object using Object.fromEntries().
+            requestConfig['args'] = Object.entries(argsMap).map(item => {
+                return {
+                    name: item[0],
+                    value: item[1]
+                };
+            });
+        }
         this.yasgui.getTab().setRequestConfig(requestConfig);
     }
 

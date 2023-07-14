@@ -25,7 +25,7 @@ import {
     Component,
     ElementRef,
     Input,
-    OnChanges,
+    OnChanges, OnDestroy,
     OnInit,
     SimpleChanges,
     ViewChild
@@ -40,15 +40,17 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
     styleUrls: ['./query-view.component.scss'],
     providers: [YasguiService]
 })
-export class QueryViewComponent implements OnInit, OnChanges {
+export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input()
     yasguiQuery: YasguiQuery
     tab: any = {};
     error = '';
     ready = true;
+    isIncludeImportsChecked: boolean;
 
     @ViewChild('ontologyQuery', {static: false}) ontologyQuery: ElementRef;
+
 
     constructor(public yasgui: YasguiService, private spinnerSvc: ProgressSpinnerService,
                 private changeDetector : ChangeDetectorRef) {
@@ -58,6 +60,7 @@ export class QueryViewComponent implements OnInit, OnChanges {
         this.ready = true;
         this.changeDetector.detectChanges();
         this._setUpYasgui();
+        this.isIncludeImportsChecked = this.yasguiQuery.isImportedOntologyInclude;
     }
     ngOnChanges(changes: SimpleChanges) {
         if (changes?.yasguiQuery && !changes?.yasguiQuery.isFirstChange()) {
@@ -70,9 +73,18 @@ export class QueryViewComponent implements OnInit, OnChanges {
         }
     }
 
+    ngOnDestroy(): void {
+        //update values when component is destroyed
+        this.yasguiQuery.isImportedOntologyInclude = this.isIncludeImportsChecked;
+    }
+
     submitQuery(): void {
         this.spinnerSvc.startLoadingForComponent(this.ontologyQuery);
-        this.yasgui.submitQuery();
+        this.yasguiQuery.isImportedOntologyInclude = this.isIncludeImportsChecked || false;
+        const config =  {
+            args: [{ name: 'includeImports', value: this.yasguiQuery.isImportedOntologyInclude }]
+        };
+        this.yasgui.submitQuery(config);
         this.spinnerSvc.finishLoadingForComponent(this.ontologyQuery);
     }
 

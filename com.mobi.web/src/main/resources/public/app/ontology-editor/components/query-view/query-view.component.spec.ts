@@ -47,6 +47,9 @@ describe('QueryViewComponent', () => {
     let yasr;
 
     const error = 'error message';
+    const configQuery =  {
+        args: [{ name: 'includeImports', value: false }]
+    } ;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -138,7 +141,7 @@ describe('QueryViewComponent', () => {
         it('submitQuery should handle submitting a query', function() {
             component.submitQuery();
             expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.ontologyQuery);
-            expect(yasguiStub.submitQuery).toHaveBeenCalledWith();
+            expect(yasguiStub.submitQuery).toHaveBeenCalledWith(configQuery);
             expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.ontologyQuery);
         });
         describe('setValues should initialize', function() {
