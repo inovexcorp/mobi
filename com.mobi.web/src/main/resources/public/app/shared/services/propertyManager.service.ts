@@ -57,7 +57,7 @@ export class PropertyManagerService {
      */
     skosAnnotations = map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example', 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => SKOS + item);
 
-    xsdDatatypes = map(['anyURI', 'boolean', 'byte', 'date','dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => XSD + item);
+    xsdDatatypes = map(['anyURI', 'boolean', 'byte', 'date', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => XSD + item);
     rdfDatatypes = map(['langString'], item => RDF + item);
     /**
      * `defaultDatatypes` holds an array of datatypes that are available by default.
