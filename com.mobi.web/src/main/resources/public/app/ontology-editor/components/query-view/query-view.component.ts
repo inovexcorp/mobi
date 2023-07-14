@@ -25,7 +25,8 @@ import {
     Component,
     ElementRef,
     Input,
-    OnChanges, OnDestroy,
+    OnChanges, 
+    OnDestroy,
     OnInit,
     SimpleChanges,
     ViewChild
