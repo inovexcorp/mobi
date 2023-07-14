@@ -79,6 +79,7 @@ describe('Property Manager service', function() {
                 XSD + 'anyURI',
                 XSD + 'boolean',
                 XSD + 'byte',
+                XSD + 'date',
                 XSD + 'dateTime',
                 XSD + 'decimal',
                 XSD + 'double',
