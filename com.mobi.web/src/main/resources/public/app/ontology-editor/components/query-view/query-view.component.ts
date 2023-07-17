@@ -25,7 +25,8 @@ import {
     Component,
     ElementRef,
     Input,
-    OnChanges,
+    OnChanges, 
+    OnDestroy,
     OnInit,
     SimpleChanges,
     ViewChild
@@ -40,13 +41,14 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
     styleUrls: ['./query-view.component.scss'],
     providers: [YasguiService]
 })
-export class QueryViewComponent implements OnInit, OnChanges {
+export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input()
     yasguiQuery: YasguiQuery
     tab: any = {};
     error = '';
     ready = true;
+    isIncludedImportsChecked: boolean;
 
     @ViewChild('ontologyQuery', {static: false}) ontologyQuery: ElementRef;
 
@@ -58,6 +60,7 @@ export class QueryViewComponent implements OnInit, OnChanges {
         this.ready = true;
         this.changeDetector.detectChanges();
         this._setUpYasgui();
+        this.isIncludedImportsChecked = this.yasguiQuery.isImportedOntologyIncluded;
     }
     ngOnChanges(changes: SimpleChanges) {
         if (changes?.yasguiQuery && !changes?.yasguiQuery.isFirstChange()) {
@@ -65,14 +68,24 @@ export class QueryViewComponent implements OnInit, OnChanges {
             this.changeDetector.detectChanges();
             this.yasgui.reset();
             this.ready = true;
+            this.isIncludedImportsChecked = changes.yasguiQuery.currentValue?.isImportedOntologyIncluded;
             this.changeDetector.detectChanges();
             this._setUpYasgui();
         }
     }
 
+    ngOnDestroy(): void {
+        //update values when component is destroyed
+        this.yasguiQuery.isImportedOntologyIncluded = this.isIncludedImportsChecked;
+    }
+
     submitQuery(): void {
         this.spinnerSvc.startLoadingForComponent(this.ontologyQuery);
-        this.yasgui.submitQuery();
+        this.yasguiQuery.isImportedOntologyIncluded = this.isIncludedImportsChecked || false;
+        const config =  {
+            args: [{ name: 'includeImports', value: this.yasguiQuery.isImportedOntologyIncluded }]
+        };
+        this.yasgui.submitQuery(config);
         this.spinnerSvc.finishLoadingForComponent(this.ontologyQuery);
     }
 

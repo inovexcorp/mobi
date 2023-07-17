@@ -27,7 +27,7 @@ export class YasguiQuery {
     private _submitDisabled: boolean;
     private _queryString: string;
     private _response: any;
-
+    private _isImportedOntologyIncluded: boolean;
     get recordId(): string {
         return this._recordId;
     }
@@ -84,6 +84,13 @@ export class YasguiQuery {
         this._executionTime = value;
     }
 
+    set isImportedOntologyIncluded(value: boolean) {
+        this._isImportedOntologyIncluded = value;
+    }
+
+    get isImportedOntologyIncluded(): boolean {
+       return this._isImportedOntologyIncluded;
+    }
     private _executionTime: number;
 
     constructor(recordId = '', commitId = '') {
@@ -94,5 +101,6 @@ export class YasguiQuery {
         this._queryString = '';
         this._response = {};
         this._executionTime = 0;
+        this._isImportedOntologyIncluded = false;
     }
 }

@@ -94,8 +94,8 @@ export class YasguiService {
     // fire a new query
     public submitQuery(queryConfig = {}): boolean {
         if (this.hasInitialized) {
-            this._setRequestConfig();
-            this.yasgui.getTab().yasqe.query(queryConfig);
+            this._setRequestConfig(queryConfig);
+            this.yasgui.getTab().yasqe.query();
             return true;
         } else {
             this.util.createErrorToast('Error: Yasgui has not been initialized');
@@ -314,7 +314,7 @@ export class YasguiService {
     }
 
     // update yasr request configuration
-    private _setRequestConfig() {
+    private _setRequestConfig(configVals) {
         const datasetIri = this.isOntology ? undefined : this.yasguiQuery.recordId;
         let url =  this.customURL || this.defaultUrl.href;
         if (this.isOntology) {
@@ -329,14 +329,13 @@ export class YasguiService {
             method: 'POST'
         };
         if (this.isOntology) {
-            requestConfig['args'] = [{name: 'applyInProgressCommit', value: true}, {name: 'includeImports', value: false}];
+            requestConfig['args'] = [{name: 'applyInProgressCommit', value: true}, {name: 'includeImports', value: this.yasguiQuery.isImportedOntologyIncluded}];
             if (this.yasguiQuery.commitId !== '') {
                 requestConfig['args'].push({ name: 'commitId', value: this.yasguiQuery.commitId});
             }
         } else {
             requestConfig['args'] = (datasetIri !== '') ? [{name: 'dataset', value: datasetIri}] : [];
         }
-        
         this.yasgui.getTab().setRequestConfig(requestConfig);
     }
 
