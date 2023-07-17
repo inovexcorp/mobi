@@ -330,39 +330,12 @@ export class YasguiService {
             method: 'POST'
         };
         if (this.isOntology) {
-            requestConfig['args'] = [{name: 'applyInProgressCommit', value: true}, {name: 'includeImports', value: false}];
+            requestConfig['args'] = [{name: 'applyInProgressCommit', value: true}, {name: 'includeImports', value: this.yasguiQuery.isImportedOntologyIncluded}];
             if (this.yasguiQuery.commitId !== '') {
                 requestConfig['args'].push({ name: 'commitId', value: this.yasguiQuery.commitId});
             }
         } else {
             requestConfig['args'] = (datasetIri !== '') ? [{name: 'dataset', value: datasetIri}] : [];
-        }
-        // only update arguments for now
-        if (!isEmpty(configVals) && Object.prototype.hasOwnProperty.call(configVals,'args')) {
-            // create a map to stores arguments names and values
-            // This allows constant values search
-            const argsMap = {};
-
-            requestConfig['args'].forEach(item => {
-                argsMap[item.name] =  item.value;
-            });
-
-            // no array search needed for each value.
-            // Iterate over the arguments and update the values.
-            configVals['args'].forEach(item => {
-                if (Object.prototype.hasOwnProperty.call(argsMap,item.name)) {
-                 argsMap[item.name] = item.value;
-                }
-            });
-
-            // Convert map to object again.
-            // In ES2019 We can convert array into object using Object.fromEntries().
-            requestConfig['args'] = Object.entries(argsMap).map(item => {
-                return {
-                    name: item[0],
-                    value: item[1]
-                };
-            });
         }
         this.yasgui.getTab().setRequestConfig(requestConfig);
     }
