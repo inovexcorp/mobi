@@ -27,7 +27,7 @@ export class YasguiQuery {
     private _submitDisabled: boolean;
     private _queryString: string;
     private _response: any;
-    private _isImportedOntologyInclude: boolean;
+    private _isImportedOntologyIncluded: boolean;
     get recordId(): string {
         return this._recordId;
     }
@@ -53,7 +53,7 @@ export class YasguiQuery {
     }
 
     get submitDisabled(): boolean {
-        return this._submitDisabled ;
+        return this._submitDisabled;
     }
 
     set submitDisabled(value: boolean) {
@@ -84,12 +84,12 @@ export class YasguiQuery {
         this._executionTime = value;
     }
 
-    set isImportedOntologyInclude(value: boolean) {
-        this._isImportedOntologyInclude = value;
+    set isImportedOntologyIncluded(value: boolean) {
+        this._isImportedOntologyIncluded = value;
     }
 
-    get isImportedOntologyInclude(): boolean {
-       return this._isImportedOntologyInclude;
+    get isImportedOntologyIncluded(): boolean {
+       return this._isImportedOntologyIncluded;
     }
     private _executionTime: number;
 
@@ -101,6 +101,6 @@ export class YasguiQuery {
         this._queryString = '';
         this._response = {};
         this._executionTime = 0;
-        this._isImportedOntologyInclude = false;
+        this._isImportedOntologyIncluded = false;
     }
 }

@@ -48,10 +48,9 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
     tab: any = {};
     error = '';
     ready = true;
-    isIncludeImportsChecked: boolean;
+    isIncludedImportsChecked: boolean;
 
     @ViewChild('ontologyQuery', {static: false}) ontologyQuery: ElementRef;
-
 
     constructor(public yasgui: YasguiService, private spinnerSvc: ProgressSpinnerService,
                 private changeDetector : ChangeDetectorRef) {
@@ -61,7 +60,7 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
         this.ready = true;
         this.changeDetector.detectChanges();
         this._setUpYasgui();
-        this.isIncludeImportsChecked = this.yasguiQuery.isImportedOntologyInclude;
+        this.isIncludedImportsChecked = this.yasguiQuery.isImportedOntologyIncluded;
     }
     ngOnChanges(changes: SimpleChanges) {
         if (changes?.yasguiQuery && !changes?.yasguiQuery.isFirstChange()) {
@@ -69,6 +68,7 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
             this.changeDetector.detectChanges();
             this.yasgui.reset();
             this.ready = true;
+            this.isIncludedImportsChecked = changes.yasguiQuery.currentValue?.isImportedOntologyIncluded;
             this.changeDetector.detectChanges();
             this._setUpYasgui();
         }
@@ -76,14 +76,14 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnDestroy(): void {
         //update values when component is destroyed
-        this.yasguiQuery.isImportedOntologyInclude = this.isIncludeImportsChecked;
+        this.yasguiQuery.isImportedOntologyIncluded = this.isIncludedImportsChecked;
     }
 
     submitQuery(): void {
         this.spinnerSvc.startLoadingForComponent(this.ontologyQuery);
-        this.yasguiQuery.isImportedOntologyInclude = this.isIncludeImportsChecked || false;
+        this.yasguiQuery.isImportedOntologyIncluded = this.isIncludedImportsChecked || false;
         const config =  {
-            args: [{ name: 'includeImports', value: this.yasguiQuery.isImportedOntologyInclude }]
+            args: [{ name: 'includeImports', value: this.yasguiQuery.isImportedOntologyIncluded }]
         };
         this.yasgui.submitQuery(config);
         this.spinnerSvc.finishLoadingForComponent(this.ontologyQuery);

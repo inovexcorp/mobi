@@ -341,13 +341,14 @@ export class YasguiService {
         if (!isEmpty(configVals) && Object.prototype.hasOwnProperty.call(configVals,'args')) {
             // create a map to stores arguments names and values
             // This allows constant values search
-            let argsMap = {};
+            const argsMap = {};
 
             requestConfig['args'].forEach(item => {
                 argsMap[item.name] =  item.value;
-            })
+            });
 
             // no array search needed for each value.
+            // Iterate over the arguments and update the values.
             configVals['args'].forEach(item => {
                 if (Object.prototype.hasOwnProperty.call(argsMap,item.name)) {
                  argsMap[item.name] = item.value;
