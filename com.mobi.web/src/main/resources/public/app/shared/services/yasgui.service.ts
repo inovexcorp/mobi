@@ -21,7 +21,7 @@
  * #L%
  */
 import { Injectable } from '@angular/core';
-import { merge, isEmpty } from 'lodash';
+import { merge } from 'lodash';
 import * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
 import { PersistedJson } from '@triply/yasgui/build/ts/src/PersistentConfig';
 import { MatDialog } from '@angular/material/dialog';
@@ -34,7 +34,6 @@ import { REST_PREFIX } from '../../constants';
 import { DownloadQueryOverlayComponent } from '../components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { UtilService } from './util.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
-import {query} from '@angular/animations';
 
 /**
  * @class shared.YasguiService
