@@ -36,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
         immediate = true,
         service = { RecordService.class, DatasetRecordService.class, SimpleDatasetRecordService.class }
 )
-public class SimpleDatasetRecordService extends DatasetRecordService {
+public class SimpleDatasetRecordService extends DatasetRecordService<DatasetRecord> {
     public static final String DCTERMS_PUBLISHER = "http://purl.org/dc/terms/publisher";
 
     @Reference
@@ -48,7 +48,7 @@ public class SimpleDatasetRecordService extends DatasetRecordService {
     }
 
     @Override
-    public Class getType() {
+    public Class<DatasetRecord> getType() {
         return DatasetRecord.class;
     }
 

@@ -23,10 +23,10 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyCreationService;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -39,6 +39,8 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
@@ -53,23 +55,21 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
     protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference
-    protected DatasetManager datasetManager;
+    protected DatasetUtilsService dsUtilsService;
     @Reference
     protected ImportsResolver importsResolver;
     @Reference
     protected BNodeService bNodeService;
     @Reference
-    protected RDFImportService importService;
-    @Reference
     protected RepositoryManager repositoryManager;
     @Reference
-    protected CatalogManager catalogManager;
+    protected CatalogUtilsService utilsService;
     @Reference
     protected CatalogConfigProvider configProvider;
 
     @Override
     public Ontology createOntologyFromCommit(Resource recordId, Resource commitId) {
-        File ontologyFile = catalogManager.getCompiledResourceFile(commitId);
+        File ontologyFile = getCompiledResourceFile(commitId);
         return createOntology(ontologyFile, recordId, commitId);
     }
 
@@ -79,8 +79,8 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = String.format("%s&%s", recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, ontologyFile, repository, getOntologyManager(), catalogManager, configProvider,
-                datasetManager, importsResolver, bNodeService, valueFactory, modelFactory, importService);
+        return new SimpleOntology(key, ontologyFile, repository, getOntologyManager(), utilsService, configProvider,
+                dsUtilsService, importsResolver, bNodeService, valueFactory, modelFactory);
     }
 
     @Override
@@ -89,8 +89,8 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = String.format("%s&%s", recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, repository, getOntologyManager(), catalogManager, configProvider, datasetManager,
-                importsResolver, bNodeService, valueFactory, modelFactory, importService);
+        return new SimpleOntology(key, repository, getOntologyManager(), utilsService, configProvider, dsUtilsService,
+                importsResolver, bNodeService, valueFactory, modelFactory);
     }
 
     private OntologyManager getOntologyManager() {
@@ -98,5 +98,12 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
         ServiceReference<OntologyManager> serviceReference = bundleContext
                 .getServiceReference(OntologyManager.class);
         return bundleContext.getService(serviceReference);
+    }
+
+    private File getCompiledResourceFile(Resource commitIRI) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utilsService.validateResource(commitIRI, valueFactory.createIRI(Commit.TYPE), conn);
+            return utilsService.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
+        }
     }
 }

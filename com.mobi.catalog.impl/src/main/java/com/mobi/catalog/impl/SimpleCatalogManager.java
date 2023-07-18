@@ -75,8 +75,10 @@ import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.xacml.XACML;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -110,11 +112,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -127,12 +129,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     static final String COMPONENT_NAME = "com.mobi.catalog.api.CatalogManager";
     private static final Logger log = LoggerFactory.getLogger(SimpleCatalogManager.class);
-    private Map<Resource, String> sortingOptions = new HashMap<>();
+    private final Map<Resource, String> sortingOptions = new HashMap<>();
 
     /**
      * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
      */
-    private Map<Class, RecordService> recordServices = new HashMap<>();
+    private final Map<Class, RecordService> recordServices = new HashMap<>();
 
     private <T extends Record> RecordService<T> getRecordService(Class<T> clazz) {
         return recordServices.get(clazz);
@@ -192,6 +194,9 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     OrmFactoryRegistry factoryRegistry;
 
+    @Reference
+    PDP pdp;
+
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addRecordService(RecordService<? extends Record> recordService) {
         recordServices.put(recordService.getType(), recordService);
@@ -217,19 +222,19 @@ public class SimpleCatalogManager implements CatalogManager {
     static {
         try {
             FIND_RECORDS_QUERY = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/find-records.rq"),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/find-records.rq")),
                     StandardCharsets.UTF_8
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/count-records.rq")),
                     StandardCharsets.UTF_8
             );
             GET_KEYWORD_QUERY = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-keywords.rq"),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/get-keywords.rq")),
                     StandardCharsets.UTF_8
             );
             GET_KEYWORD_COUNT_QUERY = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-keywords-count.rq"),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/get-keywords-count.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -261,10 +266,9 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    private List<String> getViewableRecords(Resource catalogId, PaginatedSearchParams searchParams, User user, PDP pdp,
+    private List<String> getViewableRecords(Resource catalogId, PaginatedSearchParams searchParams, User user,
                                             RepositoryConnection conn) {
         Optional<Resource> typeParam = searchParams.getTypeFilter();
-        Optional<String> searchTextParam = searchParams.getSearchText();
 
         String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
                 replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY)));
@@ -274,28 +278,28 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQuery query = conn.prepareTupleQuery(queryString);
         query.setBinding(CATALOG_BINDING, catalogId);
         typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
-        searchTextParam.ifPresent(searchText -> query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
+        searchParams.getSearchText().ifPresent(searchText ->
+                query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
         log.debug("Query Plan:\n" + query);
 
         // Get Results
-        TupleQueryResult result = query.evaluate();
-
         List<String> recordIRIs = new ArrayList<>();
-        result.forEach(bindings -> {
-            recordIRIs.add(Bindings.requiredResource(bindings, RECORD_BINDING)
-                    .stringValue());
-        });
+        try (TupleQueryResult result = query.evaluate()) {
+            result.forEach(bindings -> recordIRIs.add(Bindings.requiredResource(bindings, RECORD_BINDING)
+                    .stringValue()));
+        }
+
 
         Map<String, Literal> subjectAttrs = new HashMap<>();
         Map<String, Literal> actionAttrs = new HashMap<>();
 
         IRI subjectId = (IRI) user.getResource();
 
-        /** Will this always be Read? */
-        IRI actionId = vf.createIRI("http://mobi.com/ontologies/policy#Read");
+        // Will this always be Read?
+        IRI actionId = vf.createIRI(Read.TYPE);
 
-        List<IRI> resourceIds = recordIRIs.stream().map(recordIRI -> vf.createIRI(recordIRI))
+        List<IRI> resourceIds = recordIRIs.stream().map(vf::createIRI)
                 .collect(Collectors.toList());
         subjectAttrs.put(XACML.SUBJECT_ID, vf.createLiteral(subjectId.stringValue()));
         actionAttrs.put(XACML.ACTION_ID, vf.createLiteral(actionId.stringValue()));
@@ -304,8 +308,8 @@ public class SimpleCatalogManager implements CatalogManager {
             return new ArrayList<>();
         }
 
-        Request request = pdp.createRequest(Arrays.asList(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
-                Arrays.asList(actionId), actionAttrs);
+        Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
+                List.of(actionId), actionAttrs);
 
         Set<String> viewableRecords = pdp.filter(request,
                 vf.createIRI(POLICY_PERMIT_OVERRIDES));
@@ -313,10 +317,10 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams, User user,
-                                                     PDP pdp) {
+    public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams,
+                                                     User user) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            List<String> viewableRecords = getViewableRecords(catalogId, searchParams, user, pdp, conn);
+            List<String> viewableRecords = getViewableRecords(catalogId, searchParams, user, conn);
             int totalCount = viewableRecords.size();
             log.debug("Record count: " + totalCount);
 
@@ -476,7 +480,7 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    protected static String escapeKeyword(String keyword){
+    protected static String escapeKeyword(String keyword) {
         return keyword.replace("\\", "\\\\").replace("'", "\\'");
     }
 
@@ -503,7 +507,7 @@ public class SimpleCatalogManager implements CatalogManager {
         return queryString;
     }
 
-    public static String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
+    protected static String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
         if (searchParams.getKeywords().isPresent()) {
             StringBuilder keywordFilter = new StringBuilder();
             keywordFilter.append("?record mcat:keyword ?keyword .\n");
@@ -527,7 +531,7 @@ public class SimpleCatalogManager implements CatalogManager {
         return queryString;
     }
 
-    public static String replaceCreatorFilter(PaginatedSearchParams searchParams, String queryString) {
+    protected static String replaceCreatorFilter(PaginatedSearchParams searchParams, String queryString) {
         if (searchParams.getCreators().isPresent() && !searchParams.getCreators().get().isEmpty()) {
             StringBuilder creatorFilter = new StringBuilder();
             creatorFilter.append("?record dc:publisher ?creator .\n");
@@ -665,45 +669,20 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
-        T record;
+    public <T extends Record> T removeRecord(Resource catalogId, Resource recordId, User user, Class<T> recordClass) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
-
-            record = utils.optObject(recordId, factory, conn).orElseThrow(()
-                    -> new IllegalArgumentException("Record " + recordId + " does not exist"));
-
-            Resource catalog = record.getCatalog_resource().orElseThrow(()
-                    -> new IllegalStateException("Record " + recordId + " does not have a Catalog set"));
-
-            if (catalog.equals(catalogId)) {
-                conn.begin();
-                if (record.getModel().contains(null, null, vf.createIRI(UnversionedRecord.TYPE))) {
-                    removeUnversionedRecord(record, conn);
-                } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRDFRecord.TYPE))) {
-                    removeVersionedRDFRecord(record, conn);
-                } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRecord.TYPE))) {
-                    removeVersionedRecord(record, conn);
-                } else {
-                    utils.removeObject(record, conn);
-                }
-                conn.commit();
+            utils.validateRecord(catalogId, recordId, recordFactory.getTypeIRI(), conn);
+            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn, false);
+            RecordService<T> service;
+            if (recordClass.equals(Record.class)) {
+                service = (RecordService<T>) getRecordService(serviceType.getType());
             } else {
-                record = null;
+                if (!serviceType.getType().equals(recordClass)) {
+                    throw new IllegalArgumentException("Service for factory " + recordClass
+                            + " is unavailable or doesn't exist.");
+                }
+                service = getRecordService(recordClass);
             }
-        }
-        return record;
-    }
-
-    @Override
-    public <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn, true);
-            if (!serviceType.getType().equals(recordClass)) {
-                throw new IllegalArgumentException("Service for factory " + recordClass
-                        + " is unavailable or doesn't exist.");
-            }
-            RecordService<T> service = getRecordService(recordClass);
             return service.delete(recordId, user, conn);
         }
     }
@@ -1538,7 +1517,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Model getCompiledResource(List<Commit> commitList, Resource... subjectIds) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
+            return utils.getCompiledResource(commitList.stream().map(Thing::getResource)
                     .collect(Collectors.toList()), conn, subjectIds);
         }
     }
@@ -1636,7 +1615,7 @@ public class SimpleCatalogManager implements CatalogManager {
      *
      * @param recordId The record IRI
      * @param exactOnly A flag to indicate whether to do an exact match with the record type. If false, will allow
-     *                  closest match to be returned
+     *                  the closest match to be returned
      * @return the record factory of a given recordId
      */
     private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn, boolean exactOnly) {
@@ -1646,19 +1625,19 @@ public class SimpleCatalogManager implements CatalogManager {
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
 
         List<OrmFactory<? extends Record>> classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
-                .collect(Collectors.toList());
+                .toList();
 
         if (exactOnly && classType.size() > 0) {
-            if (recordServices.keySet().contains(classType.get(0).getType())) {
+            if (recordServices.containsKey(classType.get(0).getType())) {
                 return classType.get(0);
             }
         } else {
             for (OrmFactory<? extends Record> factory : classType) {
-                if (recordServices.keySet().contains(factory.getType())) {
+                if (recordServices.containsKey(factory.getType())) {
                     return factory;
                 }
             }
@@ -1683,7 +1662,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param issued   The OffsetDateTime of when the Record was issued.
      * @param modified The OffsetDateTime of when the Record was modified.
      * @param <T>      An Object which extends the Record class.
-     * @return T which contains all of the properties provided by the parameters.
+     * @return T which contains all the properties provided by the parameters.
      */
     private <T extends Record> T addPropertiesToRecord(T record, RecordConfig config, OffsetDateTime issued,
                                                        OffsetDateTime modified) {
@@ -1705,57 +1684,5 @@ public class SimpleCatalogManager implements CatalogManager {
             record.setKeyword(config.getKeywords().stream().map(vf::createLiteral).collect(Collectors.toSet()));
         }
         return record;
-    }
-
-    /**
-     * Removes the UnversionedRecord created from the provided Record along with all associated Distributions.
-     *
-     * @param record The Record to remove.
-     */
-    private void removeUnversionedRecord(Record record, RepositoryConnection conn) {
-        unversionedRecordFactory.getExisting(record.getResource(), record.getModel())
-                .ifPresent(unversionedRecord -> {
-                    unversionedRecord.getUnversionedDistribution_resource().forEach(resource ->
-                            utils.remove(resource, conn));
-                    utils.removeObject(unversionedRecord, conn);
-                });
-    }
-
-    /**
-     * Removes the VersionedRecord created from the provided Record along with all associated Versions and all the
-     * Distributions associated with those Versions.
-     *
-     * @param record The Record to remove.
-     */
-    private void removeVersionedRecord(Record record, RepositoryConnection conn) {
-        versionedRecordFactory.getExisting(record.getResource(), record.getModel())
-                .ifPresent(versionedRecord -> {
-                    versionedRecord.getVersion_resource()
-                            .forEach(resource -> utils.removeVersion(versionedRecord.getResource(), resource, conn));
-                    utils.removeObject(versionedRecord, conn);
-                });
-    }
-
-    /**
-     * Removes the VersionedRDFRecord created from the provided Record along with all associated Versions, all the
-     * Distributions associated with those Versions, all associated Branches, and all the Commits associated with those
-     * Branches.
-     *
-     * @param record The Record to remove.
-     */
-    private void removeVersionedRDFRecord(Record record, RepositoryConnection conn) {
-        versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
-                .ifPresent(versionedRDFRecord -> {
-                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
-                    versionedRDFRecord.getVersion_resource()
-                            .forEach(resource -> utils.removeVersion(versionedRDFRecord.getResource(), resource, conn));
-                    conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
-                            null, versionedRDFRecord.getResource());
-                    List<Resource> deletedCommits = new ArrayList<>();
-                    versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource,
-                                    deletedCommits, conn));
-                    utils.removeObject(versionedRDFRecord, conn);
-                });
     }
 }

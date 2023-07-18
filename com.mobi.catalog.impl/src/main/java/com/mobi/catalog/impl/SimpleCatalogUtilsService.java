@@ -25,6 +25,7 @@ package com.mobi.catalog.impl;
 
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
+
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
@@ -94,7 +95,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -109,6 +109,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -148,67 +149,80 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     static {
         try {
             GET_PAGED_CHANGES = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-changes.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-paged-changes.rq")),
                     StandardCharsets.UTF_8
             );
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-in-progress-commit.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-in-progress-commit.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ALL_IN_PROGRESS_COMMIT_IRIS = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-all-in-progress-commit-iris.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-all-in-progress-commit-iris.rq")),
                     StandardCharsets.UTF_8
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq")),
                     StandardCharsets.UTF_8
             );
             GET_COMMIT_ENTITY_CHAIN = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-entity-chain.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-commit-entity-chain.rq")),
                     StandardCharsets.UTF_8
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-new-latest-version.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-new-latest-version.rq")),
                     StandardCharsets.UTF_8
             );
             GET_COMMIT_PATHS = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-paths.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-paths.rq")),
                     StandardCharsets.UTF_8
             );
             COMMIT_IN_RECORD = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/commit-in-record.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class.getResourceAsStream("/commit-in-record.rq")),
                     StandardCharsets.UTF_8
             );
             GET_SUBJECTS_WITH_DELETIONS = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-subjects-with-deletions.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-subjects-with-deletions.rq")),
                     StandardCharsets.UTF_8
             );
             GET_COMMITS_WITH_SUBJECT = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commits-with-subject.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-commits-with-subject.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ADDITIONS_IN_COMMIT = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-additions-in-commit.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-additions-in-commit.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ADDITIONS_FROM_COIS = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-additions-from-cois.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-additions-from-cois.rq")),
                     StandardCharsets.UTF_8
             );
             GET_DELETIONS_IN_COMMIT = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-deletions-in-commit.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-deletions-in-commit.rq")),
                     StandardCharsets.UTF_8
             );
             GET_FILTERED_ADDITIONS_SUBQUERY = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-filtered-additions-subquery.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-filtered-additions-subquery.rq")),
                     StandardCharsets.UTF_8
             );
             GET_FILTERED_DELETIONS_SUBQUERY = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-filtered-deletions-subquery.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-filtered-deletions-subquery.rq")),
                     StandardCharsets.UTF_8
             );
             VERSIONED_RDF_RECORD_IRI_QUERY = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-record-from-branch.rq"),
+                    Objects.requireNonNull(SimpleCatalogUtilsService.class
+                            .getResourceAsStream("/get-record-from-branch.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -257,7 +271,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void validateResource(Resource resource, IRI classId, RepositoryConnection conn) {
-        if (!ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), classId, resource)) {
+        if (!ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+                classId, resource)) {
             throw new IllegalArgumentException(classId.getLocalName() + " " + resource + " could not be found");
         }
     }
@@ -497,18 +512,21 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         List<List<Resource>> rtn = new ArrayList<>();
         TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_PATHS);
         query.setBinding("start", commitId);
-        query.evaluate().forEach(bindings -> {
-            String[] path = StringUtils.split(Bindings.requiredLiteral(bindings, "path").stringValue(), " ");
-            Optional<Binding> parent = Optional.ofNullable(bindings.getBinding("parent"));
-            if (!parent.isPresent()) {
-                rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
-            } else {
-                String[] connectPath = StringUtils.split(
-                        Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
-                rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
-                        .collect(Collectors.toList()));
-            }
-        });
+        try (TupleQueryResult result = query.evaluate()) {
+            result.forEach(bindings -> {
+                String[] path = StringUtils.split(Bindings.requiredLiteral(bindings, "path").stringValue(), " ");
+                assert path != null;
+                Optional<Binding> parent = Optional.ofNullable(bindings.getBinding("parent"));
+                if (parent.isEmpty()) {
+                    rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
+                } else {
+                    String[] connectPath = StringUtils.split(
+                            Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
+                    rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
+                            .collect(Collectors.toList()));
+                }
+            });
+        }
         return rtn;
     }
 
@@ -585,10 +603,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public List<Resource> getInProgressCommitIRIs(Resource userId, RepositoryConnection conn) {
         TupleQuery query = conn.prepareTupleQuery(GET_ALL_IN_PROGRESS_COMMIT_IRIS);
         query.setBinding(USER_BINDING, userId);
-        TupleQueryResult queryResult = query.evaluate();
-        List<Resource> inProgressCommitIRIs = new ArrayList<>();
-        queryResult.forEach(bindings -> inProgressCommitIRIs.add(Bindings.requiredResource(bindings, COMMIT_BINDING)));
-        return inProgressCommitIRIs;
+        try (TupleQueryResult queryResult = query.evaluate()) {
+            List<Resource> inProgressCommitIRIs = new ArrayList<>();
+            queryResult.forEach(bindings -> inProgressCommitIRIs.add(Bindings.requiredResource(bindings,
+                    COMMIT_BINDING)));
+            return inProgressCommitIRIs;
+        }
     }
 
     @Override
@@ -698,12 +718,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
                 String commitHash = vf.createIRI(commitId.stringValue()).getLocalName();
                 String changesContextLocalName;
-                try {
-                    changesContextLocalName = commitHash + "%00" + URLEncoder.encode(modifiedGraph.stringValue(),
-                            "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    throw new MobiException(e);
-                }
+                changesContextLocalName = commitHash + "%00" + URLEncoder.encode(modifiedGraph.stringValue(),
+                        StandardCharsets.UTF_8);
 
                 IRI additionsIRI = vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + changesContextLocalName);
                 IRI deletionsIRI = vf.createIRI(Catalogs.DELETIONS_NAMESPACE + changesContextLocalName);
@@ -897,7 +913,45 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public PagedDifference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
+    public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
+        Revision revision = getRevision(commitId, conn);
+
+        Model addModel = mf.createEmptyModel();
+        Model deleteModel = mf.createEmptyModel();
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
+                new IllegalStateException("Additions not set on Commit " + commitId));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
+                new IllegalStateException("Deletions not set on Commit " + commitId));
+
+        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
+                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
+                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+        revision.getGraphRevision().forEach(graphRevision -> {
+            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
+                    new IllegalStateException("GraphRevision missing Revisioned Graph."));
+            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
+                    new IllegalStateException("Additions not set on Commit " + commitId));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
+                    new IllegalStateException("Deletions not set on Commit " + commitId));
+
+            conn.getStatements(null, null, null, adds).forEach(statement ->
+                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+            conn.getStatements(null, null, null, dels).forEach(statement ->
+                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+        });
+
+        return new Difference.Builder()
+                .additions(addModel)
+                .deletions(deleteModel)
+                .build();
+    }
+
+    @Override
+    public PagedDifference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit,
+                                                    int offset) {
         Map<Statement, Integer> additions = new HashMap<>();
         Map<Statement, Integer> deletions = new HashMap<>();
         boolean hasMoreResults = false;
@@ -953,7 +1007,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
 
     @Override
-    public PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit, int offset) {
+    public PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit,
+                                                    int offset) {
         Revision revision = getRevision(commitId, conn);
 
         Model addModel = mf.createEmptyModel();
@@ -966,23 +1021,30 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
         String queryString = GET_PAGED_CHANGES.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
         queryString = queryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
-        queryString = queryString.replace("%LIMIT%", String.valueOf(limit + 1)); // Query for limit plus 1 to see if more results exist
+        // Query for limit plus 1 to see if more results exist
+        queryString = queryString.replace("%LIMIT%", String.valueOf(limit + 1));
         queryString = queryString.replace("%OFFSET%", String.valueOf(offset));
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
 
         Resource lastSubject = null;
-        TupleQueryResult it = query.evaluate();
-        while(it.hasNext()) {
-            BindingSet bindingSet = it.next();
-            if (bindingSet.hasBinding("additionsObj")) {
-                addModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "additionsPred"), bindingSet.getValue("additionsObj")));
-            }
-            if (bindingSet.hasBinding("deletionsObj")) {
-                deleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"), bindingSet.getValue("deletionsObj")));
-            }
-            if (!it.hasNext()) {
-                lastSubject = Bindings.requiredResource(bindingSet, "s"); // Keep track of last subject so we can remove it (we queried for limit + 1 subjects)
+        try (TupleQueryResult it = query.evaluate()) {
+            while (it.hasNext()) {
+                BindingSet bindingSet = it.next();
+                if (bindingSet.hasBinding("additionsObj")) {
+                    addModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
+                            (IRI) Bindings.requiredResource(bindingSet, "additionsPred"),
+                            bindingSet.getValue("additionsObj")));
+                }
+                if (bindingSet.hasBinding("deletionsObj")) {
+                    deleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
+                            (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"),
+                            bindingSet.getValue("deletionsObj")));
+                }
+                if (!it.hasNext()) {
+                    // Keep track of last subject, so we can remove it (we queried for limit + 1 subjects)
+                    lastSubject = Bindings.requiredResource(bindingSet, "s");
+                }
             }
         }
 
@@ -1005,43 +1067,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .additions(addModel)
                 .deletions(deleteModel)
                 .build(), hasMoreResults);
-    }
-
-    @Override
-    public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
-        Revision revision = getRevision(commitId, conn);
-
-        Model addModel = mf.createEmptyModel();
-        Model deleteModel = mf.createEmptyModel();
-
-        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + commitId));
-        IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
-                new IllegalStateException("Deletions not set on Commit " + commitId));
-
-        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
-                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-        conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
-                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-
-        revision.getGraphRevision().forEach(graphRevision -> {
-            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
-                    new IllegalStateException("GraphRevision missing Revisioned Graph."));
-            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
-                    new IllegalStateException("Additions not set on Commit " + commitId));
-            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
-                    new IllegalStateException("Deletions not set on Commit " + commitId));
-
-            conn.getStatements(null, null, null, adds).forEach(statement ->
-                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
-            conn.getStatements(null, null, null, dels).forEach(statement ->
-                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
-        });
-
-        return new Difference.Builder()
-                .additions(addModel)
-                .deletions(deleteModel)
-                .build();
     }
 
     @Override
@@ -1087,11 +1112,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat, RepositoryConnection conn) {
-        return getCompiledResourceFile(getCommitChain(commitId, true, conn), rdfFormat, conn);
-    }
-
-    @Override
     public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds) {
         Model compiledResource = mf.createEmptyModel();
         if (commits.isEmpty()) {
@@ -1099,6 +1119,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         }
         buildCompiledResource(commits, conn, compiledResource::add, subjectIds);
         return compiledResource;
+    }
+
+    @Override
+    public File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat, RepositoryConnection conn) {
+        return getCompiledResourceFile(getCommitChain(commitId, true, conn), rdfFormat, conn);
     }
 
     @Override
@@ -1156,11 +1181,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                     "addSubject", "%SUBJECTLISTADD%", subjectIds);
 
             GraphQuery additionsInCOIQuery = conn.prepareGraphQuery(additionsFromCoisQueryString);
-            additionsInCOIQuery.evaluate().forEach(statement -> {
-                if (!deletionSubjects.contains(statement.getSubject())) {
-                    consumer.accept(statement);
-                }
-            });
+            try (GraphQueryResult result = additionsInCOIQuery.evaluate()) {
+                result.forEach(statement -> {
+                    if (!deletionSubjects.contains(statement.getSubject())) {
+                        consumer.accept(statement);
+                    }
+                });
+            }
 
             // Gather and write final statements from all subjects that have deletions
             Map<Statement, Integer> additions = new HashMap<>();
@@ -1177,7 +1204,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             String additionInCommitQuery =  replaceCommitList(GET_ADDITIONS_IN_COMMIT, commitsAdditionsOnly);
             additionInCommitQuery = replaceSubjectList(additionInCommitQuery, "s", "%SUBJECTLIST%", subjectIds);
             GraphQuery additionsQuery = conn.prepareGraphQuery(additionInCommitQuery);
-            additionsQuery.evaluate().forEach(consumer);
+            try (GraphQueryResult result = additionsQuery.evaluate()) {
+                result.forEach(consumer);
+            }
         }
     }
 
@@ -1187,8 +1216,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         String query = replaceCommitList(GET_SUBJECTS_WITH_DELETIONS, commits);
         query = replaceSubjectList(query, "s", "%SUBJECTLIST%", subjectIds);
         TupleQuery subjectsQuery = conn.prepareTupleQuery(query);
-        subjectsQuery.evaluate().forEach(bindings ->
-                deletionSubjects.add((Bindings.requiredResource(bindings, "s"))));
+        try (TupleQueryResult result = subjectsQuery.evaluate()) {
+            result.forEach(bindings ->
+                    deletionSubjects.add((Bindings.requiredResource(bindings, "s"))));
+        }
         return deletionSubjects;
     }
 
@@ -1200,8 +1231,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             String query = replaceCommitList(GET_COMMITS_WITH_SUBJECT, commits);
             query = replaceSubjectList(query, "deletionSubject", "%SUBJECTLIST%", subjectIds);
             TupleQuery commitsQuery = conn.prepareTupleQuery(query);
-            commitsQuery.evaluate().forEach(bindingSet ->
-                    commitsOfInterest.add(Bindings.requiredResource(bindingSet, "commitOfInterest")));
+            try (TupleQueryResult result = commitsQuery.evaluate()) {
+                result.forEach(bindingSet ->
+                        commitsOfInterest.add(Bindings.requiredResource(bindingSet, "commitOfInterest")));
+            }
         }
         return commitsOfInterest;
 
@@ -1259,7 +1292,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Set<Conflict> getConflicts(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn) {
-        long start = System.currentTimeMillis();
+        final long start = System.currentTimeMillis();
         // Does not take into account named graphs
         validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
         validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
@@ -1364,33 +1397,34 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Gets an iterator which contains all of the Commit ids in the specified direction, either ascending or
-     * descending by date. If descending, the provided Resource identifying a Commit will be first.
+     * Gets an iterator which contains all the Commit ids in the specified direction, either ascending or descending by
+     * date. If descending, the provided Resource identifying a Commit will be first.
      *
      * @param commitId The Resource identifying the Commit that you want to get the chain for.
      * @param conn     The RepositoryConnection which will be queried for the Commits.
-     * @param asc      Whether or not the iterator should be ascending by date
+     * @param asc      Whether the iterator should be ascending by date
      * @return Iterator of Resource ids for the requested Commits.
      */
     private Iterator<Resource> getCommitChainIterator(Resource commitId, boolean asc, RepositoryConnection conn) {
         TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
         query.setBinding(COMMIT_BINDING, commitId);
-        TupleQueryResult result = query.evaluate();
-        LinkedList<Resource> commits = new LinkedList<>();
-        result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
-        commits.addFirst(commitId);
-        return asc ? commits.descendingIterator() : commits.iterator();
+        try (TupleQueryResult result = query.evaluate()) {
+            LinkedList<Resource> commits = new LinkedList<>();
+            result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
+            commits.addFirst(commitId);
+            return asc ? commits.descendingIterator() : commits.iterator();
+        }
     }
 
     /**
-     * Gets an iterator which contains all of the Commit ids, filtered by a Commit containing the Entity id in its
+     * Gets an iterator which contains all the Commit ids, filtered by a Commit containing the Entity id in its
      * additions or deletions, in the specified direction, either ascending or descending by date. If descending,
      * the provided Resource identifying a Commit will be first.
      *
      * @param commitId The Resource identifying the Commit that you want to get the chain for.
      * @param entityId The Resource identifying the Entity that you want to get the chain for.
      * @param conn     The RepositoryConnection which will be queried for the Commits.
-     * @param asc      Whether or not the iterator should be ascending by date
+     * @param asc      Whether the iterator should be ascending by date
      * @return Iterator of Resource ids for the requested Commits.
      */
     private Iterator<Resource> getCommitChainIterator(Resource commitId, Resource entityId, boolean asc,
@@ -1398,10 +1432,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_ENTITY_CHAIN);
         query.setBinding(COMMIT_BINDING, commitId);
         query.setBinding(ENTITY_BINDING, entityId);
-        TupleQueryResult result = query.evaluate();
-        LinkedList<Resource> commits = new LinkedList<>();
-        result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
-        return asc ? commits.descendingIterator() : commits.iterator();
+        try (TupleQueryResult result = query.evaluate()) {
+            LinkedList<Resource> commits = new LinkedList<>();
+            result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
+            return asc ? commits.descendingIterator() : commits.iterator();
+        }
     }
 
     /**
@@ -1505,8 +1540,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Remove the supplied triple from the mapToRemove if one instance of it exists, if more than one, decrement counter.
-     * Otherwise add the triple to mapToAdd. If one already exists in mapToAdd, increment counter.
+     * Remove the supplied triple from the mapToRemove if one instance of it exists, if more than one, decrement
+     * counter. Otherwise, add the triple to mapToAdd. If one already exists in mapToAdd, increment counter.
      *
      * @param statement   The statement to process
      * @param mapToAdd    The Map of addition statements to track number of times a statement has been added and to add
@@ -1514,7 +1549,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * @param mapToRemove The Map of deletion statements to track the number of times a statement has been removed and
      *                    to remove the statement from if it exists
      */
-    private void updateModels(Statement statement, Map<Statement, Integer> mapToAdd, Map<Statement, Integer> mapToRemove) {
+    private void updateModels(Statement statement, Map<Statement, Integer> mapToAdd, Map<Statement,
+            Integer> mapToRemove) {
         if (mapToRemove.containsKey(statement)) {
             int count = mapToRemove.get(statement);
             if (count == 1) {
@@ -1523,8 +1559,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 mapToRemove.put(statement, count - 1);
             }
         } else if (mapToAdd.containsKey(statement)) {
-           int count = mapToAdd.get(statement);
-           mapToAdd.put(statement, count + 1);
+            int count = mapToAdd.get(statement);
+            mapToAdd.put(statement, count + 1);
         } else {
             mapToAdd.put(statement, 1);
         }
@@ -1539,12 +1575,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * @param leftDeletions  The Model of the deleted statements from the left Model.
      * @param right          The Model of the right item being compared.
      * @param rightDeletions The Model of the deleted statements from the right Model.
-     * @return A Conflict created using all of the provided data.
+     * @return A Conflict created using all the provided data.
      */
     private Conflict createConflict(Resource subject, IRI predicate, Model left, Model leftDeletions,
                                     Model right, Model rightDeletions) {
         Difference.Builder leftDifference = new Difference.Builder();
-        Difference.Builder rightDifference = new Difference.Builder();
+        final Difference.Builder rightDifference = new Difference.Builder();
 
         Model leftAddModel = mf.createEmptyModel();
         leftAddModel.addAll(left.filter(subject, predicate, null));

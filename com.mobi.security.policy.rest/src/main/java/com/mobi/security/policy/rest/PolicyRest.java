@@ -12,12 +12,12 @@ package com.mobi.security.policy.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -69,23 +69,20 @@ import javax.ws.rs.core.Response;
 public class PolicyRest {
 
     private final ValueFactory vf = new ValidatingValueFactory();
-    private XACMLPolicyManager policyManager;
 
     @Reference
-    void setPolicyManager(XACMLPolicyManager policyManager) {
-        this.policyManager = policyManager;
-    }
+    protected XACMLPolicyManager policyManager;
 
     /**
      * Fetches all security policies that match the provided query parameters.
      *
-     * @param relatedSubject Optional string representing a subject ID. NOTE: Assumes ID represents an IRI unless String
-     *                       begins with "_:"
+     * @param relatedSubject  Optional string representing a subject ID. NOTE: Assumes ID represents an IRI unless String
+     *                        begins with "_:"
      * @param relatedResource Optional string representing a resource ID. NOTE: Assumes ID represents an IRI unless String
-     *                       begins with "_:"
-     * @param relatedAction Optional string representing an action ID. NOTE: Assumes ID represents an IRI unless String
-     *                       begins with "_:"
-     * @param systemOnly Boolean representing whether only system policies should be returned. Defaults to false
+     *                        begins with "_:"
+     * @param relatedAction   Optional string representing an action ID. NOTE: Assumes ID represents an IRI unless String
+     *                        begins with "_:"
+     * @param systemOnly      Boolean representing whether only system policies should be returned. Defaults to false
      * @return A JSON array of JSON representations of matching policies
      */
     @GET
@@ -154,7 +151,7 @@ public class PolicyRest {
     )
     public Response createPolicy(
             @Parameter(description = "A JSON representation of a policy to add to Mobi", required = true)
-                    String policyJson) {
+            String policyJson) {
         try {
             Resource policyId = policyManager.addPolicy(jsonToPolicy(policyJson));
             return Response.status(201).entity(policyId.stringValue()).build();
@@ -204,8 +201,8 @@ public class PolicyRest {
      * Updates the identified policy with the provided JSON representation in the body. Provided policy must have
      * the same ID.
      *
-     * @param policyId String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
-     *                 begins with "_:"
+     * @param policyId   String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
+     *                   begins with "_:"
      * @param policyJson A JSON representation of the new version of the policy
      * @return A Response indicating the success of the request
      */
@@ -228,7 +225,7 @@ public class PolicyRest {
             @Parameter(description = "String representing a policy ID", required = true)
             @PathParam("policyId") String policyId,
             @Parameter(description = "A JSON representation of the new version of the policy", required = true)
-                    String policyJson) {
+            String policyJson) {
         try {
             XACMLPolicy policy = jsonToPolicy(policyJson);
             if (!policy.getId().equals(vf.createIRI(policyId))) {

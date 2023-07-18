@@ -23,6 +23,7 @@ package com.mobi.catalog.api.mergerequest;
  * #L%
  */
 
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Resource;
 
 import java.util.Optional;
@@ -34,19 +35,22 @@ import java.util.Optional;
  * (ascending or descending) the getMergeRequest query results by a provided sortBy Resource.
  */
 public class MergeRequestFilterParams {
-    private Resource assignee;
-    private Resource onRecord;
-    private Resource sourceBranch;
-    private Resource targetBranch;
-    private Resource sourceCommit;
-    private Resource targetCommit;
-    private Resource sortBy;
-    private Optional<Boolean> removeSource;
-    private boolean ascending;
-    private boolean accepted;
-    private boolean filters;
+
+    private final User requestingUser;
+    private final Resource assignee;
+    private final Resource onRecord;
+    private final Resource sourceBranch;
+    private final Resource targetBranch;
+    private final Resource sourceCommit;
+    private final Resource targetCommit;
+    private final Resource sortBy;
+    private final Optional<Boolean> removeSource;
+    private final boolean ascending;
+    private final boolean accepted;
+    private final boolean filters;
 
     public MergeRequestFilterParams(Builder builder) {
+        this.requestingUser =  builder.requestingUser;
         this.assignee = builder.assignee;
         this.onRecord = builder.onRecord;
         this.sourceBranch = builder.sourceBranch;
@@ -60,6 +64,9 @@ public class MergeRequestFilterParams {
         this.filters = builder.filters;
     }
 
+    public Optional<User> getRequestingUser() {
+        return Optional.ofNullable(requestingUser);
+    }
     public Optional<Resource> getAssignee() {
         return Optional.ofNullable(assignee);
     }
@@ -105,6 +112,7 @@ public class MergeRequestFilterParams {
     }
 
     public static class Builder {
+        private User requestingUser = null;
         private Resource assignee = null;
         private Resource onRecord = null;
         private Resource sourceBranch = null;
@@ -118,6 +126,17 @@ public class MergeRequestFilterParams {
         private boolean filters = false;
 
         public Builder() {}
+
+        /**
+         * Set the User requesting the list of MergeRequests.
+         *
+         * @param requestingUser The User requesting the list of Merge Requests
+         * @return MergeRequestFilterParams.Builder
+         */
+        public Builder setRequestingUser(User requestingUser) {
+            this.requestingUser = requestingUser;
+            return this;
+        }
 
         /**
          * Set the filter on assignee of the MergeRequest.
