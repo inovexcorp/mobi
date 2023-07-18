@@ -1,4 +1,4 @@
-@Version("2.2.0.${build}")
+@Version("3.0.0.${build}")
 
 package com.mobi.catalog.api;
 

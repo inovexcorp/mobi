@@ -26,27 +26,24 @@ package com.mobi.dataset.api.record;
 import com.mobi.catalog.api.record.AbstractUnversionedRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
 import com.mobi.dataset.api.record.config.DatasetRecordCreateSettings;
-import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.repository.api.OsgiRepository;
-import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryException;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,17 +59,16 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
         extends AbstractUnversionedRecordService<T> implements RecordService<T> {
 
     @Reference
-    public RepositoryManager repoManager;
+    public DatasetFactory dsFactory;
 
     @Reference
-    public DatasetFactory dsFactory;
+    public DatasetUtilsService dsUtilsService;
 
     /**
      * Semaphore for protecting dataset IRI uniqueness checks.
      */
     private final Semaphore semaphore = new Semaphore(1, true);
     private static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
-    private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
     private static final String USER_IRI_BINDING = "%USERIRI%";
     private static final String RECORD_IRI_BINDING = "%RECORDIRI%";
     private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
@@ -91,35 +87,23 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
                 datasetConfig = DEFAULT_DS_NAMESPACE + UUID.randomUUID();
             }
             IRI datasetIRI = valueFactory.createIRI(datasetConfig);
-            IRI sdgIRI = valueFactory.createIRI(datasetConfig + SYSTEM_DEFAULT_NG_SUFFIX);
-
-            if (ConnectionUtils.contains(conn, datasetIRI, null, null)) {
-                throw new IllegalArgumentException("The datasetIRI already exists in the specified repository.");
-            }
 
             conn.begin();
 
-            OsgiRepository dsRepo = repoManager.getRepository(repositoryId).orElseThrow(() ->
-                    new IllegalArgumentException("Dataset target repository does not exist."));
-
-            Dataset dataset = dsFactory.createNew(datasetIRI);
-            dataset.setSystemDefaultNamedGraph(sdgIRI);
-
-            datasetRecord.setDataset(dataset);
-            datasetRecord.setRepository(repositoryId);
-            Set<Value> ontologies = new HashSet<>();
-            ontologiesConfig.forEach(identifier -> {
-                ontologies.add(identifier.getNode());
-                datasetRecord.getModel().addAll(identifier.getStatements());
+            boolean success = dsUtilsService.createDataset(datasetIRI, repositoryId, iri -> {
+                datasetRecord.setDataset(dsFactory.createNew(datasetIRI));
+                datasetRecord.setRepository(repositoryId);
+                Set<Value> ontologies = new HashSet<>();
+                ontologiesConfig.forEach(identifier -> {
+                    ontologies.add(identifier.getNode());
+                    datasetRecord.getModel().addAll(identifier.getStatements());
+                });
+                datasetRecord.setOntology(ontologies);
+                return true;
             });
-            datasetRecord.setOntology(ontologies);
-
-            try (RepositoryConnection dsRepoConn = dsRepo.getConnection()) {
-                dsRepoConn.add(dataset.getModel(), datasetIRI);
-            } catch (RepositoryException e) {
-                throw new IllegalArgumentException(e.getMessage());
+            if (success) {
+                utilsService.addObject(datasetRecord, conn);
             }
-            utilsService.addObject(datasetRecord, conn);
             conn.commit();
 
             writePolicies(user.getResource(), datasetRecord.getResource());
@@ -136,22 +120,30 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
         try {
             Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
                     + File.separator + "policyTemplates" + File.separator + "datasetRecordPolicy.xml");
-            String recordPolicy = new String(Files.newInputStream(recordPolicyPath).readAllBytes(),
-                    StandardCharsets.UTF_8);
-            String encodedRecordIRI = ResourceUtils.encode(recordId);
+            try (InputStream stream = Files.newInputStream(recordPolicyPath)) {
+                String recordPolicy = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+                String encodedRecordIRI = ResourceUtils.encode(recordId);
 
-            String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING};
-            String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI};
-            recordPolicy = StringUtils.replaceEach(recordPolicy, search, replace);
+                String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING};
+                String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI};
+                recordPolicy = StringUtils.replaceEach(recordPolicy, search, replace);
 
-            return Optional.of(addPolicy(recordPolicy));
+                return Optional.of(addPolicy(recordPolicy));
+            }
         } catch (IOException e) {
             throw new MobiException("Error writing record policy.", e);
         }
     }
 
+    @Override
+    protected void deleteRecord(T record, RepositoryConnection conn) {
+        super.deleteRecord(record, conn);
+        deletePolicies(record, conn);
+    }
+
     /**
-     * Overwrite Dataset Record with default policy
+     * Overwrite Dataset Record with default policy.
+     *
      * @param datasetRecord Dataset record to overwrite
      */
     public abstract void overwritePolicyDefault(DatasetRecord datasetRecord);

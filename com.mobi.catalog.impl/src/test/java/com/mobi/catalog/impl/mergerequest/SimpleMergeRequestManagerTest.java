@@ -53,13 +53,15 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -78,6 +80,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -150,6 +153,12 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogConfigProvider configProvider;
+
+    @Mock
+    private PDP pdp;
+
+    @Mock
+    private Request request;
 
     @Before
     public void setUp() {
@@ -352,12 +361,15 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         when(utilsService.optObject(eq(commentI.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentI));
         doThrow(new IllegalArgumentException()).when(utilsService).validateResource(eq(DOES_NOT_EXIST_IRI), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
 
+        when(pdp.createRequest(any(List.class), any(Map.class), any(List.class), any(Map.class), any(List.class), any(Map.class))).thenReturn(request);
+        when(pdp.filter(eq(request), any(IRI.class))).thenReturn(Collections.singleton(versionedRDFRecord2.getResource().stringValue()));
 
         manager = spy(new SimpleMergeRequestManager());
         injectOrmFactoryReferencesIntoService(manager);
         manager.catalogUtils = utilsService;
         manager.versioningManager = versioningManager;
         manager.configProvider = configProvider;
+        manager.pdp = pdp;
     }
 
     @After
@@ -510,6 +522,19 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request2.getResource(), result.get(0).getResource());
+            verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+        }
+    }
+
+    @Test
+    public void getOpenMergeRequestsRequestingUserTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
+            builder.setRequestingUser(user2);
+            List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
+            assertEquals(1, result.size());
+            assertEquals(request2.getResource(), result.get(0).getResource());
+            verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
             verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
         }
     }

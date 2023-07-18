@@ -413,29 +413,29 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .accept(MediaType.APPLICATION_JSON).delete();
 
         assertEquals(response.getStatus(), 204);
-        verify(catalogManager).deleteRecord(user, recordId, ShapesGraphRecord.class);
+        verify(catalogManager).removeRecord(catalogId, recordId, user, ShapesGraphRecord.class);
     }
 
     @Test
     public void deleteShapesGraphRecordIllegalArgumentExceptionTest() {
-        doThrow(IllegalArgumentException.class).when(catalogManager).deleteRecord(any(), any(), any());
+        doThrow(IllegalArgumentException.class).when(catalogManager).removeRecord(any(), any(), any(), any());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_JSON).delete();
 
         assertEquals(response.getStatus(), 400);
-        verify(catalogManager).deleteRecord(user, recordId, ShapesGraphRecord.class);
+        verify(catalogManager).removeRecord(catalogId, recordId, user, ShapesGraphRecord.class);
     }
 
     @Test
     public void deleteShapesGraphRecordIllegalStateExceptionTest() {
-        doThrow(IllegalStateException.class).when(catalogManager).deleteRecord(any(), any(), any());
+        doThrow(IllegalStateException.class).when(catalogManager).removeRecord(any(), any(), any(), any());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_JSON).delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(catalogManager).deleteRecord(user, recordId, ShapesGraphRecord.class);
+        verify(catalogManager).removeRecord(catalogId, recordId, user, ShapesGraphRecord.class);
     }
 
     @Test

@@ -12,12 +12,12 @@ package com.mobi.catalog.api.record;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -52,7 +52,6 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
@@ -60,22 +59,18 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.util.RDFLoader;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Reference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,12 +91,11 @@ import javax.annotation.Nonnull;
  * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
  * Overrides exportRecord() and deleteRecord() to perform VersionedRDFRecord specific operations such as writing
  * out Branches, Commits, and Tags.
+ *
  * @param <T> of VersionedRDFRecord
  */
 public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord>
         extends AbstractRecordService<T> implements RecordService<T> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractVersionedRDFRecordService.class);
     private static final String USER_IRI_BINDING = "%USERIRI%";
     private static final String RECORD_IRI_BINDING = "%RECORDIRI%";
     private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
@@ -137,9 +131,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     @Reference
     public VersioningManager versioningManager;
-
-    @Reference
-    public XACMLPolicyManager xacmlPolicyManager;
 
     @Reference
     public CatalogConfigProvider configProvider;
@@ -196,7 +187,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         InputStream inputStream = config.get(VersionedRDFRecordCreateSettings.INPUT_STREAM);
         File file;
         if (fileName != null && inputStream != null) {
-            RDFFormat format =  RDFFiles.getFormatForFileName(fileName)
+            RDFFormat format = RDFFiles.getFormatForFileName(fileName)
                     .orElseThrow(() -> new IllegalArgumentException("Could not retrieve RDFFormat for file name "
                             + fileName));
             if (format.equals(RDFFormat.TRIG)) {
@@ -226,7 +217,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * Creates two policy files for the Record based on default templates. One policy to control who can view and modify
      * the Record. The other for who can modify the aforementioned policy.
      *
-     * @param user The User who created the Record and associated Policy files
+     * @param user   The User who created the Record and associated Policy files
      * @param record The Record the Policy files control
      */
     protected void writePolicies(User user, T record) {
@@ -237,8 +228,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * Creates two policy files for the Record based on default templates. One policy to control who can view and modify
      * the Record. The other for who can modify the aforementioned policy.
      *
-     * @param user The Resource of the user who created the Record and associated Policy files
-     * @param recordId The Resource of the Record to write out
+     * @param user           The Resource of the user who created the Record and associated Policy files
+     * @param recordId       The Resource of the Record to write out
      * @param masterBranchId The Resource of the Master Branch associated with the recordId
      */
     protected void writePolicies(Resource user, Resource recordId, Resource masterBranchId) {
@@ -252,8 +243,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     /**
      * Creates a policy file based on default templates that controls who can view and modify the Record.
      *
-     * @param user The Resource of the user who created the Record and associated Policy files
-     * @param recordId The Resource of the Record to write out
+     * @param user           The Resource of the user who created the Record and associated Policy files
+     * @param recordId       The Resource of the Record to write out
      * @param masterBranchId The Resource of the Master Branch associated with the recordId
      */
     protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
@@ -279,11 +270,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     /**
      * Creates a policy file based on default templates that controls who can modify the policy for the Record.
      *
-     * @param user The Resource of the user who created the Record and associated Policy files
-     * @param recordId The Resource of the Record to write out
+     * @param user                 The Resource of the user who created the Record and associated Policy files
+     * @param recordId             The Resource of the Record to write out
      * @param recordPolicyResource The Resource of the Record policy
      */
-    protected void writeRecordPolicyPolicy(Resource user, Resource recordId,  Resource recordPolicyResource) {
+    protected void writeRecordPolicyPolicy(Resource user, Resource recordId, Resource recordPolicyResource) {
         try {
             String encodedRecordIRI = ResourceUtils.encode(recordId);
             String[] search = {USER_IRI_BINDING, POLICY_IRI_BINDING, ENCODED_POLICY_IRI_BINDING};
@@ -311,40 +302,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     /**
-     * Deletes the two Policy files associated with the provided Record.
-     *
-     * @param record The Record whose policies to delete
-     * @param conn A RepositoryConnection to use for lookup
-     */
-    protected void deletePolicies(T record, RepositoryConnection conn) {
-        RepositoryResult<Statement> results = conn.getStatements(null,
-                valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
-        if (results.hasNext()) {
-            Resource recordPolicyId = results.next().getSubject();
-            results.close();
-
-            RepositoryResult<Statement> policyPolicyIds = conn.getStatements(null,
-                    valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
-            if (!policyPolicyIds.hasNext()) {
-                LOGGER.info("Could not find policy policy for record: " + record.getResource()
-                        + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");
-            }
-            Resource policyPolicyId = policyPolicyIds.next().getSubject();
-            xacmlPolicyManager.deletePolicy(recordPolicyId);
-            xacmlPolicyManager.deletePolicy(policyPolicyId);
-            policyPolicyIds.close();
-        } else {
-            LOGGER.info("Could not find policy for record: " + record.getResource()
-                    + ". Continuing with record deletion.");
-        }
-    }
-
-    /**
      * Adds the record and masterBranch to the repository.
      *
-     * @param record The VersionedRDFRecord to add to the repository
+     * @param record       The VersionedRDFRecord to add to the repository
      * @param masterBranch The initialized masterBranch to add to the repository
-     * @param conn A RepositoryConnection to use for lookup
+     * @param conn         A RepositoryConnection to use for lookup
      */
     protected void addRecord(T record, Branch masterBranch, RepositoryConnection conn) {
         utilsService.addObject(record, conn);
@@ -372,7 +334,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     /**
      * Creates a branch specific to (title, description, factory).
      *
-     * @param title Name of desired branch
+     * @param title       Name of desired branch
      * @param description Short description of the title branch
      */
     protected Branch createBranch(@Nonnull String title, String description) {
@@ -399,7 +361,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * Deletes VersionedRDFRecord specific data (Branches, Commits, Tags, InProgressCommits) from the repository.
      *
      * @param record The VersionedRDFRecord to delete
-     * @param conn A RepositoryConnection to use for lookup
+     * @param conn   A RepositoryConnection to use for lookup
      */
     protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
         mergeRequestManager.deleteMergeRequestsWithRecordId(record.getResource(), conn);
@@ -427,13 +389,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * Writes the VersionedRDFRecord data (Branches, Commits, Tags) to the provided ExportWriter
      * If the provided branchesToWrite is empty, will write out all branches.
      *
-     * @param record The VersionedRDFRecord to write versioned data
+     * @param record          The VersionedRDFRecord to write versioned data
      * @param branchesToWrite The Set of Resources identifying branches to write out
-     * @param exporter The ExportWriter to write the VersionedRDFRecord to
-     * @param conn A RepositoryConnection to use for lookup
+     * @param exporter        The ExportWriter to write the VersionedRDFRecord to
+     * @param conn            A RepositoryConnection to use for lookup
      */
     protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite,
-                                       BatchExporter exporter, RepositoryConnection conn) {
+                                         BatchExporter exporter, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
 
         // Write Branches

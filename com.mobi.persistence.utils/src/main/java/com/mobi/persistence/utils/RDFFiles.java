@@ -71,7 +71,7 @@ public class RDFFiles {
             List.of("ofn"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
 
     public static final RDFFormat OBO = new RDFFormat(
-            "Open Biological and Biomedical Ontologies", List.of(""), StandardCharsets.UTF_8,
+            "Open Biological and Biomedical Ontologies", List.of("obo/obo"), StandardCharsets.UTF_8,
             List.of("obo"), RDFFormat.SUPPORTS_NAMESPACES, RDFFormat.NO_CONTEXTS, RDFFormat.NO_RDF_STAR);
 
     // Duplicate of RDF4j NTRIPLES but with text/plain mimetype removed

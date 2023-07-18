@@ -24,7 +24,6 @@ package com.mobi.cache.impl.repository;
  */
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryManager;
@@ -65,7 +64,7 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
     private CleanRepositoryCacheConfig config;
 
     @Mock
-    private DatasetManager datasetManager;
+    private DatasetUtilsService dsUtilsService;
 
     @Mock
     private RepositoryManager repoManager;
@@ -86,10 +85,10 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
 
         when(config.expiry()).thenReturn((long) 1800);
         when(repoManager.getRepository("ontologyCache")).thenReturn(Optional.of(repo));
-        doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
+        doNothing().when(dsUtilsService).safeDeleteDataset(any(Resource.class), anyString());
 
         cleanJob = new CleanRepositoryCache();
-        cleanJob.datasetManager = datasetManager;
+        cleanJob.dsUtilsService = dsUtilsService;
         cleanJob.repositoryManager = repoManager;
         cleanJob.start(config);
     }
@@ -108,8 +107,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
 
         cleanJob.execute(jobContext);
         verify(repoManager).getRepository("ontologyCache");
-        verify(datasetManager, never()).safeDeleteDataset(dataset1, "ontologyCache", false);
-        verify(datasetManager, never()).safeDeleteDataset(dataset2, "ontologyCache", false);
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset1, "ontologyCache");
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset2, "ontologyCache");
     }
 
     @Test
@@ -121,8 +120,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
 
         cleanJob.execute(jobContext);
         verify(repoManager).getRepository("ontologyCache");
-        verify(datasetManager).safeDeleteDataset(dataset1, "ontologyCache", false);
-        verify(datasetManager, never()).safeDeleteDataset(dataset2, "ontologyCache", false);
+        verify(dsUtilsService).safeDeleteDataset(dataset1, "ontologyCache");
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset2, "ontologyCache");
     }
 
     @Test
@@ -134,15 +133,15 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
 
         cleanJob.execute(jobContext);
         verify(repoManager).getRepository("ontologyCache");
-        verify(datasetManager).safeDeleteDataset(dataset1, "ontologyCache", false);
-        verify(datasetManager).safeDeleteDataset(dataset2, "ontologyCache", false);
+        verify(dsUtilsService).safeDeleteDataset(dataset1, "ontologyCache");
+        verify(dsUtilsService).safeDeleteDataset(dataset2, "ontologyCache");
     }
 
     @Test
     public void executeEmptyRepoTest() {
         cleanJob.execute(jobContext);
         verify(repoManager).getRepository("ontologyCache");
-        verify(datasetManager, never()).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
+        verify(dsUtilsService, never()).safeDeleteDataset(any(Resource.class), anyString());
     }
 
     @Test
@@ -154,15 +153,15 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
 
         cleanJob.execute(jobContext);
         verify(repoManager).getRepository("ontologyCache");
-        verify(datasetManager, never()).safeDeleteDataset(dataset1, "ontologyCache", false);
-        verify(datasetManager, never()).safeDeleteDataset(dataset2, "ontologyCache", false);
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset1, "ontologyCache");
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset2, "ontologyCache");
 
         when(config.expiry()).thenReturn((long) 1000000000);
         cleanJob.start(config);
         cleanJob.execute(jobContext);
         verify(repoManager, times(2)).getRepository("ontologyCache");
-        verify(datasetManager, never()).safeDeleteDataset(dataset1, "ontologyCache", false);
-        verify(datasetManager, never()).safeDeleteDataset(dataset2, "ontologyCache", false);
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset1, "ontologyCache");
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset2, "ontologyCache");
     }
 
     @Test (expected = IllegalStateException.class)
@@ -180,7 +179,7 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
         cleanJob.start(config);
         cleanJob.execute(jobContext);
         verify(repoManager).getRepository("otherRepo");
-        verify(datasetManager, never()).safeDeleteDataset(dataset1, "otherRepo", false);
-        verify(datasetManager, never()).safeDeleteDataset(dataset2, "otherRepo", false);
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset1, "otherRepo");
+        verify(dsUtilsService, never()).safeDeleteDataset(dataset2, "otherRepo");
     }
 }
