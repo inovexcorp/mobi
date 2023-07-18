@@ -27,28 +27,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.etl.api.config.rdf.ImportServiceConfig;
-import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.AnnotationProperty;
 import com.mobi.ontology.core.api.DataProperty;
@@ -65,20 +59,20 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
-import com.mobi.repository.api.OsgiRepository;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.ApplicationSetting;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DC;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -104,6 +98,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,6 +107,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -121,7 +117,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
     private ValueFactory vf;
     private ModelFactory mf;
-    private RepositoryManager repoManager = new SimpleRepositoryManager();
+    private final RepositoryManager repoManager = new SimpleRepositoryManager();
     private IRI classIRI;
     private IRI classIRIC;
     private IRI classIRID;
@@ -141,7 +137,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private Ontology queryVocabulary;
     private Ontology onlyDeclared;
     private OsgiRepository repo;
-    private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
+    private final OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
     private Model queryOntModel;
 
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
@@ -154,7 +150,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private OntologyManager ontologyManager;
 
     @Mock
-    private CatalogManager catalogManager;
+    private CatalogUtilsService utilsService;
 
     @Mock
     private CatalogConfigProvider catalogConfigProvider;
@@ -166,19 +162,10 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private BNodeService bNodeService;
 
     @Mock
-    private DatasetManager datasetManager;
+    private DatasetUtilsService dsUtilsService;
 
     @Mock
     private ImportsResolver importsResolver;
-
-    @Mock
-    private RDFImportService importService;
-
-    @Mock
-    private Branch localBranch3;
-
-    @Mock
-    private Branch localBranch2;
 
     @Mock
     private SettingService<ApplicationSetting> settingService;
@@ -217,9 +204,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
         ArgumentCaptor<Model> iriModel = ArgumentCaptor.forClass(Model.class);
-        when(ontologyManager.createOntologyId(iriModel.capture())).thenAnswer(inovcation -> {
-            return new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(iriModel.getValue()).build();
-        });
+        when(ontologyManager.createOntologyId(iriModel.capture())).thenAnswer(invocation -> new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(iriModel.getValue()).build());
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 
@@ -229,20 +214,20 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         File skosFile = setupOntologyMocks(skosModel);
         when(importsResolver.retrieveOntologyFromWebFile(skosIRI)).thenReturn(Optional.of(skosFile));
 
-        doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
-        ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
-        when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
+        doNothing().when(dsUtilsService).safeDeleteDataset(any(Resource.class), anyString());
+        ArgumentCaptor<Resource> datasetIRICapture = ArgumentCaptor.forClass(Resource.class);
+        when(dsUtilsService.createDataset(datasetIRICapture.capture(), anyString())).thenAnswer(invocation -> {
             try (RepositoryConnection conn = repo.getConnection()) {
-                Resource datasetIRI = VALUE_FACTORY.createIRI(datasetIRIStr.getValue());
+                Resource datasetIRI = datasetIRICapture.getValue();
                 Dataset dataset = datasetFactory.createNew(datasetIRI);
-                dataset.setSystemDefaultNamedGraph(VALUE_FACTORY.createIRI(datasetIRIStr.getValue() + SYSTEM_DEFAULT_NG_SUFFIX));
+                dataset.setSystemDefaultNamedGraph(VALUE_FACTORY.createIRI(datasetIRICapture.getValue().stringValue() + SYSTEM_DEFAULT_NG_SUFFIX));
                 conn.add(dataset.getModel(), datasetIRI);
             }
             return true;
         });
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> {
-            datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
+        when(dsUtilsService.getConnection(resource.capture(), anyString())).thenAnswer(invocation -> {
+            dsUtilsService.createDataset(resource.getValue(), "ontologyCache");
             return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY);
         });
 
@@ -251,20 +236,25 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Resource ontologyHeadCommitIRI = vf.createIRI("https://mobi.com/commit/testowl/head");
         String ontologyKey = OntologyDatasets.createRecordKey(ontologyRecordIRI, ontologyHeadCommitIRI);
         File ontologyFile = setupOntologyMocks(ontologyModel);
-        ontology = new SimpleOntology(ontologyKey, ontologyFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        ontology = new SimpleOntology(ontologyKey, ontologyFile, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
+
+        OsgiRepository catalogRepo = repoManager.createMemoryRepository();
+        when(catalogConfigProvider.getRepository()).thenReturn(catalogRepo);
+        try (RepositoryConnection conn = catalogRepo.getConnection();
+             InputStream testData = getClass().getResourceAsStream("/simple-ontology-test-data.trig")) {
+            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
+        }
 
         Model ont3Model = createModelFromFile("/test-local-imports-3.ttl");
         File ont3File = setupOntologyMocks(ont3Model);
         Resource ont3RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-3");
         Resource ont3HeadCommitIRI = vf.createIRI("https://mobi.com/commit/test-local-imports-3/head");
         String ont3Key = OntologyDatasets.createRecordKey(ont3RecordIRI, ont3HeadCommitIRI);
-        Ontology ont3 = new SimpleOntology(ont3Key, ont3File, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        Ontology ont3 = new SimpleOntology(ont3Key, ont3File, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
         when(ontologyManager.getOntologyRecordResource(TEST_LOCAL_IMPORT_3)).thenReturn(Optional.of(ont3RecordIRI));
         when(ontologyManager.retrieveOntology(ont3RecordIRI)).thenReturn(Optional.of(ont3));
         when(ontologyManager.getOntologyModel(ont3RecordIRI)).thenReturn(ont3Model);
-        when(localBranch3.getHead_resource()).thenReturn(Optional.of(ont3HeadCommitIRI));
-        when(catalogManager.getMasterBranch(catalogIRI, ont3RecordIRI)).thenReturn(localBranch3);
-        when(catalogManager.getCompiledResource(ont3HeadCommitIRI)).thenReturn(ont3Model);
+        when(utilsService.getCompiledResourceFile(eq(ont3HeadCommitIRI), eq(RDFFormat.TURTLE), any(RepositoryConnection.class))).thenReturn(ont3File);
 
         when(bNodeService.skolemize(any(org.eclipse.rdf4j.model.Statement.class))).thenAnswer(i -> i.getArgument(0, org.eclipse.rdf4j.model.Statement.class));
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
@@ -274,36 +264,34 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Resource ont2RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-2");
         Resource ont2HeadCommitIRI = vf.createIRI("https://mobi.com/commit/test-local-imports-2/head");
         String ont2Key = OntologyDatasets.createRecordKey(ont2RecordIRI, ont2HeadCommitIRI);
-        Ontology ont2 = new SimpleOntology(ont2Key, ont2File, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        Ontology ont2 = new SimpleOntology(ont2Key, ont2File, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
         when(ontologyManager.getOntologyRecordResource(TEST_LOCAL_IMPORT_2)).thenReturn(Optional.of(ont2RecordIRI));
         when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
         when(ontologyManager.getOntologyModel(ont2RecordIRI)).thenReturn(ont2Model);
         when(ontologyManager.getOntologyModel(ont3RecordIRI)).thenReturn(ont3Model);
-        when(localBranch2.getHead_resource()).thenReturn(Optional.of(ont2HeadCommitIRI));
-        when(catalogManager.getMasterBranch(catalogIRI, ont2RecordIRI)).thenReturn(localBranch2);
-        when(catalogManager.getCompiledResource(ont2HeadCommitIRI)).thenReturn(ont2Model);
+        when(utilsService.getCompiledResourceFile(eq(ont2HeadCommitIRI), eq(RDFFormat.TURTLE), any(RepositoryConnection.class))).thenReturn(ont2File);
 
         Model dctModel = createModelFromFile("/dcterms.rdf");
         dctModel.add(vf.createIRI("urn:generatedIRI"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
         File dctFile = setupOntologyMocks(dctModel);
         IRI dctermsIRI = vf.createIRI("http://purl.org/dc/terms/");
-        Ontology dcterms = new SimpleOntology(dctermsIRI, dctFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        Ontology dcterms = new SimpleOntology(dctermsIRI, dctFile, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Model ont1Model = createModelFromFile("/test-local-imports-1.ttl");
         File ont1File = setupOntologyMocks(ont1Model);
-        ont1 = new SimpleOntology(TEST_LOCAL_IMPORT_1, ont1File, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        ont1 = new SimpleOntology(TEST_LOCAL_IMPORT_1, ont1File, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         queryOntModel = createModelFromFile("/test-ontology.ttl");
         File queryOntFile = setupOntologyMocks(queryOntModel);
-        queryOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology"), queryOntFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        queryOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology"), queryOntFile, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Model queryVocModel = createModelFromFile("/test-vocabulary.ttl");
         File queryVocFile = setupOntologyMocks(queryVocModel);
-        queryVocabulary = new SimpleOntology(vf.createIRI("https://mobi.com/vocabulary"), queryVocFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        queryVocabulary = new SimpleOntology(vf.createIRI("https://mobi.com/vocabulary"), queryVocFile, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Model onlyDeclaredModel = createModelFromFile("/only-declared.ttl");
         File onlyDeclaredFile = setupOntologyMocks(onlyDeclaredModel);
-        onlyDeclared = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/only-declared"), onlyDeclaredFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        onlyDeclared = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/only-declared"), onlyDeclaredFile, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
     }
 
     @After
@@ -335,16 +323,15 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     public void withDctermsImport() throws Exception {
         // Setup:
         IRI masterHead = vf.createIRI("urn:masterHead");
-        Branch branch = mock(Branch.class);
-        when(branch.getHead_resource()).thenReturn(Optional.of(masterHead));
-        when(catalogManager.getMasterBranch(catalogIRI, vf.createIRI("https://mobi.com/record/dcterms"))).thenReturn(branch);
-        Model dcTermsModel = createModelFromFile("/dcterms.rdf");
-        when(catalogManager.getCompiledResource(masterHead)).thenReturn(dcTermsModel);
+        URL fileURL = getClass().getResource("/dcterms.rdf");
+        assert fileURL != null;
+        File dcTermsFile = new File(fileURL.toURI());
+        when(utilsService.getCompiledResourceFile(eq(masterHead), eq(RDFFormat.TURTLE), any(RepositoryConnection.class))).thenReturn(dcTermsFile);
 
         Model model = createModelFromFile("/skos-kgaa.ttl");
         File file = setupOntologyMocks(model);
 
-        Ontology ont = new SimpleOntology(vf.createIRI("http://www.w3.org/2004/02/skos/core2"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        Ontology ont = new SimpleOntology(vf.createIRI("http://www.w3.org/2004/02/skos/core2"), file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
         Set<String> expectedClasses = Stream.of("http://www.w3.org/2004/02/skos/core#ConceptScheme",
                 "http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#Collection",
                 "http://www.w3.org/2004/02/skos/core#OrderedCollection").collect(Collectors.toSet());
@@ -492,11 +479,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     @Test
     public void getAllObjectPropertiesDeclaredTest() throws Exception {
-        // Setup:
-        Set<String> expectedProps = Collections.emptySet();
-
         Set<ObjectProperty> properties = onlyDeclared.getAllObjectProperties();
-        assertEquals(expectedProps.size(), properties.size());
+        assertEquals(0, properties.size());
     }
 
     @Test
@@ -520,11 +504,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     @Test
     public void getAllObjectPropertiesNoImportsTest() throws Exception {
-        // Setup:
-        Set<String> expectedProps = Collections.emptySet();
-
         Set<ObjectProperty> properties = ont1.getAllObjectProperties();
-        assertEquals(expectedProps.size(), properties.size());
+        assertEquals(0, properties.size());
     }
 
     @Test
@@ -579,11 +560,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     @Test
     public void getAllDataPropertiesDeclaredTest() throws Exception {
-        // Setup:
-        Set<String> expectedProps = Collections.emptySet();
-
         Set<DataProperty> properties = onlyDeclared.getAllDataProperties();
-        assertEquals(expectedProps.size(), properties.size());
+        assertEquals(0, properties.size());
     }
 
     @Test
@@ -607,11 +585,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     @Test
     public void getAllDataPropertiesNoImportsTest() throws Exception {
-        // Setup:
-        Set<String> expectedProps = Collections.emptySet();
-
         Set<DataProperty> properties = ont1.getAllDataProperties();
-        assertEquals(expectedProps.size(), properties.size());
+        assertEquals(0, properties.size());
     }
 
     @Test
@@ -666,11 +641,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     @Test
     public void getAllAnnotationPropertiesNoImportsTest() throws Exception {
-        // Setup:
-        Set<String> expectedProps = Collections.emptySet();
-
         Set<AnnotationProperty> properties = ont1.getAllAnnotationProperties();
-        assertEquals(expectedProps.size(), properties.size());
+        assertEquals(0, properties.size());
     }
 
     @Test
@@ -1140,15 +1112,16 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     public void asJsonldWithSkolemizeTest() throws Exception {
         // Setup
         SimpleBNodeService blankNodeService = spy(new SimpleBNodeService());
-        InputStream expected = this.getClass().getResourceAsStream("/list-ontology-skolemize.jsonld");
+        InputStream expected = Objects.requireNonNull(this.getClass().getResourceAsStream("/list-ontology-skolemize.jsonld"));
 
         Model model = createModelFromFile("/list-ontology.ttl");
         File file = setupOntologyMocks(model);
-        Ontology listOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/list"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, blankNodeService, vf, mf, importService);
+        Ontology listOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/list"), file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, blankNodeService, vf, mf);
 
-        String jsonld = listOntology.asJsonLD(true).toString();
-        assertEquals(removeWhitespace(replaceBlankNodeSuffix(IOUtils.toString(expected, Charset.defaultCharset()))), removeWhitespace(replaceBlankNodeSuffix(jsonld)));
-
+        try (OutputStream stream = listOntology.asJsonLD(true)) {
+            String jsonld = stream.toString();
+            assertEquals(removeWhitespace(replaceBlankNodeSuffix(IOUtils.toString(expected, Charset.defaultCharset()))), removeWhitespace(replaceBlankNodeSuffix(jsonld)));
+        }
         verify(blankNodeService, atLeast(1)).skolemize(any(org.eclipse.rdf4j.model.Statement.class));
     }
 
@@ -1156,15 +1129,17 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     public void asJsonldWithoutSkolemizeTest() throws Exception {
         // Setup
         SimpleBNodeService blankNodeService = spy(new SimpleBNodeService());
-        InputStream expected = this.getClass().getResourceAsStream("/list-ontology.jsonld");
+        InputStream expected = Objects.requireNonNull(this.getClass().getResourceAsStream("/list-ontology.jsonld"));
 
         Model model = createModelFromFile("/list-ontology.ttl");
         File file = setupOntologyMocks(model);
 
-        Ontology listOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/list"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, blankNodeService, vf, mf, importService);
-        String jsonld = listOntology.asJsonLD(false).toString();
-        assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:genid-[a-zA-Z0-9]+-[a-z]", "\"")),
-                removeWhitespace(jsonld.replaceAll("_:[a-zA-Z0-9]+\"", "\"").replaceAll("_:genid-[a-zA-Z0-9]+-[a-z]", "")));
+        Ontology listOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/list"), file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, blankNodeService, vf, mf);
+        try (OutputStream stream = listOntology.asJsonLD(false)) {
+            String jsonld = stream.toString();
+            assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:genid-[a-zA-Z0-9]+-[a-z]", "\"")),
+                    removeWhitespace(jsonld.replaceAll("_:[a-zA-Z0-9]+\"", "\"").replaceAll("_:genid-[a-zA-Z0-9]+-[a-z]", "")));
+        }
         verify(blankNodeService, times(0)).skolemize(any(org.eclipse.rdf4j.model.Model.class));
     }
 
@@ -1981,7 +1956,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Model model = mf.createEmptyModel();
         model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
         File file = setupOntologyMocks(model);
-        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Model additionsModel = mf.createEmptyModel();
         additionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), TEST_LOCAL_IMPORT_3);
@@ -2004,7 +1979,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Model model = mf.createEmptyModel();
         model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
         File file = setupOntologyMocks(model);
-        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Model additionsModel = mf.createEmptyModel();
         additionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), skosIRI);
@@ -2030,7 +2005,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Model model = mf.createEmptyModel();
         model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
         File file = setupOntologyMocks(model);
-        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Model additionsModel = mf.createEmptyModel();
         additionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:unresolvable"));
@@ -2067,7 +2042,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         model.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), TEST_LOCAL_IMPORT_1);
         model.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), TEST_LOCAL_IMPORT_2);
         File file = setupOntologyMocks(model);
-        SimpleOntology transitive = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        SimpleOntology transitive = new SimpleOntology(ontIRI, file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Set<IRI> importsClosureIRIs = transitive.getImportsClosure()
                 .stream()
@@ -2104,7 +2079,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Model model = mf.createEmptyModel();
         model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
         File transAddFile = setupOntologyMocks(model);
-        SimpleOntology transitiveAdd = new SimpleOntology(ontIRI, transAddFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        SimpleOntology transitiveAdd = new SimpleOntology(ontIRI, transAddFile, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         assertEquals(1, transitiveAdd.getImportsClosure().size());
 
@@ -2121,7 +2096,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         File file = setupOntologyMocks(model);
         when(importsResolver.retrieveOntologyFromWebFile(any(IRI.class))).thenReturn(Optional.empty());
         when(importsResolver.retrieveOntologyLocalFile(any(IRI.class), any(OntologyManager.class))).thenReturn(Optional.empty());
-        SimpleOntology multUnresolved1 = new SimpleOntology(vf.createIRI("https://mobi.com/ontologies/multipleunresolved1"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, bNodeService, vf, mf, importService);
+        SimpleOntology multUnresolved1 = new SimpleOntology(vf.createIRI("https://mobi.com/ontologies/multipleunresolved1"), file, repo, ontologyManager, utilsService, catalogConfigProvider, dsUtilsService, importsResolver, bNodeService, vf, mf);
 
         Set<IRI> expectedUnresolved = Stream.of(vf.createIRI("https://mobi.com/ontologies/unresolvable1.owl"), vf.createIRI("https://mobi.com/ontologies/unresolvable2.owl"), vf.createIRI("https://mobi.com/ontologies/unresolvable3.owl")).collect(Collectors.toSet());
         Set<IRI> actualUnresolved = multUnresolved1.getUnloadableImportIRIs();
@@ -2140,16 +2115,9 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     private File setupOntologyMocks(Model model) throws Exception{
         Path path = Files.createTempFile(null, null);
-        Rio.write(model, Files.newOutputStream(path), RDFFormat.TRIG);
+        Rio.write(model, Files.newOutputStream(path), RDFFormat.TURTLE);
         File file = path.toFile();
         file.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgument(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(model, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(file), any(Resource.class));
         return file;
     }
 

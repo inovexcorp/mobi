@@ -1,0 +1,53 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix ontedit: <http://mobi.com/ontologies/ontology-editor#> .
+
+GRAPH <https://mobi.com/record/test-local-imports-3> {
+    <https://mobi.com/record/test-local-imports-3> a ontedit:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+       mcat:catalog <http://mobi.com/catalog> ;
+       mcat:branch <http://mobi.com/branch/test-local-imports-3/master> ;
+       mcat:masterBranch <http://mobi.com/branch/test-local-imports-3/master> ;
+       ontedit:ontologyIRI <http://mobi.com/ontology/test-local-imports-3> .
+}
+
+GRAPH <http://mobi.com/branch/test-local-imports-3/master> {
+    <http://mobi.com/branch/test-local-imports-3/master> a mcat:Branch ;
+        mcat:head <https://mobi.com/commit/test-local-imports-3/head> .
+}
+
+GRAPH <https://mobi.com/commit/test-local-imports-3/head> {
+    <https://mobi.com/commit/test-local-imports-3/head> a mcat:Commit .
+}
+
+GRAPH <https://mobi.com/record/test-local-imports-2> {
+    <https://mobi.com/record/test-local-imports-2> a ontedit:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+       mcat:catalog <http://mobi.com/catalog> ;
+       mcat:branch <http://mobi.com/branch/test-local-imports-2/master> ;
+       mcat:masterBranch <http://mobi.com/branch/test-local-imports-2/master> ;
+       ontedit:ontologyIRI <http://mobi.com/ontology/test-local-imports-2> .
+}
+
+GRAPH <http://mobi.com/branch/test-local-imports-2/master> {
+    <http://mobi.com/branch/test-local-imports-2/master> a mcat:Branch ;
+        mcat:head <https://mobi.com/commit/test-local-imports-2/head> .
+}
+
+GRAPH <https://mobi.com/commit/test-local-imports-2/head> {
+    <https://mobi.com/commit/test-local-imports-2/head> a mcat:Commit .
+}
+
+GRAPH <https://mobi.com/record/dcterms> {
+    <https://mobi.com/record/dcterms> a ontedit:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/catalog> ;
+        mcat:branch <https://mobi.com/branch/dcterms/master> ;
+        mcat:masterBranch <https://mobi.com/branch/dcterms/master> ;
+        ontedit:ontologyIRI <http://purl.org/dc/terms/> .
+}
+
+GRAPH <https://mobi.com/branch/dcterms/master> {
+    <https://mobi.com/branch/dcterms/master> a mcat:Branch ;
+        mcat:head <urn:masterHead> .
+}
+
+GRAPH <urn:masterHead> {
+    <urn:masterHead> a mcat:Commit .
+}

@@ -1,0 +1,35 @@
+@prefix dataset: <http://mobi.com/ontologies/dataset#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+GRAPH <http://test.com/dataset> {
+    <http://test.com/dataset> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://test.com/dataset/graph1> ;
+        dataset:namedGraph <http://test.com/dataset/graph2>, <http://test.com/dataset/graph3> ;
+        dataset:systemDefaultNamedGraph <http://test.com/dataset_system_dng> .
+}
+
+GRAPH <http://test.com/dataset/graph1> {
+    <http://test.com/dataset/graph1> a owl:Thing .
+}
+
+GRAPH <http://test.com/dataset/graph2> {
+    <http://test.com/dataset/graph2> a owl:Thing .
+}
+
+GRAPH <http://test.com/dataset/graph3> {
+    <http://test.com/dataset/graph3> a owl:Thing .
+}
+
+GRAPH <http://test.com/dataset_system_dng> {
+    <http://test.com/someThing> a owl:Thing .
+}
+
+GRAPH <http://test.com/dataset/other> {
+    <http://test.com/dataset/other> a dataset:Dataset ;
+        dataset:namedGraph <http://test.com/dataset/graph1> ;
+        dataset:systemDefaultNamedGraph <http://test.com/dataset/other_system_dng> .
+}
+
+GRAPH <http://test.com/dataset/other_system_dng> {
+    <http://test.com/someThing> a owl:Thing .
+}

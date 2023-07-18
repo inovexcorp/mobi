@@ -23,13 +23,21 @@ package com.mobi.ontology.utils.imports.impl;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.ontology.utils.imports.ImportsResolverConfig;
 import com.mobi.persistence.utils.RDFFiles;
+
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -44,7 +52,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.OPTIONAL,
@@ -54,17 +64,25 @@ import java.util.Optional;
 @Designate(ocd = ImportsResolverConfig.class)
 public class ImportsResolverImpl implements ImportsResolver {
     private final Logger log = LoggerFactory.getLogger(ImportsResolverImpl.class);
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     private String userAgent;
     private String acceptHeaders;
+    private Set<String> contentTypes = new HashSet<>();
 
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
+
+    @Reference
+    BranchFactory branchFactory;
+
+    @Reference
+    VersionedRDFRecordFactory versionedRDFRecordFactory;
 
     @Reference
     CatalogConfigProvider catalogConfigProvider;
 
     @Reference
-    CatalogManager catalogManager;
+    CatalogUtilsService utilsService;
 
     @Activate
     protected void activate(final ImportsResolverConfig config) {
@@ -76,6 +94,7 @@ public class ImportsResolverImpl implements ImportsResolver {
         StringBuilder sb = new StringBuilder();
         RDFFiles.getFormats().forEach(format -> {
             format.getMIMETypes().forEach(mimeType -> {
+                contentTypes.add(mimeType);
                 sb.append(mimeType);
                 if (RDFFiles.isOwlFormat(format)) {
                     sb.append("; q=0.5");
@@ -131,6 +150,15 @@ public class ImportsResolverImpl implements ImportsResolver {
             try {
                 HttpURLConnection conn = getWebInputStream(urlStr);
                 RDFFormat format = RDFFiles.getFormatForMIMEType(conn.getContentType())
+                        .or(() -> {
+                            String connContentType = conn.getContentType();
+                            return contentTypes.stream()
+                                    .filter(connContentType::contains)
+                                    .map(RDFFiles::getFormatForMIMEType)
+                                    .filter(Optional::isPresent)
+                                    .findFirst()
+                                    .orElse(Optional.empty());
+                        })
                         .or(() -> RDFFiles.getFormatForFileName(conn.getURL().getPath()))
                         .orElseThrow(() -> new IllegalStateException("Could not retrieve RDFFormat for " + resource));
                 File tempFile = RDFFiles.writeStreamToTempFile(conn.getInputStream(), format);
@@ -151,10 +179,9 @@ public class ImportsResolverImpl implements ImportsResolver {
             Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(ontologyIRI);
             if (recordIRIOpt.isPresent()) {
                 Resource recordIRI = recordIRIOpt.get();
-                Optional<Resource> masterHead = catalogManager.getMasterBranch(
-                        catalogConfigProvider.getLocalCatalogIRI(), recordIRI).getHead_resource();
+                Optional<Resource> masterHead = getMasterBranchHead(recordIRI);
                 if (masterHead.isPresent()) {
-                    File file = catalogManager.getCompiledResourceFile(masterHead.get());
+                    File file = getCompiledResourceFile(masterHead.get());
                     return Optional.of(file);
                 }
             }
@@ -170,5 +197,21 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     private void logDebug(String operationDescription, Long start) {
         log.debug(operationDescription + " complete in " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    private File getCompiledResourceFile(Resource commitIRI) {
+        try (RepositoryConnection conn = catalogConfigProvider.getRepository().getConnection()) {
+            utilsService.validateResource(commitIRI, vf.createIRI(Commit.TYPE), conn);
+            return utilsService.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
+        }
+    }
+
+    private Optional<Resource> getMasterBranchHead(Resource recordIRI) {
+        try (RepositoryConnection conn = catalogConfigProvider.getRepository().getConnection()) {
+            VersionedRDFRecord record = utilsService.getExpectedObject(recordIRI, versionedRDFRecordFactory, conn);
+            Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
+                    new IllegalStateException("Record " + recordIRI + " does not have a master Branch set."));
+            return utilsService.getExpectedObject(branchId, branchFactory, conn).getHead_resource();
+        }
     }
 }

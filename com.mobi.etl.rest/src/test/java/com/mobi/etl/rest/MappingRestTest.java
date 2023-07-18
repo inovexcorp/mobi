@@ -73,6 +73,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -118,10 +119,10 @@ public class MappingRestTest extends MobiRestTestCXF {
         catalogManager = Mockito.mock(CatalogManager.class);
 
         rest = new MappingRest();
-        rest.setManager(manager);
-        rest.setEngineManager(engineManager);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
+        rest.manager = manager;
+        rest.engineManager = engineManager;
+        rest.configProvider = configProvider;
+        rest.catalogManager = catalogManager;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -142,10 +143,10 @@ public class MappingRestTest extends MobiRestTestCXF {
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
-        mappingJsonld = IOUtils.toString(getClass().getResourceAsStream("/mapping.jsonld"), StandardCharsets.UTF_8);
+        mappingJsonld = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/mapping.jsonld")), StandardCharsets.UTF_8);
 
         when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class))).thenReturn(record);
-        when(catalogManager.removeRecord(catalogId, recordId, mappingRecordFactory)).thenReturn(record);
+        when(catalogManager.removeRecord(catalogId, recordId, user, MappingRecord.class)).thenReturn(record);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
@@ -269,7 +270,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         Response response = target().path("mappings/" + encode(MAPPING_RECORD_IRI)).request().delete();
         assertEquals(response.getStatus(), 200);
 
-        verify(catalogManager).deleteRecord(user, recordId, MappingRecord.class);
+        verify(catalogManager).removeRecord(catalogId, recordId, user, MappingRecord.class);
         verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 }

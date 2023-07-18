@@ -23,7 +23,6 @@ package com.mobi.prov.impl;
  * #L%
  */
 
-import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.ActivityFactory;
 import com.mobi.ontologies.provo.Entity;
@@ -38,32 +37,21 @@ import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.OsgiRepository;
-import java.io.IOException;
-import java.util.ArrayList;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModel;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParser;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -76,18 +64,17 @@ import java.util.stream.Collectors;
 @Component
 public class SimpleProvenanceService implements ProvenanceService {
 
-    private static String ACTIVITY_NAMESPACE = "http://mobi.com/activities/";
+    private static final String ACTIVITY_NAMESPACE = "http://mobi.com/activities/";
 
+    final ValueFactory vf = new ValidatingValueFactory();
+
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Reference(target = "(id=prov)")
     OsgiRepository repo;
 
     @Reference
     OrmFactoryRegistry factoryRegistry;
-
-    final ValueFactory vf = new ValidatingValueFactory();
-
-    final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
     ActivityFactory activityFactory;
@@ -174,8 +161,8 @@ public class SimpleProvenanceService implements ProvenanceService {
             }
             conn.begin();
             List<Resource> generated = getReferencedEntityIRIs(activityIRI, Activity.generated_IRI, conn);
-            List<Resource> invalided = getReferencedEntityIRIs(activityIRI, Activity.invalidated_IRI, conn);
-            List<Resource> used = getReferencedEntityIRIs(activityIRI, Activity.used_IRI, conn);
+            final List<Resource> invalided = getReferencedEntityIRIs(activityIRI, Activity.invalidated_IRI, conn);
+            final List<Resource> used = getReferencedEntityIRIs(activityIRI, Activity.used_IRI, conn);
             conn.remove(activityIRI, null, null);
             conn.remove((Resource) null, null, activityIRI);
             generated.forEach(resource -> removeIfNotReferenced(resource, conn));
@@ -193,12 +180,14 @@ public class SimpleProvenanceService implements ProvenanceService {
         try (RepositoryConnection conn = repo.getConnection()) {
             List<ProvActivityAction> activities = new ArrayList<>();
             TupleQuery query = conn.prepareTupleQuery(getActionWords);
-            query.evaluate().forEach(bindingSet -> {
-                String type = Bindings.requiredResource(bindingSet, "activity").stringValue();
-                String word = Bindings.requiredLiteral(bindingSet, "action").stringValue();
-                String pred = Bindings.requiredResource(bindingSet, "pred").stringValue();
-                activities.add(new ProvActivityAction(type, word, pred));
-            });
+            try (TupleQueryResult result = query.evaluate()) {
+                result.forEach(bindingSet -> {
+                    String type = Bindings.requiredResource(bindingSet, "activity").stringValue();
+                    String word = Bindings.requiredLiteral(bindingSet, "action").stringValue();
+                    String pred = Bindings.requiredResource(bindingSet, "pred").stringValue();
+                    activities.add(new ProvActivityAction(type, word, pred));
+                });
+            }
             return activities;
         }
     }

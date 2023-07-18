@@ -23,7 +23,7 @@ package com.mobi.cache.impl.repository;
  * #L%
  */
 
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
@@ -33,7 +33,6 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.QueryResults;
-import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -72,7 +71,7 @@ public class CleanRepositoryCache implements Job {
     private long expirySeconds;
 
     @Reference
-    DatasetManager datasetManager;
+    DatasetUtilsService dsUtilsService;
 
     @Reference
     RepositoryManager repositoryManager;
@@ -106,7 +105,7 @@ public class CleanRepositoryCache implements Job {
             statements.forEach(statement -> {
                 if (now.isAfter(OffsetDateTime.parse(statement.getObject().stringValue()).plusSeconds(expirySeconds))) {
                     log.debug("Evicting expired dataset: " + statement.getSubject().stringValue());
-                    datasetManager.safeDeleteDataset(statement.getSubject(), repoId, false);
+                    dsUtilsService.safeDeleteDataset(statement.getSubject(), repoId);
                 }
             });
         }

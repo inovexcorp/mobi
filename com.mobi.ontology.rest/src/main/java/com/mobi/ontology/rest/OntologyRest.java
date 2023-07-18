@@ -192,13 +192,27 @@ public class OntologyRest {
 
     private final ModelFactory modelFactory = new DynamicModelFactory();
     private final ValueFactory valueFactory = new ValidatingValueFactory();
-    private OntologyManager ontologyManager;
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private EngineManager engineManager;
-    private OntologyCache ontologyCache;
-    private BNodeService bNodeService;
-    private PDP pdp;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    protected OntologyManager ontologyManager;
+
+    @Reference
+    protected CatalogConfigProvider configProvider;
+
+    @Reference
+    protected CatalogManager catalogManager;
+
+    @Reference
+    protected EngineManager engineManager;
+
+    @Reference
+    protected OntologyCache ontologyCache;
+
+    @Reference
+    protected BNodeService bNodeService;
+
+    @Reference
+    protected PDP pdp;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -230,41 +244,6 @@ public class OntologyRest {
         } catch (IOException e) {
             throw new MobiException(e);
         }
-    }
-
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    void setOntologyManager(OntologyManager ontologyManager) {
-        this.ontologyManager = ontologyManager;
-    }
-
-    @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
-
-    @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    @Reference
-    void setOntologyCache(OntologyCache ontologyCache) {
-        this.ontologyCache = ontologyCache;
-    }
-
-    @Reference
-    void setbNodeService(BNodeService bNodeService) {
-        this.bNodeService = bNodeService;
-    }
-
-    @Reference
-    void setPdp(PDP pdp) {
-        this.pdp = pdp;
     }
 
     /**
@@ -476,8 +455,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr) {
         try {
-            catalogManager.deleteRecord(getActiveUser(servletRequest, engineManager), valueFactory.createIRI(recordIdStr),
-                    OntologyRecord.class);
+            catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr),
+                    getActiveUser(servletRequest, engineManager), OntologyRecord.class);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {

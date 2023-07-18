@@ -31,10 +31,9 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -65,7 +64,7 @@ public class SimpleOntologyCreationServiceTest extends OrmEnabledTestCase {
     IRI commitId;
 
     @Mock
-    DatasetManager datasetManager;
+    DatasetUtilsService dsUtilsService;
 
     @Mock
     ImportsResolver importsResolver;
@@ -74,13 +73,13 @@ public class SimpleOntologyCreationServiceTest extends OrmEnabledTestCase {
     BNodeService bNodeService;
 
     @Mock
-    RDFImportService importService;
-
-    @Mock
     RepositoryManager repositoryManager;
 
     @Mock
-    CatalogManager catalogManager;
+    CatalogUtilsService utilsService;
+
+    @Mock
+    OsgiRepository catalogRepo;
 
     @Mock
     CatalogConfigProvider configProvider;
@@ -112,14 +111,13 @@ public class SimpleOntologyCreationServiceTest extends OrmEnabledTestCase {
         when(bundle.getBundleContext()).thenReturn(bundleContext);
         when(bundleContext.getServiceReference(OntologyManager.class)).thenReturn(serviceReference);
         when(bundleContext.getService(serviceReference)).thenReturn(ontologyManager);
+        when(configProvider.getRepository()).thenReturn(catalogRepo);
 
         service = Mockito.spy(new SimpleOntologyCreationService());
-        service.datasetManager = datasetManager;
-        service.importService = importService;
+        service.dsUtilsService = dsUtilsService;
         service.bNodeService = bNodeService;
-        service.importService = importService;
         service.repositoryManager = repositoryManager;
-        service.catalogManager = catalogManager;
+        service.utilsService = utilsService;
         service.configProvider = configProvider;
     }
 
