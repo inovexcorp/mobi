@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -81,7 +82,7 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
     static {
         try {
             FIND_ONTOLOGY = IOUtils.toString(
-                    AbstractOntologyManager.class.getResourceAsStream("/find-ontology.rq"),
+                    Objects.requireNonNull(AbstractOntologyManager.class.getResourceAsStream("/find-ontology.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {

@@ -29,7 +29,6 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
@@ -49,7 +48,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -59,7 +57,6 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
-import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -114,54 +111,24 @@ public class DatasetRest {
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
 
-    private DatasetManager manager;
-    private EngineManager engineManager;
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private BNodeService bNodeService;
-    private CatalogProvUtils provUtils;
-    private RDFImportService importService;
-    private PDP pdp;
+    @Reference
+    protected DatasetManager manager;
 
     @Reference
-    void setManager(DatasetManager manager) {
-        this.manager = manager;
-    }
+    protected EngineManager engineManager;
 
     @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    protected CatalogConfigProvider configProvider;
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
+    protected CatalogManager catalogManager;
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
+    protected BNodeService bNodeService;
 
     @Reference
-    void setBNodeService(BNodeService bNodeService) {
-        this.bNodeService = bNodeService;
-    }
+    protected RDFImportService importService;
 
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
-    }
-
-    @Reference
-    void setImportService(RDFImportService importService) {
-        this.importService = importService;
-    }
-
-    @Reference
-    void setPdp(PDP pdp) {
-        this.pdp = pdp;
-    }
     /**
      * Retrieves all the DatasetRecords in the local Catalog in a JSON array. Can optionally be paged if passed a
      * limit and offset. Can optionally be sorted by property value if passed a sort IRI.
@@ -170,7 +137,7 @@ public class DatasetRest {
      * @param offset Offset for a page of DatasetRecords
      * @param limit Number of DatasetRecords to return in one page
      * @param sort IRI of the property to sort by
-     * @param asc Whether or not the list should be sorted ascending or descending. Default is ascending
+     * @param asc Whether the list should be sorted ascending or descending. Default is ascending
      * @param searchText Optional search text for the query
      * @return Response with a JSON array of DatasetRecords
      */
@@ -214,9 +181,8 @@ public class DatasetRest {
                 params.setSearchText(searchText);
             }
 
-            PaginatedSearchResults<Record> results = catalogManager.findRecord(
-                    vf.createIRI("http://mobi.com/catalog-local"), params.build(),
-                    getActiveUser(servletRequest, engineManager), pdp);
+            PaginatedSearchResults<Record> results = catalogManager.findRecord(configProvider.getLocalCatalogIRI(),
+                    params.build(), getActiveUser(servletRequest, engineManager));
 
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
@@ -324,8 +290,6 @@ public class DatasetRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (Exception ex) {
-            throw ex;
         }
     }
 
@@ -376,7 +340,7 @@ public class DatasetRest {
      *
      * @param servletRequest The HttpServletRequest
      * @param datasetRecordId The IRI of a DatasetRecord
-     * @param force Whether or not the delete should be forced
+     * @param force Whether the delete should be forced
      * @return A Response indicating the success of the request
      */
     @DELETE
@@ -403,20 +367,14 @@ public class DatasetRest {
             @DefaultValue("false") @QueryParam("force") boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         User activeUser = getActiveUser(servletRequest, engineManager);
-        DeleteActivity deleteActivity = null;
         try {
-            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIRI);
-
             DatasetRecord record = (force
-                    ? manager.deleteDataset(recordIRI)
-                    : manager.safeDeleteDataset(recordIRI));
+                    ? manager.deleteDataset(recordIRI, activeUser)
+                    : manager.safeDeleteDataset(recordIRI, activeUser));
 
-            provUtils.endDeleteActivity(deleteActivity, record);
         } catch (IllegalArgumentException ex) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();
@@ -524,7 +482,7 @@ public class DatasetRest {
     /**
      * Class used for OpenAPI documentation for file upload endpoint.
      */
-    private class DatasetFileUpload {
+    private static class DatasetFileUpload {
         @Schema(type = "string", format = "binary", description = "Dataset RDF file to upload.")
         public String file;
     }

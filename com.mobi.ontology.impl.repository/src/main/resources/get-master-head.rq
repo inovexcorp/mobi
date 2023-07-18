@@ -1,0 +1,8 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX ontedit: <http://mobi.com/ontologies/ontology-editor#>
+
+SELECT ?head
+WHERE {
+    ?record a ontedit:OntologyRecord ;
+        mcat:masterBranch/mcat:head ?head .
+}

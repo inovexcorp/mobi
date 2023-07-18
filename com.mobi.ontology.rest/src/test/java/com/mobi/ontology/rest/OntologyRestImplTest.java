@@ -277,15 +277,15 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         ontologyCache = Mockito.mock(OntologyCache.class);
 
         rest = new OntologyRest();
-        rest.setOntologyManager(ontologyManager);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
-        rest.setEngineManager(engineManager);
-        rest.setOntologyCache(ontologyCache);
-        rest.setPdp(pdp);
+        rest.ontologyManager = ontologyManager;
+        rest.configProvider = configProvider;
+        rest.catalogManager = catalogManager;
+        rest.engineManager = engineManager;
+        rest.ontologyCache = ontologyCache;
+        rest.pdp = pdp;
 
         bNodeService = new SimpleBNodeService();
-        rest.setbNodeService(bNodeService);
+        rest.bNodeService = bNodeService;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -468,7 +468,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
         when(catalogManager.getRecord(eq(catalogId), eq(recordId), any(OntologyRecordFactory.class))).thenReturn(Optional.of(record));
-        when(catalogManager.removeRecord(catalogId, recordId, ontologyRecordFactory)).thenReturn(record);
+        when(catalogManager.removeRecord(catalogId, recordId, user, OntologyRecord.class)).thenReturn(record);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(catalogManager.getInProgressCommit(catalogId, recordId, user)).thenReturn(Optional.of(inProgressCommit));
         when(catalogManager.getInProgressCommit(catalogId, recordId, inProgressCommitId)).thenReturn(Optional.of(inProgressCommit));
@@ -4814,13 +4814,13 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
+        verify(catalogManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class));
     }
 
     @Test
     public void testDeleteOntologyError() {
         Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager)
-                .deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
+                .removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class));
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 500);
@@ -4843,7 +4843,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(branchId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(catalogManager, times(0)).deleteRecord(any(), any(), any());
+        verify(ontologyManager).deleteOntologyBranch(recordId, branchId);
     }
 
     // Test upload changes

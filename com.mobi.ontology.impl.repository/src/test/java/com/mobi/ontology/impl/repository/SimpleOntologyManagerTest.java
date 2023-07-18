@@ -28,7 +28,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -47,7 +46,7 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
@@ -120,7 +119,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private RepositoryManager mockRepoManager;
 
     @Mock
-    private DatasetManager datasetManager;
+    private DatasetUtilsService dsUtilsService;
 
     @Mock
     private RDFImportService importService;
@@ -130,11 +129,11 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     private AutoCloseable closeable;
     private SimpleOntologyManager manager;
-    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
-    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
-    private OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
-    private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
+    private final OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
+    private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
+    private final OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
     private IRI missingIRI;
     private IRI recordIRI;
     private IRI branchIRI;
@@ -147,7 +146,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private InProgressCommit inProgressCommit;
     private Model ontologyModel;
     private Model model;
-    private RepositoryManager repoManager = new SimpleRepositoryManager();
+    private final RepositoryManager repoManager = new SimpleRepositoryManager();
     private OsgiRepository repo;
     private OsgiRepository vocabRepo;
     private OsgiRepository cacheRepo;
@@ -175,7 +174,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Catalog catalog = catalogFactory.createNew(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
-        when(catalogManager.removeRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(record);
         when(catalogManager.removeBranch(catalogIRI, recordIRI, branchIRI)).thenReturn(Collections.singletonList(commitIRI));
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(inProgressCommit));
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
@@ -237,20 +235,20 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
 
-        doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
-        ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
-        when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
+        doNothing().when(dsUtilsService).safeDeleteDataset(any(Resource.class), anyString());
+        ArgumentCaptor<Resource> datasetIRICapture = ArgumentCaptor.forClass(Resource.class);
+        when(dsUtilsService.createDataset(datasetIRICapture.capture(), anyString())).thenAnswer(invocation -> {
             try (RepositoryConnection conn = repo.getConnection()) {
-                Resource datasetIRI = VALUE_FACTORY.createIRI(datasetIRIStr.getValue());
+                Resource datasetIRI = datasetIRICapture.getValue();
                 Dataset dataset = datasetFactory.createNew(datasetIRI);
-                dataset.setSystemDefaultNamedGraph(VALUE_FACTORY.createIRI(datasetIRIStr.getValue() + SYSTEM_DEFAULT_NG_SUFFIX));
+                dataset.setSystemDefaultNamedGraph(VALUE_FACTORY.createIRI(datasetIRICapture.getValue().stringValue() + SYSTEM_DEFAULT_NG_SUFFIX));
                 conn.add(dataset.getModel(), datasetIRI);
             }
             return true;
         });
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> {
-            datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
+        when(dsUtilsService.getConnection(resource.capture(), anyString())).thenAnswer(invocation -> {
+            dsUtilsService.createDataset(resource.getValue(), "ontologyCache");
             return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY);
         });
 

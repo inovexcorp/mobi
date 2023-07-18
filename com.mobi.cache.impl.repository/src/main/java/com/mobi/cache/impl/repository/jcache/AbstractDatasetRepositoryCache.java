@@ -24,7 +24,7 @@ package com.mobi.cache.impl.repository.jcache;
  */
 
 import com.mobi.dataset.api.DatasetConnection;
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.repository.api.OsgiRepository;
@@ -52,7 +52,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
     protected final ModelFactory mf = new DynamicModelFactory();
     protected OsgiRepository repository;
     protected DatasetFactory datasetFactory;
-    protected DatasetManager datasetManager;
+    protected DatasetUtilsService dsUtilsService;
 
     protected DatasetConnection getDatasetConnection(Resource datasetIRI, boolean createNotExists) {
         LOG.debug("Retrieving cache dataset connection for " + datasetIRI.stringValue());
@@ -63,7 +63,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
             if (!contains) {
                 if (createNotExists) {
                     LOG.debug("Creating cache dataset " + datasetIRI.stringValue());
-                    datasetManager.createDataset(datasetIRI.stringValue(), repository.getRepositoryID());
+                    dsUtilsService.createDataset(datasetIRI, repository.getRepositoryID());
                 } else {
                     LOG.trace("The dataset " + datasetIRI + " does not exist in the specified repository.");
                     throw new IllegalArgumentException("The dataset " + datasetIRI
@@ -71,7 +71,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                 }
             }
         }
-        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getRepositoryID(), false);
+        DatasetConnection conn = dsUtilsService.getConnection(datasetIRI, repository.getRepositoryID());
         updateDatasetTimestamp(conn);
         return conn;
     }

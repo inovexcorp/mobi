@@ -74,7 +74,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
@@ -85,7 +84,6 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
-import com.mobi.security.policy.api.PDP;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -155,19 +153,37 @@ public class CatalogRest {
 
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
-    
-    private OrmFactoryRegistry factoryRegistry;
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private CatalogUtilsService catalogUtilsService;
-    private VersioningManager versioningManager;
-    private BNodeService bNodeService;
-    private CatalogProvUtils provUtils;
-    private PDP pdp;
 
+    @Reference
+    protected OrmFactoryRegistry factoryRegistry;
+
+    @Reference
+    protected CatalogConfigProvider configProvider;
+
+    @Reference
+    protected CatalogManager catalogManager;
+
+    @Reference
+    protected CatalogUtilsService catalogUtilsService;
+
+    @Reference
+    protected VersioningManager versioningManager;
+
+    @Reference
+    protected BNodeService bNodeService;
+
+    @Reference
+    protected CatalogProvUtils provUtils;
+    @Reference
     protected EngineManager engineManager;
+
+    @Reference
     protected DistributionFactory distributionFactory;
+
+    @Reference
     protected CommitFactory commitFactory;
+
+    @Reference
     protected InProgressCommitFactory inProgressCommitFactory;
 
     static {
@@ -176,66 +192,6 @@ public class CatalogRest {
         sortResources.add(DCTERMS.ISSUED.stringValue());
         sortResources.add(DCTERMS.TITLE.stringValue());
         SORT_RESOURCES = Collections.unmodifiableSet(sortResources);
-    }
-
-    @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
-
-    @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setPdp(PDP pdp) {
-        this.pdp = pdp;
-    }
-
-    @Reference
-    void setCatalogUtilsService(CatalogUtilsService catalogUtilsService) {
-        this.catalogUtilsService = catalogUtilsService;
-    }
-
-    @Reference
-    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
-        this.factoryRegistry = factoryRegistry;
-    }
-
-    @Reference
-    void setDistributionFactory(DistributionFactory distributionFactory) {
-        this.distributionFactory = distributionFactory;
-    }
-
-    @Reference
-    void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
-        this.inProgressCommitFactory = inProgressCommitFactory;
-    }
-
-    @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
-
-    @Reference
-    void setbNodeService(BNodeService bNodeService) {
-        this.bNodeService = bNodeService;
-    }
-
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
     }
 
     /**
@@ -414,7 +370,7 @@ public class CatalogRest {
                 builder.creators(creators.stream().map(vf::createIRI).collect(Collectors.toList()));
             }
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
-                    builder.build(), getActiveUser(servletRequest, engineManager), pdp);
+                    builder.build(), getActiveUser(servletRequest, engineManager));
             return createPaginatedResponseJackson(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
                     Record.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -578,7 +534,7 @@ public class CatalogRest {
      *                  with "_:".
      * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @return A Response indicating whether or not the Record was deleted.
+     * @return A Response indicating whether the Record was deleted.
      */
     @DELETE
     @Path("{catalogId}/records/{recordId}")
@@ -604,18 +560,12 @@ public class CatalogRest {
             @PathParam("recordId") String recordId) {
         User activeUser = getActiveUser(servletRequest, engineManager);
         IRI recordIri = vf.createIRI(recordId);
-        DeleteActivity deleteActivity = null;
         try {
-            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
-            Record record = catalogManager.removeRecord(vf.createIRI(catalogId), recordIri,
-                    factoryRegistry.getFactoryOfType(Record.class).get());
-            provUtils.endDeleteActivity(deleteActivity, record);
+            catalogManager.removeRecord(vf.createIRI(catalogId), recordIri, activeUser, Record.class);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -629,7 +579,7 @@ public class CatalogRest {
      * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @param newRecordJson The JSON-LD of the new Record which will replace the existing Record.
-     * @return A Response indicating whether or not the Record was updated along with the updated model represented
+     * @return A Response indicating whether the Record was updated along with the updated model represented
      *         as JSON if successful
      */
     @PUT

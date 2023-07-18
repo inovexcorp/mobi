@@ -95,18 +95,12 @@ public class RecordPermissionsRest {
 
     private static final String ONTOLOGIES_CATALOG_MODIFY = "http://mobi.com/ontologies/catalog#Modify";
     private final ValueFactory vf = new ValidatingValueFactory();
-    private XACMLPolicyManager policyManager;
-    private OsgiRepository repo;
 
     @Reference
-    void setPolicyManager(XACMLPolicyManager policyManager) {
-        this.policyManager = policyManager;
-    }
+    protected XACMLPolicyManager policyManager;
 
     @Reference(target = "(id=system)")
-    public void setRepo(OsgiRepository repo) {
-        this.repo = repo;
-    }
+    protected OsgiRepository repo;
 
     /**
      * Retrieves a specific record policy JSON identified for the recordId of which users can perform each rule. If

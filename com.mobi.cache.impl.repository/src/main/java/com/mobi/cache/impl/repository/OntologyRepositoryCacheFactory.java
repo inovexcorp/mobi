@@ -28,7 +28,7 @@ import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.impl.repository.jcache.OntologyRepositoryCache;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyCreationService;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
@@ -43,7 +43,7 @@ import javax.cache.CacheManager;
 public class OntologyRepositoryCacheFactory implements CacheFactory<String, Ontology> {
 
     @Reference
-    private DatasetManager datasetManager;
+    private DatasetUtilsService dsUtilsService;
 
     @Reference
     private CatalogConfigProvider configProvider;
@@ -66,7 +66,7 @@ public class OntologyRepositoryCacheFactory implements CacheFactory<String, Onto
     public Cache<String, Ontology> createCache(RepositoryConfiguration<String, Ontology> configuration,
                                                CacheManager cacheManager, OsgiRepository repository) {
         return new OntologyRepositoryCache(configuration.getRepoId(), repository, cacheManager,
-                configuration, configProvider, utilsService, ontologyRecordFactory, datasetManager,
+                configuration, configProvider, utilsService, ontologyRecordFactory, dsUtilsService,
                 ontologyCreationService);
     }
 }

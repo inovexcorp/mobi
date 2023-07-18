@@ -77,21 +77,20 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.OsgiRepository;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rest.test.util.FormDataMultiPart;
-import com.mobi.rest.test.util.MobiRestTestCXF;
-import com.mobi.rest.test.util.UsernameTestFilter;
-import com.mobi.security.policy.api.PDP;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.After;
@@ -179,7 +178,6 @@ public class CatalogRestTest extends MobiRestTestCXF {
     private static BNodeService bNodeService;
     private static CatalogProvUtils provUtils;
     private static CatalogUtilsService catalogUtils;
-    private static PDP pdp;
 
     @Mock
     private PaginatedSearchResults<Record> recordResults;
@@ -212,19 +210,17 @@ public class CatalogRestTest extends MobiRestTestCXF {
         bNodeService = Mockito.mock(BNodeService.class);
         provUtils = Mockito.mock(CatalogProvUtils.class);
         catalogUtils = Mockito.mock(CatalogUtilsService.class);
-        pdp = Mockito.mock(PDP.class);
 
         rest = new CatalogRest();
         injectOrmFactoryReferencesIntoService(rest);
-        rest.setEngineManager(engineManager);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
-        rest.setFactoryRegistry(getOrmFactoryRegistry());
-        rest.setVersioningManager(versioningManager);
-        rest.setbNodeService(bNodeService);
-        rest.setProvUtils(provUtils);
-        rest.setCatalogUtilsService(catalogUtils);
-        rest.setPdp(pdp);
+        rest.engineManager = engineManager;
+        rest.configProvider = configProvider;
+        rest.catalogManager = catalogManager;
+        rest.factoryRegistry = getOrmFactoryRegistry();
+        rest.versioningManager = versioningManager;
+        rest.bNodeService = bNodeService;
+        rest.provUtils = provUtils;
+        rest.catalogUtilsService = catalogUtils;
         configureServer(rest, new UsernameTestFilter());
     }
 
@@ -310,8 +306,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(testRecord.getResource()));
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(recordResults);
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class),
-                any(PDP.class))).thenReturn(recordResults);
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class))).thenReturn(recordResults);
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory)))
                 .thenReturn(Optional.of(testRecord));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(unversionedRecordFactory)))
@@ -384,7 +379,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(testInProgressCommit);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
         when(catalogManager.getDifference(any(Resource.class), any(Resource.class))).thenReturn(difference);
-        when(catalogManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(OrmFactory.class))).thenReturn(testRecord);
+        when(catalogManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(Class.class))).thenReturn(testRecord);
 
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
         when(versioningManager.merge(any(), any(), any(), any(), any(), any(), any())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
@@ -532,7 +527,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .limit(10)
                 .ascending(false);
 
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user), eq(pdp));
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
@@ -569,7 +564,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .limit(10)
                 .ascending(false);
 
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user), eq(pdp));
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
@@ -604,7 +599,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .limit(10)
                 .ascending(false);
 
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user), eq(pdp));
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
@@ -625,7 +620,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class), eq(user), eq(pdp));
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class), eq(user));
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
@@ -650,7 +645,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void getRecordsWithOffsetThatIsTooLargeTest() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)),
-                any(PaginatedSearchParams.class), eq(user), eq(pdp));
+                any(PaginatedSearchParams.class), eq(user));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records").queryParam("offset", 9999).request().get();
         assertEquals(response.getStatus(), 400);
@@ -660,7 +655,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void getRecordsWithIncorrectPathTest() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(ERROR_IRI)),
-                any(PaginatedSearchParams.class), eq(user), eq(pdp));
+                any(PaginatedSearchParams.class), eq(user));
 
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
@@ -671,7 +666,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void getRecordsWithErrorTest() {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class),
-                eq(user), eq(pdp));
+                eq(user));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
@@ -862,9 +857,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .request().delete();
         assertEquals(response.getStatus(), 200);
         IRI recordIri = vf.createIRI(RECORD_IRI);
-        verify(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
-        verify(provUtils).startDeleteActivity(user, recordIri);
-        verify(provUtils).endDeleteActivity(eq(deleteActivity), any(Record.class));
+        verify(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri, user, Record.class);
     }
 
     @Test
@@ -872,13 +865,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         // Setup:
         IRI recordIri = vf.createIRI(ERROR_IRI);
         doThrow(new IllegalArgumentException()).when(catalogManager)
-                .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
+                .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, user, Record.class);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
-        verify(provUtils).startDeleteActivity(user, recordIri);
-        verify(provUtils).removeActivity(deleteActivity);
     }
 
     @Test
@@ -886,13 +877,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         // Setup:
         IRI recordIri = vf.createIRI(RECORD_IRI);
         doThrow(new MobiException()).when(catalogManager)
-                .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
+                .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, user, Record.class);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
-        verify(provUtils).startDeleteActivity(user, recordIri);
-        verify(provUtils).removeActivity(deleteActivity);
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}

@@ -130,7 +130,8 @@ public class MergeRequestRest {
 
     /**
      * Retrieves a list of all the {@link MergeRequest}s in Mobi sorted according to the provided parameters
-     * and optionally filtered by whether or not they are accepted.
+     * and optionally filtered by whether they are accepted. This list respects the Read access on the attached
+     * Records on the Merge Requests.
      *
      * @param sort IRI of the predicate to sort by
      * @param asc Whether the results should be sorted ascending or descending. Default is false.
@@ -153,13 +154,15 @@ public class MergeRequestRest {
             }
     )
     public Response getMergeRequests(
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "The IRI of the predicate to sort by", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Whether the results should be sorted ascending or descending")
             @DefaultValue("false") @QueryParam("ascending") boolean asc,
             @Parameter(description = "Whether the results should only be accepted or open requests")
             @DefaultValue("false") @QueryParam("accepted") boolean accepted) {
-        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
+        User activeUser = getActiveUser(servletRequest, engineManager);
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setRequestingUser(activeUser);
         if (!StringUtils.isEmpty(sort)) {
             builder.setSortBy(createIRI(sort, vf));
         }
