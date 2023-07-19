@@ -5,6 +5,7 @@
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix um: <http://mobi.com/ontologies/user/management#>.
+@prefix wf: <https://mobi.solutions/ontologies/form#>.
 @prefix : <http://mobi.com/ontologies/setting#>.
 @base <http://mobi.com/ontologies/setting>.
 
@@ -88,14 +89,3 @@
     rdfs:subClassOf :SettingGroup ;
     rdfs:label "Publish Group"@en;
     rdfs:comment "The group of publish settings that this publish setting belongs to"@en.
-
-:FormField a owl:Class .
-
-:TextInput a :FormField .
-
-:ToggleInput a :FormField .
-
-:usesFormField a owl:ObjectProperty;
-   rdfs:label "For User"@en;
-   rdfs:domain sh:PropertyShape;
-   rdfs:range :FormField.
