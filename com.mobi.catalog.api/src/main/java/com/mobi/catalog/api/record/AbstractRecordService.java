@@ -37,16 +37,22 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -60,6 +66,8 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRecordService.class);
+
     @Reference
     public CatalogProvUtils provUtils;
 
@@ -68,6 +76,9 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
 
     @Reference
     public CatalogFactory catalogFactory;
+
+    @Reference
+    public XACMLPolicyManager xacmlPolicyManager;
 
     public OrmFactory<T> recordFactory;
 
@@ -265,6 +276,35 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
             throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey()
                     + " is required.");
+        }
+    }
+
+    /**
+     * Deletes the two Policy files associated with the provided Record.
+     *
+     * @param record The Record whose policies to delete
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    protected void deletePolicies(T record, RepositoryConnection conn) {
+        RepositoryResult<Statement> results = conn.getStatements(null,
+                valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
+        if (results.hasNext()) {
+            Resource recordPolicyId = results.next().getSubject();
+            results.close();
+
+            RepositoryResult<Statement> policyPolicyIds = conn.getStatements(null,
+                    valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
+            if (!policyPolicyIds.hasNext()) {
+                LOGGER.info("Could not find policy policy for record: " + record.getResource()
+                        + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");
+            }
+            Resource policyPolicyId = policyPolicyIds.next().getSubject();
+            xacmlPolicyManager.deletePolicy(recordPolicyId);
+            xacmlPolicyManager.deletePolicy(policyPolicyId);
+            policyPolicyIds.close();
+        } else {
+            LOGGER.info("Could not find policy for record: " + record.getResource()
+                    + ". Continuing with record deletion.");
         }
     }
 }

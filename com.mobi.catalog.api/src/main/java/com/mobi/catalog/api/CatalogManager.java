@@ -40,7 +40,6 @@ import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.security.policy.api.PDP;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -73,8 +72,7 @@ public interface CatalogManager {
 
     /**
      * Searches the provided Catalog for Records that match the provided PaginatedSearchParams. Acceptable
-     * sortBy parameters are http://purl.org/dc/terms/title, http://purl.org/dc/terms/modified, and
-     * http://purl.org/dc/terms/issued.
+     * sortBy parameters are `dct:title`, `dct:modified`, and `dct:issued`.
      *
      * @param catalogId    The Resource identifying the Catalog to find the Records in.
      * @param searchParams Search parameters.
@@ -86,17 +84,16 @@ public interface CatalogManager {
 
     /**
      * Searches the provided Catalog for Records that match the provided PaginatedSearchParams. Acceptable
-     * sortBy parameters are http://purl.org/dc/terms/title, http://purl.org/dc/terms/modified, and
-     * http://purl.org/dc/terms/issued. Only records that the provided user has Read permission for are returned.
+     * sortBy parameters are `dct:title`, `dct:modified`, and `dct:issued`. Only records that the provided user has
+     * Read  permission for are returned.
      *
      * @param catalogId    The Resource identifying the Catalog to find the Records in.
      * @param searchParams Search parameters.
      * @param user         The user to check record read permissions for
-     * @param pdp          The PDP to use to check record permissions
      * @return The PaginatedSearchResults for a page matching the search criteria.
      * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
      */
-    PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams, User user, PDP pdp);
+    PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams, User user);
 
     /**
      * Return a list of keywords using the provided Catalog with provided PaginatedSearchParams.
@@ -163,28 +160,20 @@ public interface CatalogManager {
     <T extends Record> void updateRecord(Resource catalogId, T newRecord);
 
     /**
-     * Removes the Record identified by the provided Resources from the repository.
+     * Removes the Record identified by the provided Resources from the repository using the appropriate
+     * {@link com.mobi.catalog.api.record.RecordService}. If the type passed is the top level {@link Record}, then the
+     * method will use the most specific {@link com.mobi.catalog.api.record.RecordService} it can find.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param recordId  The Resource identifying the Record which you want to remove.
-     * @param factory   The OrmFactory of the Type of Record you want to get back.
+     * @param user The user performing the deletion activity
+     * @param recordClass The Class of Record you want to delete.
      * @param <T>       An Object which extends Record.
      * @return The Record object which was removed.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or
      *                                  the Record does not belong to the Catalog.
      */
-    <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
-
-    /**
-     * Deletes a Record using the appropriate {@link com.mobi.catalog.api.record.RecordService}.
-     *
-     * @param user The user performing the deletion activity
-     * @param recordId The record Resource to delete
-     * @param recordClass The Class of Record you want to delete.
-     * @param <T>       An Object which extends Record.
-     * @return The deleted Object
-     */
-    <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass);
+    <T extends Record> T removeRecord(Resource catalogId, Resource recordId, User user, Class<T> recordClass);
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided

@@ -34,13 +34,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.imports.ImportsResolverConfig;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.base.OsgiRepositoryWrapper;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
@@ -49,6 +51,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -80,11 +83,15 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     private OsgiRepositoryWrapper repo;
     private IRI headCommitIRI;
     private IRI recordIRI;
+    private IRI branchIRI;
     private IRI catalogIRI;
     private IRI ontologyIRI;
     private Model localModel;
 
     private static HttpUrlStreamHandler httpUrlStreamHandler;
+
+    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<VersionedRDFRecord> versionedRdfRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
 
     @Mock
     private ImportsResolverConfig importsResolverConfig;
@@ -93,13 +100,17 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     private CatalogConfigProvider configProvider;
 
     @Mock
-    private CatalogManager catalogManager;
+    private CatalogUtilsService utilsService;
 
     @Mock
     private OntologyManager ontologyManager;
 
     @Mock
+    private VersionedRDFRecord record;
+
+    @Mock
     private Branch masterBranch;
+
 
     @BeforeClass
     public static void setupURLStreamHandlerFactory() {
@@ -122,6 +133,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         headCommitIRI = vf.createIRI("urn:headCommit");
         catalogIRI = vf.createIRI("urn:catalog");
         recordIRI = vf.createIRI("urn:recordIRI");
+        branchIRI = vf.createIRI("urn:branchIRI");
         ontologyIRI = vf.createIRI("urn:ontologyIRI");
 
         localModel = Models.createModel(getClass().getResourceAsStream("/Ontology.ttl"));
@@ -130,18 +142,22 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         repo.setDelegate(new SailRepository(new MemoryStore()));
         when(repo.getRepositoryID()).thenReturn("repoCacheId");
 
+        when(record.getMasterBranch_resource()).thenReturn(Optional.of(branchIRI));
         when(masterBranch.getHead_resource()).thenReturn(Optional.of(headCommitIRI));
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
-        when(catalogManager.getMasterBranch(eq(catalogIRI), eq(recordIRI))).thenReturn(masterBranch);
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(utilsService.getExpectedObject(eq(recordIRI), eq(versionedRdfRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
+        when(utilsService.getExpectedObject(eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyManager.getOntologyRecordResource(eq(ontologyIRI))).thenReturn(Optional.of(recordIRI));
         when(ontologyManager.getOntologyRecordResource(eq(vf.createIRI("urn:localOntology")))).thenReturn(Optional.of(recordIRI));
 
-        when(catalogManager.getCompiledResourceFile(eq(headCommitIRI))).thenReturn(Paths.get(getClass().getResource("/Ontology.ttl").getPath()).toFile());
+        when(utilsService.getCompiledResourceFile(eq(headCommitIRI), eq(RDFFormat.TURTLE), any(RepositoryConnection.class))).thenReturn(Paths.get(getClass().getResource("/Ontology.ttl").getPath()).toFile());
 
+        injectOrmFactoryReferencesIntoService(resolver);
         resolver.catalogConfigProvider = configProvider;
-        resolver.catalogManager = catalogManager;
+        resolver.utilsService = utilsService;
         when(importsResolverConfig.userAgent()).thenReturn("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0");
         resolver.activate(importsResolverConfig);
     }
@@ -245,14 +261,26 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         when(connection.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
         when(connection.getContentType()).thenReturn(RDFFormat.TURTLE.getDefaultMIMEType());
         httpUrlStreamHandler.addConnection(new URL(url), connection);
-        assertModelFromWebEmpty(url);    }
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebExtensionIncorrectTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        HttpURLConnection httpURLConnection = getMockConnection();
+        when(httpURLConnection.getInputStream()).thenReturn(getClass().getResourceAsStream("/skos.rdf"));
+        when(httpURLConnection.getResponseCode()).thenReturn(200);
+        RDFFormat format = RDFFiles.getFormatForFileName("/skos.rdf").get();
+        when(httpURLConnection.getContentType()).thenReturn("text/plain; " + format.getDefaultMIMEType());
+        httpUrlStreamHandler.addConnection(new URL(url), httpURLConnection);
+        assertModelFromWebPresent(url);
+    }
 
     @Test
     public void retrieveOntologyLocalFileTest() {
         IRI iri = vf.createIRI("urn:localOntology");
         Optional<File> local = resolver.retrieveOntologyLocalFile(iri, ontologyManager);
         assertTrue(local.isPresent());
-//        assertTrue(local.get().size() > 0);
     }
 
     @Test
@@ -275,7 +303,6 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         IRI iri = vf.createIRI(url);
         Optional<File> model = resolver.retrieveOntologyFromWebFile(iri);
         assertTrue(model.isPresent());
-//        assertTrue(model.get().size() > 0);
     }
 
     private void assertModelFromWebEmpty(String url) {

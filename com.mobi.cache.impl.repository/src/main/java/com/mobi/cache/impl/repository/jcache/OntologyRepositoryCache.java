@@ -24,10 +24,11 @@ package com.mobi.cache.impl.repository.jcache;
  */
 
 import com.google.common.collect.Maps;
+
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyCreationService;
@@ -78,7 +79,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     public OntologyRepositoryCache(String name, OsgiRepository repository, CacheManager cacheManager,
                                    Configuration configuration, CatalogConfigProvider configProvider,
                                    CatalogUtilsService utilsService, OntologyRecordFactory ontologyRecordFactory,
-                                   DatasetManager datasetManager, OntologyCreationService ontologyCreationService) {
+                                   DatasetUtilsService dsUtilsService, OntologyCreationService ontologyCreationService) {
         this.name = name;
         this.repository = repository;
         this.cacheManager = cacheManager;
@@ -86,7 +87,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         this.configProvider = configProvider;
         this.utilsService = utilsService;
         this.ontologyRecordFactory = ontologyRecordFactory;
-        this.datasetManager = datasetManager;
+        this.dsUtilsService = dsUtilsService;
         this.ontologyCreationService = ontologyCreationService;
     }
 
@@ -396,7 +397,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     private boolean removeValueFromRepo(IRI datasetIRI) {
         try {
             LOG.debug("Removing cache dataset " + datasetIRI.stringValue());
-            datasetManager.safeDeleteDataset(datasetIRI, repository.getRepositoryID(), false);
+            dsUtilsService.safeDeleteDataset(datasetIRI, repository.getRepositoryID());
             return true;
         } catch (Exception e) {
             return false;

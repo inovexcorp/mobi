@@ -28,7 +28,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
@@ -38,7 +37,7 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
-import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.Ontology;
@@ -48,6 +47,8 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ResourceUtils;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -55,8 +56,6 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
@@ -158,7 +157,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     private CacheManager cacheManager;
 
     @Mock
-    private DatasetManager datasetManager;
+    private DatasetUtilsService dsUtilsService;
 
     @Mock
     private CatalogConfigProvider configProvider;
@@ -264,20 +263,20 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         when(ontologyCreationService.createOntology(record3IRI, commit1IRI)).thenReturn(ontMultipleImports);
 
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repo.getRepositoryID(), vf));
-        doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
-        ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
-        when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
+        when(dsUtilsService.getConnection(resource.capture(), anyString())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repo.getRepositoryID(), vf));
+        doNothing().when(dsUtilsService).safeDeleteDataset(any(Resource.class), anyString());
+        ArgumentCaptor<Resource> datasetIRICapture = ArgumentCaptor.forClass(Resource.class);
+        when(dsUtilsService.createDataset(datasetIRICapture.capture(), anyString())).thenAnswer(invocation -> {
             try (RepositoryConnection conn = repo.getConnection()) {
-                Resource datasetIRI = vf.createIRI(datasetIRIStr.getValue());
+                Resource datasetIRI = datasetIRICapture.getValue();
                 Dataset dataset = datasetFactory.createNew(datasetIRI);
-                dataset.setSystemDefaultNamedGraph(vf.createIRI(datasetIRIStr.getValue() + SYSTEM_DEFAULT_NG_SUFFIX));
+                dataset.setSystemDefaultNamedGraph(vf.createIRI(datasetIRICapture.getValue().stringValue() + SYSTEM_DEFAULT_NG_SUFFIX));
                 conn.add(dataset.getModel(), datasetIRI);
             }
             return true;
         });
 
-        cache = new OntologyRepositoryCache("Ontology Repository Cache", repo, cacheManager, configuration, configProvider, utilsService, ontologyRecordFactory, datasetManager, ontologyCreationService);
+        cache = new OntologyRepositoryCache("Ontology Repository Cache", repo, cacheManager, configuration, configProvider, utilsService, ontologyRecordFactory, dsUtilsService, ontologyCreationService);
         injectOrmFactoryReferencesIntoService(cache);
     }
 
@@ -571,7 +570,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     @Test
     public void removeNoHitTest() {
         assertTrue(cache.remove(key1));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID());
     }
 
     @Test
@@ -585,7 +584,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         }
 
         assertTrue(cache.remove(key1));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID());
     }
 
     @Test
@@ -600,7 +599,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         }
 
         assertTrue(cache.remove(key2));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID());
     }
 
     @Test
@@ -617,7 +616,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         }
 
         assertTrue(cache.remove(key3));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID());
     }
 
     @Test
@@ -637,7 +636,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         }
 
         assertTrue(cache.remove(key3));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID());
     }
 
     @Test
@@ -665,7 +664,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     public void replaceTest() {
         cache.put(key1, ontNoImports);
         assertTrue(cache.replace(key1, ontOneImport));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID());
     }
 
     @Test
@@ -677,7 +676,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     public void replaceMatchTest() {
         cache.put(key1, ontNoImports);
         assertTrue(cache.replace(key1, ontNoImports, ontOneImport));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID());
     }
 
     @Test
@@ -721,8 +720,8 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key1, ontNoImports);
         cache.put(key2, ontOneImport);
         cache.removeAll(Stream.of(key1, key2).collect(Collectors.toSet()));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID());
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID());
     }
 
     @Test
@@ -730,16 +729,16 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key2, ontOneImport);
         cache.put(key3, ontMultipleImports);
         cache.removeAll(Stream.of(key3, key2).collect(Collectors.toSet()));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID());
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID());
     }
 
     @Test
     public void removeAllWithSetOneNotInCacheTest() {
         cache.put(key1, ontNoImports);
         cache.removeAll(Stream.of(key1, key2).collect(Collectors.toSet()));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID());
+        verify(dsUtilsService).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID());
     }
 
     @Test
@@ -811,13 +810,13 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
 
     @Test
     public void isClosedTest() {
-        assertEquals(false, cache.isClosed());
+        assertFalse(cache.isClosed());
     }
 
     @Test
     public void isClosedClosedTest() {
         cache.close();
-        assertEquals(true, cache.isClosed());
+        assertTrue(cache.isClosed());
     }
 
     /* registerCacheEntryListener() */

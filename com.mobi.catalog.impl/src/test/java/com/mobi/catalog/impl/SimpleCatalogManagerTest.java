@@ -277,6 +277,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.addRecordService(versionedRecordService);
         manager.addRecordService(unversionedRecordService);
         manager.mergeRequestManager = mergeRequestManager;
+        manager.pdp = pdp;
 
         manager.start();
         manager.factoryRegistry = ORM_FACTORY_REGISTRY;
@@ -456,7 +457,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
 
         // when
-        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user, pdp);
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user);
 
         // then
         assertEquals(2, records.getPage().size());
@@ -482,7 +483,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
 
         // when
-        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user, pdp);
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user);
 
         // then
         assertEquals(1, records.getPage().size());
@@ -495,7 +496,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         // when
         PaginatedSearchResults<Record> pageTwoRecords = manager.findRecord(distributedCatalogId, pageTwoSearchParams,
-                user, pdp);
+                user);
 
         // then
         assertEquals(1, pageTwoRecords.getPage().size());
@@ -517,7 +518,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
 
         // when
-        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user, pdp);
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user);
 
         // then
         assertEquals(0, records.getPage().size());
@@ -1056,122 +1057,63 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     /* removeRecord */
 
     @Test
-    public void testRemoveRecord() throws Exception {
-        // Setup:
-        Record record = unversionedRecordFactory.createNew(RECORD_IRI);
-        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
-        doReturn(Optional.of(record)).when(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
-
-        Record result = manager.removeRecord(distributedCatalogId, RECORD_IRI, recordFactory);
-        assertEquals(record, result);
-        verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
-        verify(utilsService).removeObject(any(Record.class), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void testRemoveUnversionedRecord() throws Exception {
-        // Setup:
-        UnversionedRecord record = unversionedRecordFactory.createNew(UNVERSIONED_RECORD_IRI);
-        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
-        Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
-        record.setUnversionedDistribution(Collections.singleton(dist));
-        doReturn(Optional.of(record)).when(utilsService).optObject(eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
-
-        Record result = manager.removeRecord(distributedCatalogId, UNVERSIONED_RECORD_IRI, unversionedRecordFactory);
-        assertEquals(record, result);
-        record.getUnversionedDistribution_resource().forEach(resource -> verify(utilsService).remove(eq(resource), any(RepositoryConnection.class)));
-        verify(utilsService).removeObject(any(UnversionedRecord.class), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void testRemoveVersionedRecord() throws Exception {
-        // Setup:
-        VersionedRecord record = versionedRecordFactory.createNew(VERSIONED_RECORD_IRI);
-        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
-        Version version = versionFactory.createNew(VERSION_IRI);
-        record.setVersion(Collections.singleton(version));
-        record.setLatestVersion(version);
-        Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
-        version.setVersionedDistribution(Collections.singleton(dist));
-        doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-
-        Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI, versionedRecordFactory);
-        assertEquals(record, result);
-        verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).removeObject(any(VersionedRecord.class), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void testRemoveVersionedRDFRecord() throws Exception {
-        // Setup:
-        VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
-        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
-        Tag tag = tagFactory.createNew(TAG_IRI);
-        Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
-        Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
-        tag.setVersionedDistribution(Collections.singleton(dist));
-        record.setVersion(Collections.singleton(tag));
-        record.setLatestVersion(tag);
-        record.setBranch(Collections.singleton(branch));
-        record.setMasterBranch(branch);
-        doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-
-        Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
-        assertEquals(record, result);
-        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI), any(RepositoryConnection.class));
-        verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).removeBranch(eq(record.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
-        verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
-    }
-
-    /* deleteRecord() */
-
-    @Test
-    public void testDeleteRecord() {
+    public void testRemoveRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, RECORD_IRI, Record.class);
+        manager.removeRecord(distributedCatalogId, RECORD_IRI, user, Record.class);
 
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(RECORD_IRI), eq(recordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(recordService).delete(eq(RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
 
     @Test
-    public void testDeleteVersionedRecord() {
+    public void testRemoveVersionedRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, VERSIONED_RECORD_IRI, VersionedRecord.class);
+        manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI, user, VersionedRecord.class);
 
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(recordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(versionedRecordService).delete(eq(VERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
 
     @Test
-    public void testDeleteUnversionedRecord() {
+    public void testRemoveUnversionedRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, UNVERSIONED_RECORD_IRI, UnversionedRecord.class);
+        manager.removeRecord(distributedCatalogId, UNVERSIONED_RECORD_IRI, user, UnversionedRecord.class);
 
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(recordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(unversionedRecordService).delete(eq(UNVERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
 
     @Test
-    public void testDeleteVersionedRDFRecord() {
+    public void testRemoveVersionedRDFRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.class);
+        manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user, VersionedRDFRecord.class);
 
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(recordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(versionedRDFRecordService).delete(eq(VERSIONED_RDF_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testDeleteVersionedRDFRecordMissingService() {
+    public void testRemoveVersionedRDFRecordMissingService() {
         manager.removeRecordService(versionedRDFRecordService);
         User user = userFactory.createNew(USER_IRI);
 
-        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.class);
+        manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user, VersionedRDFRecord.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testDeleteClassServiceMismatch() {
+    public void testRemoveRecordClassServiceMismatch() {
         User user = userFactory.createNew(USER_IRI);
 
-        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRecord.class);
+        manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user, VersionedRecord.class);
+    }
+
+    @Test
+    public void testRemoveRecordUsingMostSpecific() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user, Record.class);
+
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(recordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(versionedRDFRecordService).delete(eq(VERSIONED_RDF_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
 
     /* getRecord */

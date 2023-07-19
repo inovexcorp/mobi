@@ -25,15 +25,21 @@ package com.mobi.itests.etl;
 
 import static org.junit.Assert.assertTrue;
 
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.api.builder.DatasetRecordConfig;
+import com.mobi.dataset.api.record.config.DatasetRecordCreateSettings;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -51,7 +57,6 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.BundleContext;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -67,9 +72,7 @@ import javax.inject.Inject;
 public class ImportIT extends KarafTestSupport {
     private static Boolean setupComplete = false;
     private static DatasetRecord record;
-    private static DatasetManager manager;
-    private static UserFactory userFactory;
-    private static ValueFactory vf;
+    private static DatasetManager datasetManager;
 
     private static Model data;
 
@@ -107,14 +110,22 @@ public class ImportIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.ontology.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
-        data = Rio.parse(new FileInputStream(new File(dataFile)), "", RDFFormat.TRIG);
+        data = Rio.parse(new FileInputStream(dataFile), "", RDFFormat.TRIG);
 
-        manager = getOsgiService(DatasetManager.class);
-        userFactory = getOsgiService(UserFactory.class);
-        vf = new ValidatingValueFactory();
-        DatasetRecordConfig config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset",
-                Collections.singleton(userFactory.createNew(vf.createIRI("http://mobi.com/users/admin"))), "system").build();
-        record = manager.createDataset(config);
+        datasetManager = getOsgiService(DatasetManager.class);
+        CatalogManager manager = getOsgiService(CatalogManager.class);
+        CatalogConfigProvider configProvider = getOsgiService(CatalogConfigProvider.class);
+        UserFactory userFactory = getOsgiService(UserFactory.class);
+        ValueFactory vf = new ValidatingValueFactory();
+        User adminUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/admin"));
+        RecordOperationConfig config = new OperationConfig();
+        config.set(RecordCreateSettings.CATALOG_ID, configProvider.getLocalCatalogIRI().stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "Test Dataset");
+        config.set(DatasetRecordCreateSettings.DATASET, "http://test.com/test-dataset");
+        config.set(DatasetRecordCreateSettings.REPOSITORY_ID, "system");
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, Collections.singleton(adminUser));
+
+        record = manager.createRecord(adminUser, config, DatasetRecord.class);
 
         executeCommand(String.format("mobi:import -d=%s %s", record.getResource().stringValue(), dataFile));
 
@@ -123,7 +134,7 @@ public class ImportIT extends KarafTestSupport {
 
     @Test
     public void testDataAddedToDataset() throws Exception {
-        try (DatasetConnection conn = manager.getConnection(record.getResource())) {
+        try (DatasetConnection conn = datasetManager.getConnection(record.getResource())) {
             List<Resource> contexts = new ArrayList<>();
             Resource systemNG = conn.getSystemDefaultNamedGraph();
             data.forEach(statement -> {

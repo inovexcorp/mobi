@@ -106,30 +106,17 @@ public class MappingRest {
 
     private final ValueFactory vf = new ValidatingValueFactory();
 
-    private MappingManager manager;
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private EngineManager engineManager;
+    @Reference
+    protected MappingManager manager;
 
     @Reference
-    void setManager(MappingManager manager) {
-        this.manager = manager;
-    }
+    protected CatalogConfigProvider configProvider;
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
+    protected CatalogManager catalogManager;
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    protected EngineManager engineManager;
 
     /**
      * Uploads a mapping sent as form data or a JSON-LD string into a data store with a UUID local name and creates
@@ -220,7 +207,7 @@ public class MappingRest {
     /**
      * Class used for OpenAPI documentation for file upload endpoint.
      */
-    private class MappingFileUpload {
+    private static class MappingFileUpload {
         @Schema(type = "string", format = "binary", description = "Mapping file to upload.")
         public String file;
 
@@ -256,7 +243,7 @@ public class MappingRest {
             tags = "mappings",
             summary = "Retrieve JSON-LD of an uploaded mapping",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response with the JSON-LD from the uploaded mapping"),
+                    @ApiResponse(responseCode = "200", description = "Response with the uploaded mapping JSON-LD"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -344,7 +331,8 @@ public class MappingRest {
             tags = "mappings",
             summary = "Delete an uploaded mapping",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of "
+                            + "the request"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -357,7 +345,8 @@ public class MappingRest {
             @Parameter(description = "ID of an uploaded mapping", required = true)
             @PathParam("recordId") String recordId) {
         try {
-            catalogManager.deleteRecord(getActiveUser(servletRequest, engineManager), vf.createIRI(recordId),
+            Resource catalogId = configProvider.getLocalCatalogIRI();
+            catalogManager.removeRecord(catalogId, vf.createIRI(recordId), getActiveUser(servletRequest, engineManager),
                     MappingRecord.class);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);

@@ -28,11 +28,9 @@ import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,17 +48,14 @@ public abstract class AbstractUnversionedRecordService<T extends UnversionedReco
     private static final String POLICY_IRI_BINDING = "%POLICYIRI%";
     private static final String ENCODED_POLICY_IRI_BINDING = "%POLICYIRIENCODED%";
 
-    @Reference
-    public XACMLPolicyManager xacmlPolicyManager;
-
     @Override
     protected void deleteRecord(T record, RepositoryConnection conn) {
         recordFactory.getExisting(record.getResource(), record.getModel())
-            .ifPresent(unversionedRecord -> {
-                unversionedRecord.getUnversionedDistribution_resource().forEach(resource ->
-                    utilsService.remove(resource, conn));
-                deleteRecordObject(record, conn);
-            });
+                .ifPresent(unversionedRecord -> {
+                    unversionedRecord.getUnversionedDistribution_resource()
+                            .forEach(resource -> utilsService.remove(resource, conn));
+                    deleteRecordObject(record, conn);
+                });
     }
 
     /**
@@ -72,9 +67,7 @@ public abstract class AbstractUnversionedRecordService<T extends UnversionedReco
      */
     protected void writePolicies(Resource user, Resource recordId) {
         Optional<Resource> recordPolicyResource = writeRecordPolicy(user, recordId);
-        if (recordPolicyResource.isPresent()) {
-            writeRecordPolicyPolicy(user, recordId, recordPolicyResource.get());
-        }
+        recordPolicyResource.ifPresent(resource -> writeRecordPolicyPolicy(user, recordId, resource));
     }
 
     /**
@@ -91,10 +84,11 @@ public abstract class AbstractUnversionedRecordService<T extends UnversionedReco
             String[] replace = {user.stringValue(), recordPolicyResource.stringValue(), encodedRecordIRI};
             Path policyPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
                     + File.separator + "policyTemplates" + File.separator + "policyPolicy.xml");
-            String policyPolicy = new String(Files.newInputStream(policyPolicyPath).readAllBytes(),
-                    StandardCharsets.UTF_8);
-            policyPolicy = StringUtils.replaceEach(policyPolicy, search, replace);
-            addPolicy(policyPolicy);
+            try (InputStream inputStream = Files.newInputStream(policyPolicyPath)) {
+                String policyPolicy = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                policyPolicy = StringUtils.replaceEach(policyPolicy, search, replace);
+                addPolicy(policyPolicy);
+            }
         } catch (IOException e) {
             throw new MobiException("Error writing record policy.", e);
         }

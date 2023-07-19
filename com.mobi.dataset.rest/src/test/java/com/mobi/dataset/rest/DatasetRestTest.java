@@ -30,7 +30,9 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -40,7 +42,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -50,7 +51,6 @@ import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.api.record.config.DatasetRecordCreateSettings;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
@@ -66,7 +66,6 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import com.mobi.security.policy.api.PDP;
 import net.sf.json.JSONArray;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -124,7 +123,6 @@ public class DatasetRestTest extends MobiRestTestCXF {
     private static CatalogManager catalogManager;
     private static CatalogConfigProvider configProvider;
     private static BNodeService service;
-    private static CatalogProvUtils provUtils;
     private static RDFImportService importService;
 
     @Mock
@@ -143,19 +141,15 @@ public class DatasetRestTest extends MobiRestTestCXF {
         catalogManager = Mockito.mock(CatalogManager.class);
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         service = Mockito.mock(BNodeService.class);
-        provUtils = Mockito.mock(CatalogProvUtils.class);
         importService = Mockito.mock(RDFImportService.class);
-        PDP pdp = Mockito.mock(PDP.class);
 
         rest = new DatasetRest();
-        rest.setManager(datasetManager);
-        rest.setEngineManager(engineManager);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
-        rest.setBNodeService(service);
-        rest.setProvUtils(provUtils);
-        rest.setImportService(importService);
-        rest.setPdp(pdp);
+        rest.manager = datasetManager;
+        rest.engineManager = engineManager;
+        rest.configProvider = configProvider;
+        rest.catalogManager = catalogManager;
+        rest.bNodeService = service;
+        rest.importService = importService;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -190,15 +184,14 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         closeable = MockitoAnnotations.openMocks(this);
         when(configProvider.getLocalCatalogIRI()).thenReturn(localIRI);
-        reset(datasetManager, catalogManager, results, service, provUtils, importService);
+        reset(datasetManager, catalogManager, results, service, importService);
 
         when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
 
         when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.of(record1));
         when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
-        when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);
-        when(datasetManager.deleteDataset(record1.getResource())).thenReturn(record1);
-        when(datasetManager.safeDeleteDataset(record1.getResource())).thenReturn(record1);
+        when(datasetManager.deleteDataset(eq(record1.getResource()), any(User.class))).thenReturn(record1);
+        when(datasetManager.safeDeleteDataset(eq(record1.getResource()), any(User.class))).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
         when(recordResults.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
@@ -207,16 +200,13 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(recordResults.getTotalSize()).thenReturn(3);
 
         when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(branch);
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class))).thenReturn(recordResults);
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class))).thenReturn(recordResults);
         when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenReturn(record1);
 
         when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
         when(results.getPageNumber()).thenReturn(1);
         when(results.getPageSize()).thenReturn(10);
         when(results.getTotalSize()).thenReturn(3);
-
-        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
-        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     @After
@@ -230,7 +220,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     public void getDatasetRecordsTest() {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class));
+        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class));
         verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
         try {
@@ -251,7 +241,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
 
-        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class));
+        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class));
         verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
 
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
@@ -284,7 +274,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getDatasetRecordsWithErrorTest() {
         // Setup:
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class))).thenThrow(new MobiException());
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class))).thenThrow(new MobiException());
 
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 500);
@@ -328,7 +318,6 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -338,7 +327,6 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -452,10 +440,8 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).deleteDataset(record1.getResource());
-        verify(datasetManager, never()).safeDeleteDataset(any(Resource.class));
-        verify(provUtils).startDeleteActivity(user, record1.getResource());
-        verify(provUtils).endDeleteActivity(deleteActivity, record1);
+        verify(datasetManager).deleteDataset(record1.getResource(), user);
+        verify(datasetManager, never()).safeDeleteDataset(any(Resource.class), any(User.class));
     }
 
     @Test
@@ -463,17 +449,15 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).safeDeleteDataset(record1.getResource());
-        verify(datasetManager, never()).deleteDataset(any(Resource.class));
-        verify(provUtils).startDeleteActivity(user, record1.getResource());
-        verify(provUtils).endDeleteActivity(deleteActivity, record1);
+        verify(datasetManager).safeDeleteDataset(record1.getResource(), user);
+        verify(datasetManager, never()).deleteDataset(any(Resource.class), any(User.class));
     }
 
     @Test
     public void deleteDatasetRecordThatDoesNotExistTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(datasetManager).deleteDataset(any(Resource.class));
-        doThrow(new IllegalArgumentException()).when(datasetManager).safeDeleteDataset(any(Resource.class));
+        doThrow(new IllegalArgumentException()).when(datasetManager).deleteDataset(any(Resource.class), any(User.class));
+        doThrow(new IllegalArgumentException()).when(datasetManager).safeDeleteDataset(any(Resource.class), any(User.class));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
@@ -482,15 +466,13 @@ public class DatasetRestTest extends MobiRestTestCXF {
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(2)).startDeleteActivity(user, record1.getResource());
-        verify(provUtils, times(2)).removeActivity(deleteActivity);
     }
 
     @Test
     public void deleteDatasetRecordWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(datasetManager).deleteDataset(any(Resource.class));
-        doThrow(new MobiException()).when(datasetManager).safeDeleteDataset(any(Resource.class));
+        doThrow(new MobiException()).when(datasetManager).deleteDataset(any(Resource.class), any(User.class));
+        doThrow(new MobiException()).when(datasetManager).safeDeleteDataset(any(Resource.class), any(User.class));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
@@ -499,8 +481,6 @@ public class DatasetRestTest extends MobiRestTestCXF {
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 500);
-        verify(provUtils, times(2)).startDeleteActivity(user, record1.getResource());
-        verify(provUtils, times(2)).removeActivity(deleteActivity);
     }
 
     /* DELETE datasets/{datasetId}/data */

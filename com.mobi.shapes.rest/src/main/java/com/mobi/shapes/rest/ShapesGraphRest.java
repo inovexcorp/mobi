@@ -222,7 +222,7 @@ public class ShapesGraphRest {
     /**
      * Class used for OpenAPI documentation for file upload endpoint.
      */
-    private class ShapesGraphFileUpload {
+    private static class ShapesGraphFileUpload {
         @Schema(type = "string", format = "binary", description = "Ontology file to upload.")
         public String file;
 
@@ -395,8 +395,8 @@ public class ShapesGraphRest {
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr) {
         try {
-            catalogManager.deleteRecord(getActiveUser(servletRequest, engineManager), vf.createIRI(recordIdStr),
-                    ShapesGraphRecord.class);
+            catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr),
+                    getActiveUser(servletRequest, engineManager), ShapesGraphRecord.class);
             return Response.noContent().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -499,7 +499,7 @@ public class ShapesGraphRest {
             Model currentModel = currentModelFuture.get();
             Model uploadedModel = uploadedModelFuture.get();
 
-            if (!OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isPresent()) {
+            if (OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isEmpty()) {
                 OntologyModels.findFirstOntologyIRI(currentModel, vf)
                         .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
                                 vf.createIRI(OWL.ONTOLOGY.stringValue())));
@@ -536,7 +536,7 @@ public class ShapesGraphRest {
     /**
      * Class used for OpenAPI documentation for upload changes endpoint.
      */
-    private class ShapesGraphFileUploadChanges {
+    private static class ShapesGraphFileUploadChanges {
         @Schema(type = "string", format = "binary", description = "ShapesGraph file to upload.")
         public String file;
 
@@ -792,10 +792,9 @@ public class ShapesGraphRest {
             Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
                     configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user);
 
-            if (inProgressCommitOpt.isPresent()) {
-                shapesGraph.setModel(catalogManager.applyInProgressCommit(
-                        inProgressCommitOpt.get().getResource(), shapesGraphOpt.get().getModel()));
-            }
+            inProgressCommitOpt.ifPresent(inProgressCommit -> shapesGraph.setModel(
+                    catalogManager.applyInProgressCommit(inProgressCommit.getResource(),
+                            shapesGraphOpt.get().getModel())));
         }
 
         return shapesGraph;
