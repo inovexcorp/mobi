@@ -46,7 +46,7 @@ import {
 import { SettingConstants } from '../../models/settingConstants.class';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
-import { SETTING, SHACL, XSD } from '../../../prefixes';
+import { SETTING, SHACL, SHACL_FORM, XSD } from '../../../prefixes';
 import { UtilService } from '../../services/util.service';
 import { SettingFormFieldComponent } from './settingFormField.component';
 import { MockProvider } from 'ng-mocks';
@@ -114,8 +114,8 @@ describe('Setting Form Field component', function() {
         shaclShape = {
             '@id': SETTING + 'SomeSimpleTextPreferencePropertyShape',
             '@type': [ SHACL + 'PropertyShape' ],
-            [SETTING + 'usesFormField']: [ {
-              '@id': SETTING + 'TextInput'
+            [SHACL_FORM + 'usesFormField']: [ {
+              '@id': SHACL_FORM + 'TextInput'
             } ],
             [SHACL + 'datatype']: [ {
               '@id': XSD + 'string'
@@ -170,22 +170,22 @@ describe('Setting Form Field component', function() {
                     expect(component.formType).toEqual('textInput');
                 });
                 it('when rdf declares a toggle input field', function() {
-                    component.shaclShape[SETTING + 'usesFormField'] = [{
-                        '@id': SETTING + 'ToggleInput'
+                    component.shaclShape[SHACL_FORM + 'usesFormField'] = [{
+                        '@id': SHACL_FORM + 'ToggleInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('toggle');
                 });
                 it('when rdf declares an unsupported input field', function() {
-                    component.shaclShape[SETTING + 'usesFormField'] = [{
-                        '@id': SETTING + 'UnknownInput'
+                    component.shaclShape[SHACL_FORM + 'usesFormField'] = [{
+                        '@id': SHACL_FORM + 'UnknownInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
                     expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                 });
                 it('when rdf declares no input field', function() {
-                    delete component.shaclShape[SETTING + 'usesFormField'];
+                    delete component.shaclShape[SHACL_FORM + 'usesFormField'];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
                     expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));

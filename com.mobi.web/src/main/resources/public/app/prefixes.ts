@@ -45,6 +45,7 @@ export const ROLES = 'http://mobi.com/roles/';
 export const SKOSXL = 'http://www.w3.org/2008/05/skos-xl#';
 export const SHACL = 'http://www.w3.org/ns/shacl#';
 export const SETTING = 'http://mobi.com/ontologies/setting#';
+export const SHACL_FORM = 'https://mobi.solutions/ontologies/form#';
 export const SHAPESGRAPHEDITOR = 'http://mobi.com/ontologies/shapes-graph-editor#';
 export const SHAPESGRAPHSTATE = 'http://mobi.com/ontologies/shapes-graph/state#';
 export const BRANCHID = 'http://mobi.com/states/shapes-graph-editor/branch-id/';

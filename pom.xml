@@ -120,6 +120,7 @@
         <module>com.mobi.shapes.impl</module>
         <module>com.mobi.shapes.rest</module>
         <module>com.mobi.owlapi.utils</module>
+        <module>com.mobi.shacl.form.api</module>
     </modules>
 
     <properties>

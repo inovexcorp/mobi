@@ -23,7 +23,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { Validators, ValidatorFn, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 
-import { SETTING, SHACL, XSD } from '../../../prefixes';
+import { SHACL, SHACL_FORM, XSD } from '../../../prefixes';
 import { UtilService } from '../../services/util.service';
 
 /**
@@ -55,11 +55,11 @@ export class SettingFormFieldComponent implements OnChanges {
             this.validators.push(Validators.pattern(regex));
         }
 
-        switch (this.util.getPropertyId(this.shaclShape, SETTING + 'usesFormField')) {
-            case SETTING + 'TextInput':
+        switch (this.util.getPropertyId(this.shaclShape, SHACL_FORM + 'usesFormField')) {
+            case SHACL_FORM + 'TextInput':
                 this.formType = 'textInput';
                 break;
-            case SETTING + 'ToggleInput':
+            case SHACL_FORM + 'ToggleInput':
                 this.formType = 'toggle';
                 break;
             case '':

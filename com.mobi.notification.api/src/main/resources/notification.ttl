@@ -5,6 +5,7 @@
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix setting: <http://mobi.com/ontologies/setting#>.
+@prefix webForm: <https://mobi.solutions/ontologies/form#> .
 @prefix : <http://mobi.com/ontologies/notification#>.
 @base <http://mobi.com/ontologies/notification>.
 
@@ -29,7 +30,7 @@
     sh:datatype xsd:boolean;
     sh:minCount 1 ;
     sh:maxCount 1 ;
-    setting:usesFormField setting:ToggleInput .
+    webForm:usesFormField webForm:ToggleInput .
 
 :NotificationPreferenceGroup a setting:PreferenceGroup ;
     rdfs:label "Notifications"@en .

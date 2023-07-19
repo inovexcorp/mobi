@@ -200,9 +200,9 @@ module.exports = {
             .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Data Property 0")]]')
             .waitForElementVisible('//div[contains(@class, "section-header")]//h5[text()[contains(., "Axioms")]]//following-sibling::a[contains(@class, "fa-plus")]') // opens overlay
             .assert.visible('//axiom-block//datatype-property-axioms//property-values//p[text()[contains(., "Sub Property Of")]]')
-            .assert.visible('//axiom-block//datatype-property-axioms//property-values//ngx-codemirror//span[text()[contains(., "DataProperty1")]]')
-            .assert.visible('//axiom-block//datatype-property-axioms//property-values//ngx-codemirror//span[text()[contains(., "or")]]')
-            .assert.visible('//axiom-block//datatype-property-axioms//property-values//ngx-codemirror//span[text()[contains(., "DataProperty2")]]')
+            .assert.visible('//axiom-block//datatype-property-axioms//property-values//blank-node-value-display //span[text()[contains(., "DataProperty1")]]')
+            .assert.visible('//axiom-block//datatype-property-axioms//property-values//blank-node-value-display //span[text()[contains(., "or")]]')
+            .assert.visible('//axiom-block//datatype-property-axioms//property-values//blank-node-value-display //span[text()[contains(., "DataProperty2")]]')
     },
     
     'Step 15: Open Axiom Overlay for Object Property 0' : function (browser) {
