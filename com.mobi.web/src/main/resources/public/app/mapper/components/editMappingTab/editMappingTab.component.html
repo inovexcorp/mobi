@@ -42,7 +42,7 @@
                 </div>
                 <div class="button-container py-2">
                     <button mat-raised-button class="cancel-mapping" (click)="cancel()">Cancel</button>
-                    <mat-button-toggle-group class="float-right" [disabled]="!isSaveable()">
+                    <mat-button-toggle-group class="float-right" appearance="legacy" [disabled]="!isSaveable()">
                         <mat-button-toggle [ngStyle]="{'pointer-events': isSaveable() ? 'auto' : 'none'}" class="save-button" (click)="save()">Save</mat-button-toggle>
                         <mat-button-toggle [ngStyle]="{'pointer-events': isSaveable() ? 'auto' : 'none'}" class="drop-down-button" [matMenuTriggerFor]="saveMenu">
                             <mat-icon>arrow_drop_down</mat-icon>

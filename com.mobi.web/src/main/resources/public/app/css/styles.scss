@@ -151,6 +151,14 @@ mat-markdown-editor ul {
     padding-left: 2rem;
 }
 
+showdown ul {
+    display: block;
+    list-style-type: disc;
+    margin-block: 1em;
+    margin-inline: 0px;
+    padding-inline-start: 40px;
+ }
+
 /* clears out ul styles */
 ul {
     list-style: none;

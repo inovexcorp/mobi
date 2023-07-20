@@ -74,7 +74,7 @@
     "rdf-validate-datatype": "^0.1.5",
     "rimraf": "^2.6.3",
     "rxjs": "^6.6.7",
-    "showdown": "^1.9.0",
+    "showdown": "^2.1.0",
     "sparqljs": "^1.5.1",
     "tslib": "^1.10.0",
     "util": "^0.12.5",

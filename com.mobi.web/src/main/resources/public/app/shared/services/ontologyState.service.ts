@@ -2548,6 +2548,9 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     case XSD + 'anyURI':
                         icon = 'fa-external-link';
                         break;
+                    case XSD + 'date':
+                        icon = 'fa-calendar-o';
+                        break;
                     case XSD + 'dateTime':
                         icon = 'fa-clock-o';
                         break;

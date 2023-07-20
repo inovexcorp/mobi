@@ -23,7 +23,7 @@
 /* Core variables */
 @import "../../../css/variables";
 
-mapping-config-overlay {
+.container-fluid {
     .info-message {
         padding: 10px;
     }
@@ -32,6 +32,6 @@ mapping-config-overlay {
     }
     .ontologies {
         max-height: 300px;
-        overflow-y: auto;
+        overflow-y: scroll;
     }
 }
