@@ -24,10 +24,8 @@
 @import "../../../css/variables";
 
 .merge-request-discussion {
-    comment-display.reply .comment-display {
-        margin-left: 3rem !important;
-    }
-    reply-comment.reply .reply-comment {
+    reply-comment.reply {
+        display: grid;
         margin-left: 3rem !important;
     }
 }

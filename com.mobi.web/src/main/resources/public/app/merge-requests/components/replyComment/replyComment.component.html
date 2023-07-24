@@ -22,5 +22,12 @@
   -->
 <div class="reply-comment mt-3">
     <div *ngIf="!edit" class="reply-box text-muted border p-1 rounded" (click)="edit = true">Reply here...</div>
-    <markdown-editor *ngIf="edit" [(markdown)]="replyComment" [allowBlank]="false" (saveEvent)="reply($event)" [cancellable]="true" (cancelEvent)="cancel($event)"></markdown-editor>
+    <markdown-editor *ngIf="edit"
+                     [(markdown)]="replyComment"
+                     [allowBlank]="false"
+                     (saveEvent)="reply($event)"
+                     [cancellable]="true"
+                     (cancelEvent)="cancel($event)"
+                     [height]="200">
+    </markdown-editor>
 </div>
