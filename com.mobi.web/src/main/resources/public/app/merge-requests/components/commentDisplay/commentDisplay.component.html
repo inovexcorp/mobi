@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="comment-display">
+<div class="comment-display" [ngClass]="{'reply': isReply}">
     <p class="comment-title mb-1 pb-1 border-bottom">
         <strong class="text-truncate">{{creator}}</strong> <span class="text-muted"> {{isReply ? 'replied' : 'commented'}} on {{issued | date:'short'}}</span>
     </p>
