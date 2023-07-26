@@ -29,6 +29,9 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface RecordService<T extends Record> {
 
     /**
@@ -73,4 +76,16 @@ public interface RecordService<T extends Record> {
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
     void export(Resource iriRecord, RecordOperationConfig config, RepositoryConnection conn);
+
+    /**
+     * Delete the record's branch if supported.  If operation is not supported on the record
+     * an IllegalArgumentException should be thrown.
+     * @param catalogId The Resource identifying the Catalog which should have the Record.
+     * @param versionedRDFRecordId The Resource identifying the Record.
+     * @param branchId The Resource identifying the Branch for Record.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @return Optional of Deleted Commits
+     */
+    Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                           RepositoryConnection conn);
 }

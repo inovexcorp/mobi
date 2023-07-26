@@ -31,7 +31,6 @@ import { Observable } from 'rxjs';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { State } from '../../../shared/models/state.interface';
 import { CATALOG, DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
@@ -97,8 +96,10 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     @ViewChild('ontologySearch', { static: true }) ontologySearch: ElementRef;
     @ViewChild(MatAutocompleteTrigger, { static: true }) autocompleteTrigger: MatAutocompleteTrigger;
 
-    constructor(private dialog: MatDialog, public cm: CatalogManagerService, public os: OntologyStateService, 
-        private om: OntologyManagerService, public util: UtilService) {}
+    constructor(private dialog: MatDialog, 
+        public cm: CatalogManagerService, 
+        public os: OntologyStateService, 
+        public util: UtilService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -246,7 +247,8 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
         });
     }
     deleteBranch(branch: JSONLDObject): void {
-        this.om.deleteOntologyBranch(this.listItem.versionedRdfRecord.recordId, branch['@id']).pipe(
+        const localCatalogId = get(this.cm.localCatalog, '@id', '');
+        this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, branch['@id'], localCatalogId).pipe(
             switchMap(() => this.os.removeBranch(this.listItem.versionedRdfRecord.recordId, branch['@id'])),
             switchMap(() => this.os.deleteBranchState(this.listItem.versionedRdfRecord.recordId, branch['@id']))
         ).subscribe(() => {

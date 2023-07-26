@@ -199,14 +199,6 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
     }
 
     @Override
-    public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        long start = getStartTime();
-        catalogManager.removeBranch(configProvider.getLocalCatalogIRI(), recordId, branchId).forEach(resource ->
-                ontologyCache.removeFromCache(recordId.stringValue(), resource.stringValue()));
-        logTrace("deleteOntologyBranch(recordId, branchId)", start);
-    }
-
-    @Override
     public Model getOntologyModel(Resource recordId) {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }

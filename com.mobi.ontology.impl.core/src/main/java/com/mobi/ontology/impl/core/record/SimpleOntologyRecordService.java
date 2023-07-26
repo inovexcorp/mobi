@@ -52,6 +52,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Objects;
 import java.util.Set;
 
@@ -117,13 +118,26 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
      * Delete Ontology State.  When an OntologyRecord is deleted, all State data associated with that
      * Record is deleted from the application for all users.
      */
-    protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn) {
+    protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn){
+        long start = getStartTime();
         List<Model> states = getAllStateModelsForRecord(record, conn);
         List<Statement> statementsToRemove = new ArrayList<>();
         for (Model stateModel: states) {
             statementsToRemove.addAll(stateModel);
         }
         conn.remove(statementsToRemove);
+        logTrace("deleteOntologyState(OntologyRecord, RepositoryConnection)", start);
+    }
+
+    @Override
+    public Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                                RepositoryConnection conn) {
+        long start = getStartTime();
+        Optional<List<Resource>> deletedCommits = super.deleteBranch(catalogId, versionedRDFRecordId, branchId, conn);
+        deletedCommits.orElseThrow(() -> new IllegalArgumentException("")).forEach(resource ->
+                ontologyCache.removeFromCache(versionedRDFRecordId.stringValue(), resource.stringValue()));
+        logTrace("deleteBranch(catalogId, versionedRDFRecordId, branchId, RepositoryConnection)", start);
+        return deletedCommits;
     }
 
     protected Set<Resource> getPlatformStateIds(OntologyRecord record, RepositoryConnection conn) {

@@ -43,7 +43,6 @@ import { OntologyAction } from '../../../shared/models/ontologyAction';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { State } from '../../../shared/models/state.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { UtilService } from '../../../shared/services/util.service';
 import { EditBranchOverlayComponent } from '../editBranchOverlay/editBranchOverlay.component';
@@ -53,7 +52,6 @@ describe('Open Ontology Select component', function() {
     let component: OpenOntologySelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<OpenOntologySelectComponent>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
@@ -115,7 +113,6 @@ describe('Open Ontology Select component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
                 MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
@@ -129,29 +126,25 @@ describe('Open Ontology Select component', function() {
         fixture = TestBed.createComponent(OpenOntologySelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        
-        catalogManagerStub.localCatalog = {'@id': catalogId};
-
         listItem = new OntologyListItem();
         listItem.versionedRdfRecord.recordId = recordId;
         listItem.versionedRdfRecord.branchId = branchId;
         ontologyStateStub.ontologyRecordAction$ = of({recordId: '', action: undefined});
         ontologyStateStub.getStateByRecordId.and.returnValue(state);
-    });
+        catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+        catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
+    }); 
 
     afterEach(function() {
         cleanStylesFromDOM();
         component = null;
         element = null;
         fixture = null;
-        catalogManagerStub = null;
+        catalogManagerStub.deleteRecordBranch = null;
         ontologyStateStub = null;
-        ontologyManagerStub = null;
         utilStub = null;
         matDialog = null;
         listItem = null;
@@ -596,9 +589,9 @@ describe('Open Ontology Select component', function() {
                 utilStub.getPropertyId.and.returnValue(commitId);
                 spyOn(component, 'changeToMaster');
             });
-            describe('when deleteOntologyBranch is resolved', function() {
+            describe('when deleteRecordBranch is resolved', function() {
                 beforeEach(function() {
-                    ontologyManagerStub.deleteOntologyBranch.and.returnValue(of(null));
+                    catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
                 });
                 describe('and when removeBranch is resolved', function() {
                     beforeEach(function() {
@@ -616,7 +609,7 @@ describe('Open Ontology Select component', function() {
                                 catalogManagerStub.getCommit.and.returnValue(of(null));
                                 component.deleteBranch(branch);
                                 tick();
-                                expect(ontologyManagerStub.deleteOntologyBranch).toHaveBeenCalledWith(recordId, branchId);
+                                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                                 expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                                 expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
                                 expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentState);
@@ -631,7 +624,7 @@ describe('Open Ontology Select component', function() {
                                 catalogManagerStub.getCommit.and.returnValue(throwError('Error message'));
                                 component.deleteBranch(branch);
                                 tick();
-                                expect(ontologyManagerStub.deleteOntologyBranch).toHaveBeenCalledWith(recordId, branchId);
+                                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                                 expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                                 expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
                                 expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentState);
@@ -655,7 +648,7 @@ describe('Open Ontology Select component', function() {
                             ontologyStateStub.isStateBranch.and.returnValue(true);
                             component.deleteBranch(branch);
                             tick();
-                            expect(ontologyManagerStub.deleteOntologyBranch).toHaveBeenCalledWith(recordId, branchId);
+                            expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                             expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                             expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
                             expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentState);
@@ -670,7 +663,7 @@ describe('Open Ontology Select component', function() {
                         ontologyStateStub.deleteBranchState.and.returnValue(throwError(error));
                         component.deleteBranch(branch);
                         tick();
-                        expect(ontologyManagerStub.deleteOntologyBranch).toHaveBeenCalledWith(recordId, branchId);
+                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                         expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                         expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
                         expect(ontologyStateStub.isStateBranch).not.toHaveBeenCalled();
@@ -685,7 +678,7 @@ describe('Open Ontology Select component', function() {
                     ontologyStateStub.removeBranch.and.returnValue(throwError(error));
                     component.deleteBranch(branch);
                     tick();
-                    expect(ontologyManagerStub.deleteOntologyBranch).toHaveBeenCalledWith(recordId, branchId);
+                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                     expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                     expect(ontologyStateStub.deleteBranchState).not.toHaveBeenCalled();
                     expect(ontologyStateStub.isStateBranch).not.toHaveBeenCalled();
@@ -696,11 +689,11 @@ describe('Open Ontology Select component', function() {
                     expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
                 }));
             });
-            it('when deleteOntologyBranch is rejected', fakeAsync(function() {
-                ontologyManagerStub.deleteOntologyBranch.and.returnValue(throwError(error));
+            it('when deleteRecordBranch is rejected', fakeAsync(function() {
+                catalogManagerStub.deleteRecordBranch.and.returnValue(throwError(error));
                 component.deleteBranch(branch);
                 tick();
-                expect(ontologyManagerStub.deleteOntologyBranch).toHaveBeenCalledWith(recordId, branchId);
+                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                 expect(ontologyStateStub.removeBranch).not.toHaveBeenCalled();
                 expect(ontologyStateStub.deleteBranchState).not.toHaveBeenCalled();
                 expect(ontologyStateStub.isStateBranch).not.toHaveBeenCalled();

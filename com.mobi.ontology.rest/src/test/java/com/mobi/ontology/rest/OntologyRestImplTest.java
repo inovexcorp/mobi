@@ -4817,35 +4817,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(catalogManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class));
     }
 
-    @Test
-    public void testDeleteOntologyError() {
-        Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager)
-                .removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class));
-        Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
-
-        assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntologyBranch(any(), any());
-    }
-
-    @Test
-    public void testDeleteOntologyBranch() {
-        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/branches/"
-                + encode(branchId.stringValue())).request().delete();
-
-        assertEquals(response.getStatus(), 200);
-        verify(ontologyManager).deleteOntologyBranch(recordId, branchId);
-    }
-
-    @Test
-    public void testDeleteOntologyBranchError() {
-        Mockito.doThrow(new MobiException("I'm an exception!")).when(ontologyManager).deleteOntologyBranch(eq(recordId), eq(branchId));
-        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/branches/"
-                + encode(branchId.stringValue())).request().delete();
-
-        assertEquals(response.getStatus(), 500);
-        verify(ontologyManager).deleteOntologyBranch(recordId, branchId);
-    }
-
     // Test upload changes
 
     @Test

@@ -49,6 +49,7 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.BatchGraphInserter;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.ResourceUtils;
@@ -60,6 +61,8 @@ import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQuery;
@@ -81,6 +84,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -143,6 +147,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     @Reference
     public RevisionFactory revisionFactory;
+
+    final ValueFactory vf = new ValidatingValueFactory();
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -355,6 +361,25 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         deleteVersionedRDFData(record, conn);
         deleteRecordObject(record, conn);
         deletePolicies(record, conn);
+    }
+
+    @Override
+    public Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                       RepositoryConnection conn) {
+        T record = utilsService.getRecord(catalogId, versionedRDFRecordId, recordFactory,
+                conn);
+        Branch branch = utilsService.getBranch(record, branchId, branchFactory, conn);
+        IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+        if (ConnectionUtils.contains(conn, versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
+            throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
+        }
+        conn.begin();
+        record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+        utilsService.updateObject(record, conn);
+        List<Resource> deletedCommits = utilsService.removeBranch(versionedRDFRecordId, branch, conn);
+        mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
+        conn.commit();
+        return Optional.of(deletedCommits);
     }
 
     /**

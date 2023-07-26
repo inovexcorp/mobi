@@ -1742,36 +1742,36 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         assertEquals(COMMIT_IRI, branch.getHead_resource().get());
     }
 
-    /* removeBranch */
+    /* RemoveBranch */
 
     @Test
     public void testRemoveBranch() throws Exception {
-        VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
-        String previousModifiedValue = getModifiedIriValue(record);
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(branch).when(utilsService).getBranch(any(), any(), any(), any());
-
+        when(versionedRDFRecordService.deleteBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class)))
+                .thenReturn(Optional.of(Arrays.asList()));
         manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
-        verify(utilsService).getBranch(eq(record), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).removeBranch(eq(VERSIONED_RDF_RECORD_IRI), any(Branch.class), any(RepositoryConnection.class));
-        verify(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
-        assertNotSame(getModifiedIriValue(record), previousModifiedValue);
+    }
+
+    @Test
+    public void testDeleteBranchWithMissingIdentifier() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Record does not support Delete Branch operation");
+
+        when(versionedRDFRecordService.deleteBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class)))
+                .thenReturn(Optional.empty());
+        manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
     }
 
     @Test
     public void testRemoveMasterBranch() {
         // Setup:
-        Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
-        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        when(versionedRDFRecordService.deleteBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class)))
+                .thenThrow(new IllegalStateException("Branch " + MASTER_BRANCH_IRI + " is the master Branch and cannot be removed."));
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("Branch " + MASTER_BRANCH_IRI + " is the master Branch and cannot be removed.");
 
         manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, MASTER_BRANCH_IRI);
-        verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
     }
+
 
     /* getBranch */
 

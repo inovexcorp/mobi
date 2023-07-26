@@ -123,7 +123,6 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
                 conn.add(ontologyIRI, RDF.TYPE, OWL.ONTOLOGY, additionsGraph);
             }
         }
-
         validateOntology(ontologyIRI);
         record.setOntologyIRI(ontologyIRI);
         utilsService.updateObject(record, conn);
