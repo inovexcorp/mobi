@@ -74,9 +74,6 @@ describe('Shapes Graph State service', function() {
                 MockProvider(PolicyEnforcementService),
             ]
         });
-
-        catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         service = TestBed.inject(ShapesGraphStateService);
         shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
@@ -87,7 +84,8 @@ describe('Shapes Graph State service', function() {
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
             return get(obj, `['${DCTERMS}${prop}'][0]['@value']`, '');
         });
-        catalogManagerStub.localCatalog = {'@id': catalogId};
+        catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+        catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': catalogId, data: branches}]})));
         catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': 'urn:tag'}]})));
         service.initialize();
@@ -553,7 +551,7 @@ describe('Shapes Graph State service', function() {
             describe('then deleting the branch state', function() {
                 it('successfully', async function() {
                     await service.deleteShapesGraphBranch('recordId', 'branchId');
-                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('branchId', 'recordId', 'catalog');
+                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'branchId', 'catalog');
                     expect(this.deleteBranchStateSpy).toHaveBeenCalledWith('recordId', 'branchId');
                 });
                 it('unless an error occurs', async function() {
@@ -564,7 +562,7 @@ describe('Shapes Graph State service', function() {
                         }, response => {
                             expect(response).toEqual('Error');
                         });
-                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('branchId', 'recordId', 'catalog');
+                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'branchId', 'catalog');
                     expect(this.deleteBranchStateSpy).toHaveBeenCalledWith('recordId', 'branchId');
                 });
             });
@@ -576,7 +574,7 @@ describe('Shapes Graph State service', function() {
                     }, response => {
                         expect(response).toEqual('Error');
                     });
-                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('branchId', 'recordId', 'catalog');
+                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'branchId', 'catalog');
             });
         });
     });

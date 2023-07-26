@@ -612,29 +612,5 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertTrue(optionalOntology.isPresent());
         verify(mockCache, times(0)).put(eq(key), eq(optionalOntology.get()));
     }
-
-    /* Testing deleteOntologyBranch(Resource recordId, Resource branchId) */
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDeleteOntologyBranchWithMissingIdentifier() {
-        // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).removeBranch(catalogIRI, recordIRI, missingIRI);
-
-        manager.deleteOntologyBranch(recordIRI, missingIRI);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testDeleteOntologyBranchWithInvalidCommit() {
-        // Setup:
-        doThrow(new IllegalStateException()).when(catalogManager).removeBranch(catalogIRI, recordIRI, missingIRI);
-
-        manager.deleteOntologyBranch(recordIRI, missingIRI);
-    }
-
-    @Test
-    public void testDeleteOntologyBranch() throws Exception {
-        manager.deleteOntologyBranch(recordIRI, branchIRI);
-        verify(catalogManager).removeBranch(catalogIRI, recordIRI, branchIRI);
-        verify(ontologyCache).removeFromCache(recordIRI.stringValue(), commitIRI.stringValue());
-    }
+    
 }

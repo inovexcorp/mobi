@@ -1614,7 +1614,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 switchMap((commit: string) => {
                     commitId = commit;
                     if (checkbox) {
-                        return this.om.deleteOntologyBranch(this.listItem.versionedRdfRecord.recordId, sourceId)
+                        return this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, sourceId, this.catalogId)
                             .pipe(
                                 switchMap(() => this.removeBranch(this.listItem.versionedRdfRecord.recordId, sourceId)),
                                 switchMap(() => this.deleteBranchState(this.listItem.versionedRdfRecord.recordId, sourceId))

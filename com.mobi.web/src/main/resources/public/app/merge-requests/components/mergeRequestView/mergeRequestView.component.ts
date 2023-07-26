@@ -40,6 +40,7 @@ import { CATALOG, MERGEREQ } from '../../../prefixes';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 /**
  * @class merge-requests.MergeRequestViewComponent
@@ -74,6 +75,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 public om: OntologyManagerService,
                 public um: UserManagerService,
                 private lm: LoginManagerService,
+                protected cm: CatalogManagerService,
                 private pep: PolicyEnforcementService) {}
 
     ngOnInit(): void {
@@ -146,7 +148,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         const targetBranchId = requestToAccept.targetBranch['@id'];
         const sourceBranchId = requestToAccept.sourceBranch['@id'];
         const removeSource = requestToAccept.removeSource;
-        
+        const localCatalogId = get(this.cm.localCatalog, '@id', '');
         this.mm.acceptRequest(requestToAccept.jsonld['@id'])
             .pipe(
                 switchMap(() => {
@@ -160,7 +162,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }),
                 switchMap(() => {
                     if (removeSource) {
-                        return this.om.deleteOntologyBranch(requestToAccept.recordIri, sourceBranchId)
+                        return this.cm.deleteRecordBranch(requestToAccept.recordIri, sourceBranchId, localCatalogId)
                             .pipe(map(() => {
                                 if (some(this.os.list, {versionedRdfRecord: {recordId: requestToAccept.recordIri}})) {
                                     this.os.removeBranch(requestToAccept.recordIri, sourceBranchId);

@@ -27,6 +27,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertNotSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,6 +52,7 @@ import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -68,6 +70,7 @@ import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
@@ -77,6 +80,7 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -101,6 +105,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -140,16 +145,18 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     private IRI revisionIRI;
 
-    private OrmFactory<OntologyRecord> recordFactory = getRequiredOrmFactory(OntologyRecord.class);
-    private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
-    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-    private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
+    private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
-
+    private OrmFactory<OntologyRecord> recordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
+    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
+
+    private ValueFactory vf;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -196,9 +203,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private CreateActivity createActivity;
 
-
     @Before
     public void setUp() throws Exception {
+        vf = getValueFactory();
         System.setProperty("karaf.etc", OntologyRecordServiceTest.class.getResource("/").getPath());
         repository = new MemoryRepositoryWrapper();
         repository.setDelegate(new SailRepository(new MemoryStore()));
@@ -913,4 +920,29 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(record02Ids.toString(), actual1);
         assertEquals(record03Ids.toString(), actual2);
     }
+
+
+    @Test
+    public void deleteBranchTest() {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            VersionedRDFRecord record = versionedRDFRecordFactory.createNew(testIRI);
+            Branch branch = branchFactory.createNew(branchIRI);
+            record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+            String previousModifiedValue = getModifiedIriValue(record);
+            when(utilsService.getRecord(eq(catalogId), eq(testIRI), any(), any(RepositoryConnection.class))).thenReturn(record);
+            when(utilsService.getBranch(any(), any(), any(), any())).thenReturn(branch);
+
+            recordService.deleteBranch(catalogId, testIRI, branchIRI, connection);
+
+            verify(utilsService).getBranch(eq(record), eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class));
+            verify(utilsService).removeBranch(eq(testIRI), any(Branch.class), any(RepositoryConnection.class));
+            verify(mergeRequestManager).cleanMergeRequests(eq(testIRI), eq(branchIRI), any(RepositoryConnection.class));
+            assertNotSame(getModifiedIriValue(record), previousModifiedValue);
+        }
+    }
+
+    private String getModifiedIriValue(Thing property) {
+        return property.getProperty(vf.createIRI(_Thing.modified_IRI)).get().toString();
+    }
+
 }

@@ -811,54 +811,7 @@ public class OntologyRest {
         return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId),
                 bNodesMap);
     }
-
-    /**
-     Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
-     * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
-     *
-     * @param servletRequest the HttpServletRequest.
-     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:".
-     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:".
-     * @return OK.
-     */
-    @DELETE
-    @Path("{recordId}/branches/{branchId}")
-    @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Deletes the Branch with the requested BranchId from the "
-                    + "OntologyRecord with the provided recordId",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating successfully request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    @ActionId(Modify.TYPE)
-    @ActionAttributes(
-            @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
-    )
-    @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteOntologyBranch(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID", required = true)
-            @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = true)
-            @PathParam("branchId") String branchIdStr) {
-        try {
-            ontologyManager.deleteOntologyBranch(valueFactory.createIRI(recordIdStr),
-                    valueFactory.createIRI(branchIdStr));
-        } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-        }
-        return Response.ok().build();
-    }
-
+    
     /**
      * Returns a JSON object with keys for the list of IRIs of derived skos:Concepts, the list of IRIs of derived
      * skos:ConceptSchemes, an object with the concept hierarchy and index, and an object with the concept scheme

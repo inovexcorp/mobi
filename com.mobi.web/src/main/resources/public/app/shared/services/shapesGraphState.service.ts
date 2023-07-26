@@ -297,7 +297,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
      * @return {Promise} A Promise that resolves if the branch deletion was successful or not.
      */
     deleteShapesGraphBranch(recordId: string, branchId: string): Promise<any> {
-        return this.cm.deleteRecordBranch(branchId, recordId, this.catalogId).pipe(first()).toPromise()
+        return this.cm.deleteRecordBranch(recordId, branchId, this.catalogId).pipe(first()).toPromise()
             .then(() => this.deleteBranchState(recordId, branchId), error => Promise.reject(error));
     }
     /**

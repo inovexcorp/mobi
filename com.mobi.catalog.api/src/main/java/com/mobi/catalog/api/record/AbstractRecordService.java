@@ -55,6 +55,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -277,6 +279,12 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
             throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey()
                     + " is required.");
         }
+    }
+
+    @Override
+    public Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                                 RepositoryConnection conn){
+        throw new IllegalArgumentException("Record does not support Delete Branch operation");
     }
 
     /**

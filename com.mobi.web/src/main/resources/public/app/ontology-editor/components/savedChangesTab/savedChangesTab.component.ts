@@ -138,6 +138,7 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
         };
 
         let createdBranchId;
+        const localCatalogId = get(this.cm.localCatalog, '@id', '');
         this.cm.createRecordBranch(this.os.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig, this.os.listItem.versionedRdfRecord.commitId)
             .pipe(switchMap((branchId: string) => {
                 createdBranchId = branchId;
@@ -149,7 +150,7 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
                 const commitId = this.util.getPropertyId(branch, CATALOG + 'head');
                 return this.os.updateState({recordId: this.os.listItem.versionedRdfRecord.recordId, commitId, branchId: createdBranchId});
             }),
-            switchMap(() => this.om.deleteOntologyBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId)),
+            switchMap(() => this.cm.deleteRecordBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId, localCatalogId)),
             switchMap(() => this.os.deleteBranchState(this.os.listItem.versionedRdfRecord.recordId, userBranchId)))
             .subscribe(() => {
                 this.os.removeBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId).subscribe();

@@ -761,12 +761,12 @@ export class CatalogManagerService {
      * with the passed Catalog, Record, and Branch ids and removes the identified Branch and all associated
      * entities from Mobi.
      *
-     * @param {string} branchId The id of the Branch to delete
      * @param {string} recordId The id of the Record with the specified Branch
+     * @param {string} branchId The id of the Branch to delete
      * @param {string} catalogId The id of the Catalog the Record should be part of
      * @returns {Observable} An Observable that resolves if the deletion was successful or rejects with an error message
      */
-    deleteRecordBranch(branchId: string, recordId: string, catalogId: string): Observable<null> {
+    deleteRecordBranch(recordId: string, branchId: string, catalogId: string): Observable<null> {
         return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)))
             .pipe(catchError(this.util.handleError));
     }

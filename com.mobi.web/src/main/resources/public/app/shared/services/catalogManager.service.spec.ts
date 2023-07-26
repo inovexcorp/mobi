@@ -1314,7 +1314,7 @@ describe('Catalog Manager service', function() {
             this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
         });
         it('unless an error occurs', function() {
-            service.deleteRecordBranch(branchId, recordId, catalogId)
+            service.deleteRecordBranch(recordId, branchId, catalogId)
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
@@ -1322,7 +1322,7 @@ describe('Catalog Manager service', function() {
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.deleteRecordBranch(branchId, recordId, catalogId)
+            service.deleteRecordBranch(recordId, branchId, catalogId)
                 .subscribe(() => {
                     expect(true).toBeTrue();
                 }, () => fail('Observable should have resolved'));

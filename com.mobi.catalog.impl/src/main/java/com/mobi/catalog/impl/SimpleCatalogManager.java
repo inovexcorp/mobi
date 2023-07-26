@@ -979,7 +979,6 @@ public class SimpleCatalogManager implements CatalogManager {
         if (description != null) {
             branch.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
         }
-
         return branch;
     }
 
@@ -1061,20 +1060,12 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public List<Resource> removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
-                    conn);
-            Branch branch = utils.getBranch(record, branchId, branchFactory, conn);
-            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
-            if (ConnectionUtils.contains(conn, versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
-                throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
-            }
-            conn.begin();
-            record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
-            utils.updateObject(record, conn);
-            List<Resource> deletedCommits = utils.removeBranch(versionedRDFRecordId, branch, conn);
-            mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
-            conn.commit();
-            return deletedCommits;
+            OrmFactory<? extends Record> factory = getFactory(versionedRDFRecordId, conn, false);
+            RecordService<? extends Record> recordService = Optional.ofNullable(getRecordService(factory.getType()))
+                    .orElseThrow(() -> new IllegalArgumentException("Service for factory " + factory.getType().toString()
+                            + " is unavailable or doesn't exist."));
+            return recordService.deleteBranch(catalogId, versionedRDFRecordId, branchId, conn)
+                    .orElseThrow(() -> new IllegalArgumentException("Record does not support Delete Branch operation"));
         }
     }
 

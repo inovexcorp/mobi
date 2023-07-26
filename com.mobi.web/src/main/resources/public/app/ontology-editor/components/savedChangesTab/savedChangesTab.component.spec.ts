@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -70,6 +71,12 @@ describe('Saved Changes Tab component', function() {
     const obj: JSONLDObject = {
         '@id': 'obj'
     };
+    const branch = {
+        '@id': 'branch123',
+        [CATALOG + 'head']: [{'@id': 'commit123'}],
+        [DCTERMS + 'title']: [{'@value': 'MASTER'}]
+    };
+    const branches = [branch];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -97,7 +104,9 @@ describe('Saved Changes Tab component', function() {
 
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.localCatalog = {'@id': catalogId};
-
+        catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': catalogId, data: branches}]})));
+        catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': 'urn:tag'}]})));
+        
         fixture = TestBed.createComponent(SavedChangesTabComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -341,9 +350,9 @@ describe('Saved Changes Tab component', function() {
                             ontologyStateStub.updateState.and.returnValue(of(null));
                             catalogManagerStub.isUserBranch.and.callFake(branchToCheck => branchToCheck['@id'] === otherUserBranchId);
                         });
-                        describe('and when deleteOntologyBranch is resolved', function() {
+                        describe('and when deleteRecordBranch is resolved', function() {
                             beforeEach(() => {
-                                ontologyManagerStub.deleteOntologyBranch.and.returnValue(of(null));
+                                catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
                             });
                             it('and when deleteBranchState is resolved', fakeAsync(function() {
                                 ontologyStateStub.deleteBranchState.and.returnValue(of(null));
@@ -368,7 +377,7 @@ describe('Saved Changes Tab component', function() {
                             }));
                         });
                         it('and when deleteOntologyBranch is rejected', fakeAsync(function() {
-                            ontologyManagerStub.deleteOntologyBranch.and.returnValue(throwError(error));
+                            catalogManagerStub.deleteRecordBranch.and.returnValue(throwError(error));
                             component.restoreBranchWithUserBranch();
                             tick();
                             expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
