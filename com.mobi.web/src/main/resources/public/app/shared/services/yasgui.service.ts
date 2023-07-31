@@ -212,6 +212,8 @@ export class YasguiService {
                         const errorJson = JSON.parse(decodeURIComponent(error.text));
                         if (Object.prototype.hasOwnProperty.call(errorJson, 'details')) {
                             errTextEl.textContent = errorJson['details'];
+                        } else if (Object.prototype.hasOwnProperty.call(errorJson, 'errorDetails')) {
+                            errTextEl.textContent = errorJson['errorDetails'];
                         } else {
                             errTextEl.textContent = 'Could not find error details from response object.';
                         }
@@ -298,7 +300,7 @@ export class YasguiService {
      * @returns Accept Header Content Type
      */
     private _getFormat(type, query: string) {
-        const format = type || this.yasgui.getTab().yasr.config.defaultPlugin;
+        let format = type || this.yasgui.getTab().yasr.config.defaultPlugin;
         const formatType =  {
            'turtle': 'text/turtle',
            'rdfXml': 'application/rdf+xml',
@@ -310,7 +312,16 @@ export class YasguiService {
         if (format === 'table' && constructIndex < selectIndex) {
             return formatType['turtle'];
         }
-        return formatType?.[format] || formatType.jsonLD;
+        let defaultForType;
+        if (constructIndex < selectIndex) {
+            defaultForType = formatType.jsonLD;
+        } else {
+            if (format === 'turtle' || format === 'rdfXml' || format === 'jsonLD') {
+                format = 'NOT_VALID';
+            }
+            defaultForType = formatType.table;
+        }
+        return formatType?.[format] || defaultForType;
     }
 
     // update yasr request configuration
@@ -329,7 +340,10 @@ export class YasguiService {
             method: 'POST'
         };
         if (this.isOntology) {
-            requestConfig['args'] = [{name: 'applyInProgressCommit', value: true}, {name: 'includeImports', value: this.yasguiQuery.isImportedOntologyIncluded}];
+            requestConfig['args'] = [
+                {name: 'applyInProgressCommit', value: true}, 
+                {name: 'includeImports', value: this.yasguiQuery.isImportedOntologyIncluded}
+            ];
             if (this.yasguiQuery.commitId !== '') {
                 requestConfig['args'].push({ name: 'commitId', value: this.yasguiQuery.commitId});
             }

@@ -1,10 +1,8 @@
-@Version("2.1.2.${build}")
-
-package com.mobi.ontology.rest;
+package com.mobi.rest.util.swagger;
 
 /*-
  * #%L
- * com.mobi.ontology.rest
+ * com.mobi.rest.util
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,18 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
-import org.osgi.annotation.versioning.Version;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.List;
+
+/**
+ * Class used for OpenAPI documentation for Error Object
+ */
+public class ErrorObjectSchema {
+    @Schema(type = "string", description = "Error Type")
+    public String error;
+    @Schema(type = "string", description = "Error Message")
+    public String errorMessage;
+    @Schema(type = "array", description = "List of error details")
+    public List<String> errorDetails;
+}

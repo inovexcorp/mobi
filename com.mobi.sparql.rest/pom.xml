@@ -103,10 +103,6 @@
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.poi</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.junit.vintage</groupId>
