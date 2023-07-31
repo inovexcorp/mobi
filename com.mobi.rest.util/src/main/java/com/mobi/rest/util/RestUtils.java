@@ -88,6 +88,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -562,7 +563,7 @@ public class RestUtils {
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {
         if (StringUtils.isBlank(param)) {
-            throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(errorMessage));
         }
     }
 
@@ -975,7 +976,7 @@ public class RestUtils {
 
         if (delimiter == null) {
             objectNode.put("errorMessage", errorMessage);
-        } else if (errorMessage.contains(delimiter)) {
+        } else if (errorMessage != null && errorMessage.contains(delimiter)) {
             String[] errorMessages = errorMessage.split(delimiter);
             objectNode.put("errorMessage", errorMessages[0].trim());
 
@@ -1002,7 +1003,11 @@ public class RestUtils {
      */
     public static MobiWebException getErrorObjBadRequest(Throwable throwable) {
         ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
-        Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
+        Response response = Response
+                .status(Response.Status.BAD_REQUEST)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(objectNode.toString())
+                .build();
         return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
     }
 
@@ -1015,7 +1020,10 @@ public class RestUtils {
      */
     public static MobiWebException getErrorObjInternalServerError(Throwable throwable) {
         ObjectNode objectNode = createJsonErrorObject(throwable);
-        Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString())
+        Response response = Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(objectNode.toString())
                 .build();
         return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
     }

@@ -1,4 +1,4 @@
-package com.mobi.sparql.rest;
+package com.mobi.rest.util;
 
 /*-
  * #%L

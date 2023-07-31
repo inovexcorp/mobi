@@ -5055,7 +5055,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("query", encode(query))
                 .request().accept("application/json").get();
 
-        assertEquals(response.getStatus(), 204);
+        assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
     }
 
@@ -5211,7 +5211,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
 
-        assertEquals(response.getStatus(), 204);
+        assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
     }
 
@@ -5366,7 +5366,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-        assertEquals(response.getStatus(), 204);
+        assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
     }
 
@@ -5542,7 +5542,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("fileType", "application/json")
                 .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
 
-        assertEquals(response.getStatus(), 204);
+        assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
     }
 
@@ -5553,7 +5553,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         String query = "construct where { ?s ?p ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .queryParam("fileType", "application/ld+json")
+                .queryParam("fileType", "jsonld")
                 .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
 
         assertEquals(response.getStatus(), 200);
@@ -5568,7 +5568,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         String query = "construct where { ?s <urn:test> ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .queryParam("fileType", "application/ld+json")
+                .queryParam("fileType", "jsonld")
                 .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
 
         assertEquals(response.getStatus(), 200);
@@ -5668,7 +5668,9 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(query, "application/sparql-query"));
 
         assertEquals(response.getStatus(), 400);
     }
@@ -5683,14 +5685,14 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
-//        verify(ontologyManager).getTupleQueryResults(ontology, query, true);
         assertSelectQuery(getResponse(response));
     }
 
@@ -5703,12 +5705,13 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-        assertEquals(response.getStatus(), 204);
+        assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
     }
 
@@ -5721,10 +5724,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "jsonld");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/ld+json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
@@ -5740,9 +5744,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "jsonld");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/ld+json")
-                .request().accept("application/octet-stream").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
@@ -5755,10 +5761,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Form form = new Form();
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 400);
     }
@@ -5770,10 +5777,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 400);
     }
@@ -5788,10 +5796,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 400);
     }
@@ -5805,10 +5814,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Form form = new Form();
         form.param("query", query);
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5824,9 +5834,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Form form = new Form();
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5841,10 +5853,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         String query = "select * { ?s ?p ?o }";
         Form form = new Form();
         form.param("query", query);
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5860,10 +5873,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         form.param("query", query);
         form.param("branchId", branchId.stringValue());
         form.param("commitId", commitId.stringValue());
+        form.param("fileType", "json");
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
-                .queryParam("fileType", "application/json")
-                .request().accept("application/octet-stream").post(Entity.entity(form,
-                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                .request()
+                .accept("application/octet-stream")
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 400);
     }

@@ -23,16 +23,20 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
+import static com.mobi.rest.util.RestQueryUtils.QUERY_INVALID_MESSAGE;
+import static com.mobi.rest.util.RestUtils.CSV_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.JSON_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.LDJSON_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.RDFXML_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.TSV_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.TURTLE_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.XLSX_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.XLS_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.convertFileExtensionToMimeType;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
-import static com.mobi.rest.util.RestUtils.getRDFFormatForConstructQuery;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
@@ -50,7 +54,6 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -88,8 +91,9 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.MobiWebException;
+import com.mobi.rest.util.RestQueryUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
@@ -3252,7 +3256,7 @@ public class OntologyRest {
      */
     @GET
     @Path("{recordId}/query")
-    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, LDJSON_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "ontologies",
@@ -3260,11 +3264,24 @@ public class OntologyRest {
                     + "and its import closures in the requested format",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "SPARQL 1.1 results in JSON format if the query is a "
-                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                            description = "SPARQL 1.1 results in JSON format if the query is a SELECT "
+                                    + "or the JSONLD serialization of the results if the query is a CONSTRUCT",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                            }),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
+                            @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = ErrorObjectSchema.class)
+                            )
+                    }),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
+                            @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = ErrorObjectSchema.class)
+                            )
+                    })
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3272,7 +3289,8 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "SPARQL Query to perform against ontology", required = true)
+            @Parameter(description = "SPARQL Query to perform against ontology", required = true,
+                    example = "SELECT * WHERE { ?s ?p ?o . }")
             @QueryParam("query") String queryString,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
@@ -3288,9 +3306,8 @@ public class OntologyRest {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
-
         return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
-                applyInProgressCommit, acceptString, queryString, "", "").build();
+                applyInProgressCommit, acceptString, queryString, null, "");
     }
 
     /**
@@ -3316,21 +3333,9 @@ public class OntologyRest {
     @POST
     @Path("{recordId}/query")
     @Consumes("application/sparql-query")
-    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, LDJSON_MIME_TYPE, TURTLE_MIME_TYPE, RDFXML_MIME_TYPE})
+    // @Operation overwritten by postUrlEncodedDownloadQueryOntology
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Retrieves the SPARQL query results of an ontology, "
-                    + "and its import closures in the requested format",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "SPARQL 1.1 results in JSON format if the query is a "
-                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
     @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response postQueryOntology(
@@ -3352,10 +3357,9 @@ public class OntologyRest {
         if (queryString == null) {
             throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
         }
-
         return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit,
-                acceptString, queryString, "", "").build();
+                acceptString, queryString, null, "");
     }
 
     /**
@@ -3382,65 +3386,8 @@ public class OntologyRest {
     @Path("{recordId}/query")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    // @Operation overwritten by postUrlEncodedDownloadQueryOntology
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Retrieves the SPARQL query results of an ontology, "
-                    + "and its import closures in the requested format",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 Response in the format of fileType query parameter",
-                            content = {
-                                    @Content(mediaType = "*/*"),
-                                    @Content(mediaType = TURTLE_MIME_TYPE),
-                                    @Content(mediaType = LDJSON_MIME_TYPE),
-                                    @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = JSON_MIME_TYPE),
-                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
-                            }
-                    ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            },
-            requestBody = @RequestBody(
-                    content = {
-                            @Content(
-                                    mediaType = "application/sparql-query",
-                                    schema = @Schema(
-                                            name = "query", type = "string",
-                                            description = "A sparql query",
-                                            example = "SELECT * WHERE { ?s ?p ?o . }"
-                                    )
-                            ),
-                            @Content(
-                                    mediaType = MediaType.APPLICATION_FORM_URLENCODED,
-                                    schema = @Schema(implementation = EncodedQuery.class)
-                            )
-                    }
-            ),
-            parameters = {
-                    @Parameter(name = "branchId", description = "Optional Branch ID representing the branch IRI of the "
-                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to "
-                            + "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
-                    @Parameter(name = "commitId", description = "Optional Commit ID representing the commit IRI of the "
-                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to " +
-                            "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
-                    @Parameter(name = "includeImports", description = "Optional boolean representing whether to "
-                            + "include imported ontologies when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
-                            defaultValue = "true"), in = ParameterIn.QUERY),
-                    @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
-                            + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
-                            defaultValue = "false"), in = ParameterIn.QUERY),
-                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
-                            "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
-                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
-                            "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
-                            schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
-            }
-    )
     @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response postQueryUrlEncodedOntology(
@@ -3461,11 +3408,10 @@ public class OntologyRest {
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
-            throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
-
         return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
-                applyInProgressCommit, acceptString, queryString, "", "").build();
+                applyInProgressCommit, acceptString, queryString, "", "");
     }
 
     /**
@@ -3491,21 +3437,9 @@ public class OntologyRest {
     @POST
     @Path("{recordId}/query")
     @Consumes("application/sparql-query")
-    @Produces({MediaType.APPLICATION_OCTET_STREAM})
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE})
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Downloads the SPARQL query results of an ontology, "
-                    + "and its import closures in the requested format",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "SPARQL 1.1 results in JSON format if the query is a "
-                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    // @Operation overwritten by postUrlEncodedDownloadQueryOntology
     @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response postDownloadQueryOntology(
@@ -3526,17 +3460,16 @@ public class OntologyRest {
             @DefaultValue("results") @QueryParam("fileName") String fileName,
             @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
                     + "`application/octet-stream`",
-                    schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
+                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
             @QueryParam("fileType") String fileType,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString,
             String queryString) {
         if (queryString == null) {
-            throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("SPARQL query must be provided in request body."));
         }
         return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
-                applyInProgressCommit, acceptString, queryString, fileType, fileName)
-                .header("Content-Disposition", "attachment;filename=" + fileName + "." + fileType).build();
+                applyInProgressCommit, acceptString, queryString, fileType, fileName);
     }
 
     /**
@@ -3562,7 +3495,7 @@ public class OntologyRest {
     @POST
     @Path("{recordId}/query")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces({MediaType.APPLICATION_OCTET_STREAM})
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "ontologies",
@@ -3572,17 +3505,28 @@ public class OntologyRest {
                     @ApiResponse(responseCode = "200",
                             description = "The SPARQL 1.1 Response in the format of fileType query parameter",
                             content = {
-                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = JSON_MIME_TYPE),
                                     @Content(mediaType = TURTLE_MIME_TYPE),
                                     @Content(mediaType = LDJSON_MIME_TYPE),
                                     @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = XLSX_MIME_TYPE),
+                                    @Content(mediaType = XLS_MIME_TYPE),
+                                    @Content(mediaType = CSV_MIME_TYPE),
+                                    @Content(mediaType = TSV_MIME_TYPE),
                                     @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
                             }
                     ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
+                            @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = ErrorObjectSchema.class)
+                            )
+                    }),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
+                            @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = ErrorObjectSchema.class)
+                            )
+                    }),
             },
             requestBody = @RequestBody(
                     content = {
@@ -3617,7 +3561,7 @@ public class OntologyRest {
                             "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
                     @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
                             "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
-                            schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
+                            schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
 
             }
     )
@@ -3639,19 +3583,58 @@ public class OntologyRest {
             @DefaultValue("false") @FormParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(description = "File name of the downloaded results file when the `ACCEPT` header is set to "
                     + "`application/octet-stream`")
-            @DefaultValue("results") @QueryParam("fileName") String fileName,
+            @DefaultValue("results") @FormParam("fileName") String fileName,
             @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
                     + "`application/octet-stream`",
-                    schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
-            @QueryParam("fileType") String fileType,
+                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
+            @FormParam("fileType") String fileType,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
-            throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
         return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
-                acceptString, queryString, fileType, fileName).header("Content-Disposition", "attachment;filename="
-                + fileName + "." + fileType).build();
+                acceptString, queryString, fileType, fileName);
+    }
+
+    private Response handleSparqlQuery(HttpServletRequest context, String recordIdStr,
+                                       String branchIdStr, String commitIdStr, boolean includeImports,
+                                       boolean applyInProgressCommit, String acceptString,
+                                       String queryString, String fileExtension, String fileName) {
+        try {
+            if (acceptString.equals(MediaType.APPLICATION_OCTET_STREAM) && StringUtils.isBlank(fileName)) {
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Must provide both fileName " +
+                        "when accept header is application/octet-stream"));
+            }
+
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
+                    .orElseThrow(() -> RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The ontology could not be found.")));
+
+            if (fileExtension != null && !fileExtension.isEmpty()) {
+                acceptString = convertFileExtensionToMimeType(fileExtension);
+            }
+            return RestQueryUtils.handleQuery(queryString, null, acceptString, fileName, ontology, includeImports, null);
+        } catch (MalformedQueryException ex) {
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE +
+                    ";;;" + ex.getMessage()));
+        } catch (MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    private Response.ResponseBuilder getResponseBuilderForGraphQuery(Ontology ontology, String query,
+                                                                     boolean includeImports, boolean skolemize,
+                                                                     String format) {
+        return getResponseBuilderForGraphQuery(ontology, query, includeImports, skolemize, getRdfFormat(format));
+    }
+
+    private Response.ResponseBuilder getResponseBuilderForGraphQuery(Ontology ontology, String query,
+                                                                     boolean includeImports, boolean skolemize,
+                                                                     RDFFormat format) {
+        StreamingOutput output = outputStream -> {
+            ontology.getGraphQueryResultsStream(query, includeImports, format, skolemize, outputStream);
+        };
+        return Response.ok(output);
     }
 
     /**
@@ -4047,21 +4030,6 @@ public class OntologyRest {
         }
     }
 
-    private Response.ResponseBuilder getResponseBuilderForGraphQuery(Ontology ontology, String query,
-                                                                     boolean includeImports, boolean skolemize,
-                                                                     String format) {
-        return getResponseBuilderForGraphQuery(ontology, query, includeImports, skolemize, getRdfFormat(format));
-    }
-
-    private Response.ResponseBuilder getResponseBuilderForGraphQuery(Ontology ontology, String query,
-                                                                     boolean includeImports, boolean skolemize,
-                                                                     RDFFormat format) {
-        StreamingOutput output = outputStream -> {
-            ontology.getGraphQueryResultsStream(query, includeImports, format, skolemize, outputStream);
-        };
-        return Response.ok(output);
-    }
-
     private Set<String> getUnloadableImportIRIs(Ontology ontology) {
         return ontology.getUnloadableImportIRIs().stream()
                 .map(Value::stringValue)
@@ -4250,9 +4218,9 @@ public class OntologyRest {
                 }
             }
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
 
         return optionalOntology;
@@ -4925,72 +4893,12 @@ public class OntologyRest {
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
 
-    private Response.ResponseBuilder handleSparqlQuery(HttpServletRequest context, String recordIdStr,
-                                                       String branchIdStr, String commitIdStr, boolean includeImports,
-                                                       boolean applyInProgressCommit, String acceptString,
-                                                       String queryString, String fileExtension, String fileName) {
-        try {
-            if (acceptString.equals("application/octet-stream") && (fileName == null || fileExtension == null
-                    || fileExtension.isEmpty())) {
-                throw ErrorUtils.sendError("Must provide both fileName and fileExtension when accept header is "
-                        + "application/octet-stream", Response.Status.BAD_REQUEST);
-            }
-
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
-                            Response.Status.BAD_REQUEST));
-
-            ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
-
-            if (parsedOperation instanceof ParsedQuery) {
-                if (parsedOperation instanceof ParsedTupleQuery) {
-                    if (fileName.isEmpty() && !acceptString.equals("application/json")) {
-                        throw ErrorUtils.sendError("Unsupported response format for SELECT queries. Must be "
-                                + "application/json.", Response.Status.BAD_REQUEST);
-                    }
-                    TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
-                    if (tupResults.hasNext()) {
-                        ObjectNode json = JSONQueryResults.getResponse(tupResults);
-                        return Response.ok(json.toString(), MediaType.APPLICATION_JSON_TYPE);
-                    } else {
-                        return Response.noContent();
-                    }
-                } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    if (!fileExtension.isEmpty()) {
-                        String mimeType = convertFileExtensionToMimeType(fileExtension);
-                        return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, false,
-                                getRDFFormatForConstructQuery(mimeType))
-                                .type(convertFileExtensionToMimeType(fileExtension));
-                    } else {
-                        return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, false,
-                                getRDFFormatForConstructQuery(acceptString))
-                                .header("Content-Type", acceptString);
-                    }
-                } else {
-                    throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
-                }
-            } else {
-                throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
-            }
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getCause().getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     /**
      * Class used for OpenAPI documentation for encoded url endpoint.
      */
     private static class EncodedQuery {
-        @Schema(type = "string", description = "The SPARQL query to execute", required = true)
+        @Schema(type = "string", description = "The SPARQL query to execute", required = true,
+                example = "SELECT * WHERE { ?s ?p ?o . }")
         public String query;
         @Schema(type = "string", description = "Optional Branch ID representing the branch IRI of the Record to query")
         public String branchId;
@@ -5002,5 +4910,12 @@ public class OntologyRest {
         @Schema(type = "boolean", description = "Optional boolean representing whether to "
                 + "apply the in progress commit when executing the query")
         public String applyInProgressCommit;
+        @Schema(name = "fileName", description = "File name of the downloaded results file when the " +
+                "`ACCEPT` header is set to `application/octet-stream`")
+        public String fileName;
+        @Schema(type= "string", description = "Format of the downloaded results file when the `ACCEPT` " +
+                "header is set to `application/octet-stream`",
+                allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"})
+        public String fileType;
     }
 }

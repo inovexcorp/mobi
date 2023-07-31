@@ -821,7 +821,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("details"));
+        assertTrue(result.containsKey("errorDetails"));
     }
 
     @Test
@@ -833,7 +833,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("details"));
+        assertTrue(result.containsKey("errorDetails"));
     }
 
     @Test

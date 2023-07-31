@@ -62,7 +62,17 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>dataset.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>jaas.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>ontology.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -74,6 +84,22 @@
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
             <version>${jaxb.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.poi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2-servlet-initializer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
         </dependency>
 
         <dependency>
@@ -117,9 +143,11 @@
                             com.mobi.rest.util,
                             com.mobi.rest.util.compress,
                             com.mobi.rest.util.logging,
-                            com.mobi.rest.util.jaxb
+                            com.mobi.rest.util.jaxb,
+                            com.mobi.rest.util.swagger
                         </Export-Package>
                         <Import-Package>
+                            !io.swagger.v3.*,
                             *
                         </Import-Package>
                         <build>${maven.build.timestamp}</build>
