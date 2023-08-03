@@ -28,7 +28,7 @@ import { Router } from '@angular/router';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { PERSPECTIVES, RoutePerspective } from '../../models/routePerspective.interface';
-import { DOC_SITE } from '../../../documentation';
+import { DOC_SITE, SERVICE_DESK } from '../../../documentation';
 
 /**
  * @class shared.SidebarComponent
@@ -49,6 +49,7 @@ export class SidebarComponent {
     @Output() collapsedNavChange = new EventEmitter<boolean>();
 
     docSite = DOC_SITE;
+    serviceDesk = SERVICE_DESK;
 
     constructor(public router: Router, public lm: LoginManagerService, public um: UserManagerService, 
         @Inject(PERSPECTIVES) public perspectives: RoutePerspective[]) {}

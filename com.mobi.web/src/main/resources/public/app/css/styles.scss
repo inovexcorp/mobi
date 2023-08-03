@@ -367,3 +367,9 @@ login-layout {
 .unset-max-width {
     max-width: unset !important;
 }
+.help-link {
+    text-decoration: none !important;
+}
+.help-link:hover,.help-link:active,.help-link:focus {
+    text-decoration: none !important;
+}
