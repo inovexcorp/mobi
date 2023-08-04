@@ -23,22 +23,28 @@ package com.mobi.prov.rest;
  * #L%
  */
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.ResourceUtils;
@@ -48,12 +54,15 @@ import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -71,6 +80,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -85,38 +95,51 @@ import javax.ws.rs.core.Response;
 
 public class ProvRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
-    private OrmFactory<Activity> activityFactory;
-    private OrmFactory<Entity> entityFactory;
+    private static OrmFactory<Activity> activityFactory;
+    private static OrmFactory<Entity> entityFactory;
 
     private List<String> activityIRIs;
     private List<String> entityIRIs;
     private final String ACTIVITY_NAMESPACE = "http://test.org/activities#";
     private final String ENTITY_NAMESPACE = "http://test.org/entities#";
     private final String NULL_ACT_IRI = "http://test.org/activities#ProvActNull";
+    private final String USER_IRI = "http://test.org/users#" + UsernameTestFilter.USERNAME;
     private Map<String, List<String>> entityMap;
 
-    // Mock services used in server
-    private static ProvRest rest;
     private static ValueFactory vf;
-    private static ModelFactory mf;
     private static ProvenanceService provService;
     private static RepositoryManager repositoryManager;
+    private static EngineManager engineManager;
+    private static PDP pdp;
     private static MemoryRepositoryWrapper repo;
+    private static Request request;
+    private static User user;
 
     @BeforeClass
     public static void startServer() {
         vf = getValueFactory();
-        mf = getModelFactory();
 
         provService = Mockito.mock(ProvenanceService.class);
-        
+        pdp = Mockito.mock(PDP.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        request = Mockito.mock(Request.class);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + com.mobi.rest.util.UsernameTestFilter.USERNAME));
+
         repositoryManager = Mockito.mock(RepositoryManager.class);
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
 
-        rest = new ProvRest();
-        rest.setProvService(provService);
-        rest.setRepositoryManager(repositoryManager);
+        activityFactory = getRequiredOrmFactory(Activity.class);
+        entityFactory = getRequiredOrmFactory(Entity.class);
+
+        // Mock services used in server
+        ProvRest rest = new ProvRest();
+        injectOrmFactoryReferencesIntoService(rest);
+        rest.provService = provService;
+        rest.repositoryManager = repositoryManager;
+        rest.pdp = pdp;
+        rest.engineManager = engineManager;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -124,10 +147,7 @@ public class ProvRestTest extends MobiRestTestCXF {
     @Before
     public void setUpMocks() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
-        reset(provService);
-
-        activityFactory = getRequiredOrmFactory(Activity.class);
-        entityFactory = getRequiredOrmFactory(Entity.class);
+        reset(provService, pdp);
 
         String provData = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/prov-data.ttl")), StandardCharsets.UTF_8);
         activityIRIs = IntStream.range(0, 10)
@@ -153,6 +173,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
             conn.add(Rio.parse(new ByteArrayInputStream(provData.getBytes()), "", RDFFormat.TURTLE));
         }
 
@@ -166,6 +187,10 @@ public class ProvRestTest extends MobiRestTestCXF {
             entityMap.get(activity.getResource().stringValue()).forEach(entityIRI -> entityFactory.createNew(vf.createIRI(entityIRI), activity.getModel()));
             return Optional.of(activity);
         });
+
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(pdp.createRequest(anyList(), anyMap(), anyList(), anyMap(), anyList(), anyMap())).thenReturn(request);
+        when(pdp.filter(eq(request), any(IRI.class))).thenReturn(new HashSet<>(entityIRIs.subList(0, entityIRIs.size() - 1)));
     }
 
     @After
@@ -187,6 +212,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "0");
         verify(provService, times(0)).getActivity(any(Resource.class));
+        verify(pdp, times(0)).filter(eq(request), any(IRI.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertActivities(result, new ArrayList<>());
@@ -203,6 +229,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "10");
         verify(provService, times(10)).getActivity(any(Resource.class));
+        verify(pdp, times(0)).filter(eq(request), any(IRI.class));
         try {
             List<String> expected = new ArrayList<>(activityIRIs);
             Collections.reverse(expected);
@@ -225,6 +252,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         assertTrue(response.hasLink("prev"));
         assertTrue(response.hasLink("next"));
         verify(provService, times(2)).getActivity(any(Resource.class));
+        verify(pdp, times(0)).filter(eq(request), any(IRI.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertActivities(result, Stream.of(activityIRIs.get(7), activityIRIs.get(6)).collect(Collectors.toList()));
@@ -242,6 +270,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "6");
         verify(provService, times(6)).getActivity(any(Resource.class));
+        verify(pdp, times(0)).filter(eq(request), any(IRI.class));
         try {
             List<String> expected = Stream.of(activityIRIs.get(2), activityIRIs.get(4), activityIRIs.get(5), activityIRIs.get(6), activityIRIs.get(8), activityIRIs.get(9)).collect(Collectors.toList());
             Collections.reverse(expected);
@@ -260,12 +289,38 @@ public class ProvRestTest extends MobiRestTestCXF {
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "3");
         verify(provService, times(3)).getActivity(any(Resource.class));
+        verify(pdp, times(0)).filter(eq(request), any(IRI.class));
         try {
             List<String> expected = Stream.of(activityIRIs.get(0), activityIRIs.get(1), activityIRIs.get(5)).collect(Collectors.toList());
             Collections.reverse(expected);
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertActivities(result, expected);
             assertEntities(result, Stream.of(entityIRIs.get(0)).collect(Collectors.toList()));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getActivitiesWithRecords() {
+        // Setup:
+        try (RepositoryConnection conn = repo.getConnection()) {
+            entityIRIs.forEach(iri -> conn.add(vf.createIRI(iri), RDF.TYPE, vf.createIRI(Record.TYPE)));
+        }
+
+        Response response = target().path("provenance-data").request().get();
+        assertEquals(response.getStatus(), 200);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "8");
+        verify(provService, times(8)).getActivity(any(Resource.class));
+        verify(pdp).createRequest(anyList(), anyMap(), anyList(), anyMap(), anyList(), anyMap());
+        verify(pdp).filter(eq(request), any(IRI.class));
+        try {
+            List<String> expected = Stream.of(activityIRIs.get(0), activityIRIs.get(1), activityIRIs.get(2), activityIRIs.get(3), activityIRIs.get(4), activityIRIs.get(5), activityIRIs.get(6), activityIRIs.get(9)).collect(Collectors.toList());
+            Collections.reverse(expected);
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertActivities(result, expected);
+            assertEntities(result, entityIRIs.subList(0, entityIRIs.size() - 1));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
