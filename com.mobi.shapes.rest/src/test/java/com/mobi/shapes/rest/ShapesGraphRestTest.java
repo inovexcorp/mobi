@@ -176,7 +176,6 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         record = recordFactory.createNew(recordId);
         branch = branchFactory.createNew(branchId);
-        user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
         record.setMasterBranch(branch);
         record.setShapesGraphIRI(shapesGraphId);
         commit = commitFactory.createNew(commitId);
@@ -206,9 +205,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(catalogManager.getMasterBranch(any(), any())).thenReturn(branch);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), eq(user))).thenReturn(Optional.of(inProgressCommit));
-        when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenAnswer(i -> {
-            return i.getArgument(1, Model.class);
-        });
+        when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenAnswer(i -> i.getArgument(1, Model.class));
 
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
     }
