@@ -1,10 +1,14 @@
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
-SELECT (COUNT(DISTINCT ?activity) as ?count)
+SELECT DISTINCT ?activity ?entity ?repoId
 WHERE {
 	?activity a prov:Activity ;
 	    prov:wasAssociatedWith ?agent ;
+        prov:endedAtTime ?end ;
 	    prov:used|prov:invalidated|prov:generated ?entity .
+
+    ?entity prov:atLocation ?repoId .
 
 	%ENTITY_FILTER%
 }
+ORDER BY DESC(?end)

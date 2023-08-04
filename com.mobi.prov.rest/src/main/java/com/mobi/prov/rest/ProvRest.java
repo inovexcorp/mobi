@@ -24,14 +24,19 @@ package com.mobi.prov.rest;
  */
 
 import static com.mobi.rest.util.LinksUtils.validateParams;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.prov.api.ProvActivityAction;
@@ -42,6 +47,10 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.ontologies.policy.Read;
+import com.mobi.security.policy.api.xacml.XACML;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -51,13 +60,14 @@ import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
@@ -72,12 +82,18 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -96,49 +112,47 @@ public class ProvRest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProvRest.class);
 
-    private ProvenanceService provService;
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private RepositoryManager repositoryManager;
+    @Reference
+    protected ProvenanceService provService;
 
-    private static final String GET_ACTIVITIES_QUERY;
-    private static final String GET_ACTIVITIES_COUNT_QUERY;
+    @Reference
+    protected RepositoryManager repositoryManager;
+
+    @Reference
+    protected RecordFactory recordFactory;
+
+    @Reference
+    protected PDP pdp;
+
+    @Reference
+    protected EngineManager engineManager;
+
+    private static final String GET_DISTINCT_ACTIVITIES_QUERY;
     private static final String GET_ENTITIES_QUERY;
-    private static final String ACTIVITY_COUNT_BINDING = "count";
     private static final String ACTIVITY_BINDING = "activity";
+    private static final String ENTITY_BINDING = "entity";
+    private static final String REPO_ID_BINDING = "repoId";
     private static final String ENTITY_FILTER = "%ENTITY_FILTER%";
     private static final String AGENT_BINDING = "agent";
 
     static {
         try {
-            GET_ACTIVITIES_COUNT_QUERY = IOUtils.toString(
-                    ProvRest.class.getResourceAsStream("/get-activities-count.rq"),
-                    StandardCharsets.UTF_8
-            );
-            GET_ACTIVITIES_QUERY = IOUtils.toString(
-                    ProvRest.class.getResourceAsStream("/get-activities.rq"),
+            GET_DISTINCT_ACTIVITIES_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(ProvRest.class.getResourceAsStream("/get-distinct-activities.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ENTITIES_QUERY = IOUtils.toString(
-                    ProvRest.class.getResourceAsStream("/get-entities.rq"),
+                    Objects.requireNonNull(ProvRest.class.getResourceAsStream("/get-entities.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
         }
-    }
-
-    @Reference
-    void setProvService(ProvenanceService provService) {
-        this.provService = provService;
-    }
-
-    @Reference
-    void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
     }
 
     /**
@@ -163,7 +177,7 @@ public class ProvRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
-    public Response getActivities(
+    public Response getActivities(@Context HttpServletRequest servletRequest,
             @Context UriInfo uriInfo,
             @Parameter(description = "An entity IRI to filter the results by", required = false)
             @QueryParam("entity") String entityIri,
@@ -174,62 +188,138 @@ public class ProvRest {
             @DefaultValue("0") @QueryParam("offset") int offset,
             @Parameter(schema = @Schema(type = "integer", description = "The offset for the page", required = false))
             @DefaultValue("50") @QueryParam("limit") int limit) {
+        User user = getActiveUser(servletRequest, engineManager);
         validateParams(limit, offset);
         Resource entity = null;
-        if ( StringUtils.isNotEmpty(entityIri)) {
+        if (StringUtils.isNotEmpty(entityIri)) {
             entity = vf.createIRI(entityIri);
         }
         Resource agent = null;
-        if ( StringUtils.isNotEmpty(agentIri)) {
+        if (StringUtils.isNotEmpty(agentIri)) {
             agent = vf.createIRI(agentIri);
         }
-        List<Activity> activityList = new ArrayList<>();
         try (RepositoryConnection conn = provService.getConnection()) {
             StopWatch watch = new StopWatch();
-            LOG.trace("Start collecting prov activities count");
+            LOG.trace("Start collecting initial prov activities data");
             watch.start();
-            TupleQuery countQuery = conn.prepareTupleQuery(replaceEntityFilter(GET_ACTIVITIES_COUNT_QUERY, entity));
-            replaceAgentFilter(countQuery, agent);
-            TupleQueryResult countResult = countQuery.evaluate();
-            int totalCount;
-            BindingSet bindingSet;
-            if (!countResult.hasNext()
-                    || !(bindingSet = countResult.next()).getBindingNames().contains(ACTIVITY_COUNT_BINDING)
-                    || (totalCount = Bindings.requiredLiteral(bindingSet, ACTIVITY_COUNT_BINDING).intValue()) == 0) {
+            TupleQuery distinctQuery = conn.prepareTupleQuery(replaceEntityFilter(GET_DISTINCT_ACTIVITIES_QUERY,
+                    entity));
+            replaceAgentFilter(distinctQuery, agent);
+            Set<Resource> activities = new LinkedHashSet<>();
+            Map<String, List<String>> repoToEntities = new HashMap<>();
+            Map<Resource, List<Resource>> entityToActivities = new HashMap<>();
+            try (TupleQueryResult distinctResult = distinctQuery.evaluate()) {
+                if (!distinctResult.hasNext()) {
+                    JSONObject object = new JSONObject();
+                    object.element("activities", new JSONArray());
+                    object.element("entities", new JSONArray());
+                    return Response.ok(object).header("X-Total-Count", 0).build();
+                }
+                distinctResult.forEach(bindings -> {
+                    Resource activityIRI = Bindings.requiredResource(bindings, ACTIVITY_BINDING);
+                    Resource entityIRI = Bindings.requiredResource(bindings, ENTITY_BINDING);
+                    String repoId = Bindings.requiredLiteral(bindings, REPO_ID_BINDING).stringValue();
+                    activities.add(activityIRI);
+                    repoToEntities.putIfAbsent(repoId, new ArrayList<>());
+                    if (!repoToEntities.get(repoId).contains("<" + entityIRI + ">")) {
+                        repoToEntities.get(repoId).add("<" + entityIRI + ">");
+                    }
+                    entityToActivities.putIfAbsent(entityIRI, new ArrayList<>());
+                    entityToActivities.get(entityIRI).add(activityIRI);
+                });
+            } finally {
                 watch.stop();
-                countResult.close();
-                LOG.trace("End collecting prov activities count: " + watch.getTime() + "ms");
-                return Response.ok(createReturnObj(activityList)).header("X-Total-Count", 0).build();
+                LOG.trace("End collecting initial prov activities data: " + watch.getTime() + "ms");
+                watch.reset();
             }
-            watch.stop();
-            LOG.trace("End collecting prov activities count: " + watch.getTime() + "ms");
-            watch.reset();
+
+            Model entitiesModel = mf.createEmptyModel();
+            repoToEntities.keySet().forEach(repoId -> {
+                LOG.trace("Start collecting entities for prov activities in " + repoId);
+                watch.start();
+                OsgiRepository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
+                        new IllegalStateException("Repository " + repoId + " could not be found"));
+                try (RepositoryConnection entityConn = repo.getConnection()) {
+                    String entityQueryStr = GET_ENTITIES_QUERY.replace("#ENTITIES#",
+                            String.join(" ", repoToEntities.get(repoId)));
+                    GraphQuery entityQuery = entityConn.prepareGraphQuery(entityQueryStr);
+                    entitiesModel.addAll(QueryResults.asModel(entityQuery.evaluate(), mf));
+                    watch.stop();
+                    LOG.trace("End collecting entities for prov activities in " + repoId + ": "
+                            + watch.getTime() + "ms");
+                    watch.reset();
+                }
+            });
+
+            // Filter list if any entities are Records
+            Collection<Record> records = recordFactory.getAllExisting(entitiesModel);
+            if (records.size() > 0) {
+                LOG.trace("Entities contain records. Executing access control filtering.");
+                watch.start();
+                IRI subjectId = (IRI) user.getResource();
+                IRI actionId = vf.createIRI(Read.TYPE);
+
+                List<IRI> resourceIds = records.stream().map(Record::getResource).map(resource -> (IRI) resource)
+                        .collect(Collectors.toList());
+                Map<String, Literal> subjectAttrs = Collections.singletonMap(XACML.SUBJECT_ID,
+                        vf.createLiteral(subjectId.stringValue()));
+                Map<String, Literal> actionAttrs = Collections.singletonMap(XACML.ACTION_ID,
+                        vf.createLiteral(actionId.stringValue()));
+
+                Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
+                        List.of(actionId), actionAttrs);
+
+                Set<String> viewableRecords = pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
+                entityToActivities.keySet().forEach(entityIRI -> {
+                    if (!viewableRecords.contains(entityIRI.stringValue())) {
+                        LOG.trace("Removing record " + entityIRI + " from return set");
+                        entitiesModel.remove(entityIRI, null, null);
+                        List<Resource> activityIRIsToRemove = entityToActivities.get(entityIRI);
+                        LOG.trace("Removing activities " + activityIRIsToRemove + " from return set");
+                        activityIRIsToRemove.forEach(activities::remove);
+                    }
+                });
+                watch.stop();
+                LOG.trace("End access control filtering: " + watch.getTime() + "ms");
+                watch.reset();
+            }
+
             LOG.trace("Start collecting prov activities");
             watch.start();
-            String queryStr = replaceEntityFilter(GET_ACTIVITIES_QUERY, entity)
-                    + "\nLIMIT " + limit + "\nOFFSET " + offset;
-            TupleQuery query = conn.prepareTupleQuery(queryStr);
-            replaceAgentFilter(query, agent);
-            TupleQueryResult result = query.evaluate();
-            result.forEach(bindings -> {
-                Resource resource = vf.createIRI(Bindings.requiredResource(bindings, ACTIVITY_BINDING).stringValue());
-                Activity fullActivity = provService.getActivity(resource).orElseThrow(() ->
+            Model finalEntitiesModel = mf.createEmptyModel();
+            List<Activity> activityList = new ArrayList<>();
+            activities.stream().skip(offset).limit(limit).forEach(activityIRI -> {
+                Activity fullActivity = provService.getActivity(activityIRI).orElseThrow(() ->
                         ErrorUtils.sendError("Activity could not be found", Response.Status.INTERNAL_SERVER_ERROR));
                 activityList.add(fullActivity);
+                Model entityModel = mf.createEmptyModel();
+                entityModel.addAll(fullActivity.getModel());
+                entityModel.remove(fullActivity.getResource(), null, null);
+                finalEntitiesModel.addAll(entityModel);
+                entityModel.subjects()
+                        .forEach(entityIRI -> finalEntitiesModel.addAll(entitiesModel.filter(entityIRI, null, null)));
             });
+            JSONArray activityArr = new JSONArray();
+            activityList.forEach(activity -> {
+                Model tempModel = mf.createEmptyModel();
+                tempModel.addAll(activity.getModel());
+                Model activityModel = tempModel.filter(activity.getResource(), null, null);
+                activityArr.add(RestUtils.getObjectFromJsonld(RestUtils.modelToJsonld(activityModel)));
+            });
+            JSONObject object = new JSONObject();
+            object.element("activities", activityArr);
+            object.element("entities", RestUtils.modelToJsonld(finalEntitiesModel));
             watch.stop();
             LOG.trace("End collecting prov activities: " + watch.getTime() + "ms");
-            watch.reset();
-            Links links = LinksUtils.buildLinks(uriInfo, activityList.size(), totalCount, limit, offset);
-            Response.ResponseBuilder response = Response.ok(createReturnObj(activityList))
-                    .header("X-Total-Count", totalCount);
+
+            Links links = LinksUtils.buildLinks(uriInfo, activityList.size(), activities.size(), limit, offset);
+            Response.ResponseBuilder response = Response.ok(object).header("X-Total-Count", activities.size());
             if (links.getNext() != null) {
                 response = response.link(links.getBase() + links.getNext(), "next");
             }
             if (links.getPrev() != null) {
                 response = response.link(links.getBase() + links.getPrev(), "prev");
             }
-            countResult.close();
             return response.build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -272,6 +362,9 @@ public class ProvRest {
     }
 
     /**
+     * Gets a list of the types of Activities within the system along with the associated "action word" to be used for
+     * display and the expected predicate to follow to find associated entities.
+     *
      * @return Returns a JSON object of the action words, predicate, and types.
      */
     @GET
@@ -299,51 +392,6 @@ public class ProvRest {
         } catch (IllegalStateException | JsonProcessingException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private JSONObject createReturnObj(List<Activity> activities) {
-        JSONArray activityArr = new JSONArray();
-        Model entitiesModel = mf.createEmptyModel();
-        Map<String, List<String>> repoToEntities = new HashMap<>();
-        activities.forEach(activity -> {
-            Model entityModel = mf.createEmptyModel();
-            entityModel.addAll(activity.getModel());
-            entityModel.remove(activity.getResource(), null, null);
-            entitiesModel.addAll(entityModel);
-            entityModel.filter(null, vf.createIRI("http://www.w3.org/ns/prov#atLocation"), null).forEach(statement -> {
-                Resource entityIRI = statement.getSubject();
-                String repoId = statement.getObject().stringValue();
-                if (repoToEntities.containsKey(repoId)) {
-                    repoToEntities.get(repoId).add("<" + entityIRI + ">");
-                } else {
-                    repoToEntities.put(repoId, new ArrayList<>(Collections.singletonList("<" + entityIRI + ">")));
-                }
-            });
-            Model tempModel = mf.createEmptyModel();
-            tempModel.addAll(activity.getModel());
-            Model activityModel = tempModel.filter(activity.getResource(), null, null);
-            activityArr.add(RestUtils.getObjectFromJsonld(RestUtils.modelToJsonld(activityModel)));
-        });
-        StopWatch watch = new StopWatch();
-        repoToEntities.keySet().forEach(repoId -> {
-            LOG.trace("Start collecting entities for prov activities in " + repoId);
-            watch.start();
-            OsgiRepository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
-                    new IllegalStateException("Repository " + repoId + " could not be found"));
-            try (RepositoryConnection entityConn = repo.getConnection()) {
-                String entityQueryStr = GET_ENTITIES_QUERY.replace("#ENTITIES#",
-                        String.join(" ", repoToEntities.get(repoId)));
-                GraphQuery entityQuery = entityConn.prepareGraphQuery(entityQueryStr);
-                entitiesModel.addAll(QueryResults.asModel(entityQuery.evaluate(), mf));
-                watch.stop();
-                LOG.trace("End collecting entities for prov activities in " + repoId + ": " + watch.getTime() + "ms");
-                watch.reset();
-            }
-        });
-        JSONObject object = new JSONObject();
-        object.element("activities", activityArr);
-        object.element("entities", RestUtils.modelToJsonld(entitiesModel));
-        return object;
     }
 
     private String replaceEntityFilter(String query, @Nullable Resource entity) {
