@@ -171,6 +171,7 @@ describe('Merge Request View component', function() {
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
         userManagerStub.isAdminUser.and.returnValue(false);
+        ontologyStateStub.removeBranch.and.returnValue(of(null));
     });
 
     afterEach(function() {
