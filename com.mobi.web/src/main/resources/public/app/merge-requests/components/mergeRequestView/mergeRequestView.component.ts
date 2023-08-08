@@ -163,10 +163,11 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 switchMap(() => {
                     if (removeSource) {
                         return this.cm.deleteRecordBranch(requestToAccept.recordIri, sourceBranchId, localCatalogId)
-                            .pipe(map(() => {
+                            .pipe(switchMap(() => {
                                 if (some(this.os.list, {versionedRdfRecord: {recordId: requestToAccept.recordIri}})) {
-                                    this.os.removeBranch(requestToAccept.recordIri, sourceBranchId);
+                                    return this.os.removeBranch(requestToAccept.recordIri, sourceBranchId);
                                 }
+                                return of(null);
                             }));
                     }
                     return of(null);
