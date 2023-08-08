@@ -48,7 +48,7 @@ export class CreateBranchOverlayComponent implements OnInit {
     catalogId: string;
     
     createForm = this.fb.group({
-        title: ['', Validators.required],
+        title: ['', [Validators.required, Validators.maxLength(150)]],
         description: [''],
     });
     

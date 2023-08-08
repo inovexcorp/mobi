@@ -23,11 +23,12 @@
 <h1 mat-dialog-title>Edit Branch</h1>
 <form mat-dialog-content [formGroup]="editBranchForm">
     <error-display *ngIf="error">{{error}}</error-display>
-    <mat-form-field class="w-100">
+    <mat-form-field class="w-100 mb-2">
         <mat-label>Title</mat-label>
         <input matInput type="text" name="title" formControlName="title" required focus/>
+        <mat-error *ngIf="editBranchForm.get('title').hasError('maxlength')">Cannot exceed 150 characters</mat-error>
     </mat-form-field>
-    <mat-form-field class="w-100">
+    <mat-form-field class="w-100 mb-2">
         <mat-label>Description</mat-label>
         <textarea matInput name="description" formControlName="description"></textarea>
     </mat-form-field>
