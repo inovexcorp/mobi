@@ -23,10 +23,11 @@
 <h1 mat-dialog-title>Create New Branch</h1>
 <form mat-dialog-content [formGroup]="createForm">
     <error-display *ngIf="error">{{error}}</error-display>
-    <mat-form-field class="w-100">
+    <mat-form-field class="w-100 mb-2">
         <input matInput placeholder="Title" name="title" type="text" formControlName="title" required>
+        <mat-error *ngIf="createForm.get('title').hasError('maxlength')">Cannot exceed 150 characters</mat-error>
     </mat-form-field>
-    <mat-form-field class="w-100">
+    <mat-form-field class="w-100 mb-2">
         <textarea matInput placeholder="Description" formControlName="description"></textarea>
     </mat-form-field>
 </form>

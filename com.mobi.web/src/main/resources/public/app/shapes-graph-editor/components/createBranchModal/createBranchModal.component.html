@@ -23,11 +23,12 @@
 <div class="create-branch-modal">
     <h1 mat-dialog-title>Create Branch</h1>
     <div mat-dialog-content [formGroup]="createBranchForm">
-        <mat-form-field class="w-100">
+        <mat-form-field class="w-100 mb-2">
             <mat-label>Title</mat-label>
             <input matInput name="title" formControlName="title" required/>
+            <mat-error *ngIf="createBranchForm.get('title').hasError('maxlength')">Cannot exceed 150 characters</mat-error>
         </mat-form-field>
-        <mat-form-field class="w-100">
+        <mat-form-field class="w-100 mb-2">
             <mat-label>Description</mat-label>
             <textarea matInput name="description" formControlName="description"></textarea>
         </mat-form-field>

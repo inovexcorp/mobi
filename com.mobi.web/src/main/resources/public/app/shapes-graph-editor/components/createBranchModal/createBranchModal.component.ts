@@ -49,7 +49,7 @@ export class CreateBranchModal {
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
     createBranchForm = this.fb.group({
-        title: ['', Validators.required],
+        title: ['', [Validators.required, Validators.maxLength(150)]],
         description: ['']
     });
 
