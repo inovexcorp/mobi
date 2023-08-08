@@ -82,6 +82,7 @@ import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
@@ -290,8 +291,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public <T extends Thing> Optional<T> optObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
-        Model model = QueryResults.asModel(conn.getStatements(null, null, null, id), mf);
-        return factory.getExisting(id, model);
+        try(RepositoryResult repositoryResult = conn.getStatements(null, null, null, id)){
+            Model model = QueryResults.asModel(repositoryResult, mf);
+            return factory.getExisting(id, model);
+        } catch (Exception e) {
+            throw new MobiException(e);
+        }
     }
 
     @Override
