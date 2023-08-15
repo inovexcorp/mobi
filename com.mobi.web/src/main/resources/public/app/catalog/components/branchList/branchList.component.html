@@ -36,6 +36,7 @@
                     [commitId]="util.getPropertyId(branch, catalogPrefix + 'head')"
                     [recordId]="recordId"
                     [branches]="branches"
+                    [type]="cm.getType(record)"
                     graph>
                 </commit-history-table>
             </ng-template>

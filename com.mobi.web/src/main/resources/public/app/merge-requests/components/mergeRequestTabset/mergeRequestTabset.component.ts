@@ -24,6 +24,7 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { ONTOLOGYEDITOR } from '../../../prefixes';
 
 /**
  * @class merge-requests.MergeRequestTabsetComponent
@@ -48,6 +49,7 @@ export class MergeRequestTabsetComponent implements OnInit {
     @Output() requestChange = new EventEmitter<MergeRequest>();
 
     constructor(public state: MergeRequestsStateService) {}
+    
     getEntityName(iri: string): string {
         return this.state.getEntityNameLabel(iri);
     }

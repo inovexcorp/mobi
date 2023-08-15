@@ -40,6 +40,7 @@ import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { UtilService } from '../../services/util.service';
 import { Commit } from '../../models/commit.interface';
 import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
+import { ONTOLOGYEDITOR } from '../../../prefixes';
 
 describe('Commit Info Overlay component', function() {
     let component: CommitInfoOverlayComponent;
@@ -55,7 +56,7 @@ describe('Commit Info Overlay component', function() {
     const commitId = 'commitId';
     const ontRecordId = 'ontRecordId';
     const emptyObj: JSONLDObject = {'@id': '', '@type': []};
-    const data: {commit: Commit, ontRecordId: string} = {
+    const data: {commit: Commit, ontRecordId: string, type: string} = {
         commit: {
             id: commitId,
             creator: undefined,
@@ -64,7 +65,8 @@ describe('Commit Info Overlay component', function() {
             base: '',
             auxiliary: ''
         },
-        ontRecordId
+        ontRecordId,
+        type: ONTOLOGYEDITOR + 'OntologyRecord'
     };
 
     beforeEach(async () => {
@@ -176,7 +178,8 @@ describe('Commit Info Overlay component', function() {
                                 base: '',
                                 auxiliary: ''
                             },
-                            ontRecordId: 'recordId'
+                            ontRecordId: 'recordId',
+                            type: ONTOLOGYEDITOR + 'OntologyRecord'
                         };
                         fixture.detectChanges();
                         await fixture.whenStable();
@@ -214,7 +217,8 @@ describe('Commit Info Overlay component', function() {
                             base: '',
                             auxiliary: ''
                         },
-                        ontRecordId: ''
+                        ontRecordId: '',
+                        type: ''
                     };
                     expect(component.additions).toEqual([]);
                     fixture.detectChanges();
@@ -239,7 +243,8 @@ describe('Commit Info Overlay component', function() {
                         base: '',
                         auxiliary: ''
                     },
-                    ontRecordId: ''
+                    ontRecordId: '',
+                    type: ''
                 };
                 fixture.detectChanges();
                 await fixture.whenStable();

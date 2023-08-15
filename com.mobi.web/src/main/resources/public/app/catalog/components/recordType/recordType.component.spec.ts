@@ -28,7 +28,6 @@ import { MockProvider } from 'ng-mocks';
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { CATALOG } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { UtilService } from '../../../shared/services/util.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -73,16 +72,6 @@ describe('Record Type component', function() {
         utilStub = null;
     });
 
-    describe('initializes correctly on record change', function() {
-        it('if it is a recognized type', function() {
-            component.record = {'@id': '', '@type': ['core', 'typeA']};
-            expect(component.type).toEqual('typeA');
-        });
-        it('if it is not a recognized type', function() {
-            component.record = {'@id': '', '@type': ['test']};
-            expect(component.type).toEqual(CATALOG + 'Record');                
-        });
-    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.record-type')).length).toEqual(1);

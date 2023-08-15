@@ -38,6 +38,7 @@ import { GitAction } from '../../models/git-action.interface';
 import { GitgraphCommitOptions } from '@gitgraph/core';
 import { BranchNames } from '../../models/branch-names.interface';
 import { Tag } from '../../../shared/models/tag.interface';
+import { ONTOLOGYEDITOR } from '../../../prefixes';
 
 describe('CommitHistoryGraphComponent', () => {
   let component: CommitHistoryGraphComponent;
@@ -49,6 +50,7 @@ describe('CommitHistoryGraphComponent', () => {
   let svgElementHelperServiceMock: jasmine.SpyObj<SVGElementHelperService>;
   let commitId: string;
   let recordId: string;
+  let type: string;
   let commit: Commit;
   let commits: Commit[];
   let tag1: Tag;
@@ -83,6 +85,7 @@ describe('CommitHistoryGraphComponent', () => {
     svgElementHelperServiceMock = TestBed.inject(SVGElementHelperService) as jasmine.SpyObj<SVGElementHelperService>;
 
     commitId = 'commitId';
+    type = ONTOLOGYEDITOR + 'OntologyRecord';
     branchNames = [
         {
           'name': 'MASTER'
@@ -136,6 +139,7 @@ describe('CommitHistoryGraphComponent', () => {
       },
     ];
     component.tags = [tag1, tag2];
+    component.type = type;
     fixture.detectChanges();
   });
   it('should create', () => {
@@ -352,7 +356,7 @@ describe('CommitHistoryGraphComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(matDialogMock.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {
-            data: { commit: commit, ontRecordId: recordId }
+            data: { commit: commit, ontRecordId: recordId, type: type }
         });
     });
     it('reset clears gitgraph and clears branches', async function() {

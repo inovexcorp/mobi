@@ -85,11 +85,11 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
             this.os.listItem.merge.startIndex = 0;
         }
     }
-    getEntityName(entityIRI: string, os = this.os): string {
+    getEntityName(entityIRI: string): string {
         if (this.os && Object.prototype.hasOwnProperty.call(this.os,'listItem')) {
-            return os.getEntityNameByListItem(entityIRI, os.listItem);
+            return this.os.getEntityNameByListItem(entityIRI, this.os.listItem);
         } else {
-            return os.getEntityNameByListItem(entityIRI);
+            return this.os.getEntityNameByListItem(entityIRI);
         }
 
     }

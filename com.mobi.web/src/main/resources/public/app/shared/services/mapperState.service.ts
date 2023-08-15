@@ -40,7 +40,7 @@ import {
 } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
-import { DCTERMS, DELIM } from '../../prefixes';
+import { DCTERMS, DELIM, MAPPINGS } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -172,6 +172,12 @@ export class MapperStateService {
      * @type {string}
      */
     mappingSearchString = '';
+
+    /**
+     * A string that that represents the Mapping Record type.
+     * @type {string}
+     */
+    recordType = DELIM + 'MappingRecord'
 
     /**
      * Sets the main state variables back to their default values and resets the values of

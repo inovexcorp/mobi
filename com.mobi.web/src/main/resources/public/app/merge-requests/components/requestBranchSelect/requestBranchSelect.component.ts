@@ -52,6 +52,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
     targetCommitId = '';
     branchTitle = '';
     recordTitle = '';
+    type = ''
     commits = [];
     @Output() emitCommits = new EventEmitter<{commits: Commit[]}>();
 
@@ -61,6 +62,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
         private spinnerSvc: ProgressSpinnerService, public util: UtilService) {}
 
     ngOnInit(): void {
+        this.type = this.cm.getType(this.state.selectedRecord);
         this.recordTitle = this.util.getDctermsValue(this.state.selectedRecord, 'title');
         this.state.clearDifference();
         this.state.sameBranch = false;

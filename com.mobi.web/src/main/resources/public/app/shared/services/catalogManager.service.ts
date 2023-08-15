@@ -22,7 +22,7 @@
  */
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { has, find, get, forEach } from 'lodash';
+import { has, find, get, forEach, difference, includes } from 'lodash';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { Observable, throwError, of, forkJoin } from 'rxjs';
 
@@ -1167,6 +1167,11 @@ export class CatalogManagerService {
      */
     isCommit(entity: JSONLDObject): boolean {
         return get(entity, '@type', []).includes(CATALOG + 'Commit');
+    }
+
+    getType(record: JSONLDObject): string {
+        const type = find(difference(this.recordTypes, this.coreRecordTypes), type => includes(get(record, '@type', []), type));
+        return this.util.getBeautifulIRI(type || CATALOG + 'Record');
     }
 
     private _createVersion(recordId: string, catalogId: string, versionConfig: NewConfig): Observable<string> {

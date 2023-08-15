@@ -31,6 +31,7 @@
                 [branches]="os.listItem.branches"
                 [tags]="os.listItem.tags"
                 [headTitle]="getHeadTitle()"
+                [type]="os.type"
                 (commitDotOnClick)="openOntologyAtCommit($event)"
                 (receiveCommits)="commits = $event"
                 dotClickable

@@ -77,6 +77,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
   @Input() headTitle?: string;
   @Input() recordId?: string;
   @Input() commitDotClickable: boolean;
+  @Input() type: string;
   @Input() branches: JSONLDObject[] = [];
   @Input() tags: Tag[] = [];
   @Output() commitDotOnClick = new EventEmitter<Commit>();
@@ -262,7 +263,8 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     this.dialog.open(CommitInfoOverlayComponent, {
         data: {
             commit: find(this.commits, {id: commitId}),
-            ontRecordId: this.recordId
+            ontRecordId: this.recordId,
+            type: this.type
         }
     });
   }

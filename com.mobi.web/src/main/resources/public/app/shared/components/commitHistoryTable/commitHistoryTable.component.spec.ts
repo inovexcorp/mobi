@@ -46,6 +46,7 @@ import { CommitHistoryTableComponent } from './commitHistoryTable.component';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { Tag } from '../../models/tag.interface';
 import { HttpResponse } from '@angular/common/http';
+import { ONTOLOGYEDITOR } from "../../../prefixes";
 
 describe('Commit History Table component', function() {
     let component: CommitHistoryTableComponent;
@@ -109,6 +110,7 @@ describe('Commit History Table component', function() {
             commit: commit,
             commits: [commit],
             recordId: 'record',
+            type: ONTOLOGYEDITOR + 'OntologyRecord',
             tags: [tag]
         };
         component.headTitle = 'title';
@@ -116,6 +118,7 @@ describe('Commit History Table component', function() {
         component.targetId = testData.commitId;
         component.entityId = testData.entityId;
         component.recordId = testData.recordId;
+        component.type = testData.type;
         component.tags = testData.tags;
         spyOn<EventEmitter<Commit[]>>(component.receiveCommits, 'emit');
     });
@@ -215,7 +218,7 @@ describe('Commit History Table component', function() {
             fixture.detectChanges();
             await fixture.whenStable();
             expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {
-                data: { commit: testData.commit, ontRecordId: testData.recordId }
+                data: { commit: testData.commit, ontRecordId: testData.recordId, type: testData.type }
             });
         });
         describe('should get the list of commits', function() {
@@ -444,7 +447,7 @@ describe('Commit History Table component', function() {
 
             const id = element.queryAll(By.css('table tr td.commit-id a'))[0];
             id.triggerEventHandler('click', null);
-            expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {data: {commit: testData.commit, ontRecordId: testData.recordId}});
+            expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {data: {commit: testData.commit, ontRecordId: testData.recordId, type: testData.type}});
         });
     });
 });

@@ -56,6 +56,7 @@
                 <commit-history-table [commitId]="os.listItem.versionedRdfRecord.commitId"
                                       [entityId]="os.listItem.selected['@id']"
                                       [recordId]="os.listItem.versionedRdfRecord.recordId"
+                                      [type]="os.type"
                                       (receiveCommits)="receiveCommits($event)">
                 </commit-history-table>
             </div>
