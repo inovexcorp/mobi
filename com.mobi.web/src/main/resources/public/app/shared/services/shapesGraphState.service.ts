@@ -35,7 +35,7 @@ import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { BRANCHID, COMMITID, SHAPESGRAPHSTATE, TAGID, GRAPHEDITOR, DCTERMS, CATALOG } from '../../prefixes';
+import { BRANCHID, COMMITID, SHAPESGRAPHSTATE, TAGID, GRAPHEDITOR, DCTERMS, CATALOG, SHAPESGRAPHEDITOR } from '../../prefixes';
 import { StateManagerService } from './stateManager.service';
 import { PolicyManagerService } from './policyManager.service';
 import { UtilService } from './util.service';
@@ -48,6 +48,8 @@ import { PolicyEnforcementService } from './policyEnforcement.service';
  */
 @Injectable()
 export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
+    
+    type = SHAPESGRAPHEDITOR + 'ShapesGraphRecord';
 
     constructor(protected sm: StateManagerService,
                 protected cm: CatalogManagerService,

@@ -66,6 +66,7 @@
                                       [tags]="state.listItem.tags"
                                       (receiveCommits)="commits = $event"
                                       [branches]="state.listItem.branches"
+                                      [type]="state.type"
                                       (commitDotOnClick)="openCommit($event)"
                                       dotClickable
                                       graph>

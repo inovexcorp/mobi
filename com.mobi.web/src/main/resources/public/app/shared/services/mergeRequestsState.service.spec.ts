@@ -73,7 +73,8 @@ describe('Merge Requests State service', function() {
         creator: 'creator',
         recordIri: recordId,
         assignees: [],
-        jsonld: request
+        jsonld: request,
+        recordType: ONTOLOGYEDITOR + 'OntologyRecord'
     };
     const headers = {'has-more-results': 'false'};
 
@@ -300,7 +301,7 @@ describe('Merge Requests State service', function() {
                                 expect(copyRequest.targetCommit).toEqual(MERGEREQ + 'targetCommit');
                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(MERGEREQ + 'sourceCommit', MERGEREQ + 'targetCommit', 100, 0);
-                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', MERGEREQ + 'sourceCommit', this.httpResponse);
+                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', MERGEREQ + 'sourceCommit', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
                             });
                         tick();
                     }));
@@ -320,7 +321,7 @@ describe('Merge Requests State service', function() {
                                 expect(copyRequest.targetCommit).toEqual(MERGEREQ + 'targetCommit');
                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(MERGEREQ + 'sourceCommit', MERGEREQ + 'targetCommit', 100, 0);
-                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', MERGEREQ + 'sourceCommit', this.httpResponse);
+                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', MERGEREQ + 'sourceCommit', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
                             });
                         tick();
                     }));
@@ -445,7 +446,7 @@ describe('Merge Requests State service', function() {
                                                 expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
                                                 expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
                                                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(CATALOG + 'head', CATALOG + 'head', catalogManagerStub.differencePageSize, 0);
-                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse);
+                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
                                                 expect(catalogManagerStub.getBranchConflicts).toHaveBeenCalledWith(sourceBranch['@id'], targetBranch['@id'], recordId, catalogId);
                                             }, () => fail('Observable should have resolved'));
                                         tick();
@@ -474,7 +475,7 @@ describe('Merge Requests State service', function() {
                                                 expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
                                                 expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
                                                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(CATALOG + 'head', CATALOG + 'head', catalogManagerStub.differencePageSize, 0);
-                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse);
+                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
                                                 expect(catalogManagerStub.getBranchConflicts).toHaveBeenCalledWith(sourceBranch['@id'], targetBranch['@id'], recordId, catalogId);
                                             });
                                         tick();
@@ -504,7 +505,7 @@ describe('Merge Requests State service', function() {
                                             expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
                                             expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
                                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(CATALOG + 'head', CATALOG + 'head', catalogManagerStub.differencePageSize, 0);
-                                            expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse);
+                                            expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
                                             expect(catalogManagerStub.getBranchConflicts).not.toHaveBeenCalled();
                                         });
                                     tick();
@@ -800,7 +801,7 @@ describe('Merge Requests State service', function() {
     describe('should process a response from getDifference', function() {
         it('unless one is not provided', fakeAsync(function() {
             spyOn(service, 'setDifference');
-            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', undefined)
+            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', undefined, ONTOLOGYEDITOR + 'OntologyRecord')
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(jasmine.stringContaining('Difference is not set'));
                     expect(utilStub.getObjIrisFromDifference).not.toHaveBeenCalled();
@@ -822,7 +823,7 @@ describe('Merge Requests State service', function() {
             it('unless getOntologyEntityNames rejects', fakeAsync(function() {
                 spyOn(service, 'setDifference');
                 ontologyManagerStub.getOntologyEntityNames.and.returnValue(throwError(error));
-                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse)
+                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord')
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
                         expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([this.addObj]);
@@ -846,7 +847,7 @@ describe('Merge Requests State service', function() {
                     },
                 };
                 ontologyManagerStub.getOntologyEntityNames.and.returnValue(of(newNames));
-                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse)
+                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord')
                     .subscribe(() => {
                         expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([this.addObj]);
                         expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([this.delObj]);
@@ -860,7 +861,7 @@ describe('Merge Requests State service', function() {
         it('unless the difference is empty', fakeAsync(function() {
             spyOn(service, 'setDifference');
             const httpResponse = new HttpResponse<CommitDifference>({body: new CommitDifference()});
-            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', httpResponse)
+            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', httpResponse, ONTOLOGYEDITOR + 'OntologyRecord')
                 .subscribe(() => {
                     expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([]);
                     expect(ontologyManagerStub.getOntologyEntityNames).not.toHaveBeenCalled();
@@ -927,22 +928,24 @@ describe('Merge Requests State service', function() {
         describe('when getDifference resolves', function() {
             it('unless processDifferenceResponse rejects', fakeAsync(function() {
                 spyOn(service, 'processDifferenceResponse').and.returnValue(throwError(error));
+                catalogManagerStub.getType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
                 service.updateRequestConfigDifference()
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
                         expect(service.clearDifference).toHaveBeenCalledWith();
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', 100, 0);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse));
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
                     });
                 tick();
             }));
             it('and processDifferenceResponse resolves', fakeAsync(function() {
                 spyOn(service, 'processDifferenceResponse').and.returnValue(of(null));
+                catalogManagerStub.getType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
                 service.updateRequestConfigDifference()
                     .subscribe(() => {
                         expect(service.clearDifference).toHaveBeenCalledWith();
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', 100, 0);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse));
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
                     }, () => fail('Observable should have resolved'));
                 tick();
             }));
@@ -1004,7 +1007,7 @@ describe('Merge Requests State service', function() {
                 expect(utilStub.getPropertyId).toHaveBeenCalledWith(undefined, CATALOG + 'head');
                 expect(service.startIndex).toEqual(paginationDetails.offset);
                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(undefined, undefined, paginationDetails.limit, paginationDetails.offset);
-                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], undefined, jasmine.any(HttpResponse));
+                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], undefined, jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
             describe('and processDifferenceResponse resolves', function() {
@@ -1025,7 +1028,7 @@ describe('Merge Requests State service', function() {
                         expect(utilStub.getPropertyId).toHaveBeenCalledWith({'@id': ''}, CATALOG + 'head');
                         expect(service.startIndex).toEqual(paginationDetails.offset);
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceCommit', 'targetCommit', paginationDetails.limit, paginationDetails.offset);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', 'sourceCommit', jasmine.any(HttpResponse));
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', 'sourceCommit', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
                         expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                     it('with a source and target branch set', fakeAsync(function() {
@@ -1044,11 +1047,12 @@ describe('Merge Requests State service', function() {
                         expect(utilStub.getPropertyId).toHaveBeenCalledWith(targetBranch, CATALOG + 'head');
                         expect(service.startIndex).toEqual(paginationDetails.offset);
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', paginationDetails.limit, paginationDetails.offset);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse));
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
                         expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                 });
                 it('and a request is being created', fakeAsync(function() {
+                    catalogManagerStub.getType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
                     service.requestConfig = {
                         sourceBranchId: sourceBranch['@id'],
                         sourceBranch,
@@ -1071,7 +1075,7 @@ describe('Merge Requests State service', function() {
                     expect(utilStub.getPropertyId).toHaveBeenCalledWith(targetBranch, CATALOG + 'head');
                     expect(service.startIndex).toEqual(paginationDetails.offset);
                     expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', paginationDetails.limit, paginationDetails.offset);
-                    expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse));
+                    expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
                     expect(utilStub.createErrorToast).not.toHaveBeenCalled();
                 }));
             });

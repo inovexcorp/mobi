@@ -61,7 +61,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     @Input() commitId?: string;
     @Input() additions: JSONLDObject[];
     @Input() deletions: JSONLDObject[];
-    @Input() entityNameFunc?: (entityIRI: string, os: OntologyStateService) => string;
+    @Input() entityNameFunc?: (entityIRI: string) => string;
     @Input() hasMoreResults: boolean;
     @Input() startIndex?: number;
 
@@ -107,7 +107,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
             const changesItems: ChangesItem[] = Object.keys(mergedInProgressCommitsMap).map(id => ({
                 id,
                 difference: mergedInProgressCommitsMap[id],
-                entityName: this.entityNameFunc ? this.entityNameFunc(id, this.os) : this.util.getBeautifulIRI(id),
+                entityName: this.entityNameFunc ? this.entityNameFunc(id) : this.util.getBeautifulIRI(id),
                 disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id),
                 showFull: false,
                 resource: undefined,
@@ -121,7 +121,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
         this.showMoreResultsEmitter.emit({limit: this.limit, offset: this.offsetIndex}); // Will trigger ngOnChanges
     }
     getEntityName(entityIRI: string): string {
-        return this.entityNameFunc ? this.entityNameFunc(entityIRI, this.os) : this.os.getEntityNameByListItem(entityIRI);
+        return this.entityNameFunc ? this.entityNameFunc(entityIRI) : this.os.getEntityNameByListItem(entityIRI);
     }
     toggleFull(item: ChangesItem): void {
         if (this.commitId) {

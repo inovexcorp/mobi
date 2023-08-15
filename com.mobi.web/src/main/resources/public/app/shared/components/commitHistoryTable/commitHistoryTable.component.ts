@@ -79,6 +79,7 @@ import { get, find } from 'lodash';
 })
 export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy, DoCheck {
     @Input() commitId: string;
+    @Input() type: string;
     @Input() headTitle?: string;
     @Input() targetId?: string;
     @Input() entityId?: string;
@@ -133,7 +134,8 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         this.dialog.open(CommitInfoOverlayComponent, {
             data: {
                 commit: find(this.commits, {id: commitId}),
-                ontRecordId: this.recordId
+                ontRecordId: this.recordId,
+                type: this.type
             }
         });
     }

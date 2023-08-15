@@ -76,7 +76,7 @@ import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
-import { CATALOG, DCTERMS, ONTOLOGYSTATE, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
+import { CATALOG, DCTERMS, ONTOLOGYSTATE, OWL, RDF, RDFS, SKOS, XSD, ONTOLOGYEDITOR } from '../../prefixes';
 import { OntologyManagerService } from './ontologyManager.service';
 import { OntologyListItem } from '../models/ontologyListItem.class';
 import { OntologyRecordConfig } from '../models/ontologyRecordConfig.interface';
@@ -114,6 +114,7 @@ import { YasguiQuery } from '../models/yasguiQuery.class';
 @Injectable()
 export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     catalogId = '';
+    type = ONTOLOGYEDITOR + 'OntologyRecord';
     // Only the service has access to the subject
     private _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
     private _updateRefsExclude = [

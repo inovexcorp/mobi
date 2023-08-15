@@ -25,7 +25,7 @@ import { Injectable } from '@angular/core';
 import { get, map, uniq, noop, forEach, filter, find, union, concat, merge } from 'lodash';
 import { forkJoin, from, Observable, of, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import { CATALOG, MERGEREQ, OWL } from '../../prefixes';
+import { CATALOG, MERGEREQ, OWL, ONTOLOGYEDITOR } from '../../prefixes';
 
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Conflict } from '../models/conflict.interface';
@@ -239,7 +239,7 @@ export class MergeRequestsStateService {
                     return this.cm.getDifference(request.sourceCommit, request.targetCommit, this.cm.differencePageSize, 0);
                 }),
                 switchMap((response: HttpResponse<CommitDifference>) => {
-                    return this.processDifferenceResponse(request.recordIri, '', request.sourceCommit, response);
+                    return this.processDifferenceResponse(request.recordIri, '', request.sourceCommit, response, request.recordType);
                 }));
         } else {
             return this.mm.getComments(request.jsonld['@id'])
@@ -266,7 +266,7 @@ export class MergeRequestsStateService {
                                         return this.cm.getDifference(request.sourceCommit, request.targetCommit, this.cm.differencePageSize, 0);
                                     }),
                                     switchMap((response: HttpResponse<CommitDifference>) => {
-                                        return this.processDifferenceResponse(request.recordIri, request.sourceBranch['@id'], request.sourceCommit, response);
+                                        return this.processDifferenceResponse(request.recordIri, request.sourceBranch['@id'], request.sourceCommit, response, request.recordType);
                                     }),
                                     switchMap(() => {
                                         return this.cm.getBranchConflicts(request.sourceBranch['@id'], targetIri, request.recordIri, this.catalogId);
@@ -357,7 +357,7 @@ export class MergeRequestsStateService {
      * @return {Observable} An Observable indicating the success of retrieving entityNames
      */
     processDifferenceResponse(recordId: string, sourceBranchId: string, commitId: string,
-        diffResponse: HttpResponse<CommitDifference>): Observable<null> {
+        diffResponse: HttpResponse<CommitDifference>, type: string): Observable<null> {
         if (!diffResponse) {
             return throwError('Difference is not set. Cannot get ontology entity names.');
         }
@@ -366,7 +366,8 @@ export class MergeRequestsStateService {
         const iris = union(diffIris, this.util.getObjIrisFromDifference(difference.additions as JSONLDObject[]), this.util.getObjIrisFromDifference(difference.deletions as JSONLDObject[]));
 
         if (iris.length > 0) {
-            return from(this.om.getOntologyEntityNames(recordId, sourceBranchId, commitId, false, false, iris))
+            if (type === ONTOLOGYEDITOR + 'OntologyRecord') {
+                return from(this.om.getOntologyEntityNames(recordId, sourceBranchId, commitId, false, false, iris))
                 .pipe(
                     switchMap(data => {
                         merge(this.entityNames, data);
@@ -378,6 +379,11 @@ export class MergeRequestsStateService {
                         return throwError(error);
                     })
                 );
+            } else {
+                this.entityNames = {};
+                this.setDifference(diffResponse);
+            }
+            
         } else {
             this.difference = new Difference();
             return of(null);
@@ -423,7 +429,7 @@ export class MergeRequestsStateService {
         return this.cm.getDifference(this.util.getPropertyId(this.requestConfig.sourceBranch, CATALOG + 'head'), this.util.getPropertyId(this.requestConfig.targetBranch, CATALOG + 'head'), this.cm.differencePageSize, 0)
             .pipe(
                 switchMap((response: HttpResponse<CommitDifference>) => {
-                    return this.processDifferenceResponse(this.requestConfig.recordId, this.requestConfig.sourceBranchId, this.util.getPropertyId(this.requestConfig.sourceBranch, CATALOG + 'head'), response);
+                    return this.processDifferenceResponse(this.requestConfig.recordId, this.requestConfig.sourceBranchId, this.util.getPropertyId(this.requestConfig.sourceBranch, CATALOG + 'head'), response, this.selected ? this.selected.recordType : this.cm.getType(this.selectedRecord));
                 }),
                 catchError(errorMessage => {
                     this.clearDifference();
@@ -472,7 +478,7 @@ export class MergeRequestsStateService {
         this.startIndex = paginationDetails.offset;
         this.cm.getDifference(sourceHead, targetHead, paginationDetails.limit, paginationDetails.offset)
             .pipe(switchMap((response: HttpResponse<CommitDifference>) => {
-                return this.processDifferenceResponse(this.selected ? this.selected.recordIri : this.requestConfig.recordId, sourceBranch['@id'], sourceHead, response);
+                return this.processDifferenceResponse(this.selected ? this.selected.recordIri : this.requestConfig.recordId, sourceBranch['@id'], sourceHead, response, this.selected ? this.selected.recordType : this.cm.getType(this.selectedRecord));
             }))
             .subscribe(noop, this.util.createErrorToast);
     }

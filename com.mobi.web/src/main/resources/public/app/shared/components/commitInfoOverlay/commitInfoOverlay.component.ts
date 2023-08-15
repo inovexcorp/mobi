@@ -36,6 +36,7 @@ import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { UtilService } from '../../services/util.service';
 import { EntityNames } from '../../models/entityNames.interface';
 import { Commit } from '../../models/commit.interface';
+import { ONTOLOGYEDITOR } from '../../../prefixes';
 
 /**
  * @class shared.CommitInfoOverlayComponent
@@ -63,7 +64,7 @@ export class CommitInfoOverlayComponent implements OnInit {
     tempDeletions: JSONLDObject[] = [];
 
     constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, 
-                @Inject(MAT_DIALOG_DATA) public data: {ontRecordId: string, commit: Commit},
+                @Inject(MAT_DIALOG_DATA) public data: {ontRecordId: string, commit: Commit, type: string},
                 public util: UtilService, public um: UserManagerService, private cm: CatalogManagerService,
                 private om: OntologyManagerService) {
     }
@@ -83,7 +84,7 @@ export class CommitInfoOverlayComponent implements OnInit {
                     const headers = response.headers;
                     this.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
 
-                    if (this.data.ontRecordId) {
+                    if (this.data.ontRecordId && (this.data.type === ONTOLOGYEDITOR + 'OntologyRecord')) {
                         const diffIris = union(this.tempAdditions.map(obj => obj['@id']), this.tempDeletions.map(obj => obj['@id']));
                         const filterIris = union(diffIris, this.util.getObjIrisFromDifference(this.tempAdditions), this.util.getObjIrisFromDifference(this.tempDeletions));
                         return this.om.getOntologyEntityNames(this.data.ontRecordId, '', this.data.commit.id, false, false, filterIris);
@@ -91,7 +92,7 @@ export class CommitInfoOverlayComponent implements OnInit {
                     return of(null);
                 }),
                 map(data => {
-                    if (data) {
+                    if (data) { // only do this if ontology record, otherwise, set to empty object
                         merge(this.entityNames, data);
                     }
                     this.additions = this.additions.concat(this.tempAdditions);
