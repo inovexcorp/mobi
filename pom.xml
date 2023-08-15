@@ -271,9 +271,9 @@
     </build>
 
     <scm>
-        <connection>scm:git:git@gitlab.inovexcorp.com:matonto/matonto.git</connection>
-        <developerConnection>scm:git:git@gitlab.inovexcorp.com:matonto/matonto.git</developerConnection>
-        <url>http://gitlab.inovexcorp.com/matonto/matonto</url>
+        <connection>scm:git:git@gitlab.inovexcorp.com:matonto/mobi.git</connection>
+        <developerConnection>scm:git:git@gitlab.inovexcorp.com:matonto/mobi.git</developerConnection>
+        <url>https://gitlab.inovexcorp.com/matonto/mobi</url>
         <tag>HEAD</tag>
     </scm>
 </project>
