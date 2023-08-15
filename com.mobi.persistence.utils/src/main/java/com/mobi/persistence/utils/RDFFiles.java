@@ -12,12 +12,12 @@ package com.mobi.persistence.utils;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -76,7 +76,7 @@ public class RDFFiles {
 
     // Duplicate of RDF4j NTRIPLES but with text/plain mimetype removed
     private static final RDFFormat NTRIPLES = new RDFFormat(
-            "N-Triples",Arrays.asList("application/n-triples"), StandardCharsets.UTF_8,
+            "N-Triples", Arrays.asList("application/n-triples"), StandardCharsets.UTF_8,
             List.of("nt"), SimpleValueFactory.getInstance().createIRI("http://www.w3.org/ns/formats/N-Triples"),
             false, false, false);
 
@@ -112,7 +112,7 @@ public class RDFFiles {
      * tempFile. If defaults cannot parse, uses the optionally provided RDFParsers. Upon completion, the provided
      * temporary file is deleted.
      *
-     * @param tempFile The temporary {@link File} to parse into a file of the specified format.
+     * @param tempFile   The temporary {@link File} to parse into a file of the specified format.
      * @param destFormat The {@link RDFFormat} to parse the temporary file into.
      * @return An {@link Optional} of the resulting file. If unsuccessful, returns empty Optional.
      */
@@ -179,10 +179,10 @@ public class RDFFiles {
     /**
      * Attempts to parse the provided temporary file with the given RDFFormat.
      *
-     * @param tempFile The temporary {@link File} to parse.
-     * @param rdfParser The {@link RDFParser} to attempt the parse with.
+     * @param tempFile   The temporary {@link File} to parse.
+     * @param rdfParser  The {@link RDFParser} to attempt the parse with.
      * @param destFormat The desired {@link RDFFormat} of the destination file.
-     * @param path The {@link Path} to write the destination file to.
+     * @param path       The {@link Path} to write the destination file to.
      * @return A boolean indicating the success of the parse operation.
      */
     private static boolean tryParse(File tempFile, RDFParser rdfParser, RDFFormat destFormat, Path path,
@@ -209,6 +209,7 @@ public class RDFFiles {
 
     /**
      * Checks to see if a file is an OWL file format.
+     *
      * @param file The file to test
      * @return boolean true if owl format, false otherwise
      */
@@ -221,6 +222,7 @@ public class RDFFiles {
 
     /**
      * Checks to see if a format is an OWLAPI format.
+     *
      * @param format The format to test
      * @return boolean true if owl format, false otherwise
      */
@@ -251,6 +253,7 @@ public class RDFFiles {
 
     /**
      * Retrieves the {@link RDFFormat} associated with the given file name
+     *
      * @param fileName The name of the file
      * @return An {@link Optional} of the {@link RDFFormat} if found
      */
@@ -260,6 +263,7 @@ public class RDFFiles {
 
     /**
      * Retrieves the {@link RDFFormat} associated with the given mime type
+     *
      * @param mimeType The name of the file
      * @return An {@link Optional} of the {@link RDFFormat} if found
      */
@@ -279,8 +283,7 @@ public class RDFFiles {
     }
 
     private static boolean isGzip(File file) {
-        try {
-            RandomAccessFile raf = new RandomAccessFile(file, "r");
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             int magic = raf.read() & 0xff | (raf.read() << 8) & 0xff00;
             raf.close();
             return magic == GZIPInputStream.GZIP_MAGIC;
@@ -290,7 +293,9 @@ public class RDFFiles {
     }
 
     private static boolean isZip(File file) throws IOException {
-        return new ZipInputStream(new FileInputStream(file)).getNextEntry() != null;
+        try (ZipInputStream data = new ZipInputStream(new FileInputStream(file))) {
+            return data.getNextEntry() != null;
+        }
     }
 
     private static InputStream getInputStream(File file) {

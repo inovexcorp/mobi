@@ -12,12 +12,12 @@ package com.mobi.utils.cli;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -40,6 +40,7 @@ import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -76,12 +77,12 @@ public class ReloadSystemPolicy implements Action {
         Resource policyId = vf.createIRI(fileId);
 
         if (policyManager.getSystemPolicyIds().contains(policyId)) {
-            LOGGER.info("Reloading policy: " + file);
+            LOGGER.info("Reloading policy: {}", file);
             XACMLPolicy oldPolicy = policyManager.getPolicy(policyId)
                     .orElseThrow(() -> new IllegalStateException("Policy can not be retrieved"));
             policyManager.deletePolicy(policyId);
-            String policyContents = new String(Files.newInputStream(file).readAllBytes(), StandardCharsets.UTF_8);
-            try {
+            try (InputStream data = Files.newInputStream(file)) {
+                String policyContents = new String(data.readAllBytes(), StandardCharsets.UTF_8);
                 policyManager.loadSystemPolicyIfAbsent(policyContents);
                 System.out.println("Policy " + policyId.stringValue() + " successfully updated.");
             } catch (Exception e) {

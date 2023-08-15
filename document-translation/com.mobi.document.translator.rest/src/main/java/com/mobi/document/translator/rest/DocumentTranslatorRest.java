@@ -238,9 +238,8 @@ public class DocumentTranslatorRest {
 
     private void cleanupFiles(java.nio.file.Path tempDirectory) {
         if (tempDirectory != null) {
-            try {
-                Files.walk(tempDirectory)
-                        .sorted(Comparator.reverseOrder())
+            try (Stream<java.nio.file.Path> paths = Files.walk(tempDirectory)){
+                paths.sorted(Comparator.reverseOrder())
                         .map(java.nio.file.Path::toFile)
                         .forEach(File::delete);
             } catch (IOException fileException) {

@@ -254,13 +254,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param masterBranchId The Resource of the Master Branch associated with the recordId
      */
     protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
-        try {
-            Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
-                    + File.separator + "policyTemplates" + File.separator + "recordPolicy.xml");
-            String recordPolicy = new String(Files.newInputStream(recordPolicyPath).readAllBytes(),
-                    StandardCharsets.UTF_8);
+        Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                + File.separator + "policyTemplates" + File.separator + "recordPolicy.xml");
+        try (InputStream data = Files.newInputStream(recordPolicyPath)){
+            String recordPolicy = new String(data.readAllBytes(), StandardCharsets.UTF_8);
             String encodedRecordIRI = ResourceUtils.encode(recordId);
-
             String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
                     MASTER_BRANCH_IRI_BINDING};
             String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
@@ -281,14 +279,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param recordPolicyResource The Resource of the Record policy
      */
     protected void writeRecordPolicyPolicy(Resource user, Resource recordId, Resource recordPolicyResource) {
-        try {
-            String encodedRecordIRI = ResourceUtils.encode(recordId);
-            String[] search = {USER_IRI_BINDING, POLICY_IRI_BINDING, ENCODED_POLICY_IRI_BINDING};
-            String[] replace = {user.stringValue(), recordPolicyResource.stringValue(), encodedRecordIRI};
-            Path policyPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
-                    + File.separator + "policyTemplates" + File.separator + "policyPolicy.xml");
-            String policyPolicy = new String(Files.newInputStream(policyPolicyPath).readAllBytes(),
-                    StandardCharsets.UTF_8);
+        String encodedRecordIRI = ResourceUtils.encode(recordId);
+        String[] search = {USER_IRI_BINDING, POLICY_IRI_BINDING, ENCODED_POLICY_IRI_BINDING};
+        String[] replace = {user.stringValue(), recordPolicyResource.stringValue(), encodedRecordIRI};
+        Path policyPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                + File.separator + "policyTemplates" + File.separator + "policyPolicy.xml");
+        try (InputStream data = Files.newInputStream(policyPolicyPath)){
+            String policyPolicy = new String(data.readAllBytes(), StandardCharsets.UTF_8);
             policyPolicy = StringUtils.replaceEach(policyPolicy, search, replace);
             addPolicy(policyPolicy);
         } catch (IOException e) {

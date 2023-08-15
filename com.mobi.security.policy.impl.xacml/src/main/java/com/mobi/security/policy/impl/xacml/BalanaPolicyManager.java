@@ -12,12 +12,12 @@ package com.mobi.security.policy.impl.xacml;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -394,31 +394,33 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             // Initialize policies from the systemPolicies directory if they don't already exist
             Path policiesDirectory = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
                     + File.separator + "systemPolicies");
-            Files.walk(policiesDirectory).forEach(path -> {
-                if (!Files.isDirectory(path)) {
-                    try {
-                        String fileName = URLDecoder.decode(
-                                FilenameUtils.getName(path.getFileName().toString()), StandardCharsets.UTF_8);
-                        String fileId = FilenameUtils.removeExtension(
-                                URLDecoder.decode(fileName, StandardCharsets.UTF_8));
-                        Resource fileIRI = vf.createIRI(fileId);
-                        if (!ConnectionUtils.contains(conn, fileIRI, null, null)) {
-                            VirtualFile file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
-                            addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
-                        } else {
-                            PolicyFile policy = validatePolicy(fileIRI);
-                            VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
-                            if (!file.exists()) {
-                                file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
+            try (Stream<Path> files = Files.walk(policiesDirectory)) {
+                files.forEach(path -> {
+                    if (!Files.isDirectory(path)) {
+                        try {
+                            String fileName = URLDecoder.decode(
+                                    FilenameUtils.getName(path.getFileName().toString()), StandardCharsets.UTF_8);
+                            String fileId = FilenameUtils.removeExtension(
+                                    URLDecoder.decode(fileName, StandardCharsets.UTF_8));
+                            Resource fileIRI = vf.createIRI(fileId);
+                            if (!ConnectionUtils.contains(conn, fileIRI, null, null)) {
+                                VirtualFile file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
                                 addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
+                            } else {
+                                PolicyFile policy = validatePolicy(fileIRI);
+                                VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
+                                if (!file.exists()) {
+                                    file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
+                                    addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
+                                }
                             }
+                            systemPolicies.add(fileIRI);
+                        } catch (IOException e) {
+                            LOG.error("Could not load system policy for: {}", path);
                         }
-                        systemPolicies.add(fileIRI);
-                    } catch (IOException e) {
-                        LOG.error("Could not load system policy for " + path);
                     }
-                }
-            });
+                });
+            }
 
             // Grab fileNames that are already in the repository
             Set<String> fileNames = new HashSet<>();
