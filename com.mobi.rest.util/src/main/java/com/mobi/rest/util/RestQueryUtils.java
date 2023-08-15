@@ -12,12 +12,12 @@ package com.mobi.rest.util;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -72,13 +72,13 @@ import org.eclipse.rdf4j.rio.RDFWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 public class RestQueryUtils {
 
@@ -92,16 +92,16 @@ public class RestQueryUtils {
 
     /**
      * Handle SPARQL Query based on query type.  Can handle SELECT AND CONSTRUCT queries.
-     *
+     * <p>
      * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
-     * @param queryString The SPARQL query to execute.
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param acceptString used to specify certain media types which are acceptable for the response
-     * @param fileName The optional file name for the download file.
-     * @param ontology Ontology to query from.
-     * @param includeImports Should Include Imports for Ontology.
+     * @param acceptString    used to specify certain media types which are acceptable for the response
+     * @param fileName        The optional file name for the download file.
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     public static Response handleQuery(String queryString, String datasetRecordId, String acceptString, String fileName,
@@ -128,18 +128,21 @@ public class RestQueryUtils {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE + ";;;" + ex.getMessage()));
         } catch (MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
     /**
      * Handle SPARQL Query eagerly based on query type. Can handle SELECT AND CONSTRUCT queries.
-     *
+     * <p>
      * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
-     * @param queryString The SPARQL query to execute.
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param mimeType        used to specify certain media types which are acceptable for the response
      * @return SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     public static Response handleQueryEagerly(String queryString, String datasetRecordId, String mimeType,
@@ -170,17 +173,17 @@ public class RestQueryUtils {
      * Handle Select Query. Defaults to json if mimeType is invalid
      * Output: JSON, XLS, XLSX, CSV, TSV
      *
-     * @param queryString The SPARQL query to execute.
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
-     * @param mimeType used to specify certain media types which are acceptable for the response.
-     * @param fileName The optional file name for the download file.
-     * @param ontology Ontology to query from.
-     * @param includeImports Should Include Imports for Ontology.
+     * @param mimeType        used to specify certain media types which are acceptable for the response.
+     * @param fileName        The optional file name for the download file.
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return SPARQL 1.1 ResponseBuilder in the format of ACCEPT Header mime type
      */
     public static Response.ResponseBuilder handleSelectQuery(String queryString, String datasetRecordId,
-                                              String mimeType, String fileName, Ontology ontology,
-                                              boolean includeImports, ConnectionObjects connectionObjects) {
+                                                             String mimeType, String fileName, Ontology ontology,
+                                                             boolean includeImports, ConnectionObjects connectionObjects) {
         StreamingOutput stream;
         String fileExtension;
 
@@ -225,7 +228,7 @@ public class RestQueryUtils {
                 String oldMimeType = mimeType;
                 mimeType = JSON_MIME_TYPE;
                 logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType,
-                         mimeType));
+                        mimeType));
                 stream = getSelectStream(queryString, datasetRecordId, ontology, includeImports, TupleQueryResultFormat.JSON, connectionObjects);
                 break;
         }
@@ -234,7 +237,7 @@ public class RestQueryUtils {
                 .type(mimeType);
 
         if (StringUtils.isNotBlank(fileName)) {
-            builder.header("Content-Disposition", "attachment;filename=" + fileName +  "." + fileExtension);
+            builder.header("Content-Disposition", "attachment;filename=" + fileName + "." + fileExtension);
         }
 
         return builder;
@@ -244,9 +247,9 @@ public class RestQueryUtils {
      * Handle Select Query Eagerly.
      * Output: JSON
      *
-     * @param queryString The SPARQL query to execute.
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param mimeType        used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     private static Response handleSelectQueryEagerly(String queryString, String datasetRecordId, String mimeType,
@@ -261,15 +264,16 @@ public class RestQueryUtils {
 
     /**
      * Get SelectQueryResponse Eagerly.
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     *
+     * @param queryString            The SPARQL query to execute.
+     * @param datasetRecordId        an optional DatasetRecord IRI representing the Dataset to query
      * @param tupleQueryResultFormat TupleQueryResultFormat used to convert TupleQueryResults for response
-     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param mimeType               used to specify certain media types which are acceptable for the response
      * @return Response in TupleQueryResultFormat of SPARQL Query
      */
     private static Response getSelectQueryResponseEagerly(String queryString, String datasetRecordId,
-                                                   TupleQueryResultFormat tupleQueryResultFormat, String mimeType,
-                                                   int limit, ConnectionObjects connectionObjects) throws IOException {
+                                                          TupleQueryResultFormat tupleQueryResultFormat, String mimeType,
+                                                          int limit, ConnectionObjects connectionObjects) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         boolean limitExceeded;
 
@@ -309,9 +313,9 @@ public class RestQueryUtils {
      * Handle Construct Query Eagerly.
      * Output: Turtle, JSON-LD, and RDF/XML
      *
-     * @param queryString The SPARQL query to execute.
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
-     * @param mimeType used to specify certain media types which are acceptable for the response.
+     * @param mimeType        used to specify certain media types which are acceptable for the response.
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
     private static Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType,
@@ -344,14 +348,15 @@ public class RestQueryUtils {
 
     /**
      * Get GraphQueryResponse Eagerly.
-     * @param queryString The SPARQL query to execute.
+     *
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param format RDFFormat used to convert GraphQueryResults for response
-     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param format          RDFFormat used to convert GraphQueryResults for response
+     * @param mimeType        used to specify certain media types which are acceptable for the response
      * @return Response in RDFFormat of SPARQL Query
      */
     private static Response getGraphQueryResponseEagerly(String queryString, String datasetRecordId, RDFFormat format,
-                                                  String mimeType, int limit,
+                                                         String mimeType, int limit,
                                                          ConnectionObjects connectionObjects) throws IOException {
         boolean limitExceeded;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -384,18 +389,18 @@ public class RestQueryUtils {
      * Handle Construct Query.
      * Output: Turtle, JSON-LD, and RDF/XML
      *
-     * @param queryString The SPARQL query to execute.
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
-     * @param mimeType used to specify certain media types which are acceptable for the response.
-     * @param fileName The optional file name for the download file.
-     * @param ontology Ontology to query from.
-     * @param includeImports Should Include Imports for Ontology.
+     * @param mimeType        used to specify certain media types which are acceptable for the response.
+     * @param fileName        The optional file name for the download file.
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
     public static Response.ResponseBuilder handleConstructQuery(String queryString, String datasetRecordId,
-                                                                 String mimeType, String fileName,
-                                                                 Ontology ontology, boolean includeImports,
-                                                                 boolean skolemize, ConnectionObjects connectionObjects) {
+                                                                String mimeType, String fileName,
+                                                                Ontology ontology, boolean includeImports,
+                                                                boolean skolemize, ConnectionObjects connectionObjects) {
         RDFFormat format;
         String fileExtension;
 
@@ -538,7 +543,8 @@ public class RestQueryUtils {
 
     /**
      * Get TupleQueryResults.
-     * @param queryString The SPARQL query to execute.
+     *
+     * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @return TupleQueryResult results of SPARQL Query
      */
@@ -586,50 +592,50 @@ public class RestQueryUtils {
      * XSSF is the POI Project's pure Java implementation of the Excel 2007 OOXML (.xlsx) file format.
      *
      * @param result TupleQueryResult
-     * @param type the excel spreadsheet format, accepts xls, xlsx
+     * @param type   the excel spreadsheet format, accepts xls, xlsx
      * @return StreamingOutput creates a binary stream for Workbook data
      */
     private static StreamingOutput createExcelResults(TupleQueryResult result, String type) {
         List<String> bindings = result.getBindingNames();
-        Workbook wb;
-        if (type.equals("xls")) {
-            wb = new HSSFWorkbook();
-        } else {
-            wb = new XSSFWorkbook();
-        }
-        Sheet sheet = wb.createSheet();
-        Row row;
-        Cell cell;
-        BindingSet bindingSet;
-        int rowIt = 0;
-        int cellIt = 0;
-
-        row = sheet.createRow(rowIt);
-        for (String bindingName : bindings) {
-            cell = row.createCell(cellIt);
-            cell.setCellValue(bindingName);
-            cellIt++;
-        }
-        rowIt++;
-        while (result.hasNext()) {
-            bindingSet = result.next();
-            cellIt = 0;
-            row = sheet.createRow(rowIt);
-            for (String bindingName : bindings) {
-                cell = row.createCell(cellIt);
-                Optional<Binding> bindingOpt = Optional.ofNullable(bindingSet.getBinding(bindingName));
-                if (bindingOpt.isPresent()) {
-                    cell.setCellValue(bindingOpt.get().getValue().stringValue());
-                }
-                cellIt++;
-            }
-            rowIt++;
-        }
 
         return os -> {
-            wb.write(os);
-            os.flush();
-            os.close();
+            try (Workbook wb = type.equals("xls") ? new HSSFWorkbook() : new XSSFWorkbook()) {
+                Sheet sheet = wb.createSheet();
+                Row row;
+                Cell cell;
+                BindingSet bindingSet;
+                int rowIt = 0;
+                int cellIt = 0;
+
+                row = sheet.createRow(rowIt);
+                for (String bindingName : bindings) {
+                    cell = row.createCell(cellIt);
+                    cell.setCellValue(bindingName);
+                    cellIt++;
+                }
+                rowIt++;
+                while (result.hasNext()) {
+                    bindingSet = result.next();
+                    cellIt = 0;
+                    row = sheet.createRow(rowIt);
+                    for (String bindingName : bindings) {
+                        cell = row.createCell(cellIt);
+                        Optional<Binding> bindingOpt = Optional.ofNullable(bindingSet.getBinding(bindingName));
+                        if (bindingOpt.isPresent()) {
+                            cell.setCellValue(bindingOpt.get().getValue().stringValue());
+                        }
+                        cellIt++;
+                    }
+                    rowIt++;
+                }
+
+                wb.write(os);
+                os.flush();
+                os.close();
+            } catch (IOException e) {
+                // Exception can be thrown when closing the workbook.
+                throw new MobiException("Encountered issue creating excel results!", e);
+            }
         };
     }
 }

@@ -178,8 +178,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         Model convertedRDF = modelFactory.createEmptyModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
 
-        try {
-            Workbook wb = WorkbookFactory.create(config.getData());
+        try (Workbook wb = WorkbookFactory.create(config.getData())){
             FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();

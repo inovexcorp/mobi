@@ -12,12 +12,12 @@ package com.mobi.etl.api.delimited.record;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -47,6 +47,7 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -95,12 +96,11 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
     }
 
     protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
-        try {
-            // Record Policy
-            Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
-                    + File.separator + "policyTemplates" + File.separator + "mappingRecordPolicy.xml");
-            String recordPolicy = new String(Files.newInputStream(recordPolicyPath).readAllBytes(),
-                    StandardCharsets.UTF_8);
+        // Record Policy
+        Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                + File.separator + "policyTemplates" + File.separator + "mappingRecordPolicy.xml");
+        try (InputStream data = Files.newInputStream(recordPolicyPath)) {
+            String recordPolicy = new String(data.readAllBytes(), StandardCharsets.UTF_8);
             String encodedRecordIRI = ResourceUtils.encode(recordId);
 
             String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,

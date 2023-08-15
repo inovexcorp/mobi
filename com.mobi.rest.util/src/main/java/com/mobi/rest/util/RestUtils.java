@@ -12,12 +12,12 @@ package com.mobi.rest.util;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -101,9 +101,9 @@ public class RestUtils {
     public static final String CSV_MIME_TYPE = "text/csv";
     public static final String TSV_MIME_TYPE = "text/tab-separated-values";
     public static final String JSON_MIME_TYPE = "application/json";
-    public static final  String TURTLE_MIME_TYPE = "text/turtle";
-    public static final  String LDJSON_MIME_TYPE = "application/ld+json";
-    public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
+    public static final String TURTLE_MIME_TYPE = "text/turtle";
+    public static final String LDJSON_MIME_TYPE = "application/ld+json";
+    public static final String RDFXML_MIME_TYPE = "application/rdf+xml";
     private static final ValueFactory vf = new ValidatingValueFactory();
 
     /**
@@ -183,8 +183,8 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a string containing RDF in the specified RDFFormat.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The RDFFormat the RDF should be serialized into.
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
      * @return A String of the serialized RDF from the Model.
      */
     public static String modelToString(Model model, RDFFormat format) {
@@ -201,8 +201,8 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a string containing RDF in the format specified by the passed string.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The abbreviated name of a RDFFormat.
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
      * @return A String of the serialized RDF from the Model.
      */
     public static String modelToString(Model model, String format) {
@@ -212,9 +212,9 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a skolemized string containing RDF in the specified RDFFormat.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The RDFFormat the RDF should be serialized into.
-     * @param service     The BNodeService for skolemization.
+     * @param model   A {@link Model} of RDF to convert.
+     * @param format  The RDFFormat the RDF should be serialized into.
+     * @param service The BNodeService for skolemization.
      * @return A skolemized String of the serialized RDF from the Model.
      */
     public static String modelToSkolemizedString(Model model, RDFFormat format, BNodeService service) {
@@ -232,9 +232,9 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a skolemized string containing RDF in the format specified by the passed string.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The abbreviated name of a RDFFormat.
-     * @param service     The BNodeService for skolemization.
+     * @param model   A {@link Model} of RDF to convert.
+     * @param format  The abbreviated name of a RDFFormat.
+     * @param service The BNodeService for skolemization.
      * @return A skolemized String of the serialized RDF from the Model.
      */
     public static String modelToSkolemizedString(Model model, String format, BNodeService service) {
@@ -244,9 +244,9 @@ public class RestUtils {
     /**
      * Writes a {@link Model} to an output stream.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The RDFFormat the RDF should be serialized into
-     * @param os          The output stream the model should be written to.
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into
+     * @param os     The output stream the model should be written to.
      */
     public static void groupedModelToOutputStream(Model model, RDFFormat format, OutputStream os) {
         RDFHandler handler = new BufferedGroupingRDFHandler(Rio.createWriter(format, os));
@@ -256,8 +256,8 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a string containing grouped RDF in the specified RDFFormat.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The RDFFormat the RDF should be serialized into.
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
      * @return A String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToString(Model model, RDFFormat format) {
@@ -275,8 +275,8 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a string containing grouped RDF in the format specified by the passed string.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The abbreviated name of a RDFFormat.
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
      * @return A String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToString(Model model, String format) {
@@ -286,9 +286,9 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a skolemized string containing grouped RDF in the specified RDFFormat.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The RDFFormat the RDF should be serialized into.
-     * @param service     The BNodeService for skolemization.
+     * @param model   A {@link Model} of RDF to convert.
+     * @param format  The RDFFormat the RDF should be serialized into.
+     * @param service The BNodeService for skolemization.
      * @return A skolemized String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToSkolemizedString(Model model, RDFFormat format, BNodeService service) {
@@ -307,9 +307,9 @@ public class RestUtils {
      * Converts a {@link Model} into a skolemized string containing grouped RDF in the format specified by the passed
      * string.
      *
-     * @param model       A {@link Model} of RDF to convert.
-     * @param format      The abbreviated name of a RDFFormat.
-     * @param service     The BNodeService for skolemization.
+     * @param model   A {@link Model} of RDF to convert.
+     * @param format  The abbreviated name of a RDFFormat.
+     * @param service The BNodeService for skolemization.
      * @return A skolemized String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToSkolemizedString(Model model, String format, BNodeService service) {
@@ -319,7 +319,7 @@ public class RestUtils {
     /**
      * Converts a JSON-LD string into a {@link Model}.
      *
-     * @param jsonld      A string of JSON-LD.
+     * @param jsonld A string of JSON-LD.
      * @return A Model containing the RDF from the JSON-LD string.
      */
     public static Model jsonldToModel(String jsonld) {
@@ -373,8 +373,8 @@ public class RestUtils {
     /**
      * Converts a JSON-LD string into a deskolemized {@link Model}.
      *
-     * @param jsonld      A string of JSON-LD.
-     * @param service     The BNodeService for skolemization.
+     * @param jsonld  A string of JSON-LD.
+     * @param service The BNodeService for skolemization.
      * @return A deskolemized Model containing the RDF from the JSON-LD string.
      */
     public static Model jsonldToDeskolemizedModel(String jsonld, BNodeService service) {
@@ -384,7 +384,7 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a JSON-LD string.
      *
-     * @param model       A {@link Model} containing RDF.
+     * @param model A {@link Model} containing RDF.
      * @return A JSON-LD string containing the converted RDF from the Model.
      */
     public static String modelToJsonld(Model model) {
@@ -394,7 +394,7 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a skolemized JSON-LD string.
      *
-     * @param model       A {@link Model} containing RDF.
+     * @param model A {@link Model} containing RDF.
      * @return A skolemized JSON-LD string containing the converted RDF from the Model.
      */
     public static String modelToSkolemizedJsonld(Model model, BNodeService service) {
@@ -404,7 +404,7 @@ public class RestUtils {
     /**
      * Converts a {@link Model} into a TRiG string.
      *
-     * @param model       A {@link Model} containing RDF.
+     * @param model A {@link Model} containing RDF.
      * @return A TRiG string containing the converted RDF from the Model.
      */
     public static String modelToTrig(Model model) {
@@ -488,7 +488,7 @@ public class RestUtils {
      * a 401 Response.
      *
      * @param servletRequest The servletRequest of a Request.
-     * @param engineManager The EngineManager to use when attempting to retrieve the User.
+     * @param engineManager  The EngineManager to use when attempting to retrieve the User.
      * @return The User who made the Request if found; throws a 401 otherwise.
      */
     public static User getActiveUser(HttpServletRequest servletRequest, EngineManager engineManager) {
@@ -516,7 +516,7 @@ public class RestUtils {
      * an empty Optional.
      *
      * @param servletRequest The servletRequest of a Request.
-     * @param engineManager The EngineManager to use when attempting to retrieve the User.
+     * @param engineManager  The EngineManager to use when attempting to retrieve the User.
      * @return An Optional containing the User who made the Request if found; otherwise empty
      */
     public static Optional<User> optActiveUser(HttpServletRequest servletRequest, EngineManager engineManager) {
@@ -654,7 +654,7 @@ public class RestUtils {
                 }
             }
             return null;
-        }  catch (IOException e) {
+        } catch (IOException e) {
             throw new MobiException(e);
         } finally {
             LOG.trace("getTypedObjectFromJsonld took {}ms", System.currentTimeMillis() - start);
@@ -680,8 +680,8 @@ public class RestUtils {
      * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
      * Thing's Model.
      *
-     * @param thing       The Thing to convert into a JSONObject.
-     * @param type        The type of the {@link Thing} passed in.
+     * @param thing The Thing to convert into a JSONObject.
+     * @param type  The type of the {@link Thing} passed in.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
     public static JSONObject thingToJsonObject(Thing thing, String type) {
@@ -765,11 +765,11 @@ public class RestUtils {
     }
 
     public static <T extends Thing> Response createPaginatedThingResponseJackson(UriInfo uriInfo, Set<T> things,
-                                                                          IRI sortIRI, int offset, int limit,
-                                                                          boolean asc,
-                                                                          Function<T, Boolean> filterFunction,
-                                                                          String type,
-                                                                          BNodeService bNodeService) {
+                                                                                 IRI sortIRI, int offset, int limit,
+                                                                                 boolean asc,
+                                                                                 Function<T, Boolean> filterFunction,
+                                                                                 String type,
+                                                                                 BNodeService bNodeService) {
         long start = System.currentTimeMillis();
         try {
             if (offset > things.size()) {
@@ -806,13 +806,13 @@ public class RestUtils {
      * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
      * to the total size and the "Links" header to the next and prev URLs if present.
      *
-     * @param <T>         A class that extends Thing
-     * @param uriInfo     The URI information of the request.
-     * @param items       The limited and sorted Collection of items for the current page
-     * @param totalSize   The total number of items.
-     * @param limit       The limit for each page.
-     * @param offset      The offset for the current page.
-     * @param type        The type of the {@link Thing} to be returned
+     * @param <T>       A class that extends Thing
+     * @param uriInfo   The URI information of the request.
+     * @param items     The limited and sorted Collection of items for the current page
+     * @param totalSize The total number of items.
+     * @param limit     The limit for each page.
+     * @param offset    The offset for the current page.
+     * @param type      The type of the {@link Thing} to be returned
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
      * pages if present.
      */
@@ -980,9 +980,9 @@ public class RestUtils {
             String[] errorMessages = errorMessage.split(delimiter);
             objectNode.put("errorMessage", errorMessages[0].trim());
 
-            String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1 ,errorMessages.length);
+            String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1, errorMessages.length);
 
-            for (String currentErrorMessage: errorMessagesSlice) {
+            for (String currentErrorMessage : errorMessagesSlice) {
                 arrayNode.add(currentErrorMessage.trim());
             }
         } else {
@@ -1036,7 +1036,7 @@ public class RestUtils {
      * type for the Collection.
      *
      * @param servletRequest The {@link HttpServletRequest} used to retrieve form data from.
-     * @param fields A {@link Map} of field name to the Class of the field.
+     * @param fields         A {@link Map} of field name to the Class of the field.
      * @return A map of the field name to the corresponding form data field Object.
      */
     public static Map<String, Object> getFormData(HttpServletRequest servletRequest, Map<String, List<Class>> fields) {
@@ -1048,38 +1048,39 @@ public class RestUtils {
             while (iter.hasNext()) {
                 FileItemStream item = iter.next();
                 String name = item.getFieldName();
-                InputStream stream = item.openStream();
-                if (item.isFormField()) {
-                    if (fieldNames.contains(name)) {
-                        List<Class> classes = fields.get(name);
-                        if (classes.size() > 1) {
-                            // Is a Collection of Type
-                            Class collectionClass = classes.get(0);
-                            Class typeClass = classes.get(1);
-                            if (!parsedValues.containsKey(name)) {
-                                if (collectionClass == Set.class) {
-                                    parsedValues.put(name, new HashSet<>());
-                                } else if (collectionClass == List.class) {
-                                    parsedValues.put(name, new ArrayList<>());
-                                } else {
-                                    throw new MobiException("Invalid parent class type. Must provide a collection.");
+                try (InputStream stream = item.openStream()) {
+                    if (item.isFormField()) {
+                        if (fieldNames.contains(name)) {
+                            List<Class> classes = fields.get(name);
+                            if (classes.size() > 1) {
+                                // Is a Collection of Type
+                                Class collectionClass = classes.get(0);
+                                Class typeClass = classes.get(1);
+                                if (!parsedValues.containsKey(name)) {
+                                    if (collectionClass == Set.class) {
+                                        parsedValues.put(name, new HashSet<>());
+                                    } else if (collectionClass == List.class) {
+                                        parsedValues.put(name, new ArrayList<>());
+                                    } else {
+                                        throw new MobiException("Invalid parent class type. Must provide a collection.");
+                                    }
                                 }
+                                Collection collection = (Collection) parsedValues.get(name);
+                                collection.add(getValue(typeClass, stream));
+                                parsedValues.put(name, collection);
+                            } else {
+                                // Is a single type
+                                Object value = getValue(classes.get(0), stream);
+                                parsedValues.put(name, value);
                             }
-                            Collection collection = (Collection) parsedValues.get(name);
-                            collection.add(getValue(typeClass, stream));
-                            parsedValues.put(name, collection);
                         } else {
-                            // Is a single type
-                            Object value = getValue(classes.get(0), stream);
-                            parsedValues.put(name, value);
+                            LOG.debug("Non default field '" + name + "' provided.");
                         }
                     } else {
-                        LOG.debug("Non default field '" + name + "' provided.");
+                        // Is the file stream
+                        parsedValues.put("filename", item.getName());
+                        parsedValues.put("stream", Models.toByteArrayInputStream(stream));
                     }
-                } else {
-                    // Is the file stream
-                    parsedValues.put("filename", item.getName());
-                    parsedValues.put("stream", Models.toByteArrayInputStream(stream));
                 }
             }
             return parsedValues;

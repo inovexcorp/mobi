@@ -73,6 +73,7 @@
         <junit.version>5.9.1</junit.version>
         <karaf.version>4.4.3</karaf.version>
         <logback.version>1.2.11</logback.version>
+        <lz4.version>1.8.0</lz4.version>
         <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
         <mockito.version>4.6.1</mockito.version>
         <opencsv.version>5.3</opencsv.version>
@@ -488,7 +489,7 @@
             <dependency>
                 <groupId>org.lz4</groupId>
                 <artifactId>lz4-java</artifactId>
-                <version>1.8.0</version>
+                <version>${lz4.version}</version>
             </dependency>
 
             <!-- Test Dependencies -->

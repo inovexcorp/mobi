@@ -84,19 +84,20 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     @Override
     public String contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException {
-        StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
-        byte[] buffer = new byte[8192];
-        int bytesRead = 0;
+        try(StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead = 0;
 
-        try {
-            while ((bytesRead = inputStream.read(buffer)) >= 0) {
-                hash64.update(buffer, 0, bytesRead);
+            try {
+                while ((bytesRead = inputStream.read(buffer)) >= 0) {
+                    hash64.update(buffer, 0, bytesRead);
+                }
+            } catch (IOException e) {
+                throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
             }
-        } catch (IOException e) {
-            throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
-        }
 
-        return filePathFromHash(hash64);
+            return filePathFromHash(hash64);
+        }
     }
 
     @Override
@@ -130,10 +131,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     @Override
     public VirtualFile resolveVirtualFile(InputStream inputStream, String directory) throws VirtualFilesystemException {
-        try {
-            StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
+        try (StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0)){
             FileObject temp = this.fsManager.resolveFile(UUID.randomUUID().toString());
-
             byte[] buffer = new byte[8192];
             int bytesRead = 0;
             try (OutputStream out = temp.getContent().getOutputStream(true)) {
@@ -152,8 +151,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     @Override
     public VirtualFile resolveVirtualFile(byte[] fileBytes, String directory) throws VirtualFilesystemException {
-        try {
-            StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
+        try (StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0)){
             FileObject temp = this.fsManager.resolveFile(UUID.randomUUID().toString());
 
             try (OutputStream out = temp.getContent().getOutputStream()) {

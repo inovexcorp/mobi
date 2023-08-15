@@ -200,10 +200,11 @@ public class CLITransform implements Action {
             }
 
             if (outputFile != null) {
-                OutputStream output = new FileOutputStream(outputFile);
-                RDFFormat outputFormat = Rio.getParserFormatForFileName(outputFile).orElse(RDFFormat.TRIG);
-                RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
-                rdfExportService.export(config, model);
+                try(OutputStream output = new FileOutputStream(outputFile)) {
+                    RDFFormat outputFormat = Rio.getParserFormatForFileName(outputFile).orElse(RDFFormat.TRIG);
+                    RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
+                    rdfExportService.export(config, model);
+                }
             }
 
             if (ontology != null) {

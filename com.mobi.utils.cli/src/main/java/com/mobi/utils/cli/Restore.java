@@ -12,12 +12,12 @@ package com.mobi.utils.cli;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -91,11 +91,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Command(scope = "mobi", name = "restore", description = "Restores Mobi backup and will handle migration if versions "
-        +  "differ")
+        + "differ")
 @Service
 public class Restore implements Action {
 
@@ -164,7 +165,7 @@ public class Restore implements Action {
             "http://mobi.com/policies/shapes-graph-record-creation",
             "http://mobi.com/policies/publish",
             "http://mobi.com/policies/sync");
-    
+
     // Service References
     @Reference
     protected SystemService systemService;
@@ -249,7 +250,7 @@ public class Restore implements Action {
         out("Restarting XACMLPolicyManager bundle");
         long start = System.currentTimeMillis();
         xacmlBundleContext.getBundle().update();
-        out("Restarted XACMLPolicyManager bundle. Took:" + (System.currentTimeMillis() - start)+ " ms");
+        out("Restarted XACMLPolicyManager bundle. Took:" + (System.currentTimeMillis() - start) + " ms");
 
         out("Restarting all services");
         systemService.reboot();
@@ -306,27 +307,30 @@ public class Restore implements Action {
             if (encryptionService != null) {
                 encryptionService.disable();
             }
-            Files.walk(src).forEach(backupConfig -> {
-                try {
-                    boolean isSystemPolicy = containsSubPath(backupConfig, Paths.get("policies/systemPolicies"));
-                    Path newFileDest = dest.resolve(src.relativize(backupConfig));
-                    if (Files.isDirectory(backupConfig)) {
-                        if (!Files.exists(newFileDest)) {
-                            Files.createDirectory(newFileDest);
-                            LOGGER.trace("Created directory: " + newFileDest.getFileName().toString());
+
+            try (Stream<Path> stream = Files.walk(src)) {
+                stream.forEach(backupConfig -> {
+                    try {
+                        boolean isSystemPolicy = containsSubPath(backupConfig, Paths.get("policies/systemPolicies"));
+                        Path newFileDest = dest.resolve(src.relativize(backupConfig));
+                        if (Files.isDirectory(backupConfig)) {
+                            if (!Files.exists(newFileDest)) {
+                                Files.createDirectory(newFileDest);
+                                LOGGER.trace("Created directory: " + newFileDest.getFileName().toString());
+                            }
+                        } else if (isSystemPolicy && Files.exists(newFileDest)) {
+                            LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
+                            return;
+                        } else if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
+                            Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
+                        } else {
+                            LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
                         }
-                    } else if (isSystemPolicy && Files.exists(newFileDest)) {
-                        LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
-                        return;
-                    } else if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
-                        Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
-                    } else {
-                        LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
+                    } catch (IOException e) {
+                        LOGGER.error("Could not copy file: " + backupConfig.getFileName());
                     }
-                } catch (IOException e) {
-                    LOGGER.error("Could not copy file: " + backupConfig.getFileName());
-                }
-            });
+                });
+            }
 
             if (mobiVersions.indexOf(version) < mobiVersions.indexOf("2.3")) {
                 LOGGER.trace("Version lower than 2.3 detected. Removing files.");
@@ -373,6 +377,7 @@ public class Restore implements Action {
 
     /**
      * Copy policy files to proper destination. Directory contains all policies for runtime.
+     *
      * @param bundleContext XamclPolicyManager bundleContext
      * @param backupVersion backup versoin
      * @throws IOException
@@ -393,6 +398,7 @@ public class Restore implements Action {
 
     /**
      * Clear All Repos
+     *
      * @param repositoryManager Repository Manager
      * @return A list of remote repos
      */
@@ -438,8 +444,9 @@ public class Restore implements Action {
 
     /**
      * Post processing of restore process
+     *
      * @param xacmlBundleContext xacmlBundleContext
-     * @param backupVersion backupVersion
+     * @param backupVersion      backupVersion
      */
     protected void restorePostProcess(BundleContext xacmlBundleContext, String backupVersion) {
         try (RepositoryConnection conn = config.getRepository().getConnection()) {
@@ -482,7 +489,7 @@ public class Restore implements Action {
         }
     }
 
-        private void cleanPolicies(RepositoryConnection conn, String backupVersion, BundleContext bundleContext) {
+    private void cleanPolicies(RepositoryConnection conn, String backupVersion, BundleContext bundleContext) {
         if (mobiVersions.indexOf(backupVersion) < 10) {
             LOGGER.trace("Remove old versions of admin policy and system repo query policy");
             // 1.20 changed admin policy and system repo query policy. Need to remove old versions so updated
@@ -503,8 +510,9 @@ public class Restore implements Action {
 
     /**
      * Get a list of Dataset Records that do not have policies
+     *
      * @param conn RepositoryConnection
-     * @return  List<Resource> Dataset Resources
+     * @return List<Resource> Dataset Resources
      */
     protected List<Resource> getDatasetNoPolicyResources(RepositoryConnection conn) {
         List<Resource> datasetResources = new ArrayList<>();
@@ -515,11 +523,10 @@ public class Restore implements Action {
 
     /**
      * Create Dataset Policies for datasets that do not have polices.
-     *
+     * <p>
      * Steps:
      * - Find all dataset records that does not have policies
      * - Create dataset policies for those records
-     *
      */
     protected void createDatesetPolicies(BundleContext bundleContext) {
         List<Resource> datasetResources;
@@ -552,10 +559,11 @@ public class Restore implements Action {
      * Finds old policy file locations for the provided files in the repo (may point to a non-existent directory), grabs
      * the hash path, finds the File in the new location on this instance using the policyFileLocation and VFS, and
      * deletes the File if it exists.
-     * @param bundleContext the OSGI {@link BundleContext} used to retrieve services.
-     * @param conn the {@link RepositoryConnection} used to query the repo for retrievalUrls.
+     *
+     * @param bundleContext      the OSGI {@link BundleContext} used to retrieve services.
+     * @param conn               the {@link RepositoryConnection} used to query the repo for retrievalUrls.
      * @param policyFileLocation the policyFileLocation for the current instance.
-     * @param policies the List of IRIs of policies whose files should be removed.
+     * @param policies           the List of IRIs of policies whose files should be removed.
      */
     protected void removePolicyFiles(BundleContext bundleContext, RepositoryConnection conn, String policyFileLocation,
                                      List<Resource> policies) {
@@ -586,7 +594,8 @@ public class Restore implements Action {
 
     /**
      * Unzip archive into temp directory
-     * @param filePath file to unzip
+     *
+     * @param filePath    file to unzip
      * @param destination directory
      * @throws IOException
      */
@@ -654,17 +663,17 @@ public class Restore implements Action {
         return destFile;
     }
 
-    private void out(String msg){
+    private void out(String msg) {
         LOGGER.trace(msg);
         System.out.println(msg);
     }
 
-    private void error(String msg){
+    private void error(String msg) {
         LOGGER.error(msg);
         System.out.println(msg);
     }
 
-    private void error(String msg, Exception e){
+    private void error(String msg, Exception e) {
         LOGGER.error(msg, e);
         System.out.println(msg);
     }
