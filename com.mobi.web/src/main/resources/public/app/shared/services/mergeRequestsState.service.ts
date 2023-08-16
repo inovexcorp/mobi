@@ -367,21 +367,22 @@ export class MergeRequestsStateService {
 
         if (iris.length > 0) {
             if (type === ONTOLOGYEDITOR + 'OntologyRecord') {
-                return from(this.om.getOntologyEntityNames(recordId, sourceBranchId, commitId, false, false, iris))
-                .pipe(
-                    switchMap(data => {
-                        merge(this.entityNames, data);
-                        this.setDifference(diffResponse);
-                        return of(null);
-                    }),
-                    catchError(error => {
-                        this.setDifference(diffResponse);
-                        return throwError(error);
-                    })
-                );
+                return this.om.getOntologyEntityNames(recordId, sourceBranchId, commitId, false, false, iris)
+                    .pipe(
+                        switchMap(data => {
+                            merge(this.entityNames, data);
+                            this.setDifference(diffResponse);
+                            return of(null);
+                        }),
+                        catchError(error => {
+                            this.setDifference(diffResponse);
+                            return throwError(error);
+                        })
+                    );
             } else {
                 this.entityNames = {};
                 this.setDifference(diffResponse);
+                return of(null);
             }
             
         } else {
