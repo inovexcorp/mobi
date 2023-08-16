@@ -1171,7 +1171,7 @@ export class CatalogManagerService {
 
     getType(record: JSONLDObject): string {
         const type = find(difference(this.recordTypes, this.coreRecordTypes), type => includes(get(record, '@type', []), type));
-        return this.util.getBeautifulIRI(type || CATALOG + 'Record');
+        return type || CATALOG + 'Record';
     }
 
     private _createVersion(recordId: string, catalogId: string, versionConfig: NewConfig): Observable<string> {

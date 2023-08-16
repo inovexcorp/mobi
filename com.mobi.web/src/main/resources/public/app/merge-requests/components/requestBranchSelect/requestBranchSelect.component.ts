@@ -46,7 +46,6 @@ import { UtilService } from '../../../shared/services/util.service';
     styleUrls: ['./requestBranchSelect.component.scss']
 })
 export class RequestBranchSelectComponent implements OnInit, OnDestroy {
-    @Input() updateCommits:any;
     branches: JSONLDObject[] = [];
     sourceCommitId = '';
     targetCommitId = '';

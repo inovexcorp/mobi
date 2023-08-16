@@ -49,7 +49,7 @@ export class RecordTypeComponent {
 
     @Input() set record(value: JSONLDObject) {
         this._record = value;
-        this.type = this.cm.getType(this._record);
+        this.type = this.getTypeDisplay(this._record);
     }
 
     get record(): JSONLDObject {
@@ -57,4 +57,9 @@ export class RecordTypeComponent {
     }
 
     constructor(public cm: CatalogManagerService, public util: UtilService) {}
+
+    getTypeDisplay(record: JSONLDObject): string {
+        const type = find(difference(this.cm.recordTypes, this.cm.coreRecordTypes), type => includes(get(record, '@type', []), type));
+        return this.util.getBeautifulIRI(type || CATALOG + 'Record');
+    }
 }
