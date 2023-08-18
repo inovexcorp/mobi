@@ -27,12 +27,13 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { REST_PREFIX } from '../../constants';
-import { MERGEREQ } from '../../prefixes';
+import { MERGEREQ, DCTERMS } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestConfig } from '../models/mergeRequestConfig.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 import { UtilService } from './util.service';
+import { SortOption } from '../models/sortOption.interface';
 
 /**
  * @class shared.MergeRequestManagerService
@@ -43,7 +44,32 @@ import { UtilService } from './util.service';
 @Injectable()
 export class MergeRequestManagerService {
     prefix = REST_PREFIX + 'merge-requests';
+    /**
+     * `sortOptions` contains a list of objects representing all sort options for Merge Request.
+     */
+    sortOptions: SortOption[] = [
+        {
+            field: DCTERMS + 'issued',
+            asc: false,
+            label: 'Issued (desc)'
+        },
+        {
+            field: DCTERMS + 'issued',
+            asc: true,
+            label: 'Issued (asc)'
+        },
+        {
+            field: DCTERMS + 'title',
+            asc: false,
+            label: 'Title (desc)'
+        },
+        {
+            field: DCTERMS + 'title',
+            asc: true,
+            label: 'Title (asc)'
+        },
 
+    ];
     constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService, private util: UtilService) {}
     /**
      * Calls the GET /mobirest/merge-requests endpoint with the provided object of query parameters
@@ -202,4 +228,5 @@ export class MergeRequestManagerService {
     isAccepted(request: JSONLDObject): boolean {
         return includes(request['@type'], MERGEREQ + 'AcceptedMergeRequest');
     }
+
 }

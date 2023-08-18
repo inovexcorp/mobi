@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
@@ -44,11 +44,12 @@ export class MergeRequestListComponent implements OnInit {
         { value: false, label: 'Open' },
         { value: true, label: 'Accepted' }
     ];
+    @Input() requests: MergeRequest[];
 
     constructor(public state: MergeRequestsStateService, public dialog: MatDialog) {}
 
     ngOnInit(): void {
-        this.state.setRequests(this.state.acceptedFilter);
+        this.state.setRequests({accepted: this.state.acceptedFilter});
     }
     showDeleteOverlay(request: MergeRequest): void {
         this.dialog.open(ConfirmModalComponent, {

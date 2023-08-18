@@ -20,44 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
-
-.merge-request-list {
-    .overflow {
-        &-auto {
-            overflow: auto;
-        }
-    }
-    .search-container {
-        text-align: center;
-        padding-bottom: 15px;
-
-        button {
-            display: inline-block;
-        }
-    }
-    .request {
-        display: flex;
-        flex-direction: row;
-        cursor: pointer;
-
-        h3 {
-            margin: 0;
-            @include textOverflow;
-        }
-        
-        .assignees {
-            li {
-                display: inline;
-
-                &:after {
-                    content: ', ';
-                }
-                &.last:after {
-                    content: '';
-                }
-            }
-        }
-    }
+import { FilterItem } from '../../shared/models/filterItem.interface';
+/**
+ * A filter to be displayed in {@link catalog.RecordFiltersComponent}
+ */
+export enum FilterType {
+    CHECKBOX,
+    RADIO
+}
+export interface MergeRequestFilter {
+    title: string,
+    hide: boolean,
+    pageable?: boolean,
+    searchable?: boolean,
+    filterItems: FilterItem[],
+    getItemText: (filterItem: FilterItem) => string,
+    onInit: () => void,
+    setFilterItems: () => void,
+    filter: (filterItem: FilterItem) => void,
+    setFilter?: (value) => void;
 }

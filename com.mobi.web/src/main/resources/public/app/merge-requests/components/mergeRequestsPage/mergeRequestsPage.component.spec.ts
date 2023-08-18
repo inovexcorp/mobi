@@ -33,11 +33,49 @@ import { CreateRequestComponent } from '../createRequest/createRequest.component
 import { MergeRequestListComponent } from '../mergeRequestList/mergeRequestList.component';
 import { MergeRequestViewComponent } from '../mergeRequestView/mergeRequestView.component';
 import { MergeRequestsPageComponent } from './mergeRequestsPage.component';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { DCTERMS } from '../../../prefixes';
+import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
+import { SortOption } from '../../../shared/models/sortOption.interface';
+import { MergeRequestFilterComponent } from '../merge-request-filter/merge-request-filter.component';
+import { RecordCardComponent } from '../../../catalog/components/recordCard/recordCard.component';
 
 describe('Merge Requests Page component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<MergeRequestsPageComponent>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
+    let mergeRequestsManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
+    const request: MergeRequest[] = [{
+        title: '',
+        recordIri: '',
+        date: '',
+        creator: '',
+        assignees: [],
+        jsonld: {'@id': ''}
+    }];
+    const sortOptions: SortOption[] = [
+        {
+            field: DCTERMS + 'issued',
+            asc: false,
+            label: 'Issued (desc)'
+        },
+        {
+            field: DCTERMS + 'issued',
+            asc: true,
+            label: 'Issued (asc)'
+        },
+        {
+            field: DCTERMS + 'title',
+            asc: false,
+            label: 'Title (desc)'
+        },
+        {
+            field: DCTERMS + 'title',
+            asc: true,
+            label: 'Title (asc)'
+        },
+
+    ];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -46,9 +84,12 @@ describe('Merge Requests Page component', function() {
                 MockComponent(MergeRequestListComponent),
                 MockComponent(CreateRequestComponent),
                 MockComponent(MergeRequestViewComponent),
+                MockComponent(MergeRequestFilterComponent),
+                MockComponent(RecordCardComponent),
             ],
             providers: [
                 MockProvider(MergeRequestsStateService),
+                MockProvider(MergeRequestManagerService)
             ],
         });
     });
@@ -57,6 +98,9 @@ describe('Merge Requests Page component', function() {
         fixture = TestBed.createComponent(MergeRequestsPageComponent);
         element = fixture.debugElement;
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
+        mergeRequestsManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
+        mergeRequestsManagerStub.sortOptions = sortOptions;
+        mergeRequestsStateStub.requests = request;
     });
 
     afterEach(function() {
@@ -76,6 +120,8 @@ describe('Merge Requests Page component', function() {
             expect(element.queryAll(By.css('merge-request-list')).length).toBe(1);
             expect(element.queryAll(By.css('merge-request-view')).length).toBe(0);
             expect(element.queryAll(By.css('create-request')).length).toBe(0);
+            expect(element.queryAll(By.css('.search-container')).length).toEqual(1);
+            expect(element.queryAll(By.css('merge-request-filter')).length).toBe(1);
         });
         it('if a request is selected', function() {
             mergeRequestsStateStub.selected = {
@@ -97,6 +143,13 @@ describe('Merge Requests Page component', function() {
             expect(element.queryAll(By.css('merge-request-list')).length).toBe(0);
             expect(element.queryAll(By.css('merge-request-view')).length).toBe(0);
             expect(element.queryAll(By.css('create-request')).length).toBe(1);
+        });
+        it('should call startCreate when the Create Request button is clicked', function() {
+            fixture.detectChanges();
+            const button = element.queryAll(By.css('.search-container button'))[0];
+            expect(button).not.toBeNull();
+            button.triggerEventHandler('click', null);
+            expect(mergeRequestsStateStub.startCreate).toHaveBeenCalledWith();
         });
     });
 });

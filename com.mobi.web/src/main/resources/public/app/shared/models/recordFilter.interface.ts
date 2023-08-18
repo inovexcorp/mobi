@@ -1,9 +1,5 @@
 /*-
- * #%L
- * com.mobi.web
- * $Id:$
- * $HeadURL:$
- * %%
+ * #%Ld
  * Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
@@ -20,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FilterItem } from './filterItem.interface';
+import { FilterItem } from '../../shared/models/filterItem.interface';
 
 /**
  * A filter to be displayed in {@link catalog.RecordFiltersComponent}

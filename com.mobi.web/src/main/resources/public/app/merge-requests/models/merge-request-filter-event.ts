@@ -20,22 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FilterItem } from './filterItem.interface';
-import { RecordFilter } from './recordFilter.interface';
-
-/**
- * A filter to be displayed in {@link catalog.RecordFiltersComponent} that has searchable items
- */
-export interface SearchableRecordFilter extends RecordFilter {
-    pagingData: {
-        limit: number,
-        totalSize: number,
-        currentPage: number,
-        hasNextPage: boolean
-    },
-    rawFilterItems: FilterItem[],
-    searchModel: string,
-    searchChanged: (string) => void,
-    searchSubmitted: () => void,
-    nextPage: () => void
+export interface MergeRequestFilterEvent {
+    recordType?: string;
+    requestStatus: boolean
 }

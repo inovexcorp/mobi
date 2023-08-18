@@ -48,6 +48,8 @@ describe('Merge Requests State service', function() {
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let utilStub: jasmine.SpyObj<UtilService>;
+    const acceptedRequest = { accepted: true };
+    const openRequest = { accepted: false };
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
@@ -181,7 +183,7 @@ describe('Merge Requests State service', function() {
                 describe('and getRecord ', function() {
                     it('resolves', fakeAsync(function() {
                         catalogManagerStub.getRecord.and.returnValue(of([record]));
-                        service.setRequests(true);
+                        service.setRequests(acceptedRequest);
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
@@ -195,7 +197,7 @@ describe('Merge Requests State service', function() {
                     }));
                     it('rejects', fakeAsync(function() {
                         catalogManagerStub.getRecord.and.returnValue(throwError(error));
-                        service.setRequests(true);
+                        service.setRequests(acceptedRequest);
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
@@ -209,7 +211,7 @@ describe('Merge Requests State service', function() {
             });
             it('rejects', fakeAsync(function() {
                 mergeRequestManagerStub.getRequests.and.returnValue(throwError(error));
-                service.setRequests(true);
+                service.setRequests(acceptedRequest);
                 tick();
                 expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
                 expect(service.getRequestObj).not.toHaveBeenCalled();
@@ -227,7 +229,7 @@ describe('Merge Requests State service', function() {
                 describe('and getRecord ', function() {
                     it('resolves', fakeAsync(function() {
                         catalogManagerStub.getRecord.and.returnValue(of([record]));
-                        service.setRequests();
+                        service.setRequests(openRequest);
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
@@ -241,7 +243,7 @@ describe('Merge Requests State service', function() {
                     }));
                     it('rejects', fakeAsync(function() {
                         catalogManagerStub.getRecord.and.returnValue(throwError(error));
-                        service.setRequests();
+                        service.setRequests(openRequest);
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
@@ -255,7 +257,7 @@ describe('Merge Requests State service', function() {
             });
             it('rejects', fakeAsync(function() {
                 mergeRequestManagerStub.getRequests.and.returnValue(throwError(error));
-                service.setRequests();
+                service.setRequests(openRequest);
                 tick();
                 expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
                 expect(service.getRequestObj).not.toHaveBeenCalled();
@@ -750,7 +752,7 @@ describe('Merge Requests State service', function() {
                 expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
                 expect(service.selected).toBeUndefined();
                 expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(service.setRequests).toHaveBeenCalledWith(service.acceptedFilter);
+                expect(service.setRequests).toHaveBeenCalledWith(openRequest);
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });

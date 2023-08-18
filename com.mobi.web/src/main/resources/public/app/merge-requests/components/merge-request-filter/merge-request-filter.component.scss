@@ -20,44 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
-
-.merge-request-list {
-    .overflow {
-        &-auto {
-            overflow: auto;
-        }
-    }
-    .search-container {
-        text-align: center;
-        padding-bottom: 15px;
-
-        button {
-            display: inline-block;
-        }
-    }
-    .request {
-        display: flex;
-        flex-direction: row;
-        cursor: pointer;
-
-        h3 {
-            margin: 0;
-            @include textOverflow;
-        }
-        
-        .assignees {
-            li {
-                display: inline;
-
-                &:after {
-                    content: ', ';
-                }
-                &.last:after {
-                    content: '';
-                }
-            }
-        }
-    }
+.record-filters {
+ .filter-radio-items {
+   display: flex;
+   flex-flow: column;
+   margin: 10px 0;
+ }
 }

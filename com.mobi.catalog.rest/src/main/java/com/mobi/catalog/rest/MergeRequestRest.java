@@ -67,6 +67,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.sail.SailException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
@@ -74,6 +75,8 @@ import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -134,6 +137,8 @@ public class MergeRequestRest {
      * Records on the Merge Requests.
      *
      * @param sort IRI of the predicate to sort by
+     * @param offset An optional offset for the results.
+     * @param limit An optional limit for the results.
      * @param asc Whether the results should be sorted ascending or descending. Default is false.
      * @param accepted Whether the results should only be accepted or open requests
      * @return The list of all {@link MergeRequest}s that match the criteria
@@ -160,7 +165,11 @@ public class MergeRequestRest {
             @Parameter(description = "Whether the results should be sorted ascending or descending")
             @DefaultValue("false") @QueryParam("ascending") boolean asc,
             @Parameter(description = "Whether the results should only be accepted or open requests")
-            @DefaultValue("false") @QueryParam("accepted") boolean accepted) {
+            @DefaultValue("false") @QueryParam("accepted") boolean accepted,
+            @Parameter(description = "Optional offset for the results")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "Optional limit for the results")
+            @QueryParam("limit") int limit) {
         User activeUser = getActiveUser(servletRequest, engineManager);
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setRequestingUser(activeUser);
         if (!StringUtils.isEmpty(sort)) {
@@ -168,13 +177,22 @@ public class MergeRequestRest {
         }
         builder.setAscending(asc).setAccepted(accepted);
         try {
-            JSONArray result = JSONArray.fromObject(manager.getMergeRequests(builder.build()).stream()
+            Stream<MergeRequest> stream = manager.getMergeRequests(builder.build()).stream();
+            if (offset > 0) {
+                stream = stream.skip(offset);
+            }
+            if (limit > 0) {
+                stream = stream.limit(limit);
+            }
+            JSONArray result = JSONArray.fromObject(stream
                     .map(request -> modelToJsonld(request.getModel()))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
-        } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | SailException | MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

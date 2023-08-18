@@ -20,9 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
-
+import { Component, OnInit } from '@angular/core';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { MergeRequestFilterEvent } from '../../models/merge-request-filter-event';
+import { SortOption } from '../../../shared/models/sortOption.interface';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { MergeRequestPaginatedConfig } from '../../../shared/models/mergeRequestPaginatedConfig.interface';
+import { PageEvent } from '@angular/material/paginator';
 
 /**
  * `mergeRequestsPage` is a component which creates a div containing the main parts of the Merge Requests
@@ -32,8 +36,43 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
  */
 @Component({
     selector: 'merge-requests-page',
-    templateUrl: './mergeRequestsPage.component.html'
+    templateUrl: './mergeRequestsPage.component.html',
+    styleUrls: ['./mergeRequestsPage.component.scss']
 })
-export class MergeRequestsPageComponent {
-    constructor(public state: MergeRequestsStateService) {}
+export class MergeRequestsPageComponent implements  OnInit {
+    private recordType: string;
+    constructor(public state: MergeRequestsStateService,   public ms: MergeRequestManagerService) {}
+
+    ngOnInit(): void {
+        this.state.recordSortOption = this.state.recordSortOption || this.ms.sortOptions[0];
+        this._loadRecords();
+    }
+    changeFilter(changeDetails: MergeRequestFilterEvent): void {
+        this.state.acceptedFilter = changeDetails.requestStatus;
+        this.state.currentRecordPage = 0;
+        this.setRecords(this.state.recordSortOption, changeDetails.recordType, changeDetails.requestStatus)
+    }
+
+    changeSort(): void {
+        this._loadRecords();
+    }
+
+    private _loadRecords() {
+        this.setRecords(this.state.recordSortOption, this.state.recordType, this.state.acceptedFilter);
+    }
+    setRecords(sortOption: SortOption, recordType:string, requestStatus= false): void {
+        const paginatedConfig: MergeRequestPaginatedConfig = {
+            pageIndex: this.state.currentRecordPage,
+            limit: this.state.recordLimit,
+            sortOption,
+            type: this.recordType,
+            accepted: requestStatus
+        };
+        this.state.setRequests(paginatedConfig);
+    }
+
+    getRecordPage($event: PageEvent): void {
+        this.state.currentRecordPage = $event.pageIndex;
+        this._loadRecords();
+    }
 }

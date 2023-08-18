@@ -104,7 +104,7 @@ describe('Merge Request List component', function() {
 
     it('should initialize correctly', function() {
         component.ngOnInit();
-        expect(mergeRequestsStateStub.setRequests).toHaveBeenCalledWith(mergeRequestsStateStub.acceptedFilter);
+        expect(mergeRequestsStateStub.setRequests).toHaveBeenCalledWith({accepted : mergeRequestsStateStub.acceptedFilter});
     });
     describe('controller methods', function() {
         it('should show the delete confirmation overlay', fakeAsync(function() {
@@ -117,15 +117,9 @@ describe('Merge Request List component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.merge-request-list')).length).toEqual(1);
-            expect(element.queryAll(By.css('.search-container')).length).toEqual(1);
-        });
-        ['mat-form-field', 'mat-select', '.search-container button'].forEach(test => {
-            it('with a ' + test, function() {
-                expect(element.queryAll(By.css(test)).length).toEqual(1);
-            });
         });
         it('depending on how many merge requests there are', function() {
-            mergeRequestsStateStub.requests = [];
+            component.requests = [];
             fixture.detectChanges();
             expect(element.queryAll(By.css('info-message')).length).toEqual(1);
             expect(element.queryAll(By.css('.request')).length).toEqual(0);
@@ -133,15 +127,15 @@ describe('Merge Request List component', function() {
 
             const secondRequest = Object.assign({}, request);
             secondRequest.title = 'title';
-            mergeRequestsStateStub.requests = [request, secondRequest];
+            component.requests = [request, secondRequest];
             fixture.detectChanges();
             expect(element.queryAll(By.css('info-message')).length).toEqual(0);
-            expect(element.queryAll(By.css('.request')).length).toEqual(mergeRequestsStateStub.requests.length);
+            expect(element.queryAll(By.css('.request')).length).toEqual(component.requests.length);
             expect(element.queryAll(By.css('.mat-divider')).length).toEqual(1);
         });
         it('depending on how many assignees are on a request', function() {
             const copyRequest = Object.assign({}, request);
-            mergeRequestsStateStub.requests = [copyRequest];
+            component.requests = [copyRequest];
             fixture.detectChanges();
             const listItems = element.queryAll(By.css('.request .assignees li'));
             expect(listItems.length).toEqual(1);
@@ -151,20 +145,5 @@ describe('Merge Request List component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.request .assignees li')).length).toEqual(copyRequest.assignees.length);
         });
-    });
-    it('should set the correct state when a request is clicked', function() {
-        mergeRequestsStateStub.requests = [request];
-        fixture.detectChanges();
-
-        const requestDiv = element.queryAll(By.css('.request'))[0];
-        expect(requestDiv).not.toBeNull();
-        requestDiv.triggerEventHandler('click', null);
-        expect(mergeRequestsStateStub.selected).toEqual(request);
-    });
-    it('should call startCreate when the Create Request button is clicked', function() {
-        const button = element.queryAll(By.css('.search-container button'))[0];
-        expect(button).not.toBeNull();
-        button.triggerEventHandler('click', null);
-        expect(mergeRequestsStateStub.startCreate).toHaveBeenCalledWith();
     });
 });
