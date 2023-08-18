@@ -37,6 +37,7 @@ import { ReplyCommentComponent } from './components/replyComment/replyComment.co
 import { RequestBranchSelectComponent } from './components/requestBranchSelect/requestBranchSelect.component';
 import { RequestDetailsFormComponent } from './components/requestDetailsForm/requestDetailsForm.component';
 import { RequestRecordSelectComponent } from './components/requestRecordSelect/requestRecordSelect.component';
+import { MergeRequestFilterComponent } from './components/merge-request-filter/merge-request-filter.component';
 
 /**
  * @namespace merge-requests
@@ -58,7 +59,8 @@ import { RequestRecordSelectComponent } from './components/requestRecordSelect/r
         ReplyCommentComponent,
         RequestBranchSelectComponent,
         RequestDetailsFormComponent,
-        RequestRecordSelectComponent
+        RequestRecordSelectComponent,
+        MergeRequestFilterComponent
     ]
 })
 export class MergeRequestsModule {}

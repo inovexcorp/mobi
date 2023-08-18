@@ -20,44 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
+import { FilterItem } from '../../shared/models/filterItem.interface';
+import { RecordFilter } from '../../shared/models/recordFilter.interface';
 
-.merge-request-list {
-    .overflow {
-        &-auto {
-            overflow: auto;
-        }
-    }
-    .search-container {
-        text-align: center;
-        padding-bottom: 15px;
-
-        button {
-            display: inline-block;
-        }
-    }
-    .request {
-        display: flex;
-        flex-direction: row;
-        cursor: pointer;
-
-        h3 {
-            margin: 0;
-            @include textOverflow;
-        }
-        
-        .assignees {
-            li {
-                display: inline;
-
-                &:after {
-                    content: ', ';
-                }
-                &.last:after {
-                    content: '';
-                }
-            }
-        }
-    }
+/**
+ * A filter to be displayed in {@link catalog.RecordFiltersComponent} that has searchable items
+ */
+export interface SearchableRecordFilter extends RecordFilter {
+    pagingData: {
+        limit: number,
+        totalSize: number,
+        currentPage: number,
+        hasNextPage: boolean
+    },
+    rawFilterItems: FilterItem[],
+    searchModel: string,
+    searchChanged: (string) => void,
+    searchSubmitted: () => void,
+    nextPage: () => void
 }

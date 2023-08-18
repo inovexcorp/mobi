@@ -1,0 +1,45 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="record-filters w-100">
+    <mat-expansion-panel class="mat-elevation-z0" *ngFor="let currentFilter of filters" [expanded]="!currentFilter.hide">
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                {{ currentFilter.title }}
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="filter-options">
+            <info-message *ngIf="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
+            <div [ngClass]="{ pageable: currentFilter.pageable }">
+                <mat-radio-group class="filter-radio-items" [(ngModel)]="statusValue" (change)="currentFilter.setFilter(statusValue)">
+                    <mat-radio-button  *ngFor="let filterItem of currentFilter.filterItems"
+                                      [checked]="filterItem.checked"
+                                      [value]="filterItem.value">{{ currentFilter.getItemText(filterItem) }}
+                    </mat-radio-button>
+                </mat-radio-group>
+            </div>
+            <a *ngIf="currentFilter.pageable && currentFilter?.pagingData.hasNextPage" (click)="currentFilter.pagingData.currentPage = currentFilter.pagingData.currentPage + 1; currentFilter.nextPage()">
+                <i class="fa fa-fw fa-plus"></i><span>Load More</span>
+            </a>
+        </div>
+    </mat-expansion-panel>
+</div>

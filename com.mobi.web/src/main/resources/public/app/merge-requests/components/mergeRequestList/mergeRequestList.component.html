@@ -20,18 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-request-list d-flex flex-column h-100">
-    <form class="search-container">
-        <mat-form-field>
-            <mat-select placeholder="Request Status" [(value)]="state.acceptedFilter" (selectionChange)="state.setRequests(state.acceptedFilter)">
-                <mat-option *ngFor="let option of filterOptions" [value]="option.value">{{option.label}}</mat-option>
-            </mat-select>
-        </mat-form-field>
-        <button type="button" mat-raised-button color="primary" class="ml-2" (click)="state.startCreate()">New Request</button>
-    </form>
+<div class="merge-request-list d-flex flex-1">
     <div class="flex-1 remove-min-height">
-        <info-message *ngIf="!state.requests.length">No requests found</info-message>
-        <div class="request padding" *ngFor="let request of state.requests; last as lastRequest" (click)="state.selected = request">
+        <info-message *ngIf="!requests || requests.length === 0">No requests found</info-message>
+        <div class="request padding" *ngFor="let request of requests; last as lastRequest" (click)="state.selected = request">
             <div class="request-contents d-flex w-100">
                 <div class="details flex-1 remove-min-width">
                     <h3 class="text-truncate">{{request.title}}</h3>

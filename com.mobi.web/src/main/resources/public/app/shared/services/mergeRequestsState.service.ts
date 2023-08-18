@@ -39,6 +39,9 @@ import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { UserManagerService } from './userManager.service';
 import { UtilService } from './util.service';
+import { SortOption } from '../models/sortOption.interface';
+import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 
 /**
  * @class shared.MergeRequestsStateService
@@ -49,6 +52,32 @@ import { UtilService } from './util.service';
 @Injectable()
 export class MergeRequestsStateService {
     catalogId = '';
+    /**
+     * `totalRecordSize` holds an integer for the total number of merge  request in the latest query on the
+     * @type {number}
+     */
+    totalRecordSize = 0;
+    /**
+     * `currentRecordPage` holds an 0 based index indicating which page of merge request should be displayed
+     * @type {number}
+     */
+    currentRecordPage = 0;
+    /**
+     * `recordLimit` holds an integer representing the maximum number of merge request to be shown in a page
+     * @type {number}
+     */
+    recordLimit = 10;
+    /**
+     * `recordSortOption` holds one of the options from the `sortOptions` in the
+     * @type {SortOption}
+     */
+    recordSortOption: SortOption = undefined;
+    /**
+     * Indicates if the merge Request is accepted or open.
+     * @type {boolean}
+     */
+    requestStatus: boolean;
+    recordType: string;
 
     constructor(private mm: MergeRequestManagerService, private cm: CatalogManagerService,
         private um: UserManagerService, private om: OntologyManagerService, private util: UtilService) {}
@@ -167,6 +196,10 @@ export class MergeRequestsStateService {
         this.selectedRecord = undefined;
         this.clearDifference();
         this.sameBranch = false;
+        this.acceptedFilter = false;
+        this.totalRecordSize = 0;
+        this.currentRecordPage = 1;
+        this.recordSortOption = undefined;
     }
     /**
      * Clears all variables associated with calculating the Difference of a MergeRequest
@@ -182,12 +215,13 @@ export class MergeRequestsStateService {
      *
      * @param {boolean} [accepted=false] Whether the list should be accepted Merge Requests or just open ones.
      */
-    setRequests(accepted = false): void {
+    setRequests( paginatedConfig: MergeRequestPaginatedConfig): void {
         let recordsToRetrieve;
-        this.mm.getRequests({accepted})
+        this.mm.getRequests(paginatedConfig)
             .pipe(
                 switchMap((data: HttpResponse<JSONLDObject[]>) => {
                     this.requests = data.body.map(obj => this.getRequestObj(obj));
+                    this.totalRecordSize = this.requests.length;
                     recordsToRetrieve = uniq(map(this.requests, 'recordIri'));
                     return forkJoin(recordsToRetrieve.map(iri => this.cm.getRecord(iri, this.catalogId)));
                 })
@@ -322,7 +356,7 @@ export class MergeRequestsStateService {
                 this.selected = undefined;
                 this.util.createSuccessToast('Request successfully deleted');
                 if (!hasSelected) {
-                    this.setRequests(this.acceptedFilter);
+                    this.setRequests({accepted: this.acceptedFilter});
                 }
             }, this.util.createErrorToast);
     }

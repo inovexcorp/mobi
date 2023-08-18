@@ -24,6 +24,7 @@ var adminUsername = 'admin';
 var adminPassword = 'admin';
 
 var ontologyEditorPage = require('./OntologyEditorPage').ontologyEditorPage;
+var mergeRequest = require('./mergeRequestsPage').mergeRequestsPage;
 
 module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-request'],
@@ -348,12 +349,18 @@ module.exports = {
             .useCss()
             .waitForElementPresent('ontology-editor-page ontology-tab');
     },
-
     'Step 30: Create a merge request': function(browser) {
         browser
             .useXpath()
             .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
             .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
+            .useCss();
+        mergeRequest.verifyRecordFilters(browser);
+        mergeRequest.verifyMergeRequestList(browser);
+        mergeRequest.verifyMergePageSort(browser);
+
+        browser
+            .useXpath()
             .click("//button//span[text()[contains(.,'New Request')]]")
             .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
             .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
@@ -380,7 +387,7 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//button//span[text()="Submit"]')
         //stale element reference: stale element not found
-        browser 
+        browser
             .click('//button//span[text()="Submit"]')
             .useCss()
             .waitForElementVisible('div.toast-success')

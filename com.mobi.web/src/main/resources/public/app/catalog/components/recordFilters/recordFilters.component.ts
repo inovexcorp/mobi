@@ -29,9 +29,9 @@ import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { UtilService } from '../../../shared/services/util.service';
-import { FilterItem } from '../../models/filterItem.interface';
-import { RecordFilter } from '../../models/recordFilter.interface';
-import { SearchableRecordFilter } from '../../models/searchableRecordFilter.interface';
+import { FilterItem } from '../../../shared/models/filterItem.interface'; 
+import { RecordFilter } from '../../../shared/models/recordFilter.interface';
+import { SearchableRecordFilter } from '../../../shared/models/searchableRecordFilter.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 
 /**

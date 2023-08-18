@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="create-request h-100">
+<div class="create-request h-100 d-flex">
     <!-- TODO: Come Angular 11, switch the ngIfs to lazy loading -->
     <mat-horizontal-stepper editable="false" linear #requestStepper>
         <mat-step #firstStep label="Select Record" [completed]="!!state.requestConfig.recordId">
