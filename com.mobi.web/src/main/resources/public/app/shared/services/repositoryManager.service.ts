@@ -28,13 +28,13 @@ import { catchError } from 'rxjs/operators';
 import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { Repository } from '../models/repository.interface';
-import { UtilService } from './util.service';
+import { handleError } from '../utility';
 
 @Injectable()
 export class RepositoryManagerService {
-    prefix = REST_PREFIX + 'repositories';
+    prefix = `${REST_PREFIX}repositories`;
 
-    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * Calls the GET /repositories endpoint to retrieve an array of the repositories configured in the Mobi server.
@@ -43,7 +43,7 @@ export class RepositoryManagerService {
      */
     getRepositories(): Observable<Repository[]> {
         return this.spinnerSvc.track(this.http.get<Repository[]>(this.prefix))
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -54,6 +54,6 @@ export class RepositoryManagerService {
      */
     getRepository(id: string): Observable<Repository> {
         return this.spinnerSvc.track(this.http.get<Repository>(`${this.prefix}/${encodeURIComponent(id)}`))
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
 }

@@ -39,7 +39,7 @@ import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { InstanceFormComponent } from '../instanceForm/instanceForm.component';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { InstanceEditorComponent } from './instanceEditor.component';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
 
@@ -49,7 +49,7 @@ describe('Instance Editor component', function() {
     let fixture: ComponentFixture<InstanceEditorComponent>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let exploreUtilsStub: jasmine.SpyObj<ExploreUtilsService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
@@ -65,7 +65,7 @@ describe('Instance Editor component', function() {
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
                 MockProvider(PolicyEnforcementService)
@@ -77,7 +77,7 @@ describe('Instance Editor component', function() {
         element = fixture.debugElement;
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         exploreUtilsStub = TestBed.inject(ExploreUtilsService) as jasmine.SpyObj<ExploreUtilsService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
 
@@ -124,7 +124,7 @@ describe('Instance Editor component', function() {
         fixture = null;
         discoverStateStub = null;
         exploreServiceStub = null;
-        utilStub = null;
+        toastStub = null;
         exploreUtilsStub = null;
         policyEnforcementStub = null;
     });
@@ -160,7 +160,7 @@ describe('Instance Editor component', function() {
             describe('resolved and getClassInstanceDetails is', function() {
                 beforeEach(function() {
                     this.instanceIRI = discoverStateStub.explore.instance.metadata.instanceIRI;
-                    exploreServiceStub.updateInstance.and.returnValue(of(''));
+                    exploreServiceStub.updateInstance.and.returnValue(of(null));
                 });
                 it('resolved', fakeAsync(function() {
                     const data = [{
@@ -201,7 +201,7 @@ describe('Instance Editor component', function() {
                     expect(discoverStateStub.explore.instance.entity).toEqual([{'@id': 'test', '@type': ['test type']}]);
                     expect(exploreServiceStub.updateInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, this.instanceIRI, discoverStateStub.explore.instance.entity);
                     expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: discoverStateStub.explore.instanceDetails.currentPage * discoverStateStub.explore.instanceDetails.limit, limit: discoverStateStub.explore.instanceDetails.limit});
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
                 }));
             });
             it('rejected', fakeAsync(function() {
@@ -214,7 +214,7 @@ describe('Instance Editor component', function() {
                 expect(discoverStateStub.explore.instance.entity).toEqual([{'@id': 'test', '@type': ['test type']}]);
                 expect(exploreServiceStub.updateInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.instance.metadata.instanceIRI, discoverStateStub.explore.instance.entity);
                 expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
             }));
         });
         it('cancel sets the correct variables', function() {

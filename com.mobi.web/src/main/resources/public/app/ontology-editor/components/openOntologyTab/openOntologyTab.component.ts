@@ -39,9 +39,10 @@ import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOverlay.component';
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontology-download-modal.component';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 export interface OntologyRecordDisplay {
     title: string,
@@ -86,7 +87,7 @@ export class OpenOntologyTabComponent implements OnInit {
 
     constructor(public dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, public om: OntologyManagerService, 
         public os: OntologyStateService, public ms: MapperStateService, private cm: CatalogManagerService, 
-        private sm: SettingManagerService, public util: UtilService) {}
+        private sm: SettingManagerService, private toast: ToastService) {}
 
     ngOnInit(): void {
         this.setPageOntologyRecords(0, '');
@@ -126,14 +127,14 @@ export class OpenOntologyTabComponent implements OnInit {
             this.os.listItem.active = true;
         } else {
             this.os.openOntology(record.jsonld['@id'], record.title)
-                .subscribe(() => {}, error => this.util.createErrorToast(error));
+                .subscribe(() => {}, error => this.toast.createErrorToast(error));
         }
     }
     newOntology(): void {
         this.sm.getDefaultNamespace()
             .subscribe(defaultNamespace => {
                 this.dialog.open(NewOntologyOverlayComponent, { autoFocus: false, data: { defaultNamespace } });
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     showDeleteConfirmationOverlay(record: OntologyRecordDisplay): void {
         const recordId = get(record.jsonld, '@id', '');
@@ -164,7 +165,7 @@ export class OpenOntologyTabComponent implements OnInit {
                     this.os.deleteState(recordId);
                 }
                 return this.setPageOntologyRecords(0, this.filterText);
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     getPage(pageEvent: PageEvent): void {
         this.setPageOntologyRecords(pageEvent.pageIndex, this.filterText);
@@ -176,8 +177,8 @@ export class OpenOntologyTabComponent implements OnInit {
         const paginatedConfig = {
             pageIndex: this.pageIndex,
             limit: this.limit,
-            type: ONTOLOGYEDITOR + 'OntologyRecord',
-            sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
+            type: `${ONTOLOGYEDITOR}OntologyRecord`,
+            sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
             searchText: inputFilterText
         };
         this.spinnerSvc.startLoadingForComponent(this.ontologyList);
@@ -188,12 +189,12 @@ export class OpenOntologyTabComponent implements OnInit {
             .subscribe((response: HttpResponse<JSONLDObject[]>) => {
                 this.filteredList = response.body
                     .filter(item => {
-                        return get(item, '@type', []).some(i => i === ONTOLOGYEDITOR + 'OntologyRecord');
+                        return get(item, '@type', []).some(i => i === `${ONTOLOGYEDITOR}OntologyRecord`);
                     })
                     .map(record => ({
-                        title: this.util.getDctermsValue(record, 'title'),
-                        ontologyIRI: this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI'),
-                        description: this.util.getDctermsValue(record, 'description'),
+                        title: getDctermsValue(record, 'title'),
+                        ontologyIRI: getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`),
+                        description: getDctermsValue(record, 'description'),
                         jsonld: record
                     }));
                 if (response.headers !== undefined) {

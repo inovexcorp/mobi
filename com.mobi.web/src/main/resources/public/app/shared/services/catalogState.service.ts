@@ -106,14 +106,9 @@ export class CatalogStateService {
     selectedRecord: JSONLDObject = undefined;
 
     /**
-     * @ngdoc property
-     * @name editPermissionSelectedRecord
-     * @propertyOf shared.service:catalogStateService
-     * @type {boolean}
-     *
-     * @description
      * `editPermissionSelectedRecord` holds the currently selected catalog Record object that is being viewed in the
-     * {@link catalog.component:catalogPage} for permission page.
+     * {@link catalog.CatalogPageComponent} for permission page.
+     * @type {boolean}
      */
     editPermissionSelectedRecord = false;
 
@@ -123,16 +118,16 @@ export class CatalogStateService {
      * @type {Object}
      */
     recordIcons = {
-        [ONTOLOGYEDITOR + 'OntologyRecord']: 'fa-sitemap',
-        [DATASET + 'DatasetRecord']: 'fa-database',
-        [DELIM + 'MappingRecord']: 'fa-map',
-        [SHAPESGRAPHEDITOR + 'ShapesGraphRecord']: 'mat rule',
+        [`${ONTOLOGYEDITOR}OntologyRecord`]: 'fa-sitemap',
+        [`${DATASET}DatasetRecord`]: 'fa-database',
+        [`${DELIM}MappingRecord`]: 'fa-map',
+        [`${SHAPESGRAPHEDITOR}ShapesGraphRecord`]: 'mat rule',
         default: 'fa-book'
     };
 
     /**
      * Initializes state variables for the {@link catalog.CatalogPageComponent} using information retrieved
-     * from {@link shared.service:catalogManagerService catalogManagerService}.
+     * from {@link shared.CatalogManagerService}.
      */
     initialize(): void {
         this.initializeRecordSortOption();
@@ -144,7 +139,7 @@ export class CatalogStateService {
      * @return {string} The type IRI of the record
      */
     getRecordType(record: JSONLDObject): string {
-        return find(Object.keys(this.recordIcons), type => includes(get(record, '@type', []), type)) || CATALOG + 'Record';
+        return find(Object.keys(this.recordIcons), type => includes(get(record, '@type', []), type)) || `${CATALOG}Record`;
     }
     /**
      * Returns a Font Awesome icon class representing the type of the provided catalog Record object. If the
@@ -155,7 +150,7 @@ export class CatalogStateService {
      */
     getRecordIcon(record: JSONLDObject): string {
         const type = this.getRecordType(record);
-        return this.recordIcons[type === CATALOG + 'Record' ? 'default' : type];
+        return this.recordIcons[type === `${CATALOG}Record` ? 'default' : type];
     }
     /**
      * Resets all state variables for the {@link catalog.CatalogPageComponent}.
@@ -177,6 +172,6 @@ export class CatalogStateService {
      * Initializes the `recordSortOption` to a certain sort option from the {@link shared.CatalogManagerService}.
      */
     initializeRecordSortOption(): void {
-        this.recordSortOption = find(this.cm.sortOptions, {field: DCTERMS + 'modified', asc: false});
+        this.recordSortOption = find(this.cm.sortOptions, {field: `${DCTERMS}modified`, asc: false});
     }
 }

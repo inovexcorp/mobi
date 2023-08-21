@@ -36,6 +36,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
@@ -51,13 +52,12 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { SettingManagerService } from '../../../shared/services/settingManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOverlay.component';
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
 import { UploadSnackbarComponent } from '../uploadSnackbar/uploadSnackbar.component';
 import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontology-download-modal.component';
 import { OpenOntologyTabComponent } from './openOntologyTab.component';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 describe('Open Ontology Tab component', function() {
     let component: OpenOntologyTabComponent;
@@ -70,14 +70,17 @@ describe('Open Ontology Tab component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error Message';
     const recordId = 'recordId';
     const ontologyIRI = 'ontologyIRI';
     const ontologyRecord: JSONLDObject = {
         '@id': recordId,
-        '@type': [ONTOLOGYEDITOR + 'OntologyRecord']
+        '@type': [`${ONTOLOGYEDITOR}OntologyRecord`],
+        [`${DCTERMS}title`]: [{ '@value': 'title' }],
+        [`${DCTERMS}description`]: [{ '@value': 'description' }],
+        [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': ontologyIRI }],
     };
     const displayItem = {
         title: 'title',
@@ -120,7 +123,7 @@ describe('Open Ontology Tab component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(MapperStateService),
                 MockProvider(SettingManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -137,7 +140,7 @@ describe('Open Ontology Tab component', function() {
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -147,7 +150,7 @@ describe('Open Ontology Tab component', function() {
         fixture = null;
         ontologyStateStub = null;
         ontologyManagerStub = null;
-        utilStub = null;
+        toastStub = null;
         mapperStateStub = null;
         catalogManagerStub = null;
         settingManagerStub = null;
@@ -228,7 +231,7 @@ describe('Open Ontology Tab component', function() {
                 ontologyStateStub.list = [listItem];
                 component.open(displayItem);
                 expect(ontologyStateStub.openOntology).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 expect(ontologyStateStub.listItem).toEqual(listItem);
                 expect(listItem.active).toBeTrue();
             });
@@ -238,14 +241,14 @@ describe('Open Ontology Tab component', function() {
                     component.open(displayItem);
                     tick();
                     expect(ontologyStateStub.openOntology).toHaveBeenCalledWith(recordId, 'title');
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
                     ontologyStateStub.openOntology.and.returnValue(throwError(error));
                     component.open(displayItem);
                     tick();
                     expect(ontologyStateStub.openOntology).toHaveBeenCalledWith(recordId, 'title');
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 }));
             });
         });
@@ -303,7 +306,7 @@ describe('Open Ontology Tab component', function() {
                 expect(ontologyStateStub.getStateByRecordId).not.toHaveBeenCalled();
                 expect(ontologyStateStub.deleteState).not.toHaveBeenCalled();
                 expect(component.setPageOntologyRecords).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
             it('successfully', fakeAsync(function() {
                 ontologyManagerStub.deleteOntology.and.returnValue(of(null));
@@ -314,7 +317,7 @@ describe('Open Ontology Tab component', function() {
                 expect(ontologyStateStub.getStateByRecordId).toHaveBeenCalledWith(recordId);
                 expect(ontologyStateStub.deleteState).toHaveBeenCalledWith(recordId);
                 expect(component.setPageOntologyRecords).toHaveBeenCalledWith(0, 'searchText');
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         it('should handle getting a specific page of results', function() {
@@ -327,19 +330,17 @@ describe('Open Ontology Tab component', function() {
         });
         it('should get the list of ontology records at the specified page', fakeAsync(function() {
             const catalogId = 'catalogId';
-            const sortOption = {field: DCTERMS + 'title', label: '', asc: true};
+            const sortOption = {field: `${DCTERMS}title`, label: '', asc: true};
             const expectedPaginatedConfig = {
                 pageIndex: 1,
                 limit: 10,
-                type: ONTOLOGYEDITOR + 'OntologyRecord',
+                type: `${ONTOLOGYEDITOR}OntologyRecord`,
                 sortOption,
                 searchText: 'searchText'
             };
             catalogManagerStub.localCatalog = {'@id': catalogId};
             catalogManagerStub.sortOptions = [sortOption];
 
-            utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-            utilStub.getPropertyId.and.returnValue(ontologyIRI);
             const headers = {'x-total-count': '1'};
             catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse({body: [ontologyRecord, {'@id': 'other'}], headers: new HttpHeaders(headers)})));
             component.setPageOntologyRecords(1, 'searchText');
@@ -349,9 +350,6 @@ describe('Open Ontology Tab component', function() {
             expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.ontologyList);
             expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.ontologyList);
             expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, expectedPaginatedConfig, true);
-            expect(utilStub.getDctermsValue).toHaveBeenCalledWith(ontologyRecord, 'title');
-            expect(utilStub.getDctermsValue).toHaveBeenCalledWith(ontologyRecord, 'description');
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(ontologyRecord, ONTOLOGYEDITOR + 'ontologyIRI');
             expect(component.filteredList).toContain({
                 title: 'title',
                 ontologyIRI,

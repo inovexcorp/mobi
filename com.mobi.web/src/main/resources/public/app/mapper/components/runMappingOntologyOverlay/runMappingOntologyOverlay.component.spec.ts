@@ -35,7 +35,6 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { skip } from 'rxjs/operators';
 
 import {
     cleanStylesFromDOM,
@@ -49,7 +48,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { RunMappingOntologyOverlayComponent } from './runMappingOntologyOverlay.component';
 
@@ -62,7 +61,7 @@ describe('Run Mapping Ontology Overlay component', function() {
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error message';
     const catalogId = 'catalogId';
@@ -72,11 +71,18 @@ describe('Run Mapping Ontology Overlay component', function() {
     const ontologyIRI = 'iri';
     const sortOption = {
         asc: true,
-        field: DCTERMS + 'title',
+        field: `${DCTERMS}title`,
         label: ''
     };
-    const record: JSONLDObject = { '@id': recordId };
-    const branch: JSONLDObject = { '@id': branchId };
+    const record: JSONLDObject = {
+      '@id': recordId,
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': ontologyIRI }]
+    };
+    const branch: JSONLDObject = {
+      '@id': branchId,
+      [`${DCTERMS}title`]: [{ '@value': 'title' }]
+    };
     const ontologyPreview = {
         id: recordId,
         title: 'title',
@@ -107,7 +113,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 MockProvider(DelimitedManagerService),
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -122,7 +128,7 @@ describe('Run Mapping Ontology Overlay component', function() {
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         catalogManagerStub.localCatalog = { '@id': catalogId };
         mapperStateStub.selected = {
@@ -140,7 +146,6 @@ describe('Run Mapping Ontology Overlay component', function() {
         mapperStateStub.step = 2;
         mapperStateStub.selectMappingStep = 0;
         catalogManagerStub.sortOptions = [sortOption];
-        utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
         catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [record]})));
     });
 
@@ -153,7 +158,7 @@ describe('Run Mapping Ontology Overlay component', function() {
         mapperStateStub = null;
         delimitedManagerStub = null;
         ontologyStateStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should handle updates to the ontology select value', function() {
@@ -172,7 +177,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, {
                     searchText: 'text',
                     limit: 50,
-                    type: ONTOLOGYEDITOR + 'OntologyRecord',
+                    type: `${ONTOLOGYEDITOR}OntologyRecord`,
                     sortOption
                 }, true);
                 expect(component.getOntologyIRI).toHaveBeenCalledWith(record);
@@ -188,7 +193,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, {
                     searchText: 'title',
                     limit: 50,
-                    type: ONTOLOGYEDITOR + 'OntologyRecord',
+                    type: `${ONTOLOGYEDITOR}OntologyRecord`,
                     sortOption
                 }, true);
                 expect(component.getOntologyIRI).toHaveBeenCalledWith(record);
@@ -203,7 +208,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, {
                     searchText: '',
                     limit: 50,
-                    type: ONTOLOGYEDITOR + 'OntologyRecord',
+                    type: `${ONTOLOGYEDITOR}OntologyRecord`,
                     sortOption
                 }, true);
                 expect(component.getOntologyIRI).toHaveBeenCalledWith(record);
@@ -232,15 +237,11 @@ describe('Run Mapping Ontology Overlay component', function() {
                 expect(component.branch).toBeUndefined();
             });
             it('successfully', fakeAsync(function() {
-                const masterBranch = {'@id': 'master'};
+                const masterBranch = {
+                  '@id': 'master',
+                  [`${DCTERMS}title`]: [{ '@value': 'MASTER' }]
+                };
                 catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [masterBranch, branch]})));
-                utilStub.getDctermsValue.and.callFake((obj, prop) => {
-                    if (obj['@id'] === masterBranch['@id']) {
-                        return 'MASTER';
-                    } else {
-                        return prop;
-                    }
-                });
                 const event: MatAutocompleteSelectedEvent = {
                     option: {
                         value: ontologyPreview
@@ -255,9 +256,7 @@ describe('Run Mapping Ontology Overlay component', function() {
             }));
         });
         it('should get the IRI of an ontology', function() {
-            utilStub.getPropertyId.and.returnValue(ontologyIRI);
             expect(component.getOntologyIRI(record)).toEqual(ontologyIRI);
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(record, ONTOLOGYEDITOR + 'ontologyIRI');
         });
         describe('should set the correct state for running mapping', function() {
             beforeEach(function() {
@@ -285,8 +284,8 @@ describe('Run Mapping Ontology Overlay component', function() {
                         expect(mapperStateStub.initialize).not.toHaveBeenCalled();
                         expect(mapperStateStub.resetEdit).not.toHaveBeenCalled();
                         expect(delimitedManagerStub.reset).not.toHaveBeenCalled();
-                        expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                        expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                        expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                        expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                         expect(matDialogRef.close).not.toHaveBeenCalled();
                         expect(component.errorMessage).toEqual(error);
                     }));
@@ -304,8 +303,8 @@ describe('Run Mapping Ontology Overlay component', function() {
                             tick();
                             expect(mapperStateStub.saveMapping).toHaveBeenCalledWith();
                             expect(delimitedManagerStub.mapAndCommit).toHaveBeenCalledWith(mappingRecordId, recordId, branchId, component.update);
-                            expect(utilStub.createWarningToast).not.toHaveBeenCalled();
-                            expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                            expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+                            expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                             expect(mapperStateStub.step).toBe(mapperStateStub.selectMappingStep);
                             expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                             expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
@@ -323,7 +322,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                             tick();
                             expect(mapperStateStub.saveMapping).toHaveBeenCalledWith();
                             expect(delimitedManagerStub.mapAndCommit).toHaveBeenCalledWith(mappingRecordId, recordId, branchId, component.update);
-                            expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('You have a merge in progress'), jasmine.any(Object));
+                            expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('You have a merge in progress'), jasmine.any(Object));
                             expect(mapperStateStub.step).toBe(mapperStateStub.selectMappingStep);
                             expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                             expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
@@ -347,8 +346,8 @@ describe('Run Mapping Ontology Overlay component', function() {
                         tick();
                         expect(mapperStateStub.saveMapping).not.toHaveBeenCalled();
                         expect(delimitedManagerStub.mapAndCommit).toHaveBeenCalledWith(mappingRecordId, recordId, branchId, component.update);
-                        expect(utilStub.createWarningToast).not.toHaveBeenCalled();
-                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                        expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                         expect(mapperStateStub.step).toBe(mapperStateStub.selectMappingStep);
                         expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                         expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
@@ -366,8 +365,8 @@ describe('Run Mapping Ontology Overlay component', function() {
                         tick();
                         expect(mapperStateStub.saveMapping).not.toHaveBeenCalled();
                         expect(delimitedManagerStub.mapAndCommit).toHaveBeenCalledWith(mappingRecordId, recordId, branchId, component.update);
-                        expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('You have a merge in progress'), jasmine.any(Object));
-                        expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                        expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('You have a merge in progress'), jasmine.any(Object));
+                        expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                         expect(mapperStateStub.step).toBe(mapperStateStub.selectMappingStep);
                         expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                         expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
@@ -387,8 +386,8 @@ describe('Run Mapping Ontology Overlay component', function() {
                     expect(mapperStateStub.saveMapping).not.toHaveBeenCalled();
                     expect(delimitedManagerStub.mapAndCommit).toHaveBeenCalledWith(mappingRecordId, recordId, branchId, component.update);
                     expect(mapperStateStub.step).toBe(mapperStateStub.selectMappingStep);
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                     expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                     expect(delimitedManagerStub.reset).toHaveBeenCalledWith();

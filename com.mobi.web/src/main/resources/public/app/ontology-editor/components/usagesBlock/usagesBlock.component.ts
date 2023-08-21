@@ -20,10 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, get, chunk, union } from 'lodash';
+import { get, chunk, union } from 'lodash';
 import { Component, Input, OnInit, OnChanges, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { SPARQLSelectBinding } from '../../../shared/models/sparqlSelectResults.interface';
 
 /**
  * @class ontology-editor.UsagesBlockComponent
@@ -42,12 +43,12 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
     styleUrls: ['./usagesBlock.component.scss']
 })
 export class UsagesBlockComponent implements OnInit, OnChanges, OnDestroy {
-    @Input() usages;
+    @Input() usages: SPARQLSelectBinding[];
 
     size = 100;
     index = 0;
     id = '';
-    results: {[key: string]: any} = {};
+    results: {[key: string]: {subject: string, predicate: string, object: string}[]} = {};
     total = 0;
     shown = 0;
     chunks = 0;
@@ -72,19 +73,24 @@ export class UsagesBlockComponent implements OnInit, OnChanges, OnDestroy {
     }
     getMoreResults(): void {
         this.index++;
-        forEach(get(chunk(this.usages, this.size), this.index, []), binding => this.addToResults(this.results, binding));
+        get(chunk(this.usages, this.size), this.index, [])
+            .forEach((binding: SPARQLSelectBinding) => this.addToResults(this.results, binding));
     }
-    getResults(): any {
-        const results = {};
+    getResults(): {[key: string]: {subject: string, predicate: string, object: string}[]} {
+        const results: {[key: string]: {subject: string, predicate: string, object: string}[]} = {};
         this.total = get(this.usages, 'length');
         const chunks = chunk(this.usages, this.size);
         this.chunks = chunks.length === 0 ? 0 : chunks.length - 1;
-        forEach(get(chunks, this.index, []), binding => this.addToResults(results, binding));
+        get(chunks, this.index, []).forEach((binding: SPARQLSelectBinding) => this.addToResults(results, binding));
         return results;
     }
 
-    private addToResults(results, binding) {
-        results[binding.p.value] = union(get(results, binding.p.value, []), [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]);
+    private addToResults(results: {[key: string]: {subject: string, predicate: string, object: string}[]}, 
+      binding: SPARQLSelectBinding) {
+        results[binding.p.value] = union(
+            get(results, binding.p.value, []), 
+            [{subject: binding.s.value, predicate: binding.p.value, object: binding.o.value}]
+        );
         this.shown++;
     }
 

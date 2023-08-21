@@ -42,7 +42,7 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { RepositoryManagerService } from '../../../shared/services/repositoryManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { DatasetsOntologyPickerComponent } from '../datasetsOntologyPicker/datasetsOntologyPicker.component';
 import { NewDatasetOverlayComponent } from './newDatasetOverlay.component';
 
@@ -52,7 +52,7 @@ describe('New Dataset Overlay component', function() {
     let fixture: ComponentFixture<NewDatasetOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<NewDatasetOverlayComponent>>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let repositoryManagerStub: jasmine.SpyObj<RepositoryManagerService>;
 
     beforeEach(async () => {
@@ -76,7 +76,7 @@ describe('New Dataset Overlay component', function() {
             ],
             providers: [
                 MockProvider(DatasetManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(RepositoryManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -89,7 +89,7 @@ describe('New Dataset Overlay component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<NewDatasetOverlayComponent>>;
         datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -99,7 +99,7 @@ describe('New Dataset Overlay component', function() {
         fixture = null;
         matDialogRef = null;
         datasetManagerStub = null;
-        utilStub = null;
+        toastStub = null;
         repositoryManagerStub = null;
     });
 
@@ -142,7 +142,7 @@ describe('New Dataset Overlay component', function() {
                     keywords: ['a', 'b', 'c d'],
                     ontologies: ['ontology1', 'ontology2']
                 });
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
                 expect(component.error).toBe('Error Message');
             }));
@@ -158,7 +158,7 @@ describe('New Dataset Overlay component', function() {
                     keywords: ['a', 'b', 'c d'],
                     ontologies: ['ontology1', 'ontology2']
                 });
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith(true);
                 expect(component.error).toBe('');
             }));

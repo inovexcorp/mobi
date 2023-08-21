@@ -39,7 +39,7 @@ import { OntologyVisualizationService } from '../../services/ontologyVisualizati
 import { SidePanelAction, SidePanelPayloadI } from '../../classes/sidebarState';
 import { GraphState, StateNode } from '../../classes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { D3SimulatorService } from '../../services/d3Simulator.service';
 import { SimulationOptions } from '../../interfaces/simulation.interface';
 
@@ -47,12 +47,12 @@ import { D3Node, D3NodeIndex } from '../../classes/d3Classes';
 import { GraphStateDataI } from '../../classes/graphState';
 
 /**
- * @class OntologyVisualization
+ * @class ontology-visualization.OntologyVisualization
+ * 
  * Enable users to visually explore classes within an 
  * ontology and the ways they relate to one another
  * 
- * @requires shared.service:ontologyVisualizaton
- * `OntologyVisualization`
+ * @requires ontology-visualization.OntologyVisualizationService
  */
 @Component({
     selector: 'ontology-visualization',
@@ -95,7 +95,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
 
     constructor(private ovis: OntologyVisualizationService,  
         private d3Simulator: D3SimulatorService,
-        private util: UtilService, 
+        private toast: ToastService, 
         private cf: ChangeDetectorRef,
         private spinnerSrv : ProgressSpinnerService) {}
 
@@ -114,7 +114,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
             },
             error(reason) {
                 self.status.initialized = true;
-                self.util.clearToast();
+                self.toast.clearToast();
                 self.initFailed(reason);
             }
         });
@@ -169,7 +169,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
         } 
     }
     ngOnDestroy(): void {
-        this.util.clearToast();
+        this.toast.clearToast();
         if (this.sidePanelActionSub$) {
             this.sidePanelActionSub$.unsubscribe();  
         }
@@ -198,7 +198,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
     private initFailed(reason: string): void{
         const commitGraphState = this.ovis.getGraphState(this.commitId);
         this.cyChartSize = commitGraphState.getElementsLength();
-        this.util.createWarningToast(reason, this._toastrConfig);
+        this.toast.createWarningToast(reason, this._toastrConfig);
         this.status.hasWarningsMsg = true;
         this.status.loaded = true;
     }
@@ -338,7 +338,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
      */
     private clearErrorToasts(): void {
         if (this.status.hasWarningsMsg) {
-            this.util.clearToast();
+            this.toast.clearToast();
             this.status.hasWarningsMsg = false;
         }
     }
@@ -664,11 +664,11 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
         this.clearErrorToasts();
         if (this.hasInProgressCommit) {
             this.status.hasWarningsMsg = true;
-            this.util.createWarningToast('Uncommitted changes will not appear in the graph', this._toastrConfig);
+            this.toast.createWarningToast('Uncommitted changes will not appear in the graph', this._toastrConfig);
         }
         if (isOverLimit) {
             this.status.hasWarningsMsg = true;
-            this.util.createWarningToast(`Maximum number of nodes reached. Only ${nodeLimit} nodes are being displayed`, this._toastrConfig);
+            this.toast.createWarningToast(`Maximum number of nodes reached. Only ${nodeLimit} nodes are being displayed`, this._toastrConfig);
         }
     }
 }

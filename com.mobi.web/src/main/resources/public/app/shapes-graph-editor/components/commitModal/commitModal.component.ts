@@ -24,18 +24,19 @@ import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { get } from 'lodash';
-import { first } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getPropertyId } from '../../../shared/utility';
 
 /**
  * @class shapes-graph-editor.CommitModalComponent
  * 
- * A component that creates content for a modal to commit the changes to the ShapesGraphRecord. The form in the modal contains a
- * {@link shared.component:textArea} for the commit message.
+ * A component that creates content for a modal to commit the changes to the ShapesGraphRecord. The form in the modal
+ * contains a `textarea for the commit message.
  */
 @Component({
     selector: 'commit-modal',
@@ -50,29 +51,29 @@ export class CommitModalComponent {
         comment: ['', Validators.required]
     });
 
-    constructor(private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
+    constructor(private state: ShapesGraphStateService, private toast: ToastService, private cm: CatalogManagerService,
         private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CommitModalComponent>) {}
 
     commit(): void {
         this.cm.getRecordBranch(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
             .subscribe(branch => {
-                this.state.listItem.upToDate = this.util.getPropertyId(branch, CATALOG + 'head') === this.state.listItem.versionedRdfRecord.commitId;
+                this.state.listItem.upToDate = getPropertyId(branch, `${CATALOG}head`) === this.state.listItem.versionedRdfRecord.commitId;
                 if (this.state.listItem.upToDate) {
                     this.createCommit(this.state.listItem.versionedRdfRecord.branchId);
                 } else {
                     this.errorMessage = 'Cannot commit. Branch is behind HEAD. Please update.';
                 }
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     createCommit(branchId: string): void {
         this.cm.createBranchCommit(branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId,
-            this.createCommitForm.controls.comment.value).pipe(first()).toPromise()
-            .then(commitIri => this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
-                    this.state.listItem.versionedRdfRecord.branchId, commitIri, undefined, undefined, true,
-                    this.state.listItem.changesPageOpen),
-                error => Promise.reject(error))
-            .then(() => {
-                this.util.createSuccessToast('Successfully Committed Changes');
+            this.createCommitForm.controls.comment.value).pipe(
+                switchMap(commitIri => this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
+                        this.state.listItem.versionedRdfRecord.branchId, commitIri, undefined, undefined, true,
+                        this.state.listItem.changesPageOpen)
+                )
+            ).subscribe(() => {
+                this.toast.createSuccessToast('Successfully Committed Changes');
                 this.dialogRef.close(true);
             }, error => {
                 this.errorMessage = error;

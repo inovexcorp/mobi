@@ -23,8 +23,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
-import { HttpParams } from '@angular/common/http';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { RdfUpload } from '../models/rdfUpload.interface';
@@ -32,12 +30,10 @@ import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from './util.service';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 
 describe('Shapes Graph Manager service', function() {
     let service: ShapesGraphManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -63,7 +59,6 @@ describe('Shapes Graph Manager service', function() {
         commitId: 'commit1'
     };
     let rdfDownload: RdfDownload;
-    let downloadParams: any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -71,43 +66,13 @@ describe('Shapes Graph Manager service', function() {
             providers: [
                 ShapesGraphManagerService,
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService)
             ]
         });
 
         service = TestBed.inject(ShapesGraphManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
-        utilStub.createHttpParams.and.callThrough();
-        utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
-        utilStub.rejectError.and.callFake(() => Promise.reject(error));
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
         rdfDownload = {
             recordId: 'record1',
             branchId: 'branch1',
@@ -115,20 +80,12 @@ describe('Shapes Graph Manager service', function() {
             rdfFormat: 'turtle',
             fileName: file.name
         };
-        downloadParams = {
-            branchId: 'branch1',
-            commitId: 'commit1',
-            rdfFormat: 'turtle',
-            fileName: 'filename',
-            applyInProgressCommit: false
-        };
         progressSpinnerStub.track.and.callFake((ob) => ob);
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
-        utilStub = null;
         httpMock = null;
         progressSpinnerStub = null;
     });
@@ -138,93 +95,91 @@ describe('Shapes Graph Manager service', function() {
     });
 
     describe('should create a shapes graph record', function() {
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
             service.createShapesGraphRecord(rdfUpload)
-                .then(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
-                    expect(utilStub.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    done();
-                }).catch(done.fail);
+                .subscribe(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual({
+                        error: '',
+                        errorMessage: error,
+                        errorDetails: []
+                    });
+                });
             const request = httpMock.expectOne({url: service.prefix, method: 'POST'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush('', { status: 400, statusText: error });
         });
 
-        it('successfully', function(done) {
-            spyOn<any>(service, 'getVersionedRdfUpload').and.returnValue(uploadResponse);
+        it('successfully', function() {
             service.createShapesGraphRecord(rdfUpload)
-                .then(response => {
+                .subscribe(response => {
                     expect(response).toEqual(uploadResponse);
-                    done();
-                }, () => fail('Promise should have resolved')).catch(done.fail);
+                }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne({url: service.prefix, method: 'POST'});
-            request.flush([uploadResponse]);
+            request.flush(uploadResponse);
         });
     });
 
     describe('should upload changes to a shapes graph record', function() {
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
             service.uploadChanges(rdfUpdate)
-                .then(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
-                    expect(utilStub.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    done();
-                }).catch(done.fail);
-            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'PUT'});
-            request.flush('flush', { status: 400, statusText: error });
+                .subscribe(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual({
+                        error: '',
+                        errorMessage: error,
+                        errorDetails: []
+                    });
+                });
+            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'PUT'});
+            request.flush('', { status: 400, statusText: error });
         });
 
-        it('successfully', function(done) {
+        it('successfully', function() {
             service.uploadChanges(rdfUpdate)
-                .then(response => {
+                .subscribe(response => {
                     expect(response.status).toEqual(200);
-                    done();
-                }, () => fail('Promise should have resolved')).catch(done.fail);
-            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'PUT'});
+                }, () => fail('Promise should have resolved'));
+            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'PUT'});
             request.flush([uploadResponse]);
         });
     });
 
     describe('should delete changes on a shapes graph record', function() {
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
             service.deleteShapesGraphRecord(rdfUpdate.recordId)
-                .then(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
-                    expect(utilStub.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    done();
-                }).catch(done.fail);
-            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
+                .subscribe(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual({
+                        error: '',
+                        errorMessage: error,
+                        errorDetails: []
+                    });
+                });
+            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'DELETE'});
+            request.flush('', { status: 400, statusText: error });
         });
-        it('successfully', function(done) {
+        it('successfully', function() {
             service.deleteShapesGraphRecord(rdfUpdate.recordId)
-                .then(response => {
-                    expect(response).toEqual([]);
-                    done();
-                }, () => fail('Promise should have resolved')).catch(done.fail);
-            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'DELETE'});
-            request.flush([]);
+                .subscribe(() => {
+                    expect(true).toBeTrue();
+                }, () => fail('Promise should have resolved'));
+            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'DELETE'});
+            request.flush(200);
         });
     });
 
     describe('should retrieve shapes graph content of a shapes graph record', function() {
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
             service.getShapesGraphContent('record1', 'branch1', 'commit1')
-                .then(() => fail('Promise should have rejected'), response => {
+                .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
-                    done();
-                }).catch(done.fail);
-            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === service.prefix + '/record1/content');
-
+                });
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/content`);
             request.flush('flush', { status: 400, statusText: error });
         });
-        it('successfully', function(done) {
+        it('successfully', function() {
             service.getShapesGraphContent('record1', 'branch1', 'commit1')
-                .then(response => {
+                .subscribe(response => {
                     expect(response).toEqual('content');
-                    done();
-                }, () => fail('Promise should have resolved')).catch(done.fail);
-            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === service.prefix + '/record1/content');
+                }, () => fail('Promise should have resolved'));
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/content`);
             request.flush('content');
         });
     });
@@ -236,29 +191,21 @@ describe('Shapes Graph Manager service', function() {
         it('with all fields set', function() {
             service.downloadShapesGraph(rdfDownload);
 
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith(downloadParams);
-            expect(window.open).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
-                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=filename&applyInProgressCommit=false');
+            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=filename&applyInProgressCommit=false`);
         });
 
         it('with rdfFormat not set', function() {
             rdfDownload.rdfFormat = undefined;
-            downloadParams.rdfFormat = 'jsonld';
             service.downloadShapesGraph(rdfDownload);
 
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith(downloadParams);
-            expect(window.open).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
-                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=jsonld&fileName=filename&applyInProgressCommit=false');
+            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=jsonld&fileName=filename&applyInProgressCommit=false`);
         });
 
         it('with fileName not set', function() {
             rdfDownload.fileName = undefined;
-            downloadParams.fileName = 'shapesGraph';
             service.downloadShapesGraph(rdfDownload);
 
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith(downloadParams);
-            expect(window.open).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
-                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=shapesGraph&applyInProgressCommit=false');
+            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=shapesGraph&applyInProgressCommit=false`);
         });
     });
 });

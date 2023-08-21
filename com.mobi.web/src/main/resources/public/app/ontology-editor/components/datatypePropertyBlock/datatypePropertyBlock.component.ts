@@ -63,7 +63,7 @@ export class DatatypePropertyBlockComponent implements OnChanges {
             editingProperty: false,
             propertySelect: undefined,
             propertyValue: '',
-            propertyType: XSD + 'string',
+            propertyType: `${XSD}string`,
             propertyIndex: 0,
             propertyLanguage: 'en'
         };
@@ -81,7 +81,7 @@ export class DatatypePropertyBlockComponent implements OnChanges {
             propertyValue: propertyObj['@value'],
             propertyIndex: input.index,
             propertyLanguage: propertyLanguage,
-            propertyType: propertyType ? propertyType : (propertyLanguage ? RDF + 'langString' : '') 
+            propertyType: propertyType ? propertyType : (propertyLanguage ? `${RDF}langString` : '') 
         };
         this.dialog.open(DatatypePropertyOverlayComponent, {data: data}).afterClosed().subscribe(result => {
             if (result) {
@@ -92,7 +92,7 @@ export class DatatypePropertyBlockComponent implements OnChanges {
     showRemovePropertyOverlay(input: {key: string, index: number}): void {
         this.dialog.open(ConfirmModalComponent,{
             data: {
-                content: 'Are you sure you want to clear <strong>' +  this.os.getRemovePropOverlayMessage(input.key, input.index)+ '</strong>?'
+                content: `Are you sure you want to clear <strong>${this.os.getRemovePropOverlayMessage(input.key, input.index)}</strong>?`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {

@@ -24,15 +24,12 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from './util.service';
 import { RecordPermissionsManagerService } from './recordPermissionsManager.service';
 
 describe('Record Permissions service', function() {
     let service: RecordPermissionsManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -46,31 +43,19 @@ describe('Record Permissions service', function() {
             providers: [
                 RecordPermissionsManagerService,
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
             ]
         });
 
         service = TestBed.inject(RecordPermissionsManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
-        utilStub.createHttpParams.and.callThrough();
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
         progressSpinnerStub.track.and.callFake((ob) => ob);
         recordId = 'id';
     });
 
     afterEach(() => {
         service = null;
-        utilStub = null;
         httpMock.verify();
         recordId = null;
     });
@@ -78,13 +63,13 @@ describe('Record Permissions service', function() {
         it('unless an error occurs', function() {
             service.getRecordPolicy(recordId)
                 .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toBe('Error Message'));
-            const request = httpMock.expectOne({url: '/mobirest/record-permissions/' + recordId, method: 'GET'});
+            const request = httpMock.expectOne({url: `/mobirest/record-permissions/${recordId}`, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getRecordPolicy(recordId)
                 .subscribe((response) => expect(response).toEqual({}), () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: '/mobirest/record-permissions/' + recordId, method: 'GET'});
+            const request = httpMock.expectOne({url: `/mobirest/record-permissions/${recordId}`, method: 'GET'});
             request.flush({});
         });
     });
@@ -93,7 +78,7 @@ describe('Record Permissions service', function() {
             service.updateRecordPolicy(recordId, policy)
                 .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toBe('Error Message'));
 
-            const request = httpMock.expectOne({url: '/mobirest/record-permissions/' + recordId, method: 'PUT'});
+            const request = httpMock.expectOne({url: `/mobirest/record-permissions/${recordId}`, method: 'PUT'});
             request.flush('flush', { status: 400, statusText: error });
         });
         it('when resolved', function() {
@@ -101,7 +86,7 @@ describe('Record Permissions service', function() {
                 .subscribe(() => {
                     expect(true).toBeTrue();
                 },() => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: '/mobirest/record-permissions/' + recordId, method: 'PUT'});
+            const request = httpMock.expectOne({url: `/mobirest/record-permissions/${recordId}`, method: 'PUT'});
             request.flush(null);
         });
     });

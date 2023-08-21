@@ -30,7 +30,7 @@ import { DCTERMS, OWL } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
@@ -61,7 +61,7 @@ export class NewOntologyOverlayComponent implements OnInit {
 
     constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<NewOntologyOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: {defaultNamespace: string}, public os: OntologyStateService,
-        private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
+        private camelCase: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.newOntologyForm.controls.iri.setValue(this.data.defaultNamespace);
@@ -72,18 +72,18 @@ export class NewOntologyOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRI.transform(this.newOntologyForm.controls.iri.value);
+            const split = splitIRI(this.newOntologyForm.controls.iri.value);
             this.newOntologyForm.controls.iri.setValue(split.begin + split.then + this.camelCase.transform(newName, 'class'));
         }
     }
     create(): void {
         const newOntology: JSONLDObject = {
             '@id': this.newOntologyForm.controls.iri.value,
-            '@type': [OWL + 'Ontology'],
-            [DCTERMS + 'title']: [{'@value': this.newOntologyForm.controls.title.value}],
+            '@type': [`${OWL}Ontology`],
+            [`${DCTERMS}title`]: [{'@value': this.newOntologyForm.controls.title.value}],
         };
         if (this.newOntologyForm.controls.description.value) {
-            newOntology[DCTERMS + 'description'] = [{'@value': this.newOntologyForm.controls.description.value}];
+            newOntology[`${DCTERMS}description`] = [{'@value': this.newOntologyForm.controls.description.value}];
         }
         this.os.addLanguageToNewEntity(newOntology, this.newOntologyForm.controls.language.value);
         this.os.createOntology([newOntology], this.newOntologyForm.controls.title.value, this.newOntologyForm.controls.description.value, uniq(map(this.newOntologyForm.controls.keywords.value, trim)))

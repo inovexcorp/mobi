@@ -39,7 +39,6 @@ import { InstanceViewComponent } from '../instanceView/instanceView.component';
 import { ExploreTabComponent } from './exploreTab.component';
 
 describe('Explore Tab component', function() {
-    let component: ExploreTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ExploreTabComponent>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
@@ -62,7 +61,6 @@ describe('Explore Tab component', function() {
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExploreTabComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
 
@@ -97,7 +95,6 @@ describe('Explore Tab component', function() {
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
         discoverStateStub = null;

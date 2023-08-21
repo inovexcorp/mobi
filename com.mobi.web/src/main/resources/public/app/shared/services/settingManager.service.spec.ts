@@ -21,25 +21,28 @@
  * #L%
  */
 
-import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { SETTING } from '../../prefixes';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { RESTError } from '../models/RESTError.interface';
 import { SettingManagerService } from './settingManager.service';
 
 describe('Setting Manager service', function() {
     let service: SettingManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
     const error = 'error message';
+    const errorObj: RESTError = { error: '', errorMessage: error, errorDetails: [] };
+    const prefType = 'https://mobi.com/ontologies/setting#TestPreferenceType';
+    const prefGroup = 'https://mobi.com/ontologies/setting#TestPreferenceGroup';
+    const appSettingType = 'https://mobi.com/ontologies/setting#TestApplicationSettingType';
+    const appSettingGroup = 'https://mobi.com/ontologies/setting#TestApplicationSettingGroup';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -47,58 +50,33 @@ describe('Setting Manager service', function() {
             providers: [
                 SettingManagerService,
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         });
 
         service = TestBed.inject(SettingManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        
-        progressSpinnerStub.track.and.callFake((ob) => ob);
-
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-
-            return httpParams;
-        });
+        progressSpinnerStub.trackedRequest.and.callFake((ob) => ob);
     });
 
     afterEach(function() {
         service = null;
-        utilStub = null;
         httpMock = null;
         progressSpinnerStub = null;
     });
 
     describe('should retrieve a list of user preferences', function() {
+        beforeEach(function() {
+            this.url = service.prefix;
+        });
         it('unless an error occurs', function() {
             service.getUserPreferences()
                 .subscribe(() =>  fail('Observable should have rejected'), response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
@@ -106,90 +84,84 @@ describe('Setting Manager service', function() {
                 .subscribe((response: { [key: string]: JSONLDObject[] }) => {
                     expect(response).toEqual({'type': [{'@id': 'test'}]});
                 }, () => fail('Observable should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush({'type': [{'@id': 'test'}]});
         });
     });
     describe('should get a preference by type', function() {
+        beforeEach(function() {
+            this.url = `${service.prefix}/types/${encodeURIComponent(prefType)}`;
+        });
         it('unless an error occurs', function() {
-            service.getUserPreferenceByType('https://mobi.com/ontologies/setting#TestPreferenceType')
+            service.getUserPreferenceByType(prefType)
                 .subscribe(() => {
                     fail('Observable should have rejected');
                 }, response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/settings/types/' + encodeURIComponent('https://mobi.com/ontologies/setting#TestPreferenceType')) && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
 
         });
         it('successfully', function() {
-            service.getUserPreferenceByType('https://mobi.com/ontologies/setting#TestPreferenceType')
+            service.getUserPreferenceByType(prefType)
                 .subscribe((response: JSONLDObject[]) => {
                     expect(response).toEqual([{'@id': 'test'}]);
                 }, () => {
                     fail('Observable should have resolved');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/settings/types/' + encodeURIComponent('https://mobi.com/ontologies/setting#TestPreferenceType')) && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush([{'@id': 'test'}]);
         });
     });
     describe('should update a preference', function() {
         beforeEach(function() {
             this.newRecord = {};
-            this.url = '/mobirest/settings/' + '1234';
-            this.preferenceConfig = {
-                type: SETTING + 'Preference',
-                subType: 'https://mobi.com/ontologies/setting#TestPreferenceType'
-            };
+            this.url = `${service.prefix}/1234`;
         });
         it('unless an error occurs', function() {
-            service.updateUserPreference('1234', 'https://mobi.com/ontologies/setting#TestPreferenceType', this.newRecord)
+            service.updateUserPreference('1234', prefType, this.newRecord)
                 .subscribe(() => fail('Observable should have rejected'),
-                    response => expect(response).toEqual(error));
+                    response => expect(response).toEqual(errorObj));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'PUT');
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith(this.preferenceConfig);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.updateUserPreference('1234', 'https://mobi.com/ontologies/setting#TestPreferenceType', this.newRecord)
-                .subscribe(response => expect(response).toEqual({}),
-                        () => fail('Observable should have resolved'));
+            service.updateUserPreference('1234', prefType, this.newRecord)
+                .subscribe(() => expect(true).toBeTrue(),
+                    () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'PUT');
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith(this.preferenceConfig);
-            expect(request.request.params.get('subType')).toEqual('https://mobi.com/ontologies/setting#TestPreferenceType');
-            expect(request.request.params.get('type')).toEqual(SETTING + 'Preference');
-            request.flush({});
+            expect(request.request.params.get('subType')).toEqual(prefType);
+            expect(request.request.params.get('type')).toEqual(`${SETTING}Preference`);
+            request.flush(200);
         });
     });
     describe('should create a preference', function() {
         beforeEach(function() {
             this.newRecord = {};
-            this.url = '/mobirest/settings';
-            this.preferenceConfig = {
-                type: SETTING + 'Preference',
-                subType: 'https://mobi.com/ontologies/setting#TestPreferenceType'
-            };
+            this.url = service.prefix;
         });
         it('unless an error occurs', function() {
-            service.createUserPreference('https://mobi.com/ontologies/setting#TestPreferenceType', this.newRecord)
+            service.createUserPreference(prefType, this.newRecord)
                 .subscribe(() => fail('Observable should have rejected'),
-                    response => expect(response).toEqual(error));
+                    response => expect(response).toEqual(errorObj));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith(this.preferenceConfig);
-            expect(request.request.params.get('subType')).toEqual('https://mobi.com/ontologies/setting#TestPreferenceType');
-            expect(request.request.params.get('type')).toEqual(SETTING + 'Preference');
-            request.flush('flush', { status: 400, statusText: error });
+            expect(request.request.params.get('subType')).toEqual(prefType);
+            expect(request.request.params.get('type')).toEqual(`${SETTING}Preference`);
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.createUserPreference('https://mobi.com/ontologies/setting#TestPreferenceType', this.newRecord)
-                .subscribe(response => expect(response).toEqual({}),
-                        () => fail('Observable should have resolved'));
+            service.createUserPreference(prefType, this.newRecord)
+                .subscribe(() => expect(true).toBeTrue(),
+                    () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith(this.preferenceConfig);
-            request.flush({});
+            request.flush('newId');
         });
     });
     describe('should retrieve a list preference groups', function() {
+        beforeEach(function() {
+            this.url = `${service.prefix}/groups`;
+        });
         it('unless an error occurs', function() {
             service.getPreferenceGroups()
                 .subscribe(() => {
@@ -197,7 +169,7 @@ describe('Setting Manager service', function() {
                 }, (response) => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix + '/groups' && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
@@ -207,37 +179,40 @@ describe('Setting Manager service', function() {
                 }, () => {
                     fail('Observable should have resolved');
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix + '/groups' && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush([{'@id': 'test'}]);
         });
     });
     describe('should retrieve a list of preference definitions', function() {
         beforeEach(function() {
-            this.testPrefGroup = 'https://mobi.com/ontologies/setting#TestPreferenceGroup';
+            this.url = `${service.prefix}/groups/${encodeURIComponent(prefGroup)}/definitions`;
         });
         it('unless an error occurs', function() {
-            service.getPreferenceDefinitions(this.testPrefGroup)
+            service.getPreferenceDefinitions(prefGroup)
                 .subscribe(() => {
                     fail('Observable should have rejected');
                 }, response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === (service.prefix + '/groups/' + encodeURIComponent(this.testPrefGroup) + '/definitions') && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
             
         });
         it('successfully', function() {
-            service.getPreferenceDefinitions(this.testPrefGroup)
+            service.getPreferenceDefinitions(prefGroup)
                 .subscribe(response => {
                     expect(response).toEqual([{'@id': 'test'}]);
                 }, () => {
                     fail('Observable should have resolved');
                 });
-            const request = httpMock.expectOne(req => req.url === (service.prefix + '/groups/' + encodeURIComponent(this.testPrefGroup) + '/definitions') && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush([{'@id': 'test'}]);
         });
     });
     describe('should retrieve a list of application settings', function() {
+        beforeEach(function() {
+            this.url = service.prefix;
+        });
         it('unless an error occurs', function() {
             service.getApplicationSettings()
                 .subscribe(() => {
@@ -245,7 +220,7 @@ describe('Setting Manager service', function() {
                 }, response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
             
         });
@@ -256,84 +231,84 @@ describe('Setting Manager service', function() {
                 }, () => {
                     fail('Observable should have resolved');
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush({'type': [{'@id': 'test'}]});
         });
     });
     describe('should get an application setting by type', function() {
+        beforeEach(function() {
+            this.url = `${service.prefix}/types/${encodeURIComponent(appSettingType)}`;
+        });
         it('unless an error occurs', function() {
-            service.getApplicationSettingByType('https://mobi.com/ontologies/setting#TestApplicationSettingType')
+            service.getApplicationSettingByType(appSettingType)
                 .subscribe(() => {
                     fail('Observable should have rejected');
                 }, response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/settings/types/' + encodeURIComponent('https://mobi.com/ontologies/setting#TestApplicationSettingType')) && req.method === 'GET'); 
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET'); 
             request.flush('flush', { status: 400, statusText: error });
             
         });
         it('successfully', function() {
-            service.getApplicationSettingByType('https://mobi.com/ontologies/setting#TestApplicationSettingType')
+            service.getApplicationSettingByType(appSettingType)
                 .subscribe(response => {
                     expect(response).toEqual([{'@id': 'test'}]);
                 }, () => {
                     fail('Observable should have resolved');
                 });
-            const request = httpMock.expectOne(req => req.url === ('/mobirest/settings/types/' + encodeURIComponent('https://mobi.com/ontologies/setting#TestApplicationSettingType')) && req.method === 'GET'); 
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET'); 
             request.flush([{'@id': 'test'}]);
         });
     });
     describe('should update an application setting', function() {
         beforeEach(function() {
             this.newRecord = {};
-            this.url = '/mobirest/settings/' + '1234';
-            this.applicationSettingConfig = {
-                type: SETTING + 'ApplicationSetting',
-                subType: 'https://mobi.com/ontologies/setting#TestApplicationSettingType'
-            };
+            this.url = `${service.prefix}/1234`;
         });
         it('unless an error occurs', function() {
-            service.updateApplicationSetting('1234', 'https://mobi.com/ontologies/setting#TestApplicationSettingType', this.newRecord)
+            service.updateApplicationSetting('1234', appSettingType, this.newRecord)
                 .subscribe(() => fail('Observable should have rejected'),
-                    response => expect(response).toEqual(error));
+                    response => expect(response).toEqual(errorObj));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'PUT');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.updateApplicationSetting('1234', 'https://mobi.com/ontologies/setting#TestApplicationSettingType', this.newRecord)
-                .subscribe(response => expect(response).toEqual({}),
+            service.updateApplicationSetting('1234', appSettingType, this.newRecord)
+                .subscribe(() => expect(true).toBeTrue(),
                         () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'PUT');
-            expect(request.request.params.get('subType')).toEqual('https://mobi.com/ontologies/setting#TestApplicationSettingType');
+            expect(request.request.params.get('subType')).toEqual(appSettingType);
             expect(request.request.params.get('type')).toEqual(service.appSettingType.iri);
-            request.flush({});
+            request.flush(200);
         });
     });
     describe('should create an application setting', function() {
         beforeEach(function() {
             this.newRecord = {};
-            this.url = '/mobirest/settings';
-            this.applicationSettingConfig = {
-                type: SETTING + 'ApplicationSetting',
-                subType: 'https://mobi.com/ontologies/setting#TestApplicationSettingType'
-            };
+            this.url = service.prefix;
         });
         it('unless an error occurs', function() {
-            service.createApplicationSetting('https://mobi.com/ontologies/setting#TestApplicationSettingType', this.newRecord)
+            service.createApplicationSetting(appSettingType, this.newRecord)
                 .subscribe(() => fail('Observable should have rejected'),
-                    response => expect(response).toEqual(error));
+                    response => expect(response).toEqual(errorObj));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.createApplicationSetting('https://mobi.com/ontologies/setting#TestApplicationSettingType', this.newRecord)
-                .subscribe(response => expect(response).toEqual({}),
-                        () => fail('Observable should have resolved'));
+            service.createApplicationSetting(appSettingType, this.newRecord)
+                .subscribe(() => expect(true).toBeTrue(),
+                    () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
-            request.flush({});
+            expect(request.request.params.get('subType')).toEqual(appSettingType);
+            expect(request.request.params.get('type')).toEqual(service.appSettingType.iri);
+            request.flush(200);
         });
     });
     describe('should retrieve a list of application setting groups', function() {
+        beforeEach(function() {
+            this.url = `${service.prefix}/groups`;
+        });
         it('unless an error occurs', function() {
             service.getApplicationSettingGroups()
                 .subscribe(() => {
@@ -341,7 +316,7 @@ describe('Setting Manager service', function() {
                 }, response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix + '/groups' && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
@@ -351,33 +326,33 @@ describe('Setting Manager service', function() {
                 }, () => {
                     fail('Observable should have resolved');
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix + '/groups' && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush([{'@id': 'test'}]);
         });
     });
     describe('should retrieve a list of application setting definitions', function() {
         beforeEach(function() {
-            this.testApplicationSettingGroup = 'https://mobi.com/ontologies/setting#TestApplicationSettingGroup';
+            this.url = `${service.prefix}/groups/${encodeURIComponent(appSettingGroup)}/definitions`;
         });
         it('unless an error occurs', function() {
-            service.getApplicationSettingDefinitions(this.testApplicationSettingGroup)
+            service.getApplicationSettingDefinitions(appSettingGroup)
                 .subscribe(() => {
                     fail('Observable should have rejected');
                 }, response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req => req.url === (service.prefix + '/groups/' + encodeURIComponent(this.testApplicationSettingGroup) + '/definitions') && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
             
         });
         it('successfully', function() {
-            service.getApplicationSettingDefinitions(this.testApplicationSettingGroup)
+            service.getApplicationSettingDefinitions(appSettingGroup)
                 .subscribe(response => {
                     expect(response).toEqual([{'@id': 'test'}]);
                 }, () => {
                     fail('Observable should have resolved');
                 });
-            const request = httpMock.expectOne(req => req.url === (service.prefix + '/groups/' + encodeURIComponent(this.testApplicationSettingGroup) + '/definitions') && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             request.flush([{'@id': 'test'}]);
         });
     });

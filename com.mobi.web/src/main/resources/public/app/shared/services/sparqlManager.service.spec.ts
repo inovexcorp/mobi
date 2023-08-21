@@ -24,7 +24,7 @@ import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
@@ -32,14 +32,12 @@ import {
 import { XSD } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { UtilService } from './util.service';
 import { SparqlManagerService } from './sparqlManager.service';
 
 describe('SPARQL Manager service', function() {
     let service: SparqlManagerService;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
-    let utilStub: jasmine.SpyObj<UtilService>;
     
     const error = 'error message';
     const query = 'SELECT * WHERE { ?s ?p ?o }';
@@ -50,8 +48,8 @@ describe('SPARQL Manager service', function() {
         },
         results: { bindings: [
             {
-                'A': { type: XSD + 'string', value: 'testA' },
-                'B': { type: XSD + 'string', value: 'testB' },
+                'A': { type: `${XSD}string`, value: 'testA' },
+                'B': { type: `${XSD}string`, value: 'testB' },
             }
         ]}
     };
@@ -62,7 +60,6 @@ describe('SPARQL Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 SparqlManagerService,
-                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService),
             ]
         });
@@ -70,33 +67,9 @@ describe('SPARQL Manager service', function() {
         service = TestBed.inject(SparqlManagerService);
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
    
         progressSpinnerStub.track.and.callFake((ob) => ob);
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
+        progressSpinnerStub.trackedRequest.and.callFake((ob) => ob);
     });
 
     afterEach(function() {
@@ -104,7 +77,6 @@ describe('SPARQL Manager service', function() {
         service = null;
         httpMock = null;
         progressSpinnerStub = null;
-        utilStub = null;
     });
 
     afterEach(() => {
@@ -126,7 +98,7 @@ describe('SPARQL Manager service', function() {
                     service.query(query, datasetRecordIRI, true)
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
@@ -137,7 +109,7 @@ describe('SPARQL Manager service', function() {
                     service.query(query, '', true)
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
@@ -152,7 +124,7 @@ describe('SPARQL Manager service', function() {
                     service.query(query, datasetRecordIRI)
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
@@ -163,7 +135,7 @@ describe('SPARQL Manager service', function() {
                     service.query(query, '')
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
@@ -190,7 +162,7 @@ describe('SPARQL Manager service', function() {
                     service.postQuery(query, datasetRecordIRI, true)
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
@@ -201,7 +173,7 @@ describe('SPARQL Manager service', function() {
                     service.postQuery(query, '', true)
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
@@ -216,7 +188,7 @@ describe('SPARQL Manager service', function() {
                     service.postQuery(query, datasetRecordIRI)
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
@@ -227,7 +199,7 @@ describe('SPARQL Manager service', function() {
                     service.postQuery(query, '')
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
-                            expect(utilStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
+                            expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
                     const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
@@ -253,7 +225,7 @@ describe('SPARQL Manager service', function() {
                     }
                 });
                 service.downloadResults(query, 'csv', '', datasetRecordIRI);
-                expect(window.open).toHaveBeenCalledWith(service.prefix + '?' + params.toString());
+                expect(window.open).toHaveBeenCalledWith(`${service.prefix}?${params.toString()}`);
             });
             it('with a file name', function() {
                 const params = new HttpParams({
@@ -264,7 +236,7 @@ describe('SPARQL Manager service', function() {
                     }
                 });
                 service.downloadResults(query, 'csv', 'test');
-                expect(window.open).toHaveBeenCalledWith(service.prefix + '?' + params.toString());
+                expect(window.open).toHaveBeenCalledWith(`${service.prefix}?${params.toString()}`);
             });
             it('without a file name', function() {
                 const params = new HttpParams({
@@ -274,7 +246,7 @@ describe('SPARQL Manager service', function() {
                     }
                 });
                 service.downloadResults(query, 'csv');
-                expect(window.open).toHaveBeenCalledWith(service.prefix + '?' + params.toString());
+                expect(window.open).toHaveBeenCalledWith(`${service.prefix}?${params.toString()}`);
             });
         });
         describe('via POST', function() {

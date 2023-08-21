@@ -39,7 +39,6 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { CreateTagOverlayComponent } from './createTagOverlay.component';
@@ -52,7 +51,6 @@ describe('Create Tag Overlay component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
     const error = 'error';
     const catalogId = 'catalogId';
@@ -81,7 +79,6 @@ describe('Create Tag Overlay component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService),
                 { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -95,9 +92,7 @@ describe('Create Tag Overlay component', function() {
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<CreateTagOverlayComponent>>;
         camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
 
-        splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
         catalogManagerStub.localCatalog = {'@id': catalogId};
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
@@ -113,22 +108,21 @@ describe('Create Tag Overlay component', function() {
         matDialogRef = null;
         ontologyStateStub = null;
         camelCaseStub = null;
-        splitIRIStub = null;
         catalogManagerStub = null;
     });
 
     describe('should initialize correctly', function() {
         it('if the ontology id has a separator at the end already', function() {
-            ontologyStateStub.listItem.ontologyId = ontologyId + '#';
+            ontologyStateStub.listItem.ontologyId = `${ontologyId}#`;
             component.ngOnInit();
             expect(component.catalogId).toEqual(catalogId);
-            expect(component.createForm.controls.iri.value).toEqual(ontologyId + '#');
+            expect(component.createForm.controls.iri.value).toEqual(`${ontologyId}#`);
         });
         it('if the ontology id does not have a separator at the end', function() {
             ontologyStateStub.listItem.ontologyId = ontologyId;
             component.ngOnInit();
             expect(component.catalogId).toEqual(catalogId);
-            expect(component.createForm.controls.iri.value).toEqual(ontologyId + '/');
+            expect(component.createForm.controls.iri.value).toEqual(`${ontologyId}/`);
 
         });
     });
@@ -157,6 +151,7 @@ describe('Create Tag Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
         });
         it('depending on the validity of the form', function() {
+            ontologyStateStub.listItem.ontologyId = ontologyId;
             const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
             expect(button).not.toBeNull();
             expect(button.properties['disabled']).toBeFalsy();
@@ -177,20 +172,18 @@ describe('Create Tag Overlay component', function() {
         });
         describe('should handle a title change', function() {
             beforeEach(function() {
-                component.createForm.controls.iri.setValue(ontologyId + '#');
+                component.createForm.controls.iri.setValue(`${ontologyId}#`);
                 camelCaseStub.transform.and.callFake(a => a);
             });
             it('if the iri has not been manually changed', function() {
                 component.nameChanged('new');
-                expect(component.createForm.controls.iri.value).toEqual('http://test.com#new');
-                expect(splitIRIStub.transform).toHaveBeenCalledWith(ontologyId + '#');
+                expect(component.createForm.controls.iri.value).toEqual('http://test.com/ontology#new');
                 expect(camelCaseStub.transform).toHaveBeenCalledWith('new', 'class');
             });
             it('unless the iri has been manually changed', function() {
                 component.iriHasChanged = true;
                 component.nameChanged('new');
-                expect(component.createForm.controls.iri.value).toEqual(ontologyId + '#');
-                expect(splitIRIStub.transform).not.toHaveBeenCalled();
+                expect(component.createForm.controls.iri.value).toEqual(`${ontologyId}#`);
                 expect(camelCaseStub.transform).not.toHaveBeenCalled();
             });
         });

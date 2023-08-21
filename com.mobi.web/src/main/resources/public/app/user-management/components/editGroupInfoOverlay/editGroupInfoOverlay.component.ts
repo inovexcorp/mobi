@@ -28,7 +28,7 @@ import { find } from 'lodash';
 import { Group } from '../../../shared/models/group.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { updateDctermsValue } from '../../../shared/utility';
 
 /**
  * @class user-management.EditGroupInfoOverlayComponent
@@ -46,7 +46,7 @@ export class EditGroupInfoOverlayComponent {
     errorMessage = '';
 
     constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, private fb: UntypedFormBuilder,
-        private state: UserStateService, private um: UserManagerService, private util: UtilService) {
+        private state: UserStateService, private um: UserManagerService) {
             this.editGroupInfoForm = this.fb.group({
                 description: [this.state.selectedGroup.description]
             });
@@ -55,7 +55,7 @@ export class EditGroupInfoOverlayComponent {
     set(): void {
         const newGroup: Group = Object.assign({}, this.state.selectedGroup);
         newGroup.description = this.editGroupInfoForm.controls.description.value;
-        this.util.updateDctermsValue(newGroup.jsonld, 'description', newGroup.description);
+        updateDctermsValue(newGroup.jsonld, 'description', newGroup.description);
         this.um.updateGroup(this.state.selectedGroup.title, newGroup).subscribe(() => {
             this.errorMessage = '';
             this.state.selectedGroup = find(this.um.groups, {title: newGroup.title});

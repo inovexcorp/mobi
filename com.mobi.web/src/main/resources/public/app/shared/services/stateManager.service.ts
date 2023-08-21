@@ -29,7 +29,8 @@ import { catchError, map } from 'rxjs/operators';
 import { REST_PREFIX } from '../../constants';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
+import { createHttpParams, handleError } from '../utility';
 
 /**
  * @class shared.StateManagerService
@@ -39,9 +40,9 @@ import { UtilService } from './util.service';
  */
 @Injectable()
 export class StateManagerService {
-    prefix = REST_PREFIX + 'states';
+    prefix = `${REST_PREFIX}states`;
 
-    constructor(private http: HttpClient, private util: UtilService) {}
+    constructor(private http: HttpClient, private toast: ToastService) {}
 
     /**
      * `states` holds the list of all states for the current user.
@@ -62,7 +63,7 @@ export class StateManagerService {
                 return null;
             }),
             catchError(() => {
-                this.util.createErrorToast('Problem getting states');
+                this.toast.createErrorToast('Problem getting states');
                 return of(null);
             })
         );
@@ -76,12 +77,12 @@ export class StateManagerService {
      * message
      */
     getStates(applicationId = '', subjects: string[] = []): Observable<State[]> {
-        const params = this.util.createHttpParams({
+        const params = createHttpParams({
             applicationId,
             subjects
         });
         return this.http.get<State[]>(this.prefix, { params })
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
     /**
      * Calls the POST /mobirest/states endpoint with the provided state JSON-LD and a string identifying the
@@ -95,9 +96,9 @@ export class StateManagerService {
      */
     createState(stateJson: JSONLDObject[], application?: string): Observable<null> {
         const headers = new HttpHeaders().append('Content-Type', 'application/json');
-        const params = this.util.createHttpParams(application ? { application } : {});
+        const params = createHttpParams(application ? { application } : {});
         return this.http.post(this.prefix, stateJson, { headers, params, responseType: 'text' }).pipe(
-            catchError(this.util.handleError),
+            catchError(handleError),
             map(stateId => {
                 this.states.push({id: stateId, model: stateJson});
                 return null;
@@ -113,8 +114,8 @@ export class StateManagerService {
      * error message
      */
     getState(stateId: string): Observable<State> {
-        return this.http.get<State>(this.prefix + '/' + encodeURIComponent(stateId))
-            .pipe(catchError(this.util.handleError));
+        return this.http.get<State>(`${this.prefix}/${encodeURIComponent(stateId)}`)
+            .pipe(catchError(handleError));
     }
     /**
      * Calls the PUT /mobirest/states/{stateId} endpoint and updates the identified state with the provided IRI
@@ -127,8 +128,8 @@ export class StateManagerService {
      * message
      */
     updateState(stateId: string, stateJson: JSONLDObject[]): Observable<null> {
-        return this.http.put(this.prefix + '/' + encodeURIComponent(stateId), stateJson).pipe(
-            catchError(this.util.handleError),
+        return this.http.put(`${this.prefix}/${encodeURIComponent(stateId)}`, stateJson).pipe(
+            catchError(handleError),
             map(() => {
                 this.states.forEach(state => {
                     if (get(state, 'id', '') === stateId) {
@@ -149,8 +150,8 @@ export class StateManagerService {
      * @returns {Observable} An Observable that resolves if the deletion was successful or rejects with an error message
      */
     deleteState(stateId: string): Observable<null> {
-        return this.http.delete(this.prefix + '/' + encodeURIComponent(stateId)).pipe(
-            catchError(this.util.handleError),
+        return this.http.delete(`${this.prefix}/${encodeURIComponent(stateId)}`).pipe(
+            catchError(handleError),
             map(() => {
                 remove(this.states, {id: stateId});
                 return null;

@@ -23,7 +23,7 @@
 
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { cloneDeep, get, includes, noop, set } from 'lodash';
+import { cloneDeep, includes, noop, set } from 'lodash';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError, Observable } from 'rxjs';
 
@@ -35,34 +35,35 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
 import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { CatalogManagerService } from './catalogManager.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { VersionedRdfState } from './versionedRdfState.service';
+import { StateManagerService } from './stateManager.service';
 
 class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> {
     static testPrefix = 'urn:state#';
     static appName = 'test-application'
     constructor() {
         super(VersionedRdfStateImpl.testPrefix,
-            VersionedRdfStateImpl.testPrefix + 'branch-id/',
-            VersionedRdfStateImpl.testPrefix + 'tag-id/',
-            VersionedRdfStateImpl.testPrefix + 'commit-id/',
+            `${VersionedRdfStateImpl.testPrefix}branch-id/`,
+            `${VersionedRdfStateImpl.testPrefix}tag-id/`,
+            `${VersionedRdfStateImpl.testPrefix}commit-id/`,
             VersionedRdfStateImpl.appName
         );
     }
     initialize(): void {
         this.catalogId = 'catalog';
     }
-    getId(): Promise<any> {
-        return Promise.resolve();
+    getId(): Observable<string> {
+        return of('');
     }
     protected merge(): Observable<null> {
         return of(null);
     }
 
-    public setServices(stateManager: any, catalogManager: any, util: any) {
+    public setServices(stateManager: StateManagerService, catalogManager: CatalogManagerService, toast: ToastService) {
         this.sm = stateManager;
         this.cm = catalogManager;
-        this.util = util;
+        this.toast = toast;
     }
 }
 
@@ -78,10 +79,10 @@ describe('Versioned RDF State service', function() {
     let service: VersionedRdfStateImpl;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let stateManagerStub;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     const recordId = 'recordId';
     const branchId = 'branchId';
-    const commitId = 'commitId';
+    const commitId = 'http://test.com#1234567890';
     const tagId = 'tagId';
     const stateId = 'state-id';
     const catalogId = 'catalog';
@@ -102,7 +103,7 @@ describe('Versioned RDF State service', function() {
                 VersionedRdfStateImpl,
                 MockProvider(CatalogManagerService),
                 { provide: stateManagerService, useClass: mockStateManager },
-                MockProvider(UtilService)
+                MockProvider(ToastService)
             ]
         }).compileComponents();
 
@@ -112,31 +113,28 @@ describe('Versioned RDF State service', function() {
 
         stateManagerStub = TestBed.inject(stateManagerService);
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, `['${propertyIRI}'][0]['@id']`, '');
-        });
-        service.setServices(stateManagerStub, catalogManagerStub, utilStub);
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+        service.setServices(stateManagerStub, catalogManagerStub, toastStub);
 
         branch = {
             '@id': branchId,
-            '@type': [CATALOG + 'branch'],
-            [CATALOG + 'head']: [{'@id': commitId}],
-            [DCTERMS + 'title']: [{'@value': 'MASTER'}]
+            '@type': [`${CATALOG}branch`],
+            [`${CATALOG}head`]: [{'@id': commitId}],
+            [`${DCTERMS}title`]: [{'@value': 'MASTER'}]
         };
         tag = {
             '@id': tagId,
-            '@type': [VersionedRdfStateImpl.testPrefix + 'Version', VersionedRdfStateImpl.testPrefix + 'Tag']
+            '@type': [`${VersionedRdfStateImpl.testPrefix}Version`, `${VersionedRdfStateImpl.testPrefix}Tag`]
         };
         commit = {
             '@id': commitId,
-            '@type': [CATALOG + 'Commit']
+            '@type': [`${CATALOG}Commit`]
         };
 
         recordState = {
             '@id': stateId,
-            '@type': [VersionedRdfStateImpl.testPrefix + 'StateRecord'],
-            [VersionedRdfStateImpl.testPrefix + 'record']: [{'@id': recordId}]
+            '@type': [`${VersionedRdfStateImpl.testPrefix}StateRecord`],
+            [`${VersionedRdfStateImpl.testPrefix}record`]: [{'@id': recordId}]
         };
         versionedRdfStateModel = [recordState];
         versionedRdfState = {id: stateId, model: versionedRdfStateModel};
@@ -155,16 +153,16 @@ describe('Versioned RDF State service', function() {
             expect(stateManagerStub.createState).toHaveBeenCalledWith([
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateRecord'],
-                    [VersionedRdfStateImpl.testPrefix + 'record']: [{'@id': recordId}],
-                    [VersionedRdfStateImpl.testPrefix + 'branchStates']: [{'@id': jasmine.any(String)}],
-                    [VersionedRdfStateImpl.testPrefix + 'currentState']: [{'@id': jasmine.any(String)}]
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateRecord`],
+                    [`${VersionedRdfStateImpl.testPrefix}record`]: [{'@id': recordId}],
+                    [`${VersionedRdfStateImpl.testPrefix}branchStates`]: [{'@id': jasmine.any(String)}],
+                    [`${VersionedRdfStateImpl.testPrefix}currentState`]: [{'@id': jasmine.any(String)}]
                 },
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit', VersionedRdfStateImpl.testPrefix + 'StateBranch'],
-                    [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': commitId}],
-                    [VersionedRdfStateImpl.testPrefix + 'branch']: [{'@id': branchId}],
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`, `${VersionedRdfStateImpl.testPrefix}StateBranch`],
+                    [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': commitId}],
+                    [`${VersionedRdfStateImpl.testPrefix}branch`]: [{'@id': branchId}],
                 }
             ], VersionedRdfStateImpl.appName);
         });
@@ -173,15 +171,15 @@ describe('Versioned RDF State service', function() {
             expect(stateManagerStub.createState).toHaveBeenCalledWith([
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateRecord'],
-                    [VersionedRdfStateImpl.testPrefix + 'record']: [{'@id': recordId}],
-                    [VersionedRdfStateImpl.testPrefix + 'currentState']: [{'@id': jasmine.any(String)}]
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateRecord`],
+                    [`${VersionedRdfStateImpl.testPrefix}record`]: [{'@id': recordId}],
+                    [`${VersionedRdfStateImpl.testPrefix}currentState`]: [{'@id': jasmine.any(String)}]
                 },
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit', VersionedRdfStateImpl.testPrefix + 'StateTag'],
-                    [VersionedRdfStateImpl.testPrefix + 'tag']: [{'@id': tagId}],
-                    [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': commitId}],
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`, `${VersionedRdfStateImpl.testPrefix}StateTag`],
+                    [`${VersionedRdfStateImpl.testPrefix}tag`]: [{'@id': tagId}],
+                    [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': commitId}],
                 }
             ], VersionedRdfStateImpl.appName);
         });
@@ -190,14 +188,14 @@ describe('Versioned RDF State service', function() {
             expect(stateManagerStub.createState).toHaveBeenCalledWith([
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateRecord'],
-                    [VersionedRdfStateImpl.testPrefix + 'record']: [{'@id': recordId}],
-                    [VersionedRdfStateImpl.testPrefix + 'currentState']: [{'@id': jasmine.any(String)}]
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateRecord`],
+                    [`${VersionedRdfStateImpl.testPrefix}record`]: [{'@id': recordId}],
+                    [`${VersionedRdfStateImpl.testPrefix}currentState`]: [{'@id': jasmine.any(String)}]
                 },
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit'],
-                    [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': commitId}],
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`],
+                    [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': commitId}],
                 }
             ], VersionedRdfStateImpl.appName);
         });
@@ -221,8 +219,8 @@ describe('Versioned RDF State service', function() {
             });
         });
         it('if a commit was current before', function() {
-            commitStateModel = {'@id': 'commitStateModel', '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit']};
-            recordState[VersionedRdfStateImpl.testPrefix + 'currentState'] = [{'@id': 'commitStateModel'}];
+            commitStateModel = {'@id': 'commitStateModel', '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`]};
+            recordState[`${VersionedRdfStateImpl.testPrefix}currentState`] = [{'@id': 'commitStateModel'}];
             versionedRdfStateModel.push(commitStateModel);
             service.updateState({recordId: recordId, commitId: 'newCommit', branchId: branchId});
             expect(stateManagerStub.updateState).toHaveBeenCalledWith(stateId, {
@@ -230,8 +228,8 @@ describe('Versioned RDF State service', function() {
             });
         });
         it('if a tag was current before', function() {
-            tagStateModel = {'@id': 'tagStateModel', '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit', VersionedRdfStateImpl.testPrefix + 'StateTag']};
-            recordState[VersionedRdfStateImpl.testPrefix + 'currentState'] = [{'@id': 'tagStateModel'}];
+            tagStateModel = {'@id': 'tagStateModel', '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`, `${VersionedRdfStateImpl.testPrefix}StateTag`]};
+            recordState[`${VersionedRdfStateImpl.testPrefix}currentState`] = [{'@id': 'tagStateModel'}];
             versionedRdfStateModel.push(tagStateModel);
             service.updateState({recordId: recordId, commitId: 'newCommit', branchId: branchId});
             expect(stateManagerStub.updateState).toHaveBeenCalledWith(stateId, {
@@ -244,8 +242,8 @@ describe('Versioned RDF State service', function() {
                 set(recordState, `['${VersionedRdfStateImpl.testPrefix}currentState']`, [{'@id': jasmine.any(String)}]),
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit'],
-                    [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': commitId}],
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`],
+                    [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': commitId}],
                 }
             ]);
         });
@@ -255,30 +253,30 @@ describe('Versioned RDF State service', function() {
                 set(recordState, `['${VersionedRdfStateImpl.testPrefix}currentState']`, [{'@id': jasmine.any(String)}]),
                 {
                     '@id': jasmine.any(String),
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit', VersionedRdfStateImpl.testPrefix + 'StateTag'],
-                    [VersionedRdfStateImpl.testPrefix + 'tag']: [{'@id': tagId}],
-                    [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': commitId}],
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`, `${VersionedRdfStateImpl.testPrefix}StateTag`],
+                    [`${VersionedRdfStateImpl.testPrefix}tag`]: [{'@id': tagId}],
+                    [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': commitId}],
                 }
             ]);
         });
         describe('if a branch is in the update', function() {
             it('and the branch was opened before', function() {
-                recordState[VersionedRdfStateImpl.testPrefix + 'branchStates'] = [{'@id': 'branchState'}];
-                recordState[VersionedRdfStateImpl.testPrefix + 'currentState'] = [{'@id': 'branchState'}];
+                recordState[`${VersionedRdfStateImpl.testPrefix}branchStates`] = [{'@id': 'branchState'}];
+                recordState[`${VersionedRdfStateImpl.testPrefix}currentState`] = [{'@id': 'branchState'}];
                 versionedRdfStateModel.push({
                     '@id': 'branchState',
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateBranch', VersionedRdfStateImpl.testPrefix + 'StateCommit'],
-                    [VersionedRdfStateImpl.testPrefix + 'branch']: [{'@id': branchId}],
-                    [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': commitId}],
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateBranch`, `${VersionedRdfStateImpl.testPrefix}StateCommit`],
+                    [`${VersionedRdfStateImpl.testPrefix}branch`]: [{'@id': branchId}],
+                    [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': commitId}],
                 });
                 service.updateState({recordId: recordId, commitId: 'newCommit', branchId: branchId});
                 expect(stateManagerStub.updateState).toHaveBeenCalledWith(stateId, [
                     recordState,
                     {
                         '@id': 'branchState',
-                        '@type': [VersionedRdfStateImpl.testPrefix + 'StateBranch', VersionedRdfStateImpl.testPrefix + 'StateCommit'],
-                        [VersionedRdfStateImpl.testPrefix + 'branch']: [{'@id': branchId}],
-                        [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': 'newCommit'}],
+                        '@type': [`${VersionedRdfStateImpl.testPrefix}StateBranch`, `${VersionedRdfStateImpl.testPrefix}StateCommit`],
+                        [`${VersionedRdfStateImpl.testPrefix}branch`]: [{'@id': branchId}],
+                        [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': 'newCommit'}],
                     }
                 ]);
             });
@@ -288,9 +286,9 @@ describe('Versioned RDF State service', function() {
                     set(set(recordState, `['${VersionedRdfStateImpl.testPrefix}branchStates']`, [{'@id': jasmine.any(String)}]), `['${VersionedRdfStateImpl.testPrefix}currentState']`, [{'@id': jasmine.any(String)}]),
                     {
                         '@id': jasmine.any(String),
-                        '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit', VersionedRdfStateImpl.testPrefix + 'StateBranch'],
-                        [VersionedRdfStateImpl.testPrefix + 'branch']: [{'@id': branchId}],
-                        [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': 'newCommit'}]
+                        '@type': [`${VersionedRdfStateImpl.testPrefix}StateCommit`, `${VersionedRdfStateImpl.testPrefix}StateBranch`],
+                        [`${VersionedRdfStateImpl.testPrefix}branch`]: [{'@id': branchId}],
+                        [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': 'newCommit'}]
                     }
                 ]);
             });
@@ -317,8 +315,8 @@ describe('Versioned RDF State service', function() {
     });
     it('deleteBranchState calls the correct method', function() {
         const tempState = cloneDeep(versionedRdfStateModel);
-        recordState[VersionedRdfStateImpl.testPrefix + 'branchStates'] = [{'@id': 'branchState'}];
-        versionedRdfStateModel.push({'@id': 'branchState', [VersionedRdfStateImpl.testPrefix + 'branch']: [{'@id': branchId}]} as JSONLDObject);
+        recordState[`${VersionedRdfStateImpl.testPrefix}branchStates`] = [{'@id': 'branchState'}];
+        versionedRdfStateModel.push({'@id': 'branchState', [`${VersionedRdfStateImpl.testPrefix}branch`]: [{'@id': branchId}]} as JSONLDObject);
         spyOn(service, 'getStateByRecordId').and.returnValue({
             id: stateId,
             model: versionedRdfStateModel
@@ -355,7 +353,7 @@ describe('Versioned RDF State service', function() {
         expect(service.isStateTag(obj)).toEqual(false);
         obj['@type'] = ['Test'];
         expect(service.isStateTag(obj)).toEqual(false);
-        obj['@type'].push(VersionedRdfStateImpl.testPrefix + 'StateTag');
+        obj['@type'].push(`${VersionedRdfStateImpl.testPrefix}StateTag`);
         expect(service.isStateTag(obj)).toEqual(true);
     });
     it('isStateBranch determines if an object is a StateBranch', function() {
@@ -366,12 +364,11 @@ describe('Versioned RDF State service', function() {
         expect(service.isStateBranch(obj)).toEqual(false);
         obj['@type'] = ['Test'];
         expect(service.isStateBranch(obj)).toEqual(false);
-        obj['@type'].push(VersionedRdfStateImpl.testPrefix + 'StateBranch');
+        obj['@type'].push(`${VersionedRdfStateImpl.testPrefix}StateBranch`);
         expect(service.isStateBranch(obj)).toEqual(true);
     });
     describe('getCatalogDetails calls the correct methods', function() {
         beforeEach(function() {
-            utilStub.condenseCommitId.and.returnValue(commitId);
             this.expected = {
                 recordId: recordId,
                 branchId: branchId,
@@ -395,14 +392,14 @@ describe('Versioned RDF State service', function() {
             beforeEach(function() {
                 recordState = {
                     '@id': 'id',
-                    '@type': [VersionedRdfStateImpl.testPrefix + 'StateRecord'],
-                    [VersionedRdfStateImpl.testPrefix + 'record']: [{'@id': recordId}],
-                    [VersionedRdfStateImpl.testPrefix + 'currentState']: [{'@id': 'state-id'}],
+                    '@type': [`${VersionedRdfStateImpl.testPrefix}StateRecord`],
+                    [`${VersionedRdfStateImpl.testPrefix}record`]: [{'@id': recordId}],
+                    [`${VersionedRdfStateImpl.testPrefix}currentState`]: [{'@id': 'state-id'}],
                 };
                 commitStateModel = {
                     '@id': 'state-id',
                     '@type': [],
-                    [VersionedRdfStateImpl.testPrefix + 'commit']: [{'@id': commitId}]
+                    [`${VersionedRdfStateImpl.testPrefix}commit`]: [{'@id': commitId}]
                 };
                 versionedRdfStateModel = [
                     recordState,
@@ -411,12 +408,11 @@ describe('Versioned RDF State service', function() {
                 versionedRdfState = {id: stateId, model: versionedRdfStateModel};
                 spyOn(service, 'getStateByRecordId').and.returnValue(versionedRdfState);
                 this.deleteStateSpy = spyOn(service, 'deleteState');
-                utilStub.getPropertyId.and.callFake((entity, propertyIRI) => get(entity, `['${propertyIRI}'][0]['@id']`, ''));
             });
             describe('and a branch was last checked out', function() {
                 beforeEach(function() {
-                    recordState[VersionedRdfStateImpl.testPrefix + 'branchStates'] = [{'@id': 'state-id'}];
-                    commitStateModel[VersionedRdfStateImpl.testPrefix + 'branch'] = [{'@id': branchId}];
+                    recordState[`${VersionedRdfStateImpl.testPrefix}branchStates`] = [{'@id': 'state-id'}];
+                    commitStateModel[`${VersionedRdfStateImpl.testPrefix}branch`] = [{'@id': branchId}];
                 });
                 describe('and getRecordBranch is resolved', function() {
                     beforeEach(function() {
@@ -462,7 +458,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                    expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                                 it('and getLatestMaster is rejected', async function() {
                                     this.getLatestMasterSpy.and.returnValue(throwError(this.error));
@@ -476,7 +472,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                    expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                             });
                             it('and deleteState is rejected', async function() {
@@ -491,7 +487,7 @@ describe('Versioned RDF State service', function() {
                                 expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                 expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                 expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                             });
                         });
                     });
@@ -535,7 +531,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                        expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                     it('and getLatestMaster is rejected', async function() {
                                         this.getLatestMasterSpy.and.returnValue(throwError(this.error));
@@ -549,7 +545,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                        expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
@@ -564,7 +560,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                    expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                             });
                         });
@@ -649,8 +645,8 @@ describe('Versioned RDF State service', function() {
                             expect(catalogManagerStub.getInProgressCommit).not.toHaveBeenCalled();
                             expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                             expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                            expect(utilStub.createWarningToast).toHaveBeenCalledWith('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
-                            expect(utilStub.createWarningToast).not.toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                            expect(toastStub.createWarningToast).toHaveBeenCalledWith(`Branch ${branchId} does not exist. Opening HEAD of MASTER.`, {timeOut: 5000});
+                            expect(toastStub.createWarningToast).not.toHaveBeenCalledWith(`Commit ${commitId} does not exist. Opening HEAD of MASTER.`, {timeOut: 5000});
                         });
                     });
                     it('and deleteState is rejected', async function() {
@@ -668,7 +664,7 @@ describe('Versioned RDF State service', function() {
             });
             describe('and a tag was last checked out', function() {
                 beforeEach(function() {
-                    commitStateModel[VersionedRdfStateImpl.testPrefix + 'tag'] = [{'@id': tagId}];
+                    commitStateModel[`${VersionedRdfStateImpl.testPrefix}tag`] = [{'@id': tagId}];
                     this.expected.branchId = '';
                     this.expected2.branchId = '';
                     this.expected.tagId = tagId;
@@ -893,8 +889,8 @@ describe('Versioned RDF State service', function() {
                                 expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                 expect(this.deleteStateSpy).not.toHaveBeenCalled();
                                 expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Tag ' + tagId + ' does not exist. Opening commit ' + commitId, {timeOut: 5000});
-                                expect(utilStub.createWarningToast).not.toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                expect(toastStub.createWarningToast).toHaveBeenCalledWith(`Tag ${tagId} does not exist. Opening commit 1234567890`, {timeOut: 5000});
+                                expect(toastStub.createWarningToast).not.toHaveBeenCalledWith(`Commit ${commitId} does not exist. Opening HEAD of MASTER.`, {timeOut: 5000});
                             });
                             describe('and getCommit is rejected', function() {
                                 beforeEach(function() {
@@ -918,7 +914,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                        expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                     it('and getLatestMaster is rejected', async function() {
                                         this.getLatestMasterSpy.and.returnValue(throwError(this.error));
@@ -933,7 +929,7 @@ describe('Versioned RDF State service', function() {
                                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
-                                        expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                        expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
@@ -949,7 +945,7 @@ describe('Versioned RDF State service', function() {
                                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                     expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                     expect(this.getLatestMasterSpy).not.toHaveBeenCalled();
-                                    expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                                    expect(toastStub.createWarningToast).toHaveBeenCalledWith('Commit 1234567890 does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
                                 });
                             });
                         });

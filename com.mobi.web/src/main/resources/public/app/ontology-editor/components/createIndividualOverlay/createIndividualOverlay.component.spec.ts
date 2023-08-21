@@ -39,7 +39,6 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { OntologyClassSelectComponent } from '../ontologyClassSelect/ontologyClassSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { DCTERMS, OWL } from '../../../prefixes';
 import { CreateIndividualOverlayComponent } from './createIndividualOverlay.component';
@@ -51,10 +50,8 @@ describe('Create Individual Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateIndividualOverlayComponent>>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
     const namespace = 'http://test.com#';
-    const iri = 'iri#';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -78,7 +75,6 @@ describe('Create Individual Overlay component', function() {
                 MockProvider(OntologyStateService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
             ]
         });
     });
@@ -92,12 +88,9 @@ describe('Create Individual Overlay component', function() {
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<CreateIndividualOverlayComponent>>;
         camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
 
-        ontologyStateStub.getDefaultPrefix.and.returnValue(iri);
+        ontologyStateStub.getDefaultPrefix.and.returnValue(namespace);
         ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
         ontologyStateStub.listItem = new OntologyListItem();
-
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
-        splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
     });
 
     afterEach(function() {
@@ -108,15 +101,14 @@ describe('Create Individual Overlay component', function() {
         matDialogRef = null;
         ontologyStateStub = null;
         camelCaseStub = null;
-        splitIRIStub = null;
     });
     
     it('initializes with the correct values', function() {
         component.ngOnInit();
         expect(ontologyStateStub.getDefaultPrefix).toHaveBeenCalledWith();
-        expect(component.individual['@id']).toEqual(iri);
-        expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual']);
-        expect(component.individual[DCTERMS + 'title']).toEqual([{'@value': ''}]);
+        expect(component.individual['@id']).toEqual(namespace);
+        expect(component.individual['@type']).toEqual([`${OWL}NamedIndividual`]);
+        expect(component.individual[`${DCTERMS}title`]).toEqual([{'@value': ''}]);
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -158,22 +150,20 @@ describe('Create Individual Overlay component', function() {
             });
             it('if the iri has not been manually changed', function() {
                 component.nameChanged('new');
-                expect(component.createForm.controls.iri.value).toEqual(namespace + 'new');
-                expect(splitIRIStub.transform).toHaveBeenCalledWith(namespace);
+                expect(component.createForm.controls.iri.value).toEqual(`${namespace}new`);
                 expect(camelCaseStub.transform).toHaveBeenCalledWith('new', 'class');
             });
             it('unless the iri has been manually changed', function() {
                 component.iriHasChanged = true;
                 component.nameChanged('new');
                 expect(component.createForm.controls.iri.value).toEqual(namespace);
-                expect(splitIRIStub.transform).not.toHaveBeenCalled();
                 expect(camelCaseStub.transform).not.toHaveBeenCalled();
             });
         });
         it('should change the individual IRI based on the params', function() {
             component.onEdit('begin', 'then', 'end');
             expect(component.iriHasChanged).toEqual(true);
-            expect(component.individual['@id']).toEqual('begin' + 'then' + 'end');
+            expect(component.individual['@id']).toEqual('beginthenend');
             expect(ontologyStateStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('should create an individual', function() {
@@ -188,7 +178,7 @@ describe('Create Individual Overlay component', function() {
                 component.create();
                 tick();
                 expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.individual);
-                expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual', 'ClassA']);
+                expect(component.individual['@type']).toEqual([`${OWL}NamedIndividual`, 'ClassA']);
                 expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.individual);
                 expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.individual);
                 expect(ontologyStateStub.addConcept).toHaveBeenCalledWith(component.individual);
@@ -202,7 +192,7 @@ describe('Create Individual Overlay component', function() {
                 component.create();
                 tick();
                 expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.individual);
-                expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual', 'ClassA']);
+                expect(component.individual['@type']).toEqual([`${OWL}NamedIndividual`, 'ClassA']);
                 expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.individual);
                 expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.individual);
                 expect(ontologyStateStub.addConcept).not.toHaveBeenCalled();
@@ -215,7 +205,7 @@ describe('Create Individual Overlay component', function() {
                 component.create();
                 tick();
                 expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.individual);
-                expect(component.individual['@type']).toEqual([OWL + 'NamedIndividual', 'ClassA']);
+                expect(component.individual['@type']).toEqual([`${OWL}NamedIndividual`, 'ClassA']);
                 expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.individual);
                 expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.individual);
                 expect(ontologyStateStub.addConcept).not.toHaveBeenCalled();

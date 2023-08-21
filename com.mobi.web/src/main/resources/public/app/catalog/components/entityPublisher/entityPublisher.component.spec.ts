@@ -29,8 +29,8 @@ import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { SharedModule } from '../../../shared/shared.module';
+import { DCTERMS } from '../../../prefixes';
 import { EntityPublisherComponent } from './entityPublisher.component';
 
 describe('Entity Publisher component', function() {
@@ -38,7 +38,6 @@ describe('Entity Publisher component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<EntityPublisherComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const userId = 'userId';
     const username = 'user';
@@ -51,7 +50,6 @@ describe('Entity Publisher component', function() {
             ],
             providers: [
                 MockProvider(UserManagerService),
-                MockProvider(UtilService)
             ],
         }).compileComponents();
 
@@ -60,9 +58,7 @@ describe('Entity Publisher component', function() {
         element = fixture.debugElement;
         
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         
-        utilStub.getDctermsId.and.returnValue(userId);
         userManagerStub.users = [{iri: userId, username, external: false, firstName: '', lastName: '', email: '', roles: []}];
     });
 
@@ -72,16 +68,14 @@ describe('Entity Publisher component', function() {
         element = null;
         fixture = null;
         userManagerStub = null;
-        utilStub = null;
     });
 
     describe('initializes correctly on entity change', function() {
         it('if the user can be found', function() {
-            component.entity = {'@id': '', '@type': []};
+            component.entity = { '@id': '', '@type': [], [`${DCTERMS}publisher`]: [{ '@id': userId }] };
             expect(component.publisherName).toEqual(username);
         });
         it('if the entity does not have a publisher', function() {
-            utilStub.getDctermsId.and.returnValue('');
             component.entity = {'@id': '', '@type': []};
             expect(component.publisherName).toEqual('(None)');
         });

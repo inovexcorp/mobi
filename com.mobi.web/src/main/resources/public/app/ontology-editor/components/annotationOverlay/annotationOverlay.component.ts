@@ -32,11 +32,12 @@ import { OWL, RDF, XSD } from '../../../prefixes';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { datatype } from "../../../shared/validators/datatype.validator";
+import { datatype } from '../../../shared/validators/datatype.validator';
 import { REGEX } from '../../../constants';
 import { PropertyOverlayDataOptions } from '../../../shared/models/propertyOverlayDataOptions.interface';
+import { createJson, getIRINamespace } from '../../../shared/utility';
 
 interface AnnotationGroup {
     namespace: string,
@@ -71,9 +72,9 @@ interface AnnotationOption {
     templateUrl: './annotationOverlay.component.html',
 })
 export class AnnotationOverlayComponent implements OnInit {
-    deprecatedIri = OWL + 'deprecated';
+    deprecatedIri = `${OWL}deprecated`;
     annotations: string[] = [];
-    type: string = XSD + 'string';
+    type = `${XSD}string`;
     annotationForm = this.fb.group({
         annotation: ['', [Validators.required]],
         value: ['', [Validators.required, datatype(() => this.type)]],
@@ -86,7 +87,7 @@ export class AnnotationOverlayComponent implements OnInit {
     constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
         private om: OntologyManagerService, public os: OntologyStateService,
-        public pm: PropertyManagerService, public util: UtilService) {}
+        public pm: PropertyManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         if (this.data.isIRIProperty) {
@@ -114,7 +115,7 @@ export class AnnotationOverlayComponent implements OnInit {
     }
     filter(val: string): AnnotationGroup[] {
         const filtered = this.annotations.filter(annotation => annotation.toLowerCase().includes(val.toLowerCase()));
-        const grouped: {[key: string]: string[]} = groupBy(filtered, annotation => this.util.getIRINamespace(annotation));
+        const grouped: {[key: string]: string[]} = groupBy(filtered, annotation => getIRINamespace(annotation));
         const rtn: AnnotationGroup[] = Object.keys(grouped).map(namespace => ({
             namespace,
             options: grouped[namespace].map(annotation => ({
@@ -129,16 +130,16 @@ export class AnnotationOverlayComponent implements OnInit {
         return rtn;
     }
     isPropDisabled(annotation: string): boolean {
-        return annotation === OWL + 'deprecated' && has(this.os.listItem.selected, `['${OWL + 'deprecated'}']`);
+        return annotation === `${OWL}deprecated` && has(this.os.listItem.selected, `['${OWL}deprecated']`);
     }
     selectProp(event: MatAutocompleteSelectedEvent): void {
         const selectedAnnotation: string = event.option.value;
         this.annotationForm.controls.value.setValue('');
-        if (selectedAnnotation === OWL + 'deprecated') {
-            this.annotationForm.controls.type.setValue(XSD + 'boolean');
+        if (selectedAnnotation === `${OWL}deprecated`) {
+            this.annotationForm.controls.type.setValue(`${XSD}boolean`);
             this.annotationForm.controls.language.setValue('');
         } else {
-            this.annotationForm.controls.type.setValue(XSD + 'string');
+            this.annotationForm.controls.type.setValue(`${XSD}string`);
             this.annotationForm.controls.language.setValue('');
         }
     }
@@ -168,7 +169,7 @@ export class AnnotationOverlayComponent implements OnInit {
             }
             this.os.annotationModified(this.os.listItem.selected['@id'], annotation, value);
         } else {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         this.dialogRef.close(added);
     }
@@ -193,7 +194,7 @@ export class AnnotationOverlayComponent implements OnInit {
             }
             this.os.annotationModified(this.os.listItem.selected['@id'], annotation, value);
         } else {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         this.dialogRef.close(edited);
     }
@@ -210,10 +211,10 @@ export class AnnotationOverlayComponent implements OnInit {
         }
     }
     isLangString(): boolean {
-        return RDF + 'langString' === (this.annotationForm.controls.type.value ? this.annotationForm.controls.type.value: '');
+        return `${RDF}langString` === (this.annotationForm.controls.type.value ? this.annotationForm.controls.type.value: '');
     }
     private _createJson(value, type, language): JSONLDObject {
         const valueObj = this.isIRIProperty ? {'@id': value} : this.pm.createValueObj(value, type, language);
-        return this.util.createJson(this.os.listItem.selected['@id'], this.annotationForm.controls.annotation.value, valueObj);
+        return createJson(this.os.listItem.selected['@id'], this.annotationForm.controls.annotation.value, valueObj);
     }
 }

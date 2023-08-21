@@ -3,24 +3,23 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX setting: <http://mobi.com/ontologies/setting#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-CONSTRUCT { ?settingDef ?p ?o .
-  ?mainPropertyShape ?mainPropertyShapePred ?mainPropertyShapeObj .
-  ?attachedNode ?attachedNodePred ?attachedNodeObj .
-  ?attachedProperty ?attachedPropertyPred ?attachedPropertyObj .
+CONSTRUCT {
+    ?settingDef ?p ?o .
+    ?attached ?attachedP ?attachedO .
+    ?bnode ?bnodeP ?bnodeO .
 }
 WHERE {
     ?settingDef a sh:NodeShape ;
         setting:inGroup ?group ;
         rdfs:subClassOf ?settingType ;
-        sh:property ?mainPropertyShape ;
+        sh:property|sh:property/sh:node|sh:property/sh:node/sh:property ?attached ;
         ?p ?o .
 
-    ?mainPropertyShape ?mainPropertyShapePred ?mainPropertyShapeObj .
+    ?attached ?attachedP ?attachedO .
 
     OPTIONAL {
-        ?mainPropertyShape sh:node ?attachedNode .
-        ?attachedNode sh:property ?attachedProperty ;
-            ?attachedNodePred ?attachedNodeObj .
-        ?attachedProperty ?attachedPropertyPred ?attachedPropertyObj .
+        ?attached (rdf:temp|!rdf:temp)* ?bnode .
+        ?bnode ?bnodeP ?bnodeO .
+        FILTER(isBlank(?bnode))
     }
 }

@@ -27,6 +27,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
@@ -50,9 +51,8 @@ import { ConceptSchemesTabComponent } from '../conceptSchemesTab/conceptSchemesT
 import { ConceptsTabComponent } from '../conceptsTab/conceptsTab.component';
 import { SeeHistoryComponent } from '../seeHistory/seeHistory.component';
 import { IndividualsTabComponent } from '../individualsTab/individualsTab.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { OntologyTabComponent } from './ontologyTab.component';
-import { MatMenuModule } from '@angular/material/menu';
 
 describe('Ontology Tab component', function() {
     let component: OntologyTabComponent;
@@ -60,7 +60,7 @@ describe('Ontology Tab component', function() {
     let fixture: ComponentFixture<OntologyTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'error message';
     const catalogId = 'catalogId';
@@ -69,7 +69,7 @@ describe('Ontology Tab component', function() {
     const commitId = 'commitId';
     const branch: JSONLDObject = {
         '@id': branchId,
-        [DCTERMS + 'title']: [{
+        [`${DCTERMS}title`]: [{
             '@value': 'MASTER'
         }]
     };
@@ -79,7 +79,8 @@ describe('Ontology Tab component', function() {
     };
     const branchState: JSONLDObject = {
         '@id': 'stateId',
-        [ONTOLOGYSTATE + 'branch']: [{'@id': branchId}]
+        [`${ONTOLOGYSTATE}branch`]: [{ '@id': branchId }],
+        [`${ONTOLOGYSTATE}commit`]: [{ '@id': commitId }],
     };
     const state: State = {
         id: '',
@@ -114,7 +115,7 @@ describe('Ontology Tab component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         });
     });
@@ -125,7 +126,7 @@ describe('Ontology Tab component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.branches = [branch];
@@ -144,21 +145,19 @@ describe('Ontology Tab component', function() {
         fixture = null;
         ontologyStateStub = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize calling the correct methods', function() {
         beforeEach(function() {
             ontologyStateStub.updateOntology.calls.reset();
             ontologyStateStub.resetStateTabs.calls.reset();
-            utilStub.getDctermsValue.and.returnValue('MASTER');
         });
         describe('when the ontology is open on a branch', function() {
             describe('and the branch does not exist', function() {
                 beforeEach(function() {
                     ontologyStateStub.listItem.versionedRdfRecord.branchId = 'not exist';
                     ontologyStateStub.getStateByRecordId.and.returnValue(state);
-                    utilStub.getPropertyId.and.returnValue(commitId);
                 });
                 describe('and getBranchHeadCommit is resolved', function() {
                     beforeEach(function() {
@@ -168,38 +167,32 @@ describe('Ontology Tab component', function() {
                         ontologyStateStub.updateOntology.and.returnValue(of(null));
                         component.ngOnInit();
                         tick();
-                        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
                         expect(ontologyStateStub.getStateByRecordId).toHaveBeenCalledWith(recordId);
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(branchState, ONTOLOGYSTATE + 'commit');
                         expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
                         expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId, true);
                         expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                     it('and updateOntology does not resolve', fakeAsync(function() {
                         ontologyStateStub.updateOntology.and.returnValue(throwError(error));
                         component.ngOnInit();
                         tick();
-                        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
                         expect(ontologyStateStub.getStateByRecordId).toHaveBeenCalledWith(recordId);
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(branchState, ONTOLOGYSTATE + 'commit');
                         expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
                         expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId, true);
                         expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                     }));
                 });
                 it('and getBranchHeadCommit does not resolve', fakeAsync(function() {
                     catalogManagerStub.getBranchHeadCommit.and.returnValue(throwError(error));
                     component.ngOnInit();
                     tick();
-                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
                     expect(ontologyStateStub.getStateByRecordId).toHaveBeenCalledWith(recordId);
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(branchState, ONTOLOGYSTATE + 'commit');
                     expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith(branchId, recordId, catalogId);
                     expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
                     expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 }));
             });
             it('and the branch exists', fakeAsync(function() {
@@ -209,7 +202,7 @@ describe('Ontology Tab component', function() {
                 expect(catalogManagerStub.getBranchHeadCommit).not.toHaveBeenCalled();
                 expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         it('when the ontology is not open on a branch', fakeAsync(function() {
@@ -218,7 +211,7 @@ describe('Ontology Tab component', function() {
             expect(catalogManagerStub.getBranchHeadCommit).not.toHaveBeenCalled();
             expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
             expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
         }));
     });
     it('should destroy correctly', function() {

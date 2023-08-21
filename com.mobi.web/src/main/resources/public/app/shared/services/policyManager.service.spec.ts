@@ -21,21 +21,17 @@
  * #L%
  */
 
-import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from './util.service';
 import { PolicyManagerService } from './policyManager.service';
 
 describe('Policy Manager service', function() {
     let service: PolicyManagerService;
     let httpMock: HttpTestingController;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
     const error = 'Error Message';
@@ -45,41 +41,20 @@ describe('Policy Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 PolicyManagerService,
-                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService)
             ]
         });
 
         service = TestBed.inject(PolicyManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
         progressSpinnerStub.track.and.callFake(ob => ob);
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(() => throwError(error));
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
-        utilStub = null;
         progressSpinnerStub = null;
         httpMock.verify();
         httpMock = null;
@@ -90,12 +65,6 @@ describe('Policy Manager service', function() {
             service.getPolicies()
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({
-                        relatedResource: undefined,
-                        relatedSubject: undefined,
-                        relatedAction: undefined,
-                        systemOnly: false,
-                    });
                     done();
                 });
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
@@ -105,15 +74,13 @@ describe('Policy Manager service', function() {
             service.getPolicies()
                 .subscribe(response => {
                     expect(response).toEqual([]);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({
-                        relatedResource: undefined,
-                        relatedSubject: undefined,
-                        relatedAction: undefined,
-                        systemOnly: false,
-                    });
                     done();
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            expect(request.request.params.has('relatedResource')).toBeFalse();
+            expect(request.request.params.has('relatedSubject')).toBeFalse();
+            expect(request.request.params.has('relatedAction')).toBeFalse();
+            expect(request.request.params.get('systemOnly')).toEqual('false');
             request.flush([]);
         });
         it('with filters', function(done) {
@@ -126,7 +93,6 @@ describe('Policy Manager service', function() {
             service.getPolicies(config.relatedResource, config.relatedSubject, config.relatedAction, config.systemOnly)
                 .subscribe(response => {
                     expect(response).toEqual([]);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith(config);
                     done();
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
@@ -144,7 +110,7 @@ describe('Policy Manager service', function() {
                     expect(response).toEqual(error);
                     done();
                 });
-            const request = httpMock.expectOne({url: service.prefix + '/id', method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.prefix}/id`, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function(done) {
@@ -153,7 +119,7 @@ describe('Policy Manager service', function() {
                     expect(response).toEqual({});
                     done();
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.prefix + '/id', method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.prefix}/id`, method: 'GET'});
             request.flush({});
         });
     });
@@ -167,7 +133,7 @@ describe('Policy Manager service', function() {
                     expect(response).toEqual(error);
                     done();
                 });
-            const request = httpMock.expectOne({url: service.prefix + '/' + this.policy.PolicyId, method: 'PUT'});
+            const request = httpMock.expectOne({url: `${service.prefix}/${this.policy.PolicyId}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.policy);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -176,7 +142,7 @@ describe('Policy Manager service', function() {
                 .subscribe(() => {
                     done();
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.prefix + '/' + this.policy.PolicyId, method: 'PUT'});
+            const request = httpMock.expectOne({url: `${service.prefix}/${this.policy.PolicyId}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.policy);
             request.flush(200);
         });

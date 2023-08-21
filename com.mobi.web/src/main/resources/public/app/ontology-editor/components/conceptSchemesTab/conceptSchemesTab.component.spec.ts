@@ -83,7 +83,7 @@ describe('Concept Schemes Tab component', function() {
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = {
             '@id': 'schemeId',
-            '@type': [SKOS + 'ConceptScheme']
+            '@type': [`${SKOS}ConceptScheme`]
         };
         fixture.detectChanges();
     });

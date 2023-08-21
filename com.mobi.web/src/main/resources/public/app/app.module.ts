@@ -62,7 +62,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { LoginLayoutComponent } from './layouts/login-layout.component';
 import { MainLayoutComponent } from './layouts/main-layout.component';
 
-
 @NgModule({
     imports: [
         AppRoutingModule,

@@ -35,7 +35,7 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { DiscoverStateService } from './discoverState.service';
-import { UtilService } from './util.service';
+import { createHttpParams, handleError, paginatedConfigToHttpParams } from '../utility';
 
 /**
  * @class shared.DatasetManagerService
@@ -44,10 +44,10 @@ import { UtilService } from './util.service';
  */
 @Injectable()
 export class DatasetManagerService {
-    prefix = REST_PREFIX + 'datasets';
+    prefix = `${REST_PREFIX}datasets`;
 
     constructor(private http: HttpClient, private cm: CatalogManagerService, private spinnerSvc: ProgressSpinnerService,
-        private util: UtilService, private ds: DiscoverStateService) {}
+        private ds: DiscoverStateService) {}
 
     /**
      * 'datasetRecords' holds an array of dataset record arrays which contain properties for the metadata
@@ -68,13 +68,13 @@ export class DatasetManagerService {
      * endpoint or is rejected with an error message
      */
     getDatasetRecords(paginatedConfig: PaginatedConfig, isTracked = false): Observable<HttpResponse<JSONLDObject[][]>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
+        let params = paginatedConfigToHttpParams(paginatedConfig);
         if (get(paginatedConfig, 'searchText')) {
-            params.searchText = paginatedConfig.searchText;
+            params = params.set('searchText', paginatedConfig.searchText);
         }
-        const request = this.http.get<JSONLDObject[][]>(this.prefix, {params: this.util.createHttpParams(params), observe: 'response'});
+        const request = this.http.get<JSONLDObject[][]>(this.prefix, {params, observe: 'response'});
         return this._trackedRequest(request, isTracked)
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/datasets/{datasetRecordIRI} endpoint to get the DatasetRecord associated
@@ -84,8 +84,8 @@ export class DatasetManagerService {
      * rejected with an error message
      */
     getDatasetRecord(datasetRecordIRI: string): Observable<JSONLDObject[]> {
-        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(datasetRecordIRI)))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(datasetRecordIRI)}`))
+            .pipe(catchError(handleError));
     }
     /**
      * Calls POST /mobirest/datasets endpoint with the passed metadata and creates a new DatasetRecord and
@@ -110,7 +110,7 @@ export class DatasetManagerService {
         forEach(get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
         return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 switchMap((datasetRecordId: string) => {
                     this.initialize().subscribe();
                     return of(datasetRecordId);
@@ -130,9 +130,10 @@ export class DatasetManagerService {
      */
     deleteDatasetRecord(datasetRecordIRI: string, force = false): Observable<null> {
         const params = { force };
-        return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(datasetRecordIRI), {params: this.util.createHttpParams(params)}))
+        return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(datasetRecordIRI)}`, 
+          {params: createHttpParams(params)}))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 switchMap(() => {
                     this.ds.cleanUpOnDatasetDelete(datasetRecordIRI);
                     this._removeDataset(datasetRecordIRI);
@@ -153,9 +154,10 @@ export class DatasetManagerService {
      */
     clearDatasetRecord(datasetRecordIRI: string, force = false): Observable<null> {
         const params = { force };
-        return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', {params: this.util.createHttpParams(params)}))
+        return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(datasetRecordIRI)}/data`, 
+          {params: createHttpParams(params)}))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 switchMap(() => {
                     this.ds.cleanUpOnDatasetClear(datasetRecordIRI);
                     return of(null);
@@ -198,9 +200,9 @@ export class DatasetManagerService {
     uploadData(datasetRecordIRI: string, file: File, isTracked = false): Observable<null> {
         const fd = new FormData();
         fd.append('file', file);
-        const url = this.prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data';
+        const url = `${this.prefix}/${encodeURIComponent(datasetRecordIRI)}/data`;
         return this._trackedRequest(this.http.post(url, fd, {responseType: 'text'}), isTracked)
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
     /**
      * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results
@@ -211,7 +213,7 @@ export class DatasetManagerService {
     initialize(): Observable<null> {
         const paginatedConfig: PaginatedConfig = {
             sortOption: {
-                field: DCTERMS + 'title',
+                field: `${DCTERMS}title`,
                 label: 'Title (asc)',
                 asc: true
             }
@@ -242,7 +244,7 @@ export class DatasetManagerService {
      * @return {JSONLDObject} The JSON-LD object for a DatasetRecord; undefined otherwise
      */
     getRecordFromArray(arr: JSONLDObject[]): JSONLDObject {
-        return find(arr, obj => includes(obj['@type'], DATASET + 'DatasetRecord'));
+        return find(arr, obj => includes(obj['@type'], `${DATASET}DatasetRecord`));
     }
     /**
      * Splits the JSON-LD array into an object with a key for the DatasetRecord and a key for the

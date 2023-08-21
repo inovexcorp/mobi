@@ -25,6 +25,7 @@
  */
 export interface PropertyDetails {
     propertyIRI: string,
+    display?: string,
     type: string,
     range: string[],
     restrictions: {

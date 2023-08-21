@@ -25,10 +25,10 @@ import { find } from 'lodash';
 
 import { RDFS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getPropertyId } from '../../../shared/utility';
 
 /**
  * @class mapper.PropPreviewComponent
@@ -55,7 +55,7 @@ export class PropPreviewComponent {
         this._propObj = value;
         this.name = this.om.getEntityName(value);
         this.description = this.om.getEntityDescription(value) || '(None Specified)';
-        const newRangeId = this.util.getPropertyId(value, RDFS + 'range');
+        const newRangeId = getPropertyId(value, `${RDFS}range`);
         if (this.om.isObjectProperty(value)) {
             if (newRangeId !== this.rangeId) {
                 const availableClass = find(this.state.availableClasses, {classObj: {'@id': newRangeId}});
@@ -68,7 +68,7 @@ export class PropPreviewComponent {
                 }
             }
         } else {
-            this.rangeName = this.split.transform(newRangeId).end || 'string';
+            this.rangeName = splitIRI(newRangeId).end || 'string';
             this.rangeIsDeprecated = false;
         }
         this.rangeId = newRangeId;
@@ -77,6 +77,5 @@ export class PropPreviewComponent {
         return this._propObj;
     }
 
-    constructor(private state: MapperStateService, private split: SplitIRIPipe, 
-        private om: OntologyManagerService, private util: UtilService) {}
+    constructor(private state: MapperStateService, private om: OntologyManagerService) {}
 }

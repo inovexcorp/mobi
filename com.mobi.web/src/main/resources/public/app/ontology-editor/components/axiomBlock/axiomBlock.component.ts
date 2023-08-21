@@ -83,7 +83,7 @@ export class AxiomBlockComponent {
         }
     }
     updateClassHierarchy(updatedAxiomObj: { axiom: string, values: string[] }): void {
-        if (updatedAxiomObj.axiom === RDFS + 'subClassOf' && updatedAxiomObj.values.length) {
+        if (updatedAxiomObj.axiom === `${RDFS}subClassOf` && updatedAxiomObj.values.length) {
             this.os.setSuperClasses(this.os.listItem.selected['@id'], updatedAxiomObj.values);
             if (includes(this.os.listItem.individualsParentPath, this.os.listItem.selected['@id'])) {
                 this.os.updateFlatIndividualsHierarchy(updatedAxiomObj.values);
@@ -92,20 +92,20 @@ export class AxiomBlockComponent {
         }
     }
     updateDataPropHierarchy(updatedAxiomObj: { axiom: string, values: string[] }): void {
-        if (updatedAxiomObj.axiom === RDFS + 'subPropertyOf' && updatedAxiomObj.values.length) {
+        if (updatedAxiomObj.axiom === `${RDFS}subPropertyOf` && updatedAxiomObj.values.length) {
             this.os.setSuperProperties(this.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
-        } else if (updatedAxiomObj.axiom === RDFS + 'domain' && updatedAxiomObj.values.length) {
+        } else if (updatedAxiomObj.axiom === `${RDFS}domain` && updatedAxiomObj.values.length) {
             this.os.addPropertyToClasses(this.os.listItem.selected['@id'], updatedAxiomObj.values);
             this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
         }
     }
     updateObjectPropHierarchy(updatedAxiomObj: { axiom: string, values: string[] }): void {
-        if (updatedAxiomObj.axiom === RDFS + 'subPropertyOf' && updatedAxiomObj.values.length) {
+        if (updatedAxiomObj.axiom === `${RDFS}subPropertyOf` && updatedAxiomObj.values.length) {
             this.os.setSuperProperties(this.os.listItem.selected['@id'], updatedAxiomObj.values, 'objectProperties');
             if (this.os.containsDerivedSemanticRelation(updatedAxiomObj.values)) {
                 this.os.setVocabularyStuff();
             }
-        } else if (updatedAxiomObj.axiom === RDFS + 'domain' && updatedAxiomObj.values.length) {
+        } else if (updatedAxiomObj.axiom === `${RDFS}domain` && updatedAxiomObj.values.length) {
             this.os.addPropertyToClasses(this.os.listItem.selected['@id'], updatedAxiomObj.values);
             this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
         }

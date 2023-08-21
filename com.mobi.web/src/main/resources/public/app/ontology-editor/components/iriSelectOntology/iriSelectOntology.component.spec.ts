@@ -37,7 +37,6 @@ import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { IriSelectOntologyComponent } from './iriSelectOntology.component';
 
 describe('IRI Select Ontology component', function() {
@@ -45,7 +44,6 @@ describe('IRI Select Ontology component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<IriSelectOntologyComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const iri = 'http://test.com';
     const iriOption = {
@@ -72,7 +70,6 @@ describe('IRI Select Ontology component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
             ]
         });
     });
@@ -82,14 +79,13 @@ describe('IRI Select Ontology component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         spyOn(component.selectedChange, 'emit');
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.ontologyId = 'ontologyId';
         component.selectList = {
             'iri1': 'A',
-            'iri3': 'B',
+            '_:genid0': 'B',
             'iri2': 'B',
             'test1': 'A',
             'test3': 'C'
@@ -102,14 +98,12 @@ describe('IRI Select Ontology component', function() {
         element = null;
         fixture = null;
         ontologyStateStub = null;
-        utilStub = null;
     });
 
     describe('should initialize correctly', function() {
         beforeEach(function() {
             this.group = { namespace: 'namespace', options: [iriOption] };
             spyOn(component, 'filter').and.returnValue([this.group]);
-            utilStub.isBlankNodeId.and.returnValue(false);
             spyOn(component, 'getName').and.returnValue('Name');
             component.selected = ['test'];
         });
@@ -198,7 +192,6 @@ describe('IRI Select Ontology component', function() {
         });
         it('filter should return the list of filtered grouped IRIs', function() {
             spyOn(component, 'getOntologyIri').and.callThrough();
-            utilStub.isBlankNodeId.and.callFake(a => a === 'iri3');
             spyOn(component, 'getName').and.callFake(a => a);
             expect(component.filter('I')).toEqual([
                 { namespace: 'A', options: [
@@ -206,14 +199,13 @@ describe('IRI Select Ontology component', function() {
                 ] },
                 { namespace: 'B', options: [
                     {item: 'iri2', name: 'iri2', isBlankNode: false},
-                    {item: 'iri3', name: 'iri3', isBlankNode: true},
+                    {item: '_:genid0', name: '_:genid0', isBlankNode: true},
                 ] },
             ]);
             Object.keys(component.selectList).forEach(iri => {
-                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith(iri);
                 expect(component.getName).toHaveBeenCalledWith(iri, jasmine.any(Boolean));
             });
-            ['iri1', 'iri2', 'iri3'].forEach(iri => {
+            ['iri1', 'iri2', '_:genid0'].forEach(iri => {
                 expect(component.getOntologyIri).toHaveBeenCalledWith(iri);
             });
         });
@@ -236,7 +228,6 @@ describe('IRI Select Ontology component', function() {
             expect(ontologyStateStub.getEntityNameByListItem).toHaveBeenCalledWith(iri);
         });
         it('add should handle adding a chip', function() {
-            utilStub.isBlankNodeId.and.returnValue(false);
             spyOn(component, 'getName').and.returnValue('name');
             component.add({chipInput: null, input: null, value: iriOption.item});
             expect(component.selected).toEqual([iriOption.item]);
@@ -280,7 +271,7 @@ describe('IRI Select Ontology component', function() {
                 } as MatAutocompleteSelectedEvent;
                 component.select(event);
                 expect(component.selected).toEqual(['previous', iriOption.item]);
-                expect(component.selectedOptions).toEqual([{item: 'previous', isBlankNode: undefined, name: undefined}, iriOption]);
+                expect(component.selectedOptions).toEqual([{item: 'previous', isBlankNode: false, name: undefined}, iriOption]);
                 expect(component.selectedChange.emit).toHaveBeenCalledWith(['previous', iriOption.item]);
                 expect(component.multiInput.nativeElement.value).toEqual('');
                 expect(component.multiControl.value).toEqual(null);

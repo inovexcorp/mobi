@@ -38,7 +38,8 @@ import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interfac
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.ImportsOverlayComponent
@@ -65,7 +66,7 @@ export class ImportsOverlayComponent implements OnInit {
     getOntologyConfig: PaginatedConfig = {
         pageIndex: 0,
         limit: 100,
-        type: ONTOLOGYEDITOR + 'OntologyRecord',
+        type: `${ONTOLOGYEDITOR}OntologyRecord`,
         sortOption: undefined,
         searchText: ''
     };
@@ -79,11 +80,11 @@ export class ImportsOverlayComponent implements OnInit {
     
     constructor(private fb: UntypedFormBuilder, private http: HttpClient, private dialogRef: MatDialogRef<ImportsOverlayComponent>,
         private os: OntologyStateService, private spinnerSvc: ProgressSpinnerService, private cm: CatalogManagerService,
-        public util: UtilService, private pm: PropertyManagerService) {}
+        private toast: ToastService, private pm: PropertyManagerService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
-        this.getOntologyConfig.sortOption = find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true});
+        this.getOntologyConfig.sortOption = find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true});
     }
     setOntologies(): void {
         if (this.ontologiesList) {
@@ -124,7 +125,7 @@ export class ImportsOverlayComponent implements OnInit {
         }
     }
     getOntologyIRI(record: JSONLDObject): string {
-        return this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI');
+        return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
     }
     addImport(): void {
         if (this.tabIndex === 0) {
@@ -137,10 +138,10 @@ export class ImportsOverlayComponent implements OnInit {
         }
     }
     confirmed(urls: string[], tabIndex: number): void {
-        const importsIRI = OWL + 'imports';
+        const importsIRI = `${OWL}imports`;
         const addedUrls = filter(urls, url => this.pm.addId(this.os.listItem.selected, importsIRI, url));
         if (addedUrls.length !== urls.length) {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         if (addedUrls.length) {
             const urlObjs = map(addedUrls, url => ({'@id': url}));
@@ -160,7 +161,7 @@ export class ImportsOverlayComponent implements OnInit {
         this.ontologies = map(filter(response.body, record => this._isOntologyUnused(record)), record => ({
             recordId: record['@id'],
             ontologyIRI: this.getOntologyIRI(record),
-            title: this.util.getDctermsValue(record, 'title'),
+            title: getDctermsValue(record, 'title'),
             selected: false,
             jsonld: record
         }));

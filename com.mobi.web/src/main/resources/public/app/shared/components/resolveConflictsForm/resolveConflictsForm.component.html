@@ -24,12 +24,12 @@
     <div class="list-info" *ngIf="index === undefined">
         <p><strong>NOTE:</strong> There were conflicts found for the following entities. Please select the entity you want to resolve first.</p>
         <p *ngFor="let conflict of conflicts; let i = index" class="conflict-list-item" [ngClass]="{'text-danger': !conflict.resolved, 'text-success': conflict.resolved}">
-            <span (click)="select(i)"><i class="fa fa-fw" [ngClass]="{'fa-times': !conflict.resolved, 'fa-check': conflict.resolved}"></i><strong>{{util.getBeautifulIRI(conflict.iri)}}</strong> <small>&lt;{{conflict.iri}}&gt;</small></span>
+            <span (click)="select(i)"><i class="fa fa-fw" [ngClass]="{'fa-times': !conflict.resolved, 'fa-check': conflict.resolved}"></i><strong>{{conflict.display}}</strong> <small>&lt;{{conflict.iri}}&gt;</small></span>
         </p>
     </div>
     <div *ngIf="index !== undefined" class="conflict-container">
         <a mat-button class="back-to-list" (click)="backToList()">&lt; Back to List</a>
-        <h5 class="text-center">{{util.getBeautifulIRI(selected.iri)}} &lt;{{selected.iri}}&gt;</h5>
+        <h5 class="text-center">{{selected.display}} &lt;{{selected.iri}}&gt;</h5>
         <div class="flex-container d-flex align-items-center">
             <div class="btn-navigation-container">
                 <button mat-raised-button color="primary" class="prev-button" type="button" [disabled]="index === 0" (click)="select(index - 1)">&lt; Previous</button>

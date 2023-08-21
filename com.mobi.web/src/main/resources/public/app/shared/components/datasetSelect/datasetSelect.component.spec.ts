@@ -40,7 +40,6 @@ import { DCTERMS } from '../../../prefixes';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { DatasetManagerService } from '../../services/datasetManager.service';
 import { DiscoverStateService } from '../../services/discoverState.service';
-import { UtilService } from '../../services/util.service';
 import { DatasetSelectComponent } from './datasetSelect.component';
 
 describe('Dataset Select component', function() {
@@ -48,10 +47,12 @@ describe('Dataset Select component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<DatasetSelectComponent>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const recordId = 'recordId';
-    const record = {'@id': recordId};
+    const record = {
+      '@id': recordId,
+      [`${DCTERMS}title`]: [{ '@value': 'title' }]
+    };
     const datasetPreview = {
         id: recordId,
         title: 'title'
@@ -75,7 +76,6 @@ describe('Dataset Select component', function() {
             ],
             providers: [
                 MockProvider(DatasetManagerService),
-                MockProvider(UtilService),
                 MockProvider(DiscoverStateService)
             ]
         }).compileComponents();
@@ -84,11 +84,9 @@ describe('Dataset Select component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         datasetManagerStub.getDatasetRecords.and.returnValue(of(new HttpResponse<JSONLDObject[][]>({body: [[record]]})));
         datasetManagerStub.getRecordFromArray.and.returnValue(record);
-        utilStub.getDctermsValue.and.returnValue('title');
 
         component.parentForm = new UntypedFormGroup({
             datasetSelect: new UntypedFormControl('')
@@ -104,7 +102,6 @@ describe('Dataset Select component', function() {
         element = null;
         fixture = null;
         datasetManagerStub = null;
-        utilStub = null;
     });
 
     describe('should handle updates to the dataset select value', function() {
@@ -125,7 +122,7 @@ describe('Dataset Select component', function() {
                     pageIndex: 0,
                     sortOption: {
                         label: 'Title',
-                        field: DCTERMS + 'title',
+                        field: `${DCTERMS}title`,
                         asc: true
                     }
                 }, true);
@@ -148,7 +145,7 @@ describe('Dataset Select component', function() {
                     pageIndex: 0,
                     sortOption: {
                         label: 'Title',
-                        field: DCTERMS + 'title',
+                        field: `${DCTERMS}title`,
                         asc: true
                     }
                 }, true);
@@ -166,7 +163,7 @@ describe('Dataset Select component', function() {
                     pageIndex: 0,
                     sortOption: {
                         label: 'Title',
-                        field: DCTERMS + 'title',
+                        field: `${DCTERMS}title`,
                         asc: true
                     }
                 }, true);

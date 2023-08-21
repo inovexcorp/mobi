@@ -29,12 +29,11 @@ import { MatCardModule } from '@angular/material/card';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
-import { MockComponent, MockProvider, MockPipe } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { SerializationSelectComponent } from '../serializationSelect/serializationSelect.component';
@@ -46,7 +45,6 @@ describe('Preview Block component', function() {
     let fixture: ComponentFixture<PreviewBlockComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -84,7 +82,6 @@ describe('Preview Block component', function() {
         fixture = null;
         ontologyStateStub = null;
         ontologyManagerStub = null;
-        splitIRIStub = null;
     });
 
     it('should initialize correctly', fakeAsync(function() {
@@ -111,7 +108,7 @@ describe('Preview Block component', function() {
             expect(element.queryAll(By.css('.preview-block')).length).toEqual(1);
         });
         ['mat-card', 'mat-card-header', 'mat-card-content', 'form', 'serialization-select'].forEach(item => {
-            it('with a .' + item, function() {
+            it(`with a .${item}`, function() {
                 expect(element.queryAll(By.css(item)).length).toEqual(1);
             });
         });
@@ -140,23 +137,23 @@ describe('Preview Block component', function() {
             });
             it('unless an error occurs', fakeAsync(function() {
                 component.activePage = { serialization: 'test' };
-                ontologyManagerStub.getQueryResults.and.returnValue(throwError('Error'));
+                ontologyManagerStub.postQueryResults.and.returnValue(throwError('Error'));
                 component.setPreview();
                 tick();
-                expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'test', false, true);
+                expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'test', false, true);
                 expect(component.activePage.preview).toEqual('Error');
                 expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
             }));
             describe('successfully', function() {
                 beforeEach(function() {
-                    ontologyManagerStub.getQueryResults.and.returnValue(of('Test'));
+                    ontologyManagerStub.postQueryResults.and.returnValue(of('Test'));
                 });
                 it('if the format is JSON-LD', fakeAsync(function() {
                     component.activePage = {serialization: 'jsonld'};
                     component.setPreview();
                     tick();
                     expect(component.activePage.mode).toEqual('application/ld+json');
-                    expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'jsonld', false, true);
+                    expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'jsonld', false, true);
                     expect(component.activePage.preview).toEqual('Test');
                     expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
                 }));
@@ -175,7 +172,7 @@ describe('Preview Block component', function() {
                         component.setPreview();
                         tick();
                         expect(component.activePage.mode).toEqual(test.mode);
-                        expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', test.serialization, false, true);
+                        expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', test.serialization, false, true);
                         expect(component.activePage.preview).toEqual('Test');
                         expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
                     });

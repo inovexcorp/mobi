@@ -24,20 +24,21 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { MockProvider } from 'ng-mocks';
-import { isEqual } from 'lodash';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import { 
     cleanStylesFromDOM
  } from '../../../../../../public/test/ts/Shared';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
-import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
-import { ExploreUtilsService } from '../../services/exploreUtils.service';
-import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { BreadcrumbsComponent } from '../../../../shared/components/breadcrumbs/breadcrumbs.component';
+import { ValueDisplayComponent } from '../../../../shared/components/valueDisplay/valueDisplay.component';
 import { InstanceViewComponent } from './instanceView.component';
 
 describe('Instance View component', function() {
@@ -45,27 +46,26 @@ describe('Instance View component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<InstanceViewComponent>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let exploreUtilsStub: jasmine.SpyObj<ExploreUtilsService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
-    const jsonLdObj = {
-        '@id': 'id',
-        '@type': ['string'],
-        prop3: [{'@value': 'value3'}]
-    };
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [
+                NoopAnimationsModule,
+                MatButtonModule,
+                MatDividerModule,
+            ],
             declarations: [
                 InstanceViewComponent,
+                MockComponent(BreadcrumbsComponent),
+                MockComponent(ValueDisplayComponent)
             ],
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
-                MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
             ]
         }).compileComponents();
@@ -75,8 +75,7 @@ describe('Instance View component', function() {
         element = fixture.debugElement;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        exploreUtilsStub = TestBed.inject(ExploreUtilsService) as jasmine.SpyObj<ExploreUtilsService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
@@ -85,11 +84,9 @@ describe('Instance View component', function() {
             '@type': ['ignored'],
             prop1: [{
                 '@id': 'http://mobi.com/id',
-                more: true
             }],
             prop2: [{
                 '@value': 'value1',
-                'more': true
             }, {
                 '@value': 'value2'
             }],
@@ -105,7 +102,6 @@ describe('Instance View component', function() {
             creating: false,
             editing: false,
             instance: {
-                // changed: [],
                 entity: [],
                 metadata: {
                     instanceIRI: 'string',
@@ -129,14 +125,6 @@ describe('Instance View component', function() {
             recordTitle: '',
             hasPermissionError: false
         };
-
-        exploreUtilsStub.getReification.and.callFake(function(array, sub, pred, value) : JSONLDObject {
-
-            if (isEqual(value, {'@value': 'value1'})) {
-                return jsonLdObj;
-            }
-            return undefined;
-        });
     });
 
     afterEach(function() {
@@ -242,20 +230,20 @@ describe('Instance View component', function() {
         });
     });
     describe('controller methods', function() {
-        describe('getLimit returns the proper value when limit and array.length are', function() {
-            it('equal', async function() {
-                component.ngOnInit();
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(component.getLimit(['', ''], 2)).toBe(1);
-            });
-            it('not equal', async function() {
-                component.ngOnInit();
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(component.getLimit(['', ''], 1)).toBe(2);
-            });
-        });
+        // describe('getLimit returns the proper value when limit and array.length are', function() {
+        //     it('equal', async function() {
+        //         component.ngOnInit();
+        //         fixture.detectChanges();
+        //         await fixture.whenStable();
+        //         expect(component.getLimit(['', ''], 2)).toBe(1);
+        //     });
+        //     it('not equal', async function() {
+        //         component.ngOnInit();
+        //         fixture.detectChanges();
+        //         await fixture.whenStable();
+        //         expect(component.getLimit(['', ''], 1)).toBe(2);
+        //     });
+        // });
         it('edit sets the correct state and has modify permission', fakeAsync(function() {
             policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
             discoverStateStub.explore.editing = false;
@@ -274,7 +262,7 @@ describe('Instance View component', function() {
             fixture.detectChanges();
             tick();
             expect(discoverStateStub.explore.editing).toBe(false);
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
         }));
     });
     it('should call edit when the edit button is clicked', function() {

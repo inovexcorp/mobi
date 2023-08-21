@@ -80,6 +80,9 @@ describe('Beautify filter', function() {
         }, {
             value: '123Here',
             result: '123 Here'
+        }, {
+            value: 'Test1',
+            result: 'Test 1'
         }];
         let result;
         forEach(tests, function(test) {

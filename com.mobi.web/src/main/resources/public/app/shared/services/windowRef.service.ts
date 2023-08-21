@@ -31,7 +31,7 @@ import { Injectable } from '@angular/core';
 export class WindowRef {
     constructor() {}
 
-    getNativeWindow() {
+    getNativeWindow(): Window {
         return window;
     }
 }

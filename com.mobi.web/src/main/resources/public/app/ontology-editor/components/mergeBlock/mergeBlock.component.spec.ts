@@ -34,13 +34,14 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { CommitDifferenceTabsetComponent } from '../../../shared/components/commitDifferenceTabset/commitDifferenceTabset.component';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { MergeBlockComponent } from './mergeBlock.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import {UserManagerService} from '../../../shared/services/userManager.service';
 import {LoginManagerService} from '../../../shared/services/loginManager.service';
+import { CATALOG } from '../../../prefixes';
+import { MergeBlockComponent } from './mergeBlock.component';
 
 describe('Merge Block component', function() {
     let component: MergeBlockComponent;
@@ -49,7 +50,7 @@ describe('Merge Block component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -70,7 +71,7 @@ describe('Merge Block component', function() {
                 MockProvider(PolicyEnforcementService),
                 MockProvider(UserManagerService),
                 MockProvider(LoginManagerService),
-                MockProvider(UtilService)
+                MockProvider(ToastService)
             ]
         });
     });
@@ -81,8 +82,8 @@ describe('Merge Block component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.versionedRdfRecord.branchId = 'branchId';
@@ -158,7 +159,6 @@ describe('Merge Block component', function() {
         describe('should collect differences when changing the target branch', function() {
             beforeEach(function() {
                 ontologyStateStub.listItem.merge.difference = new Difference();
-                utilStub.getPropertyId.and.returnValue('');
             });
             it('unless the target is empty', function() {
                 component.changeTarget(undefined);
@@ -168,32 +168,31 @@ describe('Merge Block component', function() {
                 expect(ontologyStateStub.listItem.merge.difference).toBeUndefined();
             });
             describe('when target is not empty', function() {
+                const branch = {'@id': 'target'};
                 beforeEach(function() {
-                    this.branch = {'@id': 'target'};
+                    catalogManagerStub.getRecordBranch.and.returnValue(of({'@id': 'branch1', [`${CATALOG}head`]: [{'@id': 'targetHead'}]}));
                 });
                 it('unless an error occurs', function() {
-                    catalogManagerStub.getRecordBranch.and.returnValue(of({'@id': 'branch1', 'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
                     ontologyStateStub.getMergeDifferences.and.returnValue(throwError('Error'));
                     policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
-                    component.changeTarget(this.branch);
+                    component.changeTarget(branch);
                     fixture.detectChanges();
-                    expect(ontologyStateStub.listItem.merge.target).toEqual(this.branch);
-                    expect(catalogManagerStub.getRecordBranch).toHaveBeenCalled();
-                    expect(ontologyStateStub.getMergeDifferences).toHaveBeenCalledWith('', '', catalogManagerStub.differencePageSize, 0);
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                    expect(ontologyStateStub.listItem.merge.target).toEqual(branch);
+                    expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch['@id'], 'recordId', component.catalogId);
+                    expect(ontologyStateStub.getMergeDifferences).toHaveBeenCalledWith('', 'targetHead', catalogManagerStub.differencePageSize, 0);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
                     expect(ontologyStateStub.listItem.merge.difference).toBeUndefined();
                     expect(component.isSubmitDisabled).toBeTruthy();
                     expect(component.error).toEqual(component.permissionMessage);
                 });
                 it('successfully', function() {
-                    catalogManagerStub.getRecordBranch.and.returnValue(of({'@id': 'branch1', 'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
                     ontologyStateStub.getMergeDifferences.and.returnValue(of(null));
-                    component.changeTarget(this.branch);
+                    component.changeTarget(branch);
                     fixture.detectChanges();
-                    expect(ontologyStateStub.listItem.merge.target).toEqual(this.branch);
-                    expect(catalogManagerStub.getRecordBranch).toHaveBeenCalled();
-                    expect(ontologyStateStub.getMergeDifferences).toHaveBeenCalledWith('', '', catalogManagerStub.differencePageSize, 0);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.listItem.merge.target).toEqual(branch);
+                    expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch['@id'], 'recordId', component.catalogId);
+                    expect(ontologyStateStub.getMergeDifferences).toHaveBeenCalledWith('', 'targetHead', catalogManagerStub.differencePageSize, 0);
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     expect(component.isSubmitDisabled).toBeFalse();
                     expect(component.error).not.toEqual(component.permissionMessage);
                 });
@@ -206,7 +205,7 @@ describe('Merge Block component', function() {
                 fixture.detectChanges();
                 expect(ontologyStateStub.attemptMerge).toHaveBeenCalledWith();
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(ontologyStateStub.cancelMerge).not.toHaveBeenCalled();
                 expect(component.error).toEqual('Error message');
             });
@@ -216,7 +215,7 @@ describe('Merge Block component', function() {
                 fixture.detectChanges();
                 expect(ontologyStateStub.attemptMerge).toHaveBeenCalledWith();
                 expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
                 expect(component.error).toEqual('');
             });

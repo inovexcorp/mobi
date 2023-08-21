@@ -31,7 +31,7 @@ import { DatasetRecordConfig } from '../../../shared/models/datasetRecordConfig.
 import { Repository } from '../../../shared/models/repository.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { RepositoryManagerService } from '../../../shared/services/repositoryManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { OntologyDetails } from '../../models/ontologyDetails.interface';
 
 /**
@@ -60,7 +60,7 @@ export class NewDatasetOverlayComponent implements OnInit {
     repositories: Repository[] = [];
 
     constructor(private dialogRef: MatDialogRef<NewDatasetOverlayComponent>, private fb: UntypedFormBuilder,
-        public dm: DatasetManagerService, public util: UtilService, private rm: RepositoryManagerService) {}
+        public dm: DatasetManagerService, private toast: ToastService, private rm: RepositoryManagerService) {}
     
     ngOnInit(): void {
         this.rm.getRepositories().subscribe(repos => {
@@ -79,7 +79,7 @@ export class NewDatasetOverlayComponent implements OnInit {
         };
         this.dm.createDatasetRecord(recordConfig)
             .subscribe(() => {
-                this.util.createSuccessToast('Dataset successfully created');
+                this.toast.createSuccessToast('Dataset successfully created');
                 this.dialogRef.close(true);
             }, error => this.error = error);
     }

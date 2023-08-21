@@ -42,9 +42,6 @@ import { RouterModule } from '@angular/router';
         ActivityCardComponent,
         HomePageComponent,
         QuickActionGridComponent
-    ],
-    providers: [
-        {provide: '$state', useFactory: ($injector: any) => $injector.get('$state'), deps: ['$injector']}
     ]
 })
 export class HomeModule {}

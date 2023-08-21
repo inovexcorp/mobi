@@ -27,14 +27,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { DCTERMS } from '../../../prefixes';
 import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalogRecordKeywords.component';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.component';
@@ -46,11 +46,14 @@ describe('Record Card component', function() {
     let component: RecordCardComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<RecordCardComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
+    const dateStr = '2020-01-01';
     const record: JSONLDObject = {
         '@id': '',
-        '@type': []
+        '@type': [],
+        [`${DCTERMS}title`]: [{ '@value': 'title' }],
+        [`${DCTERMS}description`]: [{ '@value': 'description' }],
+        [`${DCTERMS}modified`]: [{ '@value': dateStr }],
     };
 
     beforeEach(async () => {
@@ -69,19 +72,12 @@ describe('Record Card component', function() {
                 MockComponent(EntityPublisherComponent),
                 MockComponent(OpenRecordButtonComponent),
                 MockDirective(CopyClipboardDirective)
-            ],
-            providers: [
-                MockProvider(UtilService)
-            ],
+            ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(RecordCardComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-
-        utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-        utilStub.getDate.and.returnValue('date');
     });
 
     afterEach(function() {
@@ -89,15 +85,15 @@ describe('Record Card component', function() {
         component = null;
         element = null;
         fixture = null;
-        utilStub = null;
     });
 
     describe('should initialize', function() {
         it('with a title, description, and modified date', function() {
+            component.record = record;
             component.ngOnInit();
             expect(component.title).toEqual('title');
             expect(component.description).toEqual('description');
-            expect(component.modified).toEqual('date');
+            expect(component.modified.getTime()).toEqual(new Date(dateStr).getTime());
         });
     });
     describe('contains the correct html', function() {

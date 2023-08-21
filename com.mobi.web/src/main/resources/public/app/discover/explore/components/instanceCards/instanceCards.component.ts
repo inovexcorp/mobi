@@ -34,7 +34,7 @@ import { ConfirmModalComponent } from '../../../../shared/components/confirmModa
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { ClassDetails } from '../../../models/classDetails.interface';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 /**
  * @class explore.InstanceCardsComponent
@@ -58,7 +58,7 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
     @ViewChild('instanceVirtualScroll') virtualScroll;
 
     constructor(private ds: DiscoverStateService, private es: ExploreService, private eu: ExploreUtilsService,
-                private dialog: MatDialog, private util: UtilService, private pep: PolicyEnforcementService) {
+                private dialog: MatDialog, private toast: ToastService, private pep: PolicyEnforcementService) {
     }
 
     ngOnInit(): void {
@@ -72,7 +72,7 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
     view(item: InstanceDetails): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: POLICY + 'Read'
+            actionId: `${POLICY}Read`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -91,21 +91,21 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
                             if (has(response, 'results')) {
                                 forEach(response.results.bindings, binding => this.ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
                             }
-                        }, error => this.util.createErrorToast(error));
+                        }, error => this.toast.createErrorToast(error));
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to read dataset');
+                    this.toast.createErrorToast('You don\'t have permission to read dataset');
                     this.ds.explore.breadcrumbs = initial(this.ds.explore.breadcrumbs);
                     this.ds.resetPagedInstanceDetails();
                     this.ds.explore.hasPermissionError = true;
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
     delete(item: InstanceDetails): void {
         this.es.deleteInstance(this.ds.explore.recordId, item.instanceIRI)
             .pipe(switchMap(() => {
-                this.util.createSuccessToast('Instance was successfully deleted.');
+                this.toast.createSuccessToast('Instance was successfully deleted.');
                 this.ds.explore.instanceDetails.total--;
                 if (this.ds.explore.instanceDetails.total === 0) {
                     return this.es.getClassDetails(this.ds.explore.recordId);
@@ -123,12 +123,12 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
                     const resultsObject = this.es.createPagedResultsObject(details as HttpResponse<InstanceDetails[]>);
                     this.ds.explore.instanceDetails.data = resultsObject.data;
                 }
-            }, this.util.createErrorToast);
+            }, this.toast.createErrorToast);
     }
     confirmDelete(item: InstanceDetails): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: 'Are you sure you want to delete <strong>' + item.title + '</strong>?'
+                content: `Are you sure you want to delete <strong>${item.title}</strong>?`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {

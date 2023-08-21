@@ -24,17 +24,14 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { Repository } from '../models/repository.interface';
-import { UtilService } from './util.service';
 import { RepositoryManagerService } from './repositoryManager.service';
 
 describe('Repository Manager service', function() {
     let service: RepositoryManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -56,32 +53,19 @@ describe('Repository Manager service', function() {
             providers: [
                 RepositoryManagerService,
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
             ]
         });
 
         service = TestBed.inject(RepositoryManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
-        utilStub.createHttpParams.and.callThrough();
-        utilStub.rejectError.and.callFake(() => Promise.reject(error));
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
         progressSpinnerStub.track.and.callFake((ob) => ob);
     });
 
     afterEach(() => {
         cleanStylesFromDOM();
         service = null;
-        utilStub = null;
         progressSpinnerStub = null;
         httpMock = null;
     });

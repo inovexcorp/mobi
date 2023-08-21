@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
  
 /**
  * @class user-management.MemberTableComponent
@@ -61,7 +61,7 @@ export class MemberTableComponent implements OnChanges {
 
     constructor() {}
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.dataSource = this.members;
     }
     emitRemoveMember(user: string): void {

@@ -27,12 +27,12 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { ClassMappingOverlayComponent } from '../classMappingOverlay/classMappingOverlay.component';
 import { MappingConfigOverlayComponent } from '../mappingConfigOverlay/mappingConfigOverlay.component';
 import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/runMappingDatasetOverlay.component';
 import { RunMappingDownloadOverlayComponent } from '../runMappingDownloadOverlay/runMappingDownloadOverlay.component';
 import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay/runMappingOntologyOverlay.component';
+import { getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class mapper.EditMappingTabComponent
@@ -52,11 +52,12 @@ import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay
 export class EditMappingTabComponent implements OnInit, OnDestroy {
     errorMessage = '';
     classMappings = [];
+    ontologyTitle = '';
 
-    constructor(private dialog: MatDialog, public state: MapperStateService, public dm: DelimitedManagerService,
-        public util: UtilService) {}
+    constructor(private dialog: MatDialog, public state: MapperStateService, public dm: DelimitedManagerService) {}
         
     ngOnInit(): void {
+        this.setOntologyTitle();
         this.setClassMappings();
     }
     ngOnDestroy(): void {
@@ -74,6 +75,7 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
     }
     openMappingConfig(): void {
         this.dialog.open(MappingConfigOverlayComponent).afterClosed().subscribe(() => {
+            this.setOntologyTitle();
             this.setClassMappings();
         });
     }
@@ -84,6 +86,9 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
             this.state.selectedClassMappingId = '';
         }
         this.setClassMappings();
+    }
+    setOntologyTitle(): void {
+      this.ontologyTitle = getDctermsValue(this.state.selected.ontology, 'title') || '(None Specified)';
     }
     setClassMappings(): void {
         this.classMappings = this.state.selected.mapping.getAllClassMappings();

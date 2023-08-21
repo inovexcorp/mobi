@@ -34,7 +34,6 @@ import { OpenOntologyTabComponent } from '../openOntologyTab/openOntologyTab.com
 import { OntologyEditorPageComponent } from './ontologyEditorPage.component';
 
 describe('Ontology Editor Page component', function() {
-    let component: OntologyEditorPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<OntologyEditorPageComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
@@ -55,14 +54,12 @@ describe('Ontology Editor Page component', function() {
 
     beforeEach(function() {
         fixture = TestBed.createComponent(OntologyEditorPageComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
         ontologyStateStub = null;

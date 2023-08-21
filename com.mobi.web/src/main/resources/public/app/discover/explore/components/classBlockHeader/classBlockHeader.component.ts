@@ -29,7 +29,7 @@ import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/newInstanceClassOverlay.component';
 import { CATALOG, POLICY } from '../../../../prefixes';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 /**
  * @class explore.ClassBlockHeaderComponent
@@ -43,13 +43,13 @@ import { UtilService } from '../../../../shared/services/util.service';
     styleUrls: ['./classBlockHeader.component.scss']
 })
 export class ClassBlockHeaderComponent {
-    constructor(private es: ExploreService, private util: UtilService, private pep: PolicyEnforcementService,
+    constructor(private es: ExploreService, private toast: ToastService, private pep: PolicyEnforcementService,
         public ds: DiscoverStateService, private eu: ExploreUtilsService, private dialog: MatDialog) {}
 
     showCreate(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: CATALOG + 'Modify'
+            actionId: `${CATALOG}Modify`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -61,15 +61,15 @@ export class ClassBlockHeaderComponent {
                                 data: {
                                     content: classes
                                 }});
-                        }, this.util.createErrorToast);
+                        }, this.toast.createErrorToast);
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.toast.createErrorToast('You don\'t have permission to modify dataset');
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
-    onSelect(value): void {
+    onSelect(value: string): void {
         this.ds.explore.recordId = value;
         if (this.ds.explore.recordId !== '') {
             this.refresh();
@@ -78,7 +78,7 @@ export class ClassBlockHeaderComponent {
     refresh(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: POLICY + 'Read'
+            actionId: `${POLICY}Read`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -90,16 +90,16 @@ export class ClassBlockHeaderComponent {
                             this.ds.explore.classDetails = details;
                         }, errorMessage => {
                             this.ds.explore.classDetails = [];
-                            this.util.createErrorToast(errorMessage);
+                            this.toast.createErrorToast(errorMessage);
                         });
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to read dataset');
+                    this.toast.createErrorToast('You don\'t have permission to read dataset');
                     this.ds.explore.recordId = '';
                     this.ds.explore.breadcrumbs = ['Classes'];
                     this.ds.explore.hasPermissionError = true;
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
 }

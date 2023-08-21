@@ -37,14 +37,14 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { CamelCasePipe } from '../pipes/camelCase.pipe';
 import { DATA, DCTERMS, DELIM, MAPPINGS, RDFS } from '../../prefixes';
-import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { Mapping } from '../models/mapping.class';
 import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
 import { MappingOntology } from '../models/mappingOntology.interface';
 import { RecordConfig } from '../models/recordConfig.interface';
 import { OntologyManagerService } from './ontologyManager.service';
-import { UtilService } from './util.service';
 import { OntologyDocument } from '../models/ontologyDocument.interface';
+import { createHttpParams, getPropertyId, handleError } from '../utility';
+import { splitIRI } from '../pipes/splitIRI.pipe';
 
 /**
  * @class shared:MappingManagerService
@@ -54,21 +54,21 @@ import { OntologyDocument } from '../models/ontologyDocument.interface';
  */
 @Injectable()
 export class MappingManagerService {
-    prefix = REST_PREFIX + 'mappings';
+    prefix = `${REST_PREFIX}mappings`;
 
     /**
      * An array of annotation IRIs that are supported by the Mapping Tool.
      * @type {string[]}
      */
     annotationProperties = [
-        RDFS + 'label',
-        RDFS + 'comment',
-        DCTERMS + 'title',
-        DCTERMS + 'description'
+        `${RDFS}label`,
+        `${RDFS}comment`,
+        `${DCTERMS}title`,
+        `${DCTERMS}description`
     ];
 
-    constructor(private http: HttpClient, private util: UtilService, private om: OntologyManagerService,
-        private spinnerSvc: ProgressSpinnerService, private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
+    constructor(private http: HttpClient, private om: OntologyManagerService,
+        private spinnerSvc: ProgressSpinnerService, private camelCase: CamelCasePipe) {}
 
     // REST calls
     /**
@@ -76,7 +76,7 @@ export class MappingManagerService {
      * repository with a generated IRI. Returns An observable with the IRI of the newly uploaded
      * mapping.
      *
-     * @param {MappingRecordConfig} mapping The configuration for a new mapping
+     * @param {RecordConfig} mapping The configuration for a new mapping
      * @returns {Observable<string>} An observable with the IRI of the uploaded mapping
      */
     upload(config: RecordConfig, jsonld: JSONLDObject[]): Observable<string> {
@@ -88,7 +88,7 @@ export class MappingManagerService {
         forEach(config.keywords, keyword => fd.append('keywords', keyword));
         fd.append('jsonld', JSON.stringify(jsonld));
         return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
-           .pipe(catchError(this.util.handleError));
+           .pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/mappings/{mappingName} endpoint which returns the JSONL-LD
@@ -98,8 +98,8 @@ export class MappingManagerService {
      * @returns {Observable<JSONLDObject[]>} An observable with the JSON-LD of the uploaded mapping
      */
     getMapping(mappingId: string): Observable<JSONLDObject[]> {
-        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(mappingId)))
-           .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(mappingId)}`))
+           .pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/mappings/{mappingName} endpoint using the `window.location` function
@@ -109,10 +109,10 @@ export class MappingManagerService {
      * @param {string} format the RDF serialization to retrieve the mapping in
      */
     downloadMapping(mappingId: string, format = 'jsonld'): void {
-        const params = this.util.createHttpParams({
+        const params = createHttpParams({
             format: format || 'jsonld'
         });
-        window.open(this.prefix + '/' + encodeURIComponent(mappingId) + '?' + params.toString());
+        window.open(`${this.prefix}/${encodeURIComponent(mappingId)}?${params.toString()}`);
     }
     /**
      * Calls the DELETE /mobirest/mappings/{mappingName} endpoint which deleted the specified
@@ -121,9 +121,9 @@ export class MappingManagerService {
      * @param {string} mappingId The IRI for the mapping
      * @returns {Observable<string>} An observable resolves if the deletion succeeded; rejects otherwise
      */
-    deleteMapping(mappingId: string): Observable<string> {
-        return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(mappingId)))
-           .pipe(catchError(this.util.handleError));
+    deleteMapping(mappingId: string): Observable<void> {
+        return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(mappingId)}`))
+           .pipe(catchError(handleError), map(() => {}));
     }
 
     // Edit mapping methods
@@ -150,9 +150,9 @@ export class MappingManagerService {
         // Check if class exists in ontology
         if (classEntity) {
             // Collect IRI sections for prefix and create class mapping
-            const splitIri = this.splitIRI.transform(classId);
-            const ontologyDataName = (this.splitIRI.transform(this.om.getOntologyIRI(ontology))).end;
-            return mapping.addClassMapping(classId, DATA + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/');
+            const splitIri = splitIRI(classId);
+            const ontologyDataName = (splitIRI(this.om.getOntologyIRI(ontology))).end;
+            return mapping.addClassMapping(classId, `${DATA}${ontologyDataName}/${splitIri.end.toLowerCase()}/`);
         }
 
         return;
@@ -170,8 +170,8 @@ export class MappingManagerService {
         // Check if class mapping exists in mapping
         const classMapping = mapping.getClassMapping(classMappingId);
         if (classMapping) {
-            classMapping[DELIM + 'hasPrefix'] = [{'@value': prefix}];
-            classMapping[DELIM + 'localName'] = [{'@value': localNamePattern}];
+            classMapping[`${DELIM}hasPrefix`] = [{'@value': prefix}];
+            classMapping[`${DELIM}localName`] = [{'@value': localNamePattern}];
         }
     }
     /**
@@ -221,7 +221,7 @@ export class MappingManagerService {
         const rangeClassMapping = mapping.getClassMapping(rangeClassMappingId);
         if (mapping.hasClassMapping(classMappingId) && rangeClassMapping && propEntity 
             && this.om.isObjectProperty(propEntity) 
-            && this.util.getPropertyId(propEntity, RDFS + 'range') === rangeClassMapping[DELIM + 'mapsTo'][0]['@id']) {
+            && getPropertyId(propEntity, `${RDFS}range`) === getPropertyId(rangeClassMapping, `${DELIM}mapsTo`)) {
             return mapping.addObjectPropMapping(propId, classMappingId, rangeClassMappingId);
         }
 
@@ -366,9 +366,9 @@ export class MappingManagerService {
                     incompatibleMappings.push(propMapping);
                     return;
                 }
-                const rangeClassId = mapping.getClassIdByMappingId(this.util.getPropertyId(propMapping, DELIM + 'classMapping'));
+                const rangeClassId = mapping.getClassIdByMappingId(getPropertyId(propMapping, `${DELIM}classMapping`));
                 // Incompatible if range of object property is different
-                if (this.util.getPropertyId(propObj, RDFS + 'range') !== rangeClassId) {
+                if (getPropertyId(propObj, `${RDFS}range`) !== rangeClassId) {
                     incompatibleMappings.push(propMapping);
                     return;
                 }
@@ -426,7 +426,7 @@ export class MappingManagerService {
      * @returns {string} A standardized title for a property mapping
      */
     getPropMappingTitle(className: string, propName: string): string {
-        return className + ': ' + propName;
+        return `${className}: ${propName}`;
     }
 
     private _isType(entity: JSONLDObject, type: string): boolean {

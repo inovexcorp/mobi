@@ -43,7 +43,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { RequestRecordSelectComponent } from './requestRecordSelect.component';
 
 describe('Request Record Select component', function() {
@@ -53,12 +53,17 @@ describe('Request Record Select component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
     const recordId = 'recordId';
-    const record: JSONLDObject = {'@id': recordId};
+    const record: JSONLDObject = {
+      '@id': recordId,
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${DCTERMS}description`]: [{ '@value': 'description' }],
+      [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontologyIRI' }]
+    };
     const totalSize = 3;
     const headers = {'x-total-count': '' + totalSize};
     const sortOption: SortOption = {
@@ -85,7 +90,7 @@ describe('Request Record Select component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(MergeRequestsStateService),
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         });
     });
@@ -97,11 +102,11 @@ describe('Request Record Select component', function() {
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [record], headers: new HttpHeaders(headers)})));
-        sortOption.field = DCTERMS + 'title';
+        sortOption.field = `${DCTERMS}title`;
         catalogManagerStub.sortOptions = [sortOption];
         mergeRequestsStateStub.requestConfig = {
             title: '',
@@ -120,14 +125,14 @@ describe('Request Record Select component', function() {
         catalogManagerStub = null;
         mergeRequestsStateStub = null;
         progressSpinnerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('should initialize properly', function() {
         spyOn(component, 'setInitialRecords');
         component.ngOnInit();
         expect(component.catalogId).toEqual(catalogId);
-        expect(component.config.type).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
+        expect(component.config.type).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
         expect(component.config.sortOption).toEqual(sortOption);
         expect(component.setInitialRecords).toHaveBeenCalledWith();
     });
@@ -147,10 +152,10 @@ describe('Request Record Select component', function() {
                 expect(component.config.pageIndex).toEqual(10);
                 expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.mrRecords);
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, component.config, true);
-                expect(component.records).toEqual([record]);
+                expect(component.records).toEqual([{record, title: 'title', description: 'description', ontologyIRI: 'ontologyIRI'}]);
                 expect(component.totalSize).toEqual(3);
                 expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.mrRecords);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 catalogManagerStub.getRecords.and.returnValue(throwError(error));
@@ -162,7 +167,7 @@ describe('Request Record Select component', function() {
                 expect(component.records).toEqual([]);
                 expect(component.totalSize).toEqual(0);
                 expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.mrRecords);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
         it('should set the initial page of records', function() {

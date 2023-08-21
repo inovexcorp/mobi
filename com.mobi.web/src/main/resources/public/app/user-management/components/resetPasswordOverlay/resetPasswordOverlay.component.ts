@@ -27,7 +27,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class user-management.ResetPasswordOverlayComponent
@@ -47,12 +47,12 @@ export class ResetPasswordOverlayComponent {
     });
 
     constructor(private dialogRef: MatDialogRef<ResetPasswordOverlayComponent>, private fb: UntypedFormBuilder,
-        private state: UserStateService, private um: UserManagerService, private util: UtilService) {}
+        private state: UserStateService, private um: UserManagerService, private toast: ToastService) {}
 
     set(): void {
         this.um.resetPassword(this.state.selectedUser.username, this.resetPasswordForm.controls.unmaskPassword.value)
             .subscribe(() => {
-                this.util.createSuccessToast('Password successfully reset');
+                this.toast.createSuccessToast('Password successfully reset');
                 this.errorMessage = '';
                 this.dialogRef.close();
             }, error => this.errorMessage = error);

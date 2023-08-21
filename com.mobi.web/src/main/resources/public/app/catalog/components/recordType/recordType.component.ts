@@ -21,12 +21,10 @@
  * #L%
  */
 import { Component, Input } from '@angular/core';
-import { find, difference, includes, get} from 'lodash';
 
-import { CATALOG } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getBeautifulIRI } from '../../../shared/utility';
 
 /**
  * @class catalog.RecordTypeComponent
@@ -56,10 +54,9 @@ export class RecordTypeComponent {
         return this._record;
     }
 
-    constructor(public cm: CatalogManagerService, public util: UtilService) {}
+    constructor(private cm: CatalogManagerService) {}
 
     getTypeDisplay(record: JSONLDObject): string {
-        const type = find(difference(this.cm.recordTypes, this.cm.coreRecordTypes), type => includes(get(record, '@type', []), type));
-        return this.util.getBeautifulIRI(type || CATALOG + 'Record');
-    }
+      return getBeautifulIRI(this.cm.getType(record));
+  }
 }

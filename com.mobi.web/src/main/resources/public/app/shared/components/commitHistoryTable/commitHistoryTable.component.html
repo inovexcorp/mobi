@@ -37,9 +37,9 @@
           <tbody>
               <tr *ngFor="let commit of commits; trackBy: getCommitId">
                   <td class="fit" title="Username: {{commit.creator.username}}">{{um.getUserDisplay(commit.creator)}}</td>
-                  <td class="fit commit-id" title="{{commit.id}}"><a (click)="openCommitOverlay(commit.id)">{{util.condenseCommitId(commit.id)}}</a></td>
+                  <td class="fit commit-id" title="{{commit.id}}"><a (click)="openCommitOverlay(commit.id)">{{commit.condensedId}}</a></td>
                   <td title="{{commit.message}}" class="commit-message"><div><span>{{commit.message}}</span></div></td>
-                  <td class="fit" title="{{util.getDate(commit.date, 'medium')}}">{{util.getDate(commit.date, 'd MMM yyyy')}}</td>
+                  <td class="fit" title="{{commit.dateObj | date:'medium'}}">{{commit.dateObj | date:'d MMM yyyy'}}</td>
               </tr>
           </tbody>
       </table>

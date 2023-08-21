@@ -21,12 +21,15 @@
  * #L%
  */
 
+import { formatDate } from '@angular/common';
 import { Observable } from 'rxjs';
 import 'hammerjs';
 import { GraphState, StateEdge, StateNode } from '../../app/ontology-visualization/classes';
 import { ControlRecordI } from '../../app/ontology-visualization/classes/controlRecords';
 
-
+export const DATE_STR = '2023-01-01T00:00:00Z';
+export const SHORT_DATE_STR = formatDate(new Date(DATE_STR), 'short', 'en-US');
+export const SHORTDATE_DATE_STR = formatDate(new Date(DATE_STR), 'shortDate', 'en-US');
 
 export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];

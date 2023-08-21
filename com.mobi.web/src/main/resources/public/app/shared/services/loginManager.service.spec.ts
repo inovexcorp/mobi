@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -45,10 +44,10 @@ import { ShapesGraphStateService } from './shapesGraphState.service';
 import { StateManagerService } from './stateManager.service';
 import { UserManagerService } from './userManager.service';
 import { UserStateService } from './userState.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { YasguiService } from './yasgui.service';
 import { LoginManagerService } from './loginManager.service';
-import {ProvManagerService} from './provManager.service';
+import { ProvManagerService } from './provManager.service';
 
 describe('Login Manager service', function() {
     let service: LoginManagerService;
@@ -69,7 +68,6 @@ describe('Login Manager service', function() {
     let stateManagerStub: jasmine.SpyObj<StateManagerService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let userStateStub: jasmine.SpyObj<UserStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let yasguiStub: jasmine.SpyObj<YasguiService>;
     let provManagerStub: jasmine.SpyObj<ProvManagerService>;
 
@@ -104,7 +102,7 @@ describe('Login Manager service', function() {
                 MockProvider(StateManagerService),
                 MockProvider(UserManagerService),
                 MockProvider(UserStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(YasguiService),
                 MockProvider(ProvManagerService)
             ]
@@ -129,26 +127,9 @@ describe('Login Manager service', function() {
         stateManagerStub = TestBed.inject(StateManagerService) as jasmine.SpyObj<StateManagerService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         userStateStub = TestBed.inject(UserStateService) as jasmine.SpyObj<UserStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         yasguiStub = TestBed.inject(YasguiService) as jasmine.SpyObj<YasguiService>;
         provManagerStub = TestBed.inject(ProvManagerService) as jasmine.SpyObj<ProvManagerService>;
 
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-
-            return httpParams;
-        });
         progressSpinnerStub.track.and.callFake((ob) => ob);
     });
     afterEach(function() {
@@ -171,7 +152,6 @@ describe('Login Manager service', function() {
         stateManagerStub = null;
         userManagerStub = null;
         userStateStub = null;
-        utilStub = null;
         yasguiStub = null;
         provManagerStub = null;
     });

@@ -88,8 +88,8 @@ describe('Concepts Tab components', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2', '@type': 'type', '@language': 'language'}]
         };
-        propertyManagerStub.conceptSchemeRelationshipList = [SKOS + 'topConceptOf', SKOS + 'inScheme'];
-        ontologyStateStub.listItem.iriList = [SKOS + 'topConceptOf', SKOS + 'inScheme'];
+        propertyManagerStub.conceptSchemeRelationshipList = [`${SKOS}topConceptOf`, `${SKOS}inScheme`];
+        ontologyStateStub.listItem.iriList = [`${SKOS}topConceptOf`, `${SKOS}inScheme`];
         fixture.detectChanges();
     });
 
@@ -103,7 +103,7 @@ describe('Concepts Tab components', function() {
     });
 
     it('initializes correctly', function() {
-        expect(component.relationshipList).toEqual([SKOS + 'topConceptOf', SKOS + 'inScheme']);
+        expect(component.relationshipList).toEqual([`${SKOS}topConceptOf`, `${SKOS}inScheme`]);
         expect(ontologyStateStub.listItem.editorTabStates.concepts.element).toEqual(component.conceptsTab);
     });
     it('should tear down correctly', function() {

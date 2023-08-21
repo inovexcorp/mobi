@@ -29,7 +29,7 @@ import { DCTERMS, OWL } from '../../../prefixes';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
 /**
@@ -59,8 +59,7 @@ export class CreateIndividualOverlayComponent implements OnInit {
     constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateIndividualOverlayComponent>,
         public os: OntologyStateService,
-        private camelCasePipe: CamelCasePipe,
-        private splitIRIPipe: SplitIRIPipe) {}
+        private camelCasePipe: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
@@ -68,7 +67,7 @@ export class CreateIndividualOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void  {
         if (!this.iriHasChanged) {
-            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            const split = splitIRI(this.createForm.controls.iri.value);
             this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
         }
     }
@@ -80,8 +79,8 @@ export class CreateIndividualOverlayComponent implements OnInit {
     get individual(): JSONLDObject {
         return {
             '@id': this.createForm.controls.iri.value,
-            '@type': [OWL + 'NamedIndividual'].concat(this.classes),
-            [DCTERMS + 'title']: [{
+            '@type': [`${OWL}NamedIndividual`].concat(this.classes),
+            [`${DCTERMS}title`]: [{
                 '@value': this.createForm.controls.title.value
             }],
         };

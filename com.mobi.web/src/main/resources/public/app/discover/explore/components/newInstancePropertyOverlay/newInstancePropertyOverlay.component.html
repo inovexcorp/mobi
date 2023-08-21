@@ -30,7 +30,7 @@
                [matAutocomplete]="propertyAuto">
         <mat-autocomplete #propertyAuto="matAutocomplete" (optionSelected)="selectProperty($event)" [displayWith]="getDisplayText.bind(this)">
             <mat-option *ngFor="let property of filteredProperties | async" [value]="property" [title]="property.propertyIRI">
-                {{util.getBeautifulIRI(property.propertyIRI)}} :: {{property.propertyIRI}}
+                {{property.display}} :: {{property.propertyIRI}}
             </mat-option>
         </mat-autocomplete>
     </mat-form-field>

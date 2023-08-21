@@ -24,16 +24,16 @@
     <mat-accordion class="branches-list" *ngIf="branches.length">
         <mat-expansion-panel *ngFor="let branch of branches">
             <mat-expansion-panel-header>
-                <mat-panel-title><span class="text-truncate">{{util.getDctermsValue(branch, 'title')}}</span></mat-panel-title>
+                <mat-panel-title><span class="text-truncate">{{branch.title}}</span></mat-panel-title>
                 <mat-panel-description>
-                    <div class="small"><entity-publisher class="d-inline-block" [entity]="branch"></entity-publisher> &#8226; Updated {{util.getDate(util.getDctermsValue(branch, 'modified'), 'short')}}</div>
+                    <div class="small"><entity-publisher class="d-inline-block" [entity]="branch.branch"></entity-publisher> &#8226; Updated {{branch.date}}</div>
                 </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-                <span>{{util.getDctermsValue(branch, 'description')}}</span>
+                <span>{{branch.description}}</span>
                 <commit-history-table 
-                    [headTitle]="util.getDctermsValue(branch, 'title')"
-                    [commitId]="util.getPropertyId(branch, catalogPrefix + 'head')"
+                    [headTitle]="branch.title"
+                    [commitId]="branch.head"
                     [recordId]="recordId"
                     [branches]="branches"
                     [type]="cm.getType(record)"

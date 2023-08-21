@@ -21,36 +21,36 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
-import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { MatIconModule } from '@angular/material/icon';
-import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { CreateTagModal } from './createTagModal.component';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-describe('Create tag component', function() {
+import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CreateTagModal } from './createTagModal.component';
+
+describe('Create Tag Modal component', function() {
     let component: CreateTagModal;
     let element: DebugElement;
     let fixture: ComponentFixture<CreateTagModal>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateTagModal>>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let shapesGraphStateStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+    let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -69,17 +69,18 @@ describe('Create tag component', function() {
             declarations: [
                 CreateTagModal,
                 MockComponent(ErrorDisplayComponent),
-                MockPipe(SplitIRIPipe),
-                MockPipe(CamelCasePipe)
             ],
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphStateService),
-                SplitIRIPipe,
-                CamelCasePipe
+                { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
             ]
         }).compileComponents();
+
+        catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+        catalogManagerStub.localCatalog = {'@id': 'catalog'};
+        catalogManagerStub.createRecordTag.and.returnValue(of('urn:tag'));
 
         fixture = TestBed.createComponent(CreateTagModal);
         component = fixture.componentInstance;
@@ -90,11 +91,8 @@ describe('Create tag component', function() {
         shapesGraphStateStub.listItem.shapesGraphId = 'shapesGraphId';
         shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
         shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'commitId';
-        shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
-
-        catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        catalogManagerStub.localCatalog = {'@id': 'catalog'};
-        catalogManagerStub.createRecordTag.and.returnValue(of('urn:tag'));
+        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(of(null));
+        camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
     });
 
     afterEach(function() {
@@ -105,6 +103,7 @@ describe('Create tag component', function() {
         matDialogRef = null;
         shapesGraphStateStub = null;
         catalogManagerStub = null;
+        camelCaseStub = null;
     });
 
     describe('controller methods', function() {
@@ -127,27 +126,18 @@ describe('Create tag component', function() {
         describe('nameChanged should update the IRI', function() {
             it('when the IRI has not been edited directly', function() {
                 expect(component.createTagForm.controls.iri.value).toEqual('urn:tag');
-                spyOn(component['splitIRI'], 'transform').and.returnValue({
-                    begin: 'begin',
-                    then: 'then',
-                    end: 'end'
-                });
-                spyOn(component['camelCase'], 'transform').and.returnValue('camelCase');
+                camelCaseStub.transform.and.returnValue('camelCase');
                 component.nameChanged();
 
-                expect(component['splitIRI'].transform).toHaveBeenCalledWith('urn:tag');
-                expect(component['camelCase'].transform).toHaveBeenCalledWith('New Tag', 'class');
-                expect(component.createTagForm.controls.iri.value).toEqual('beginthencamelCase');
+                expect(camelCaseStub.transform).toHaveBeenCalledWith('New Tag', 'class');
+                expect(component.createTagForm.controls.iri.value).toEqual('urn:camelCase');
             });
             it('unless the IRI has not been edited directly', function() {
                 expect(component.createTagForm.controls.iri.value).toEqual('urn:tag');
-                spyOn(component['splitIRI'], 'transform');
-                spyOn(component['camelCase'], 'transform');
                 component.iriHasChanged = true;
                 component.nameChanged();
 
-                expect(component['splitIRI'].transform).not.toHaveBeenCalled();
-                expect(component['camelCase'].transform).not.toHaveBeenCalled();
+                expect(camelCaseStub.transform).not.toHaveBeenCalled();
                 expect(component.createTagForm.controls.iri.value).toEqual('urn:tag');
             });
         });
@@ -163,7 +153,7 @@ describe('Create tag component', function() {
                 });
 
                 it('unless an error occurs', async function() {
-                    shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
+                    shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(throwError('Error'));
                     await component.createTag();
 
                     expect(catalogManagerStub.createRecordTag).toHaveBeenCalledWith('recordId', 'catalog', this.tagConfig);
@@ -205,6 +195,6 @@ describe('Create tag component', function() {
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
 
-        expect(component.createTag).toHaveBeenCalled();
+        expect(component.createTag).toHaveBeenCalledWith();
     });
 });

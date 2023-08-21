@@ -168,7 +168,7 @@ describe('Overview Tab component', function() {
                 ontologyManagerStub.isClass.and.returnValue(true);
                 component.deleteEntity();
                 expect(ontologyManagerStub.isClass).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
-                expect(ontologyStateStub.deleteClass).toHaveBeenCalled();
+                expect(ontologyStateStub.deleteClass).toHaveBeenCalledWith();
                 expect(ontologyStateStub.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyStateStub.deleteDataTypeProperty).not.toHaveBeenCalled();
             });
@@ -177,7 +177,7 @@ describe('Overview Tab component', function() {
                 component.deleteEntity();
                 expect(ontologyManagerStub.isObjectProperty).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
                 expect(ontologyStateStub.deleteClass).not.toHaveBeenCalled();
-                expect(ontologyStateStub.deleteObjectProperty).toHaveBeenCalled();
+                expect(ontologyStateStub.deleteObjectProperty).toHaveBeenCalledWith();
                 expect(ontologyStateStub.deleteDataTypeProperty).not.toHaveBeenCalled();
             });
             it('if it is a datatype property', function() {
@@ -186,7 +186,7 @@ describe('Overview Tab component', function() {
                 expect(ontologyManagerStub.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
                 expect(ontologyStateStub.deleteClass).not.toHaveBeenCalled();
                 expect(ontologyStateStub.deleteObjectProperty).not.toHaveBeenCalled();
-                expect(ontologyStateStub.deleteDataTypeProperty).toHaveBeenCalled();
+                expect(ontologyStateStub.deleteDataTypeProperty).toHaveBeenCalledWith();
             });
         });
     });
@@ -194,7 +194,7 @@ describe('Overview Tab component', function() {
         spyOn(component, 'seeHistory');
         const button = element.queryAll(By.css('.selected-header button[color="primary"]'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.seeHistory).toHaveBeenCalled();
+        expect(component.seeHistory).toHaveBeenCalledWith();
     });
     it('should call showDeleteConfirmation when the delete button is clicked', function() {
         ontologyStateStub.canModify.and.returnValue(true);
@@ -202,6 +202,6 @@ describe('Overview Tab component', function() {
         spyOn(component, 'showDeleteConfirmation');
         const button = element.queryAll(By.css('.selected-header button[color="warn"]'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.showDeleteConfirmation).toHaveBeenCalled();
+        expect(component.showDeleteConfirmation).toHaveBeenCalledWith();
     });
 });

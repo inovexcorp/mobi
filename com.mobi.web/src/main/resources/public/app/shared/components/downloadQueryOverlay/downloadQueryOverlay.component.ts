@@ -25,10 +25,10 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
 
 import { SparqlManagerService } from '../../services/sparqlManager.service';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
-import { Observable } from 'rxjs';
 
 interface FormatOption {
     id: string,
@@ -75,7 +75,7 @@ export class DownloadQueryOverlayComponent implements OnInit {
     download(): void {
         const fileType = this.downloadResultsForm.controls.fileType.value;
         const fileName = this.downloadResultsForm.controls.fileName.value;
-        let request: Observable<any>;
+        let request: Observable<ArrayBuffer>;
         if (this.data.isOntology) {
             request = this.om.downloadResultsPost(this.data.query, fileType, fileName, this.data.recordId, this.data.commitId);
         } else {

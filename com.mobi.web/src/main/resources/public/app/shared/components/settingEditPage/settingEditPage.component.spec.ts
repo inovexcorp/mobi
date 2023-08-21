@@ -25,7 +25,6 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { get } from 'lodash';
 import { of, throwError } from 'rxjs';
 
 import {
@@ -36,7 +35,7 @@ import { SettingGroupComponent } from '../settingGroup/settingGroup.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
 import { RDFS } from '../../../prefixes';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { SettingManagerService } from '../../services/settingManager.service';
 import { SettingEditPageComponent } from './settingEditPage.component';
 
@@ -44,7 +43,7 @@ describe('Setting Edit Page Component', function() {
     let component: SettingEditPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SettingEditPageComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
     let testGroups;
 
@@ -62,7 +61,7 @@ describe('Setting Edit Page Component', function() {
             ],
             providers: [
                 MockProvider(SettingManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         }).compileComponents();
@@ -72,25 +71,19 @@ describe('Setting Edit Page Component', function() {
         element = fixture.debugElement;
         settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
         settingManagerStub.getSettingGroups.and.returnValue(of([]));
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
-            return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
-        });
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
-        utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
-        });
         testGroups = [ {
             '@id': 'preference:TestGroupA',
             '@type': [ 'preference:PreferenceGroup' ],
-            [RDFS + 'label']: [ {
+            [`${RDFS}label`]: [ {
               '@language': 'en',
               '@value': 'Test Group A'
             } ]
           }, {
             '@id': 'preference:#TestGroupB',
             '@type': [ 'preference:PreferenceGroup' ],
-            [RDFS + 'label']: [ {
+            [`${RDFS}label`]: [ {
               '@language': 'en',
               '@value': 'Test Group B'
             } ]
@@ -107,7 +100,7 @@ describe('Setting Edit Page Component', function() {
         element = null;
         fixture = null;
         settingManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('controller methods', function() {
@@ -117,14 +110,14 @@ describe('Setting Edit Page Component', function() {
                 component.setSettingTabs();
                 tick();
                 expect(component.tabs.length).toEqual(0);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
             it('with new values', fakeAsync(function() {
                 settingManagerStub.getSettingGroups.and.returnValue(of(testGroups));
                 component.setSettingTabs();
                 tick();
                 expect(component.tabs.length).toEqual(2);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 expect(component.tabs[0].active).toEqual(true);
             }));
         });
@@ -136,13 +129,13 @@ describe('Setting Edit Page Component', function() {
                 };
                 component.addTab(testPreferenceGroup);
                 expect(component.tabs.length).toEqual(0);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             });
             it('with the correct properties', function() {
                 const testPreferenceGroup = {
                     '@id': 'preference:TestGroupA',
                     '@type': [ 'preference:PreferenceGroup' ],
-                    [RDFS + 'label']: [ {
+                    [`${RDFS}label`]: [ {
                       '@language': 'en',
                       '@value': 'Test Group A'
                     } ]

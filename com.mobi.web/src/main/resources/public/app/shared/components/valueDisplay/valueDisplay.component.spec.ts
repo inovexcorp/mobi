@@ -20,28 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { ValueDisplayComponent } from './valueDisplay.component';
+import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
+
+import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
 import { HighlightTextPipe } from '../../pipes/highlightText.pipe';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { By } from '@angular/platform-browser';
-import { UtilService } from '../../services/util.service';
 import { DiscoverStateService } from '../../services/discoverState.service';
+import { ValueDisplayComponent } from './valueDisplay.component';
 
 describe('Value Display component', function() {
     let component: ValueDisplayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ValueDisplayComponent>;
     let discoverStateServiceStub: jasmine.SpyObj<DiscoverStateService>;
-    let utilServiceStub: jasmine.SpyObj<UtilService>;
-    let trustedHtmlPipeStub: jasmine.SpyObj<TrustedHtmlPipe>;
-    let highlightTextPipeStub: jasmine.SpyObj<HighlightTextPipe>;
-    let prefixationPipeStub: jasmine.SpyObj<PrefixationPipe>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -53,7 +48,6 @@ describe('Value Display component', function() {
             ],
             providers: [
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
                 TrustedHtmlPipe,
                 HighlightTextPipe,
                 PrefixationPipe
@@ -65,11 +59,6 @@ describe('Value Display component', function() {
         element = fixture.debugElement;
 
         discoverStateServiceStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
-        utilServiceStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        trustedHtmlPipeStub = TestBed.inject(TrustedHtmlPipe) as jasmine.SpyObj<TrustedHtmlPipe>;
-        highlightTextPipeStub = TestBed.inject(HighlightTextPipe) as jasmine.SpyObj<HighlightTextPipe>;
-        prefixationPipeStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
-
         discoverStateServiceStub.explore = {
             breadcrumbs: ['Classes', 'instance'],
             classDeprecated: false,
@@ -80,7 +69,7 @@ describe('Value Display component', function() {
             instance: {
                 entity: [{'@id': 'instanceId', '@type': ['instance']}],
                 metadata: {instanceIRI: 'instanceIRI', title: 'prop', description: 'prop description'},
-                objectMap: {},
+                objectMap: { 'iri': 'Test' },
                 original: []
             },
             instanceDetails: {
@@ -108,10 +97,6 @@ describe('Value Display component', function() {
         component = null;
         element = null;
         discoverStateServiceStub = null;
-        utilServiceStub = null;
-        trustedHtmlPipeStub = null;
-        highlightTextPipeStub = null;
-        prefixationPipeStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -120,14 +105,15 @@ describe('Value Display component', function() {
         });
         it('with a .has-id', function() {
             expect(element.queryAll(By.css('.has-id')).length).toEqual(1);
-            // component.value = {}; // Typing makes this test not possible
+            
+            component.value = {'@value': 'value'};
             fixture.detectChanges();
-            // expect(element.queryAll(By.css('.has-id')).length).toEqual(0);
+            expect(element.queryAll(By.css('.has-id')).length).toEqual(0);
         });
         it('with a .has-value', function() {
             expect(element.queryAll(By.css('.has-value')).length).toEqual(0);
 
-            component.value = {'@id': 'id', '@value': 'value'};
+            component.value = {'@value': 'value'};
             fixture.detectChanges();
 
             expect(element.queryAll(By.css('.has-value')).length).toEqual(1);
@@ -135,7 +121,7 @@ describe('Value Display component', function() {
         it('with a .text-muted.lang-display', function() {
             expect(element.queryAll(By.css('.text-muted.lang-display')).length).toEqual(0);
 
-            component.value = {'@id': 'id', '@value': 'value', '@language': 'en'};
+            component.value = {'@value': 'value', '@language': 'en'};
             fixture.detectChanges();
 
             expect(element.queryAll(By.css('.text-muted.lang-display')).length).toEqual(1);
@@ -143,22 +129,19 @@ describe('Value Display component', function() {
         it('with a .text-muted.type-display', function() {
             expect(element.queryAll(By.css('.text-muted.type-display')).length).toEqual(0);
 
-            component.value = {'@id': 'id', '@value': 'value', '@type': ['type']};
+            component.value = {'@value': 'value', '@type': 'type'};
             fixture.detectChanges();
 
             expect(element.queryAll(By.css('.text-muted.type-display')).length).toEqual(1);
         });
     });
     describe('controller methods', function() {
-        describe('has should return', function() {
-            beforeEach(function() {
-                this.obj = {prop: 'value'};
+        describe('getDisplay should return display text for an IRI', function() {
+            it('when property is in the explore state', function() {
+                expect(component.getDisplay('iri')).toEqual('Test');
             });
-            it('true when property is present', function() {
-                expect(component.has(this.obj, 'prop')).toEqual(true);
-            });
-            it('false when property is not present', function() {
-                expect(component.has(this.obj, 'missing')).toEqual(false);
+            it('when property is not in the explore state', function() {
+                expect(component.getDisplay('http://test.com#iri')).toEqual('Iri');
             });
         });
     });

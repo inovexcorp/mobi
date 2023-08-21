@@ -25,7 +25,6 @@ import { QueryModule } from './query/query.module';
 import { DiscoverSharedModule } from './discoverShared.module';
 import { SharedModule } from '../shared/shared.module';
 import { ExploreModule } from './explore/explore.module';
-import { ExploreService } from './services/explore.service';
 import { DiscoverPageComponent } from './components/discoverPage/discoverPage.component';
 
 /**

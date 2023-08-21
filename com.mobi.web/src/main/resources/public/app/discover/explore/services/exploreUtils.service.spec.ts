@@ -32,15 +32,14 @@ import { SparqlManagerService } from '../../../shared/services/sparqlManager.ser
 import { PropertyDetails } from '../../models/propertyDetails.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
-import { UtilService } from '../../../shared/services/util.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { DATASET, RDF, XSD } from '../../../prefixes';
+import { DATASET, OWL, RDF, XSD } from '../../../prefixes';
 import { ExploreUtilsService } from './exploreUtils.service';
+import { REGEX } from '../../../constants';
 
 describe('Explore Utils Service', function() {
     let exploreUtilsService : ExploreUtilsService;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
     let fewProperties: PropertyDetails[];
     let allProperties: PropertyDetails[];
@@ -57,7 +56,6 @@ describe('Explore Utils Service', function() {
                 MockProvider(SparqlManagerService),
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService)
             ]
         });
     });
@@ -66,7 +64,6 @@ describe('Explore Utils Service', function() {
         datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
         exploreUtilsService = TestBed.inject(ExploreUtilsService) as jasmine.SpyObj<ExploreUtilsService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         fewProperties = [
             {
@@ -82,7 +79,7 @@ describe('Explore Utils Service', function() {
             }, {
                 propertyIRI: 'propertyId3',
                 type: 'Data',
-                range: [XSD + 'boolean'],
+                range: [`${XSD}boolean`],
                 restrictions: []
             }
         ];
@@ -90,52 +87,52 @@ describe('Explore Utils Service', function() {
                 {
                 propertyIRI: 'id1',
                 type: 'Data',
-                range: [XSD + 'dateTime'],
+                range: [`${XSD}dateTime`],
                 restrictions: []
             }, {
                 propertyIRI: 'id2',
                 type: 'Data',
-                range: [XSD + 'dateTimeStamp'],
+                range: [`${XSD}dateTimeStamp`],
                 restrictions: []
             }, {
                 propertyIRI: 'id3',
                 type: 'Data',
-                range: [XSD + 'decimal'],
+                range: [`${XSD}decimal`],
                 restrictions: []
             }, {
                 propertyIRI: 'id4',
                 type: 'Data',
-                range: [XSD + 'double'],
+                range: [`${XSD}double`],
                 restrictions: []
             }, {
                 propertyIRI: 'id5',
                 type: 'Data',
-                range: [XSD + 'float'],
+                range: [`${XSD}float`],
                 restrictions: []
             }, {
                 propertyIRI: 'id6',
                 type: 'Data',
-                range: [XSD + 'int'],
+                range: [`${XSD}int`],
                 restrictions: []
             }, {
                 propertyIRI: 'id7',
                 type: 'Data',
-                range: [XSD + 'integer'],
+                range: [`${XSD}integer`],
                 restrictions: []
             }, {
                 propertyIRI: 'id8',
                 type: 'Data',
-                range: [XSD + 'long'],
+                range: [`${XSD}long`],
                 restrictions: []
             }, {
                 propertyIRI: 'id9',
                 type: 'Data',
-                range: [XSD + 'short'],
+                range: [`${XSD}short`],
                 restrictions: []
             }, {
                 propertyIRI: 'id10',
                 type: 'Data',
-                range: [XSD + 'other'],
+                range: [`${XSD}other`],
                 restrictions: []
             }
         ];
@@ -145,24 +142,19 @@ describe('Explore Utils Service', function() {
         datasetManagerStub = null;
         exploreUtilsService = null;
         ontologyManagerStub = null;
-        utilStub = null;
         fewProperties = null;
         allProperties = null;
     });
 
     it('getInputType should return the correct input type', function() {
-        utilStub.getInputType.and.returnValue('type');
         spyOn(exploreUtilsService, 'getRange').and.returnValue('iri');
-        expect(exploreUtilsService.getInputType('id', [])).toBe('type');
+        expect(exploreUtilsService.getInputType('id', [])).toBe('text');
         expect(exploreUtilsService.getRange).toHaveBeenCalledWith('id', []);
-        expect(utilStub.getInputType).toHaveBeenCalledWith('iri');
     });
     it('getPattern should return the correct pattern', function() {
-        utilStub.getPattern.and.returnValue(/[a-zA-Z]/);
         spyOn(exploreUtilsService, 'getRange').and.returnValue('iri');
-        expect(exploreUtilsService.getPattern('id', [])).toEqual(/[a-zA-Z]/);
+        expect(exploreUtilsService.getPattern('id', [])).toEqual(REGEX.ANYTHING);
         expect(exploreUtilsService.getRange).toHaveBeenCalledWith('id', []);
-        expect(utilStub.getPattern).toHaveBeenCalledWith('iri');
     });
     it('isPropertyOfType should return the proper boolean based on the properties list', function() {
         expect(exploreUtilsService.isPropertyOfType('propertyId', 'Data', fewProperties)).toBe(true);
@@ -186,7 +178,7 @@ describe('Explore Utils Service', function() {
     });
     describe('getRange should return the correct range if propertyIRI is', function() {
         it('found', function() {
-            expect(exploreUtilsService.getRange('id1', allProperties)).toEqual(XSD + 'dateTime');
+            expect(exploreUtilsService.getRange('id1', allProperties)).toEqual(`${XSD}dateTime`);
         });
         it('not found', function() {
             expect(exploreUtilsService.getRange('missing-id', allProperties)).toEqual('');
@@ -206,20 +198,14 @@ describe('Explore Utils Service', function() {
         beforeEach(function() {
        
             record = {'@id': this.datasetId};
-            identifier = {'@id': 'id'};
+            identifier = {
+              '@id': 'id',
+              [`${DATASET}linksToRecord`]: [{ '@id': 'recordId' }],
+              [`${DATASET}linksToBranch`]: [{ '@id': 'branchId' }],
+              [`${DATASET}linksToCommit`]: [{ '@id': 'commitId' }],
+            };
             datasetManagerStub.datasetRecords = [[record, identifier]];
             datasetManagerStub.getOntologyIdentifiers.and.returnValue([identifier]);
-            utilStub.getPropertyId.and.callFake(function(obj, propId) {
-                if (propId === DATASET + 'linksToRecord') {
-                    return 'recordId';
-                } else if (propId === DATASET + 'linksToBranch') {
-                    return 'branchId';
-                } else if (propId === DATASET + 'linksToCommit') {
-                    return 'commitId';
-                } else {
-                    return '';
-                }
-            });
         });
         it('unless the dataset could not be found', function() {
             exploreUtilsService.getClasses('')
@@ -252,9 +238,8 @@ describe('Explore Utils Service', function() {
             expect(ontologyManagerStub.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', false);
         });
         it('successfully', function() {
-            utilStub.getPropertyValue.and.returnValue('true');
             ontologyManagerStub.getEntityName.and.returnValue('title');
-            ontologyManagerStub.getOntologyClasses.and.returnValue(of([{'@id': 'classId'}]));
+            ontologyManagerStub.getOntologyClasses.and.returnValue(of([{'@id': 'classId', [`${OWL}deprecated`]: [{ '@value': 'true'}] }]));
             exploreUtilsService.getClasses(this.datasetId)
                 .subscribe(function(response) {
                     expect(response).toContain({id: 'classId', title: 'title', deprecated: true});
@@ -298,7 +283,7 @@ describe('Explore Utils Service', function() {
                 {
                     'propertyIRI': 'propertyId3',
                     'type': 'Data',
-                    'range': ['http://www.w3.org/2001/XMLSchema#boolean'],
+                    'range': [`${XSD}boolean`],
                     'restrictions': []
                 }
             ];
@@ -309,7 +294,7 @@ describe('Explore Utils Service', function() {
                 {
                     'propertyIRI': 'propertyId3',
                     'type': 'Data',
-                    'range': ['http://www.w3.org/2001/XMLSchema#boolean'],
+                    'range': [`${XSD}boolean`],
                     'restrictions': []
                 }
             ];
@@ -339,20 +324,20 @@ describe('Explore Utils Service', function() {
         const pred = 'predicate';
         const value: JSONLDValue = {'@value': 'value'};
         const array: JSONLDObject[] = [
-            {'@id': 'id', '@type': [RDF + 'Statement']},
-            {'@id': 'id', '@type': [RDF + 'Statement']},
-            {'@id': 'id', '@type': [RDF + 'Statement']},
-            {'@id': 'id', '@type': [RDF + 'Statement']}
+            {'@id': 'id', '@type': [`${RDF}Statement`]},
+            {'@id': 'id', '@type': [`${RDF}Statement`]},
+            {'@id': 'id', '@type': [`${RDF}Statement`]},
+            {'@id': 'id', '@type': [`${RDF}Statement`]}
         ];
-        array[0][RDF + 'subject'] = [{'@id': sub}];
-        array[2][RDF + 'subject'] = [{'@id': sub}];
-        array[3][RDF + 'subject'] = [{'@id': sub}];
-        array[0][RDF + 'predicate'] = [{'@id': pred}];
-        array[1][RDF + 'predicate'] = [{'@id': pred}];
-        array[3][RDF + 'predicate'] = [{'@id': pred}];
-        array[0][RDF + 'object'] = [value];
-        array[1][RDF + 'object'] = [value];
-        array[2][RDF + 'object'] = [value];
+        array[0][`${RDF}subject`] = [{'@id': sub}];
+        array[2][`${RDF}subject`] = [{'@id': sub}];
+        array[3][`${RDF}subject`] = [{'@id': sub}];
+        array[0][`${RDF}predicate`] = [{'@id': pred}];
+        array[1][`${RDF}predicate`] = [{'@id': pred}];
+        array[3][`${RDF}predicate`] = [{'@id': pred}];
+        array[0][`${RDF}object`] = [value];
+        array[1][`${RDF}object`] = [value];
+        array[2][`${RDF}object`] = [value];
 
         expect(exploreUtilsService.getReification(array, sub, pred, value)).toEqual(array[0]);
         expect(exploreUtilsService.getReification(array, '', pred, value)).toBeUndefined();

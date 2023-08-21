@@ -20,11 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
@@ -32,12 +30,10 @@ import {
 import { MERGEREQ } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { UtilService } from './util.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 
 describe('Merge Request Manager service', function() {
     let service: MergeRequestManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -53,47 +49,19 @@ describe('Merge Request Manager service', function() {
             providers: [
                 MergeRequestManagerService,
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
             ]
         });
 
         service = TestBed.inject(MergeRequestManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
-        utilStub.paginatedConfigToParams.and.callFake(x => Object.assign({}, x) || {});
         progressSpinnerStub.track.and.callFake((ob) => ob);
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
-        utilStub = null;
         httpMock = null;
     });
 
@@ -128,16 +96,18 @@ describe('Merge Request Manager service', function() {
             request.flush([]);
         });
         it('with parameters', function() {
-            this.config.ascending = false;
-            this.config.sort = 'sort';
+            this.config.sortOption = {
+                field: 'sort',
+                asc: false
+            };
             service.getRequests(this.config)
                 .subscribe(response => {
                     expect(response.body).toEqual([]);
                 }, () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
             expect(request.request.params.get('accepted').toString()).toEqual('' + this.config.accepted);
-            expect(request.request.params.get('sort').toString()).toEqual(this.config.sort);
-            expect(request.request.params.get('ascending').toString()).toEqual('' + this.config.ascending);
+            expect(request.request.params.get('sort').toString()).toEqual(this.config.sortOption.field);
+            expect(request.request.params.get('ascending').toString()).toEqual('' + this.config.sortOption.asc);
             request.flush([]);
         });
     });
@@ -199,7 +169,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should get a single merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId);
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}`;
         });
         it('unless an error occurs', function() {
             service.getRequest(requestId)
@@ -220,7 +190,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should remove a single merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId);
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}`;
         });
         it('unless an error occurs', function() {
             service.deleteRequest(requestId)
@@ -241,7 +211,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should accept a merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId);
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}`;
         });
         it('unless an error occurs', function() {
             service.acceptRequest(requestId)
@@ -262,7 +232,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should get the list of comments on a merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId) + '/comments';
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}/comments`;
         });
         it('unless an error occurs', function() {
             service.getComments(requestId)
@@ -283,7 +253,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should delete a comment on a merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId);
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`;
         });
         it('unless an error occurs', function() {
             service.deleteComment(requestId, commentId)
@@ -304,7 +274,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should create a comment on a merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId) + '/comments';
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}/comments`;
         });
         it('unless an error occurs', function() {
             service.createComment(requestId, commentText)
@@ -338,7 +308,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should update a comment on a merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId);
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`;
         });
         it('unless an error occurs', function() {
             service.updateComment(requestId, commentId, commentText)
@@ -361,7 +331,7 @@ describe('Merge Request Manager service', function() {
     });
     describe('should update a merge request', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(requestId);
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}`;
         });
         it('unless an error occurs', function() {
             service.updateRequest(requestId, emptyObj)
@@ -385,9 +355,9 @@ describe('Merge Request Manager service', function() {
     it('should determine whether a request is accepted', function() {
         expect(service.isAccepted(emptyObj)).toEqual(false);
         const mr = Object.assign({}, emptyObj);
-        mr['@type'] = [MERGEREQ + 'MergeRequest'];
+        mr['@type'] = [`${MERGEREQ}MergeRequest`];
         expect(service.isAccepted(emptyObj)).toEqual(false);
-        mr['@type'].push(MERGEREQ + 'AcceptedMergeRequest');
+        mr['@type'].push(`${MERGEREQ}AcceptedMergeRequest`);
         expect(service.isAccepted(mr)).toEqual(true);
     });
 });

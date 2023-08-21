@@ -36,7 +36,6 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
-import { UtilService } from '../../../shared/services/util.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
@@ -54,11 +53,10 @@ describe('See History component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const commits: Commit[] = [
-        {id: 'commit1', auxiliary: '', base: '', creator: undefined, message: '', date: ''},
-        {id: 'commit2', auxiliary: '', base: '', creator: undefined, message: '', date: ''}
+        {id: 'http://test.com#1234567890', auxiliary: '', base: '', creator: undefined, message: '', date: ''},
+        {id: 'http://test.com#0987654321', auxiliary: '', base: '', creator: undefined, message: '', date: ''}
     ];
     const resource: JSONLDObject = {
         '@id': 'www.test.com',
@@ -90,7 +88,6 @@ describe('See History component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService)
             ]
         }).compileComponents();
 
@@ -100,7 +97,6 @@ describe('See History component', function() {
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = {
@@ -118,7 +114,6 @@ describe('See History component', function() {
         catalogManagerStub = null;
         ontologyStateStub = null;
         progressSpinnerStub = null;
-        utilStub = null;
     });
 
     describe('controller methods', function() {
@@ -161,13 +156,12 @@ describe('See History component', function() {
         });
         it('should assign the correct label for each commit', function() {
             component.commits = commits;
-            utilStub.condenseCommitId.and.returnValue('1234');
             const labels = component.commits.map(commit => component.createLabel(commit.id));
             labels.forEach((label, idx) => {
                 if (idx === 0) {
-                    expect(label).toEqual('1234 (latest)');
+                    expect(label).toEqual('1234567890 (latest)');
                 } else {
-                    expect(label).toEqual('1234');
+                    expect(label).toEqual('0987654321');
                 }
             });
         });

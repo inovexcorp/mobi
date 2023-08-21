@@ -33,7 +33,7 @@ import { EditUserProfileOverlayComponent } from '../editUserProfileOverlay/editU
 import { ResetPasswordOverlayComponent } from '../resetPasswordOverlay/resetPasswordOverlay.component';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
@@ -60,7 +60,7 @@ export class UsersPageComponent implements OnInit {
     selectedAdminUser = false;
     
     constructor(private dialog: MatDialog, public state: UserStateService, private um: UserManagerService,
-        private lm: LoginManagerService, private util: UtilService) {}
+        private lm: LoginManagerService, private toast: ToastService) {}
 
     ngOnInit(): void {
         this.setUsers();
@@ -83,7 +83,7 @@ export class UsersPageComponent implements OnInit {
     confirmDeleteUser(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: 'Are you sure you want to remove <strong>' + this.state.selectedUser.username + '</strong>?'
+                content: `Are you sure you want to remove <strong>${this.state.selectedUser.username}</strong>?`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
@@ -101,25 +101,18 @@ export class UsersPageComponent implements OnInit {
         this.dialog.open(ResetPasswordOverlayComponent);
     }
     deleteUser(): void {
-        try {
-            this.um.deleteUser(this.state.selectedUser.username).subscribe(() => {
-                this.util.createSuccessToast('User successfully deleted');
-                this.state.selectedUser = undefined;
-                this.selectedCurrentUser = false;
-                this.selectedAdminUser = false;
-                this.setAdmin();
-                this.setUserGroups();
-            }, () => {
-                return this.util.createErrorToast.bind(this.util);
-            });
-        } catch (e) {
-            this.util.rejectError(e);
-        }
-        
+        this.um.deleteUser(this.state.selectedUser.username).subscribe(() => {
+            this.toast.createSuccessToast('User successfully deleted');
+            this.state.selectedUser = undefined;
+            this.selectedCurrentUser = false;
+            this.selectedAdminUser = false;
+            this.setAdmin();
+            this.setUserGroups();
+        }, () => this.toast.createErrorToast('Error occurred when deleting user'));
     }
     changeAdmin(event: MatSlideToggleChange): void {
         const request = event.checked ? this.um.addUserRoles(this.state.selectedUser.username, ['admin']) : this.um.deleteUserRole(this.state.selectedUser.username, 'admin');
-        request.subscribe( ()=> noop, this.util.createErrorToast);
+        request.subscribe( ()=> noop, this.toast.createErrorToast);
     }
     setUserGroups(): void {
         this.groups = filter(this.um.groups, group => includes(group.members, this.state.selectedUser.username));

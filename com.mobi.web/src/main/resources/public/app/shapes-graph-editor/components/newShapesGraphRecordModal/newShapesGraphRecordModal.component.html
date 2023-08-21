@@ -21,7 +21,7 @@
 <div class="new-shapes-graph-record-modal">
     <h1 mat-dialog-title>Create Shapes Graph Record</h1>
     <div mat-dialog-content [formGroup]="createRecordForm">
-        <error-display *ngIf="error.errorMessage">
+        <error-display *ngIf="error && error.errorMessage">
             {{error.errorMessage}}
             <ul>
                 <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">

@@ -23,25 +23,24 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { EditorTopBarComponent } from '../editorTopBar/editorTopBar.component';
-import { ShapesGraphMergePageComponent } from '../shapesGraphMergePage/shapesGraphMergePage.component';
-import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
-import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
-import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
-import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { YateComponent } from '../yate/yate.component';
 
+import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { EditorTopBarComponent } from '../editorTopBar/editorTopBar.component';
+import { ShapesGraphMergePageComponent } from '../shapesGraphMergePage/shapesGraphMergePage.component';
+import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
+import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
+
 describe('Shapes Graph Editor Page component', function() {
-    let component: ShapesGraphEditorPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphEditorPageComponent>;
-    let shapesGraphStateStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -59,22 +58,20 @@ describe('Shapes Graph Editor Page component', function() {
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
-                MockProvider(ShapesGraphManagerService)
             ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(ShapesGraphEditorPageComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
         shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-        shapesGraphStateStub.listItem = new VersionedRdfListItem();
+        shapesGraphStateStub.listItem = new ShapesGraphListItem();
     });
 
     afterAll(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
+        shapesGraphStateStub = null;
     });
 
     describe('contains the correct html', function() {

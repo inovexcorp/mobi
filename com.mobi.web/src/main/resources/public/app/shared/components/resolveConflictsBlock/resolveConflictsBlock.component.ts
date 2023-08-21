@@ -23,9 +23,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { concat, forEach, find, some } from 'lodash';
 
-import { UtilService } from '../../services/util.service';
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 import { Difference } from '../../models/difference.class';
+import { getDctermsValue } from '../../utility';
 
 /**
  * @class ontology-editor.ResolveConflictsBlockComponent
@@ -49,7 +49,7 @@ export class ResolveConflictsBlock implements OnInit {
     branchTitle = '';
     targetTitle = '';
 
-    constructor(private util: UtilService) {}
+    constructor() {}
 
     ngOnInit(): void {
         let branchId;
@@ -60,8 +60,8 @@ export class ResolveConflictsBlock implements OnInit {
             branchId = this.listItem.versionedRdfRecord.branchId;
         }
         const branch = find(this.listItem.branches, {'@id': branchId});
-        this.branchTitle = this.util.getDctermsValue(branch, 'title');
-        this.targetTitle = this.util.getDctermsValue(this.listItem.merge.target, 'title');
+        this.branchTitle = getDctermsValue(branch, 'title');
+        this.targetTitle = getDctermsValue(this.listItem.merge.target, 'title');
     }
     allResolved(): boolean {
         return !some(this.listItem.merge.conflicts, {resolved: false});

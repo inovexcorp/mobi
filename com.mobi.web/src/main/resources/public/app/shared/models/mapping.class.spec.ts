@@ -38,30 +38,30 @@ describe('Mapping class', function() {
     beforeEach(function() {
         mappingEntity = {
             '@id': mappingId,
-            '@type': [DELIM + 'Mapping']
+            '@type': [`${DELIM}Mapping`]
         };
         targetClassMapping = {
             '@id': 'targetClassMapping',
-            '@type': [DELIM + 'ClassMapping'],
-            [DELIM + 'mapsTo']: [{'@id': classIRI + '1'}],
+            '@type': [`${DELIM}ClassMapping`],
+            [`${DELIM}mapsTo`]: [{'@id': `${classIRI}1`}],
         };
         dataPropMapping = {
             '@id': 'dataPropMapping',
-            '@type': [DELIM + 'PropertyMapping', DELIM + 'DataMapping'],
-            [DELIM + 'hasProperty']: [{'@id': propIRI}]
+            '@type': [`${DELIM}PropertyMapping`, `${DELIM}DataMapping`],
+            [`${DELIM}hasProperty`]: [{'@id': propIRI}]
         };
         objectPropMapping = {
             '@id': 'objectPropMapping',
-            '@type': [DELIM + 'PropertyMapping', DELIM + 'ObjectMapping'],
-            [DELIM + 'hasProperty']: [{'@id': propIRI}],
-            [DELIM + 'classMapping']: [{'@id': targetClassMapping['@id']}]
+            '@type': [`${DELIM}PropertyMapping`, `${DELIM}ObjectMapping`],
+            [`${DELIM}hasProperty`]: [{'@id': propIRI}],
+            [`${DELIM}classMapping`]: [{'@id': targetClassMapping['@id']}]
         };
         classMapping = {
             '@id': 'classMapping',
-            '@type': [DELIM + 'ClassMapping'],
-            [DELIM + 'mapsTo']: [{'@id': classIRI}],
-            [DELIM + 'dataProperty']: [{'@id': dataPropMapping['@id']}],
-            [DELIM + 'objectProperty']: [{'@id': objectPropMapping['@id']}],
+            '@type': [`${DELIM}ClassMapping`],
+            [`${DELIM}mapsTo`]: [{'@id': classIRI}],
+            [`${DELIM}dataProperty`]: [{'@id': dataPropMapping['@id']}],
+            [`${DELIM}objectProperty`]: [{'@id': objectPropMapping['@id']}],
         };
         testMapping = new Mapping([mappingEntity, classMapping, targetClassMapping, dataPropMapping, objectPropMapping]);
     });
@@ -75,7 +75,7 @@ describe('Mapping class', function() {
     describe('constructor works with', function() {
         it('with an id', function() {
             const result = new Mapping('test');
-            expect(result.getJsonld()).toContain({'@id': 'test', '@type': [DELIM + 'Mapping']});
+            expect(result.getJsonld()).toContain({'@id': 'test', '@type': [`${DELIM}Mapping`]});
         });
         it('with JSON-LD', function() {
             const jsonld = [classMapping, dataPropMapping];
@@ -158,14 +158,14 @@ describe('Mapping class', function() {
             it('if it is a Data Property Mapping', function() {
                 expect(testMapping.removePropMapping(classMapping['@id'], dataPropMapping['@id'])).toEqual(dataPropMapping);
                 expect(testMapping.getJsonld()).not.toContain(dataPropMapping);
-                expect(classMapping[DELIM + 'dataProperty']).toBeUndefined();
+                expect(classMapping[`${DELIM}dataProperty`]).toBeUndefined();
             });
             it('if it is an Object Property Mapping', function() {
                 expect(testMapping.removePropMapping(classMapping['@id'], objectPropMapping['@id'])).toEqual(objectPropMapping);
                 const jsonld = testMapping.getJsonld();
                 expect(jsonld).not.toContain(objectPropMapping);
                 expect(jsonld).toContain(targetClassMapping);
-                expect(classMapping[DELIM + 'objectProperty']).toBeUndefined();
+                expect(classMapping[`${DELIM}objectProperty`]).toBeUndefined();
             });
         });
         describe('removeClassMapping removes the specified Class Mapping', function() {
@@ -179,7 +179,7 @@ describe('Mapping class', function() {
                 const jsonld = testMapping.getJsonld();
                 expect(jsonld).not.toContain(targetClassMapping);
                 expect(jsonld).not.toContain(objectPropMapping);
-                expect(classMapping[DELIM + 'objectProperty']).toBeUndefined();
+                expect(classMapping[`${DELIM}objectProperty`]).toBeUndefined();
             });
             it('successfully removing all it\'s Property Mappings', function() {
                 expect(testMapping.removeClassMapping(classMapping['@id'])).toEqual(classMapping);
@@ -195,14 +195,14 @@ describe('Mapping class', function() {
                 branchId: 'branchId',
                 commitId: 'commitId'
             });
-            expect(mappingEntity[DELIM + 'sourceRecord']).toEqual([{'@id': 'recordId'}]);
-            expect(mappingEntity[DELIM + 'sourceBranch']).toEqual([{'@id': 'branchId'}]);
-            expect(mappingEntity[DELIM + 'sourceCommit']).toEqual([{'@id': 'commitId'}]);
+            expect(mappingEntity[`${DELIM}sourceRecord`]).toEqual([{'@id': 'recordId'}]);
+            expect(mappingEntity[`${DELIM}sourceBranch`]).toEqual([{'@id': 'branchId'}]);
+            expect(mappingEntity[`${DELIM}sourceCommit`]).toEqual([{'@id': 'commitId'}]);
         });
         it('getSourceOntologyInfo returns the source ontology info from the Mapping', function() {
-            mappingEntity[DELIM + 'sourceRecord'] = [{'@id': 'recordId'}];
-            mappingEntity[DELIM + 'sourceBranch'] = [{'@id': 'branchId'}];
-            mappingEntity[DELIM + 'sourceCommit'] = [{'@id': 'commitId'}];
+            mappingEntity[`${DELIM}sourceRecord`] = [{'@id': 'recordId'}];
+            mappingEntity[`${DELIM}sourceBranch`] = [{'@id': 'branchId'}];
+            mappingEntity[`${DELIM}sourceCommit`] = [{'@id': 'commitId'}];
             expect(testMapping.getSourceOntologyInfo()).toEqual({
                 recordId: 'recordId',
                 branchId: 'branchId',
@@ -210,60 +210,60 @@ describe('Mapping class', function() {
             });
         });
         it('addClassMapping adds a Class Mapping', function() {
-            const result = testMapping.addClassMapping(classIRI + '2', 'prefix');
+            const result = testMapping.addClassMapping(`${classIRI}2`, 'prefix');
             expect(result).toEqual({
                 '@id': jasmine.stringContaining(mappingId),
-                '@type': [DELIM + 'ClassMapping'],
-                [DELIM + 'mapsTo']: [{'@id': classIRI + '2'}],
-                [DELIM + 'hasPrefix']: [{'@value': 'prefix'}],
-                [DELIM + 'localName']: [{'@value': '${UUID}'}]
+                '@type': [`${DELIM}ClassMapping`],
+                [`${DELIM}mapsTo`]: [{'@id': `${classIRI}2`}],
+                [`${DELIM}hasPrefix`]: [{'@value': 'prefix'}],
+                [`${DELIM}localName`]: [{'@value': '${UUID}'}]
             });
             expect(testMapping.getJsonld()).toContain(result);
         });
         describe('addDataPropMapping adds a Data Property Mapping', function() {
             it('without a datatype or language', function() {
-                const result = testMapping.addDataPropMapping(propIRI + '2', 0, classMapping['@id']);
+                const result = testMapping.addDataPropMapping(`${propIRI}2`, 0, classMapping['@id']);
                 expect(result).toEqual({
                     '@id': jasmine.stringContaining(mappingId),
-                    '@type': [DELIM + 'DataMapping', DELIM + 'PropertyMapping'],
-                    [DELIM + 'hasProperty']: [{'@id': propIRI + '2'}],
-                    [DELIM + 'columnIndex']: [{'@value': '0'}],
+                    '@type': [`${DELIM}DataMapping`, `${DELIM}PropertyMapping`],
+                    [`${DELIM}hasProperty`]: [{'@id': `${propIRI}2`}],
+                    [`${DELIM}columnIndex`]: [{'@value': '0'}],
                 });
-                expect(classMapping[DELIM + 'dataProperty']).toContain({'@id': result['@id']});
+                expect(classMapping[`${DELIM}dataProperty`]).toContain({'@id': result['@id']});
             });
             it('with a datatype, but no language', function() {
-                const result = testMapping.addDataPropMapping(propIRI + '2', 0, classMapping['@id'], 'datatype');
+                const result = testMapping.addDataPropMapping(`${propIRI}2`, 0, classMapping['@id'], 'datatype');
                 expect(result).toEqual({
                     '@id': jasmine.stringContaining(mappingId),
-                    '@type': [DELIM + 'DataMapping', DELIM + 'PropertyMapping'],
-                    [DELIM + 'hasProperty']: [{'@id': propIRI + '2'}],
-                    [DELIM + 'columnIndex']: [{'@value': '0'}],
-                    [DELIM + 'datatypeSpec']: [{'@id': 'datatype'}]
+                    '@type': [`${DELIM}DataMapping`, `${DELIM}PropertyMapping`],
+                    [`${DELIM}hasProperty`]: [{'@id': `${propIRI}2`}],
+                    [`${DELIM}columnIndex`]: [{'@value': '0'}],
+                    [`${DELIM}datatypeSpec`]: [{'@id': 'datatype'}]
                 });
-                expect(classMapping[DELIM + 'dataProperty']).toContain({'@id': result['@id']});
+                expect(classMapping[`${DELIM}dataProperty`]).toContain({'@id': result['@id']});
             });
             it('with a datatype and language', function() {
-                const result = testMapping.addDataPropMapping(propIRI + '2', 0, classMapping['@id'], 'datatype', 'language');
+                const result = testMapping.addDataPropMapping(`${propIRI}2`, 0, classMapping['@id'], 'datatype', 'language');
                 expect(result).toEqual({
                     '@id': jasmine.stringContaining(mappingId),
-                    '@type': [DELIM + 'DataMapping', DELIM + 'PropertyMapping'],
-                    [DELIM + 'hasProperty']: [{'@id': propIRI + '2'}],
-                    [DELIM + 'columnIndex']: [{'@value': '0'}],
-                    [DELIM + 'datatypeSpec']: [{'@id': 'datatype'}],
-                    [DELIM + 'languageSpec']: [{'@value': 'language'}]
+                    '@type': [`${DELIM}DataMapping`, `${DELIM}PropertyMapping`],
+                    [`${DELIM}hasProperty`]: [{'@id': `${propIRI}2`}],
+                    [`${DELIM}columnIndex`]: [{'@value': '0'}],
+                    [`${DELIM}datatypeSpec`]: [{'@id': 'datatype'}],
+                    [`${DELIM}languageSpec`]: [{'@value': 'language'}]
                 });
-                expect(classMapping[DELIM + 'dataProperty']).toContain({'@id': result['@id']});
+                expect(classMapping[`${DELIM}dataProperty`]).toContain({'@id': result['@id']});
             });
         });
         it('addObjectPropMapping adds an Object Property Mapping', function() {
-            const result = testMapping.addObjectPropMapping(propIRI + '2', classMapping['@id'], targetClassMapping['@id']);
+            const result = testMapping.addObjectPropMapping(`${propIRI}2`, classMapping['@id'], targetClassMapping['@id']);
             expect(result).toEqual({
                 '@id': jasmine.stringContaining(mappingId),
-                '@type': [DELIM + 'ObjectMapping', DELIM + 'PropertyMapping'],
-                [DELIM + 'hasProperty']: [{'@id': propIRI + '2'}],
-                [DELIM + 'classMapping']: [{'@id': targetClassMapping['@id']}],
+                '@type': [`${DELIM}ObjectMapping`, `${DELIM}PropertyMapping`],
+                [`${DELIM}hasProperty`]: [{'@id': `${propIRI}2`}],
+                [`${DELIM}classMapping`]: [{'@id': targetClassMapping['@id']}],
             });
-            expect(classMapping[DELIM + 'objectProperty']).toContain({'@id': result['@id']});
+            expect(classMapping[`${DELIM}objectProperty`]).toContain({'@id': result['@id']});
         });
         it('copy should create a copy of the Mapping', function() {
             const newId = 'http://test.com';
@@ -273,33 +273,33 @@ describe('Mapping class', function() {
             // Validate Mapping Entity
             expect(jsonld).toContain({
                 '@id': newId,
-                '@type': [DELIM + 'Mapping']
+                '@type': [`${DELIM}Mapping`]
             });
             // Validate Class Mappings
             expect(jsonld).toContain({
                 '@id': jasmine.stringContaining(newId),
-                '@type': [DELIM + 'ClassMapping'],
-                [DELIM + 'mapsTo']: [{'@id': classIRI + '1'}],
+                '@type': [`${DELIM}ClassMapping`],
+                [`${DELIM}mapsTo`]: [{'@id': `${classIRI}1`}],
             });
             expect(jsonld).toContain({
                 '@id': jasmine.stringContaining(newId),
-                '@type': [DELIM + 'ClassMapping'],
-                [DELIM + 'mapsTo']: [{'@id': classIRI}],
-                [DELIM + 'dataProperty']: [{'@id': jasmine.stringContaining(newId)}],
-                [DELIM + 'objectProperty']: [{'@id': jasmine.stringContaining(newId)}],
+                '@type': [`${DELIM}ClassMapping`],
+                [`${DELIM}mapsTo`]: [{'@id': classIRI}],
+                [`${DELIM}dataProperty`]: [{'@id': jasmine.stringContaining(newId)}],
+                [`${DELIM}objectProperty`]: [{'@id': jasmine.stringContaining(newId)}],
             });
             // Validate Data Property Mapping
             expect(jsonld).toContain({
                 '@id': jasmine.stringContaining(newId),
-                '@type': [DELIM + 'PropertyMapping', DELIM + 'DataMapping'],
-                [DELIM + 'hasProperty']: [{'@id': propIRI}]
+                '@type': [`${DELIM}PropertyMapping`, `${DELIM}DataMapping`],
+                [`${DELIM}hasProperty`]: [{'@id': propIRI}]
             });
             // Validate Object Property Mapping
             expect(jsonld).toContain({
                 '@id': jasmine.stringContaining(newId),
-                '@type': [DELIM + 'PropertyMapping', DELIM + 'ObjectMapping'],
-                [DELIM + 'hasProperty']: [{'@id': propIRI}],
-                [DELIM + 'classMapping']: [{'@id': jasmine.stringContaining(newId)}]
+                '@type': [`${DELIM}PropertyMapping`, `${DELIM}ObjectMapping`],
+                [`${DELIM}hasProperty`]: [{'@id': propIRI}],
+                [`${DELIM}classMapping`]: [{'@id': jasmine.stringContaining(newId)}]
             });
             
         });

@@ -40,10 +40,11 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CreateMappingOverlayComponent } from '../createMappingOverlay/createMappingOverlay.component';
 import { DownloadMappingOverlayComponent } from '../downloadMappingOverlay/downloadMappingOverlay.component';
 import { ViewMappingModalComponent } from '../viewMappingModal/viewMappingModal.component';
+import { getDate, getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class mapper.MappingSelectPageComponent
@@ -66,7 +67,7 @@ export class MappingSelectPageComponent implements OnInit {
 
     constructor(public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
         private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService,
-        private pep: PolicyEnforcementService, public util: UtilService) {}
+        private pep: PolicyEnforcementService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.searchText = this.state.paginationConfig.searchText;
@@ -93,14 +94,14 @@ export class MappingSelectPageComponent implements OnInit {
             .subscribe((response: HttpResponse<JSONLDObject[]>) => {
                 this.results = response.body.map(record => ({
                     id: record['@id'],
-                    title: this.util.getDctermsValue(record, 'title'),
-                    description: this.util.getDctermsValue(record, 'description') || '(No Description)',
+                    title: getDctermsValue(record, 'title'),
+                    description: getDctermsValue(record, 'description') || '(No Description)',
                     keywords: map(get(record, `['${CATALOG}keyword']`, []), '@value'),
-                    modified: this.util.getDate(this.util.getDctermsValue(record, 'modified'), 'short'),
-                    branch: this.util.getPropertyId(record, CATALOG + 'masterBranch')
+                    modified: getDate(getDctermsValue(record, 'modified'), 'short'),
+                    branch: getPropertyId(record, `${CATALOG}masterBranch`)
                 }));
                 this.state.totalSize = Number(response.headers.get('x-total-count')) || 0;
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     view(mappingRecord: MappingRecord): void {
         this.state.getMappingState(mappingRecord)
@@ -110,7 +111,7 @@ export class MappingSelectPageComponent implements OnInit {
                         state: mappingState
                     }
                 });
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     run(mappingRecord: MappingRecord): void {
         this.setStateIfCompatible(mappingRecord)
@@ -119,14 +120,14 @@ export class MappingSelectPageComponent implements OnInit {
                 this.state.sourceOntologies = ontologies;
                 this.state.availableClasses = this.state.getClasses(ontologies);
                 this.state.step = this.state.fileUploadStep;
-            }, error => error ? this.util.createErrorToast(error) : undefined);
+            }, error => error ? this.toast.createErrorToast(error) : undefined);
     }
     edit(mappingRecord: MappingRecord): void {
         const request = {
             resourceId: mappingRecord.id,
-            actionId: CATALOG + 'Modify',
+            actionId: `${CATALOG}Modify`,
             actionAttrs: {
-                [CATALOG + 'branch']: mappingRecord.branch
+                [`${CATALOG}branch`]: mappingRecord.branch
             }
         };
         this.pep.evaluateRequest(request)
@@ -139,20 +140,20 @@ export class MappingSelectPageComponent implements OnInit {
                             this.state.sourceOntologies = ontologies;
                             this.state.availableClasses = this.state.getClasses(ontologies);
                             this.state.step = this.state.fileUploadStep;
-                        }, error => error ? this.util.createErrorToast(error) : undefined);
+                        }, error => error ? this.toast.createErrorToast(error) : undefined);
                 } else {
-                    this.util.createErrorToast('You do not have permission to create mappings');
+                    this.toast.createErrorToast('You do not have permission to create mappings');
                 }
             }, () => {
-                this.util.createErrorToast('Could not retrieve record permissions');
+                this.toast.createErrorToast('Could not retrieve record permissions');
             });
     }
     showNew(): void {
         const request = {
             resourceId: get(this.cm.localCatalog, '@id', ''),
-            actionId: POLICY + 'Create',
+            actionId: `${POLICY}Create`,
             actionAttrs: {
-                [RDF + 'type']: DELIM + 'MappingRecord'
+                [`${RDF}type`]: `${DELIM}MappingRecord`
             }
         };
         this.pep.evaluateRequest(request)
@@ -166,16 +167,16 @@ export class MappingSelectPageComponent implements OnInit {
                     };
                     this.dialog.open(CreateMappingOverlayComponent);
                 } else {
-                    this.util.createErrorToast('You do not have permission to create mappings');
+                    this.toast.createErrorToast('You do not have permission to create mappings');
                 }
             }, () => {
-                this.util.createErrorToast('Could not retrieve record permissions');
+                this.toast.createErrorToast('Could not retrieve record permissions');
             });
     }
     confirmDeleteMapping(mappingRecord: MappingRecord): void {
         const request = {
             resourceId: mappingRecord.id,
-            actionId: POLICY + 'Delete'
+            actionId: `${POLICY}Delete`
         };
         this.pep.evaluateRequest(request)
             .subscribe(response => {
@@ -191,10 +192,10 @@ export class MappingSelectPageComponent implements OnInit {
                         }
                     });
                 } else {
-                    this.util.createErrorToast('You do not have permission to delete this mapping');
+                    this.toast.createErrorToast('You do not have permission to delete this mapping');
                 }
             }, () => {
-                this.util.createErrorToast('Could not retrieve record permissions');
+                this.toast.createErrorToast('Could not retrieve record permissions');
             });
     }
     download(mappingRecord: MappingRecord): void {
@@ -207,9 +208,9 @@ export class MappingSelectPageComponent implements OnInit {
     duplicate(mappingRecord: MappingRecord): void {
         const request = {
             resourceId: get(this.cm.localCatalog, '@id', ''),
-            actionId: POLICY + 'Create',
+            actionId: `${POLICY}Create`,
             actionAttrs: {
-                [RDF + 'type']: DELIM + 'MappingRecord'
+                [`${RDF}type`]: `${DELIM}MappingRecord`
             }
         };
         this.pep.evaluateRequest(request)
@@ -220,12 +221,12 @@ export class MappingSelectPageComponent implements OnInit {
                         .subscribe(() => {
                             this.state.startCreateMapping();
                             this.dialog.open(CreateMappingOverlayComponent);
-                        }, error => error ? this.util.createErrorToast(error) : undefined);
+                        }, error => error ? this.toast.createErrorToast(error) : undefined);
                 } else {
-                    this.util.createErrorToast('You do not have permission to create mappings');
+                    this.toast.createErrorToast('You do not have permission to create mappings');
                 }
             }, () => {
-                this.util.createErrorToast('Could not retrieve record permissions');
+                this.toast.createErrorToast('Could not retrieve record permissions');
             });
     }
     deleteMapping(mappingRecord: MappingRecord): void {
@@ -233,7 +234,7 @@ export class MappingSelectPageComponent implements OnInit {
             .subscribe(() => {
                 this.state.resetPagination();
                 this.setResults();
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     setStateIfCompatible(mappingRecord: MappingRecord): Observable<MappingOntology[]> {
         return this.state.getMappingState(mappingRecord)
@@ -244,7 +245,7 @@ export class MappingSelectPageComponent implements OnInit {
                             this.state.selected = mappingState;
                             return of(ontologies);
                         } else {
-                            this.util.createErrorToast('The source ontology for the mapping and/or its imported ontologies have been changed and are no longer compatible. Unable to open the mapping', {timeOut: 8000});
+                            this.toast.createErrorToast('The source ontology for the mapping and/or its imported ontologies have been changed and are no longer compatible. Unable to open the mapping', {timeOut: 8000});
                             return throwError(null);
                         }
                     }));

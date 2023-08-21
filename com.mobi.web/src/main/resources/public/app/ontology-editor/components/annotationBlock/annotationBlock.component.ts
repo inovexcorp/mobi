@@ -86,7 +86,7 @@ export class AnnotationBlockComponent implements OnChanges {
             editing: true,
             annotation: input.property,
             value: annotationObj['@value'] ||  annotationObj['@id'],
-            type: propertyType ? propertyType : (propertyLanguage ? RDF + 'langString' : ''),
+            type: propertyType ? propertyType : (propertyLanguage ? `${RDF}langString` : ''),
             index: input.index,
             language: propertyLanguage,
             isIRIProperty: !annotationObj['@value'] && annotationObj['@id'] ? true : false

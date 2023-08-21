@@ -20,9 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-// other Libs
 import { every, filter, some, get, cloneDeep, findIndex } from 'lodash';
-// Angular Imports
 import {
     Component,
     EventEmitter,
@@ -36,12 +34,12 @@ import {
     AfterContentChecked,
     AfterViewInit
 } from '@angular/core';
-// Services
+
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
-//constants
-import { INDENT } from '../../../constants';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
+import { getBeautifulIRI } from '../../../shared/utility';
+import { INDENT } from '../../../constants';
+import { HierarchyFilter } from '../hierarchyFilter/hierarchyFilter.component';
 
 /**
  * @class ontology-editor.IndividualTreeComponent
@@ -65,7 +63,6 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
     @Output() updateSearch = new EventEmitter<string>();
     @ViewChild('propertyVirtualScroll') virtualScroll
 
-
     indent = INDENT;
     searchText = '';
     filterText = '';
@@ -74,14 +71,14 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
     midFilteredHierarchy = [];
     activeTab = '';
     dropdownFilterActive = false;
-    dropdownFilters = [];
-    activeEntityFilter;
-    deprecatedEntityFilter;
+    dropdownFilters: HierarchyFilter[] = [];
+    activeEntityFilter: HierarchyFilter;
+    deprecatedEntityFilter: HierarchyFilter;
     chunks = [];
     visibleIndex = 0;
     renderedHierarchy = false;
 
-    constructor(public om:OntologyStateService, public os: OntologyStateService, public util: UtilService) {}
+    constructor(public om: OntologyStateService, public os: OntologyStateService) {}
 
     ngOnInit(): void {
         this.activeEntityFilter = {
@@ -133,7 +130,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
         });
     }
     ngAfterContentChecked(): void {
-        if (this.filteredHierarchy.length == this.virtualScroll?.getDataLength() && !this.renderedHierarchy) {
+        if (this.filteredHierarchy.length === this.virtualScroll?.getDataLength() && !this.renderedHierarchy) {
             this.createHierarchy();
             this.renderedHierarchy = true;
         }
@@ -181,10 +178,10 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
             return true;
         }
 
-        let beautifiedEntity = this.util.getBeautifulIRI(node.entityIRI);
+        const beautifiedEntity = getBeautifulIRI(node.entityIRI);
 
         // Check if beautified entity id matches search text
-        if (beautifiedEntity !== undefined && this.filterText!= undefined &&
+        if (beautifiedEntity !== undefined && this.filterText !== undefined &&
                 beautifiedEntity.toLowerCase().includes(this.filterText.toLowerCase())) {
             searchMatch = true;
         }
@@ -248,7 +245,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
         }
         return displayNode;
     }
-    updateDropdownFilters(value): void {
+    updateDropdownFilters(value: HierarchyFilter[]): void {
         this.dropdownFilters = value;
     }
     updateSearchText(value: string): void {

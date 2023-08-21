@@ -32,7 +32,7 @@ import { OntologyCloseOverlayComponent } from '../ontologyCloseOverlay/ontologyC
  * @class ontology-editor.OntologySidebarComponent
  *
  * A component that creates a `div` containing a button to
- * {@link ontology-editor.component:ontologyTab open ontologies} and a `nav` of the
+ * {@link ontology-editor.OntologyTabComponent open ontologies} and a `nav` of the
  * {@link shared.OntologyStateService opened ontologies}. The currently selected
  * {@link shared.OntologyStateService listItem} will have a
  * {@link ontology-editor.OpenOntologySelectComponent} displayed underneath and a link to

@@ -25,11 +25,12 @@ import { Component, Input, OnInit, Output } from '@angular/core';
 
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { Policy } from '../../../shared/models/policy.interface';
 import { RecordPermissionsManagerService } from '../../../shared/services/recordPermissionsManager.service';
 
 import { RecordPermissions } from '../../../shared/models/recordPermissions.interface';
+import { getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class catalog.RecordPermissionViewComponent
@@ -54,10 +55,10 @@ export class RecordPermissionViewComponent implements OnInit {
     constructor(public state: CatalogStateService,
         public ums: UserManagerService,
         public rps: RecordPermissionsManagerService, 
-        public util: UtilService) {}
+        private toast: ToastService) {}
 
     ngOnInit(): void {
-        this.title = this.util.getDctermsValue(this.state.selectedRecord, 'title');
+        this.title = getDctermsValue(this.state.selectedRecord, 'title');
         this.getPolicy(this.state.selectedRecord['@id']);
     }
 
@@ -66,7 +67,7 @@ export class RecordPermissionViewComponent implements OnInit {
             .subscribe(responsePolicy => {
                 this.recordId = recordId;
                 this.policies = this.convertResponsePolicy(responsePolicy);
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     public hasChanges(): boolean {
         return some(this.policies, 'changed');
@@ -87,8 +88,8 @@ export class RecordPermissionViewComponent implements OnInit {
                         policyItem.changed = false;
                         return policyItem;
                     });
-                    this.util.createSuccessToast('Permissions updated');
-                }, error => this.util.createErrorToast(error));
+                    this.toast.createSuccessToast('Permissions updated');
+                }, error => this.toast.createErrorToast(error));
         }
     }
     goBack(): void {

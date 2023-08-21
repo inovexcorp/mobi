@@ -29,7 +29,8 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ONTOLOGYSTATE } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.OntologyTabComponent
@@ -54,7 +55,7 @@ export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('outlet', { read: ViewContainerRef }) outletRef?: ViewContainerRef;
     @ViewChild('content', { read: TemplateRef }) contentRef: TemplateRef<any>;
 
-    constructor(public os: OntologyStateService, private cm: CatalogManagerService, private util: UtilService) {}
+    constructor(public os: OntologyStateService, private cm: CatalogManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this._checkBranchExists();
@@ -62,7 +63,7 @@ export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.isVocab && this.outletRef) {
             this.outletRef.clear();
-            this.outletRef.createEmbeddedView(this.contentRef);  // Force rerender of concept and schemes tabs when status as a vocab changes
+            this.outletRef.createEmbeddedView(this.contentRef); // Force rerender of concept and schemes tabs when status as a vocab changes
         }
     }
     ngOnDestroy(): void {
@@ -103,9 +104,9 @@ export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
     private _checkBranchExists() {
         if (this.os.listItem.versionedRdfRecord.branchId && !find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId})) {
             const catalogId = get(this.cm.localCatalog, '@id', '');
-            const masterBranch = find(this.os.listItem.branches, branch => this.util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
+            const masterBranch = find(this.os.listItem.branches, branch => getDctermsValue(branch, 'title') === 'MASTER')['@id'];
             const state = this.os.getStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);
-            let commitId = this.util.getPropertyId(find(state.model, {[ONTOLOGYSTATE + 'branch']: [{'@id': masterBranch}]}), ONTOLOGYSTATE + 'commit');
+            let commitId = getPropertyId(find(state.model, {[`${ONTOLOGYSTATE}branch`]: [{'@id': masterBranch}]}), `${ONTOLOGYSTATE}commit`);
             this.cm.getBranchHeadCommit(masterBranch, this.os.listItem.versionedRdfRecord.recordId, catalogId)
                 .pipe(switchMap(headCommit => {
                     const headCommitId = get(headCommit, 'commit[\'@id\']', '');
@@ -114,7 +115,7 @@ export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
                     }
                     return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, masterBranch, commitId, commitId === headCommitId);
                 }))
-                .subscribe(() => this.os.resetStateTabs(), error => this.util.createErrorToast(error));
+                .subscribe(() => this.os.resetStateTabs(), error => this.toast.createErrorToast(error));
         }
     }
 }

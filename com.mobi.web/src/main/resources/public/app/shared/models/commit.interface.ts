@@ -26,6 +26,7 @@
  */
 export interface Commit {
     id: string,
+    condensedId?: string,
     creator: {
         firstName: string,
         lastName: string,
@@ -33,6 +34,7 @@ export interface Commit {
         email?: string
     },
     date: string,
+    dateObj?: Date,
     message: string,
     base: string,
     auxiliary: string

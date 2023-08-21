@@ -25,7 +25,7 @@ import { get, find } from 'lodash';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDctermsId } from '../../../shared/utility';
 
 /**
  * @class catalog.EntityPublisherComponent
@@ -53,10 +53,10 @@ export class EntityPublisherComponent {
         return this._entity;
     }
 
-    constructor(public um: UserManagerService, public util: UtilService) {}
+    constructor(public um: UserManagerService) {}
 
     getPublisherName(entity: JSONLDObject): string {
-        const publisherId = this.util.getDctermsId(entity, 'publisher');
+        const publisherId = getDctermsId(entity, 'publisher');
         return publisherId ? get(find(this.um.users, {iri: publisherId}), 'username', '(None)') : '(None)';
     }
 }

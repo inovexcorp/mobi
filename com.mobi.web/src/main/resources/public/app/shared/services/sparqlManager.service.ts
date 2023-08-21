@@ -28,7 +28,7 @@ import { catchError, map } from 'rxjs/operators';
 import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { UtilService } from './util.service';
+import { createHttpParams, handleError } from '../utility';
 
 /**
  * @class shared.SparqlManagerService
@@ -38,9 +38,9 @@ import { UtilService } from './util.service';
  */
 @Injectable()
 export class SparqlManagerService {
-    prefix = REST_PREFIX + 'sparql';
+    prefix = `${REST_PREFIX}sparql`;
 
-    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * Calls the GET /sparql REST endpoint to conduct a SPARQL query using the provided query
@@ -53,13 +53,13 @@ export class SparqlManagerService {
      * error message.
      */
     query(query: string, datasetRecordIRI = '', isTracked = false): Observable<string|SPARQLSelectResults> {
-        const params: any = { query };
+        const params: {[key: string]: string} = { query };
         if (datasetRecordIRI) {
             params.dataset = datasetRecordIRI;
         }
-        const request = this.http.get(this.prefix, {params: this.util.createHttpParams(params), responseType: 'text', observe: 'response'})
+        const request = this.http.get(this.prefix, {params: createHttpParams(params), responseType: 'text', observe: 'response'})
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 map((response: HttpResponse<string>) => {
                     const contentType = response.headers.get('Content-Type');
                     if (contentType === 'application/json') {
@@ -69,7 +69,7 @@ export class SparqlManagerService {
                     }
                 })
             );
-        return this.util.trackedRequest(request, isTracked);
+        return this.spinnerSvc.trackedRequest(request, isTracked);
     }
 
     /**
@@ -83,13 +83,13 @@ export class SparqlManagerService {
      * error message.
      */
     postQuery(query: string, datasetRecordIRI = '', isTracked = false): Observable<string|SPARQLSelectResults> {
-        const params: any = {};
+        const params: {[key: string]: string} = {};
         if (datasetRecordIRI) {
             params.dataset = datasetRecordIRI;
         }
-        const request = this.http.post(this.prefix, query, {params: this.util.createHttpParams(params), responseType: 'text', observe: 'response'})
+        const request = this.http.post(this.prefix, query, {params: createHttpParams(params), responseType: 'text', observe: 'response'})
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 map((response: HttpResponse<string>) => {
                     const contentType = response.headers.get('Content-Type');
                     if (contentType === 'application/json') {
@@ -99,7 +99,7 @@ export class SparqlManagerService {
                     }
                 })
             );
-        return this.util.trackedRequest(request, isTracked);
+        return this.spinnerSvc.trackedRequest(request, isTracked);
     }
 
     /**
@@ -113,7 +113,7 @@ export class SparqlManagerService {
      * @param {string} datasetRecordIRI The optional Dataset to run the query against
      */
     downloadResults(query: string, fileType: string, fileName = '', datasetRecordIRI = ''): void {
-        const paramsObj: any = {
+        const paramsObj: {[key: string]: string} = {
             query,
             fileType
         };
@@ -123,7 +123,7 @@ export class SparqlManagerService {
         if (datasetRecordIRI) {
             paramsObj.dataset = datasetRecordIRI;
         }
-        window.open(this.prefix + '?' + this.util.createHttpParams(paramsObj).toString());
+        window.open(`${this.prefix}?${createHttpParams(paramsObj).toString()}`);
     }
 
     /**
@@ -134,8 +134,8 @@ export class SparqlManagerService {
      * @param {string} fileType The type of file to download based on file extension
      * @param {string=''} fileName The optional name of the downloaded file
      */
-    downloadResultsPost(query: string, fileType: string, fileName = '', datasetRecordIRI = ''): Observable<any> {
-        const params: any = {
+    downloadResultsPost(query: string, fileType: string, fileName = '', datasetRecordIRI = ''): Observable<ArrayBuffer> {
+        const params: {[key: string]: string} = {
             fileType,
             fileName
         };
@@ -146,10 +146,10 @@ export class SparqlManagerService {
             params.dataset = datasetRecordIRI;
         }
         
-        return this.spinnerSvc.track(this.http.post(this.prefix, query, {headers, params: this.util.createHttpParams(params), responseType: 'arraybuffer', observe: 'response'}))
+        return this.spinnerSvc.track(this.http.post(this.prefix, query, {headers, params: createHttpParams(params), responseType: 'arraybuffer', observe: 'response'}))
             .pipe(
-                catchError(this.util.handleError),
-                map((response: HttpResponse<any>) => {
+                catchError(handleError),
+                map((response: HttpResponse<ArrayBuffer>) => {
                     const file = new Blob([response.body], {
                         type: response.headers.get('Content-Type')
                     });
@@ -164,7 +164,7 @@ export class SparqlManagerService {
                 }));
     }
 
-    private _getFileName(response: HttpResponse<any>): string {
+    private _getFileName(response: HttpResponse<ArrayBuffer>): string {
         try {
             const contentDisposition: string = response.headers.get('content-disposition');
             const matches = /filename=([^;]+)/ig.exec(contentDisposition);

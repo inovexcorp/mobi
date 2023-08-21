@@ -23,13 +23,12 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { ResolveConflictsFormComponent } from '../resolveConflictsForm/resolveConflictsForm.component';
-import { UtilService } from '../../services/util.service';
 import { Difference } from '../../models/difference.class';
 import { Conflict } from '../../models/conflict.interface';
 import { ResolveConflictsBlock } from './resolveConflictsBlock.component';
@@ -46,10 +45,7 @@ describe('Resolve Conflicts Block component', function() {
                 ResolveConflictsBlock,
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(ResolveConflictsFormComponent)
-            ],
-            providers: [
-                MockProvider(UtilService)
-            ],
+            ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(ResolveConflictsBlock);

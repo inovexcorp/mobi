@@ -24,10 +24,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { UtilService } from '../../services/util.service';
 import { Difference } from '../../models/difference.class';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
@@ -46,9 +45,6 @@ describe('Commit Compiled Resource component', function() {
                 CommitCompiledResourceComponent,
                 MockComponent(InfoMessageComponent),
                 MockPipe(PrefixationPipe)
-            ],
-            providers: [
-                MockProvider(UtilService)
             ]
         }).compileComponents();
 
@@ -70,6 +66,12 @@ describe('Commit Compiled Resource component', function() {
     });
 
     describe('controller methods', function() {
+        it('gets the display of an IRI', function() {
+            const iri = 'http://test.com#test';
+            expect(component.getDisplay(iri)).toEqual('label');
+            component.entityNameFunc = null;
+            expect(component.getDisplay(iri)).toEqual('Test');
+        });
         describe('sets the data for display', function() {
             it('if only triples are set', function() {
                 component.triples = {'@id': entityId, '@type': ['TypeA']};

@@ -30,7 +30,7 @@ import { DCTERMS, OWL, RDFS } from '../../../prefixes';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
@@ -57,7 +57,7 @@ interface CharacteristicI {
 export class CreateDataPropertyOverlayComponent implements OnInit {
     characteristics: CharacteristicI[] = [
         {
-            typeIRI: OWL + 'FunctionalProperty',
+            typeIRI: `${OWL}FunctionalProperty`,
             displayText: 'Functional Property',
         }
     ];
@@ -80,8 +80,7 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
     constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateDataPropertyOverlayComponent>, 
         public os: OntologyStateService,
-        private camelCasePipe: CamelCasePipe,
-        private splitIRIPipe: SplitIRIPipe) {}
+        private camelCasePipe: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
@@ -89,7 +88,7 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            const split = splitIRI(this.createForm.controls.iri.value);
             this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
         }
     }
@@ -101,16 +100,16 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
     get property(): JSONLDObject {
         const property = {
             '@id': this.createForm.controls.iri.value,
-            '@type': [OWL + 'DatatypeProperty'],
-            [DCTERMS + 'title']: [{
+            '@type': [`${OWL}DatatypeProperty`],
+            [`${DCTERMS}title`]: [{
                 '@value': this.createForm.controls.title.value
             }],
-            [DCTERMS + 'description']: [{
+            [`${DCTERMS}description`]: [{
                 '@value': this.createForm.controls.description.value
             }]
         };
-        if (property[DCTERMS + 'description'][0]['@value'] === '') {
-            unset(property, DCTERMS + 'description');
+        if (property[`${DCTERMS}description`][0]['@value'] === '') {
+            unset(property, `${DCTERMS}description`);
         }
         this.createForm.controls.characteristics.value.forEach((val, index) => {
             if (val) {
@@ -119,13 +118,13 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
         });
         this.os.addLanguageToNewEntity(property, this.createForm.controls.language.value);
         if (this.selectedDomains.length) {
-            property[RDFS + 'domain'] = this.selectedDomains.map(iri => ({'@id': iri}));
+            property[`${RDFS}domain`] = this.selectedDomains.map(iri => ({'@id': iri}));
         }
         if (this.selectedRanges.length) {
-            property[RDFS + 'range'] =this.selectedRanges.map(iri => ({'@id': iri}));
+            property[`${RDFS}range`] =this.selectedRanges.map(iri => ({'@id': iri}));
         }
         if (this.selectedSubProperties.length) {
-            property[RDFS + 'subPropertyOf'] = this.selectedSubProperties;
+            property[`${RDFS}subPropertyOf`] = this.selectedSubProperties;
         }
         return property;
     }

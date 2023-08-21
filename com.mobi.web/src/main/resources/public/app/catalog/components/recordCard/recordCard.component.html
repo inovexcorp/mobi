@@ -23,7 +23,7 @@
 <mat-card class="record-card" (click)="handleClick()" [ngClass]="{'clickable': !!clickCard}">
     <!-- TODO: Come Angular 9, switch to Angular Material solution for click to copy -->
     <mat-card-title><span [copy-clipboard]="record['@id']" matTooltip="Copy Record IRI" matTooltipPosition="above">{{title}}</span></mat-card-title>
-    <mat-card-subtitle><record-icon [record]="record"></record-icon> <record-type [record]="record"></record-type> &bull; Updated {{modified}}</mat-card-subtitle>
+    <mat-card-subtitle><record-icon [record]="record"></record-icon> <record-type [record]="record"></record-type> &bull; Updated {{modified | date:'short'}}</mat-card-subtitle>
     <mat-card-content>
         <p class="record-description">{{description}}</p>
         <catalog-record-keywords [record]="record"></catalog-record-keywords>

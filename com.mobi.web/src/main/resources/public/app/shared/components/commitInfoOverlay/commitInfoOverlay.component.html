@@ -22,8 +22,8 @@
   -->
 <h1 mat-dialog-title>Commit Information</h1>
 <div mat-dialog-content name="form">
-    <h5><span [copy-clipboard]="data.commit.id" matTooltip="Copy Commit IRI" matTooltipPosition="above">{{util.condenseCommitId(data.commit.id)}}</span></h5>
-    <div><span class="field-name">Date: </span>{{util.getDate(data.commit.date, 'short')}}</div>
+    <h5><span [copy-clipboard]="data.commit.id" matTooltip="Copy Commit IRI" matTooltipPosition="above">{{data.commit.condensedId}}</span></h5>
+    <div><span class="field-name">Date: </span>{{date}}</div>
     <div><span class="field-name">Creator: </span>{{um.getUserDisplay(data.commit.creator)}}</div>
     <p>{{data.commit.message}}</p>
 

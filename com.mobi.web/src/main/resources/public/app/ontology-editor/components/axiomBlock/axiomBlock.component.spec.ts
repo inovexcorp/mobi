@@ -131,7 +131,7 @@ describe('Axiom Block component', function() {
                 component.updateClassHierarchy({axiom: this.axiom, values: this.values});
                 expect(ontologyStateServiceStub.addEntityToHierarchy).not.toHaveBeenCalled();
 
-                this.axiom = RDFS + 'subClassOf';
+                this.axiom = `${RDFS}subClassOf`;
                 this.values = [];
                 component.updateClassHierarchy({axiom: this.axiom, values: this.values});
                 expect(ontologyStateServiceStub.addEntityToHierarchy).not.toHaveBeenCalled();
@@ -139,7 +139,7 @@ describe('Axiom Block component', function() {
             });
             describe('if the axiom is subClassOf', function() {
                 beforeEach(function() {
-                    this.axiom = RDFS + 'subClassOf';
+                    this.axiom = `${RDFS}subClassOf`;
                 });
                 it('and is present in the individual hierarchy', function () {
                     ontologyStateServiceStub.listItem.individualsParentPath = [ontologyStateServiceStub.listItem.selected['@id']];
@@ -166,24 +166,24 @@ describe('Axiom Block component', function() {
                 expect(ontologyStateServiceStub.setSuperProperties).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.createFlatEverythingTree).not.toHaveBeenCalled();
 
-                this.axiom = RDFS + 'subPropertyOf';
+                this.axiom = `${RDFS}subPropertyOf`;
                 this.values = [];
                 component.updateDataPropHierarchy({axiom: this.axiom, values: this.values});
                 expect(ontologyStateServiceStub.setSuperProperties).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.createFlatEverythingTree).not.toHaveBeenCalled();
 
-                this.axiom = RDFS + 'domain';
+                this.axiom = `${RDFS}domain`;
                 component.updateDataPropHierarchy({axiom: this.axiom, values: this.values});
                 expect(ontologyStateServiceStub.setSuperProperties).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.createFlatEverythingTree).not.toHaveBeenCalled();
             });
             it('if the axiom is subPropertyOf', function() {
-                this.axiom = RDFS + 'subPropertyOf';
+                this.axiom = `${RDFS}subPropertyOf`;
                 component.updateDataPropHierarchy({axiom: this.axiom, values: this.values});
                 expect(ontologyStateServiceStub.setSuperProperties).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected['@id'], this.values, 'dataProperties');
             });
             it('if the axiom is domain', function() {
-                this.axiom = RDFS + 'domain';
+                this.axiom = `${RDFS}domain`;
                 ontologyStateServiceStub.createFlatEverythingTree.and.returnValue([{
                     entityIRI: 'www.test.com',
                     hasChildren: false,
@@ -214,34 +214,34 @@ describe('Axiom Block component', function() {
                 expect(ontologyStateServiceStub.setSuperProperties).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.createFlatEverythingTree).not.toHaveBeenCalled();
 
-                this.axiom = RDFS + 'subPropertyOf';
+                this.axiom = `${RDFS}subPropertyOf`;
                 this.values = [];
                 component.updateObjectPropHierarchy({axiom: this.axiom, values: this.values});
                 expect(ontologyStateServiceStub.setSuperProperties).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.createFlatEverythingTree).not.toHaveBeenCalled();
 
-                this.axiom = RDFS + 'domain';
+                this.axiom = `${RDFS}domain`;
                 component.updateObjectPropHierarchy({axiom: this.axiom, values: this.values});
                 expect(ontologyStateServiceStub.setSuperProperties).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.createFlatEverythingTree).not.toHaveBeenCalled();
             });
             describe('if the axiom is subPropertyOf', function() {
                 it('and is a derived semanticRelation', function() {
-                    this.axiom = RDFS + 'subPropertyOf';
+                    this.axiom = `${RDFS}subPropertyOf`;
                     ontologyStateServiceStub.containsDerivedSemanticRelation.and.returnValue(true);
                     component.updateObjectPropHierarchy({axiom: this.axiom, values: this.values});
                     expect(ontologyStateServiceStub.setSuperProperties).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected['@id'], this.values, 'objectProperties');
                     expect(ontologyStateServiceStub.setVocabularyStuff).toHaveBeenCalledWith();
                 });
                 it('and is not a derived semanticRelation', function() {
-                    this.axiom = RDFS + 'subPropertyOf';
+                    this.axiom = `${RDFS}subPropertyOf`;
                     component.updateObjectPropHierarchy({axiom: this.axiom, values: this.values});
                     expect(ontologyStateServiceStub.setSuperProperties).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected['@id'], this.values, 'objectProperties');
                     expect(ontologyStateServiceStub.setVocabularyStuff).not.toHaveBeenCalled();
                 });
             });
             it('if the axiom is domain', function() {
-                this.axiom = RDFS + 'domain';
+                this.axiom = `${RDFS}domain`;
                 ontologyStateServiceStub.createFlatEverythingTree.and.returnValue([{
                     entityIRI: 'www.test.com',
                     hasChildren: false,

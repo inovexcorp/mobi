@@ -68,7 +68,7 @@ export class CreateBranchOverlayComponent implements OnInit {
                 switchMap((branch: JSONLDObject) => { 
                     this.os.listItem.branches.push(branch);
                     this.os.listItem.versionedRdfRecord.branchId = branch['@id'];
-                    const commitId = branch[CATALOG + 'head'][0]['@id'];
+                    const commitId = branch[`${CATALOG}head`][0]['@id'];
                     this.os.collapseFlatLists();
                     this.os.listItem.upToDate = true;
                     this.os.resetStateTabs();

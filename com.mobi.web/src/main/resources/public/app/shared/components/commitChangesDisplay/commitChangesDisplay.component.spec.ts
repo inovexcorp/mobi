@@ -39,8 +39,9 @@ import { Difference } from '../../models/difference.class';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { CommitCompiledResourceComponent } from '../commitCompiledResource/commitCompiledResource.component';
+import { XSD } from '../../../prefixes';
 import { CommitChangesDisplayComponent } from './commitChangesDisplay.component';
 
 describe('Commit Changes Display component', function() {
@@ -48,22 +49,22 @@ describe('Commit Changes Display component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CommitChangesDisplayComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const geoJsonldList: JSONLDObject[] =  [
         {
-            '@id': 'http://topquadrant.com/ns/examples/geography#Abilene',
+            '@id': '_:genidAbilene',
             '@type': ['http://topquadrant.com/ns/examples/geography#City'],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#lat': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '32.4263401615464'}],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#long': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '-99.744873046875'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#lat': [{'@type': `${XSD}boolean`,'@value': '32.4263401615464'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#long': [{'@type': `${XSD}boolean`,'@value': '-99.744873046875'}],
             'http://www.w3.org/2004/02/skos/core#broader': [{'@id': 'http://topquadrant.com/ns/examples/geography#Texas'}],
             'http://www.w3.org/2004/02/skos/core#prefLabel': [{'@language': 'en','@value': 'Abilene'}]
         },
         {
             '@id': 'http://topquadrant.com/ns/examples/geography#Abu_Dhabi',
             '@type': ['http://topquadrant.com/ns/examples/geography#City'],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#lat': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '24.46666717529297'}],
-            'http://www.w3.org/2003/01/geo/wgs84_pos#long': [{'@type': 'http://www.w3.org/2001/XMLSchema#double','@value': '54.36666488647461'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#lat': [{'@type': `${XSD}boolean`,'@value': '24.46666717529297'}],
+            'http://www.w3.org/2003/01/geo/wgs84_pos#long': [{'@type': `${XSD}boolean`,'@value': '54.36666488647461'}],
             'http://www.w3.org/2004/02/skos/core#broader': [{'@id': 'http://topquadrant.com/ns/examples/geography#United_Arab_Emirates'}],
             'http://www.w3.org/2004/02/skos/core#prefLabel': [{'@language': 'en','@value': 'Abu Dhabi'}]
         }
@@ -84,7 +85,7 @@ describe('Commit Changes Display component', function() {
                 MockComponent(CommitCompiledResourceComponent)
             ],
             providers: [
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService)
             ]
@@ -94,8 +95,7 @@ describe('Commit Changes Display component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.isBlankNodeId.and.returnValue(false);
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         component.additions = [];
         component.deletions = [];
@@ -109,7 +109,7 @@ describe('Commit Changes Display component', function() {
         element = null;
         fixture = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('controller methods', function() {
@@ -173,7 +173,7 @@ describe('Commit Changes Display component', function() {
                 tick();
                 expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith('commitId', 'id');
                 expect(item.resource).toEqual({'@id': 'id'});
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 component.commitId = 'commitId';
@@ -183,7 +183,7 @@ describe('Commit Changes Display component', function() {
                 tick();
                 expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith('commitId', 'id');
                 expect(item.resource).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
     });
@@ -272,7 +272,6 @@ describe('Commit Changes Display component', function() {
             component.commitId = 'id';
             component.additions = geoJsonldList;
             component.deletions = geoJsonldList;
-            utilStub.isBlankNodeId.and.callFake(id => id === geoJsonldList[0]['@id']);
             component.ngOnChanges({
                 additions: new SimpleChange(null, [], true),
                 deletions: new SimpleChange(null, [], true)

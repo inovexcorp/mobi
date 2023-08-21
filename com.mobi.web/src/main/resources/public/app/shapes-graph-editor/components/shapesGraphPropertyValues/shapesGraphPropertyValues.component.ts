@@ -21,17 +21,19 @@
  * #L%
  */
 import { Component, Input } from '@angular/core';
-import { UtilService } from '../../../shared/services/util.service';
+
+import { getBeautifulIRI } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
  * @class shapes-graph-editor.ShapesGraphPropertyValuesComponent
  *
  * A component that creates a display of the values of the provided `property` on the provided
  * JSON-LD `entity`. Display includes the property as a header and the individual values displayed using a
- * {@link shared.component:valueDisplay}.
+ * {@link shared.ValueDisplayComponent}.
  *
  * @param {string} property The ID of a property on the `entity`
- * @param {Object} entity A JSON-LD object
+ * @param {JSONLDObject} entity A JSON-LD object
  */
 @Component({
     selector: 'shapes-graph-property-values',
@@ -39,8 +41,18 @@ import { UtilService } from '../../../shared/services/util.service';
     styleUrls: ['./shapesGraphPropertyValues.component.scss']
 })
 export class ShapesGraphPropertyValuesComponent {
-    @Input() property;
-    @Input() entity;
+    private _property = '';
+    propertyDisplay = '';
+
+    @Input() entity: JSONLDObject;
+    @Input() set property(value: string) {
+        this._property = value;
+        this.propertyDisplay = getBeautifulIRI(this.property);
+    }
+
+    get property(): string{
+      return this._property;
+    }
     
-    constructor(public util: UtilService) {}
+    constructor() {}
 }

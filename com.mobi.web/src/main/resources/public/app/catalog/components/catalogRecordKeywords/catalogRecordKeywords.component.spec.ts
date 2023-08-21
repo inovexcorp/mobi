@@ -32,7 +32,7 @@ import {
 import { CATALOG } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { CatalogRecordKeywordsComponent } from './catalogRecordKeywords.component';
 
@@ -41,9 +41,7 @@ describe('Catalog Record Keywords component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CatalogRecordKeywordsComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
-    const catalogId = 'catalogId';
     const recordId = 'recordId';
     const keywords = [{'@value': 'B'}, {'@value': 'A'}];
     let record: JSONLDObject;
@@ -56,7 +54,7 @@ describe('Catalog Record Keywords component', function() {
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         });
 
@@ -64,18 +62,11 @@ describe('Catalog Record Keywords component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
-        utilStub.getPropertyId.and.callFake((obj, propId) => {
-            if (propId === CATALOG + 'catalog') {
-                return catalogId;
-            }
-            return '';
-        });
         record = {
             '@id': recordId,
             '@type': [],
-            [CATALOG + 'keyword']: keywords
+            [`${CATALOG}keyword`]: keywords
         };
         catalogManagerStub.getRecord.and.returnValue(of([record]));
     });
@@ -86,7 +77,6 @@ describe('Catalog Record Keywords component', function() {
         element = null;
         fixture = null;
         catalogManagerStub = null;
-        utilStub = null;
     });
 
     describe('initializes correctly on record change', function() {
@@ -105,7 +95,7 @@ describe('Catalog Record Keywords component', function() {
             expect(component.saveEvent.emit).toHaveBeenCalledWith({
                 '@id': recordId,
                 '@type': [],
-                [CATALOG + 'keyword']: [{'@value': 'C'}, {'@value': 'D'}, {'@value': 'E'}]
+                [`${CATALOG}keyword`]: [{'@value': 'C'}, {'@value': 'D'}, {'@value': 'E'}]
             });
         });
         it('cancelChanges should cancel the keyword edit', function() {

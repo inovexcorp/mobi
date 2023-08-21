@@ -170,7 +170,7 @@ public class SettingRest {
     @RolesAllowed("user")
     @Operation(
             tags = "settings",
-            summary = "Creates a Setting and it's referenced entities from the provided body.",
+            summary = "Creates a Setting and its referenced entities from the provided body.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
@@ -199,9 +199,9 @@ public class SettingRest {
             Resource resourceId = service.createSetting(model, vf.createIRI(subType), user);
             return Response.status(201).entity(resourceId.stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -210,7 +210,7 @@ public class SettingRest {
     @RolesAllowed("user")
     @Operation(
             tags = "settings",
-            summary = "Updates a Setting it's referenced entities using the provided body.",
+            summary = "Updates a Setting and its referenced entities using the provided body.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
@@ -241,9 +241,9 @@ public class SettingRest {
             service.updateSetting(vf.createIRI(settingId), model, vf.createIRI(subType), user);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -276,9 +276,9 @@ public class SettingRest {
             service.deleteSetting(vf.createIRI(settingId));
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -410,9 +410,9 @@ public class SettingRest {
             service.deleteSettingByType(vf.createIRI(settingType), user);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

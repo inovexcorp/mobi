@@ -26,7 +26,7 @@ import { Observable, Subject } from 'rxjs';
 import {  finalize } from 'rxjs/operators';
 
 /**
- * @class ProgressSpinnerService
+ * @class shared.ProgressSpinnerService
  * 
  * A service meant for tracking requests in order to display a full screen spinner.
  */
@@ -57,6 +57,22 @@ export class ProgressSpinnerService {
                 }
             )
         );
+    }
+
+    /**
+     * Tracks the provided observable based on the value of the provided `isTracked` boolean which indicates whether
+     * the observable is being tracked otherwise.
+     * 
+     * @param {Observable} request The observable to track
+     * @param {boolean} tracked Whether the observable is being tracked otherwise
+     * @returns The Observable tracked or plain
+     */
+    public trackedRequest<T>(request: Observable<T>, tracked: boolean): Observable<T> {
+      if (tracked) {
+          return request;
+      } else {
+          return this.track(request);
+      }
     }
 
     public startSpinner(): void {

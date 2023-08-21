@@ -31,7 +31,7 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
  * @class ontology-editor.OverviewTabComponent
  *
  * A component that creates a page containing the
- * {@link ontology-editor.component:associationBlock class and property list} of the current
+ * {@link ontology-editor.AssociationBlockComponent class and property list} of the current
  * {@link shared.OntologyStateService#listItem selected ontology} and information about a selected item from that list.
  * The selected entity display includes a {@link ontology-editor.SelectedDetailsComponent}, a button to delete the
  * entity, an {@link ontology-editor.AnnotationBlockComponent}, an {@link ontology-editor.AxiomBlockComponent}, and a
@@ -61,7 +61,7 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
     showDeleteConfirmation(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>'
+                content: `<p>Are you sure that you want to delete <strong>${this.os.listItem.selected['@id']}</strong>?</p>`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {

@@ -23,10 +23,10 @@
 import { Component } from '@angular/core';
 
 /**
- * @class datasets.component:datasetsPage
+ * @class datasets.DatasetsPageComponent
  *
  * A component which creates the main page of the Datasets module. The component contains a
- * {@link datasets.DatasetsList} for navigating the Datasets module
+ * {@link datasets.DatasetsListComponent} for navigating the Datasets module
  */
 @Component({
     selector: 'datasets-page',

@@ -33,7 +33,6 @@ import { DatasetsListComponent } from '../datasetsList/datasetsList.component';
 import { DatasetsPageComponent } from './datasetsPage.component';
 
 describe('Datasets Page component', function() {
-    let component: DatasetsPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<DatasetsPageComponent>;
 
@@ -47,13 +46,11 @@ describe('Datasets Page component', function() {
         }).compileComponents();
         
         fixture = TestBed.createComponent(DatasetsPageComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
     });

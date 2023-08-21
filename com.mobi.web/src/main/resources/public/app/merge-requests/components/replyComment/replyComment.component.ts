@@ -26,7 +26,7 @@ import { switchMap } from 'rxjs/operators';
 
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class merge-requests.ReplyCommentComponent
@@ -50,7 +50,7 @@ export class ReplyCommentComponent {
     @Input() request: MergeRequest;
     @Output() requestChange = new EventEmitter<MergeRequest>();
     
-    constructor(public mm: MergeRequestManagerService, public util: UtilService) {}
+    constructor(public mm: MergeRequestManagerService, private toast: ToastService) {}
 
     reply(): void {
         this.mm.createComment(this.request.jsonld['@id'], this.replyComment, this.parentId)
@@ -64,7 +64,7 @@ export class ReplyCommentComponent {
             .subscribe(comments => {
                 this.request.comments = comments;
                 this.requestChange.emit(this.request);
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     cancel(): void {
         this.replyComment = '';

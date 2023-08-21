@@ -36,7 +36,6 @@ import { SettingManagerService } from '../../../shared/services/settingManager.s
 import { SettingsPageComponent } from './settingsPage.component';
 
 describe('Settings Page component', function() {
-    let component: SettingsPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SettingsPageComponent>;
 
@@ -60,14 +59,12 @@ describe('Settings Page component', function() {
         
         fixture = TestBed.createComponent(SettingsPageComponent);
         element = fixture.debugElement;
-        component = fixture.componentInstance;
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         element = null;
         fixture = null;
-        component = null;
     });
     
     describe('contains the correct html', function() {

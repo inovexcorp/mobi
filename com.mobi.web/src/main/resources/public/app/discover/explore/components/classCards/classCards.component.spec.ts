@@ -36,7 +36,7 @@ import { ExploreService } from '../../../services/explore.service';
 import { InstanceFormComponent } from '../instanceForm/instanceForm.component';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ClassCardsComponent } from './classCards.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
@@ -47,7 +47,7 @@ describe('Class Cards component', function() {
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -60,7 +60,7 @@ describe('Class Cards component', function() {
                 MockProvider(DiscoverStateService),
                 MockProvider(ExploreService),
                 MockProvider(PolicyEnforcementService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
         fixture = TestBed.createComponent(ClassCardsComponent);
@@ -69,7 +69,7 @@ describe('Class Cards component', function() {
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
@@ -136,7 +136,7 @@ describe('Class Cards component', function() {
         fixture = null;
         exploreServiceStub = null;
         discoverStateStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('initializes with the correct values', function() {
@@ -197,7 +197,7 @@ describe('Class Cards component', function() {
                 // const nextLink = 'http://example.com/next';
                 // const prevLink = 'http://example.com/prev';
                 const headers = {'x-total-count': '' + 10, link: 'link'};
-                // utilStub.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+                // toastStub.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
                 discoverStateStub.explore.breadcrumbs = [''];
                 discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'www.oldClass.com', title: 'oldClass', description: 'old class desc'}];
                 exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse<InstanceDetails[]>({body: data, headers: new HttpHeaders(headers)})));
@@ -245,7 +245,7 @@ describe('Class Cards component', function() {
                 fixture.detectChanges();
                 tick(100);
                 expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, 'class', {pageIndex: 0, limit: discoverStateStub.explore.instanceDetails.limit});
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
             }));
             it('when user does not have read access', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
@@ -262,7 +262,7 @@ describe('Class Cards component', function() {
                 component.exploreData(classDetails);
                 fixture.detectChanges();
                 tick(100);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
                 expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                 expect(discoverStateStub.explore.classDetails).toEqual([]);
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(true);

@@ -28,14 +28,14 @@ import { ProgressSpinnerService } from '../../../../shared/components/progress-s
 import { XACMLRequest } from '../../../../shared/models/XACMLRequest.interface';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { YasguiService } from '../../../../shared/services/yasgui.service';
 
 /**
  * @class query.QueryTabComponent
  *
  * A component that provides a form for submitting and viewing the results of SPARQL queries against the system repo or
- * a {@link discover.component:datasetFormGroup selected dataset}. The query editor and results are displayed via a
+ * a {@link discover.DatasetFormGroupComponent selected dataset}. The query editor and results are displayed via a
  * YASGUI instance tied to the {@link shared.DiscoverStateService}.
  */
 @Component({
@@ -54,7 +54,7 @@ export class QueryTabComponent implements OnInit {
     @ViewChild('discoverQuery', { static: true }) discoverQuery: ElementRef;
 
     constructor(private fb: UntypedFormBuilder, public yasgui: YasguiService, public state: DiscoverStateService, 
-        private spinnerSvc: ProgressSpinnerService, private util: UtilService, private pep: PolicyEnforcementService) {}
+        private spinnerSvc: ProgressSpinnerService, private toast: ToastService, private pep: PolicyEnforcementService) {}
 
     ngOnInit(): void {
         this.yasgui.initYasgui(this.discoverQuery.nativeElement, {name: 'discoverQuery'}, this.state.query);
@@ -68,7 +68,7 @@ export class QueryTabComponent implements OnInit {
             this.error = 'Something went wrong, try again in a few seconds or refresh the page';
         }
     }
-    onSelect(recordObject): void {
+    onSelect(recordObject: {recordId: string, recordTitle: string}): void {
         this.state.query.submitDisabled = false;
         this.state.query.recordId = recordObject.recordId;
         this.state.query.recordTitle = recordObject.recordTitle;
@@ -86,11 +86,11 @@ export class QueryTabComponent implements OnInit {
                         this.yasgui.submitQuery();
                         this.spinnerSvc.finishLoadingForComponent(this.discoverQuery);
                     } else {
-                        this.util.createErrorToast('You don\'t have permission to read dataset');
+                        this.toast.createErrorToast('You don\'t have permission to read dataset');
                         this.state.query.submitDisabled = true;
                     }
                 }, () => {
-                    this.util.createWarningToast('Could not retrieve record permissions');
+                    this.toast.createWarningToast('Could not retrieve record permissions');
                     this.state.query.submitDisabled = true;
                 });
         } else {
@@ -106,11 +106,11 @@ export class QueryTabComponent implements OnInit {
                 .subscribe(response => {
                     const canRead = response !== this.pep.deny;
                     if (!canRead) {
-                        this.util.createErrorToast('You don\'t have permission to read dataset');
+                        this.toast.createErrorToast('You don\'t have permission to read dataset');
                         this.state.query.submitDisabled = true;
                     }
                 }, () => {
-                    this.util.createWarningToast('Could not retrieve record permissions');
+                    this.toast.createWarningToast('Could not retrieve record permissions');
                     this.state.query.submitDisabled = true;
                 });
         } else {
@@ -119,11 +119,11 @@ export class QueryTabComponent implements OnInit {
                 .subscribe(response => {
                     const canRead = response !== this.pep.deny;
                     if (!canRead) {
-                        this.util.createErrorToast('You don\'t have access to query system repo');
+                        this.toast.createErrorToast('You don\'t have access to query system repo');
                         this.state.query.submitDisabled = true;
                     }
                 }, () => {
-                    this.util.createWarningToast('Could not retrieve system repo permissions');
+                    this.toast.createWarningToast('Could not retrieve system repo permissions');
                     this.state.query.submitDisabled = true;
                 });
         }
@@ -131,7 +131,7 @@ export class QueryTabComponent implements OnInit {
     createPepReadRequest(datasetRecordIRI: string): XACMLRequest {
         return {
             resourceId: datasetRecordIRI,
-            actionId: POLICY + 'Read'
+            actionId: `${POLICY}Read`
         };
     }
     setValues(): void {

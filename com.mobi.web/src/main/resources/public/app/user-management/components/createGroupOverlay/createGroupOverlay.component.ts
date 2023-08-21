@@ -29,7 +29,7 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
@@ -53,7 +53,7 @@ export class CreateGroupOverlayComponent implements OnInit {
     });
 
     constructor(private dialogRef: MatDialogRef<CreateGroupOverlayComponent>, private fb: UntypedFormBuilder,
-        private um: UserManagerService, private lm: LoginManagerService, private util: UtilService) {}
+        private um: UserManagerService, private lm: LoginManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.members = [this.lm.currentUser];
@@ -77,7 +77,7 @@ export class CreateGroupOverlayComponent implements OnInit {
         }
         this.um.addGroup(newGroup)
             .subscribe(() => {
-                this.util.createSuccessToast('Group successfully created');
+                this.toast.createSuccessToast('Group successfully created');
                 this.errorMessage = '';
                 this.dialogRef.close();
             }, error => this.errorMessage = error);

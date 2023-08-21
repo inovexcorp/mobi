@@ -29,8 +29,9 @@ import { debounceTime, startWith, map } from 'rxjs/operators';
 
 import { ObjectPropertyBlockComponent } from '../objectPropertyBlock/objectPropertyBlock.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { createJson } from '../../../shared/utility';
 
 interface PropGrouping {
     namespace: string,
@@ -65,7 +66,7 @@ export class ObjectPropertyOverlayComponent implements OnInit {
     });
 
     constructor(public os:OntologyStateService,
-                private util: UtilService,
+                private toast: ToastService,
                 private pm: PropertyManagerService,
                 private fb: UntypedFormBuilder,
                 private dialogRef: MatDialogRef<ObjectPropertyBlockComponent>) {}
@@ -96,15 +97,11 @@ export class ObjectPropertyOverlayComponent implements OnInit {
         if (added) {
             this.os.addToAdditions(
                 this.os.listItem.versionedRdfRecord.recordId,
-                this.util.createJson(
-                    this.os.listItem.selected['@id'],
-                    select,
-                    valueObj
-                )
+                createJson(this.os.listItem.selected['@id'], select, valueObj)
             );
             this.os.saveCurrentChanges().subscribe();
         } else {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         const types = this.os.listItem.selected['@type'];
         if (this.os.containsDerivedConcept(types) || this.os.containsDerivedConceptScheme(types)) {

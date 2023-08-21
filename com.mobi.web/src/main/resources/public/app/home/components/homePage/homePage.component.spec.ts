@@ -33,7 +33,6 @@ import { QuickActionGridComponent } from '../quickActionGrid/quickActionGrid.com
 import { HomePageComponent } from './homePage.component';
 
 describe('Home Page component', function() {
-    let component: HomePageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<HomePageComponent>;
 
@@ -50,13 +49,11 @@ describe('Home Page component', function() {
 
     beforeEach(function() {
         fixture = TestBed.createComponent(HomePageComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
     });
 
     afterAll(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
     });

@@ -31,7 +31,7 @@ import {
     cleanStylesFromDOM
  } from '../../../../../../public/test/ts/Shared';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { NewInstancePropertyOverlayComponent } from './newInstancePropertyOverlay.component';
@@ -62,7 +62,7 @@ describe('New Instance Property Overlay component', function() {
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 { provide: MAT_DIALOG_DATA, useValue: data },
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),

@@ -21,40 +21,21 @@
  * #L%
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { MergeRequestFilterComponent } from './merge-request-filter.component';
-import {MockComponent, MockProvider} from 'ng-mocks';
-import {InfoMessageComponent} from '../../../shared/components/infoMessage/infoMessage.component';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { UtilService  } from '../../../shared/services/util.service';
+import { MatRadioModule } from '@angular/material/radio';
+import { MockComponent, MockProvider } from 'ng-mocks';
+
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import {MatRadioModule} from '@angular/material/radio';
+import { MergeRequestFilterComponent } from './merge-request-filter.component';
 
 describe('MergeRequestFilterComponent', () => {
   let component: MergeRequestFilterComponent;
   let fixture: ComponentFixture<MergeRequestFilterComponent>;
  
-
-  const totalSize = 10;
-  const headers = {'x-total-count': '' + totalSize};
-  const records: JSONLDObject[] = [{
-    '@id': 'https://mobi.com/merge-requests#1',
-    '@type': [
-      'http://www.w3.org/2002/07/owl#Thing',
-      'http://mobi.com/ontologies/merge-requests#MergeRequest'
-    ],
-    'title': "Branch 1",
-    'description': "No description",
-    'date': '8/9/23',
-    'creator': 'admin',
-    'recordIri': 'https://mobi.com/records#b',
-    'assignees': []
-  }];
-
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [
@@ -71,25 +52,22 @@ describe('MergeRequestFilterComponent', () => {
       ],
       providers: [
         MockProvider(MergeRequestsStateService),
-        MockProvider(UtilService),
       ]
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(MergeRequestFilterComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-
-  describe('It initializes correctly',() => {
+  describe('It initializes correctly', () => {
     beforeEach(() => {
       component.ngOnInit();
-    })
+    });
     it('should create', () => {
       expect(component).toBeTruthy();
     });
-    it('with request status filter', function() {
+    it('with request status filter', () => {
       const mergeRequestFilter = component.filters[0];
       const expectedFilterItems = [
         { checked: false, value: 'Open' },
@@ -99,7 +77,7 @@ describe('MergeRequestFilterComponent', () => {
       expect(mergeRequestFilter.filterItems).toEqual(expectedFilterItems);
     });
   });
-  describe('filter methods', function() {
+  describe('filter methods', () => {
     beforeEach(function () {
       component.ngOnInit();
       this.openStatus = { value: 'Open', checked: true };

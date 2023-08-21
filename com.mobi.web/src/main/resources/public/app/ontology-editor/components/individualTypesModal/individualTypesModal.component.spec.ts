@@ -81,7 +81,7 @@ describe('Individual Types Modal component', function() {
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<IndividualTypesModalComponent>>;
 
         ontologyStateStub.listItem = new OntologyListItem();
-        ontologyStateStub.listItem.selected = {'@id': iri, '@type': [OWL + 'NamedIndividual', 'type1', 'type2'], 'title': [{'@value': 'title'}]};
+        ontologyStateStub.listItem.selected = {'@id': iri, '@type': [`${OWL}NamedIndividual`, 'type1', 'type2'], 'title': [{'@value': 'title'}]};
         ontologyStateStub.listItem.classesAndIndividuals = {'type1': [iri], 'type2': [iri]};
         ontologyStateStub.listItem.classesWithIndividuals = ['type1', 'type2'];
         ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
@@ -101,7 +101,7 @@ describe('Individual Types Modal component', function() {
         ontologyManagerStub.getEntityName.and.returnValue('name');
         component.ngOnInit();
         expect(component.entityName).toEqual('name');
-        expect(component.types).toEqual([OWL + 'NamedIndividual', 'type1', 'type2']);
+        expect(component.types).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2']);
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -160,7 +160,7 @@ describe('Individual Types Modal component', function() {
             it('if a type was added', function() {
                 component.types.push('new');
                 component.submit();
-                expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1', 'type2', 'new']);
+                expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2', 'new']);
                 expect(ontologyStateStub.listItem.classesAndIndividuals).toEqual({'type1': [iri], 'type2': [iri], 'new': [iri]});
                 expect(ontologyStateStub.listItem.classesWithIndividuals).toEqual(['type1', 'type2', 'new']);
                 expect(ontologyStateStub.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateStub.listItem);
@@ -173,9 +173,9 @@ describe('Individual Types Modal component', function() {
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             it('if a type was removed', function() {
-                component.types = [OWL + 'NamedIndividual', 'type1'];
+                component.types = [`${OWL}NamedIndividual`, 'type1'];
                 component.submit();
-                expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                 expect(ontologyStateStub.listItem.classesAndIndividuals).toEqual({'type1': [iri]});
                 expect(ontologyStateStub.listItem.classesWithIndividuals).toEqual(['type1']);
                 expect(ontologyStateStub.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateStub.listItem);
@@ -190,7 +190,7 @@ describe('Individual Types Modal component', function() {
             it('if the individual is now a concept', function() {
                 component.types.push('concept');
                 component.submit();
-                expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1', 'type2', 'concept']);
+                expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2', 'concept']);
                 expect(ontologyStateStub.addConcept).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
                 expect(ontologyStateStub.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontologyStateStub.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
@@ -198,8 +198,8 @@ describe('Individual Types Modal component', function() {
             });
             describe('if the individual is no longer a concept', function() {
                 beforeEach(function() {
-                    ontologyStateStub.listItem.selected['@type'] = [OWL + 'NamedIndividual', 'type1', 'concept'];
-                    component.types = [OWL + 'NamedIndividual', 'type1'];
+                    ontologyStateStub.listItem.selected['@type'] = [`${OWL}NamedIndividual`, 'type1', 'concept'];
+                    component.types = [`${OWL}NamedIndividual`, 'type1'];
                     ontologyStateStub.listItem.concepts.flat = [this.node];
                     ontologyStateStub.listItem.concepts.iris = {[iri]: ''};
                     ontologyStateStub.listItem.conceptSchemes.flat = [this.node];
@@ -215,7 +215,7 @@ describe('Individual Types Modal component', function() {
                     it('and the concepts page is active', function() {
                         ontologyStateStub.getActiveKey.and.returnValue('concepts');
                         component.submit();
-                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                         expect(ontologyStateStub.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.concepts, iri);
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
@@ -226,7 +226,7 @@ describe('Individual Types Modal component', function() {
                     });
                     it('and the concepts page is not active', function() {
                         component.submit();
-                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                         expect(ontologyStateStub.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.concepts, iri);
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
@@ -246,7 +246,7 @@ describe('Individual Types Modal component', function() {
                     it('and the schemes page is active', function() {
                         ontologyStateStub.getActiveKey.and.returnValue('schemes');
                         component.submit();
-                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                         expect(ontologyStateStub.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.concepts, iri);
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
@@ -257,7 +257,7 @@ describe('Individual Types Modal component', function() {
                     });
                     it('and the schemes page is not active', function() {
                         component.submit();
-                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                         expect(ontologyStateStub.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.concepts, iri);
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
@@ -269,7 +269,7 @@ describe('Individual Types Modal component', function() {
                 });
                 it('and is not selected elsewhere', function() {
                     component.submit();
-                    expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                    expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                     expect(ontologyStateStub.listItem.concepts.iris).toEqual({});
                     expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.concepts, iri);
                     expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
@@ -281,7 +281,7 @@ describe('Individual Types Modal component', function() {
             it('if the individual is now a concept scheme', function() {
                 component.types.push('scheme');
                 component.submit();
-                expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1', 'type2', 'scheme']);
+                expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2', 'scheme']);
                 expect(ontologyStateStub.addConceptScheme).toHaveBeenCalledWith(ontologyStateStub.listItem.selected);
                 expect(ontologyStateStub.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontologyStateStub.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
@@ -289,8 +289,8 @@ describe('Individual Types Modal component', function() {
             });
             describe('if the individual is no longer a scheme', function() {
                 beforeEach(function() {
-                    ontologyStateStub.listItem.selected['@type'] = [OWL + 'NamedIndividual', 'type1', 'scheme'];
-                    component.types = [OWL + 'NamedIndividual', 'type1'];
+                    ontologyStateStub.listItem.selected['@type'] = [`${OWL}NamedIndividual`, 'type1', 'scheme'];
+                    component.types = [`${OWL}NamedIndividual`, 'type1'];
                     ontologyStateStub.listItem.conceptSchemes.flat = [this.node];
                     ontologyStateStub.listItem.concepts.iris = {[iri]: ''};
                     ontologyStateStub.flattenHierarchy.and.returnValue([]);
@@ -305,7 +305,7 @@ describe('Individual Types Modal component', function() {
                     it('and the schemes page is active', function() {
                         ontologyStateStub.getActiveKey.and.returnValue('schemes');
                         component.submit();
-                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                         expect(ontologyStateStub.listItem.conceptSchemes.iris).toEqual({});
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
                         expect(ontologyStateStub.listItem.conceptSchemes.flat).toEqual([]);
@@ -314,7 +314,7 @@ describe('Individual Types Modal component', function() {
                     });
                     it('and the schemes page is not active', function() {
                         component.submit();
-                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                         expect(ontologyStateStub.listItem.conceptSchemes.iris).toEqual({});
                         expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
                         expect(ontologyStateStub.listItem.conceptSchemes.flat).toEqual([]);
@@ -324,7 +324,7 @@ describe('Individual Types Modal component', function() {
                 });
                 it('and the individual is not selected elsewhere', function() {
                     component.submit();
-                    expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1']);
+                    expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1']);
                     expect(ontologyStateStub.listItem.conceptSchemes.iris).toEqual({});
                     expect(ontologyStateStub.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, iri);
                     expect(ontologyStateStub.listItem.conceptSchemes.flat).toEqual([]);
@@ -332,9 +332,9 @@ describe('Individual Types Modal component', function() {
                 });
             });
             it('unless the new types do not include any defined classes', function() {
-                component.types = [OWL + 'NamedIndividual'];
+                component.types = [`${OWL}NamedIndividual`];
                 component.submit();
-                expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1', 'type2']);
+                expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2']);
                 expect(component.error).toBeTruthy();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
@@ -342,14 +342,14 @@ describe('Individual Types Modal component', function() {
             it('unless the individual is now both a scheme and a concept', function() {
                 component.types = ['type1', 'scheme', 'concept'];
                 component.submit();
-                expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1', 'type2']);
+                expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2']);
                 expect(component.error).toBeTruthy();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             });
             it('unless nothing changed', function() {
                 component.submit();
-                expect(ontologyStateStub.listItem.selected['@type']).toEqual([OWL + 'NamedIndividual', 'type1', 'type2']);
+                expect(ontologyStateStub.listItem.selected['@type']).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2']);
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });

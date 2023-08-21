@@ -39,7 +39,7 @@ import { InstanceFormComponent } from '../instanceForm/instanceForm.component';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { RDFS, DCTERMS } from '../../../../prefixes';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { InstanceCreatorComponent } from './instanceCreator.component';
 
 describe('Instance Creator component', function() {
@@ -49,7 +49,7 @@ describe('Instance Creator component', function() {
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     beforeEach(async () => {
@@ -64,7 +64,7 @@ describe('Instance Creator component', function() {
                 MockProvider(ExploreUtilsService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
             ]
         }).compileComponents();
@@ -75,7 +75,7 @@ describe('Instance Creator component', function() {
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
         exploreUtilsServiceStub = TestBed.inject(ExploreUtilsService) as jasmine.SpyObj<ExploreUtilsService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
 
         policyEnforcementStub.permit = 'Permit';
@@ -119,7 +119,7 @@ describe('Instance Creator component', function() {
         discoverStateStub = null;
         exploreServiceStub = null;
         exploreUtilsServiceStub = null;
-        utilStub = null;
+        toastStub = null;
         policyEnforcementStub = null;
     });
 
@@ -147,9 +147,9 @@ describe('Instance Creator component', function() {
         describe('save should call the correct functions when createInstance is', function() {
             beforeEach(function() {
                 this.instance = {'@id': 'id'};
-                this.instance[DCTERMS + 'title'] = [{'@value': 'title'}, {'@value': 'arabic', '@language': 'ar'}];
-                this.instance[RDFS + 'label'] = [{'@value': 'label'}];
-                this.instance[RDFS + 'comment'] = [{'@value': 'comment', '@language': 'en'}, {'@value': 'arabic', '@language': 'ar'}];
+                this.instance[`${DCTERMS}title`] = [{'@value': 'title'}, {'@value': 'arabic', '@language': 'ar'}];
+                this.instance[`${RDFS}label`] = [{'@value': 'label'}];
+                this.instance[`${RDFS}comment`] = [{'@value': 'comment', '@language': 'en'}, {'@value': 'arabic', '@language': 'ar'}];
                 this.cleanEntity = [{prop: 'new'}];
                 discoverStateStub.explore.instance.entity = [this.instance];
                 discoverStateStub.getInstance.and.returnValue(this.instance);
@@ -205,7 +205,7 @@ describe('Instance Creator component', function() {
                             expect(discoverStateStub.explore.creating).toEqual(false);
                             expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                             expect(discoverStateStub.explore.classDetails).toEqual([]);
-                            expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                            expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
                         });
                     }));
                 });
@@ -222,7 +222,7 @@ describe('Instance Creator component', function() {
                         expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
                         expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {offset: 1, limit: 1});
                         expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
                     });
                 }));
             });
@@ -238,7 +238,7 @@ describe('Instance Creator component', function() {
                 expect(discoverStateStub.explore.instanceDetails.total).toBe(3);
                 expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
                 expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
             }));
         });
         it('cancel sets the correct variables', function() {

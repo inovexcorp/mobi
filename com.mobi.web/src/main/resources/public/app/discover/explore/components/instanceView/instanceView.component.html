@@ -36,10 +36,10 @@
                 <small class="text-muted">&lt;{{ds.explore.instance.metadata.instanceIRI}}&gt;</small>
             </h2>
             <p class="lead">{{ds.explore.instance.metadata.description}}</p>
-            <div *ngFor="let property of entity | keyvalue" class="instance-properties-container">
-                <h3 class="property">{{util.getBeautifulIRI(property.key)}}</h3>
-                <ul class="values" [ngClass]="{'show-more': property.more, 'show-link': property.value.length > 1}">
-                    <li *ngFor="let item of property.value">
+            <div *ngFor="let property of propertyValues" class="instance-properties-container">
+                <h3 class="property" [title]="property.property">{{property.display}}</h3>
+                <ul class="values" [ngClass]="{'show-more': property.more, 'show-link': property.values.length > 1}">
+                    <li *ngFor="let item of property.values">
                         <div class="value-container d-flex align-items-center">
                             <value-display class="flex-1" [value]="item"></value-display>
                         </div>

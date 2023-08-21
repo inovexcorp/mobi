@@ -69,7 +69,7 @@ export class UsersListComponent {
     
     constructor(private um: UserManagerService) {}
     
-    trackByFn(index, item: User): string {
+    trackByFn(_index: number, item: User): string {
         return item.username;
     }
     clickUser(user: User): void {

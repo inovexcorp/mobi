@@ -35,7 +35,7 @@ export class Mapping {
         if (typeof iriOrJsonld === 'string') {
             const mappingEntity = {
                 '@id': iriOrJsonld,
-                '@type': [DELIM + 'Mapping']
+                '@type': [`${DELIM}Mapping`]
             };
             this.jsonld = [mappingEntity];
         } else if (isArray(iriOrJsonld)) {
@@ -50,7 +50,7 @@ export class Mapping {
      * @returns {string} The id of the class mapped by the class mapping
      */
     static getClassIdByMapping(classMapping: JSONLDObject): string {
-        return get(classMapping, `['${DELIM + 'mapsTo'}'][0]['@id']`, '');
+        return get(classMapping, `['${DELIM}mapsTo'][0]['@id']`, '');
     }
     /**
      * Collects the id of the property being mapped by the passed property mapping.
@@ -59,7 +59,7 @@ export class Mapping {
      * @returns {string} The id of the property mapped by the property mapping
      */
     static getPropIdByMapping(propMapping: JSONLDObject): string {
-        return get(propMapping, `['${DELIM + 'hasProperty'}'][0]['@id']`, '');
+        return get(propMapping, `['${DELIM}hasProperty'][0]['@id']`, '');
     }
 
     /**
@@ -138,7 +138,7 @@ export class Mapping {
     getPropsLinkingToClass(classMappingId: string): JSONLDObject[] {
         return filter(
             this.getAllObjectMappings(),
-            ['[\'' + DELIM + 'classMapping\'][0][\'@id\']', classMappingId]
+            [`['${DELIM}classMapping'][0]['@id']`, classMappingId]
         );
     }
     /**
@@ -148,7 +148,7 @@ export class Mapping {
      * @return {JSONLDObject[]} The array of class mappings for the identified class in the mapping
      */
     getClassMappingsByClassId(classId: string): JSONLDObject[] {
-        return filter(this.getAllClassMappings(), [DELIM + 'mapsTo', [{'@id': classId}]]);
+        return filter(this.getAllClassMappings(), [`${DELIM}mapsTo`, [{'@id': classId}]]);
     }
     /**
      * Collects all property mappings in the passed mapping that map to the passed property IRI.
@@ -158,7 +158,7 @@ export class Mapping {
      */
     getPropMappingsByPropId(propId: string): JSONLDObject[] {
         const propMappings = concat(this.getAllDataMappings(), this.getAllObjectMappings());
-        return filter(propMappings, [DELIM + 'hasProperty', [{'@id': propId}]]);
+        return filter(propMappings, [`${DELIM}hasProperty`, [{'@id': propId}]]);
     }
     /**
      * @param {string} classMappingId The IRI of a Class Mapping to search for 
@@ -261,7 +261,7 @@ export class Mapping {
                 // Collect the class mapping that uses the object mapping
                 const classWithObjectMapping = this.findClassWithObjectMapping(objectMapping['@id']);
                 // Remove the object property for the object mapping
-                remove(classWithObjectMapping[DELIM + 'objectProperty'], {'@id': objectMapping['@id']});
+                remove(classWithObjectMapping[`${DELIM}objectProperty`], {'@id': objectMapping['@id']});
                 this._cleanPropertyArray(classWithObjectMapping, 'objectProperty');
                 //Replace class mapping
                 this.jsonld.splice(findIndex(this.jsonld, {'@id': classWithObjectMapping['@id']}), 1, classWithObjectMapping);
@@ -283,9 +283,9 @@ export class Mapping {
      */
     setSourceOntologyInfo(ontologyInfo: MappingOntologyInfo): void {
         const mappingEntity = this.getMappingEntity();
-        mappingEntity[DELIM + 'sourceRecord'] = [{'@id': ontologyInfo.recordId}];
-        mappingEntity[DELIM + 'sourceBranch'] = [{'@id': ontologyInfo.branchId}];
-        mappingEntity[DELIM + 'sourceCommit'] = [{'@id': ontologyInfo.commitId}];
+        mappingEntity[`${DELIM}sourceRecord`] = [{'@id': ontologyInfo.recordId}];
+        mappingEntity[`${DELIM}sourceBranch`] = [{'@id': ontologyInfo.branchId}];
+        mappingEntity[`${DELIM}sourceCommit`] = [{'@id': ontologyInfo.commitId}];
     }
     /**
      * @returns {MappingOntologyInfo} The source ontology information of the mapping. This includes the record id, the
@@ -308,11 +308,11 @@ export class Mapping {
      */
     addClassMapping(classId: string, prefix: string): JSONLDObject {
         const classMapping = {
-            '@id': this.getMappingEntity()['@id'] + '/' + uuidv4(),
-            '@type': [DELIM + 'ClassMapping'],
-            [DELIM + 'mapsTo']: [{'@id': classId}],
-            [DELIM + 'hasPrefix']: [{'@value': prefix}],
-            [DELIM + 'localName']: [{'@value': '${UUID}'}]
+            '@id': `${this.getMappingEntity()['@id']}/${uuidv4()}`,
+            '@type': [`${DELIM}ClassMapping`],
+            [`${DELIM}mapsTo`]: [{'@id': classId}],
+            [`${DELIM}hasPrefix`]: [{'@value': prefix}],
+            [`${DELIM}localName`]: [{'@value': '${UUID}'}]
         };
         this.jsonld.push(classMapping);
         return classMapping;
@@ -333,20 +333,20 @@ export class Mapping {
         languageSpec?: string): JSONLDObject {
         // Add new data mapping id to data properties of class mapping
         const propMapping = {
-            '@id': this.getMappingEntity()['@id'] + '/' + uuidv4()
+            '@id': `${this.getMappingEntity()['@id']}/${uuidv4()}`
         };
         const classMapping = this._getEntityById(this.jsonld, classMappingId);
         // Sets the dataProperty key if not already present
-        classMapping[DELIM + 'dataProperty'] = this._getDataProperties(classMapping);
-        classMapping[DELIM + 'dataProperty'].push(Object.assign({}, propMapping));
+        classMapping[`${DELIM}dataProperty`] = this._getDataProperties(classMapping);
+        classMapping[`${DELIM}dataProperty`].push(Object.assign({}, propMapping));
         // Create data mapping
-        propMapping['@type'] = [DELIM + 'DataMapping', DELIM + 'PropertyMapping'];
-        propMapping[DELIM + 'columnIndex'] = [{'@value': `${columnIndex}`}];
-        propMapping[DELIM + 'hasProperty'] = [{'@id': propId}];
+        propMapping['@type'] = [`${DELIM}DataMapping`, `${DELIM}PropertyMapping`];
+        propMapping[`${DELIM}columnIndex`] = [{'@value': `${columnIndex}`}];
+        propMapping[`${DELIM}hasProperty`] = [{'@id': propId}];
         if (datatypeSpec) {
-            propMapping[DELIM + 'datatypeSpec'] = [{'@id': datatypeSpec}];
+            propMapping[`${DELIM}datatypeSpec`] = [{'@id': datatypeSpec}];
             if (languageSpec) {
-                propMapping[DELIM + 'languageSpec'] = [{'@value': languageSpec}];
+                propMapping[`${DELIM}languageSpec`] = [{'@value': languageSpec}];
             }
         }
         this.jsonld.push(propMapping);
@@ -365,15 +365,15 @@ export class Mapping {
     addObjectPropMapping(propId: string, classMappingId: string, rangeClassMappingId: string): JSONLDObject {
         // Add new object mapping id to object properties of class mapping
         const propMapping = {
-            '@id': this.getMappingEntity()['@id'] + '/' + uuidv4()
+            '@id': `${this.getMappingEntity()['@id']}/${uuidv4()}`
         };
         const classMapping = this._getEntityById(this.jsonld, classMappingId);
-        classMapping[DELIM + 'objectProperty'] = this._getObjectProperties(classMapping);
-        classMapping[DELIM + 'objectProperty'].push(Object.assign({}, propMapping));
+        classMapping[`${DELIM}objectProperty`] = this._getObjectProperties(classMapping);
+        classMapping[`${DELIM}objectProperty`].push(Object.assign({}, propMapping));
         // Create object mapping
-        propMapping['@type'] = [DELIM + 'ObjectMapping', DELIM + 'PropertyMapping'];
-        propMapping[DELIM + 'classMapping'] = [{'@id': rangeClassMappingId}];
-        propMapping[DELIM + 'hasProperty'] = [{'@id': propId}];
+        propMapping['@type'] = [`${DELIM}ObjectMapping`, `${DELIM}PropertyMapping`];
+        propMapping[`${DELIM}classMapping`] = [{'@id': rangeClassMappingId}];
+        propMapping[`${DELIM}hasProperty`] = [{'@id': propId}];
         this.jsonld.push(propMapping);
         return propMapping;
     }
@@ -388,18 +388,18 @@ export class Mapping {
         newMapping.getMappingEntity()['@id'] = newId;
         const idTransforms = {};
         newMapping.getAllClassMappings().forEach(classMapping => {
-            set(idTransforms, encodeURIComponent(classMapping['@id']), newId + '/' + uuidv4());
+            set(idTransforms, encodeURIComponent(classMapping['@id']), `${newId}/${uuidv4()}`);
             classMapping['@id'] = get(idTransforms, encodeURIComponent(classMapping['@id']));
-            concat(get(classMapping, '[\'' + DELIM + 'dataProperty\']', []), 
-                get(classMapping, '[\'' + DELIM + 'objectProperty\']', [])).forEach(propIdObj => {
-                set(idTransforms, encodeURIComponent(propIdObj['@id']), newId + '/' + uuidv4());
+            concat(get(classMapping, `['${DELIM}dataProperty']`, []), 
+                get(classMapping, `['${DELIM}objectProperty']`, [])).forEach(propIdObj => {
+                set(idTransforms, encodeURIComponent(propIdObj['@id']), `${newId}/${uuidv4()}`);
                 propIdObj['@id'] = get(idTransforms, encodeURIComponent(propIdObj['@id']));
             });
         });
         concat(newMapping.getAllDataMappings(), newMapping.getAllObjectMappings()).forEach(propMapping => {
             if (this._isType(propMapping, 'ObjectMapping')) {
-                propMapping[DELIM + 'classMapping'][0]['@id'] = 
-                    get(idTransforms, encodeURIComponent(propMapping[DELIM + 'classMapping'][0]['@id']));
+                propMapping[`${DELIM}classMapping`][0]['@id'] = 
+                    get(idTransforms, encodeURIComponent(propMapping[`${DELIM}classMapping`][0]['@id']));
             }
             propMapping['@id'] = get(idTransforms, encodeURIComponent(propMapping['@id']));
         });
@@ -427,7 +427,7 @@ export class Mapping {
         return this._getProperties(classMapping, 'objectProperty');
     }
     private _getProperties(classMapping: JSONLDObject, type: string) {
-        return get(classMapping, '[\'' + DELIM + type + '\']', []);
+        return get(classMapping, `['${DELIM}${type}']`, []);
     }
     private _isType(entity: JSONLDObject, type: string) {
         return includes(get(entity, '[\'@type\']'), DELIM + type);

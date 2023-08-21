@@ -38,7 +38,8 @@ import { CommitDifference } from '../../../shared/models/commitDifference.interf
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { CATALOG, DCTERMS } from '../../../prefixes';
 import { RequestBranchSelectComponent } from './requestBranchSelect.component';
 
 describe('Request Branch Select component', function() {
@@ -48,14 +49,18 @@ describe('Request Branch Select component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
     const branchId = 'branchId';
     const commitId = 'commitId';
     const error = 'error';
-    const branch: JSONLDObject = {'@id': branchId};
+    const branch: JSONLDObject = {
+      '@id': branchId,
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${CATALOG}head`]: [{ '@id': commitId }]
+    };
     const branches = [branch];
 
     beforeEach(async () => {
@@ -71,7 +76,7 @@ describe('Request Branch Select component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(MergeRequestsStateService),
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
@@ -81,10 +86,8 @@ describe('Request Branch Select component', function() {
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
-        utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-        utilStub.getPropertyId.and.returnValue(commitId);
         catalogManagerStub.localCatalog = {'@id': catalogId};
         catalogManagerStub.differencePageSize = 100;
         catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: branches})));
@@ -97,6 +100,10 @@ describe('Request Branch Select component', function() {
         };
         mergeRequestsStateStub.updateRequestConfigDifference.and.returnValue(of(null));
         mergeRequestsStateStub.requestConfig.recordId = recordId;
+        mergeRequestsStateStub.selectedRecord = {
+          '@id': recordId,
+          [`${DCTERMS}title`]: [{ '@value': 'title' }]
+        };
     });
 
     afterEach(function() {
@@ -106,7 +113,7 @@ describe('Request Branch Select component', function() {
         fixture = null;
         mergeRequestsStateStub = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize with the correct values when', function() {
@@ -175,7 +182,7 @@ describe('Request Branch Select component', function() {
             expect(component.branches).toEqual([]);
             expect(mergeRequestsStateStub.updateRequestConfigBranch).not.toHaveBeenCalled();
             expect(mergeRequestsStateStub.updateRequestConfigBranch).not.toHaveBeenCalled();
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
         }));
     });
     it('should clean up on destroy', function() {
@@ -201,7 +208,10 @@ describe('Request Branch Select component', function() {
                         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.commitDifferenceTabset);
                     }));
                     it('and is not the same', fakeAsync(function() {
-                        mergeRequestsStateStub.requestConfig.sourceBranch = {'@id': 'other'};
+                        mergeRequestsStateStub.requestConfig.sourceBranch = {
+                          '@id': 'other',
+                          [`${DCTERMS}title`]: [{ '@value': 'title' }]
+                        };
                         component.changeTarget(branch);
                         tick();
                         expect(mergeRequestsStateStub.requestConfig.targetBranch).toEqual(branch);
@@ -255,7 +265,10 @@ describe('Request Branch Select component', function() {
                         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.commitDifferenceTabset);
                     }));
                     it('and is not the same', fakeAsync(function() {
-                        mergeRequestsStateStub.requestConfig.targetBranch = {'@id': 'other'};
+                        mergeRequestsStateStub.requestConfig.targetBranch = {
+                          '@id': 'other',
+                          [`${DCTERMS}title`]: [{ '@value': 'title' }]
+                        };
                         component.changeSource(branch);
                         tick();
                         expect(mergeRequestsStateStub.requestConfig.sourceBranch).toEqual(branch);

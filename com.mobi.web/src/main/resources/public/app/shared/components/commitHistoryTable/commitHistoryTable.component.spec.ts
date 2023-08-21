@@ -30,6 +30,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { forEach } from 'lodash';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 
 import {
     cleanStylesFromDOM,
@@ -38,15 +39,13 @@ import { CommitHistoryGraphComponent } from '../../../history-graph/components/c
 import { Commit } from '../../models/commit.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
-import { UtilService } from '../../services/util.service';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
-import { CommitHistoryTableComponent } from './commitHistoryTable.component';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { Tag } from '../../models/tag.interface';
-import { HttpResponse } from '@angular/common/http';
-import { ONTOLOGYEDITOR } from "../../../prefixes";
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { CommitHistoryTableComponent } from './commitHistoryTable.component';
 
 describe('Commit History Table component', function() {
     let component: CommitHistoryTableComponent;
@@ -54,7 +53,17 @@ describe('Commit History Table component', function() {
     let fixture: ComponentFixture<CommitHistoryTableComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let testData: any =  {};
+    let testData: {
+      error?: string,
+      commitId?: string,
+      entityId?: string,
+      commit?: Commit,
+      commits?: Commit[],
+      recordId?: string,
+      type?: string,
+      tags?: JSONLDObject[],
+      headers?: { [key: string]: string }
+    } = {};
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -72,7 +81,6 @@ describe('Commit History Table component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(UserManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -90,19 +98,21 @@ describe('Commit History Table component', function() {
         const commitId = 'commitId';
         const commit: Commit = {
             id: commitId,
+            condensedId: commitId,
             creator: {
                 username: 'user',
                 firstName: 'firstName',
                 lastName: 'lastName'
             },
             date: 'somedate',
+            dateObj: new Date(),
             message: 'message',
             base: 'baseHash',
             auxiliary: 'auxiliaryHash'
         };
-        const tag = {
+        const tag: JSONLDObject = {
             '@id': 'urn:tagId'
-        } as JSONLDObject;
+        };
         testData = {
             error: 'error',
             commitId: commitId,
@@ -110,7 +120,7 @@ describe('Commit History Table component', function() {
             commit: commit,
             commits: [commit],
             recordId: 'record',
-            type: ONTOLOGYEDITOR + 'OntologyRecord',
+            type: `${ONTOLOGYEDITOR}OntologyRecord`,
             tags: [tag]
         };
         component.headTitle = 'title';
@@ -351,18 +361,21 @@ describe('Commit History Table component', function() {
                     });
                     it('successfully', async function() {
                         catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse({body: [{
-                                '@id': 'urn:tagId'
-                            } as JSONLDObject]})));
+                            '@id': 'urn:tagId',
+                            [`${DCTERMS}title`]: [{ '@value': 'title' }],
+                            [`${DCTERMS}description`]: [{ '@value': 'description' }],
+                            [`${CATALOG}commit`]: [{ '@id': 'commitId' }],
+                        }]})));
                         await component.getTags();
 
                         expect(catalogManagerStub.getRecordVersions).toHaveBeenCalledWith('urn:record', '');
                         expect(component.error).toEqual('');
-                        const tag = {
+                        const tag: Tag = {
                             tagIri: 'urn:tagId',
-                            commitIri: undefined,
-                            title: undefined,
-                            description: undefined
-                        } as Tag;
+                            commitIri: 'commitId',
+                            title: 'title',
+                            description: 'description'
+                        };
                         expect(component.tagObjects).toEqual([tag]);
                     });
                     it('unless an error occurs', async function() {
@@ -389,19 +402,22 @@ describe('Commit History Table component', function() {
             it('if Tags have been passed', async function() {
                 catalogManagerStub.getRecordVersions.calls.reset();
                 component.tags = [{
-                    '@id': 'urn:tagId'
-                } as JSONLDObject];
+                    '@id': 'urn:tagId',
+                    [`${DCTERMS}title`]: [{ '@value': 'title' }],
+                    [`${DCTERMS}description`]: [{ '@value': 'description' }],
+                    [`${CATALOG}commit`]: [{ '@id': 'commitId' }],
+                }];
                 component.recordId = undefined;
                 fixture.detectChanges();
                 await fixture.whenStable();
 
                 expect(catalogManagerStub.getRecordVersions).not.toHaveBeenCalled();
-                const tag = {
+                const tag: Tag = {
                     tagIri: 'urn:tagId',
-                    commitIri: undefined,
-                    title: undefined,
-                    description: undefined
-                } as Tag;
+                    commitIri: 'commitId',
+                    title: 'title',
+                    description: 'description'
+                };
                 expect(component.tagObjects).toEqual([tag]);
             });
         });

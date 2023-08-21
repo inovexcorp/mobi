@@ -23,7 +23,6 @@
 import { Component, Input } from '@angular/core';
 
 import { Conflict } from '../../models/conflict.interface';
-import { UtilService } from '../../services/util.service';
 
 /**
  * @class shared.ResolveConflictsFormComponent
@@ -50,7 +49,7 @@ export class ResolveConflictsFormComponent {
     index: number = undefined;
     selected = undefined;
 
-    constructor(public util: UtilService) {}
+    constructor() {}
 
     select(index: number): void {
         this.index = index;

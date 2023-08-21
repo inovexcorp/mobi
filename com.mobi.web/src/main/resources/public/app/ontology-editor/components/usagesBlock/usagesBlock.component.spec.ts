@@ -23,7 +23,7 @@
  */
 
 import { DebugElement } from '@angular/core';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { min } from 'lodash';
@@ -93,7 +93,7 @@ describe('Usages Block component', function() {
             expect(element.queryAll(By.css('.usages-block')).length).toEqual(1);
         });
         ['.section-header', '.text-center', '.usages-container'].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });
@@ -102,9 +102,9 @@ describe('Usages Block component', function() {
             expect(element.queryAll(By.css('.property-values')).length).toEqual(0);
 
             component.usages = [{
-                s: {value: 'www.test.com/A'},
-                p: {value: 'www.test.com/B'},
-                o: {value: 'www.test.com/test'}
+                s: { value: 'www.test.com/A', type: 'uri' },
+                p: { value: 'www.test.com/B', type: 'uri' },
+                o: { value: 'www.test.com/test', type: 'uri' }
             }];
 
             fixture.detectChanges();
@@ -116,25 +116,25 @@ describe('Usages Block component', function() {
     });
     it('should update the results when the usages change', function() {
         component.usages = [{
-            s: {value: 'A'},
-            p: {value: 'B'},
-            o: {value: 'test'}
+            s: { value: 'A', type: 'uri' },
+            p: { value: 'B', type: 'uri' },
+            o: { value: 'test', type: 'uri' }
         }, {
-            s: {value: 'B'},
-            p: {value: 'test'},
-            o: {value: 'A'}
+            s: { value: 'B', type: 'uri' },
+            p: { value: 'test', type: 'uri' },
+            o: { value: 'A', type: 'uri' }
         }, {
-            s: {value: 'B'},
-            p: {value: 'A'},
-            o: {value: 'test'}
+            s: { value: 'B', type: 'uri' },
+            p: { value: 'A', type: 'uri' },
+            o: { value: 'test', type: 'uri' }
         }, {
-            s: {value: 'B'},
-            p: {value: 'B'},
-            o: {value: 'test'}
+            s: { value: 'B', type: 'uri' },
+            p: { value: 'B', type: 'uri' },
+            o: { value: 'test', type: 'uri' }
         }, {
-            s: {value: 'B'},
-            p: {value: 'test'},
-            o: {value: 'B'}
+            s: { value: 'B', type: 'uri' },
+            p: { value: 'test', type: 'uri' },
+            o: { value: 'B', type: 'uri' }
         }];
         const expected = {
             B: [{
@@ -160,25 +160,25 @@ describe('Usages Block component', function() {
     describe('controller methods', function() {
         it('getMoreResults populates variables correctly', function() {
             component.usages = [{
-                s: {value: 'A'},
-                p: {value: 'B'},
-                o: {value: 'test'}
+                s: { value: 'A', type: 'uri' },
+                p: { value: 'B', type: 'uri' },
+                o: { value: 'test', type: 'uri' }
             }, {
-                s: {value: 'B'},
-                p: {value: 'test'},
-                o: {value: 'A'}
+                s: { value: 'B', type: 'uri' },
+                p: { value: 'test', type: 'uri' },
+                o: { value: 'A', type: 'uri' }
             }, {
-                s: {value: 'B'},
-                p: {value: 'A'},
-                o: {value: 'test'}
+                s: { value: 'B', type: 'uri' },
+                p: { value: 'A', type: 'uri' },
+                o: { value: 'test', type: 'uri' }
             }, {
-                s: {value: 'B'},
-                p: {value: 'B'},
-                o: {value: 'test'}
+                s: { value: 'B', type: 'uri' },
+                p: { value: 'B', type: 'uri' },
+                o: { value: 'test', type: 'uri' }
             }, {
-                s: {value: 'B'},
-                p: {value: 'test'},
-                o: {value: 'B'}
+                s: { value: 'B', type: 'uri' },
+                p: { value: 'test', type: 'uri' },
+                o: { value: 'B', type: 'uri' }
             }];
             const expected = {
                 B: [{

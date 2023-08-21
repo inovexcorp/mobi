@@ -34,7 +34,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { CATALOG, DCTERMS, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { BranchListComponent } from './branchList.component';
 
 describe('Branch List component', function() {
@@ -43,15 +43,26 @@ describe('Branch List component', function() {
     let fixture: ComponentFixture<BranchListComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
-    const record: JSONLDObject = {'@id': recordId, '@type': []};
-    const branches: JSONLDObject[] = [{'@id': '', '@type': []}];
+    const record: JSONLDObject = {
+      '@id': recordId,
+      '@type': [],
+      [`${CATALOG}catalog`]: [{ '@id': catalogId }]
+    };
+    const branches: JSONLDObject[] = [{
+      '@id': '',
+      '@type': [],
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${DCTERMS}description`]: [{ '@value': 'description' }],
+      [`${DCTERMS}modified`]: [{ '@value': '2023-01-01T00:00:00Z' }],
+      [`${CATALOG}head`]: [{ '@id': 'commitId' }]
+    }];
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
-    const sortOption = {field: DCTERMS + 'modified', label: '', asc: false};
+    const sortOption = {field: `${DCTERMS}modified`, label: '', asc: false};
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -63,7 +74,7 @@ describe('Branch List component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         }).compileComponents();
 
@@ -72,14 +83,7 @@ describe('Branch List component', function() {
         element = fixture.debugElement;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-
-        utilStub.getPropertyId.and.callFake((obj, propId) => {
-            if (propId === CATALOG + 'catalog') {
-                return catalogId;
-            }
-            return '';
-        });
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         catalogManagerStub.sortOptions = [sortOption];
         catalogManagerStub.isVersionedRDFRecord.and.returnValue(true);
@@ -92,7 +96,7 @@ describe('Branch List component', function() {
         element = null;
         fixture = null;
         ontologyManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('initializes correctly on record change', function() {
@@ -100,12 +104,12 @@ describe('Branch List component', function() {
             component.record = record;
         });
         it('with a catalogId', function() {
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(record, CATALOG + 'catalog');
             expect(component.catalogId).toEqual(catalogId);
         });
         it('with branches', function() {
             expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId, jasmine.any(Object));
-            expect(component.branches).toEqual(branches);
+            expect(component.branches.length).toEqual(branches.length);
+            expect(component.branches.map(obj => obj.branch)).toEqual(branches);
             expect(component.totalSize).toEqual(totalSize);
         });
     });
@@ -128,21 +132,23 @@ describe('Branch List component', function() {
                     component.setBranches();
                     tick();
                     expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId, {pageIndex: 0, limit: component.limit, sortOption: sortOption});
-                    expect(component.branches).toEqual(branches);
+                    expect(component.branches.length).toEqual(branches.length);
+                    expect(component.branches.map(obj => obj.branch)).toEqual(branches);
                     expect(component.totalSize).toEqual(totalSize);
                     expect(ontologyManagerStub.isOntologyRecord).toHaveBeenCalledWith(record);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('and a ShapesGraphRecord successfully', fakeAsync(function() {
                     ontologyManagerStub.isOntologyRecord.and.returnValue(false);
-                    component.record['@type'].push(SHAPESGRAPHEDITOR + 'ShapesGraphRecord');
+                    component.record['@type'].push(`${SHAPESGRAPHEDITOR}ShapesGraphRecord`);
                     component.setBranches();
                     tick();
                     expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId, {pageIndex: 0, limit: component.limit, sortOption: sortOption});
-                    expect(component.branches).toEqual(branches);
+                    expect(component.branches.length).toEqual(branches.length);
+                    expect(component.branches.map(obj => obj.branch)).toEqual(branches);
                     expect(component.totalSize).toEqual(totalSize);
                     expect(ontologyManagerStub.isOntologyRecord).toHaveBeenCalledWith(record);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getRecordBranches rejects', fakeAsync(function() {
                     catalogManagerStub.getRecordBranches.and.returnValue(throwError('Error Message'));
@@ -152,7 +158,7 @@ describe('Branch List component', function() {
                     expect(component.branches).toEqual([]);
                     expect(component.totalSize).toEqual(0);
                     expect(ontologyManagerStub.isOntologyRecord).toHaveBeenCalledWith(record);
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
                 }));
             });
             it('unless the record is not a VersionedRDFRecord', fakeAsync(function() {
@@ -162,7 +168,7 @@ describe('Branch List component', function() {
                 expect(catalogManagerStub.getRecordBranches).not.toHaveBeenCalled();
                 expect(component.branches).toEqual([]);
                 expect(component.totalSize).toEqual(0);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
     });
@@ -174,15 +180,15 @@ describe('Branch List component', function() {
             expect(element.queryAll(By.css('.branches-list')).length).toEqual(0);
             expect(element.queryAll(By.css('.mat-expansion-panel')).length).toEqual(0);
 
-            component.branches = branches;
+            component.branches = branches.map(branch => ({ branch, title: '', description: '', date: '', head: '' }));
             fixture.detectChanges();
             expect(element.queryAll(By.css('.branches-list')).length).toEqual(1);
             expect(element.queryAll(By.css('.mat-expansion-panel')).length).toEqual(branches.length);
         });
         it('depending on whether there are more branches to load', function() {
             component.branches = [
-                {'@id': '', '@type': []},
-                {'@id': '', '@type': []},
+                { branch: {'@id': '', '@type': []}, title: '', description: '', date: '', head: '' },
+                { branch: {'@id': '', '@type': []}, title: '', description: '', date: '', head: '' },
             ];
             component.totalSize = 10;
             fixture.detectChanges();
@@ -195,7 +201,7 @@ describe('Branch List component', function() {
     });
     it('should load more branches when the button is clicked', function() {
         component.totalSize = 10;
-        component.branches = branches;
+        component.branches = branches.map(branch => ({ branch, title: '', description: '', date: '', head: '' }));
         fixture.detectChanges();
         spyOn(component, 'loadMore');
         const button = element.queryAll(By.css('.load-button'))[0];

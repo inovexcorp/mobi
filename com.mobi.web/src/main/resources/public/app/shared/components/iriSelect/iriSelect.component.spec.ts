@@ -35,19 +35,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockPipe, MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { SplitIRIPipe } from '../../pipes/splitIRI.pipe';
-import { UtilService } from '../../services/util.service';
 import { IriSelectComponent } from './iriSelect.component';
 
 describe('IRI Select component', function() {
     let component: IriSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<IriSelectComponent>;
-    let utilServiceStub: jasmine.SpyObj<UtilService>;
-    let splitIRIPipeStub: jasmine.SpyObj<SplitIRIPipe>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -67,10 +62,6 @@ describe('IRI Select component', function() {
              ],
             declarations: [
                 IriSelectComponent,
-            ],
-            providers: [
-                MockProvider(UtilService),
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
             ]
         }).compileComponents();
 
@@ -81,10 +72,6 @@ describe('IRI Select component', function() {
         component.displayText = 'test';
         component.selectList = {};
         component.mutedText = 'test';
-
-        utilServiceStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        splitIRIPipeStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
-        splitIRIPipeStub.transform.and.returnValue({begin: 'http://start', then: '/', end: 'end'});
     });
 
     afterEach(function() {
@@ -92,7 +79,6 @@ describe('IRI Select component', function() {
         component = null;
         element = null;
         fixture = null;
-        utilServiceStub = null;
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -113,16 +99,14 @@ describe('IRI Select component', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            component.selectList = {iri: 'new'};
+            component.selectList = { 'http://test.com#new': 'http://test.com' };
         });
         it('getOntologyIri should return the set ontology IRI from the selectList if provided', function() {
-            expect(component.getOntologyIri('iri')).toEqual('new');
+            expect(component.getOntologyIri('http://test.com#new')).toEqual('http://test.com');
         });
         it('filter should return the correct value', function() {
-            component.selectList = {iri: 'new'};
-            utilServiceStub.getBeautifulIRI.and.returnValue('new');
             const iriGrouping = component.filter('new');
-            expect(iriGrouping).toEqual([{namespace: 'new', options: [{item: 'iri', name: 'new'}]}]);
+            expect(iriGrouping).toEqual([{namespace: 'http://test.com', options: [{item: 'http://test.com#new', name: 'New'}]}]);
         });
     });
 });

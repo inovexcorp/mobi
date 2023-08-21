@@ -25,13 +25,14 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 import { XSD, RDF } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
-import { Observable } from 'rxjs';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { datatype } from '../../../shared/validators/datatype.validator';
+import { createJson } from '../../../shared/utility';
 
 interface PropGrouping {
     namespace: string,
@@ -70,7 +71,7 @@ export class DatatypePropertyOverlayComponent implements OnInit {
                 public os: OntologyStateService,
                 private pm: PropertyManagerService,
                 private fb: UntypedFormBuilder,
-                public util: UtilService,
+                private toast: ToastService,
                 @Inject(MAT_DIALOG_DATA) public data: { editingProperty: boolean,
                     propertySelect: string,
                     propertyValue: string, 
@@ -116,10 +117,10 @@ export class DatatypePropertyOverlayComponent implements OnInit {
         const realType = this.getType(lang, this.propertyType[0]);
         const added = this.pm.addValue(this.os.listItem.selected, selectedValue, propertyValue, realType, lang);
         if (added) {
-            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this.util.createJson(this.os.listItem.selected['@id'], selectedValue, this.pm.createValueObj(propertyValue, realType, lang)));
+            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, createJson(this.os.listItem.selected['@id'], selectedValue, this.pm.createValueObj(propertyValue, realType, lang)));
             this.os.saveCurrentChanges().subscribe();
         } else {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         this.dialogRef.close();
     }
@@ -131,22 +132,22 @@ export class DatatypePropertyOverlayComponent implements OnInit {
         const oldObj = cloneDeep(this.os.listItem.selected[selectedValue][this.data.propertyIndex]);
         const edited = this.pm.editValue(this.os.listItem.selected, selectedValue, this.data.propertyIndex, propertyValue, realType, lang);
         if (edited) {
-            this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, this.util.createJson(this.os.listItem.selected['@id'], selectedValue, oldObj));
-            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this.util.createJson(this.os.listItem.selected['@id'], selectedValue, this.pm.createValueObj(propertyValue, realType, lang)));
+            this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, createJson(this.os.listItem.selected['@id'], selectedValue, oldObj));
+            this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, createJson(this.os.listItem.selected['@id'], selectedValue, this.pm.createValueObj(propertyValue, realType, lang)));
             this.os.saveCurrentChanges().subscribe();
         } else {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         this.dialogRef.close();
     }
     isLangString(): boolean {
-        return RDF + 'langString' === (this.propertyType ? this.propertyType[0]: '');
+        return `${RDF}langString` === (this.propertyType ? this.propertyType[0]: '');
     }
     getLang(language: string): string {
         return language && this.isLangString() ? language : '';
     }
     getType(language: string, type: string):string {
-        return language ? '' : type || XSD + 'string';
+        return language ? '' : type || `${XSD}string`;
     }
     getName(val: string): string {
         return val ? this.os.getEntityNameByListItem(val) : '';

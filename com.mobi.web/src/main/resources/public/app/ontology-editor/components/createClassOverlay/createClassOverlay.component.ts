@@ -31,7 +31,7 @@ import { DCTERMS, OWL, RDFS } from '../../../prefixes';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
@@ -65,8 +65,7 @@ export class CreateClassOverlayComponent implements OnInit {
     constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateClassOverlayComponent>, 
         public os: OntologyStateService, 
-        private camelCasePipe: CamelCasePipe,
-        private splitIRIPipe: SplitIRIPipe) {}
+        private camelCasePipe: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
@@ -74,7 +73,7 @@ export class CreateClassOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            const split = splitIRI(this.createForm.controls.iri.value);
             this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
         }
     }
@@ -86,19 +85,19 @@ export class CreateClassOverlayComponent implements OnInit {
     get clazz(): JSONLDObject {
         const clazz = {
             '@id': this.createForm.controls.iri.value,
-            '@type': [OWL + 'Class'],
-            [DCTERMS + 'title']: [{
+            '@type': [`${OWL}Class`],
+            [`${DCTERMS}title`]: [{
                 '@value': this.createForm.controls.title.value
             }],
-            [DCTERMS + 'description']: [{
+            [`${DCTERMS}description`]: [{
                 '@value': this.createForm.controls.description.value
             }]
         };
-        if (isEqual(clazz[DCTERMS + 'description'][0]['@value'], '')) {
-            unset(clazz, DCTERMS + 'description');
+        if (isEqual(clazz[`${DCTERMS}description`][0]['@value'], '')) {
+            unset(clazz, `${DCTERMS}description`);
         }
         if (this.selectedClasses.length) {
-            clazz[RDFS + 'subClassOf'] = this.selectedClasses;
+            clazz[`${RDFS}subClassOf`] = this.selectedClasses;
         }
         this.os.addLanguageToNewEntity(clazz, this.createForm.controls.language.value);
         return clazz;
@@ -111,8 +110,8 @@ export class CreateClassOverlayComponent implements OnInit {
         // update relevant lists
         this.os.addToClassIRIs(this.os.listItem, clazz['@id']);
         
-        if (clazz[RDFS + 'subClassOf'] && clazz[RDFS + 'subClassOf'].length) {
-            const superClassIds = map(clazz[RDFS + 'subClassOf'], '@id');
+        if (clazz[`${RDFS}subClassOf`] && clazz[`${RDFS}subClassOf`].length) {
+            const superClassIds = map(clazz[`${RDFS}subClassOf`], '@id');
             if (this.os.containsDerivedConcept(superClassIds)) {
                 this.os.listItem.derivedConcepts.push(clazz['@id']);
             } else if (this.os.containsDerivedConceptScheme(superClassIds)) {

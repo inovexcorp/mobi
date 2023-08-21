@@ -28,7 +28,7 @@ import { ExploreService } from '../../../services/explore.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ClassDetails } from '../../../models/classDetails.interface';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 /**
  * @class explore.ClassCardsComponent
@@ -50,7 +50,7 @@ export class ClassCardsComponent implements OnChanges {
     chunks: ClassDetails[][] = [];
 
     constructor(private state: DiscoverStateService, private es: ExploreService, private pep: PolicyEnforcementService,
-        private util: UtilService) {}
+        private toast: ToastService) {}
 
     ngOnChanges(): void {
         this.chunks = this._getChunks(this.classDetails);
@@ -59,7 +59,7 @@ export class ClassCardsComponent implements OnChanges {
     exploreData(item: ClassDetails): void {
         const pepRequest = {
             resourceId: this.state.explore.recordId,
-            actionId: POLICY + 'Read'
+            actionId: `${POLICY}Read`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -72,15 +72,15 @@ export class ClassCardsComponent implements OnChanges {
                             this.state.resetPagedInstanceDetails();
                             merge(this.state.explore.instanceDetails, this.es.createPagedResultsObject(response));
                             this.state.explore.breadcrumbs.push(item.classTitle);
-                        }, error => this.util.createErrorToast(error));
+                        }, error => this.toast.createErrorToast(error));
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to read dataset');
+                    this.toast.createErrorToast('You don\'t have permission to read dataset');
                     this.state.resetPagedInstanceDetails();
                     this.state.explore.classDetails = [];
                     this.state.explore.hasPermissionError = true;
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
 

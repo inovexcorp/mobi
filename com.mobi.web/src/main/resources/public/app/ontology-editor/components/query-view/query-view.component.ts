@@ -62,7 +62,7 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
         this._setUpYasgui();
         this.isIncludedImportsChecked = this.yasguiQuery.isImportedOntologyIncluded;
     }
-    ngOnChanges(changes: SimpleChanges) {
+    ngOnChanges(changes: SimpleChanges): void {
         if (changes?.yasguiQuery && !changes?.yasguiQuery.isFirstChange()) {
             this.ready = false;
             this.changeDetector.detectChanges();

@@ -20,18 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { get } from 'lodash';
-import { first } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { RESTError } from '../../../shared/models/RESTError.interface';
+import { Difference } from '../../../shared/models/difference.class';
 
 /**
  * @class shapes-graph-editor.UploadRecordModalComponent
@@ -52,8 +53,7 @@ export class UploadRecordModalComponent {
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
     constructor(private dialogRef: MatDialogRef<UploadRecordModalComponent>, private sm: ShapesGraphManagerService,
-        private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
-        @Inject(MAT_DIALOG_DATA) public data: any) {}
+        private state: ShapesGraphStateService, private toast: ToastService, private cm: CatalogManagerService) {}
 
     uploadChanges(): void {
         const updateParams: RdfUpdate = {
@@ -67,35 +67,32 @@ export class UploadRecordModalComponent {
         if (this.state?.listItem?.versionedRdfRecord?.commitId) {
             updateParams.commitId = this.state.listItem.versionedRdfRecord.commitId;
         }
-        this.sm.uploadChanges(updateParams)
-            .then((response) => {
+        this.sm.uploadChanges(updateParams).pipe(
+            switchMap((response) => {
                 if (response.status === 204) {
-                    return Promise.reject('No changes');
+                    return throwError('No changes');
                 }
-                return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
-                    .pipe(first()).toPromise();
-            }, error => {
-                return Promise.reject(error);
-            }).then(commit => {
-                this.state.listItem.inProgressCommit.additions = commit.additions;
-                this.state.listItem.inProgressCommit.deletions = commit.deletions;
+                return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId);
+            }),
+            switchMap((inProgressCommit: Difference) => {
+                this.state.listItem.inProgressCommit.additions = inProgressCommit.additions;
+                this.state.listItem.inProgressCommit.deletions = inProgressCommit.deletions;
                 return this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId,
                     this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
             })
-            .then(() => {
-                this.util.createSuccessToast('Record ' + this.state.listItem.versionedRdfRecord.recordId + ' successfully updated.');
-                this.dialogRef.close(true);
-            })
-            .catch(error => {
-                if (typeof error === 'string') {
-                    this.error = {
-                        error: '',
-                        errorDetails: [],
-                        errorMessage: error
-                    };
-                } else {
-                    this.error = error;
-                }
-            });
+        ).subscribe(() => {
+            this.toast.createSuccessToast(`Record ${this.state.listItem.versionedRdfRecord.recordId} successfully updated.`);
+            this.dialogRef.close(true);
+        }, error => {
+            if (typeof error === 'string') {
+                this.error = {
+                    error: '',
+                    errorDetails: [],
+                    errorMessage: error
+                };
+            } else {
+                this.error = error;
+            }
+        });
     }
 }

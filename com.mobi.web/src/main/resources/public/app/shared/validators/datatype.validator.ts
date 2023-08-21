@@ -23,8 +23,9 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { validateTerm } from 'rdf-validate-datatype';
 import rdf from '@rdfjs/data-model';
-import { XSD } from "../../prefixes";
-import { REGEX } from "../../constants";
+
+import { XSD } from '../../prefixes';
+import { REGEX } from '../../constants';
 
 /**
  * Validator for XSD datatypes on string that accepts empty or null values.
@@ -39,7 +40,7 @@ export function datatype(datatypeFn: (() => string)): ValidatorFn {
         if (!datatype || control.value === '' || !control.value) {
             return null;
         }
-        if (datatype === XSD + 'anyURI') {
+        if (datatype === `${XSD}anyURI`) {
             return regex.test(control.value) ? null : {'datatype': true};
         }
         const lit = rdf.literal(control.value, datatype);

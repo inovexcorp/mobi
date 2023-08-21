@@ -32,7 +32,7 @@ import { InfoMessageComponent } from '../../../shared/components/infoMessage/inf
 import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
 import { cleanStylesFromDOM, MockOntologyVisualizationService } from  '../../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { SidePanelPayloadI } from '../../classes/sidebarState';
 import { D3SimulatorService } from '../../services/d3Simulator.service';
 
@@ -41,7 +41,7 @@ describe('Ontology Visualization component', () => {
     let element: DebugElement;
     let fixture: ComponentFixture<OntologyVisualization>;
     let serviceStub: OntologyVisualizationService;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     let cyChartSpy;
 
@@ -55,7 +55,7 @@ describe('Ontology Visualization component', () => {
             providers: [
                 MockProvider(ProgressSpinnerService),
                 { provide: OntologyVisualizationService, useClass: MockOntologyVisualizationService },
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(D3SimulatorService)
             ]
         }).compileComponents();
@@ -69,7 +69,7 @@ describe('Ontology Visualization component', () => {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         serviceStub = TestBed.inject(OntologyVisualizationService) as jasmine.SpyObj<OntologyVisualizationService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         serviceStub.sidePanelActionAction$ = new Subject<SidePanelPayloadI>().asObservable();
         spyOn(component, 'updateGraphState').and.callFake(() => {});
     });
@@ -80,7 +80,7 @@ describe('Ontology Visualization component', () => {
         fixture = null;
         component = null;
         serviceStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize with the correct values', () => {
@@ -90,7 +90,7 @@ describe('Ontology Visualization component', () => {
             expect(component.cyChartSize).toBeTruthy();
             expect(serviceStub.init).toHaveBeenCalled();
             component.ngOnDestroy();
-            expect(utilStub.clearToast).toHaveBeenCalledWith();
+            expect(toastStub.clearToast).toHaveBeenCalledWith();
         }));
     });
     describe('component lifecycle should initialize with the right values', () => {
@@ -115,7 +115,7 @@ describe('Ontology Visualization component', () => {
             expect(cyChartSpy.ready).toHaveBeenCalled();
             expect(serviceStub.init).toHaveBeenCalled();
             expect(component.sidePanelActionSub$.unsubscribe).not.toHaveBeenCalled();
-            expect(utilStub.clearToast).not.toHaveBeenCalled();
+            expect(toastStub.clearToast).not.toHaveBeenCalled();
             expect(component.updateGraphState).not.toHaveBeenCalled();
         });
         it('onDestroy was initialized', () =>  {
@@ -123,7 +123,7 @@ describe('Ontology Visualization component', () => {
             component.cyChart = cyChartSpy;
             component.status.initialized = true;
             component.ngOnDestroy();
-            expect(utilStub.clearToast).toHaveBeenCalledWith();
+            expect(toastStub.clearToast).toHaveBeenCalledWith();
             expect(component.sidePanelActionSub$).toEqual(undefined);
             expect(component.updateGraphState).toHaveBeenCalledWith('commitId12345');
             component.status.initialized = false;
@@ -133,7 +133,7 @@ describe('Ontology Visualization component', () => {
             component.cyChart = cyChartSpy;
             component.status.initialized = false;
             component.ngOnDestroy();
-            expect(utilStub.clearToast).toHaveBeenCalledWith();
+            expect(toastStub.clearToast).toHaveBeenCalledWith();
             expect(component.sidePanelActionSub$).toEqual(undefined);
             expect(component.updateGraphState).not.toHaveBeenCalled();
         });

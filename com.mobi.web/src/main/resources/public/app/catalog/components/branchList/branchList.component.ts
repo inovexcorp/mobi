@@ -22,21 +22,30 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, Input } from '@angular/core';
-import { isEmpty, find, filter, includes, get } from 'lodash';
+import { isEmpty, find, includes, get } from 'lodash';
 
 import { CATALOG, DCTERMS, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDate, getDctermsValue, getPropertyId } from '../../../shared/utility';
+
+interface BranchDisplay {
+    branch: JSONLDObject,
+    title: string,
+    description: string,
+    date: string,
+    head: string
+}
 
 /**
  * @class catalog.BranchList
  *
  * A component which creates a list of expansion panels for all the Branches in the provided catalog Record. If the
  * provided Record is not a VersionedRDFRecord, no branches will be shown. The panel for each Branch shows the title,
- * description, and {@link shared.component:commitHistoryTable}. Only one panel can be open at a time.
+ * description, and {@link shared.CommitHistoryTableComponent}. Only one panel can be open at a time.
  * 
  * @param {JSONLDObject} record A JSON-LD object for a catalog Record
  */
@@ -46,9 +55,8 @@ import { UtilService } from '../../../shared/services/util.service';
     styleUrls: ['./branchList.component.scss']
 })
 export class BranchListComponent {
-    catalogPrefix = CATALOG;
     totalSize = 0;
-    branches: JSONLDObject[] = [];
+    branches: BranchDisplay[] = [];
     catalogId = '';
     increment = 10;
     limit = this.increment;
@@ -59,7 +67,7 @@ export class BranchListComponent {
     @Input() set record(value: JSONLDObject) {
         this._record = value;
         if (this._record && !isEmpty(this._record)) {
-            this.catalogId = this.util.getPropertyId(this._record, CATALOG + 'catalog');
+            this.catalogId = getPropertyId(this._record, `${CATALOG}catalog`);
             this.setBranches();
         }
     }
@@ -67,7 +75,7 @@ export class BranchListComponent {
     get record(): JSONLDObject {
         return this._record;
     }
-    constructor(public cm: CatalogManagerService, public om: OntologyManagerService, public util: UtilService) {}
+    constructor(public cm: CatalogManagerService, public om: OntologyManagerService, private toast: ToastService) {}
 
     loadMore(): void {
         this.limit += this.increment;
@@ -79,18 +87,27 @@ export class BranchListComponent {
             const paginatedConfig: PaginatedConfig = {
                 pageIndex: 0,
                 limit: this.limit,
-                sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'modified', asc: false})
+                sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}modified`, asc: false})
             };
             this.cm.getRecordBranches(this.record['@id'], this.catalogId, paginatedConfig)
                 .subscribe((response: HttpResponse<JSONLDObject[]>) => {
-                    this.branches = filter(response.body, branch => !this.cm.isUserBranch(branch));
-                    this.totalSize = Number(response.headers.get('x-total-count')) || 0 - (response.body.length - this.branches.length);
-                }, this.util.createErrorToast);
+                    this.branches = response.body
+                      .filter(branch => !this.cm.isUserBranch(branch))
+                      .map(branch => ({
+                        branch,
+                        title: getDctermsValue(branch, 'title'),
+                        description: getDctermsValue(branch, 'description'),
+                        date: getDate(getDctermsValue(branch, 'modified'), 'short'),
+                        head: getPropertyId(branch, `${CATALOG}head`)
+                      }));
+                    this.totalSize = Number(response.headers.get('x-total-count')) || 
+                      0 - (response.body.length - this.branches.length);
+                }, error => this.toast.createErrorToast(error));
         }
     }
 
     private isOntOrShapes(): boolean {
         return this.om.isOntologyRecord(this.record)
-            || includes(get(this.record, '@type', []), SHAPESGRAPHEDITOR + 'ShapesGraphRecord');
+            || includes(get(this.record, '@type', []), `${SHAPESGRAPHEDITOR}ShapesGraphRecord`);
     }
 }

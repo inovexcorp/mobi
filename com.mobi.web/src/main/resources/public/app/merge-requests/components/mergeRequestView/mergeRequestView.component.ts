@@ -32,15 +32,15 @@ import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CATALOG, MERGEREQ } from '../../../prefixes';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { getPropertyId } from '../../../shared/utility';
 
 /**
  * @class merge-requests.MergeRequestViewComponent
@@ -70,9 +70,8 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     constructor(public mm: MergeRequestManagerService,
                 public state: MergeRequestsStateService,
                 private dialog: MatDialog,
-                public util: UtilService,
+                private toast: ToastService,
                 public os: OntologyStateService,
-                public om: OntologyManagerService,
                 public um: UserManagerService,
                 private lm: LoginManagerService,
                 protected cm: CatalogManagerService,
@@ -82,12 +81,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
 
         if (!this.isAdminUser) {
-            const targetBranchId = this.util.getPropertyId(this.state.selected.jsonld, MERGEREQ + 'targetBranch');
+            const targetBranchId = getPropertyId(this.state.selected.jsonld, `${MERGEREQ}targetBranch`);
             const managePermissionRequest = {
                 resourceId: this.state.selected.recordIri,
-                actionId: CATALOG + 'Modify',
+                actionId: `${CATALOG}Modify`,
                 actionAttrs: {
-                    [CATALOG + 'branch']: targetBranchId
+                    [`${CATALOG}branch`]: targetBranchId
                 }
             };
             this.pep.evaluateRequest(managePermissionRequest).subscribe(decision => {
@@ -109,9 +108,10 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
             .subscribe(jsonld => {
                 this.state.selected.jsonld = jsonld;
                 this.isAccepted = this.mm.isAccepted(this.state.selected.jsonld);
-                this.state.setRequestDetails(this.state.selected).subscribe(() => {}, this.util.createErrorToast);
+                this.state.setRequestDetails(this.state.selected)
+                  .subscribe(() => {}, error => this.toast.createErrorToast(error));
             }, () => {
-                this.util.createWarningToast('The request you had selected no longer exists');
+                this.toast.createWarningToast('The request you had selected no longer exists');
                 this.back();
             });
     }
@@ -124,7 +124,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     showDelete(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: '<p>Are you sure you want to delete <strong>' + this.state.selected.title + '</strong.?</p>'
+                content: `<p>Are you sure you want to delete <strong>${this.state.selected.title}</strong.?</p>`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
@@ -135,7 +135,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     showAccept(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: '<p>Are you sure you want to accept <strong>' + this.state.selected.title + '</strong.?</p>'
+                content: `<p>Are you sure you want to accept <strong>${this.state.selected.title}</strong.?</p>`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
@@ -152,7 +152,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         this.mm.acceptRequest(requestToAccept.jsonld['@id'])
             .pipe(
                 switchMap(() => {
-                    this.util.createSuccessToast('Request successfully accepted');
+                    this.toast.createSuccessToast('Request successfully accepted');
                     this.isAccepted = true;
                     return this.mm.getRequest(requestToAccept.jsonld['@id']);
                 }),
@@ -179,14 +179,14 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                     if (get(this.os.listItem, 'versionedRdfRecord.branchId') === targetBranchId) {
                         this.os.listItem.upToDate = false;
                         if (this.os.listItem.merge.active) {
-                            this.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                            this.toast.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
                         }
                     }
                     if (this.os.listItem.merge.active && get(this.os.listItem.merge.target, '@id') === targetBranchId) {
-                        this.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+                        this.toast.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
                     }
                 }
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     showResolutionForm(): void {
         this.resolveConflicts = true;
@@ -200,12 +200,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         const resolutions = this._createResolutions();
         this.state.resolveRequestConflicts(this.state.selected, resolutions)
             .subscribe(() => {
-                this.util.createSuccessToast('Conflicts successfully resolved');
+                this.toast.createSuccessToast('Conflicts successfully resolved');
                 this.resolveConflicts = false;
                 this.copiedConflicts = [];
                 this.resolveError = false;
             }, error => {
-                this.util.createErrorToast(error);
+                this.toast.createErrorToast(error);
                 this.resolveError = true;
             });
     }

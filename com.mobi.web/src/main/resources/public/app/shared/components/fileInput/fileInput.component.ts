@@ -76,8 +76,9 @@ export class FileInputComponent implements OnInit {
             this.resetText();
         }
     }
-    update(event) {
-        const files: File[] = [...event.target.files];
+    update(event: Event): void {
+        const target = event.target as HTMLInputElement;
+        const files: File[] = target.files && target.files.length ? [...Array.from(target.files)] : [];
         if (files.length) {
             if (this.multiple) {
                 this.selected = true;

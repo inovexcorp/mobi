@@ -40,7 +40,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { DCTERMS } from '../../../prefixes';
 import { CommitOverlayComponent } from './commitOverlay.component';
 
 describe('Commit Overlay component', function() {
@@ -55,7 +56,11 @@ describe('Commit Overlay component', function() {
     const catalogId = 'catalogId';
     const branchId = 'branchId';
     const commitId = 'commitId';
-    const branch: JSONLDObject = {'@id': branchId};
+    const branch: JSONLDObject = {
+      '@id': branchId,
+      [`${DCTERMS}title`]: [{ '@value': 'title'}],
+      [`${DCTERMS}description`]: [{ '@value': 'description'}]
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -76,7 +81,7 @@ describe('Commit Overlay component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -190,6 +195,11 @@ describe('Commit Overlay component', function() {
             describe('when upToDate is false', function() {
                 beforeEach(function() {
                     ontologyStateStub.listItem.upToDate = false;
+                    ontologyStateStub.listItem.branches = [{
+                        '@id': ontologyStateStub.listItem.versionedRdfRecord.branchId,
+                        [`${DCTERMS}title`]: [{ '@value': 'title'}],
+                        [`${DCTERMS}description`]: [{ '@value': 'description'}]
+                    }];
                 });
                 describe('when createRecordUserBranch is resolved', function() {
                     beforeEach(function() {
@@ -210,12 +220,12 @@ describe('Commit Overlay component', function() {
                                 component.commit();
                                 tick();
                                 expect(catalogManagerStub.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateStub
-                                    .listItem.versionedRdfRecord.recordId, catalogId, jasmine.any(Object), oldCommitId,
-                                    oldBranchId);
+                                    .listItem.versionedRdfRecord.recordId, catalogId, { title: 'title', description: 'description' }, 
+                                    oldCommitId, oldBranchId);
                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, ontologyStateStub
                                     .listItem.versionedRdfRecord.recordId, catalogId);
-                                expect(ontologyStateStub.listItem.branches.length).toEqual(1);
-                                expect(ontologyStateStub.listItem.branches[0]).toEqual(branch);
+                                expect(ontologyStateStub.listItem.branches.length).toEqual(2);
+                                expect(ontologyStateStub.listItem.branches.includes(branch)).toBeTrue();
                                 expect(ontologyStateStub.listItem.versionedRdfRecord.branchId).toEqual(branchId);
                                 expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId,
@@ -233,12 +243,12 @@ describe('Commit Overlay component', function() {
                                 component.commit();
                                 tick();
                                 expect(catalogManagerStub.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateStub
-                                    .listItem.versionedRdfRecord.recordId, catalogId, jasmine.any(Object), oldCommitId,
-                                    oldBranchId);
+                                    .listItem.versionedRdfRecord.recordId, catalogId, { title: 'title', description: 'description' },
+                                    oldCommitId, oldBranchId);
                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, ontologyStateStub
                                     .listItem.versionedRdfRecord.recordId, catalogId);
-                                expect(ontologyStateStub.listItem.branches.length).toEqual(1);
-                                expect(ontologyStateStub.listItem.branches[0]).toEqual(branch);
+                                expect(ontologyStateStub.listItem.branches.length).toEqual(2);
+                                expect(ontologyStateStub.listItem.branches.includes(branch)).toBeTrue();
                                 expect(ontologyStateStub.listItem.versionedRdfRecord.branchId).toEqual(branchId);
                                 expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId,
@@ -254,12 +264,12 @@ describe('Commit Overlay component', function() {
                             component.commit();
                             tick();
                             expect(catalogManagerStub.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateStub
-                                .listItem.versionedRdfRecord.recordId, catalogId, jasmine.any(Object), oldCommitId,
-                                oldBranchId);
+                                .listItem.versionedRdfRecord.recordId, catalogId, { title: 'title', description: 'description' }, 
+                                oldCommitId, oldBranchId);
                             expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, ontologyStateStub
                                 .listItem.versionedRdfRecord.recordId, catalogId);
-                            expect(ontologyStateStub.listItem.branches.length).toEqual(1);
-                            expect(ontologyStateStub.listItem.branches[0]).toEqual(branch);
+                            expect(ontologyStateStub.listItem.branches.length).toEqual(2);
+                              expect(ontologyStateStub.listItem.branches.includes(branch)).toBeTrue();
                             expect(ontologyStateStub.listItem.versionedRdfRecord.branchId).toEqual(branchId);
                             expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.branchId,
                                 ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, component.commitForm.controls.comment.value);
@@ -272,7 +282,8 @@ describe('Commit Overlay component', function() {
                         component.commit();
                         tick();
                         expect(catalogManagerStub.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateStub
-                            .listItem.versionedRdfRecord.recordId, catalogId, jasmine.any(Object), ontologyStateStub.listItem.versionedRdfRecord.commitId,
+                            .listItem.versionedRdfRecord.recordId, catalogId, { title: 'title', description: 'description' },
+                            ontologyStateStub.listItem.versionedRdfRecord.commitId,
                             ontologyStateStub.listItem.versionedRdfRecord.branchId);
                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, ontologyStateStub
                             .listItem.versionedRdfRecord.recordId, catalogId);

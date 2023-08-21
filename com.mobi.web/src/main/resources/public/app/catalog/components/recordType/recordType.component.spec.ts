@@ -29,8 +29,7 @@ import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
-import { SharedModule } from '../../../shared/shared.module';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { RecordTypeComponent } from './recordType.component';
 
 describe('Record Type component', function() {
@@ -38,17 +37,20 @@ describe('Record Type component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<RecordTypeComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+
+    const recordType = 'http://test.com#typeA';
+    const record: JSONLDObject = {
+        '@id': 'recordId',
+        '@type': [ recordType ]
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
             declarations: [
                 RecordTypeComponent
             ],
             providers: [
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
             ],
         }).compileComponents();
 
@@ -56,11 +58,8 @@ describe('Record Type component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-
-        catalogManagerStub.coreRecordTypes = ['core'];
-        catalogManagerStub.recordTypes = ['core', 'typeA', 'typeB'];
-        utilStub.getBeautifulIRI.and.callFake(a => a);
+        catalogManagerStub.getType.and.returnValue(recordType);
+        component.record = record;
     });
 
     afterEach(function() {
@@ -69,12 +68,18 @@ describe('Record Type component', function() {
         element = null;
         fixture = null;
         catalogManagerStub = null;
-        utilStub = null;
     });
 
+    it('initializes correctly on record change', function() {
+        expect(component.type).toEqual('Type A');
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.record-type')).length).toEqual(1);
+        });
+        it('with the appropriate type display', function() {
+            fixture.detectChanges();
+            expect(element.nativeElement.innerHTML).toContain('Type A');
         });
     });
 });

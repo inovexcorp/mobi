@@ -40,12 +40,14 @@ import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { DCTERMS, SHAPESGRAPHEDITOR, POLICY } from '../../../prefixes';
+import { DCTERMS, SHAPESGRAPHEDITOR, POLICY, RDF } from '../../../prefixes';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue } from '../../../shared/utility';
+import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 
-interface OptionGroup {
+export interface OptionGroup {
     title: string,
     options: string[] | RecordSelectFiltered[]
 }
@@ -77,8 +79,8 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     };
 
     shapesRecordSearchConfig: PaginatedConfig = {
-        sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
-        type: SHAPESGRAPHEDITOR + 'ShapesGraphRecord'
+        sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
+        type: `${SHAPESGRAPHEDITOR}ShapesGraphRecord`
     };
     spinnerId = 'editor-record-select';
 
@@ -87,7 +89,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
    
     constructor(private dialog: MatDialog,
                 private state: ShapesGraphStateService,
-                private util: UtilService,
+                private toast: ToastService,
                 private spinnerSrv: ProgressSpinnerService,
                 private cm: CatalogManagerService,
                 private pm: PolicyManagerService,
@@ -117,14 +119,14 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
         event.stopPropagation();
         this.dialog.open(NewShapesGraphRecordModalComponent);
     }
-    selectRecord(event: MatAutocompleteSelectedEvent): Promise<any> {
+    selectRecord(event: MatAutocompleteSelectedEvent): void {
         const record = event.option.value;
-        return this.state.openShapesGraph(record)
-            .then(() => {
+        this.state.openShapesGraph(record)
+            .subscribe(() => {
                 this.recordSearchControl.setValue(record.title);
                 this.opened.push(record);
                 remove(this.unopened, {recordId: record.recordId});
-            }, this.util.createErrorToast);
+            }, error => this.toast.createErrorToast(error));
     }
     close(): void {
         this.textInput.nativeElement.blur();
@@ -156,7 +158,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                     this.opened = openTmp;
                     this.unopened = unopenedTmp;
                     if (this.unopened.length !== 0) {
-                        const deleteRequest: any = {
+                        const deleteRequest: XACMLRequest = {
                             resourceId: this.unopened.map(record => record['recordId']),
                             actionId: [this.pm.actionDelete]
                         };
@@ -166,7 +168,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                     }
                 }),
                 catchError(errorMessage => {
-                    this.util.createErrorToast(errorMessage);
+                    this.toast.createErrorToast(errorMessage);
                     return throwError(errorMessage);
                 }),
                 finalize(() => {
@@ -197,7 +199,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
         event.stopPropagation();
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: '<p>Are you sure you want to delete <strong>' + record.title + '</strong>?</p>'
+                content: `<p>Are you sure you want to delete <strong>${record.title}</strong>?</p>`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
@@ -207,16 +209,16 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     }
     deleteShapesGraphRecord(recordIri: string): void {
         this.state.deleteShapesGraph(recordIri)
-            .then(() => {
-                this.util.createSuccessToast(recordIri + ' deleted successfully!');
-            }, errorMessage => this.util.createErrorToast(errorMessage));
+            .subscribe(() => {
+                this.toast.createSuccessToast(`${recordIri} deleted successfully!`);
+            }, errorMessage => this.toast.createErrorToast(errorMessage));
     }
 
     private getRecordSelectFiltered(record: JSONLDObject): RecordSelectFiltered {
         return {
             recordId: record['@id'],
-            title: this.util.getDctermsValue(record, 'title'),
-            description: this.util.getDctermsValue(record, 'description')
+            title: getDctermsValue(record, 'title'),
+            description: getDctermsValue(record, 'description')
         };
     }
     protected setFilteredOptions(): void {
@@ -230,7 +232,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
         if (this?.state?.listItem?.versionedRdfRecord.recordId) {
             const record = find([...this.opened, ...this.unopened], {recordId: this.state.listItem.versionedRdfRecord.recordId});
             if (!record) {
-                this.util.createWarningToast('Previously opened ShapesGraphRecord ' + this.state.listItem.versionedRdfRecord.title + ' was removed.');
+                this.toast.createWarningToast(`Previously opened ShapesGraphRecord ${this.state.listItem.versionedRdfRecord.title} was removed.`);
                 this.state.closeShapesGraph(this.state.listItem.versionedRdfRecord.recordId);
                 remove(this.opened, {recordId: this.state.listItem.versionedRdfRecord.recordId});
                 this.state.listItem = new ShapesGraphListItem();
@@ -250,7 +252,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                     this.disabledFlag = true;
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve shapes graph record creation permissions');
+                this.toast.createWarningToast('Could not retrieve shapes graph record creation permissions');
                 this.disabledFlag = true;
             });
     }
@@ -259,10 +261,10 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     }
     private createPepRequest() {
         return {
-            resourceId: 'http://mobi.com/catalog-local',
-            actionId: POLICY + 'Create',
+            resourceId: this.catalogId,
+            actionId: `${POLICY}Create`,
             actionAttrs: {
-                         'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord'
+                [`${RDF}type`]: `${SHAPESGRAPHEDITOR}ShapesGraphRecord`
             }
         };
     }

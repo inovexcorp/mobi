@@ -30,7 +30,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { REGEX } from '../../../constants';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { TagConfig } from '../../../shared/models/tagConfig.interface';
 
 /**
@@ -58,8 +58,7 @@ export class CreateTagOverlayComponent implements OnInit {
     });
 
     constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CreateTagOverlayComponent>,
-        private cm: CatalogManagerService, public os: OntologyStateService,
-        private camelCase: CamelCasePipe, private splitIRI: SplitIRIPipe) {}
+        private cm: CatalogManagerService, public os: OntologyStateService, private camelCase: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -76,7 +75,7 @@ export class CreateTagOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRI.transform(this.createForm.controls.iri.value);
+            const split = splitIRI(this.createForm.controls.iri.value);
             this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCase.transform(newName, 'class'));
         }
     }

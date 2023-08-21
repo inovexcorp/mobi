@@ -27,7 +27,7 @@ import { MergeRequestManagerService } from '../../../shared/services/mergeReques
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { Commit } from '../../../shared/models/commit.interface';
 
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class merge-requests.CreateRequestComponent
@@ -48,7 +48,7 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
 
     @ViewChild('requestStepper', { static: true }) requestStepper: MatStepper;
 
-    constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, public util: UtilService) {}
+    constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, public toast: ToastService) {}
 
     // TODO: Come Angular 7, replace with binding on stepper in template 
     ngOnInit(): void {
@@ -62,9 +62,9 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
     submit(): void {
         this.mm.createRequest(this.state.requestConfig)
             .subscribe(() => {
-                this.util.createSuccessToast('Successfully created request');
+                this.toast.createSuccessToast('Successfully created request');
                 this.state.createRequest = false;
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     resetBranchSelect(): void  {
         this.state.requestConfig.sourceBranchId = '';

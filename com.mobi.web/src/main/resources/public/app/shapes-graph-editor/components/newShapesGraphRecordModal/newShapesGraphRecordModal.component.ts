@@ -27,6 +27,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class shapes-graph-editor.NewShapesGraphRecordModalComponent
@@ -39,7 +40,7 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
     styleUrls: ['./newShapesGraphRecordModal.component.scss']
 })
 export class NewShapesGraphRecordModalComponent {
-    error: any = '';
+    error: RESTError;
     createRecordForm = this.fb.group({
         title: ['', Validators.required],
         description: [''],
@@ -56,19 +57,27 @@ export class NewShapesGraphRecordModalComponent {
                 private state: ShapesGraphStateService) {}
 
     create(): void {
-        this.error = '';
+        this.error = undefined;
         const rdfUpload: RdfUpload = {
             title: this.createRecordForm.controls.title.value,
             description: this.createRecordForm.controls.description.value,
             keywords: this.createRecordForm.controls.keywords.value,
             file: this.selectedFile
         };
-        this.state.uploadShapesGraph(rdfUpload)
-            .then(() => this.dialogRef.close(true),
-                    error => {
-                        this.error = error;
-                    }
-            );
+        this.state.uploadShapesGraph(rdfUpload).subscribe(
+            () => this.dialogRef.close(true),
+            error => {
+                if (typeof error === 'string') {
+                    this.error = {
+                        errorMessage: error,
+                        error: '',
+                        errorDetails: []
+                    };
+                } else {
+                    this.error = error;
+                }
+            }
+        );
     }
     add(event: MatChipInputEvent): void {
         const value = (event.value || '').trim();

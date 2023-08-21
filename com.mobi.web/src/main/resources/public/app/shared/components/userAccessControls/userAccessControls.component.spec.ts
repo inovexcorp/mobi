@@ -86,15 +86,15 @@ describe('User Access Controls component', function() {
 
         everyoneMatch = {
             AttributeDesignator: {
-                AttributeId: USER + 'hasUserRole',
+                AttributeId: `${USER}hasUserRole`,
                 Category: policyManagerStub.subjectCategory,
-                DataType: XSD + 'string',
+                DataType: `${XSD}string`,
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['http://mobi.com/roles/user'],
                 otherAttributes: {},
-                DataType: XSD + 'string'
+                DataType: `${XSD}string`
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -102,13 +102,13 @@ describe('User Access Controls component', function() {
             AttributeDesignator: {
                 AttributeId: policyManagerStub.subjectId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: XSD + 'string',
+                DataType: `${XSD}string`,
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['user1'],
                 otherAttributes: {},
-                DataType: XSD + 'string'
+                DataType: `${XSD}string`
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -116,13 +116,13 @@ describe('User Access Controls component', function() {
             AttributeDesignator: {
                 AttributeId: component.groupAttributeId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: XSD + 'string',
+                DataType: `${XSD}string`,
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['group1'],
                 otherAttributes: {},
-                DataType: XSD + 'string'
+                DataType: `${XSD}string`
             },
             MatchId: policyManagerStub.stringEqual
         };

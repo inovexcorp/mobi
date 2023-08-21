@@ -69,7 +69,7 @@ export class MarkdownEditorComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.height) {
-            this.markdownOptions.height = this.height + 'px';
+            this.markdownOptions.height = `${this.height}px`;
         }
     }
     openHelp(): void {

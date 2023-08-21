@@ -31,7 +31,15 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
+
+interface RecordDisplay {
+  record: JSONLDObject,
+  title: string,
+  description: string,
+  ontologyIRI: string
+}
 
 /**
  * @class merge-requests.RequestRecordSelectComponent
@@ -46,8 +54,7 @@ import { UtilService } from '../../../shared/services/util.service';
 })
 export class RequestRecordSelectComponent implements OnInit {
     catalogId = '';
-    ontologyEditorPrefix = ONTOLOGYEDITOR;
-    records: JSONLDObject[] = [];
+    records: RecordDisplay[] = [];
     totalSize = 0;
     config: PaginatedConfig = {
         type: '',
@@ -60,12 +67,12 @@ export class RequestRecordSelectComponent implements OnInit {
     @ViewChild('mrRecords', { static: true }) mrRecords: ElementRef;
 
     constructor(public cm: CatalogManagerService, public state: MergeRequestsStateService,
-        private spinnerSvc: ProgressSpinnerService, public util: UtilService) {}
+        private spinnerSvc: ProgressSpinnerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
-        this.config.type = ONTOLOGYEDITOR + 'OntologyRecord';
-        this.config.sortOption = find(this.cm.sortOptions, { field: DCTERMS + 'title', asc: true });
+        this.config.type = `${ONTOLOGYEDITOR}OntologyRecord`;
+        this.config.sortOption = find(this.cm.sortOptions, { field: `${DCTERMS}title`, asc: true });
         this.setInitialRecords();
     }
     selectRecord(record: JSONLDObject): void {
@@ -79,7 +86,7 @@ export class RequestRecordSelectComponent implements OnInit {
             .subscribe((response: HttpResponse<JSONLDObject[]>) => this._setPagination(response), error => {
                 this.records = [];
                 this.totalSize = 0;
-                this.util.createErrorToast(error);
+                this.toast.createErrorToast(error);
                 this.spinnerSvc.finishLoadingForComponent(this.mrRecords);
             });
     }
@@ -91,7 +98,12 @@ export class RequestRecordSelectComponent implements OnInit {
     }
 
     private _setPagination(response: HttpResponse<JSONLDObject[]>) {
-        this.records = response.body;
+        this.records = response.body.map(record => ({
+          record,
+          title: getDctermsValue(record, 'title'),
+          description: getDctermsValue(record, 'description'),
+          ontologyIRI: getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`)
+        }));
         this.totalSize = Number(response.headers.get('x-total-count')) || 0;
         this.spinnerSvc.finishLoadingForComponent(this.mrRecords);
      }

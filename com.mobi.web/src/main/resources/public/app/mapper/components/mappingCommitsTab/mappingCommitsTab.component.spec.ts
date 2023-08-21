@@ -29,11 +29,12 @@ import { of, throwError } from 'rxjs';
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { CATALOG } from '../../../prefixes';
+import { CATALOG, DCTERMS } from '../../../prefixes';
 import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MappingCommitsTabComponent } from './mappingCommitsTab.component';
 
 describe('Mapping Commits Tab component', function() {
@@ -41,12 +42,17 @@ describe('Mapping Commits Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<MappingCommitsTabComponent>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error Message';
     const commitId = 'commitId';
     const branchTitle = 'branchTitle';
-    const branch = { '@id': 'branchId' };
+    const branch: JSONLDObject = {
+      '@id': 'branchId',
+      '@type': [`${CATALOG}Branch`],
+      [`${DCTERMS}title`]: [{ '@value': branchTitle }],
+      [`${CATALOG}head`]: [{ '@id': commitId }],
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -56,7 +62,7 @@ describe('Mapping Commits Tab component', function() {
             ],
             providers: [
                 MockProvider(MapperStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         });
     });
@@ -66,7 +72,7 @@ describe('Mapping Commits Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         mapperStateStub.selected = {
             mapping: undefined,
@@ -83,19 +89,13 @@ describe('Mapping Commits Tab component', function() {
     });
 
     describe('should initialize correctly', function() {
-        beforeEach(function() {
-            utilStub.getPropertyId.and.returnValue(commitId);
-            utilStub.getDctermsValue.and.returnValue(branchTitle);
-        });
         it('if a new mapping is being created', function() {
             mapperStateStub.newMapping = true;
             component.ngOnInit();
             expect(mapperStateStub.setMasterBranch).not.toHaveBeenCalled();
-            expect(utilStub.getPropertyId).not.toHaveBeenCalled();
-            expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
             expect(component.commitId).toEqual('');
             expect(component.branchTitle).toEqual('');
-            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
         });
         describe('if the mapping master branch has not been set yet for an existing mapping', function() {
             beforeEach(function() {
@@ -106,11 +106,9 @@ describe('Mapping Commits Tab component', function() {
                 component.ngOnInit();
                 tick();
                 expect(mapperStateStub.setMasterBranch).toHaveBeenCalledWith();
-                expect(utilStub.getPropertyId).not.toHaveBeenCalled();
-                expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
                 expect(component.commitId).toEqual('');
                 expect(component.branchTitle).toEqual('');
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
             it('successfully', fakeAsync(function() {
                 mapperStateStub.setMasterBranch.and.callFake(() => {
@@ -120,19 +118,15 @@ describe('Mapping Commits Tab component', function() {
                 component.ngOnInit();
                 tick();
                 expect(mapperStateStub.setMasterBranch).toHaveBeenCalledWith();
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
-                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
                 expect(component.commitId).toEqual(commitId);
                 expect(component.branchTitle).toEqual(branchTitle);
             }));
         });
         it('if the mapping master branch has been retrieved already', function() {
-            mapperStateStub.selected.branch = {'@id': 'branchId'};
+            mapperStateStub.selected.branch = branch;
             mapperStateStub.newMapping = false;
             component.ngOnInit();
             expect(mapperStateStub.setMasterBranch).not.toHaveBeenCalled();
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
-            expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
             expect(component.commitId).toEqual(commitId);
             expect(component.branchTitle).toEqual(branchTitle);
         });

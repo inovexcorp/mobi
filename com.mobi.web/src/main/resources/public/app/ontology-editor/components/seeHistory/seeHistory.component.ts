@@ -20,18 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { findIndex, head } from 'lodash';
+import { findIndex } from 'lodash';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { finalize, first, switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { Commit } from '../../../shared/models/commit.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { condenseCommitId, isBlankNodeId } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.SeeHistoryComponent
@@ -54,7 +54,7 @@ export class SeeHistoryComponent{
     @ViewChild('compiledResource') compiledResource: ElementRef;
     
     constructor(public os: OntologyStateService, public om: OntologyManagerService, public cm: CatalogManagerService,
-                private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
+                private spinnerSvc: ProgressSpinnerService) {}
 
     goBack(): void {
         this.os.listItem.seeHistory = undefined;
@@ -72,7 +72,7 @@ export class SeeHistoryComponent{
         this.selectCommit();
     }
     getEntityNameDisplay(iri: string): string {
-        return this.util.isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityNameByListItem(iri);
+        return isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityNameByListItem(iri);
     }
     receiveCommits(commits: Commit[]): void {
         this.commits = commits;
@@ -82,9 +82,9 @@ export class SeeHistoryComponent{
         }
     }
     createLabel(commitId: string): string {
-        let label = this.util.condenseCommitId(commitId);
+        let label = condenseCommitId(commitId);
         if (commitId === this.commits[0].id) {
-            label = label + ' (latest)';
+            label = `${label} (latest)`;
         }
         return label;
     }

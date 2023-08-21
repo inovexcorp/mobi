@@ -30,7 +30,7 @@ import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interfac
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class catalog.RecordsViewComponent
@@ -38,7 +38,7 @@ import { UtilService } from '../../../shared/services/util.service';
  * A component which creates a div with a Bootstrap `row` containing a list of Records in the Mobi instance. The list
  * can be sorted using a {@link catalog.SortOptionsComponent}, searched using a {@link catalog.SearchBarComponent}, and
  * filtered using a {@link catalog.RecordFiltersComponent}. The list is also paginated with a `mat-paginator`. Each
- * Record is displayed using a {@link catalog.component:recordCard} that will select the Record it in the
+ * Record is displayed using a {@link catalog.RecordCardComponent} that will select the Record it in the
  * {@link shared.CatalogStateService} when clicked.
  */
 @Component({
@@ -50,7 +50,7 @@ export class RecordsViewComponent implements OnInit {
     records = [];
     catalogId = '';
 
-    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public util: UtilService) {}
+    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public toast: ToastService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -104,6 +104,6 @@ export class RecordsViewComponent implements OnInit {
                 this.state.recordSortOption = sortOption;
                 this.records = response.body;
                 this.state.totalRecordSize = Number(response.headers.get('x-total-count')) || 0;
-            }, this.util.createErrorToast);
+            }, this.toast.createErrorToast);
     }
 }

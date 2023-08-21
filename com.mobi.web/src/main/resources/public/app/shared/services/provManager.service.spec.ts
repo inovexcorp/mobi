@@ -20,19 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
-import { UtilService } from './util.service';
-import { ProvManagerService } from './provManager.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { ActivityAction } from '../models/activityAction.interface';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { ProvManagerService } from './provManager.service';
 
 describe('Prov Manager service', function() {
     let service: ProvManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let spinnerSvcStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
 
     const error = 'Error Message';
@@ -42,46 +42,20 @@ describe('Prov Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 ProvManagerService,
-                MockProvider(UtilService),
+                MockProvider(ProgressSpinnerService),
             ]
         });
 
         service = TestBed.inject(ProvManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        spinnerSvcStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
       
-        utilStub.paginatedConfigToParams.and.callFake(x => Object.assign({}, x) || {});
-        utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
-        utilStub.rejectError.and.callFake(() => Promise.reject(error));
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-
-            return httpParams;
-        });
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
+        spinnerSvcStub.trackedRequest.and.callFake((ob) => ob);
     });
 
     afterEach(function() {
         service = null;
-        utilStub = null;
+        spinnerSvcStub = null;
         httpMock.verify();
     });
 
@@ -179,15 +153,15 @@ describe('Prov Manager service', function() {
                          expect(e).toEqual(error);
                      });
 
-                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 const request = httpMock.expectOne({url: `${service.prefix}/actions`, method: 'GET'});
                  request.flush('flush', { status: 400, statusText: error });
              });
              it('successfully', function() {
                  service.getActionWords(isTracked)
-                     .subscribe((response: any) => {
+                     .subscribe((response: ActivityAction[]) => {
                          expect(response).toEqual([]);
                      });
-                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 const request = httpMock.expectOne({url: `${service.prefix}/actions`, method: 'GET'});
                  request.flush([]);
              });
          });
@@ -200,15 +174,15 @@ describe('Prov Manager service', function() {
                          expect(e).toEqual(error);
                      });
 
-                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 const request = httpMock.expectOne({url: `${service.prefix}/actions`, method: 'GET'});
                  request.flush('flush', { status: 400, statusText: error });
              });
              it('successfully', function() {
                  service.getActionWords()
-                     .subscribe((response: any) => {
+                     .subscribe((response: ActivityAction[]) => {
                          expect(response).toEqual([]);
                      });
-                 const request = httpMock.expectOne({url: service.prefix + '/actions', method: 'GET'});
+                 const request = httpMock.expectOne({url: `${service.prefix}/actions`, method: 'GET'});
                  request.flush([]);
              });
          });

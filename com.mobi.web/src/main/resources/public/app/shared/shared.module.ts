@@ -60,6 +60,8 @@ import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 
+import { SHACLFormsModule } from '../shacl-forms/shacl-forms.module';
+
 import { ActivityListComponent } from './components/activity-list/activity-list.component';
 import { ActivityTitleComponent } from './components/activityTitle/activityTitle.component';
 import { BlankNodeValueDisplayComponent } from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
@@ -88,8 +90,6 @@ import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolv
 import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
 import { SearchBarComponent } from './components/searchBar/searchBar.component';
 import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
-import { SettingFormComponent } from './components/settingForm/settingForm.component';
-import { SettingFormFieldComponent } from './components/settingFormField/settingFormField.component';
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SpinnerComponent } from './components/progress-spinner/components/spinner/spinner.component';
@@ -129,10 +129,10 @@ import { ShapesGraphManagerService } from './services/shapesGraphManager.service
 import { ShapesGraphStateService } from './services/shapesGraphState.service';
 import { SparqlManagerService } from './services/sparqlManager.service';
 import { StateManagerService } from './services/stateManager.service';
+import { ToastService } from './services/toast.service';
 import { UpdateRefsService } from './services/updateRefs.service';
 import { UserManagerService } from './services/userManager.service';
 import { UserStateService } from './services/userState.service';
-import { UtilService } from './services/util.service';
 import { WindowRef } from './services/windowRef.service';
 import { YasguiService } from './services/yasgui.service';
 
@@ -192,7 +192,8 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         MatTooltipModule,
         ReactiveFormsModule,
         ShowdownModule.forRoot({flavor: 'github'}),
-        HistoryGraph
+        HistoryGraph,
+        SHACLFormsModule
     ],
     declarations: [
         ActivityListComponent,
@@ -222,8 +223,6 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         ResolveConflictsFormComponent,
         SearchBarComponent,
         SettingEditPageComponent,
-        SettingFormComponent,
-        SettingFormFieldComponent,
         SettingGroupComponent,
         SidebarComponent,
         SpinnerComponent,
@@ -280,6 +279,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         MatTooltipModule,
         ReactiveFormsModule,
         ShowdownModule,
+        SHACLFormsModule,
         ActivityListComponent,
         ActivityTitleComponent,
         BlankNodeValueDisplayComponent,
@@ -351,10 +351,10 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         ShapesGraphStateService,
         SparqlManagerService,
         StateManagerService,
+        ToastService,
         UpdateRefsService,
         UserManagerService,
         UserStateService,
-        UtilService,
         WindowRef,
         YasguiService,
         BeautifyPipe,

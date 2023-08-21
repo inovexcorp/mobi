@@ -30,11 +30,12 @@ import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { RDFS } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { getIRILocalName, getIRINamespace } from '../../../shared/utility';
 
 interface AxiomGroup {
     namespace: string,
@@ -81,8 +82,8 @@ export class AxiomOverlayComponent implements OnInit {
 
     axiomChoice = new UntypedFormControl('');
 
-    constructor( private os: OntologyStateService, private om: OntologyManagerService, private splitIRI: SplitIRIPipe,
-                 private dialogRef: MatDialogRef<AxiomOverlayComponent>, private util: UtilService,
+    constructor( private os: OntologyStateService, private om: OntologyManagerService,
+                 private dialogRef: MatDialogRef<AxiomOverlayComponent>, private toast: ToastService,
                  private mc: ManchesterConverterService, private pm: PropertyManagerService,
                  @Inject(MAT_DIALOG_DATA) public data: {axiomList: {iri: string, valuesKey: string}[]} ) {
     }
@@ -123,10 +124,10 @@ export class AxiomOverlayComponent implements OnInit {
         return rtn;
     }
     getIRINamespace(axiom: {iri: string, valuesKey: string}): string {
-        return this.util.getIRINamespace(get(axiom, 'iri'));
+        return getIRINamespace(get(axiom, 'iri'));
     }
     getIRILocalName(axiom: {iri: string, valuesKey: string}): string {
-        return this.util.getIRILocalName(get(axiom, 'iri'));
+        return getIRILocalName(get(axiom, 'iri'));
     }
     selectAxiom(event: MatAutocompleteSelectedEvent): void {
         const prevAxiom = this.axiom;
@@ -140,7 +141,7 @@ export class AxiomOverlayComponent implements OnInit {
         let values;
         // Collect values depending on current tab
         if (this.tabIndex === 1) {
-            const usingDatatypeRange: boolean = (axiom === RDFS + "range" && this.om.isDataTypeProperty(this.os.listItem.selected));
+            const usingDatatypeRange: boolean = (axiom === `${RDFS}range` && this.om.isDataTypeProperty(this.os.listItem.selected));
             const result = this.mc.manchesterToJsonld(this.expression, this.localNameMap, usingDatatypeRange);
             if (result.errorMessage) {
                 this.errorMessage = result.errorMessage;
@@ -164,10 +165,10 @@ export class AxiomOverlayComponent implements OnInit {
         }
         const addedValues = filter(values, value => this.pm.addId(this.os.listItem.selected, axiom, value));
         if (addedValues.length !== values.length) {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         if (addedValues.length) {
-            if (axiom === RDFS + 'range') {
+            if (axiom === `${RDFS}range`) {
                 this.os.updatePropertyIcon(this.os.listItem.selected);
             }
             const valueObjs = addedValues.map(value => ({'@id': value}));
@@ -196,7 +197,7 @@ export class AxiomOverlayComponent implements OnInit {
         const filtered = this.removeIriFromArray(array, this.os.listItem.selected['@id']);
         this.valuesSelectList = {};
         filtered.forEach(iri => {
-            this.valuesSelectList[iri] = this.util.getIRINamespace(iri);
+            this.valuesSelectList[iri] = getIRINamespace(iri);
         });
     }
     removeIriFromArray(array: string [], removalIRI: string): string[] {
@@ -219,7 +220,7 @@ export class AxiomOverlayComponent implements OnInit {
     private createLocalNameMap() {
         const map = {};
         this.os.listItem.iriList.forEach(iri => {
-            map[this.splitIRI.transform(iri).end] = iri;
+            map[splitIRI(iri).end] = iri;
         });
         return map;
     }

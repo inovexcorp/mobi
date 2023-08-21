@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { some } from 'lodash';
 
 import { DELIM } from '../../../prefixes';
@@ -28,7 +28,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { MappingInvalidProp } from '../../../shared/models/mappingInvalidProp.interface';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDctermsValue, getPropertyId, getPropertyValue } from '../../../shared/utility';
 
 /**
  * @class mapper.MappingPreviewComponent
@@ -70,23 +70,23 @@ export class MappingPreviewComponent implements OnChanges {
         return this._mapping;
     }
     
-    constructor(private mm: MappingManagerService, public util: UtilService) {}
+    constructor(private mm: MappingManagerService) {}
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.udateInvalidList();
     }
 
     getIriTemplate(classMapping: JSONLDObject): string {
-        const prefix = this.util.getPropertyValue(classMapping, DELIM + 'hasPrefix');
-        const localName = this.util.getPropertyValue(classMapping, DELIM + 'localName');
+        const prefix = getPropertyValue(classMapping, `${DELIM}hasPrefix`);
+        const localName = getPropertyValue(classMapping, `${DELIM}localName`);
         return prefix + localName;
     }
     getPropValue(propMapping: JSONLDObject): string {
         if (this.mm.isDataMapping(propMapping)) {
-            return this.util.getPropertyValue(propMapping, DELIM + 'columnIndex');
+            return getPropertyValue(propMapping, `${DELIM}columnIndex`);
         } else {
-            const classMapping = this.mapping.getClassMapping(this.util.getPropertyId(propMapping, DELIM + 'classMapping'));
-            return this.util.getDctermsValue(classMapping, 'title');
+            const classMapping = this.mapping.getClassMapping(getPropertyId(propMapping, `${DELIM}classMapping`));
+            return getDctermsValue(classMapping, 'title');
         }
     }
     isInvalid(propMappingId: string): boolean {
@@ -95,11 +95,11 @@ export class MappingPreviewComponent implements OnChanges {
     setClassMappings(): void {
         this.classMappings = this.mapping.getAllClassMappings().map(originalClassMapping => ({
             id: originalClassMapping['@id'],
-            title: this.util.getDctermsValue(originalClassMapping, 'title'),
+            title: getDctermsValue(originalClassMapping, 'title'),
             iriTemplate: this.getIriTemplate(originalClassMapping),
             propMappings: this.mapping.getPropMappingsByClass(originalClassMapping['@id']).map(originalPropMapping => ({
                     id: originalPropMapping['@id'],
-                    title: this.util.getDctermsValue(originalPropMapping, 'title'),
+                    title: getDctermsValue(originalPropMapping, 'title'),
                     isInvalid: this.isInvalid(originalPropMapping['@id']),
                     value: this.getPropValue(originalPropMapping)
             })).sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title))

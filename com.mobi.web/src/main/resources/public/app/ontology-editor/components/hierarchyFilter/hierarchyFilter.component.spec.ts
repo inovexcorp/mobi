@@ -82,7 +82,10 @@ describe('Hierarchy Filter component', function() {
             expect(element.queryAll(By.css('mat-menu')).length).toEqual(1);
         });
         it('after clicking the button', function() {
-            component.filters = [{checked: true, flag: true, name: 'filter1'}, {checked: false, flag: false, name: 'filter2'}];
+            component.filters = [
+                { checked: true, flag: true, name: 'filter1', filter: () => true }, 
+                { checked: false, flag: false, name: 'filter2', filter: () => true }
+            ];
             fixture.detectChanges();
             expect(element.queryAll(By.css('.mat-menu-panel')).length).toEqual(0);
             const button = element.query(By.css('a.mat-icon-button'));
@@ -93,17 +96,20 @@ describe('Hierarchy Filter component', function() {
         });
     });
     describe('controller methods', function() {
+        beforeEach(function() {
+            this.filter = { checked: true, flag: false, name: '', filter: () => true };
+        });
         it('should update flag with checked value in this and parent scopes on apply', function() {
             spyOn(component.updateFilters, 'emit');
-            component.filters = [{checked: true, flag: false}];
+            component.filters = [this.filter];
             component.apply();
 
-            expect(component.filters).toEqual([{checked: true, flag: true}]);
-            expect(component.updateFilters.emit).toHaveBeenCalledWith([{checked: true, flag: true}]);
+            expect(component.filters).toEqual([this.filter]);
+            expect(component.updateFilters.emit).toHaveBeenCalledWith([this.filter]);
         });
         it('should set numFilters to number of flagged filters on apply', function() {
             component.numFilters = 0;
-            component.filters = [{checked: true, flag: false}];
+            component.filters = [this.filter];
             component.apply();
 
             expect(component.numFilters).toEqual(1);
@@ -111,21 +117,23 @@ describe('Hierarchy Filter component', function() {
         it('should perform a filter on apply', function() {
             spyOn(component.submitEvent, 'emit');
             component.numFilters = 0;
-            component.filters = [{checked: true, flag: false}];
+            component.filters = [this.filter];
             component.apply();
 
-            expect(component.submitEvent.emit).toHaveBeenCalled();
+            expect(component.submitEvent.emit).toHaveBeenCalledWith();
         });
         it('should set dropdown to closed on apply', function() {
             spyOn(component.trigger, 'closeMenu');
-            component.filters = [{checked: true, flag: false}];
+            component.filters = [this.filter];
             component.apply();
-            expect(component.trigger.closeMenu).toHaveBeenCalled();
+            expect(component.trigger.closeMenu).toHaveBeenCalledWith();
         });
         it('should reset checked values with flagged values when dropdown is closed', function() {
-            component.filters = [{checked: true, flag: false}];
+            component.filters = [this.filter];
             component.dropdownClosed();
-            expect(component.filters).toEqual([{checked: false, flag: false}]);
+            component.filters.forEach(filter => {
+                expect(filter.flag).toEqual(filter.checked);
+            });
         });
     });
 });

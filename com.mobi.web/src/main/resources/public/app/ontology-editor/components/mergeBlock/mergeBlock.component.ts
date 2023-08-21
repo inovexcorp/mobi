@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, reject, find, noop } from 'lodash';
+import { get, reject, find } from 'lodash';
 import { flatMap } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { throwError } from 'rxjs';
@@ -29,11 +29,13 @@ import { UntypedFormBuilder } from '@angular/forms';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { CATALOG } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { Commit } from '../../../shared/models/commit.interface';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import {UserManagerService} from '../../../shared/services/userManager.service';
 import {LoginManagerService} from '../../../shared/services/loginManager.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
  * @class ontology-editor.MergeBlockComponent
@@ -54,7 +56,7 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
 
     constructor(public os: OntologyStateService,
                 public cm: CatalogManagerService,
-                public util: UtilService,
+                private toast: ToastService,
                 private pep: PolicyEnforcementService,
                 public um: UserManagerService,
                 private lm: LoginManagerService,
@@ -76,7 +78,7 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
         this.branches = reject(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
         const branch = find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
-        this.branchTitle = this.util.getDctermsValue(branch, 'title');
+        this.branchTitle = getDctermsValue(branch, 'title');
         this.changeTarget(undefined);
     }
     ngOnDestroy(): void {
@@ -93,7 +95,7 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
         }
 
     }
-    changeTarget(value): void {
+    changeTarget(value: JSONLDObject): void {
 
         this.os.listItem.merge.difference = undefined;
         this.os.listItem.merge.startIndex = 0;
@@ -105,9 +107,9 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
             if (!this.isAdminUser) {
                 const managePermissionRequest = {
                     resourceId: this.os.listItem.versionedRdfRecord.recordId,
-                    actionId: CATALOG + 'Modify',
+                    actionId: `${CATALOG}Modify`,
                     actionAttrs: {
-                        [CATALOG + 'branch']: this.os.listItem.merge.target['@id']
+                        [`${CATALOG}branch`]: this.os.listItem.merge.target['@id']
                     }
                 };
 
@@ -123,30 +125,31 @@ export class MergeBlockComponent implements OnInit, OnDestroy {
 
             this.cm.getRecordBranch(this.os.listItem.merge.target['@id'], this.os.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
                 flatMap(target => {
-                    this.targetHeadCommitId = this.util.getPropertyId(target, CATALOG + 'head');
+                    this.targetHeadCommitId = getPropertyId(target, `${CATALOG}head`);
                     return this.os.getMergeDifferences(this.os.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0);
                 })
-            ).subscribe(noop, errorMessage => {
-                    this.util.createErrorToast(errorMessage);
-                    this.os.listItem.merge.difference = undefined;
-                    return throwError(errorMessage);
+            ).subscribe(() => {}, errorMessage => {
+                this.toast.createErrorToast(errorMessage);
+                this.os.listItem.merge.difference = undefined;
+                return throwError(errorMessage);
             });
         } else {
             this.os.listItem.merge.difference = undefined;
         }
     }
     retrieveMoreResults(event: {limit: number, offset: number}): void {
-        this.os.getMergeDifferences(this.os.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, event.limit, event.offset).subscribe(noop, this.util.createErrorToast);
+        this.os.getMergeDifferences(this.os.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, event.limit, event.offset)
+          .subscribe(() => {}, error => this.toast.createErrorToast(error));
     }
     submit(): void {
         this.os.attemptMerge()
             .subscribe(() => {
                 this.os.resetStateTabs();
-                this.util.createSuccessToast('Your merge was successful.');
+                this.toast.createSuccessToast('Your merge was successful.');
                 this.os.cancelMerge();
             }, error => this.error = error);
     }
-    receiveCommits(value: Commit[]){
+    receiveCommits(value: Commit[]): void {
         this.commits = value;
     }
 

@@ -42,7 +42,8 @@ import { GraphState, SidebarState } from '../../classes';
 import { SidePanelAction } from '../../classes/sidebarState';
 
 /**
- * @class VisualizationSidebar
+ * @class ontology-visualization.VisualizationSidebar
+ * 
  * Enable understand a large ontology/an ontology with a lot of imports
  */
 @Component({

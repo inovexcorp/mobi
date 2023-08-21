@@ -28,9 +28,9 @@ import { FindViewComponent } from '../find-view/find-view.component';
 import { QueryViewComponent } from '../query-view/query-view.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 
 describe('Search Tab component', function() {
-    let component: SearchTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SearchTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
@@ -48,10 +48,16 @@ describe('Search Tab component', function() {
         }).compileComponents();
 
         fixture = TestBed.createComponent(SearchTabComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyStateStub.listItem = new OntologyListItem();
+    });
+
+    afterEach(function() {
+        cleanStylesFromDOM();
+        element = null;
+        fixture = null;
+        ontologyStateStub = null;
     });
 
     describe('contains the correct html', function() {

@@ -41,7 +41,6 @@ import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CreateAnnotationPropertyOverlayComponent } from './createAnnotationPropertyOverlay.component';
 
@@ -52,10 +51,8 @@ describe('Create Annotation Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateAnnotationPropertyOverlayComponent>>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
     const namespace = 'http://test.com#';
-    const iri = 'iri#';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -79,7 +76,6 @@ describe('Create Annotation Overlay component', function() {
                 MockProvider(OntologyStateService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) },
                 { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
             ]
         });
     });
@@ -93,11 +89,8 @@ describe('Create Annotation Overlay component', function() {
         ontologyStateServiceStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
 
         ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of([]));
-        ontologyStateServiceStub.getDefaultPrefix.and.returnValue(iri);
+        ontologyStateServiceStub.getDefaultPrefix.and.returnValue(namespace);
         ontologyStateServiceStub.listItem = new OntologyListItem();
-
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
-        splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
     });
 
     afterEach(function() {
@@ -108,20 +101,19 @@ describe('Create Annotation Overlay component', function() {
         matDialogRef = null;
         ontologyStateServiceStub = null;
         camelCaseStub = null;
-        splitIRIStub = null;
     });
 
     it('initializes with the correct values', function() {
         component.ngOnInit();
         expect(ontologyStateServiceStub.getDefaultPrefix).toHaveBeenCalledWith();
-        expect(component.property['@id']).toEqual(iri);
-        expect(component.property['@type']).toEqual([OWL + 'AnnotationProperty']);
-        expect(component.property[DCTERMS + 'title']).toEqual([{'@value': ''}]);
-        expect(component.property[DCTERMS + 'description']).toEqual(undefined);
+        expect(component.property['@id']).toEqual(namespace);
+        expect(component.property['@type']).toEqual([`${OWL}AnnotationProperty`]);
+        expect(component.property[`${DCTERMS}title`]).toEqual([{'@value': ''}]);
+        expect(component.property[`${DCTERMS}description`]).toEqual(undefined);
 
         component.createForm.controls.description.setValue('test1');
         fixture.detectChanges();
-        expect(component.property[DCTERMS + 'description']).toEqual([{'@value': 'test1'}]);
+        expect(component.property[`${DCTERMS}description`]).toEqual([{'@value': 'test1'}]);
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -162,21 +154,19 @@ describe('Create Annotation Overlay component', function() {
             });
             it('if the iri has not been manually changed', function() {
                 component.nameChanged('new');
-                expect(component.createForm.controls.iri.value).toEqual(namespace + 'new');
-                expect(splitIRIStub.transform).toHaveBeenCalledWith(namespace);
+                expect(component.createForm.controls.iri.value).toEqual(`${namespace}new`);
                 expect(camelCaseStub.transform).toHaveBeenCalledWith('new', 'property');
             });
             it('unless the iri has been manually changed', function() {
                 component.iriHasChanged = true;
                 component.nameChanged('new');
                 expect(component.createForm.controls.iri.value).toEqual(namespace);
-                expect(splitIRIStub.transform).not.toHaveBeenCalled();
                 expect(camelCaseStub.transform).not.toHaveBeenCalled();
             });
         });
         it('onEdit changes iri based on the params', function() {
             component.onEdit('begin', 'then', 'end');
-            expect(component.property['@id']).toEqual('begin' + 'then' + 'end');
+            expect(component.property['@id']).toEqual('beginthenend');
             expect(component.iriHasChanged).toEqual(true);
             expect(ontologyStateServiceStub.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });

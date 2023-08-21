@@ -23,7 +23,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
-import { includes, get, noop } from 'lodash';
+import { includes, get } from 'lodash';
 
 import { UserStateService } from '../../../shared/services/userState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
@@ -32,7 +32,7 @@ import { CreateGroupOverlayComponent } from '../createGroupOverlay/createGroupOv
 import { EditGroupInfoOverlayComponent } from '../editGroupInfoOverlay/editGroupInfoOverlay.component';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
@@ -55,7 +55,7 @@ export class GroupsPageComponent implements OnInit {
     selectedAdmin = false;
 
     constructor(private dialog: MatDialog, public state: UserStateService, private um: UserManagerService,
-        private lm: LoginManagerService, private util: UtilService) {}
+        private lm: LoginManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.filteredGroups = this.um.groups;
@@ -75,12 +75,12 @@ export class GroupsPageComponent implements OnInit {
     }
     changeAdmin(event: MatSlideToggleChange): void {
         const request = event.checked ? this.um.addGroupRoles(this.state.selectedGroup.title, ['admin']) : this.um.deleteGroupRole(this.state.selectedGroup.title, 'admin');
-        request.subscribe(noop, this.util.createErrorToast);
+        request.subscribe(() => {}, error => this.toast.createErrorToast(error));
     }
     confirmDeleteGroup(): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: 'Are you sure you want to remove <strong>' + this.state.selectedGroup.title + '</strong>?'
+                content: `Are you sure you want to remove <strong>${this.state.selectedGroup.title}</strong>?`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
@@ -99,17 +99,17 @@ export class GroupsPageComponent implements OnInit {
             .subscribe(() => {
                 this.state.selectedGroup = undefined;
                 this.setAdmin();
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     addMember(member: User): void {
         this.um.addUserGroup(member.username, this.state.selectedGroup.title).subscribe(() => {
-            this.util.createSuccessToast('Successfully added member');
-        }, error => this.util.createErrorToast(error));
+            this.toast.createSuccessToast('Successfully added member');
+        }, error => this.toast.createErrorToast(error));
     }
     confirmRemoveMember(member: string): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: 'Are you sure you want to remove <strong>' + member + '</strong> from <strong>' + this.state.selectedGroup.title + '</strong>?'
+                content: `Are you sure you want to remove <strong>${member}</strong> from <strong>${this.state.selectedGroup.title}</strong>?`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
@@ -119,8 +119,8 @@ export class GroupsPageComponent implements OnInit {
     }
     removeMember(member: string): void {
         this.um.deleteUserGroup(member, this.state.selectedGroup.title).subscribe(() => {
-            this.util.createSuccessToast('Successfully removed member');
-        }, error => this.util.createErrorToast(error));
+            this.toast.createSuccessToast('Successfully removed member');
+        }, error => this.toast.createErrorToast(error));
     }
     private setGroups(): void {
         this.filteredGroups = this.um.filterGroups(this.um.groups, this.state.groupSearchString);

@@ -39,7 +39,7 @@ import { InfoMessageComponent } from '../../../../shared/components/infoMessage/
 import { DatasetManagerService } from '../../../../shared/services/datasetManager.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { ClassCardsComponent } from '../classCards/classCards.component';
@@ -73,7 +73,7 @@ describe('Classes Display component', function() {
                 MockProvider(DatasetManagerService),
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
@@ -122,13 +122,23 @@ describe('Classes Display component', function() {
         discoverStateStub = null;
     });
 
+    describe('controller methods', function() {
+        it ('should handle selection of a dataset', function() {
+            spyOn(component, 'refresh');
+            component.onSelect({recordId: 'recordId', recordTitle: 'recordTitle'});
+            expect(discoverStateStub.explore.recordId).toEqual('recordId');
+            expect(discoverStateStub.explore.recordTitle).toEqual('recordTitle');
+            expect(component.refresh).toHaveBeenCalledWith();
+        });
+        // TODO: Add tests for showCreate and refresh
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.classes-display')).length).toEqual(1);
         });
         ['.classes-display', 'form.classes-display-header', 'mat-divider'].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 fixture.detectChanges();
                 expect(element.queryAll(By.css(test)).length).toBe(1);
             });

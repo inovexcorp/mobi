@@ -24,7 +24,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { forEach, get, has, includes } from 'lodash';
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { REST_PREFIX } from '../../constants';
 import { MERGEREQ, DCTERMS } from '../../prefixes';
@@ -32,8 +32,8 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestConfig } from '../models/mergeRequestConfig.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
-import { UtilService } from './util.service';
 import { SortOption } from '../models/sortOption.interface';
+import { createHttpParams, handleError, paginatedConfigToHttpParams } from '../utility';
 
 /**
  * @class shared.MergeRequestManagerService
@@ -43,34 +43,37 @@ import { SortOption } from '../models/sortOption.interface';
  */
 @Injectable()
 export class MergeRequestManagerService {
-    prefix = REST_PREFIX + 'merge-requests';
+    prefix = `${REST_PREFIX}merge-requests`;
+
     /**
      * `sortOptions` contains a list of objects representing all sort options for Merge Request.
      */
     sortOptions: SortOption[] = [
         {
-            field: DCTERMS + 'issued',
+            field: `${DCTERMS}issued`,
             asc: false,
             label: 'Issued (desc)'
         },
         {
-            field: DCTERMS + 'issued',
+            field: `${DCTERMS}issued`,
             asc: true,
             label: 'Issued (asc)'
         },
         {
-            field: DCTERMS + 'title',
+            field: `${DCTERMS}title`,
             asc: false,
             label: 'Title (desc)'
         },
         {
-            field: DCTERMS + 'title',
+            field: `${DCTERMS}title`,
             asc: true,
             label: 'Title (asc)'
         },
 
     ];
-    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService, private util: UtilService) {}
+
+    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
+
     /**
      * Calls the GET /mobirest/merge-requests endpoint with the provided object of query parameters
      * which retrieves a list of MergeRequests.
@@ -80,10 +83,10 @@ export class MergeRequestManagerService {
      * list of MergeRequests or rejects with an error message
      */
     getRequests(config: MergeRequestPaginatedConfig): Observable<HttpResponse<JSONLDObject[]>> {
-        const params = this.util.paginatedConfigToParams(config);
-        params.accepted = config.accepted;
-        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix, {params: this.util.createHttpParams(params), observe: 'response'}))
-            .pipe(catchError(this.util.handleError));
+        let params = paginatedConfigToHttpParams(config);
+        params = params.set('accepted', config.accepted);
+        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix, {params, observe: 'response'}))
+            .pipe(catchError(handleError));
     }
     /**
      * Calls the POST /mobirest/merge-requests endpoint with the passed metadata and creates a new
@@ -108,7 +111,7 @@ export class MergeRequestManagerService {
             fd.append('removeSource', '' + requestConfig.removeSource);
         }
         return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/merge-requests/{requestId} endpoint to retrieve a single Merge Request
@@ -119,8 +122,8 @@ export class MergeRequestManagerService {
      * error message
      */
     getRequest(requestId: string): Observable<JSONLDObject> {
-        return this.spinnerSvc.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(requestId)))
-           .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(requestId)}`))
+           .pipe(catchError(handleError));
     }
     /**
      * Calls the DELETE /mobirest/merge-requests/{requestId} endpoint to remove a single Merge Request
@@ -130,9 +133,9 @@ export class MergeRequestManagerService {
      * @returns {Observable<null>} An Observable that resolves if the request was deleted or rejects with an
      * error message
      */
-    deleteRequest(requestId: string): Observable<null> {
-        return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(requestId)))
-           .pipe(catchError(this.util.handleError));
+    deleteRequest(requestId: string): Observable<void> {
+        return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(requestId)}`))
+           .pipe(catchError(handleError), map(() => {}));
     }
     /**
      * Calls the POST /mobirest/merge-requests/{requestId} endpoint to accept a Merge Request
@@ -142,9 +145,9 @@ export class MergeRequestManagerService {
      * @returns {Observable<null>} An Observable that resolves if the request was accepted or rejects with an
      * error message
      */
-    acceptRequest(requestId: string): Observable<null> {
-        return this.spinnerSvc.track(this.http.post(this.prefix + '/' + encodeURIComponent(requestId), null))
-           .pipe(catchError(this.util.handleError));
+    acceptRequest(requestId: string): Observable<void> {
+        return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(requestId)}`, null))
+           .pipe(catchError(handleError), map(() => {}));
     }
     /**
      * Calls the GET /mobirest/merge-requests/{requestId}/comments endpoint to retrieve the array of comment
@@ -155,8 +158,8 @@ export class MergeRequestManagerService {
      * {@link JSONLDObject} representing comment chains or rejects with an error message
      */
     getComments(requestId: string): Observable<JSONLDObject[][]> {
-        return this.spinnerSvc.track(this.http.get<JSONLDObject[][]>(this.prefix + '/' + encodeURIComponent(requestId) + '/comments'))
-           .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.get<JSONLDObject[][]>(`${this.prefix}/${encodeURIComponent(requestId)}/comments`))
+           .pipe(catchError(handleError));
     }
     /**
      * Calls the DELETE /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to delete a comment
@@ -167,9 +170,9 @@ export class MergeRequestManagerService {
      * @returns {Observable<null>} An Observable that resolves if the comment was deleted or rejects with an error
      * message
      */
-    deleteComment(requestId: string, commentId: string): Observable<null> {
-        return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId)))
-           .pipe(catchError(this.util.handleError));
+    deleteComment(requestId: string, commentId: string): Observable<void> {
+        return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`))
+           .pipe(catchError(handleError), map(() => {}));
     }
     /**
      * Calls the POST /mobirest/merge-requests/{requestId}/comments endpoint to create a comment on the Merge
@@ -189,8 +192,9 @@ export class MergeRequestManagerService {
         if (replyComment) {
             params.commentId = replyComment;
         }
-        return this.spinnerSvc.track(this.http.post(this.prefix + '/' + encodeURIComponent(requestId) + '/comments', commentStr, {params: this.util.createHttpParams(params), responseType: 'text'}))
-           .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(requestId)}/comments`, 
+          commentStr, {params: createHttpParams(params), responseType: 'text'}))
+           .pipe(catchError(handleError));
     }
     /**
      * Calls the PUT /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to edit a comment on the Merge
@@ -201,9 +205,10 @@ export class MergeRequestManagerService {
      * @param {string} commentStr A string to be the new body of the Comment
      * @returns {Observable<null>} An Observable that resolves if the comment was edited or rejects with an error message
      */
-    updateComment(requestId: string, commentId: string, commentStr: string): Observable<null> {
-        return this.spinnerSvc.track(this.http.put(this.prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId), commentStr))
-           .pipe(catchError(this.util.handleError));
+    updateComment(requestId: string, commentId: string, commentStr: string): Observable<void> {
+        return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`, 
+          commentStr))
+           .pipe(catchError(handleError), map(() => {}));
     }
     /**
      * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request
@@ -215,8 +220,9 @@ export class MergeRequestManagerService {
      * with an error message
      */
     updateRequest(requestId: string, jsonld: JSONLDObject): Observable<string> {
-        return this.spinnerSvc.track(this.http.put(this.prefix + '/' + encodeURIComponent(requestId), jsonld, { responseType: 'text' }))
-           .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(requestId)}`, jsonld, 
+          { responseType: 'text' }))
+           .pipe(catchError(handleError));
     }
     
     /**
@@ -226,7 +232,6 @@ export class MergeRequestManagerService {
      * @return {boolean} True if the MergeRequest is accepted; false otherwise
      */
     isAccepted(request: JSONLDObject): boolean {
-        return includes(request['@type'], MERGEREQ + 'AcceptedMergeRequest');
+        return includes(request['@type'], `${MERGEREQ}AcceptedMergeRequest`);
     }
-
 }

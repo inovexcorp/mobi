@@ -27,15 +27,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MappingState } from '../../../shared/models/mappingState.interface';
-import { UtilService } from '../../../shared/services/util.service';
 import { MappingPreviewComponent } from '../mappingPreview/mappingPreview.component';
+import { DCTERMS } from '../../../prefixes';
 import { ViewMappingModalComponent } from './viewMappingModal.component';
 
 describe('View Mapping Modal component', function() {
@@ -43,9 +42,11 @@ describe('View Mapping Modal component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ViewMappingModalComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<ViewMappingModalComponent>>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
-    const ontology: JSONLDObject = { '@id': 'ontology' };
+    const ontology: JSONLDObject = {
+      '@id': 'ontology',
+      [`${DCTERMS}title`]: [{ '@value': 'title' }]
+    };
     const state: MappingState = {
         mapping: undefined,
         difference: new Difference(),
@@ -75,7 +76,6 @@ describe('View Mapping Modal component', function() {
             ],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { state } },
-                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -86,7 +86,6 @@ describe('View Mapping Modal component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<ViewMappingModalComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
     });
 
     afterEach(function() {
@@ -95,14 +94,11 @@ describe('View Mapping Modal component', function() {
         element = null;
         fixture = null;
         matDialogRef = null;
-        utilStub = null;
     });
 
     it('should initialize properly', function() {
-        utilStub.getDctermsValue.and.returnValue('title');
         component.ngOnInit();
         expect(component.ontologyTitle).toEqual('title');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(ontology, 'title');
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

@@ -38,7 +38,7 @@ import { User } from '../../../shared/models/user.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PermissionsPageComponent } from './permissionsPage.component';
 
 describe('Permissions Page component', function() {
@@ -48,7 +48,7 @@ describe('Permissions Page component', function() {
     let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let everyoneMatch;
     let userMatch;
     let groupMatch;
@@ -70,7 +70,7 @@ describe('Permissions Page component', function() {
                 MockProvider(PolicyManagerService),
                 MockProvider(UserManagerService),
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
@@ -80,22 +80,22 @@ describe('Permissions Page component', function() {
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         policyManagerStub.actionCreate = 'create';
         policyManagerStub.actionUpdate = 'update';
 
         everyoneMatch = {
             AttributeDesignator: {
-                AttributeId: USER + 'hasUserRole',
+                AttributeId: `${USER}hasUserRole`,
                 Category: policyManagerStub.subjectCategory,
-                DataType: XSD + 'string',
+                DataType: `${XSD}string`,
                 MustBePresent: true
             },
             AttributeValue: {
                 content: [component.userRole],
                 otherAttributes: {},
-                DataType: XSD + 'string'
+                DataType: `${XSD}string`
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -103,13 +103,13 @@ describe('Permissions Page component', function() {
             AttributeDesignator: {
                 AttributeId: policyManagerStub.subjectId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: XSD + 'string',
+                DataType: `${XSD}string`,
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['user1'],
                 otherAttributes: {},
-                DataType: XSD + 'string'
+                DataType: `${XSD}string`
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -117,13 +117,13 @@ describe('Permissions Page component', function() {
             AttributeDesignator: {
                 AttributeId: component.groupAttributeId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: XSD + 'string',
+                DataType: `${XSD}string`,
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['group1'],
                 otherAttributes: {},
-                DataType: XSD + 'string'
+                DataType: `${XSD}string`
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -148,7 +148,6 @@ describe('Permissions Page component', function() {
         };
         userManagerStub.groups = [group];
         catalogManagerStub.localCatalog = {'@id': 'catalogId', '@type': []};
-        utilStub.getBeautifulIRI.and.callFake(a => a);
         policyManagerStub.getPolicies.and.returnValue(of([]));
     });
 
@@ -160,7 +159,7 @@ describe('Permissions Page component', function() {
         policyManagerStub = null;
         catalogManagerStub = null;
         userManagerStub = null;
-        utilStub = null;
+        toastStub = null;
         everyoneMatch = null;
         userMatch = null;
         groupMatch = null;
@@ -175,7 +174,7 @@ describe('Permissions Page component', function() {
                 tick();
                 expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(undefined, undefined, undefined, true);
                 expect(component.policies).toEqual([]);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('with policies', fakeAsync(function() {
                 const policies = [
@@ -227,7 +226,7 @@ describe('Permissions Page component', function() {
                     selectedUsers: [],
                     selectedGroups: [group],
                 });
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         it('rejects', fakeAsync(function() {
@@ -235,7 +234,7 @@ describe('Permissions Page component', function() {
             component.ngOnInit();
             tick();
             expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(undefined, undefined, undefined, true);
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
         }));
     });
     describe('controller methods', function() {
@@ -260,8 +259,8 @@ describe('Permissions Page component', function() {
                 component.saveChanges();
                 tick();
                 expect(policyManagerStub.updatePolicy).toHaveBeenCalledWith({});
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(this.policy.changed).toEqual(false);
             }));
             it('unless no policies were changed', fakeAsync(function() {
@@ -276,8 +275,8 @@ describe('Permissions Page component', function() {
                 component.saveChanges();
                 tick();
                 expect(policyManagerStub.updatePolicy).toHaveBeenCalledWith({});
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(this.policy.changed).toEqual(true);
             }));
         });

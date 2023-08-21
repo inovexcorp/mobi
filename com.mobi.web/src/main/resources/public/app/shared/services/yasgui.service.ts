@@ -32,7 +32,7 @@ import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
 import { hasClass } from '../../vendor/YASGUI/plugins/utils/yasguiUtil';
 import { REST_PREFIX } from '../../constants';
 import { DownloadQueryOverlayComponent } from '../components/downloadQueryOverlay/downloadQueryOverlay.component';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
 
 /**
@@ -51,7 +51,7 @@ import { YasguiQuery } from '../models/yasguiQuery.class';
  */
 @Injectable()
 export class YasguiService {
-    defaultUrl : URL = new URL(REST_PREFIX + 'sparql/limited-results', window.location.origin);
+    defaultUrl : URL = new URL(`${REST_PREFIX}sparql/limited-results`, window.location.origin);
     yasgui : any = {};
     customURL = null;
     reponseLimitElement = <HTMLElement>{};
@@ -60,7 +60,7 @@ export class YasguiService {
     yasguiQuery: YasguiQuery;
     isOntology = false;
 
-    constructor(private matDialog: MatDialog, private util: UtilService) {}
+    constructor(private matDialog: MatDialog, private toast: ToastService) {}
 
     initYasgui(element: HTMLElement, config: any = {}, query: YasguiQuery, isOntology = false) : void{
         this.yasguiQuery = query;
@@ -98,7 +98,7 @@ export class YasguiService {
             this.yasgui.getTab().yasqe.query();
             return true;
         } else {
-            this.util.createErrorToast('Error: Yasgui has not been initialized');
+            this.toast.createErrorToast('Error: Yasgui has not been initialized');
             return false;
         }
     }
@@ -329,7 +329,7 @@ export class YasguiService {
         const datasetIri = this.isOntology ? undefined : this.yasguiQuery.recordId;
         let url =  this.customURL || this.defaultUrl.href;
         if (this.isOntology) {
-            url = new URL(REST_PREFIX + 'ontologies/' + encodeURIComponent(this.yasguiQuery.recordId) + '/query', window.location.origin).href;
+            url = new URL(`${REST_PREFIX}ontologies/${encodeURIComponent(this.yasguiQuery.recordId)}/query`, window.location.origin).href;
         }
         const { headers } = this.yasgui.getTab().getRequestConfig();
         headers.Accept = this._getFormat(this.yasgui.getTab().yasr.selectedPlugin, this.yasguiQuery.queryString);
@@ -426,7 +426,7 @@ export class YasguiService {
             if (prefixes) {
                 for (const prefixLabel in prefixes) {
                     if (visibleString.indexOf(prefixes[prefixLabel]) === 0) {
-                        visibleString = prefixLabel + ':' + href.substring(prefixes[prefixLabel].length);
+                        visibleString = `${prefixLabel}:${href.substring(prefixes[prefixLabel].length)}`;
                         break;
                     }
                 }

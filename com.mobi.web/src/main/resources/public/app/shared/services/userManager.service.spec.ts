@@ -23,7 +23,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
 
 import {
@@ -34,13 +34,11 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { User } from '../models/user.interface';
 import { ADMIN_USER_IRI } from '../../constants';
 import { DCTERMS, FOAF, ROLES, USER } from '../../prefixes';
-import { UtilService } from './util.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { UserManagerService } from './userManager.service';
 
 describe('User Manager service', function() {
     let service: UserManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
     let user: User;
@@ -55,41 +53,15 @@ describe('User Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 UserManagerService,
-                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService)
             ]
         });
 
         service = TestBed.inject(UserManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
 
         progressSpinnerStub.track.and.callFake(ob => ob);
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
 
         user = {
             external: false,
@@ -103,11 +75,11 @@ describe('User Manager service', function() {
         userRdf = {
             '@id': user.iri,
             '@type': [],
-            [USER + 'username']: [{'@value': user.username}],
-            [FOAF + 'firstName']: [{'@value': user.firstName}],
-            [FOAF + 'lastName']: [{'@value': user.lastName}],
-            [FOAF + 'mbox']: [{'@id': user.email}],
-            [USER + 'hasUserRole']: [{'@id': ROLES + user.roles[0]}]
+            [`${USER}username`]: [{'@value': user.username}],
+            [`${FOAF}firstName`]: [{'@value': user.firstName}],
+            [`${FOAF}lastName`]: [{'@value': user.lastName}],
+            [`${FOAF}mbox`]: [{'@id': user.email}],
+            [`${USER}hasUserRole`]: [{'@id': ROLES + user.roles[0]}]
         };
         user.jsonld = userRdf;
         
@@ -122,51 +94,17 @@ describe('User Manager service', function() {
         groupRdf = {
             '@id': group.iri,
             '@type': [],
-            [DCTERMS + 'title']: [{'@value': group.title}],
-            [DCTERMS + 'description']: [{'@value': group.description}],
-            [FOAF + 'member']: [userRdf],
-            [USER + 'hasGroupRole']: [{'@id': ROLES + group.roles[0]}]
+            [`${DCTERMS}title`]: [{'@value': group.title}],
+            [`${DCTERMS}description`]: [{'@value': group.description}],
+            [`${FOAF}member`]: [userRdf],
+            [`${USER}hasGroupRole`]: [{'@id': ROLES + group.roles[0]}]
         };
         group.jsonld = groupRdf;
-        utilStub.getErrorDataObject.and.callFake(errorResp => {
-            return {
-                error: '',
-                errorMessage: errorResp.statusText || '',
-                errorDetails: []
-            };
-        });
-        utilStub.getPropertyValue.and.callFake((jsonld, prop) => {
-            if (prop === USER + 'username') {
-                return user.username;
-            } else if (prop === FOAF + 'firstName') {
-                return user.firstName;
-            } else if (prop === FOAF + 'lastName') {
-                return user.lastName;
-            }
-        });
-        utilStub.getPropertyId.and.callFake((jsonld, prop) => {
-            if (prop === FOAF + 'mbox') {
-                return user.email;
-            }
-        });
-        utilStub.getDctermsValue.and.callFake((jsonld, prop) => {
-            if (prop === 'title') {
-                return group.title;
-            } else if (prop === 'description') {
-                return group.description;
-            }
-        });
-        utilStub.getBeautifulIRI.and.callFake(iri => {
-            if (iri === ROLES + 'user') {
-                return 'user';
-            }
-        });
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
-        utilStub = null;
         httpMock = null;
         user = null;
         group = null;
@@ -210,7 +148,6 @@ describe('User Manager service', function() {
             tick();
             expect(service.getUsers).toHaveBeenCalledWith();
             expect(service.getGroups).not.toHaveBeenCalled();
-            expect(utilStub.getErrorMessage).toHaveBeenCalledWith(errorResp);
         }));
     });
     describe('should get users', function() {
@@ -260,9 +197,8 @@ describe('User Manager service', function() {
                 service.getUsername('iri')
                     .subscribe(() => fail('Promise should have rejected'), response => {
                         expect(response).toEqual(error);
-                        expect(utilStub.createHttpParams).toHaveBeenCalledWith({iri: 'iri'});
                     });
-                const request = httpMock.expectOne(req => req.url === service.userPrefix + '/username' && req.method === 'GET');
+                const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/username` && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual('iri');
                 request.flush('flush', { status: 400, statusText: error });
             });
@@ -274,9 +210,8 @@ describe('User Manager service', function() {
                     .subscribe(response => {
                         expect(response).toEqual(user.username);
                         expect(user.iri).toEqual(iri);
-                        expect(utilStub.createHttpParams).toHaveBeenCalledWith({iri: user.iri});
                     }, () => fail('Promise should have resolved'));
-                const request = httpMock.expectOne(req => req.url === service.userPrefix + '/username' && req.method === 'GET');
+                const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/username` && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual(iri);
                 request.flush(user.username);
             });
@@ -311,7 +246,7 @@ describe('User Manager service', function() {
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne({url: service.userPrefix + '/user', method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.userPrefix}/user`, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
         describe('successfully and update the users list if', function() {
@@ -328,7 +263,7 @@ describe('User Manager service', function() {
                         expect(service.users.length).toEqual(1);
                         expect(service.users[0]).toEqual(user);
                     }, () => fail('Promise should have resolved'));
-                const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'GET'});
+                const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'GET'});
                 request.flush(userRdf);
             });
             it('the user has not been retrieved', function() {
@@ -338,7 +273,7 @@ describe('User Manager service', function() {
                         expect(service.users.length).toEqual(1);
                         expect(service.users[0]).toEqual(user);
                     }, () => fail('Promise should have resolved'));
-                const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'GET'});
+                const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'GET'});
                 request.flush(userRdf);
             });
         });
@@ -354,7 +289,7 @@ describe('User Manager service', function() {
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'PUT'});
+            const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.newUser.jsonld);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -363,7 +298,7 @@ describe('User Manager service', function() {
                 .subscribe(() => {
                     expect(service.users).toContain(this.newUser);
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'PUT'});
+            const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.newUser.jsonld);
             request.flush(200);
         });
@@ -373,9 +308,8 @@ describe('User Manager service', function() {
             service.changePassword(user.username, 'currentPassword', 'newPassword')
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({currentPassword: 'currentPassword', newPassword: 'newPassword'});
                 });
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'POST');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/password` && req.method === 'POST');
             expect(request.request.params.get('currentPassword')).toEqual('currentPassword');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
             request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error});
@@ -383,9 +317,9 @@ describe('User Manager service', function() {
         it('successfully', function() {
             service.changePassword(user.username, 'currentPassword', 'newPassword')
                 .subscribe(() => {
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({currentPassword: 'currentPassword', newPassword: 'newPassword'});
+                    expect(true).toBeTrue();
                 });
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'POST');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/password` && req.method === 'POST');
             expect(request.request.params.get('currentPassword')).toEqual('currentPassword');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
             request.flush(200);
@@ -396,18 +330,17 @@ describe('User Manager service', function() {
             service.resetPassword(user.username, 'newPassword')
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({newPassword: 'newPassword'});
                 });
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/password` && req.method === 'PUT');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.resetPassword(user.username, 'newPassword')
                 .subscribe(() => {
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({newPassword: 'newPassword'});
+                    expect(true).toBeTrue();
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/password' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/password` && req.method === 'PUT');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
             request.flush(200);
         });
@@ -422,7 +355,7 @@ describe('User Manager service', function() {
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'DELETE'});
+            const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'DELETE'});
             request.flush('flush', { status: 400, statusText: error });
         });
         it('with the passed username', function() {
@@ -431,7 +364,7 @@ describe('User Manager service', function() {
                     expect(service.users).not.toContain(user);
                     expect(group.members).not.toContain(user.username);
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.userPrefix + '/' + user.username, method: 'DELETE'});
+            const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'DELETE'});
             request.flush(200);
         });
     });
@@ -444,9 +377,8 @@ describe('User Manager service', function() {
              service.addUserRoles(user.username, roles)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ roles });
                 });
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(roles);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -455,9 +387,8 @@ describe('User Manager service', function() {
             service.addUserRoles(user.username, roles)
                 .subscribe(() => {
                     expect(user.roles).toEqual(originalRoles.concat(roles));
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ roles });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(roles);
             request.flush(200);
         });
@@ -471,9 +402,8 @@ describe('User Manager service', function() {
             service.deleteUserRole(user.username, 'role')
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ role: 'role' });
                 });
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -481,9 +411,8 @@ describe('User Manager service', function() {
             service.deleteUserRole(user.username, 'role')
                 .subscribe(() => {
                     expect(user.roles).toEqual([]);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ role: 'role' });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/roles' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush(200);
         });
@@ -498,9 +427,8 @@ describe('User Manager service', function() {
             service.addUserGroup(user.username, group.title)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ group: group.title });
                 });
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/groups` && req.method === 'PUT');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -508,9 +436,8 @@ describe('User Manager service', function() {
             service.addUserGroup(user.username, group.title)
                 .subscribe(() => {
                     expect(group.members).toContain(user.username);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ group: group.title });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/groups` && req.method === 'PUT');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush(200);
         });
@@ -524,9 +451,8 @@ describe('User Manager service', function() {
             service.deleteUserGroup(user.username, group.title)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ group: group.title });
                 });
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/groups` && req.method === 'DELETE');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -534,9 +460,8 @@ describe('User Manager service', function() {
             service.deleteUserGroup(user.username, group.title)
                 .subscribe(() => {
                     expect(group.members).not.toContain(user.username);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ group: group.title });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.userPrefix + '/' + user.username + '/groups' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/groups` && req.method === 'DELETE');
             expect(request.request.params.get('group')).toEqual(group.title);
             request.flush(200);
         });
@@ -570,7 +495,7 @@ describe('User Manager service', function() {
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
         describe('successfully and update the groups list if', function() {
@@ -587,7 +512,7 @@ describe('User Manager service', function() {
                         expect(service.groups.length).toEqual(1);
                         expect(service.groups[0]).toEqual(group);
                     }, () => fail('Promise should have resolved'));
-                const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'GET'});
+                const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'GET'});
                 request.flush(groupRdf);
             });
             it('the group has not been retrieved', function() {
@@ -597,7 +522,7 @@ describe('User Manager service', function() {
                         expect(service.groups.length).toEqual(1);
                         expect(service.groups[0]).toEqual(group);
                     }, () => fail('Promise should have resolved'));
-                const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'GET'});
+                const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'GET'});
                 request.flush(groupRdf);
             });
         });
@@ -613,7 +538,7 @@ describe('User Manager service', function() {
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'PUT'});
+            const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.newGroup.jsonld);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -622,7 +547,7 @@ describe('User Manager service', function() {
                 .subscribe(() => {
                     expect(service.groups).toContain(this.newGroup);
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'PUT'});
+            const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.newGroup.jsonld);
             request.flush(200);
         });
@@ -636,7 +561,7 @@ describe('User Manager service', function() {
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'DELETE'});
+            const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'DELETE'});
             request.flush('flush', { status: 400, statusText: error });
     });
         it('with the passed title', function() {
@@ -644,7 +569,7 @@ describe('User Manager service', function() {
                 .subscribe(() => {
                     expect(service.groups).not.toContain(group);
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title, method: 'DELETE'});
+            const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'DELETE'});
             request.flush(200);
         });
     });
@@ -657,9 +582,8 @@ describe('User Manager service', function() {
             service.addGroupRoles(group.title, roles)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ roles });
                 });
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/roles` && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(roles);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -668,9 +592,8 @@ describe('User Manager service', function() {
             service.addGroupRoles(group.title, roles)
                 .subscribe(() => {
                     expect(group.roles).toEqual(originalRoles.concat(roles));
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ roles });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/roles` && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(roles);
             request.flush(200);
         });
@@ -684,9 +607,8 @@ describe('User Manager service', function() {
             service.deleteGroupRole(group.title, 'role')
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ role: 'role' });
                 });
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/roles` && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -694,9 +616,8 @@ describe('User Manager service', function() {
             service.deleteGroupRole(group.title, 'role')
                 .subscribe(() => {
                     expect(group.roles).toEqual([]);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ role: 'role' });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/roles' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/roles` && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
             request.flush(200);
         });
@@ -707,7 +628,7 @@ describe('User Manager service', function() {
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title + '/users', method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}/users`, method: 'GET'});
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
@@ -715,7 +636,7 @@ describe('User Manager service', function() {
                 .subscribe(response => {
                     expect(response).toEqual([userRdf]);
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.groupPrefix + '/' + group.title + '/users', method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}/users`, method: 'GET'});
             request.flush([userRdf]);
         });
     });
@@ -728,9 +649,8 @@ describe('User Manager service', function() {
             service.addGroupUsers(group.title, users)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ users });
                 });
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/users` && req.method === 'PUT');
             expect(request.request.params.getAll('users')).toEqual(users);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -739,9 +659,8 @@ describe('User Manager service', function() {
             service.addGroupUsers(group.title, users)
                 .subscribe(() => {
                     expect(group.members).toEqual(originalMembers.concat(users));
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ users });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'PUT');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/users` && req.method === 'PUT');
             expect(request.request.params.getAll('users')).toEqual(users);
             request.flush(200);
         });
@@ -754,9 +673,8 @@ describe('User Manager service', function() {
             service.deleteGroupUser(group.title, user.username)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ user: user.username });
                 });
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/users` && req.method === 'DELETE');
             expect(request.request.params.get('user')).toEqual(user.username);
             request.flush('flush', { status: 400, statusText: error });
         });
@@ -764,9 +682,8 @@ describe('User Manager service', function() {
             service.deleteGroupUser(group.title, user.username)
                 .subscribe(() => {
                     expect(group.members).toEqual([]);
-                    expect(utilStub.createHttpParams).toHaveBeenCalledWith({ user: user.username });
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne(req => req.url === service.groupPrefix + '/' + group.title + '/users' && req.method === 'DELETE');
+            const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/users` && req.method === 'DELETE');
             expect(request.request.params.get('user')).toEqual(user.username);
             request.flush(200);
         });
@@ -796,25 +713,25 @@ describe('User Manager service', function() {
     });
     it('should determine whether a user is external', function() {
         expect(service.isExternalUser(userRdf)).toBeFalse();
-        userRdf['@type'] = [USER + 'User', USER + 'ExternalUser'];
+        userRdf['@type'] = [`${USER}User`, `${USER}ExternalUser`];
         expect(service.isExternalUser(userRdf)).toBeTrue();
-        userRdf['@type'] = [USER + 'User'];
+        userRdf['@type'] = [`${USER}User`];
         expect(service.isExternalUser(userRdf)).toBeFalse();
-        userRdf['@type'] = [USER + 'Group'];
+        userRdf['@type'] = [`${USER}Group`];
         expect(service.isExternalUser(userRdf)).toBeFalse();
     });
     it('should determine whether a group is external', function() {
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
-        groupRdf['@type'] = [USER + 'Group', USER + 'ExternalGroup'];
+        groupRdf['@type'] = [`${USER}Group`, `${USER}ExternalGroup`];
         expect(service.isExternalGroup(groupRdf)).toBeTrue();
-        groupRdf['@type'] = [USER + 'Group'];
+        groupRdf['@type'] = [`${USER}Group`];
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
-        groupRdf['@type'] = [USER + 'User'];
+        groupRdf['@type'] = [`${USER}User`];
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
     });
     describe('getUserDisplay should return the correct value', function() {
         it('when there is a first and last', function() {
-            expect(service.getUserDisplay(user)).toEqual(user.firstName + ' ' + user.lastName);
+            expect(service.getUserDisplay(user)).toEqual(`${user.firstName} ${user.lastName}`);
         });
         it('when there is not a first or last but there is a username', function() {
             user.firstName = '';
@@ -829,44 +746,21 @@ describe('User Manager service', function() {
         });
     });
     it('should create a user object', function() {
-        utilStub.getBeautifulIRI.and.callFake(x => x);
-        utilStub.getPropertyId.and.returnValue('email');
-        utilStub.getPropertyValue.and.callFake((obj, prop) => {
-            if (prop === FOAF + 'firstName') {
-                return 'first name';
-            } else if (prop === FOAF + 'lastName') {
-                return 'last name';
-            } else if (prop === USER + 'username') {
-                return 'username';
-            } else {
-                return '';
-            }
-        });
         spyOn(service, 'isExternalUser').and.returnValue(false);
-        userRdf[USER + 'hasUserRole'] = [{'@id': 'role'}];
+        userRdf[`${USER}hasUserRole`] = [{'@id': 'role'}];
         const result = service.getUserObj(userRdf);
         expect(result.jsonld).toEqual(userRdf);
         expect(result.external).toEqual(false);
         expect(result.iri).toEqual(userRdf['@id']);
         expect(result.username).toEqual('username');
-        expect(result.firstName).toEqual('first name');
-        expect(result.lastName).toEqual('last name');
-        expect(result.email).toEqual('email');
+        expect(result.firstName).toEqual('John');
+        expect(result.lastName).toEqual('Doe');
+        expect(result.email).toEqual('john.doe@gmail.com');
         expect(result.roles).toEqual(['role']);
     });
     it('should create a group object', function() {
-        utilStub.getBeautifulIRI.and.callFake(x => x);
-        utilStub.getDctermsValue.and.callFake((obj, prop) => {
-            if (prop === 'title') {
-                return 'title';
-            } else if (prop === 'description') {
-                return 'description';
-            } else {
-                return '';
-            }
-        });
         spyOn(service, 'isExternalGroup').and.returnValue(false);
-        groupRdf[USER + 'hasGroupRole'] = [{'@id': 'role'}];
+        groupRdf[`${USER}hasGroupRole`] = [{'@id': 'role'}];
         service.users = [user];
         const result = service.getGroupObj(groupRdf);
         expect(result.jsonld).toEqual(groupRdf);

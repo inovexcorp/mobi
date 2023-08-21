@@ -51,7 +51,7 @@ describe('Datatype Property Block component', function() {
         editingProperty: false,
         propertySelect: undefined,
         propertyValue: '',
-        propertyType: XSD + 'string',
+        propertyType: `${XSD}string`,
         propertyIndex: 0,
         propertyLanguage: 'en'
     };
@@ -88,7 +88,7 @@ describe('Datatype Property Block component', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}],
             propertyLanguage: 'lang',
-            propertyType: RDF + 'langString'
+            propertyType: `${RDF}langString`
         };
     });
 
@@ -155,7 +155,7 @@ describe('Datatype Property Block component', function() {
                 editingProperty: false,
                 propertySelect: undefined,
                 propertyValue: '',
-                propertyType: XSD + 'string',
+                propertyType: `${XSD}string`,
                 propertyIndex: 0,
                 propertyLanguage: 'en'
             };
@@ -165,12 +165,16 @@ describe('Datatype Property Block component', function() {
         it('should set the correct manager values when opening the Remove Data Property Overlay', function() {
             component.showRemovePropertyOverlay({key: 'key', index: 1});
             expect(ontologyStateStub.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
-            expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent,  { data: { content: 'Are you sure you want to clear <strong>' +  ontologyStateStub.getRemovePropOverlayMessage('key', 1)+ '</strong>?'}});
+            expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, { 
+                data: { 
+                    content: `Are you sure you want to clear <strong>${ontologyStateStub.getRemovePropOverlayMessage('key', 1)}</strong>?`
+                }
+            });
         });
         describe('should set the correct manager values when editing a data property', function() {
             beforeEach(function() {
                 propertyIRI = 'prop1';
-                value = {'@value': 'value', '@language': 'lang', '@type': RDF + 'langString'};
+                value = {'@value': 'value', '@language': 'lang', '@type': `${RDF}langString`};
                 ontologyStateStub.listItem.selected = {
                     [propertyIRI]: [value],
                     '@id': propertyIRI
@@ -181,7 +185,7 @@ describe('Datatype Property Block component', function() {
                     editingProperty: true,
                     propertySelect: propertyIRI,
                     propertyValue: 'value',
-                    propertyType: RDF + 'langString',
+                    propertyType: `${RDF}langString`,
                     propertyIndex: 0,
                     propertyLanguage: 'lang'
                 };
@@ -194,7 +198,7 @@ describe('Datatype Property Block component', function() {
                     editingProperty: true,
                     propertySelect: propertyIRI,
                     propertyValue: 'value',
-                    propertyType: RDF + 'langString',
+                    propertyType: `${RDF}langString`,
                     propertyIndex: 0,
                     propertyLanguage: null
                 };

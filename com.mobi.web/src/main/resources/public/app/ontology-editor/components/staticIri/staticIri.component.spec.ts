@@ -41,7 +41,6 @@ import { EditIriOverlayComponent } from '../../../shared/components/editIriOverl
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { TrustedHtmlPipe } from '../../../shared/pipes/trustedHtml.pipe';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { StaticIriComponent } from './staticIri.component';
@@ -52,7 +51,6 @@ describe('Static IRI component', function() {
     let fixture: ComponentFixture<StaticIriComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
     const iri = 'http://test.com#wow';
 
@@ -81,7 +79,6 @@ describe('Static IRI component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -93,9 +90,6 @@ describe('Static IRI component', function() {
         element = fixture.debugElement;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
-
-        splitIRIStub.transform.and.returnValue({begin: '', then: '', end: ''});
     });
 
     afterEach(function() {
@@ -105,7 +99,6 @@ describe('Static IRI component', function() {
         fixture = null;
         ontologyStateStub = null;
         matDialog = null;
-        splitIRIStub = null;
     });
 
     it('should initialize correctly', function() {
@@ -190,12 +183,10 @@ describe('Static IRI component', function() {
             component.iriThen = 'then';
             component.iriEnd = 'end';
             component.iri = iri;
-            splitIRIStub.transform.and.returnValue({begin: 'new', then: 'new', end: 'new'});
             component.setVariables();
-            expect(splitIRIStub.transform).toHaveBeenCalledWith(iri);
-            expect(component.iriBegin).toEqual('new');
-            expect(component.iriThen).toEqual('new');
-            expect(component.iriEnd).toEqual('new');
+            expect(component.iriBegin).toEqual('http://test.com');
+            expect(component.iriThen).toEqual('#');
+            expect(component.iriEnd).toEqual('wow');
         });
         describe('showIriOverlay opens the editIriOverlay if duplicateCheck is', function() {
             beforeEach(function() {

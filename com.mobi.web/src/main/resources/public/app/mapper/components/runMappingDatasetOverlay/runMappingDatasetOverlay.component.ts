@@ -32,7 +32,8 @@ import { DCTERMS } from '../../../prefixes';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue } from '../../../shared/utility';
 
 interface DatasetPreview {
     id: string,
@@ -63,7 +64,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<RunMappingDatasetOverlayComponent>, private fb: UntypedFormBuilder,
         private state: MapperStateService, private dm: DelimitedManagerService, private dam: DatasetManagerService,
-        private util: UtilService) {}
+        private toast: ToastService) {}
 
     ngOnInit(): void {
         this.filteredDatasets = this.runMappingDatasetForm.controls.datasetSelect.valueChanges
@@ -82,7 +83,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
                         pageIndex: 0,
                         sortOption: {
                             label: 'Title',
-                            field: DCTERMS + 'title',
+                            field: `${DCTERMS}title`,
                             asc: true
                         }
                     }).pipe(
@@ -91,7 +92,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
                                 const record = this.dam.getRecordFromArray(arr);
                                 return {
                                     id: record['@id'],
-                                    title: this.util.getDctermsValue(record, 'title')
+                                    title: getDctermsValue(record, 'title')
                                 };
                             });
                         })
@@ -130,7 +131,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
         this.state.initialize();
         this.state.resetEdit();
         this.dm.reset();
-        this.util.createSuccessToast('Successfully ran mapping');
+        this.toast.createSuccessToast('Successfully ran mapping');
         this.dialogRef.close();
     }
 }

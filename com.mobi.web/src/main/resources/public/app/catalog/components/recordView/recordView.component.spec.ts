@@ -27,8 +27,9 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR } from '../../../../../public/test/ts/Shared';
 import { InlineEditComponent } from '../../../shared/components/inlineEdit/inlineEdit.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -43,7 +44,7 @@ import { CATALOG, DCTERMS, POLICY } from '../../../prefixes';
 import { ManageRecordButtonComponent } from '../manageRecordButton/manageRecordButton.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { RecordViewComponent } from './recordView.component';
 
@@ -55,11 +56,19 @@ describe('Record View component', function() {
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
-    const record: JSONLDObject = {'@id': recordId, '@type': []};
+    const record: JSONLDObject = {
+      '@id': recordId,
+      '@type': [],
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${DCTERMS}description`]: [{ '@value': 'description' }],
+      [`${DCTERMS}modified`]: [{ '@value': DATE_STR }],
+      [`${DCTERMS}issued`]: [{ '@value': DATE_STR }],
+      [`${CATALOG}catalog`]: [{ '@id': catalogId }]
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -83,7 +92,7 @@ describe('Record View component', function() {
                 MockProvider(CatalogStateService),
                 MockProvider(OntologyStateService),
                 MockProvider(PolicyEnforcementService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         }).compileComponents();
 
@@ -94,19 +103,11 @@ describe('Record View component', function() {
         catalogStateStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
-        utilStub.getPropertyId.and.callFake((obj, propId) => {
-            if (propId === CATALOG + 'catalog') {
-                return catalogId;
-            }
-            return '';
-        });
-        utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-        utilStub.getDate.and.returnValue('date');
-        utilStub.updateDctermsValue.and.callFake((obj, prop, newVal) => obj[DCTERMS + prop] = [{'@value': newVal}]);
+
         catalogStateStub.selectedRecord = record;
         catalogManagerStub.getRecord.and.returnValue(of([record]));
         catalogManagerStub.updateRecord.and.returnValue(of([record]));
@@ -121,7 +122,7 @@ describe('Record View component', function() {
         catalogStateStub = null;
         ontologyStateStub = null;
         policyEnforcementStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize', function() {
@@ -135,7 +136,7 @@ describe('Record View component', function() {
             expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
             expect(component.setInfo).toHaveBeenCalledWith([record]);
             expect(component.setCanEdit).toHaveBeenCalledWith();
-            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             expect(catalogStateStub.selectedRecord).toEqual(record);
         });
         it('unless the record is not found', function() {
@@ -145,7 +146,7 @@ describe('Record View component', function() {
             expect(component.setInfo).not.toHaveBeenCalled();
             expect(component.setCanEdit).not.toHaveBeenCalled();
             expect(catalogStateStub.selectedRecord).toBeUndefined();
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
         });
     });
     describe('controller methods', function() {
@@ -155,50 +156,50 @@ describe('Record View component', function() {
         });
         describe('should update the record', function() {
             beforeEach(function() {
-                catalogStateStub.selectedRecord = {'@id': 'old', '@type': []};
+                catalogStateStub.selectedRecord = { '@id': 'old', '@type': [], [`${CATALOG}catalog`]: [{ '@id': catalogId }] };
                 spyOn(component, 'setInfo');
             });
             it('if updateRecord resolves', fakeAsync(function() {
-                component.completeRecord = [Object.assign({}, record)];
+                component.completeRecord = [cloneDeep(record)];
                 component.updateRecord(record);
                 tick();
                 expect(catalogManagerStub.updateRecord).toHaveBeenCalledWith(recordId, catalogId, [record]);
                 expect(component.setInfo).toHaveBeenCalledWith([record]);
                 expect(catalogStateStub.selectedRecord).toEqual(record);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless updateRecord rejects', fakeAsync(function() {
-                component.completeRecord = [Object.assign({}, record)];
+                component.completeRecord = [cloneDeep(record)];
                 catalogManagerStub.updateRecord.and.returnValue(throwError('Error message'));
                 component.updateRecord(record);
                 tick();
                 expect(catalogManagerStub.updateRecord).toHaveBeenCalledWith(recordId, catalogId, [record]);
                 expect(component.setInfo).not.toHaveBeenCalled();
-                expect(catalogStateStub.selectedRecord).toEqual({'@id': 'old', '@type': []});
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(catalogStateStub.selectedRecord).toEqual({'@id': 'old', '@type': [], [`${CATALOG}catalog`]: [{ '@id': catalogId }]});
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
         });
         it('should update the description', function() {
             spyOn(component, 'updateRecord');
-            component.record = record;
+            component.record = cloneDeep(record);
             const description = 'This is a new description';
-            component.updateDescription(description + '     ');
-            expect(component.record[DCTERMS + 'description'][0]['@value']).toEqual(description);
-            expect(component.updateRecord).toHaveBeenCalledWith(record);
+            component.updateDescription(`${description}     `);
+            expect(component.record[`${DCTERMS}description`][0]['@value']).toEqual(description);
+            expect(component.updateRecord).toHaveBeenCalledWith(component.record);
         });
         describe('should update the title', function() {
             beforeEach(function() {
                 spyOn(component, 'updateRecord');
-                component.record = record;
+                component.record = cloneDeep(record);
                 component.title = 'title';
             });
             it('when changed', function() {
                 const title = 'This is a new title';
                 component.updateTitle(title);
-                expect(component.record[DCTERMS + 'title'][0]['@value']).toEqual(title);
-                expect(component.updateRecord).toHaveBeenCalledWith(record);
+                expect(component.record[`${DCTERMS}title`][0]['@value']).toEqual(title);
+                expect(component.updateRecord).toHaveBeenCalledWith(component.record);
             });
             it('and update ontology state title if open', function() {
                 const listItem = new OntologyListItem();
@@ -206,8 +207,8 @@ describe('Record View component', function() {
                 ontologyStateStub.list = [listItem];
                 const title = 'This is a new title';
                 component.updateTitle(title);
-                expect(component.record[DCTERMS + 'title'][0]['@value']).toEqual(title);
-                expect(component.updateRecord).toHaveBeenCalledWith(record);
+                expect(component.record[`${DCTERMS}title`][0]['@value']).toEqual(title);
+                expect(component.updateRecord).toHaveBeenCalledWith(component.record);
                 expect(listItem.versionedRdfRecord.title).toEqual(title);
             });
         });
@@ -221,35 +222,44 @@ describe('Record View component', function() {
                     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                     component.setCanEdit();
                     tick();
-                    expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});
+                    expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${POLICY}Update`});
                     expect(component.canEdit).toEqual(true);
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 }));
                 it('with Indeterminate', fakeAsync(function() {
                     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.indeterminate));
                     component.setCanEdit();
                     tick();
-                    expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});
+                    expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${POLICY}Update`});
                     expect(component.canEdit).toEqual(true);
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 }));
                 it('with Deny', fakeAsync(function() {
                     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     component.setCanEdit();
                     tick();
-                    expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});
+                    expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${POLICY}Update`});
                     expect(component.canEdit).toEqual(false);
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 }));
             });
             it('when evaluateRequest rejects', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(throwError('Error message'));
                 component.setCanEdit();
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Update'});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${POLICY}Update`});
                 expect(component.canEdit).toEqual(false);
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
+        });
+        it('should set all record information', function() {
+            component.setInfo([record]);
+            expect(component.completeRecord).toEqual([record]);
+            expect(component.record).toEqual(record);
+            expect(component.title).toEqual('title');
+            expect(component.description).toEqual('description');
+            expect(component.modified).toEqual(SHORT_DATE_STR);
+            expect(component.issued).toEqual(SHORT_DATE_STR);
         });
     });
     describe('contains the correct html', function() {

@@ -53,7 +53,7 @@ export class DatasetStateService {
         pageIndex: 0,
         searchText: '',
         sortOption: {
-            field: DCTERMS + 'title',
+            field: `${DCTERMS}title`,
             label: 'Title',
             asc: true
         }

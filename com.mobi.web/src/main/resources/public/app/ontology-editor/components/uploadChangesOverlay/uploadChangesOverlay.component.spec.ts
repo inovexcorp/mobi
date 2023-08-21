@@ -37,7 +37,7 @@ import { FileInputComponent } from '../../../shared/components/fileInput/fileInp
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { UploadChangesOverlayComponent } from './uploadChangesOverlay.component';
 
 describe('Upload Changes Overlay component', function() {
@@ -68,7 +68,7 @@ describe('Upload Changes Overlay component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         }).compileComponents();

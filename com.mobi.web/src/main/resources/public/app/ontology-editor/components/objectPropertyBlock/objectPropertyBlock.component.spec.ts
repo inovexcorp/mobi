@@ -81,7 +81,7 @@ describe('Object Property Block component', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}],
             propertyLanguage: 'lang',
-            propertyType: RDF + 'langString'
+            propertyType: `${RDF}langString`
         };
         ontologyStateStub.removeProperty.and.returnValue(of({'@id': 'prop1'}));
     });
@@ -144,7 +144,7 @@ describe('Object Property Block component', function() {
     describe('controller methods', function() {
         beforeEach(() => {
             property = 'prop1';
-            value = {'@value': 'value', '@language': 'lang', '@type': RDF + 'langString'};
+            value = {'@value': 'value', '@language': 'lang', '@type': `${RDF}langString`};
             ontologyStateStub.listItem.selected = {
                 [property]: [value],
                 '@id': property
@@ -169,31 +169,31 @@ describe('Object Property Block component', function() {
         describe('should update vocabulary hierarchies on property removal', function() {
             beforeEach(function() {
                 property = 'prop1';
-                value = {'@value': 'value', '@language': 'lang', '@type': RDF + 'langString'};
+                value = {'@value': 'value', '@language': 'lang', '@type': `${RDF}langString`};
                 ontologyStateStub.listItem.selected = {
                     [property]: [value],
                     '@id': property,
-                    '@type': [RDF + 'langString']
+                    '@type': [`${RDF}langString`]
                 };
             });
             it('if selected is a derived Concept or ConceptScheme', function() {
                 ontologyStateStub.containsDerivedConcept.and.returnValue(true);
                 component.removeObjectProperty('1', {'@id': 'prop1'});
                 fixture.detectChanges();
-                expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith([RDF + 'langString']);
+                expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith([`${RDF}langString`]);
                 expect(ontologyStateStub.removeFromVocabularyHierarchies).toHaveBeenCalledWith('1', {'@id': 'prop1'});
 
                 ontologyStateStub.containsDerivedConcept.and.returnValue(false);
                 ontologyStateStub.containsDerivedConceptScheme.and.returnValue(true);
                 component.removeObjectProperty('1', {'@id': 'prop1'});
-                expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith([RDF + 'langString']);
+                expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith([`${RDF}langString`]);
                 expect(ontologyStateStub.removeFromVocabularyHierarchies).toHaveBeenCalledWith('1', {'@id': 'prop1'});
             });
             it('unless selected is not a derived Concept or ConceptScheme', function() {
                 component.removeObjectProperty('prop1', {'@id': ''});
                 fixture.detectChanges();
-                expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith([RDF + 'langString']);
-                expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith([RDF + 'langString']);
+                expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith([`${RDF}langString`]);
+                expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith([`${RDF}langString`]);
                 expect(ontologyStateStub.removeFromVocabularyHierarchies).not.toHaveBeenCalled();
             });
         });

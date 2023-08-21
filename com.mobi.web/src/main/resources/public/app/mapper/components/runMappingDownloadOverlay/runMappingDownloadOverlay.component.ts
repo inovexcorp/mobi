@@ -28,16 +28,16 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
- * @class mapper.component:runMappingDownloadOverlay
+ * @class mapper.RunMappingDownloadOverlayComponent
  *
  * A component that creates content for a modal that contains a configuration settings for running the currently selected
  * {@link shared.MapperStateService#selected mapping} against the uploaded
  * {@link shared.DelimitedManagerService#dataRows} and downloading the results. This includes a input for the file name
- * of the downloaded mapped data and a {@link mapper.MapperSerializationSelect} for the RDF format of the mapped data.
- * Meant to be used in conjunction with the `MatDialog` service.
+ * of the downloaded mapped data and a {@link mapper.MapperSerializationSelectComponent} for the RDF format of the mapped 
+ * data. Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
     selector: 'run-mapping-download-overlay',
@@ -52,11 +52,11 @@ export class RunMappingDownloadOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<RunMappingDownloadOverlayComponent>, private fb: UntypedFormBuilder,
         private state: MapperStateService, private dm: DelimitedManagerService,
-        private camelCasePipe: CamelCasePipe, private util: UtilService) {}
+        private camelCasePipe: CamelCasePipe, private toast: ToastService) {}
 
     ngOnInit(): void {
         const title = this.state.selected.record ? this.state.selected.record.title : this.state.selected.config.title;
-        this.runMappingDownloadForm.controls.fileName.setValue(this.camelCasePipe.transform(title, 'class') + '_Data');
+        this.runMappingDownloadForm.controls.fileName.setValue(`${this.camelCasePipe.transform(title, 'class')}_Data`);
     }
     run(): void {
         if (this.state.editMapping && this.state.isMappingChanged()) {
@@ -71,7 +71,7 @@ export class RunMappingDownloadOverlayComponent implements OnInit {
     }
     private _runMapping(id: string): void {
         this.dm.mapAndDownload(id, this.runMappingDownloadForm.controls.serialization.value, this.runMappingDownloadForm.controls.fileName.value);
-        this.util.createSuccessToast('Successfully ran mapping');
+        this.toast.createSuccessToast('Successfully ran mapping');
         this._reset();
     }
     private _reset(): void {

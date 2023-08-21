@@ -23,7 +23,7 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 
 import { 
     cleanStylesFromDOM
@@ -35,7 +35,6 @@ import { QueryTabComponent } from '../../query/components/queryTab/queryTab.comp
 import { DiscoverPageComponent } from './discoverPage.component';
 
 describe('Discover Page component', function() {
-    let component: DiscoverPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<DiscoverPageComponent>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
@@ -54,14 +53,12 @@ describe('Discover Page component', function() {
         }).compileComponents();
 
         fixture = TestBed.createComponent(DiscoverPageComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
         discoverStateStub = null;

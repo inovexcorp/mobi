@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { TestBed, flush } from '@angular/core/testing';
-
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { listItem, visData, propertyWithRanges } from './testData';
-import { OntologyVisualizationService } from './ontologyVisualization.service';
-import { OntologyVisualizationDataService } from './ontologyVisualizationData.service';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+
+import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { OntologyStateService } from '../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../shared/services/ontologyManager.service';
 import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
@@ -33,13 +33,11 @@ import { HierarchyResponse } from '../../shared/models/hierarchyResponse.interfa
 import { EntityNames } from '../../shared/models/entityNames.interface';
 import { IriList } from '../../shared/models/iriList.interface';
 import { PropertyToRanges } from '../../shared/models/propertyToRanges.interface';
-import { UtilService } from '../../shared/services/util.service';
-import { MockProvider } from 'ng-mocks';
+import { GraphState } from '../classes';
 import { ControlRecordUtilsService } from './controlRecordUtils.service';
-import {GraphState, StateNode} from '../classes';
-import { ControlRecordI } from '../classes/controlRecords';
-import { cleanStylesFromDOM } from '../../../test/ts/Shared';
-import { of } from 'rxjs';
+import { OntologyVisualizationDataService } from './ontologyVisualizationData.service';
+import { listItem, visData } from './testData';
+import { OntologyVisualizationService } from './ontologyVisualization.service';
 
 describe('OntologyVisualization Service', () => {
     let visualizationStub : OntologyVisualizationService;
@@ -67,7 +65,6 @@ describe('OntologyVisualization Service', () => {
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(ControlRecordUtilsService),
-                MockProvider(UtilService),
                 MockProvider(OntologyVisualizationDataService)
             ]
         }).compileComponents();

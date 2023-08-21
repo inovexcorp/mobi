@@ -27,7 +27,6 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { UtilService } from '../../../../shared/services/util.service';
 
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { PropertyDetails } from '../../../models/propertyDetails.interface';
@@ -56,7 +55,7 @@ export class NewInstancePropertyOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<NewInstancePropertyOverlayComponent>,
                 @Inject(MAT_DIALOG_DATA) public data: {properties: PropertyDetails[], instance: JSONLDObject},
-                private eu: ExploreUtilsService, public util: UtilService) {
+                private eu: ExploreUtilsService) {
     }
 
     ngOnInit(): void {

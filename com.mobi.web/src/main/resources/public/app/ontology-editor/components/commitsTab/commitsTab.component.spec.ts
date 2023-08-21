@@ -31,13 +31,13 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { ONTOLOGYSTATE } from '../../../prefixes';
+import { DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
 import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
 import { Commit } from '../../../shared/models/commit.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CommitsTabComponent } from './commitsTab.component';
 
 describe('Commits Tab component', function() {
@@ -45,7 +45,7 @@ describe('Commits Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CommitsTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const commit: Commit = {
         id: 'commit',
@@ -73,7 +73,7 @@ describe('Commits Tab component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         });
     });
@@ -83,7 +83,7 @@ describe('Commits Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.updateOntologyWithCommit.and.returnValue(of(null));
@@ -104,43 +104,39 @@ describe('Commits Tab component', function() {
     });
     describe('controller methods', function() {
         describe('should get the title for the current head commit currently selected branch', function() {
-            beforeEach(function() {
-                utilStub.getDctermsValue.and.returnValue('title');
-            });
             it('if a branch is checked out', function() {
-                const branch: JSONLDObject = {'@id': 'branchId', 'http://purl.org/dc/terms/title': [{'@value': 'title'}]};
+                const branch: JSONLDObject = {'@id': 'branchId', [`${DCTERMS}title`]: [{'@value': 'title'}]};
                 ontologyStateStub.listItem.branches = [branch];
                 ontologyStateStub.listItem.versionedRdfRecord.branchId = branch['@id'];
                 expect(component.getHeadTitle()).toEqual('title');
-                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
             });
             it('if a tag is checked out', function() {
-                ontologyStateStub.getCurrentStateByRecordId.and.returnValue({'@id': 'state'});
-                const tag: JSONLDObject = {'@id': 'tag'};
-                utilStub.getPropertyId.and.returnValue(tag['@id']);
+                const tag: JSONLDObject = {
+                    '@id': 'tag',
+                    [`${DCTERMS}title`]: [{ '@value': 'title' }]
+                };
+                ontologyStateStub.getCurrentStateByRecordId.and.returnValue({ '@id': 'state', [`${ONTOLOGYSTATE}tag`]: [{ '@id': tag['@id'] }] });
                 ontologyStateStub.isStateTag.and.returnValue(true);
                 ontologyStateStub.listItem.tags = [tag];
                 ontologyStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
                 expect(component.getHeadTitle()).toEqual('title');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith({'@id': 'state'}, ONTOLOGYSTATE + 'tag');
-                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(tag, 'title');
             });
             it('if a commit is checked out', function() {
                 expect(component.getHeadTitle()).toEqual('');
             });
         });
-        it('should open the ontology at a commit', function() {
-            component.openOntologyAtCommit(commit);
-            expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, commit.id);
-        });
-        it('should open the ontology at a commit if OntologyStateService.isCommittable is false', function() {
-            component.openOntologyAtCommit(commit);
-            expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, commit.id);
-        });
-        it('when trying to open the ontology at a commit if OntologyStateService.isCommittable is true it should createWarningToast', function() {
-            ontologyStateStub.isCommittable.and.returnValue(false);
-            component.openOntologyAtCommit(commit);
-            expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, commit.id);
+        describe('should open the ontology at a commit', function() {
+            it('if OntologyStateService.isCommittable is false', function() {
+                component.openOntologyAtCommit(commit);
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+                expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, commit.id);
+            });
+            it('unless OntologyStateService.isCommittable is true', function() {
+                ontologyStateStub.isCommittable.and.returnValue(true);
+                component.openOntologyAtCommit(commit);
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(ontologyStateStub.updateOntologyWithCommit).not.toHaveBeenCalled();
+            });
         });
         it('should return the appropriate value to track commits by', function() {
             expect(component.trackCommits(0, commit)).toEqual(commit.id);

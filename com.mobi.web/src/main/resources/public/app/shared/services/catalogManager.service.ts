@@ -20,10 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { has, find, get, forEach, difference, includes } from 'lodash';
-import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import { has, find, get, forEach, difference } from 'lodash';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, throwError, of, forkJoin } from 'rxjs';
 
 import { REST_PREFIX } from '../../constants';
@@ -41,7 +41,7 @@ import { TagConfig } from '../models/tagConfig.interface';
 import { KeywordCount } from '../models/keywordCount.interface';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { CATALOG, DCTERMS } from '../../prefixes';
-import { UtilService } from './util.service';
+import { condenseCommitId, createHttpParams, getBeautifulIRI, getDctermsValue, handleError, paginatedConfigToHttpParams } from '../utility';
 
 /**
  * @class shared.CatalogManagerService
@@ -51,20 +51,20 @@ import { UtilService } from './util.service';
  */
 @Injectable()
 export class CatalogManagerService {
-    prefix = REST_PREFIX + 'catalogs';
-    commitsPrefix = REST_PREFIX + 'commits';
+    prefix = `${REST_PREFIX}catalogs`;
+    commitsPrefix = `${REST_PREFIX}commits`;
 
-    constructor(private http: HttpClient, private spinnerSrv : ProgressSpinnerService, private util: UtilService) {}
+    constructor(private http: HttpClient, private spinnerSrv : ProgressSpinnerService) {}
 
     /**
      * `coreRecordTypes` contains a list of IRI strings of all the core types of Records defined by Mobi.
      * @type {string[]}
      */
     coreRecordTypes = [
-        CATALOG + 'Record',
-        CATALOG + 'UnversionedRecord',
-        CATALOG + 'VersionedRecord',
-        CATALOG + 'VersionedRDFRecord'
+        `${CATALOG}Record`,
+        `${CATALOG}UnversionedRecord`,
+        `${CATALOG}VersionedRecord`,
+        `${CATALOG}VersionedRDFRecord`
     ];
     /**
      * `sortOptions` contains a list of objects representing all sort options for both Catalogs. This list is populated
@@ -111,8 +111,8 @@ export class CatalogManagerService {
             .pipe(
                 catchError(() => throwError('Error in catalogManager initialization')),
                 mergeMap(responses => {
-                    this.localCatalog = find(responses[2], {[DCTERMS + 'title']: [{'@value': 'Mobi Catalog (Local)'}]});
-                    this.distributedCatalog = find(responses[2], {[DCTERMS + 'title']: [{'@value': 'Mobi Catalog (Distributed)'}]});
+                    this.localCatalog = find(responses[2], {[`${DCTERMS}title`]: [{'@value': 'Mobi Catalog (Local)'}]});
+                    this.distributedCatalog = find(responses[2], {[`${DCTERMS}title`]: [{'@value': 'Mobi Catalog (Distributed)'}]});
                     if (!this.localCatalog) {
                         return throwError('Could not find local catalog');
                     }
@@ -121,16 +121,16 @@ export class CatalogManagerService {
                     }
                     this.recordTypes = responses[0];
                     forEach(responses[1], option => {
-                        const label = this.util.getBeautifulIRI(option);
+                        const label = getBeautifulIRI(option);
                         if (!find(this.sortOptions, {field: option})) {
                             this.sortOptions.push({
                                 field: option,
                                 asc: true,
-                                label: label + ' (asc)'
+                                label: `${label} (asc)`
                             }, {
                                 field: option,
                                 asc: false,
-                                label: label + ' (desc)'
+                                label: `${label} (desc)`
                             });
                         }
                     });
@@ -146,8 +146,8 @@ export class CatalogManagerService {
      * catalog
      */
     getRecordTypes(): Observable<string[]> {
-        return this.spinnerSrv.track(this.http.get(this.prefix + '/record-types'))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<string[]>(`${this.prefix}/record-types`))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -157,8 +157,8 @@ export class CatalogManagerService {
      * properties to sort by
      */
     getSortOptions(): Observable<string[]> {
-        return this.spinnerSrv.track(this.http.get(this.prefix + '/sort-options'))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<string[]>(`${this.prefix}/sort-options`))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -172,7 +172,7 @@ export class CatalogManagerService {
      */
     getResultsPage(url: string): Observable<HttpResponse<JSONLDObject[]>> {
         return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(url, {observe: 'response'}))
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -189,15 +189,15 @@ export class CatalogManagerService {
      * of an array of {@link KeywordCount} objects or is rejected with a error message
      */
     getKeywords(catalogId: string, paginatedConfig: PaginatedConfig, isTracked = false): Observable<HttpResponse<KeywordCount[]>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
+        let params = paginatedConfigToHttpParams(paginatedConfig);
 
         if (get(paginatedConfig, 'searchText')) {
-            params.searchText = paginatedConfig.searchText;
+            params = params.set('searchText', paginatedConfig.searchText);
         }
 
-        const url = this.prefix + '/' + encodeURIComponent(catalogId) + '/keywords';
-        const request =  this.http.get<KeywordCount[]>(url, {params: this.util.createHttpParams(params), observe: 'response'});  
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/keywords`;
+        const request =  this.http.get<KeywordCount[]>(url, {params, observe: 'response'});  
+        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     /**
@@ -215,24 +215,28 @@ export class CatalogManagerService {
      * of an array of the Record {@link JSONLDObject}s or is rejected with a error message
      */
     getRecords(catalogId: string, paginatedConfig: PaginatedConfig, isTracked = false): Observable<HttpResponse<JSONLDObject[]>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
-        this._setDefaultSort(params);
+        let params = paginatedConfigToHttpParams(paginatedConfig);
+        params = this._setDefaultSort(params);
         if (get(paginatedConfig, 'searchText')) {
-            params.searchText = paginatedConfig.searchText;
+            params = params.set('searchText', paginatedConfig.searchText);
         }
         if (get(paginatedConfig, 'type')) {
-            params.type = paginatedConfig.type;
+            params = params.set('type', paginatedConfig.type);
         }
         if (get(paginatedConfig, 'keywords')) {
-            params.keywords = paginatedConfig.keywords;
+            paginatedConfig.keywords.forEach(keyword => {
+                params = params.append('keywords', keyword);
+            });
         }
         if (get(paginatedConfig, 'creators')) {
-            params.creators = paginatedConfig.creators;
+            paginatedConfig.creators.forEach(creator => {
+                params = params.append('creators', creator);
+            });
         }
-        const url = this.prefix + '/' + encodeURIComponent(catalogId) + '/records';
-        const request =  this.http.get<JSONLDObject[]>(url, {params: this.util.createHttpParams(params), observe: 'response'})
-            .pipe(catchError(this.util.handleError));
-        return this.util.trackedRequest(request, isTracked);
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records`;
+        const request =  this.http.get<JSONLDObject[]>(url, {params, observe: 'response'})
+            .pipe(catchError(handleError));
+        return this.spinnerSrv.trackedRequest(request, isTracked);
     }
 
     /**
@@ -245,8 +249,8 @@ export class CatalogManagerService {
      * Record if it exists or is rejected with an error message
      */
     getRecord(recordId: string, catalogId: string): Observable<JSONLDObject[]> {
-        return this.spinnerSrv.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}`))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -267,8 +271,8 @@ export class CatalogManagerService {
             fd.append('description', recordConfig.description);
         }
         forEach(get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(catalogId)}/records`, fd, {responseType: 'text'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -282,8 +286,8 @@ export class CatalogManagerService {
      * or rejects with an error message
      */
     updateRecord(recordId: string, catalogId: string, newRecord: JSONLDObject[]): Observable<JSONLDObject[]> {
-        return this.spinnerSrv.track(this.http.put(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), newRecord))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.put<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}`, newRecord))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -295,9 +299,9 @@ export class CatalogManagerService {
      * @returns {Observable<null>} An Observable that resolves if the deletion was successful or rejects with an error
      * message
      */
-    deleteRecord(recordId: string, catalogId: string): Observable<null> {
-        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)))
-            .pipe(catchError(this.util.handleError));
+    deleteRecord(recordId: string, catalogId: string): Observable<void> {
+        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}`))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -314,10 +318,11 @@ export class CatalogManagerService {
      * Distribution {@link JSONLDObject}s or is rejected with a error message
      */
     getRecordDistributions(recordId: string, catalogId: string, paginatedConfig: PaginatedConfig): Observable<HttpResponse<JSONLDObject[]>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
-        this._setDefaultSort(params);
-        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', {params: this.util.createHttpParams(params), observe: 'response'}))
-            .pipe(catchError(this.util.handleError));
+        let params = paginatedConfigToHttpParams(paginatedConfig);
+        params = this._setDefaultSort(params);
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions`;
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(url, {params, observe: 'response'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -331,8 +336,8 @@ export class CatalogManagerService {
      * with an error message
      */
     getRecordDistribution(distributionId: string, recordId: string, catalogId: string): Observable<JSONLDObject> {
-        return this.spinnerSrv.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions/${encodeURIComponent(distributionId)}`))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -361,8 +366,8 @@ export class CatalogManagerService {
         if (distributionConfig.downloadURL) {
             fd.append('downloadURL', distributionConfig.downloadURL);
         }
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions`, fd, {responseType: 'text'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -378,9 +383,9 @@ export class CatalogManagerService {
      * message
      */
     updateRecordDistribution(distributionId: string, recordId: string, catalogId: string, newDistribution: JSONLDObject): Observable<string> {
-        return this.spinnerSrv.track(this.http.put(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), newDistribution))
+        return this.spinnerSrv.track(this.http.put(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions/${encodeURIComponent(distributionId)}`, newDistribution))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 map(() => distributionId)
             );
     }
@@ -395,9 +400,9 @@ export class CatalogManagerService {
      * @param {string} catalogId The id of the Catalog the Record should be part of
      * @returns {Observable<null>} An Observable that resolves if the deletion was successful or rejects with an error message
      */
-    deleteRecordDistribution(distributionId: string, recordId: string, catalogId: string): Observable<null> {
-        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)))
-            .pipe(catchError(this.util.handleError));
+    deleteRecordDistribution(distributionId: string, recordId: string, catalogId: string): Observable<void> {
+        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions/${encodeURIComponent(distributionId)}`))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -414,10 +419,11 @@ export class CatalogManagerService {
      * is rejected with a error message
      */
     getRecordVersions(recordId: string, catalogId: string, paginatedConfig?: PaginatedConfig): Observable<HttpResponse<JSONLDObject[]>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
-        this._setDefaultSort(params);
-        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', {params: this.util.createHttpParams(params), observe: 'response'}))
-            .pipe(catchError(this.util.handleError));
+        let params = paginatedConfigToHttpParams(paginatedConfig);
+        params = this._setDefaultSort(params);
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions`;
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(url, {params, observe: 'response'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -459,7 +465,7 @@ export class CatalogManagerService {
      * error message
      */
     createRecordVersion(recordId: string, catalogId: string, versionConfig: NewConfig): Observable<string> {
-        versionConfig.type = CATALOG + 'Version';
+        versionConfig.type = `${CATALOG}Version`;
         return this._createVersion(recordId, catalogId, versionConfig);
     }
 
@@ -482,8 +488,8 @@ export class CatalogManagerService {
         if (has(tagConfig, 'description')) {
             fd.append('description', tagConfig.description);
         }
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/tags', fd, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/tags`, fd, {responseType: 'text'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -498,9 +504,9 @@ export class CatalogManagerService {
      * @returns {Observable<string>} An Observable that resolves if the update was successful or rejects with an error message
      */
     updateRecordVersion(versionId: string, recordId: string, catalogId: string, newVersion: JSONLDObject): Observable<string> {
-        return this.spinnerSrv.track(this.http.put(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), newVersion))
+        return this.spinnerSrv.track(this.http.put(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}`, newVersion))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 map(() => versionId)
             );
     }
@@ -515,9 +521,9 @@ export class CatalogManagerService {
      * @param {string} catalogId The id of the Catalog the Record should be part of
      * @returns {Observable<null>} An Observable that resolves if the deletion was successful or rejects with an error message
      */
-    deleteRecordVersion(versionId: string, recordId: string, catalogId: string): Observable<null> {
-        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)))
-            .pipe(catchError(this.util.handleError));
+    deleteRecordVersion(versionId: string, recordId: string, catalogId: string): Observable<void> {
+        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}`))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -532,8 +538,9 @@ export class CatalogManagerService {
      * @returns {Observable<CommitDifference>} An Observable that resolves to the Version's Commit if found or rejects with an error message
      */
     getVersionCommit(versionId: string, recordId: string, catalogId: string, format = 'jsonld'): Observable<CommitDifference> {
-        return this.spinnerSrv.track(this.http.get<CommitDifference>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', {params: this.util.createHttpParams({ format })}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/commit`;
+        return this.spinnerSrv.track(this.http.get<CommitDifference>(url, {params: createHttpParams({ format })}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -551,10 +558,11 @@ export class CatalogManagerService {
      * is rejected with a error message
      */
     getVersionDistributions(versionId: string, recordId: string, catalogId: string, paginatedConfig: PaginatedConfig): Observable<HttpResponse<JSONLDObject[]>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
-        this._setDefaultSort(params);
-        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', {params: this.util.createHttpParams(params), observe: 'response'}))
-            .pipe(catchError(this.util.handleError));
+        let params = paginatedConfigToHttpParams(paginatedConfig);
+        params = this._setDefaultSort(params);
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions`;
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(url, {params, observe: 'response'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -569,8 +577,8 @@ export class CatalogManagerService {
      * with an error message
      */
     getVersionDistribution(distributionId: string, versionId: string, recordId: string, catalogId: string): Observable<JSONLDObject> {
-        return this.spinnerSrv.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions/${encodeURIComponent(distributionId)}`))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -601,8 +609,8 @@ export class CatalogManagerService {
         if (has(distributionConfig, 'downloadURL')) {
             fd.append('downloadURL', distributionConfig.downloadURL);
         }
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions`, fd, {responseType: 'text'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -618,9 +626,9 @@ export class CatalogManagerService {
      * @returns {Observable<string>} An Observable that resolves if the update was successful or rejects with an error message
      */
     updateVersionDistribution(distributionId: string, versionId: string, recordId: string, catalogId: string, newDistribution: JSONLDObject): Observable<string> {
-        return this.spinnerSrv.track(this.http.put(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), newDistribution))
+        return this.spinnerSrv.track(this.http.put(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions/${encodeURIComponent(distributionId)}`, newDistribution))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 map(() => distributionId)
             );
     }
@@ -637,9 +645,9 @@ export class CatalogManagerService {
      * @returns {Observable<null>} An Observable that resolves if the deletion was successful or rejects with an error
      * message
      */
-    deleteVersionDistribution(distributionId: string, versionId: string, recordId: string, catalogId: string): Observable<null> {
-        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)))
-            .pipe(catchError(this.util.handleError));
+    deleteVersionDistribution(distributionId: string, versionId: string, recordId: string, catalogId: string): Observable<void> {
+        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions/${encodeURIComponent(distributionId)}`))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -657,11 +665,12 @@ export class CatalogManagerService {
      * is rejected with a error message
      */
     getRecordBranches(recordId: string, catalogId: string, paginatedConfig?: PaginatedConfig, applyUserFilter = false): Observable<HttpResponse<JSONLDObject[]>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
-        this._setDefaultSort(params);
-        params.applyUserFilter = applyUserFilter;
-        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', {params: this.util.createHttpParams(params), observe: 'response'}))
-            .pipe(catchError(this.util.handleError));
+        let params = paginatedConfigToHttpParams(paginatedConfig);
+        params = this._setDefaultSort(params);
+        params = params.set('applyUserFilter', applyUserFilter);
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches`;
+        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(url, {params, observe: 'response'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -704,7 +713,7 @@ export class CatalogManagerService {
      * message
      */
     createRecordBranch(recordId: string, catalogId: string, branchConfig: NewConfig, commitId: string): Observable<string> {
-        branchConfig.type = CATALOG + 'Branch';
+        branchConfig.type = `${CATALOG}Branch`;
         return this._createBranch(recordId, catalogId, branchConfig, commitId);
     }
 
@@ -722,15 +731,15 @@ export class CatalogManagerService {
      * message
      */
     createRecordUserBranch(recordId: string, catalogId: string, branchConfig: NewConfig, commitId: string, parentBranchId: string): Observable<string> {
-        branchConfig.type = CATALOG + 'UserBranch';
+        branchConfig.type = `${CATALOG}UserBranch`;
         return this._createBranch(recordId, catalogId, branchConfig, commitId)
             .pipe(
                 switchMap((iri: string) => {
                     return this._getRecordBranch(encodeURIComponent(iri), recordId, catalogId);
                 }),
                 switchMap((branch: JSONLDObject) => {
-                    branch[CATALOG + 'head'] = [{'@id': commitId}];
-                    branch[CATALOG + 'createdFrom'] = [{'@id': parentBranchId}];
+                    branch[`${CATALOG}head`] = [{'@id': commitId}];
+                    branch[`${CATALOG}createdFrom`] = [{'@id': parentBranchId}];
                     return this.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
                 })
             );
@@ -749,9 +758,9 @@ export class CatalogManagerService {
      * rejects with an error message
      */
     updateRecordBranch(branchId: string, recordId: string, catalogId: string, newBranch: JSONLDObject): Observable<string> {
-        return this.spinnerSrv.track(this.http.put(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), newBranch))
+        return this.spinnerSrv.track(this.http.put(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`, newBranch))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 map(() => branchId)
             );
     }
@@ -766,9 +775,9 @@ export class CatalogManagerService {
      * @param {string} catalogId The id of the Catalog the Record should be part of
      * @returns {Observable} An Observable that resolves if the deletion was successful or rejects with an error message
      */
-    deleteRecordBranch(recordId: string, branchId: string, catalogId: string): Observable<null> {
-        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)))
-            .pipe(catchError(this.util.handleError));
+    deleteRecordBranch(recordId: string, branchId: string, catalogId: string): Observable<void> {
+        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -779,8 +788,9 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves with the Commit or rejects with an error message
      */
     getCommit(commitId: string, format = 'jsonld'): Observable<JSONLDObject> {
-        return this.spinnerSrv.track(this.http.get<JSONLDObject>(this.commitsPrefix + '/' + encodeURIComponent(commitId), {params: this.util.createHttpParams({ format })}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.commitsPrefix}/${encodeURIComponent(commitId)}`;
+        return this.spinnerSrv.track(this.http.get<JSONLDObject>(url, {params: createHttpParams({ format })}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -797,9 +807,16 @@ export class CatalogManagerService {
      */
     getCommitHistory(commitId: string, targetId?: string, entityId?: string, isTracked = false): Observable<Commit[]> {
         const params = { targetId, entityId };
-        const url = this.commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
-        const request =  this.http.get<Commit[]>(url, {params: this.util.createHttpParams(params)});
-        return this.util.trackedRequest(request, isTracked) .pipe(catchError(this.util.handleError));
+        const url = `${this.commitsPrefix}/${encodeURIComponent(commitId)}/history`;
+        const request = this.http.get<Commit[]>(url, {params: createHttpParams(params)});
+        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(
+          catchError(handleError),
+          map((commits: Commit[]) => commits.map(commit => {
+            commit.dateObj = new Date(commit.date);
+            commit.condensedId = condenseCommitId(commit.id);
+            return commit;
+          }))
+        );
     }
 
     /**
@@ -813,9 +830,9 @@ export class CatalogManagerService {
      *      message.
      */
     getCompiledResource(commitId: string, entityId: string, isTracked = false): Observable<JSONLDObject[]> {
-        const url = this.commitsPrefix + '/' + encodeURIComponent(commitId) + '/resource';
-        const request =  this.http.get<JSONLDObject[]>(url, {params: this.util.createHttpParams({ entityId })});
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError)).pipe(catchError(this.util.handleError));
+        const url = `${this.commitsPrefix}/${encodeURIComponent(commitId)}/resource`;
+        const request =  this.http.get<JSONLDObject[]>(url, {params: createHttpParams({ entityId })});
+        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError)).pipe(catchError(handleError));
     }
 
     /**
@@ -830,9 +847,10 @@ export class CatalogManagerService {
      */
     getDifference(commitId: string, targetId?: string, limit?: number, offset?: number, format='jsonld'): Observable<CommitDifference | HttpResponse<CommitDifference>> {
         const params = { targetId, limit, offset, format };
-        return this.spinnerSrv.track(this.http.get<CommitDifference>(this.commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', {params: this.util.createHttpParams(params), observe: 'response'}))
+        const url = `${this.commitsPrefix}/${encodeURIComponent(commitId)}/difference`;
+        return this.spinnerSrv.track(this.http.get<CommitDifference>(url, {params: createHttpParams(params), observe: 'response'}))
             .pipe(
-                catchError(this.util.handleError),
+                catchError(handleError),
                 map((response: HttpResponse<CommitDifference>) => limit !== null && limit !== undefined ? response : response.body)
             );
     }
@@ -848,8 +866,9 @@ export class CatalogManagerService {
      *      rejects with an error message
      */
     getDifferenceForSubject(subjectId: string, commitId: string, format='jsonld'): Observable<CommitDifference> {
-        return this.spinnerSrv.track(this.http.get<CommitDifference>(this.commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference' + '/' + encodeURIComponent(subjectId), {params: this.util.createHttpParams({ format })}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.commitsPrefix}/${encodeURIComponent(commitId)}/difference/${encodeURIComponent(subjectId)}`;
+        return this.spinnerSrv.track(this.http.get<CommitDifference>(url, {params: createHttpParams({ format })}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -864,8 +883,9 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves with the list of Branch Commits or rejects with an error message
      */
     getBranchCommits(branchId: string, recordId: string, catalogId: string, targetId?: string): Observable<Commit[]> {
-        return this.spinnerSrv.track(this.http.get<Commit[]>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', {params: this.util.createHttpParams({ targetId })}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits`;
+        return this.spinnerSrv.track(this.http.get<Commit[]>(url, {params: createHttpParams({ targetId })}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -880,8 +900,9 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves to the IRI of the new Commit or rejects with an error message
      */
     createBranchCommit(branchId: string, recordId: string, catalogId: string, message: string): Observable<string> {
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, {params: this.util.createHttpParams({ message }), responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits`;
+        return this.spinnerSrv.track(this.http.post(url, null, {params: createHttpParams({ message }), responseType: 'text'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -895,8 +916,9 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves to the Commit if found or rejects with an error message
      */
     getBranchHeadCommit(branchId: string, recordId: string, catalogId: string, format = 'jsonld'): Observable<CommitDifference> {
-        return this.spinnerSrv.track(this.http.get<CommitDifference>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', {params: this.util.createHttpParams({ format })}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/head`;
+        return this.spinnerSrv.track(this.http.get<CommitDifference>(url, {params: createHttpParams({ format })}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -911,8 +933,9 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves to the Commit if found or rejects with an error message
      */
     getBranchCommit(commitId: string, branchId: string, recordId: string, catalogId: string, format = 'jsonld'): Observable<CommitDifference> {
-        return this.spinnerSrv.track(this.http.get<CommitDifference>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), {params: this.util.createHttpParams({ format })}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}`;
+        return this.spinnerSrv.track(this.http.get<CommitDifference>(url, {params: createHttpParams({ format })}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -930,8 +953,9 @@ export class CatalogManagerService {
      */
     getBranchDifference(sourceId: string, targetId: string, recordId: string, catalogId: string, format = 'jsonld'): Observable<Difference> {
         const params = { format, targetId };
-        return this.spinnerSrv.track(this.http.get<Difference>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/difference', {params: this.util.createHttpParams(params)}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(sourceId)}/difference`;
+        return this.spinnerSrv.track(this.http.get<Difference>(url, {params: createHttpParams(params)}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -948,8 +972,15 @@ export class CatalogManagerService {
      */
     getBranchConflicts(sourceId: string, targetId: string, recordId: string, catalogId: string, format = 'jsonld'): Observable<Conflict[]> {
         const params = { format, targetId };
-        return this.spinnerSrv.track(this.http.get<Conflict[]>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', {params: this.util.createHttpParams(params)}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(sourceId)}/conflicts`;
+        return this.spinnerSrv.track(this.http.get<Conflict[]>(url, {params: createHttpParams(params)})).pipe(
+            catchError(handleError),
+            tap(conflicts => {
+                conflicts.forEach(conflict => {
+                    conflict.display = getBeautifulIRI(conflict.iri);
+                });
+            })
+        );
     }
 
     /**
@@ -969,8 +1000,9 @@ export class CatalogManagerService {
         const fd = new FormData();
         fd.append('additions', JSON.stringify(differenceObj.additions));
         fd.append('deletions', JSON.stringify(differenceObj.deletions));
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, {params: this.util.createHttpParams({ targetId }), responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(sourceId)}/conflicts/resolution`;
+        return this.spinnerSrv.track(this.http.post(url, fd, {params: createHttpParams({ targetId }), responseType: 'text'}))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -992,13 +1024,13 @@ export class CatalogManagerService {
                 'Content-Type': undefined,
                 'Accept': 'text/plain'
             },
-            params: this.util.createHttpParams({
+            params: createHttpParams({
                 format,
                 applyInProgressCommit: !!applyInProgressCommit
             })
         };
-        return this.spinnerSrv.track(this.http.get<string | JSONLDObject[]>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<string | JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource`, config))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -1015,12 +1047,12 @@ export class CatalogManagerService {
      * @param {String} format The RDF format to return the compiled resource in
      */
     downloadResource(commitId: string, branchId: string, recordId: string, catalogId: string, applyInProgressCommit?: boolean, format = 'jsonld', fileName = 'resource'): void {
-        const params = this.util.createHttpParams({
+        const params = createHttpParams({
             applyInProgressCommit: !!applyInProgressCommit,
             format: format,
             fileName: fileName
         });
-        window.open(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params.toString());
+        window.open(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource?${params.toString()}`);
     }
 
     /**
@@ -1031,9 +1063,9 @@ export class CatalogManagerService {
      * @param {string} catalogId The id of the Catalog the Record should be part of
      * @returns {Observable} An Observable that resolves if the creation was successful or rejects with an error message
      */
-    createInProgressCommit(recordId: string, catalogId: string): Observable<null> {
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', null))
-            .pipe(catchError(this.util.handleError));
+    createInProgressCommit(recordId: string, catalogId: string): Observable<void> {
+        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`, null))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -1045,7 +1077,7 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves with the InProgessCommit or rejects with the HTTP response
      */
     getInProgressCommit(recordId: string, catalogId: string): Observable<Difference> {
-        return this.spinnerSrv.track(this.http.get<Difference>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit'));
+        return this.spinnerSrv.track(this.http.get<Difference>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`));
     }
 
     /**
@@ -1058,12 +1090,12 @@ export class CatalogManagerService {
      * @param {Difference} differenceObj An object representing a collection of added and deleted statements
      * @returns {Observable} An Observable that resolves if the update was successful or rejects with an error message
      */
-    updateInProgressCommit(recordId: string, catalogId: string, differenceObj: Difference): Observable<null> {
+    updateInProgressCommit(recordId: string, catalogId: string, differenceObj: Difference): Observable<void> {
         const fd = new FormData();
         fd.append('additions', JSON.stringify(differenceObj.additions));
         fd.append('deletions', JSON.stringify(differenceObj.deletions));
-        return this.spinnerSrv.track(this.http.put(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.put(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`, fd, {responseType: 'text'}))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -1074,9 +1106,9 @@ export class CatalogManagerService {
      * @param {string} catalogId The id of the Catalog the Record should be part of
      * @returns {Observable} An Observable that resolves if the deletion was successful or rejects with an error message
      */
-    deleteInProgressCommit(recordId: string, catalogId: string): Observable<null> {
-        return this.spinnerSrv.track(this.http.delete(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit'))
-            .pipe(catchError(this.util.handleError));
+    deleteInProgressCommit(recordId: string, catalogId: string): Observable<void> {
+        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`))
+            .pipe(catchError(handleError), map(() => {}));
     }
 
     /**
@@ -1086,7 +1118,7 @@ export class CatalogManagerService {
      * @returns {string} A name to represent the passed entity
      */
     getEntityName(entity: JSONLDObject): string {
-        return this.util.getDctermsValue(entity, 'title') || '(Anonymous)';
+        return getDctermsValue(entity, 'title') || '(Anonymous)';
     }
 
     /**
@@ -1096,7 +1128,7 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the Record type; false otherwise
      */
     isRecord(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'Record');
+        return get(entity, '@type', []).includes(`${CATALOG}Record`);
     }
 
     /**
@@ -1106,7 +1138,7 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the VersionedRDFRecord type; false otherwise
      */
     isVersionedRDFRecord(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'VersionedRDFRecord');
+        return get(entity, '@type', []).includes(`${CATALOG}VersionedRDFRecord`);
     }
 
     /**
@@ -1116,7 +1148,7 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the Distribution type; false otherwise
      */
     isDistribution(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'Distribution');
+        return get(entity, '@type', []).includes(`${CATALOG}Distribution`);
     }
 
     /**
@@ -1126,7 +1158,7 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the Branch type; false otherwise
      */
     isBranch(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'Branch');
+        return get(entity, '@type', []).includes(`${CATALOG}Branch`);
     }
 
     /**
@@ -1136,7 +1168,7 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the UserBranch type; false otherwise
      */
     isUserBranch(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'UserBranch');
+        return get(entity, '@type', []).includes(`${CATALOG}UserBranch`);
     }
 
     /**
@@ -1146,7 +1178,7 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the Version type; false otherwise
      */
     isVersion(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'Version');
+        return get(entity, '@type', []).includes(`${CATALOG}Version`);
     }
 
     /**
@@ -1156,7 +1188,7 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the Tag type; false otherwise
      */
     isTag(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'Tag');
+        return get(entity, '@type', []).includes(`${CATALOG}Tag`);
     }
 
     /**
@@ -1166,12 +1198,19 @@ export class CatalogManagerService {
      * @returns {boolean} True if the entity contains the Commit type; false otherwise
      */
     isCommit(entity: JSONLDObject): boolean {
-        return get(entity, '@type', []).includes(CATALOG + 'Commit');
+        return get(entity, '@type', []).includes(`${CATALOG}Commit`);
     }
 
+    /**
+     * Returns the specific type of the provided Record.
+     * 
+     * @param {JSONLDObject} record The JSON-LD of the Record to retrieve the type of
+     * @returns {string} The IRI string of the specific Record type
+     */
     getType(record: JSONLDObject): string {
-        const type = find(difference(this.recordTypes, this.coreRecordTypes), type => includes(get(record, '@type', []), type));
-        return type || CATALOG + 'Record';
+        const type = difference(this.recordTypes, this.coreRecordTypes)
+            .find(type => get(record, '@type', []).includes(type));
+        return type || `${CATALOG}Record`;
     }
 
     private _createVersion(recordId: string, catalogId: string, versionConfig: NewConfig): Observable<string> {
@@ -1181,8 +1220,8 @@ export class CatalogManagerService {
         if (has(versionConfig, 'description')) {
             fd.append('description', versionConfig.description);
         }
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions`, fd, {responseType: 'text'}))
+            .pipe(catchError(handleError));
     }
 
     private _createBranch(recordId: string, catalogId: string, branchConfig: NewConfig, commitId: string) {
@@ -1193,24 +1232,25 @@ export class CatalogManagerService {
         if (has(branchConfig, 'description')) {
             fd.append('description', branchConfig.description);
         }
-        return this.spinnerSrv.track(this.http.post(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, {responseType: 'text'}))
-           .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches`, fd, {responseType: 'text'}))
+           .pipe(catchError(handleError));
     }
 
     private _getRecordVersion(versionIdentifier: string, recordId: string, catalogId: string): Observable<JSONLDObject> {
-        return this.spinnerSrv.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + versionIdentifier))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${versionIdentifier}`))
+            .pipe(catchError(handleError));
     }
 
     private _getRecordBranch(branchIdentifier: string, recordId: string, catalogId: string): Observable<JSONLDObject> {
-        return this.spinnerSrv.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + branchIdentifier))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSrv.track(this.http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${branchIdentifier}`))
+            .pipe(catchError(handleError));
     }
 
-    private _setDefaultSort(configParams) {
-        if (!has(configParams, 'sort')) {
-            configParams.sort = this.sortOptions[0].field;
-            configParams.ascending = this.sortOptions[0].asc;
+    private _setDefaultSort(configParams: HttpParams): HttpParams {
+        if (!configParams.has('sort')) {
+            configParams = configParams.set('sort', this.sortOptions[0].field);
+            configParams = configParams.set('ascending', this.sortOptions[0].asc);
         }
+        return configParams;
     }
 }

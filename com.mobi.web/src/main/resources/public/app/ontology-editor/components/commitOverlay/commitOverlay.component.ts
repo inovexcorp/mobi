@@ -28,7 +28,9 @@ import { switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue } from '../../../shared/utility';
+import { NewConfig } from '../../../shared/models/newConfig.interface';
 
 /**
  * @class ontology-editor.CommitOverlayComponent
@@ -50,7 +52,7 @@ export class CommitOverlayComponent implements OnInit {
     });
 
     constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CommitOverlayComponent>,
-        public os: OntologyStateService, private cm: CatalogManagerService, private util: UtilService) {}
+        public os: OntologyStateService, private cm: CatalogManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -60,8 +62,8 @@ export class CommitOverlayComponent implements OnInit {
             this._createCommit(this.os.listItem.versionedRdfRecord.branchId);
         } else {
             const branch = find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
-            const branchConfig: any = {title: this.util.getDctermsValue(branch, 'title')};
-            const description = this.util.getDctermsValue(branch, 'description');
+            const branchConfig: NewConfig = {title: getDctermsValue(branch, 'title')};
+            const description = getDctermsValue(branch, 'description');
             if (description) {
                 branchConfig.description = description;
             }
@@ -96,7 +98,7 @@ export class CommitOverlayComponent implements OnInit {
                 this.os.listItem.versionedRdfRecord.commitId = commitId;
                 this.os.listItem.query.commitId = commitId;
                 this.os.clearInProgressCommit();
-                this.util.createSuccessToast('Successfully Committed Changes');
+                this.toast.createSuccessToast('Successfully Committed Changes');
                 this.dialogRef.close(true);
             }, error => this._onError(error));
     }

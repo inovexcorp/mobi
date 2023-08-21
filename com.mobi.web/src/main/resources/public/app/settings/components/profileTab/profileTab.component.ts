@@ -73,24 +73,24 @@ export class ProfileTabComponent implements OnInit {
     
     save(): void {
         if (this.profileForm.controls.firstName.value) {
-            this.currentUser.jsonld[FOAF + 'firstName'] = [{'@value': this.profileForm.controls.firstName.value}];
+            this.currentUser.jsonld[`${FOAF}firstName`] = [{'@value': this.profileForm.controls.firstName.value}];
             this.currentUser.firstName = this.profileForm.controls.firstName.value;
         } else {
-            delete this.currentUser.jsonld[FOAF + 'firstName'];
+            delete this.currentUser.jsonld[`${FOAF}firstName`];
             this.currentUser.firstName = '';
         }
         if (this.profileForm.controls.lastName.value) {
-            this.currentUser.jsonld[FOAF + 'lastName'] = [{'@value': this.profileForm.controls.lastName.value}];
+            this.currentUser.jsonld[`${FOAF}lastName`] = [{'@value': this.profileForm.controls.lastName.value}];
             this.currentUser.lastName = this.profileForm.controls.lastName.value;
         } else {
-            delete this.currentUser.jsonld[FOAF + 'lastName'];
+            delete this.currentUser.jsonld[`${FOAF}lastName`];
             this.currentUser.lastName = '';
         }
         if (this.profileForm.controls.email.value) {
-            this.currentUser.jsonld[FOAF + 'mbox'] = [{'@id': 'mailto:' + this.profileForm.controls.email.value}];
+            this.currentUser.jsonld[`${FOAF}mbox`] = [{'@id': 'mailto:' + this.profileForm.controls.email.value}];
             this.currentUser.email = this.profileForm.controls.email.value;
         } else {
-            delete this.currentUser.jsonld[FOAF + 'mbox'];
+            delete this.currentUser.jsonld[`${FOAF}mbox`];
             this.currentUser.email = '';
         }
         this.um.updateUser(this.currentUser.username, this.currentUser)

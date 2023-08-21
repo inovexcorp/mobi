@@ -25,7 +25,9 @@ import { isEqual } from 'lodash';
 
 import { RDFS } from '../../../prefixes';
 import { SettingManagerService } from '../../services/settingManager.service';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
+import { getPropertyValue } from '../../utility';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 // The type of setting to get definitions for
 interface TabType {
@@ -49,20 +51,20 @@ export class SettingEditPageComponent implements OnInit {
     @Input() settingType;
     tabs: TabType[] = [];
     
-    constructor(private sm: SettingManagerService, private util: UtilService) {}
+    constructor(private sm: SettingManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.setSettingTabs();
     }
 
-    addTab(settingGroup: any): void {
-        if (!settingGroup[RDFS + 'label']) {
-            this.util.createErrorToast('Setting Group not configured with label.');
+    addTab(settingGroup: JSONLDObject): void {
+        if (!settingGroup[`${RDFS}label`]) {
+            this.toast.createErrorToast('Setting Group not configured with label.');
             return;
         }
         this.tabs.push({
             type: settingGroup['@id'],
-            heading: this.util.getPropertyValue(settingGroup, RDFS + 'label'),
+            heading: getPropertyValue(settingGroup, `${RDFS}label`),
             active: false
         });
     }
@@ -86,6 +88,6 @@ export class SettingEditPageComponent implements OnInit {
                 if (this.tabs.length) {
                     this.tabs[0].active = true;
                 }
-            }, (errorMessage) => this.util.createErrorToast(errorMessage));
+            }, (errorMessage) => this.toast.createErrorToast(errorMessage));
     }
 }

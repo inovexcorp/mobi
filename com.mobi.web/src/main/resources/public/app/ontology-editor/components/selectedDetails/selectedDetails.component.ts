@@ -28,8 +28,9 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { IndividualTypesModalComponent } from '../individualTypesModal/individualTypesModal.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
+import { isBlankNodeId } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.SelectedDetailsComponent
@@ -53,7 +54,7 @@ export class SelectedDetailsComponent {
     @Input() highlightText: string;
 
     constructor(private prefixation: PrefixationPipe, private dialog: MatDialog, public om: OntologyManagerService, 
-        public os: OntologyStateService, private mc: ManchesterConverterService, private util: UtilService) {}
+        public os: OntologyStateService, private mc: ManchesterConverterService, private toast: ToastService) {}
 
     isFromImportedOntology(): boolean {
         const entity = get(this.os.listItem.entityInfo, get(this.os.listItem.selected, '@id'));
@@ -66,7 +67,7 @@ export class SelectedDetailsComponent {
     getTypes(): string {
         return join(orderBy(
                 map(get(this.os.listItem.selected, '@type', []), t => { 
-                    if (this.util.isBlankNodeId(t)) {
+                    if (isBlankNodeId(t)) {
                         return this.mc.jsonldToManchester(t, this.os.listItem.selectedBlankNodes, this.os.getBnodeIndex(), true);
                     } else {
                         return this.prefixation.transform(t);
@@ -79,7 +80,7 @@ export class SelectedDetailsComponent {
             .subscribe(() => {
                 this.os.saveCurrentChanges().subscribe();
                 this.os.updateLabel();
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     showTypesOverlay(): void {
         this.dialog.open(IndividualTypesModalComponent);

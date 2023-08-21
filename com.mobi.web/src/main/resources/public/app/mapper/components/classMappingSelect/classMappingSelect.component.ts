@@ -31,7 +31,7 @@ import { map, startWith } from 'rxjs/operators';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class mapper.ClassMappingSelectComponent
@@ -61,7 +61,7 @@ export class ClassMappingSelectComponent implements OnInit, OnChanges {
 
     filteredClassMappings: Observable<JSONLDObject[]>;
 
-    constructor(private dialog: MatDialog, private util: UtilService) {}
+    constructor(private dialog: MatDialog) {}
     
     ngOnInit(): void {
         this.filteredClassMappings = this.classMappingControl.valueChanges
@@ -92,7 +92,7 @@ export class ClassMappingSelectComponent implements OnInit, OnChanges {
         return filteredClassMappings;
     }
     getTitle(classMapping: JSONLDObject): string {
-        return this.util.getDctermsValue(classMapping, 'title');
+        return getDctermsValue(classMapping, 'title');
     }
     showClassMappings(): void{
         //Resets the form control, marking it pristine and untouched , and resetting the value.
@@ -106,7 +106,7 @@ export class ClassMappingSelectComponent implements OnInit, OnChanges {
         this.autocompleteTrigger.closePanel();
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: `<p>Are you sure you want to delete <strong>${this.util.getDctermsValue(classMapping, 'title')}</strong>?</p><p class="form-text">Deleting a class will remove any properties that link to it.</p>`
+                content: `<p>Are you sure you want to delete <strong>${getDctermsValue(classMapping, 'title')}</strong>?</p><p class="form-text">Deleting a class will remove any properties that link to it.</p>`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {

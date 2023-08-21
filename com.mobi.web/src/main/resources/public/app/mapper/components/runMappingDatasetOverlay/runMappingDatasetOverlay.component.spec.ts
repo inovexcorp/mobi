@@ -43,7 +43,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { RunMappingDatasetOverlayComponent } from './runMappingDatasetOverlay.component';
 
 describe('Run Mapping Dataset Overlay component', function() {
@@ -54,11 +54,14 @@ describe('Run Mapping Dataset Overlay component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error message';
     const recordId = 'recordId';
-    const record = {'@id': recordId};
+    const record = {
+      '@id': recordId,
+      [`${DCTERMS}title`]: [{ '@value': 'title' }]
+    };
     const datasetPreview = {
         id: recordId,
         title: 'title'
@@ -85,7 +88,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
                 MockProvider(DatasetManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -99,12 +102,11 @@ describe('Run Mapping Dataset Overlay component', function() {
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<RunMappingDatasetOverlayComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         datasetManagerStub.getDatasetRecords.and.returnValue(of(new HttpResponse<JSONLDObject[][]>({body: [[record]]})));
         datasetManagerStub.getRecordFromArray.and.returnValue(record);
         delimitedManagerStub.mapAndUpload.and.returnValue(of(null));
-        utilStub.getDctermsValue.and.returnValue('title');
         mapperStateStub.step = 2;
         mapperStateStub.selectMappingStep = 0;
         mapperStateStub.selected = {
@@ -130,7 +132,7 @@ describe('Run Mapping Dataset Overlay component', function() {
         mapperStateStub = null;
         delimitedManagerStub = null;
         datasetManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should handle updates to the dataset select value', function() {
@@ -151,7 +153,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                     pageIndex: 0,
                     sortOption: {
                         label: 'Title',
-                        field: DCTERMS + 'title',
+                        field: `${DCTERMS}title`,
                         asc: true
                     }
                 });
@@ -174,7 +176,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                     pageIndex: 0,
                     sortOption: {
                         label: 'Title',
-                        field: DCTERMS + 'title',
+                        field: `${DCTERMS}title`,
                         asc: true
                     }
                 });
@@ -193,7 +195,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                     pageIndex: 0,
                     sortOption: {
                         label: 'Title',
-                        field: DCTERMS + 'title',
+                        field: `${DCTERMS}title`,
                         asc: true
                     }
                 });
@@ -223,7 +225,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                         expect(mapperStateStub.resetEdit).not.toHaveBeenCalled();
                         expect(delimitedManagerStub.reset).not.toHaveBeenCalled();
                         expect(matDialogRef.close).not.toHaveBeenCalled();
-                        expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                        expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                         expect(component.errorMessage).toEqual(error);
                     }));
                     it('successfully uploading the data', fakeAsync(function() {
@@ -236,7 +238,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                         expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                         expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                         expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
-                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                         expect(matDialogRef.close).toHaveBeenCalledWith();
                         expect(component.errorMessage).toEqual('');
                     }));
@@ -251,7 +253,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                     expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                     expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                     expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                 }));
             });
@@ -265,7 +267,7 @@ describe('Run Mapping Dataset Overlay component', function() {
                 expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                 expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                 expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });

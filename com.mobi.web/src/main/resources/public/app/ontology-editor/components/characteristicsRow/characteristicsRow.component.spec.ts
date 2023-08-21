@@ -33,7 +33,6 @@ import { CharacteristicsBlockComponent } from '../characteristicsBlock/character
 import { CharacteristicsRowComponent } from './characteristicsRow.component';
 
 describe('Characteristics Row component', function() {
-    let component: CharacteristicsRowComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CharacteristicsRowComponent>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
@@ -54,7 +53,6 @@ describe('Characteristics Row component', function() {
     
     beforeEach(function() {
         fixture = TestBed.createComponent(CharacteristicsRowComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
@@ -65,7 +63,6 @@ describe('Characteristics Row component', function() {
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
         ontologyStateStub = null;

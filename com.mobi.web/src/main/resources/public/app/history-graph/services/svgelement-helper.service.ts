@@ -167,7 +167,7 @@ export class SVGElementHelperService {
     if (commitSVGElement.onMessageClick) {
         hashSvgElement.addEventListener('click', commitSVGElement.onMessageClick);
     }
-    gSvgElement.appendChild(hashSvgElement)
+    gSvgElement.appendChild(hashSvgElement);
     // Create Subject element
     const subjectSvgElement: SVGTextElement = document.createElementNS(SVG_NAMESPACE, 'text');
     subjectSvgElement.setAttribute('class', 'commit-subject-string');

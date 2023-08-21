@@ -23,7 +23,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { concat, filter, get, has, includes, map, set, sortBy, cloneDeep } from 'lodash';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { ElementRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -34,7 +34,6 @@ import { HierarchyNode } from '../models/hierarchyNode.interface';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { OntologyListItem } from '../models/ontologyListItem.class';
-import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { CatalogManagerService } from './catalogManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { Hierarchy } from '../models/hierarchy.interface';
@@ -43,12 +42,12 @@ import { RESTError } from '../models/RESTError.interface';
 import { StateManagerService } from './stateManager.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { PolicyManagerService } from './policyManager.service';
 import { ManchesterConverterService } from './manchesterConverter.service';
-import { OntologyStateService } from './ontologyState.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { UpdateRefsService } from './updateRefs.service';
+import { OntologyStateService } from './ontologyState.service';
 
 class MockElementRef extends ElementRef {
     constructor() {
@@ -60,14 +59,13 @@ describe('Ontology State Service', function() {
     let service: OntologyStateService;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let snackBarStub: jasmine.SpyObj<MatSnackBar>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
     let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error message';
     const catalogId = 'catalogId';
@@ -76,7 +74,7 @@ describe('Ontology State Service', function() {
     const commitId = 'commitId';
     const tagId = 'tagId';
     const ontologyId = 'ontologyId';
-    const classId = 'https://classId.com';
+    const classId = 'https://test.com#classId';
     const ontologyPropertyId = 'objectPropertyId';
     const datatypeId = 'datatypeId';
     const annotationId = 'annotationId';
@@ -88,24 +86,19 @@ describe('Ontology State Service', function() {
     const title = 'title';
     const clearCache = false;
     const path = 'this.is.the.path';
-    const splitIRI = {
-        begin: 'begin',
-        then: '/',
-        end: 'end'
-    };
     const difference: Difference = new Difference();
     const branch: JSONLDObject = {
         '@id': branchId,
-        [CATALOG + 'head']: [{'@id': commitId}],
-        [DCTERMS + 'title']: [{'@value': 'MASTER'}]
+        [`${CATALOG}head`]: [{'@id': commitId}],
+        [`${DCTERMS}title`]: [{'@value': 'MASTER'}]
     };
     const tag: JSONLDObject = {
         '@id': tagId,
-        '@type': [CATALOG + 'Version', CATALOG + 'Tag']
+        '@type': [`${CATALOG}Version`, `${CATALOG}Tag`]
     };
     const version: JSONLDObject = {
         '@id': 'version',
-        '@type': [CATALOG + 'Version']
+        '@type': [`${CATALOG}Version`]
     };
     const hierarchyNode: HierarchyNode = {
         entityIRI: '',
@@ -120,15 +113,15 @@ describe('Ontology State Service', function() {
     };
     const ontologyObj: JSONLDObject = {
         '@id': ontologyId,
-        '@type': [OWL + 'Ontology']
+        '@type': [`${OWL}Ontology`]
     };
     const classObj: JSONLDObject = {
         '@id': classId,
-        '@type': [OWL + 'Class']
+        '@type': [`${OWL}Class`]
     };
     const individualObj: JSONLDObject = {
         '@id': individualId,
-        '@type': [OWL + 'NamedIndividual', classId]
+        '@type': [`${OWL}NamedIndividual`, classId]
     };
     const onActionSpy = jasmine.createSpy('onAction').and.returnValue(of(null));
     const afterDismissedSpy = jasmine.createSpy('afterDismissed').and.returnValue(of(null));
@@ -150,13 +143,12 @@ describe('Ontology State Service', function() {
                         afterDismissed: afterDismissedSpy
                     }
                 }) },
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
                 MockProvider(PropertyManagerService),
                 MockProvider(UpdateRefsService),
                 MockProvider(PolicyManagerService),
                 MockProvider(PolicyEnforcementService),
                 MockProvider(ManchesterConverterService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: ElementRef, useClass: MockElementRef }
             ]
         });
@@ -164,18 +156,16 @@ describe('Ontology State Service', function() {
         service = TestBed.inject(OntologyStateService);
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         snackBarStub = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         updateRefsStub = TestBed.inject(UpdateRefsService) as jasmine.SpyObj<UpdateRefsService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
         manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
-        splitIRIStub.transform.and.returnValue(splitIRI);
         catalogManagerStub.localCatalog = {'@id': catalogId};
         service.initialize();
         hierarchyInfo = {
@@ -256,7 +246,6 @@ describe('Ontology State Service', function() {
 
     afterEach(function() {
         service = null;
-        splitIRIStub = null;
         propertyManagerStub = null;
         ontologyManagerStub = null;
         progressSpinnerStub = null;
@@ -264,7 +253,7 @@ describe('Ontology State Service', function() {
         catalogManagerStub = null;
         policyEnforcementStub = null;
         manchesterConverterStub = null;
-        utilStub = null;
+        toastStub = null;
         listItem = null;
         hierarchyInfo = null;
         snackBarStub = null;
@@ -737,7 +726,7 @@ describe('Ontology State Service', function() {
         }));
     });
     describe('createOntologyListItem should call the correct functions', function() {
-        const classId2 = SKOS + 'Concept';
+        const classId2 = `${SKOS}Concept`;
         const dataPropertyId2 = 'dataPropertyId2';
         const ontologyPropertyId2 = 'objectProperty2';
         const datatypeId2 = 'datatypeId2';
@@ -748,7 +737,8 @@ describe('Ontology State Service', function() {
         const userBranchId = 'userBranchId';
         const ontologyId2 = 'ontologyId2';
         const userBranch: JSONLDObject = {
-            '@id': userBranchId
+            '@id': userBranchId,
+            [`${CATALOG}createdFrom`]: [{ '@id': branchId }]
         };
         beforeEach(function() {
             ontologyManagerStub.getOntologyStuff.and.returnValue(of({
@@ -814,8 +804,6 @@ describe('Ontology State Service', function() {
             catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse({body: this.branches})));
             catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse({body: this.versions})));
             policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
-            utilStub.getPropertyId.and.returnValue(branchId);
-            utilStub.getBeautifulIRI.and.returnValue('iri');
             spyOn(service, 'flattenHierarchy').and.returnValue([hierarchyNode]);
             spyOn(service, 'createFlatEverythingTree').and.returnValue([hierarchyNode]);
             spyOn(service, 'createFlatIndividualTree').and.returnValue([hierarchyNode]);
@@ -910,97 +898,97 @@ describe('Ontology State Service', function() {
                         expect(get(response, 'userCanModifyMaster')).toEqual(true);
                         expect(get(response, 'entityInfo')).toEqual({
                             [annotationId]: {
-                                label: 'iri',
+                                label: 'Annotation Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [classId]: {
-                                label: 'iri',
+                                label: 'Class Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [datatypeId]: {
-                                label: 'iri',
+                                label: 'Datatype Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [ontologyPropertyId]: {
-                                label: 'iri',
+                                label: 'Object Property Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [dataPropertyId]: {
-                                label: 'iri',
+                                label: 'Data Property Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [individualId]: {
-                                label: 'iri',
+                                label: 'Individual Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [conceptId]: {
-                                label: 'iri',
+                                label: 'Concept Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [conceptSchemeId]: {
-                                label: 'iri',
+                                label: 'Concept Scheme Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [annotationId2]: {
-                                label: 'iri',
+                                label: 'Annotation Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [classId2]: {
-                                label: 'iri',
+                                label: 'Concept',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [dataPropertyId2]: {
-                                label: 'iri',
+                                label: 'Data Property Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [ontologyPropertyId2]: {
-                                label: 'iri',
+                                label: 'Object Property 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [individualId2]: {
-                                label: 'iri',
+                                label: 'Individual Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [datatypeId2]: {
-                                label: 'iri',
+                                label: 'Datatype Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [conceptId2]: {
-                                label: 'iri',
+                                label: 'Concept Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [conceptSchemeId2]: {
-                                label: 'iri',
+                                label: 'Concept Scheme Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
@@ -1099,97 +1087,97 @@ describe('Ontology State Service', function() {
                         expect(get(response, 'userCanModifyMaster')).toEqual(true);
                         expect(get(response, 'entityInfo')).toEqual({
                             [annotationId]: {
-                                label: 'iri',
+                                label: 'Annotation Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [classId]: {
-                                label: 'iri',
+                                label: 'Class Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [datatypeId]: {
-                                label: 'iri',
+                                label: 'Datatype Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [ontologyPropertyId]: {
-                                label: 'iri',
+                                label: 'Object Property Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [dataPropertyId]: {
-                                label: 'iri',
+                                label: 'Data Property Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [individualId]: {
-                                label: 'iri',
+                                label: 'Individual Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [conceptId]: {
-                                label: 'iri',
+                                label: 'Concept Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [conceptSchemeId]: {
-                                label: 'iri',
+                                label: 'Concept Scheme Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [annotationId2]: {
-                                label: 'iri',
+                                label: 'Annotation Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [classId2]: {
-                                label: 'iri',
+                                label: 'Concept',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [dataPropertyId2]: {
-                                label: 'iri',
+                                label: 'Data Property Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [ontologyPropertyId2]: {
-                                label: 'iri',
+                                label: 'Object Property 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [individualId2]: {
-                                label: 'iri',
+                                label: 'Individual Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [datatypeId2]: {
-                                label: 'iri',
+                                label: 'Datatype Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [conceptId2]: {
-                                label: 'iri',
+                                label: 'Concept Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [conceptSchemeId2]: {
-                                label: 'iri',
+                                label: 'Concept Scheme Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
@@ -1201,7 +1189,10 @@ describe('Ontology State Service', function() {
                 expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
             }));
             it('and it is a userBranch whose createdFrom branch has been deleted', fakeAsync(function() {
-                utilStub.getPropertyId.and.returnValue('deletedBranchId');
+                const branchClone = cloneDeep(userBranch);
+                branchClone[`${CATALOG}createdFrom`] = [{ '@id': 'deletedBranchId' }];
+                this.branches = [branch, branchClone];
+                catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse({body: this.branches})));
                 service.createOntologyListItem(recordId, userBranchId, commitId, difference, false, '', clearCache)
                     .subscribe(response => {
                         let expectedIriObj = {};
@@ -1289,97 +1280,97 @@ describe('Ontology State Service', function() {
                         expect(get(response, 'userCanModifyMaster')).toEqual(true);
                         expect(get(response, 'entityInfo')).toEqual({
                             [annotationId]: {
-                                label: 'iri',
+                                label: 'Annotation Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [classId]: {
-                                label: 'iri',
+                                label: 'Class Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [datatypeId]: {
-                                label: 'iri',
+                                label: 'Datatype Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [ontologyPropertyId]: {
-                                label: 'iri',
+                                label: 'Object Property Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [dataPropertyId]: {
-                                label: 'iri',
+                                label: 'Data Property Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [individualId]: {
-                                label: 'iri',
+                                label: 'Individual Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [conceptId]: {
-                                label: 'iri',
+                                label: 'Concept Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [conceptSchemeId]: {
-                                label: 'iri',
+                                label: 'Concept Scheme Id',
                                 names: [],
                                 ontologyId: ontologyId,
                                 imported: false
                             },
                             [annotationId2]: {
-                                label: 'iri',
+                                label: 'Annotation Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [classId2]: {
-                                label: 'iri',
+                                label: 'Concept',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [dataPropertyId2]: {
-                                label: 'iri',
+                                label: 'Data Property Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [ontologyPropertyId2]: {
-                                label: 'iri',
+                                label: 'Object Property 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [individualId2]: {
-                                label: 'iri',
+                                label: 'Individual Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [datatypeId2]: {
-                                label: 'iri',
+                                label: 'Datatype Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [conceptId2]: {
-                                label: 'iri',
+                                label: 'Concept Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
                             },
                             [conceptSchemeId2]: {
-                                label: 'iri',
+                                label: 'Concept Scheme Id 2',
                                 names: [],
                                 ontologyId: ontologyId2,
                                 imported: true
@@ -1482,7 +1473,7 @@ describe('Ontology State Service', function() {
                 expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.concepts, jasmine.objectContaining({ontologyId: service.listItem.ontologyId}));
                 expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.conceptSchemes, jasmine.objectContaining({ontologyId: service.listItem.ontologyId}));
                 expect(service.listItem.editorTabStates.concepts).toEqual({});
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('rejects', fakeAsync(function() {
                 const originalConcepts = Object.assign({}, service.listItem.concepts);
@@ -1499,7 +1490,7 @@ describe('Ontology State Service', function() {
                 expect(service.listItem.conceptSchemes).toEqual(originalConceptSchemes);
                 expect(service.flattenHierarchy).not.toHaveBeenCalled();
                 expect(service.listItem.editorTabStates.concepts).toEqual({entityIRI: 'iri', usages: []});
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
         describe('the provided listItem when getVocabularyStuff', function() {
@@ -1529,7 +1520,7 @@ describe('Ontology State Service', function() {
                 expect(service.flattenHierarchy).toHaveBeenCalledWith(listItem.concepts, jasmine.objectContaining({ontologyId: listItem.ontologyId}));
                 expect(service.flattenHierarchy).toHaveBeenCalledWith(listItem.conceptSchemes, jasmine.objectContaining({ontologyId: listItem.ontologyId}));
                 expect(listItem.editorTabStates.concepts).toEqual({});
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('rejects', fakeAsync(function() {
                 const originalConcepts = Object.assign({}, listItem.concepts);
@@ -1546,7 +1537,7 @@ describe('Ontology State Service', function() {
                 expect(listItem.conceptSchemes).toEqual(originalConceptSchemes);
                 expect(service.flattenHierarchy).not.toHaveBeenCalled();
                 expect(listItem.editorTabStates.concepts).toEqual({entityIRI: 'iri', usages: []});
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
     });
@@ -1573,38 +1564,38 @@ describe('Ontology State Service', function() {
             entityIRI: 'Class A',
             hasChildren: false,
             path: [recordId, 'Class A'],
-            joinedPath: recordId + '.Class A',
+            joinedPath: `${recordId}.Class A`,
             indent: 0,
             entityInfo: undefined
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
             path: [recordId, 'Class B'],
-            joinedPath: recordId + '.Class B',
+            joinedPath: `${recordId}.Class B`,
             indent: 0,
             entityInfo: undefined
         }, {
             entityIRI: 'Class B1',
             hasChildren: false,
             path: [recordId, 'Class B', 'Class B1'],
-            joinedPath: recordId + '.Class B.Class B1',
+            joinedPath: `${recordId}.Class B.Class B1`,
             indent: 1,
             entityInfo: undefined
         }, {
             entityIRI: 'Class B2',
             hasChildren: false,
             path: [recordId, 'Class B', 'Class B2'],
-            joinedPath: recordId + '.Class B.Class B2',
+            joinedPath: `${recordId}.Class B.Class B2`,
             indent: 1,
             entityInfo: undefined
         }]);
     });
     it('createFlatEverythingTree creates the correct array', function() {
         listItem.classes = {iris: {[classId]: ontologyId}, childMap: {}, parentMap: {}, circularMap: {}, flat: []};
-        listItem.classToChildProperties = {'https://classId.com': ['property1']};
+        listItem.classToChildProperties = {[classId]: ['property1']};
         listItem.noDomainProperties = ['property2'];
         listItem.entityInfo = {
-            'https://classId.com': {
+            [classId]: {
                 label: 'class',
                 names: ['class']
             },
@@ -1622,7 +1613,7 @@ describe('Ontology State Service', function() {
             hasChildren: true,
             indent: 0,
             path: [recordId, classId],
-            joinedPath: recordId + '.' + classId,
+            joinedPath: `${recordId}.${classId}`,
             entityInfo: {
                 label: 'class',
                 names: ['class']
@@ -1632,7 +1623,7 @@ describe('Ontology State Service', function() {
             hasChildren: false,
             indent: 1,
             path: [recordId, classId, 'property1'],
-            joinedPath: recordId + '.' + classId + '.property1',
+            joinedPath: `${recordId}.${classId}.property1`,
             entityInfo: {
                 label: 'data property 1',
                 names: ['data property 1']
@@ -1647,7 +1638,7 @@ describe('Ontology State Service', function() {
             indent: 1,
             get: jasmine.any(Function),
             path: [recordId, 'property2'],
-            joinedPath: recordId + '.property2',
+            joinedPath: `${recordId}.property2`,
             entityInfo: {
                 label: 'data property 2',
                 names: ['data property 2']
@@ -1659,28 +1650,28 @@ describe('Ontology State Service', function() {
             entityIRI: 'Class A',
             hasChildren: false,
             path: [recordId, 'Class A'],
-            joinedPath: recordId + '.Class A',
+            joinedPath: `${recordId}.Class A`,
             indent: 0,
             entityInfo: undefined
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
             path: [recordId, 'Class B'],
-            joinedPath: recordId + '.Class B',
+            joinedPath: `${recordId}.Class B`,
             indent: 0,
             entityInfo: undefined
         }, {
             entityIRI: 'Class B1',
             hasChildren: false,
             path: [recordId, 'Class B', 'Class B1'],
-            joinedPath: recordId + '.Class B.Class B1',
+            joinedPath: `${recordId}.Class B.Class B1`,
             indent: 1,
             entityInfo: undefined
         }, {
             entityIRI: 'Class B2',
             hasChildren: false,
             path: [recordId, 'Class B', 'Class B2'],
-            joinedPath: recordId + '.Class B.Class B2',
+            joinedPath: `${recordId}.Class B.Class B2`,
             indent: 1,
             entityInfo: undefined
         }] };
@@ -1689,12 +1680,11 @@ describe('Ontology State Service', function() {
             'Class B1': ['Individual B1']
         };
         listItem.individualsParentPath = ['Class A', 'Class B', 'Class B1'];
-        utilStub.getBeautifulIRI.and.callFake(a => a);
         expect(service.createFlatIndividualTree(listItem)).toEqual([{
             entityIRI: 'Class A',
             hasChildren: false,
             path: [recordId, 'Class A'],
-            joinedPath: recordId + '.Class A',
+            joinedPath: `${recordId}.Class A`,
             indent: 0,
             entityInfo: undefined,
             isClass: true
@@ -1702,21 +1692,21 @@ describe('Ontology State Service', function() {
             entityIRI: 'Individual A1',
             hasChildren: false,
             path: [recordId, 'Class A', 'Individual A1'],
-            joinedPath: recordId + '.Class A.Individual A1',
+            joinedPath: `${recordId}.Class A.Individual A1`,
             indent: 1,
             entityInfo: undefined
         }, {
             entityIRI: 'Individual A2',
             hasChildren: false,
             path: [recordId, 'Class A', 'Individual A2'],
-            joinedPath: recordId + '.Class A.Individual A2',
+            joinedPath: `${recordId}.Class A.Individual A2`,
             indent: 1,
             entityInfo: undefined
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
             path: [recordId, 'Class B'],
-            joinedPath: recordId + '.Class B',
+            joinedPath: `${recordId}.Class B`,
             indent: 0,
             entityInfo: undefined,
             isClass: true
@@ -1724,7 +1714,7 @@ describe('Ontology State Service', function() {
             entityIRI: 'Class B1',
             hasChildren: false,
             path: [recordId, 'Class B', 'Class B1'],
-            joinedPath: recordId + '.Class B.Class B1',
+            joinedPath: `${recordId}.Class B.Class B1`,
             indent: 1,
             entityInfo: undefined,
             isClass: true
@@ -1732,7 +1722,7 @@ describe('Ontology State Service', function() {
             entityIRI: 'Individual B1',
             hasChildren: false,
             path: [recordId, 'Class B', 'Class B1', 'Individual B1'],
-            joinedPath: recordId + '.Class B.Class B1.Individual B1',
+            joinedPath: `${recordId}.Class B.Class B1.Individual B1`,
             indent: 2,
             entityInfo: undefined
         }]);
@@ -1830,9 +1820,7 @@ describe('Ontology State Service', function() {
             expect(service.getEntityNameByListItem('iri', listItem)).toBe('name');
         });
         it('when the entityIRI is not in the entityInfo', function() {
-            utilStub.getBeautifulIRI.and.returnValue('entity name');
-            expect(service.getEntityNameByListItem('iri', listItem)).toBe('entity name');
-            expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith('iri');
+            expect(service.getEntityNameByListItem('iri', listItem)).toBe('Iri');
         });
     });
     describe('saveChanges should call the correct methods', function() {
@@ -2167,7 +2155,7 @@ describe('Ontology State Service', function() {
         spyOn(service, 'getActiveKey').and.returnValue('key');
         [true, false].forEach(value => {
             service.setNoDomainsOpened(path, value);
-            expect(get(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.noDomainsOpened')).toBe(value);
+            expect(get(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.noDomainsOpened`)).toBe(value);
         });
     });
     describe('getNoDomainsOpened gets the correct property value on the state object', function() {
@@ -2180,7 +2168,7 @@ describe('Ontology State Service', function() {
         it('when path is found', function() {
             spyOn(service, 'getActiveKey').and.returnValue('key');
             [true, false].forEach(value => {
-                set(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.noDomainsOpened', value);
+                set(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.noDomainsOpened`, value);
                 expect(service.getNoDomainsOpened(path)).toBe(value);
             });
         });
@@ -2190,7 +2178,7 @@ describe('Ontology State Service', function() {
         spyOn(service, 'getActiveKey').and.returnValue('key');
         [true, false].forEach(value => {
             service.setDataPropertiesOpened(path, value);
-            expect(get(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.dataPropertiesOpened')).toBe(value);
+            expect(get(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.dataPropertiesOpened`)).toBe(value);
         });
     });
     describe('getDataPropertiesOpened gets the correct property value on the state object', function() {
@@ -2203,7 +2191,7 @@ describe('Ontology State Service', function() {
         it('when path is found', function() {
             spyOn(service, 'getActiveKey').and.returnValue('key');
             [true, false].forEach(value => {
-                set(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.dataPropertiesOpened', value);
+                set(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.dataPropertiesOpened`, value);
                 expect(service.getDataPropertiesOpened(path)).toBe(value);
             });
         });
@@ -2213,7 +2201,7 @@ describe('Ontology State Service', function() {
         spyOn(service, 'getActiveKey').and.returnValue('key');
         [true, false].forEach(value => {
             service.setObjectPropertiesOpened(path, value);
-            expect(get(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.objectPropertiesOpened')).toBe(value);
+            expect(get(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.objectPropertiesOpened`)).toBe(value);
         });
     });
     describe('getObjectPropertiesOpened gets the correct property value on the state object', function() {
@@ -2226,7 +2214,7 @@ describe('Ontology State Service', function() {
         it('when path is found', function() {
             spyOn(service, 'getActiveKey').and.returnValue('key');
             [true, false].forEach(value => {
-                set(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.objectPropertiesOpened', value);
+                set(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.objectPropertiesOpened`, value);
                 expect(service.getObjectPropertiesOpened(path)).toBe(value);
             });
         });
@@ -2236,7 +2224,7 @@ describe('Ontology State Service', function() {
         spyOn(service, 'getActiveKey').and.returnValue('key');
         [true, false].forEach(value => {
             service.setAnnotationPropertiesOpened(path, value);
-            expect(get(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.annotationPropertiesOpened')).toBe(value);
+            expect(get(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.annotationPropertiesOpened`)).toBe(value);
         });
     });
     describe('getAnnotationPropertiesOpened gets the correct property value on the state object', function() {
@@ -2249,7 +2237,7 @@ describe('Ontology State Service', function() {
         it('when path is found', function() {
             spyOn(service, 'getActiveKey').and.returnValue('key');
             [true, false].forEach(value => {
-                set(service.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.annotationPropertiesOpened', value);
+                set(service.listItem.editorTabStates, `key.${encodeURIComponent(path)}.annotationPropertiesOpened`, value);
                 expect(service.getAnnotationPropertiesOpened(path)).toBe(value);
             });
         });
@@ -2320,7 +2308,7 @@ describe('Ontology State Service', function() {
             service.onEdit(iriBegin, iriThen, iriEnd).subscribe();
             tick();
             expect(service.recalculateJoinedPaths).toHaveBeenCalledWith(service.listItem);
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
         }));
     });
     it('setCommonIriParts sets the proper values based on parameters', function() {
@@ -2391,7 +2379,7 @@ describe('Ontology State Service', function() {
             tick();
             expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, id, undefined, undefined, undefined, false);
             expect(listItem.selected).toEqual(object);
-            expect(listItem.selected['urn:prop']).toEqual([{'@value': 'test', '@type': XSD + 'string'}]);
+            expect(listItem.selected['urn:prop']).toEqual([{'@value': 'test', '@type': `${XSD}string`}]);
             expect(listItem.selectedBlankNodes).toEqual([bnode]);
             expect(listItem.blankNodes).toEqual({[bnode['@id']]: ''});
             expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(bnode['@id'], listItem.selectedBlankNodes, {[bnode['@id']]: {position: 0}}, true);
@@ -2681,7 +2669,7 @@ describe('Ontology State Service', function() {
             indent: 1,
             entityIRI: 'iri',
             path: [recordId, 'otherIRI', 'andAnotherIRI', 'iri'],
-            joinedPath: recordId + '.otherIRI.andAnotherIRI.iri',
+            joinedPath: `${recordId}.otherIRI.andAnotherIRI.iri`,
             hasChildren: false,
             toggledClosed: true,
             entityInfo: undefined
@@ -2693,15 +2681,15 @@ describe('Ontology State Service', function() {
         it('true when all parent paths are open', function() {
             service.listItem.editorTabStates[tab].open = {
                 [node.joinedPath]: true,
-                [recordId + '.otherIRI.andAnotherIRI']: true,
-                [recordId + '.otherIRI']: true
+                [`${recordId}.otherIRI.andAnotherIRI`]: true,
+                [`${recordId}.otherIRI`]: true
             };
             expect(service.areParentsOpen(node, tab)).toBe(true);
         });
         it('false when only some parent paths are open', function() {
             service.listItem.editorTabStates[tab].open = {
                 [node.joinedPath]: true,
-                [recordId + '.otherIRI.andAnotherIRI']: true
+                [`${recordId}.otherIRI.andAnotherIRI`]: true
             };
             expect(service.areParentsOpen(node, tab)).toBe(false);
         });
@@ -3021,31 +3009,30 @@ describe('Ontology State Service', function() {
         service.openAt([{
             entityIRI: 'iri-a',
             path: [recordId, 'iri-a'],
-            joinedPath: recordId + '.iri-a',
+            joinedPath: `${recordId}.iri-a`,
             hasChildren: false,
             indent: 0,
             entityInfo: undefined
         }, {
             entityIRI: 'iri-b',
             path: [recordId, 'iri-a', 'iri-b'],
-            joinedPath: recordId + '.iri-a.iri-b',
+            joinedPath: `${recordId}.iri-a.iri-b`,
             hasChildren: false,
             indent: 0,
             entityInfo: undefined
         }, {
             entityIRI: 'iri-c',
             path: [recordId, 'iri-a', 'iri-b', 'iri-c'],
-            joinedPath: recordId + '.iri-a.iri-b.iri-c',
+            joinedPath: `${recordId}.iri-a.iri-b.iri-c`,
             hasChildren: false,
             indent: 0,
             entityInfo: undefined
         }], 'iri-c');
-        expect(service.listItem.editorTabStates['classes'].open[recordId + '.iri-a']).toEqual(true);
-        expect(service.listItem.editorTabStates['classes'].open[recordId + '.iri-a.iri-b']).toEqual(true);
+        expect(service.listItem.editorTabStates['classes'].open[`${recordId}.iri-a`]).toEqual(true);
+        expect(service.listItem.editorTabStates['classes'].open[`${recordId}.iri-a.iri-b`]).toEqual(true);
     });
     describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
         beforeEach(function() {
-            utilStub.isBlankNodeId.and.callFake(id => typeof id === 'string' && (includes(id, '/.well-known/genid/') || includes(id, '_:genid') || includes(id, '_:b')));
             service.listItem = listItem;
         });
         it('when there is no iriBegin or iriThen', function() {
@@ -3063,8 +3050,6 @@ describe('Ontology State Service', function() {
             expect(service.getDefaultPrefix().startsWith('https://mobi.com/blank-node-namespace/')).toBeTrue();
         });
         it('when the iri is a blank node and there is something in the entityInfo', function() {
-            utilStub.isBlankNodeId.and.returnValue(true);
-            splitIRIStub.transform.and.returnValue({begin: 'http://matonto.org/ontologies/uhtc', then: '#', end: ''});
             service.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
             service.listItem.entityInfo = {
                 'http://matonto.org/ontologies/uhtc#Element': {
@@ -3090,7 +3075,7 @@ describe('Ontology State Service', function() {
             const createEntity = (test): JSONLDObject => {
                 return {
                     '@id': 'test',
-                    [RDFS + 'range']: [{'@id': test}]
+                    [`${RDFS}range`]: [{'@id': test}]
                 };
             };
             beforeEach(function() {
@@ -3099,42 +3084,42 @@ describe('Ontology State Service', function() {
             it('with more than one range', function() {
                 service.updatePropertyIcon({
                     '@id': 'test',
-                    [RDFS + 'range']: [{'@id': '1'}, {'@id': '2'}]
+                    [`${RDFS}range`]: [{'@id': '1'}, {'@id': '2'}]
                 });
                 expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-cubes');
             });
             it('with a range of xsd:string or rdf:langString', function() {
-                [XSD + 'string', RDF + 'langString'].forEach(test => {
+                [`${XSD}string`, `${RDF}langString`].forEach(test => {
                     service.updatePropertyIcon(createEntity(test));
                     expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-font');
                 });
             });
             it('with a range of xsd:decimal, xsd:double, xsd:float, xsd:int, xsd:integer, xsd:long, or xsd:nonNegativeInteger', function() {
-                [XSD + 'decimal', XSD + 'double', XSD + 'float', XSD + 'int', XSD + 'integer', XSD + 'long', XSD + 'nonNegativeInteger'].forEach(test => {
+                [`${XSD}decimal`, `${XSD}double`, `${XSD}float`, `${XSD}int`, `${XSD}integer`, `${XSD}long`, `${XSD}nonNegativeInteger`].forEach(test => {
                     service.updatePropertyIcon(createEntity(test));
                     expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-calculator');
                 });
             });
             it('with a range of xsd:language', function() {
-                service.updatePropertyIcon(createEntity(XSD + 'language'));
+                service.updatePropertyIcon(createEntity(`${XSD}language`));
                 expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-language');
             });
             it('with a range of xsd:anyURI', function() {
-                service.updatePropertyIcon(createEntity(XSD + 'anyURI'));
+                service.updatePropertyIcon(createEntity(`${XSD}anyURI`));
                 expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-external-link');
             });
             it('with a range of xsd:dateTime', function() {
-                service.updatePropertyIcon(createEntity(XSD + 'dateTime'));
+                service.updatePropertyIcon(createEntity(`${XSD}dateTime`));
                 expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-clock-o');
             });
             it('with a range of xsd:boolean or xsd:byte', function() {
-                [XSD + 'boolean', XSD + 'byte'].forEach(test => {
+                [`${XSD}boolean`, `${XSD}byte`].forEach(test => {
                     service.updatePropertyIcon(createEntity(test));
                     expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-signal');
                 });
             });
             it('with a range of rdfs:Literal', function() {
-                service.updatePropertyIcon(createEntity(RDFS + 'Literal'));
+                service.updatePropertyIcon(createEntity(`${RDFS}Literal`));
                 expect(get(service.listItem.propertyIcons, 'test')).toBe('fa-cube');
             });
             it('with a range that is not predefined', function() {
@@ -3175,14 +3160,14 @@ describe('Ontology State Service', function() {
         });
         describe('if the IRI does not exist in the list', function() {
             it('and IRI is skos:Concept', function() {
-                service.addToClassIRIs(listItem, SKOS + 'Concept');
+                service.addToClassIRIs(listItem, `${SKOS}Concept`);
                 expect(listItem.isVocabulary).toEqual(true);
-                expect(listItem.classes.iris).toEqual({ [SKOS + 'Concept']: ontologyId });
+                expect(listItem.classes.iris).toEqual({ [`${SKOS}Concept`]: ontologyId });
             });
             it('and IRI is skos:ConceptScheme', function() {
-                service.addToClassIRIs(listItem, SKOS + 'ConceptScheme');
+                service.addToClassIRIs(listItem, `${SKOS}ConceptScheme`);
                 expect(listItem.isVocabulary).toEqual(true);
-                expect(listItem.classes.iris).toEqual({ [SKOS + 'ConceptScheme']: ontologyId });
+                expect(listItem.classes.iris).toEqual({ [`${SKOS}ConceptScheme`]: ontologyId });
             });
             it('unless IRI is not skos:Concept', function() {
                 service.addToClassIRIs(listItem, 'iri');
@@ -3197,32 +3182,32 @@ describe('Ontology State Service', function() {
         });
         describe('if IRI is skos:Concept and classIRIs', function() {
             beforeEach(function() {
-                listItem.classes.iris = {[SKOS + 'Concept']: 'ontology'};
+                listItem.classes.iris = {[`${SKOS}Concept`]: 'ontology'};
             });
             it('has skos:ConceptScheme', function() {
-                listItem.classes.iris[SKOS + 'ConceptScheme'] = 'ontology';
-                service.removeFromClassIRIs(listItem, SKOS + 'Concept');
+                listItem.classes.iris[`${SKOS}ConceptScheme`] = 'ontology';
+                service.removeFromClassIRIs(listItem, `${SKOS}Concept`);
                 expect(listItem.isVocabulary).toEqual(true);
-                expect(listItem.classes.iris).toEqual({[SKOS + 'ConceptScheme']: 'ontology'});
+                expect(listItem.classes.iris).toEqual({[`${SKOS}ConceptScheme`]: 'ontology'});
             });
             it('does not have skos:ConceptScheme', function() {
-                service.removeFromClassIRIs(listItem, SKOS + 'Concept');
+                service.removeFromClassIRIs(listItem, `${SKOS}Concept`);
                 expect(listItem.isVocabulary).toEqual(false);
                 expect(listItem.classes.iris).toEqual({});
             });
         });
         describe('if IRI is skos:ConceptScheme and classIRIs', function() {
             beforeEach(function() {
-                listItem.classes.iris = {[SKOS + 'ConceptScheme']: 'ontology'};
+                listItem.classes.iris = {[`${SKOS}ConceptScheme`]: 'ontology'};
             });
             it('has skos:Concept', function() {
-                listItem.classes.iris[SKOS + 'Concept'] = 'ontology';
-                service.removeFromClassIRIs(listItem, SKOS + 'ConceptScheme');
+                listItem.classes.iris[`${SKOS}Concept`] = 'ontology';
+                service.removeFromClassIRIs(listItem, `${SKOS}ConceptScheme`);
                 expect(listItem.isVocabulary).toEqual(true);
-                expect(listItem.classes.iris).toEqual({[SKOS + 'Concept']: 'ontology'});
+                expect(listItem.classes.iris).toEqual({[`${SKOS}Concept`]: 'ontology'});
             });
             it('does not have skos:Concept', function() {
-                service.removeFromClassIRIs(listItem, SKOS + 'ConceptScheme');
+                service.removeFromClassIRIs(listItem, `${SKOS}ConceptScheme`);
                 expect(listItem.isVocabulary).toEqual(false);
                 expect(listItem.classes.iris).toEqual({});
             });
@@ -3465,7 +3450,7 @@ describe('Ontology State Service', function() {
             it('annotationIri is owl:deprecated and value is true', function() {
                 listItem.deprecatedIris = {};
                 const expected = { iri: ontologyId };
-                service.annotationModified('iri', OWL + 'deprecated', 'true', listItem);
+                service.annotationModified('iri', `${OWL}deprecated`, 'true', listItem);
                 expect(listItem.deprecatedIris).toEqual(expected);
             });
         });
@@ -3474,7 +3459,7 @@ describe('Ontology State Service', function() {
                 listItem.ontologyId = 'ontologyId';
                 listItem.deprecatedIris = { iri: ontologyId };
                 const expected = {};
-                service.annotationModified('iri', OWL + 'deprecated', 'false', listItem);
+                service.annotationModified('iri', `${OWL}deprecated`, 'false', listItem);
                 expect(listItem.deprecatedIris).toEqual(expected);
             });
         });
@@ -3482,7 +3467,7 @@ describe('Ontology State Service', function() {
             it('annotationIri is not owl:deprecated and value is something', function() {
                 listItem.deprecatedIris = { iri: ontologyId };
                 const expected = { iri: ontologyId };
-                service.annotationModified('iri', OWL + 'annotation1', 'false', listItem);
+                service.annotationModified('iri', `${OWL}annotation1`, 'false', listItem);
                 expect(listItem.deprecatedIris).toEqual(expected);
             });
        });
@@ -3508,7 +3493,7 @@ describe('Ontology State Service', function() {
             hasChildren: false,
             indent: 1,
             path: [recordId, 'otherIRI', 'andAnotherIRI', 'somethingNew'],
-            joinedPath: recordId + '.otherIRI.andAnotherIRI.iri',
+            joinedPath: `${recordId}.otherIRI.andAnotherIRI.iri`,
             entityInfo: undefined
         };
         listItem.classes.flat.push(node);
@@ -3519,16 +3504,16 @@ describe('Ontology State Service', function() {
         expect(classInQuestion.length).toEqual(1);
         let individualInQuestion = filter(listItem.individuals.flat, {'entityIRI': 'iri'});
         expect(individualInQuestion.length).toEqual(1);
-        expect(classInQuestion[0].joinedPath).toEqual(recordId + '.otherIRI.andAnotherIRI.iri');
-        expect(individualInQuestion[0].joinedPath).toEqual(recordId + '.otherIRI.andAnotherIRI.iri');
+        expect(classInQuestion[0].joinedPath).toEqual(`${recordId}.otherIRI.andAnotherIRI.iri`);
+        expect(individualInQuestion[0].joinedPath).toEqual(`${recordId}.otherIRI.andAnotherIRI.iri`);
         service.recalculateJoinedPaths(listItem);
 
         classInQuestion = filter(listItem.classes.flat, {'entityIRI': 'iri'});
         expect(classInQuestion.length).toEqual(1);
         individualInQuestion = filter(listItem.individuals.flat, {'entityIRI': 'iri'});
         expect(individualInQuestion.length).toEqual(1);
-        expect(classInQuestion[0].joinedPath).toEqual(recordId + '.otherIRI.andAnotherIRI.somethingNew');
-        expect(individualInQuestion[0].joinedPath).toEqual(recordId + '.otherIRI.andAnotherIRI.somethingNew');
+        expect(classInQuestion[0].joinedPath).toEqual(`${recordId}.otherIRI.andAnotherIRI.somethingNew`);
+        expect(individualInQuestion[0].joinedPath).toEqual(`${recordId}.otherIRI.andAnotherIRI.somethingNew`);
     });
     describe('handleDeletedClass should add the entity to the proper maps', function() {
         beforeEach(function() {
@@ -3561,7 +3546,7 @@ describe('Ontology State Service', function() {
         it('when the property has a domain', function() {
             this.property = {
                 '@id': 'iri1',
-                [RDFS + 'domain']: [{'@id': 'class1'}]
+                [`${RDFS}domain`]: [{'@id': 'class1'}]
             };
             service.listItem.noDomainProperties = [];
             service.listItem.classToChildProperties = {
@@ -3598,7 +3583,7 @@ describe('Ontology State Service', function() {
         it('when the property has domains', function() {
             this.property = {
                 '@id': 'iri1',
-                [RDFS + 'domain']: [{'@id': 'class1'}]
+                [`${RDFS}domain`]: [{'@id': 'class1'}]
             };
             service.handleNewProperty(this.property);
             expect(service.listItem.classToChildProperties['class1']).toEqual(['iri1']);
@@ -3643,7 +3628,7 @@ describe('Ontology State Service', function() {
         it('when the property has a domain', function() {
             this.property = {
                 '@id': 'iri1',
-                [RDFS + 'domain']: [{'@id': 'class1'}, {'@id': 'class2'}]
+                [`${RDFS}domain`]: [{'@id': 'class1'}, {'@id': 'class2'}]
             };
             service.removePropertyFromClass(this.property, 'class2');
             expect(service.listItem.noDomainProperties).toEqual([]);
@@ -3660,7 +3645,7 @@ describe('Ontology State Service', function() {
                 expect(service.containsDerivedConcept(['derived'])).toEqual(true);
             });
             it('skos:Concept', function() {
-                expect(service.containsDerivedConcept([SKOS + 'Concept'])).toEqual(true);
+                expect(service.containsDerivedConcept([`${SKOS}Concept`])).toEqual(true);
             });
         });
         it('false if array does not contain a derived Concept or skos:Concept', function() {
@@ -3677,7 +3662,7 @@ describe('Ontology State Service', function() {
                 expect(service.containsDerivedSemanticRelation(['derived'])).toEqual(true);
             });
             it('skos:semanticRelation', function() {
-                expect(service.containsDerivedSemanticRelation([SKOS + 'semanticRelation'])).toEqual(true);
+                expect(service.containsDerivedSemanticRelation([`${SKOS}semanticRelation`])).toEqual(true);
             });
         });
         it('false if array does not contain a derived semanticRelation or skos:semanticRelation', function() {
@@ -3694,7 +3679,7 @@ describe('Ontology State Service', function() {
                 expect(service.containsDerivedConceptScheme(['derived'])).toEqual(true);
             });
             it('skos:ConceptScheme', function() {
-                expect(service.containsDerivedConceptScheme([SKOS + 'ConceptScheme'])).toEqual(true);
+                expect(service.containsDerivedConceptScheme([`${SKOS}ConceptScheme`])).toEqual(true);
             });
         });
         it('false if array does not contain a derived ConceptScheme or skos:ConceptScheme', function() {
@@ -3761,7 +3746,7 @@ describe('Ontology State Service', function() {
                 },
             ].forEach(test => {
                 test.targetArray.forEach(relationship => {
-                    describe(relationship + ' and', function() {
+                    describe(`${relationship} and`, function() {
                         it('should be updated', fakeAsync(function() {
                             spyOn(service, 'containsDerivedConcept').and.returnValue(true);
                             spyOn(service, 'containsDerivedConceptScheme').and.returnValue(true);
@@ -3901,7 +3886,7 @@ describe('Ontology State Service', function() {
                 }
             ].forEach(test => {
                 test.targetArray.forEach(relationship => {
-                    describe(relationship + ' and', function() {
+                    describe(`${relationship} and`, function() {
                         beforeEach(function() {
                             set(service.listItem, 'editorTabStates.schemes.entityIRI', test.entityIRI);
                         });
@@ -4068,7 +4053,7 @@ describe('Ontology State Service', function() {
                 });
             tick();
             expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, 'iri', 'construct');
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
         }));
     });
     it('deleteClass should call the proper methods', fakeAsync(function() {
@@ -4310,48 +4295,38 @@ describe('Ontology State Service', function() {
     describe('getBlankNodeValue returns', function() {
         beforeEach(function() {
             service.listItem = listItem;
-            service.listItem.blankNodes = {key1: 'value1'};
-            utilStub.isBlankNodeId.and.returnValue(true);
+            service.listItem.blankNodes = {'_:genid1': 'value1'};
         });
         it('value for the key provided contained in the object', function() {
-            expect(service.getBlankNodeValue('key1')).toEqual(service.listItem.blankNodes['key1']);
+            expect(service.getBlankNodeValue('_:genid1')).toEqual(service.listItem.blankNodes['_:genid1']);
         });
         it('key for the key provided not contained in the object', function() {
-            expect(service.getBlankNodeValue('key2')).toEqual('key2');
+            expect(service.getBlankNodeValue('_:genid2')).toEqual('_:genid2');
         });
         it('undefined if isBlankNodeId returns false', function() {
-            utilStub.isBlankNodeId.and.returnValue(false);
             expect(service.getBlankNodeValue('key1')).toEqual(undefined);
         });
     });
     describe('isLinkable returns proper value', function() {
         it('when existsInListItem exists and isBlankNodeId is false', function() {
             spyOn(service, 'existsInListItem').and.returnValue(true);
-            utilStub.isBlankNodeId.and.returnValue(false);
             expect(service.isLinkable('iri')).toEqual(true);
             expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('iri');
         });
         it('when existsInListItem is undefined and isBlankNodeId is false', function() {
             spyOn(service, 'existsInListItem').and.returnValue(false);
-            utilStub.isBlankNodeId.and.returnValue(false);
             expect(service.isLinkable('iri')).toEqual(false);
             expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(utilStub.isBlankNodeId).not.toHaveBeenCalled();
         });
         it('when existsInListItem exists and isBlankNodeId is true', function() {
             spyOn(service, 'existsInListItem').and.returnValue(true);
-            utilStub.isBlankNodeId.and.returnValue(true);
-            expect(service.isLinkable('iri')).toEqual(false);
-            expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('iri');
+            expect(service.isLinkable('_:genid1')).toEqual(false);
+            expect(service.existsInListItem).toHaveBeenCalledWith('_:genid1', service.listItem);
         });
         it('when existsInListItem is undefined and isBlankNodeId is true', function() {
             spyOn(service, 'existsInListItem').and.returnValue(false);
-            utilStub.isBlankNodeId.and.returnValue(true);
-            expect(service.isLinkable('iri')).toEqual(false);
-            expect(service.existsInListItem).toHaveBeenCalledWith('iri', service.listItem);
-            expect(utilStub.isBlankNodeId).not.toHaveBeenCalled();
+            expect(service.isLinkable('_:genid1')).toEqual(false);
+            expect(service.existsInListItem).toHaveBeenCalledWith('_:genid1', service.listItem);
         });
     });
     describe('addLanguageToNewEntity should set the proper values', function() {
@@ -4365,34 +4340,34 @@ describe('Ontology State Service', function() {
                 this.language = 'en';
             });
             it('and it has a dcterms:title', function() {
-                const entity = {'@id': '', [DCTERMS + 'title']: [{'@value': 'value'}]};
-                const expected = {'@id': '', [DCTERMS + 'title']: [{'@value': 'value', '@language': this.language}]};
+                const entity = {'@id': '', [`${DCTERMS}title`]: [{'@value': 'value'}]};
+                const expected = {'@id': '', [`${DCTERMS}title`]: [{'@value': 'value', '@language': this.language}]};
                 service.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
             it('and it has a dcterms:description', function() {
-                const entity = {'@id': '', [DCTERMS + 'description']: [{'@value': 'value'}]};
-                const expected = {'@id': '', [DCTERMS + 'description']: [{'@value': 'value', '@language': this.language}]};
+                const entity = {'@id': '', [`${DCTERMS}description`]: [{'@value': 'value'}]};
+                const expected = {'@id': '', [`${DCTERMS}description`]: [{'@value': 'value', '@language': this.language}]};
                 service.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
             it('and it has both dcterms:title and dcterms:description', function() {
                 const entity = {
                     '@id': '', 
-                    [DCTERMS + 'description']: [{'@value': 'description'}],
-                    [DCTERMS + 'title']: [{'@value': 'title'}]
+                    [`${DCTERMS}description`]: [{'@value': 'description'}],
+                    [`${DCTERMS}title`]: [{'@value': 'title'}]
                 };
                 const expected = {
                     '@id': '', 
-                    [DCTERMS + 'description']: [{'@value': 'description', '@language': this.language}],
-                    [DCTERMS + 'title']: [{'@value': 'title', '@language': this.language}]
+                    [`${DCTERMS}description`]: [{'@value': 'description', '@language': this.language}],
+                    [`${DCTERMS}title`]: [{'@value': 'title', '@language': this.language}]
                 };
                 service.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
             it('and it has a skos:prefLabel', function() {
-                const entity = {'@id': '', [SKOS + 'prefLabel']: [{'@value': 'value'}]};
-                const expected = {'@id': '', [SKOS + 'prefLabel']: [{'@value': 'value', '@language': this.language}]};
+                const entity = {'@id': '', [`${SKOS}prefLabel`]: [{'@value': 'value'}]};
+                const expected = {'@id': '', [`${SKOS}prefLabel`]: [{'@value': 'value', '@language': this.language}]};
                 service.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
@@ -4487,7 +4462,7 @@ describe('Ontology State Service', function() {
                     });
                 tick();
                 expect(service.afterSave).toHaveBeenCalledWith(service.listItem, true);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 expect(service.listItem.isSaved).toEqual(false);
             }));
         });
@@ -4500,7 +4475,7 @@ describe('Ontology State Service', function() {
                     expect(response).toEqual(error);
                 });
             tick();
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             expect(service.listItem.isSaved).toEqual(false);
         }));
     });
@@ -4705,18 +4680,15 @@ describe('Ontology State Service', function() {
         });
     });
     describe('getGroupedSelectList should return the correct value when getName is', function() {
-        beforeEach(function() {
-            utilStub.getIRINamespace.and.callFake(a => a[0]);
-        });
         it('not provided', function() {
             spyOn(service, 'getEntityNameByListItem').and.callFake(a => a);
-            expect(service.getGroupedSelectList(['Asecond', 'Bitem1', 'Bitem2', 'Afirst', 'Cwow'], 'I')).toEqual([
-                { namespace: 'A', options: [
-                    {item: 'Afirst', name: 'Afirst'},
+            expect(service.getGroupedSelectList(['http://A#second', 'http://B#item1', 'http://B#item2', 'http://A#first', 'http://C#wow'], 'I')).toEqual([
+                { namespace: 'http://A#', options: [
+                    {item: 'http://A#first', name: 'http://A#first'},
                 ] },
-                { namespace: 'B', options: [
-                    {item: 'Bitem1', name: 'Bitem1'},
-                    {item: 'Bitem2', name: 'Bitem2'},
+                { namespace: 'http://B#', options: [
+                    {item: 'http://B#item1', name: 'http://B#item1'},
+                    {item: 'http://B#item2', name: 'http://B#item2'},
                 ] },
             ]);
             expect(service.getEntityNameByListItem).toHaveBeenCalledWith(jasmine.any(String));
@@ -4724,13 +4696,13 @@ describe('Ontology State Service', function() {
         it('provided', function() {
             spyOn(service, 'getEntityNameByListItem');
             const getName = jasmine.createSpy('getName').and.callFake(a => a);
-            expect(service.getGroupedSelectList(['Asecond', 'Bitem1', 'Bitem2', 'Afirst', 'Cwow'], 'I', getName)).toEqual([
-                { namespace: 'A', options: [
-                    {item: 'Afirst', name: 'Afirst'},
+            expect(service.getGroupedSelectList(['http://A#second', 'http://B#item1', 'http://B#item2', 'http://A#first', 'http://C#wow'], 'I', getName)).toEqual([
+                { namespace: 'http://A#', options: [
+                    {item: 'http://A#first', name: 'http://A#first'},
                 ] },
-                { namespace: 'B', options: [
-                    {item: 'Bitem1', name: 'Bitem1'},
-                    {item: 'Bitem2', name: 'Bitem2'},
+                { namespace: 'http://B#', options: [
+                    {item: 'http://B#item1', name: 'http://B#item1'},
+                    {item: 'http://B#item2', name: 'http://B#item2'},
                 ] },
             ]);
             expect(getName).toHaveBeenCalledWith(jasmine.any(String));
@@ -4741,7 +4713,7 @@ describe('Ontology State Service', function() {
         service.listItem = listItem;
         listItem.selected = {'@id': ''};
         spyOn(service, 'getPropValueDisplay').and.returnValue('value');
-        expect(service.getRemovePropOverlayMessage('key', 0)).toEqual('<p>Are you sure you want to remove:<br><strong>key</strong></p><p>with value:<br><strong>value</strong></p><p>from:<br><strong>' + service.listItem.selected['@id'] + '</strong>?</p>');
+        expect(service.getRemovePropOverlayMessage('key', 0)).toEqual(`<p>Are you sure you want to remove:<br><strong>key</strong></p><p>with value:<br><strong>value</strong></p><p>from:<br><strong>${service.listItem.selected['@id']}</strong>?</p>`);
         expect(service.getPropValueDisplay).toHaveBeenCalledWith('key', 0);
     });
     describe('getPropValueDisplay should return the correct display if the property is', function() {
@@ -4782,11 +4754,11 @@ describe('Ontology State Service', function() {
             spyOn(service, 'addToDeletions');
             this.index = 0;
             this.key = 'test';
-            ontologyManagerStub.entityNameProps = [DCTERMS + 'title'];
+            ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
             spyOn(service, 'createFlatEverythingTree').and.returnValue([hierarchyNode]);
         });
         it('if the selected key is rdfs:range', fakeAsync(function() {
-            this.key = RDFS + 'range';
+            this.key = `${RDFS}range`;
             service.listItem.selected[this.key] = [{'@id': 'id'}];
             service.removeProperty(this.key, this.index)
                 .subscribe(response => {
@@ -4802,7 +4774,7 @@ describe('Ontology State Service', function() {
             expect(service.listItem.flatEverythingTree).toEqual([]);
         }));
         it('if the selected key is rdfs:domain', fakeAsync(function() {
-            this.key = RDFS + 'domain';
+            this.key = `${RDFS}domain`;
             service.listItem.selected[this.key] = [{'@id': 'id'}];
             service.removeProperty(this.key, this.index)
                 .subscribe(response => {
@@ -4818,7 +4790,7 @@ describe('Ontology State Service', function() {
             expect(service.listItem.flatEverythingTree).toEqual([hierarchyNode]);
         }));
         it('if the selected key is a name prop', fakeAsync(function() {
-            this.key = DCTERMS + 'title';
+            this.key = `${DCTERMS}title`;
             service.listItem.selected[this.key] = [{'@id': 'id'}];
             service.removeProperty(this.key, this.index)
                 .subscribe(response => {
@@ -4850,9 +4822,8 @@ describe('Ontology State Service', function() {
         }));
         describe('if the selected value is a blank node', function() {
             beforeEach(function() {
-                utilStub.isBlankNodeId.and.callFake(id => id === 'id');
                 this.expected = {'@id': service.listItem.selected['@id']};
-                service.listItem.selectedBlankNodes = [{'@id': 'id'}];
+                service.listItem.selectedBlankNodes = [{'@id': '_:genid1'}];
             });
             it('but is not present in the listItems list of selectedBlankNodes', fakeAsync(function() {
                 this.key = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
@@ -4878,7 +4849,6 @@ describe('Ontology State Service', function() {
                         }
                     ]
                 };
-                utilStub.isBlankNodeId.and.returnValue(true);
                 const originalSelectedBlankNodes = [
                     {
                         '@id': 'http://mobi.com/.well-known/genid/6f99109121ce471c99176fcd6bdcdc834',
@@ -4944,7 +4914,6 @@ describe('Ontology State Service', function() {
                         }
                     ]
                 });
-                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1');
                 expect(service.listItem.selectedBlankNodes).toEqual(originalSelectedBlankNodes);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();
@@ -4954,16 +4923,15 @@ describe('Ontology State Service', function() {
                 expect(service.listItem.flatEverythingTree).toEqual([]);
             }));
             it('and the selected key is rdfs:domain', fakeAsync(function() {
-                this.key = RDFS + 'domain';
-                service.listItem.selected[this.key] = [{'@id': 'id'}];
-                this.expected[this.key] = [{'@id': 'id'}];
+                this.key = `${RDFS}domain`;
+                service.listItem.selected[this.key] = [{'@id': '_:genid1'}];
+                this.expected[this.key] = [{'@id': '_:genid1'}];
                 service.removeProperty(this.key, this.index)
                     .subscribe(response => {
-                        expect(response).toEqual({'@id': 'id'});
+                        expect(response).toEqual({'@id': '_:genid1'});
                     });
                 tick();
                 expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, this.expected);
-                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('id');
                 expect(service.listItem.selectedBlankNodes).toEqual([]);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();
@@ -4973,15 +4941,14 @@ describe('Ontology State Service', function() {
                 expect(service.listItem.flatEverythingTree).toEqual([]);
             }));
             it('and the selected key is not rdf:domain', fakeAsync(function() {
-                service.listItem.selected[this.key] = [{'@id': 'id'}];
-                this.expected[this.key] = [{'@id': 'id'}];
+                service.listItem.selected[this.key] = [{'@id': '_:genid1'}];
+                this.expected[this.key] = [{'@id': '_:genid1'}];
                 service.removeProperty(this.key, this.index)
                     .subscribe(response => {
-                        expect(response).toEqual({'@id': 'id'});
+                        expect(response).toEqual({'@id': '_:genid1'});
                     });
                 tick();
                 expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, this.expected);
-                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('id');
                 expect(service.listItem.selectedBlankNodes).toEqual([]);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();
@@ -4991,32 +4958,29 @@ describe('Ontology State Service', function() {
                 expect(service.listItem.flatEverythingTree).toEqual([]);
             }));
             it('and the blank node has some transitive blank nodes', fakeAsync(function() {
-                utilStub.isBlankNodeId.and.callFake(id => id === 'bnode0' || id === 'bnode1');
-                service.listItem.selected[this.key] = [{'@id': 'bnode0'}];
+                service.listItem.selected[this.key] = [{'@id': '_:bnode0'}];
                 service.listItem.selectedBlankNodes = [{
-                    '@id': 'bnode0',
-                    propA: [{'@id': 'bnode1'}]
+                    '@id': '_:bnode0',
+                    propA: [{'@id': '_:bnode1'}]
                 }, {
-                    '@id': 'bnode1'
+                    '@id': '_:bnode1'
                 }, {
-                    '@id': 'bnode2'
+                    '@id': '_:bnode2'
                 }];
-                this.expected[this.key] = [{'@id': 'bnode0'}];
+                this.expected[this.key] = [{'@id': '_:bnode0'}];
                 service.removeProperty(this.key, this.index)
                     .subscribe(response => {
-                        expect(response).toEqual({'@id': 'bnode0'});
+                        expect(response).toEqual({'@id': '_:bnode0'});
                     });
                 tick();
                 expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, this.expected);
                 expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {
-                    '@id': 'bnode0',
-                    propA: [{'@id': 'bnode1'}]
+                    '@id': '_:bnode0',
+                    propA: [{'@id': '_:bnode1'}]
                 });
-                expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {'@id': 'bnode1'});
-                expect(service.addToDeletions).not.toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {'@id': 'bnode2'});
-                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('bnode0');
-                expect(utilStub.isBlankNodeId).toHaveBeenCalledWith('bnode1');
-                expect(service.listItem.selectedBlankNodes).toEqual([{'@id': 'bnode2'}]);
+                expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {'@id': '_:bnode1'});
+                expect(service.addToDeletions).not.toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, {'@id': '_:bnode2'});
+                expect(service.listItem.selectedBlankNodes).toEqual([{'@id': '_:bnode2'}]);
                 expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, this.key, this.index);
                 expect(service.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(service.updateLabel).not.toHaveBeenCalled();

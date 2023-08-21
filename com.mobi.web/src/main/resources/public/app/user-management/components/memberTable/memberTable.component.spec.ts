@@ -71,7 +71,7 @@ describe('Member Table component', function() {
         it('should change updates to the list of members', function() {
             expect(component.dataSource).toEqual([]);
             component.members = ['test'];
-            component.ngOnChanges(undefined);
+            component.ngOnChanges();
             expect(component.dataSource).toEqual(['test']);
         });
     });

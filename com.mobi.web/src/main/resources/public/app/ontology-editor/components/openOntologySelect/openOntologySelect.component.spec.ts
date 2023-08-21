@@ -34,6 +34,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { CATALOG, DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
@@ -44,7 +45,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { State } from '../../../shared/models/state.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { EditBranchOverlayComponent } from '../editBranchOverlay/editBranchOverlay.component';
 import { OpenOntologySelectComponent, OptionIcon } from './openOntologySelect.component';
 
@@ -55,36 +56,38 @@ describe('Open Ontology Select component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
     const recordId = 'recordId';
     const branchId = 'branchId';
-    const commitId = 'commitId';
+    const commitId = 'http://test.com#1234567890';
     const tagId = 'tagId';
     const branch: JSONLDObject = {
         '@id': branchId,
-        '@type': [CATALOG + 'Branch'],
-        [CATALOG + 'head']: [{'@id': 'head'}]
+        '@type': [`${CATALOG}Branch`],
+        [`${DCTERMS}title`]: [{ '@value': 'title' }],
+        [`${CATALOG}head`]: [{'@id': 'head'}]
     };
     const tag: JSONLDObject = {
         '@id': tagId,
-        '@type': [CATALOG + 'Tag', CATALOG + 'Version'],
-        [CATALOG + 'commit']: [{'@id': commitId}]
+        '@type': [`${CATALOG}Tag`, `${CATALOG}Version`],
+        [`${DCTERMS}title`]: [{ '@value': 'title' }],
+        [`${CATALOG}commit`]: [{'@id': commitId}]
     };
     const commit: JSONLDObject = {
         '@id': commitId,
-        '@type': [CATALOG + 'Commit']
+        '@type': [`${CATALOG}Commit`]
     };
     const currentState: JSONLDObject = {
         '@id': 'currentState',
-        [ONTOLOGYSTATE + 'branch']: [{'@id': branchId}]
+        [`${ONTOLOGYSTATE}branch`]: [{'@id': branchId}]
     };
     const recordState: JSONLDObject = {
         '@id': 'recordState',
-        '@type': [ONTOLOGYSTATE + 'StateRecord'],
-        [ONTOLOGYSTATE + 'currentState']: [{'@id': currentState['@id']}]
+        '@type': [`${ONTOLOGYSTATE}StateRecord`],
+        [`${ONTOLOGYSTATE}currentState`]: [{'@id': currentState['@id']}]
     };
     const state: State = {
         id: 'state',
@@ -114,7 +117,7 @@ describe('Open Ontology Select component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -128,7 +131,7 @@ describe('Open Ontology Select component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         listItem = new OntologyListItem();
         listItem.versionedRdfRecord.recordId = recordId;
         listItem.versionedRdfRecord.branchId = branchId;
@@ -145,7 +148,7 @@ describe('Open Ontology Select component', function() {
         fixture = null;
         catalogManagerStub.deleteRecordBranch = null;
         ontologyStateStub = null;
-        utilStub = null;
+        toastStub = null;
         matDialog = null;
         listItem = null;
     });
@@ -221,24 +224,15 @@ describe('Open Ontology Select component', function() {
             beforeEach(function() {
                 component.listItem = listItem;
                 spyOn(component, 'canDelete').and.returnValue(true);
-                utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
             });
             it('if it is a branch', function() {
                 listItem.branches = [branch];
                 catalogManagerStub.isUserBranch.and.returnValue(false);
-                utilStub.getPropertyId.and.callFake((obj, prop) => {
-                    if (prop === ONTOLOGYSTATE + 'currentState') {
-                        return currentState['@id'];
-                    } else {
-                        return branchId;
-                    }
-                });
                 ontologyStateStub.isStateBranch.and.returnValue(true);
                 component.updateState();
                 expect(ontologyStateStub.getStateByRecordId).toHaveBeenCalledWith(recordId);
                 expect(component.state).toEqual(state);
                 expect(component.currentState).toEqual(currentState);
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'branch');
                 expect(catalogManagerStub.isUserBranch).toHaveBeenCalledWith(branch);
                 expect(component.selected).toEqual({
                     title: 'title',
@@ -252,19 +246,17 @@ describe('Open Ontology Select component', function() {
             });
             it('if it is a tag', function() {
                 listItem.tags = [tag];
-                utilStub.getPropertyId.and.callFake((obj, prop) => {
-                    if (prop === ONTOLOGYSTATE + 'currentState') {
-                        return currentState['@id'];
-                    } else {
-                        return tagId;
-                    }
-                });
+                const currentStateClone = cloneDeep(currentState);
+                delete currentStateClone[`${ONTOLOGYSTATE}branch`];
+                currentStateClone[`${ONTOLOGYSTATE}tag`] = [{ '@id': tagId }];
+                const stateClone = cloneDeep(state);
+                stateClone.model = [currentStateClone, recordState];
+                ontologyStateStub.getStateByRecordId.and.returnValue(stateClone);
                 ontologyStateStub.isStateTag.and.returnValue(true);
                 component.updateState();
                 expect(ontologyStateStub.getStateByRecordId).toHaveBeenCalledWith(recordId);
-                expect(component.state).toEqual(state);
-                expect(component.currentState).toEqual(currentState);
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'tag');
+                expect(component.state).toEqual(stateClone);
+                expect(component.currentState).toEqual(currentStateClone);
                 expect(catalogManagerStub.isUserBranch).not.toHaveBeenCalled();
                 expect(component.selected).toEqual({
                     title: 'title',
@@ -277,34 +269,30 @@ describe('Open Ontology Select component', function() {
                 expect(component.ontologySearchControl.value).toEqual('title');
             });
             it('if it is a commit', function() {
-                utilStub.getPropertyId.and.callFake((obj, prop) => {
-                    if (prop === ONTOLOGYSTATE + 'currentState') {
-                        return currentState['@id'];
-                    } else {
-                        return commitId;
-                    }
-                });
-                utilStub.condenseCommitId.and.returnValue(commitId);
+                const currentStateClone = cloneDeep(currentState);
+                delete currentStateClone[`${ONTOLOGYSTATE}branch`];
+                currentStateClone[`${ONTOLOGYSTATE}commit`] = [{ '@id': commitId }];
+                const stateClone = cloneDeep(state);
+                stateClone.model = [currentStateClone, recordState];
+                ontologyStateStub.getStateByRecordId.and.returnValue(stateClone);
                 component.updateState();
                 expect(ontologyStateStub.getStateByRecordId).toHaveBeenCalledWith(recordId);
-                expect(component.state).toEqual(state);
-                expect(component.currentState).toEqual(currentState);
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
+                expect(component.state).toEqual(stateClone);
+                expect(component.currentState).toEqual(currentStateClone);
                 expect(catalogManagerStub.isUserBranch).not.toHaveBeenCalled();
-                expect(utilStub.condenseCommitId).toHaveBeenCalledWith(commitId);
                 expect(component.selected).toEqual({
-                    title: commitId,
+                    title: '1234567890',
                     type: 'Commit',
                     canDelete: false,
                     isUserBranch: false,
                     jsonld: {
                         '@id': commitId,
-                        '@type': [CATALOG + 'Commit'],
-                        [DCTERMS + 'title']: [{'@value': commitId}]
+                        '@type': [`${CATALOG}Commit`],
+                        [`${DCTERMS}title`]: [{'@value': '1234567890'}]
                     },
                     icon: OptionIcon.COMMIT
                 });
-                expect(component.ontologySearchControl.value).toEqual(commitId);
+                expect(component.ontologySearchControl.value).toEqual('1234567890');
             });
         });
         describe('determines whether an entity can be deleted', function() {
@@ -312,10 +300,10 @@ describe('Open Ontology Select component', function() {
                 catalogManagerStub.isBranch.and.returnValue(true);
                 component.listItem = listItem;
                 
-                utilStub.getDctermsValue.and.returnValue('MASTER');
-                expect(component.canDelete(branch)).toBeFalse();
+                const branchClone = cloneDeep(branch);
+                branchClone[`${DCTERMS}title`] = [{ '@value': 'MASTER' }];
+                expect(component.canDelete(branchClone)).toBeFalse();
 
-                utilStub.getDctermsValue.and.returnValue('title');
                 expect(component.canDelete(branch)).toBeFalse();
 
                 listItem.userCanModify = true;
@@ -324,9 +312,11 @@ describe('Open Ontology Select component', function() {
                 expect(component.canDelete({'@id': 'otherBranch'})).toBeTrue();
             });
             it('if it is a tag', function() {
-                utilStub.getPropertyId.and.returnValue(tagId);
                 catalogManagerStub.isTag.and.returnValue(true);
                 component.listItem = listItem;
+                const currentStateClone = cloneDeep(currentState);
+                currentStateClone[`${ONTOLOGYSTATE}tag`] = [{ '@id': tagId}];
+                component.currentState = currentStateClone;
             
                 expect(component.canDelete(tag)).toBeFalse();
             
@@ -398,22 +388,24 @@ describe('Open Ontology Select component', function() {
                         ontologyStateStub.updateOntology.and.returnValue(of(null));
                         component.updateSelected(this.option);
                         tick();
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
                         expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, 'head', true);
                         expect(component.ontologySearchControl.value).toEqual(this.option.title);
                         expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith(listItem);
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                     it('when updateOntology rejects and the branch state has a commit id', fakeAsync(function() {
-                        utilStub.getPropertyId.and.returnValue(commitId);
+                        const currentStateClone = cloneDeep(currentState);
+                        currentStateClone[`${ONTOLOGYSTATE}commit`] = [{ '@id': commitId }];
+                        const stateClone = cloneDeep(state);
+                        stateClone.model = [currentStateClone, recordState];
+                        component.state = stateClone;
                         ontologyStateStub.updateOntology.and.returnValue(throwError(error));
                         component.updateSelected(this.option);
                         tick();
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
                         expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId, false);
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                         expect(component.ontologySearchControl.value).toBeNull();
                         expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
                     }));
@@ -422,10 +414,9 @@ describe('Open Ontology Select component', function() {
                     catalogManagerStub.getRecordBranch.and.returnValue(throwError(error));
                     component.updateSelected(this.option);
                     tick();
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
                     expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
                     expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                     expect(component.ontologySearchControl.value).toBeNull();
                     expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
                 }));
@@ -440,7 +431,6 @@ describe('Open Ontology Select component', function() {
                         isUserBranch: false,
                         icon: undefined
                     };
-                    utilStub.getPropertyId.and.returnValue(commitId);
                 });
                 describe('when getCommit resolves', function() {
                     beforeEach(function() {
@@ -450,21 +440,19 @@ describe('Open Ontology Select component', function() {
                         ontologyStateStub.updateOntologyWithCommit.and.returnValue(of(null));
                         component.updateSelected(this.option);
                         tick();
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(tag, CATALOG + 'commit');
                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                         expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(recordId, commitId, tagId);
                         expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith(listItem);
                         expect(component.ontologySearchControl.value).toEqual(this.option.title);
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                     it('when updateOntologyWithCommit rejects', fakeAsync(function() {
                         ontologyStateStub.updateOntologyWithCommit.and.returnValue(throwError(error));
                         component.updateSelected(this.option);
                         tick();
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(tag, CATALOG + 'commit');
                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                         expect(ontologyStateStub.updateOntologyWithCommit).toHaveBeenCalledWith(recordId, commitId, tagId);
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                         expect(component.ontologySearchControl.value).toBeNull();
                         expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
                     }));
@@ -473,10 +461,9 @@ describe('Open Ontology Select component', function() {
                     catalogManagerStub.getCommit.and.returnValue(throwError(error));
                     component.updateSelected(this.option);
                     tick();
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(tag, CATALOG + 'commit');
                     expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                     expect(ontologyStateStub.updateOntologyWithCommit).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                     expect(component.ontologySearchControl.value).toBeNull();
                     expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
                 }));
@@ -490,7 +477,6 @@ describe('Open Ontology Select component', function() {
                     isUserBranch: false,
                     icon: undefined
                 });
-                expect(utilStub.getPropertyId).not.toHaveBeenCalled();
                 expect(catalogManagerStub.getRecordBranch).not.toHaveBeenCalled();
                 expect(catalogManagerStub.getCommit).not.toHaveBeenCalled();
             });
@@ -582,11 +568,12 @@ describe('Open Ontology Select component', function() {
             expect(component.handleBranchEdit).toHaveBeenCalledWith(branch);
         }));
         describe('deleteBranch calls the correct methods', function() {
+            const currentStateClone = cloneDeep(currentState);
+            currentStateClone[`${ONTOLOGYSTATE}commit`] = [{ '@id': commitId }];
             beforeEach(function() {
                 component.catalogId = catalogId;
                 component.listItem = listItem;
-                component.currentState = currentState;
-                utilStub.getPropertyId.and.returnValue(commitId);
+                component.currentState = currentStateClone;
                 spyOn(component, 'changeToMaster');
             });
             describe('when deleteRecordBranch is resolved', function() {
@@ -612,13 +599,12 @@ describe('Open Ontology Select component', function() {
                                 expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                                 expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                                 expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                                expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentState);
-                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
+                                expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
                                 expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                 expect(component.changeToMaster).not.toHaveBeenCalled();
                                 expect(component.ontologySearchControl.value).toBeNull();
                                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                             }));
                             it('and getCommit is rejected', fakeAsync(function() {
                                 catalogManagerStub.getCommit.and.returnValue(throwError('Error message'));
@@ -627,13 +613,12 @@ describe('Open Ontology Select component', function() {
                                 expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                                 expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                                 expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                                expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentState);
-                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
+                                expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
                                 expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                 expect(component.changeToMaster).toHaveBeenCalledWith();
                                 expect(component.ontologySearchControl.value).toBeNull();
                                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                             }));
                         });
                         it('and the current state is a branch', fakeAsync(function() {
@@ -651,12 +636,12 @@ describe('Open Ontology Select component', function() {
                             expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
                             expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                             expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                            expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentState);
+                            expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
                             expect(catalogManagerStub.getCommit).not.toHaveBeenCalled();
                             expect(component.changeToMaster).not.toHaveBeenCalled();
                             expect(component.ontologySearchControl.value).toEqual('title');
                             expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith(listItem);
-                            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                         }));
                     });
                     it('and when deleteBranchState is rejected', fakeAsync(function() {
@@ -671,7 +656,7 @@ describe('Open Ontology Select component', function() {
                         expect(component.changeToMaster).not.toHaveBeenCalled();
                         expect(component.ontologySearchControl.value).toBeNull();
                         expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                     }));
                 });
                 it('and when removeBranch is rejected', fakeAsync(function() {
@@ -686,7 +671,7 @@ describe('Open Ontology Select component', function() {
                     expect(component.changeToMaster).not.toHaveBeenCalled();
                     expect(component.ontologySearchControl.value).toBeNull();
                     expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 }));
             });
             it('when deleteRecordBranch is rejected', fakeAsync(function() {
@@ -701,17 +686,18 @@ describe('Open Ontology Select component', function() {
                 expect(component.changeToMaster).not.toHaveBeenCalled();
                 expect(component.ontologySearchControl.value).toBeNull();
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
         describe('deleteTag calls the correct methods', function() {
+            const currentStateClone = cloneDeep(currentState);
+            currentStateClone[`${ONTOLOGYSTATE}commit`] = [{ '@id': commitId }];
             beforeEach(function() {
                 component.catalogId = catalogId;
                 component.listItem = listItem;
                 listItem.tags = [tag];
-                component.currentState = currentState;
+                component.currentState = currentStateClone;
                 spyOn(component, 'changeToMaster');
-                utilStub.getPropertyId.and.returnValue(commitId);
             });
             describe('when deleteRecordVersion is resolved', function() {
                 beforeEach(function() {
@@ -727,13 +713,12 @@ describe('Open Ontology Select component', function() {
                         tick();
                         expect(catalogManagerStub.deleteRecordVersion).toHaveBeenCalledWith(tagId, recordId, catalogId);
                         expect(component.listItem.tags).not.toContain(tag);
-                        expect(ontologyStateStub.isStateTag).toHaveBeenCalledWith(currentState);
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
+                        expect(ontologyStateStub.isStateTag).toHaveBeenCalledWith(currentStateClone);
                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                         expect(component.changeToMaster).toHaveBeenCalledWith();
                         expect(component.ontologySearchControl.value).toBeNull();
                         expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                     it('and the commit referenced still exists', fakeAsync(function() {
                         catalogManagerStub.getCommit.and.returnValue(of(commit));
@@ -741,13 +726,12 @@ describe('Open Ontology Select component', function() {
                         tick();
                         expect(catalogManagerStub.deleteRecordVersion).toHaveBeenCalledWith(tagId, recordId, catalogId);
                         expect(component.listItem.tags).not.toContain(tag);
-                        expect(ontologyStateStub.isStateTag).toHaveBeenCalledWith(currentState);
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(currentState, ONTOLOGYSTATE + 'commit');
+                        expect(ontologyStateStub.isStateTag).toHaveBeenCalledWith(currentStateClone);
                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                         expect(component.changeToMaster).not.toHaveBeenCalled();
                         expect(component.ontologySearchControl.value).toBeNull();
                         expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                 });
                 it('and the current state is a tag', fakeAsync(function() {
@@ -764,12 +748,12 @@ describe('Open Ontology Select component', function() {
                     tick();
                     expect(catalogManagerStub.deleteRecordVersion).toHaveBeenCalledWith(tagId, recordId, catalogId);
                     expect(component.listItem.tags).not.toContain(tag);
-                    expect(ontologyStateStub.isStateTag).toHaveBeenCalledWith(currentState);
+                    expect(ontologyStateStub.isStateTag).toHaveBeenCalledWith(currentStateClone);
                     expect(catalogManagerStub.getCommit).not.toHaveBeenCalled();
                     expect(component.changeToMaster).not.toHaveBeenCalled();
                     expect(component.ontologySearchControl.value).toEqual('title');
                     expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith(listItem);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
             });
             it('when deleteRecordVersion is rejected', fakeAsync(function() {
@@ -783,23 +767,15 @@ describe('Open Ontology Select component', function() {
                 expect(component.changeToMaster).not.toHaveBeenCalled();
                 expect(component.ontologySearchControl.value).toBeNull();
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
         it('should handle an edit to a branch', function() {
             component.currentState = currentState;
             component.listItem = listItem;
             listItem.branches = [branch];
-            utilStub.getPropertyId.and.callFake((obj, prop) => {
-                if (prop === ONTOLOGYSTATE + 'currentState') {
-                    return currentState['@id'];
-                } else {
-                    return branchId;
-                }
-            });
             spyOn(component, 'canDelete').and.returnValue(true);
             catalogManagerStub.isUserBranch.and.returnValue(false);
-            utilStub.getDctermsValue.and.returnValue('title');
             ontologyStateStub.isStateBranch.and.returnValue(true);
             component.handleBranchEdit({'@id': 'other'});
             expect(component.selected).toBeUndefined();
@@ -821,7 +797,7 @@ describe('Open Ontology Select component', function() {
             listItem.masterBranchIri = 'master';
             spyOn(component, 'updateSelected');
             component.changeToMaster();
-            expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('no longer exists'));
+            expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('no longer exists'));
             expect(component.updateSelected).toHaveBeenCalledWith({
                 title: 'MASTER',
                 type: 'Branch',
@@ -829,7 +805,7 @@ describe('Open Ontology Select component', function() {
                 canDelete: false,
                 jsonld: {
                     '@id': 'master',
-                    '@type': [CATALOG + 'Branch']
+                    '@type': [`${CATALOG}Branch`]
                 },
                 icon: OptionIcon.BRANCH
             });

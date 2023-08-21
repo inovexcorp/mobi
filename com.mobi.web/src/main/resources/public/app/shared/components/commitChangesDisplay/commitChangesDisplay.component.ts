@@ -30,7 +30,8 @@ import { Difference } from '../../models/difference.class';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
+import { getBeautifulIRI, isBlankNodeId } from '../../utility';
 
 /**
  * @class shared.CommitChangesDisplayComponent
@@ -38,7 +39,7 @@ import { UtilService } from '../../services/util.service';
  * A *dumb* component that creates a sequence of mat-accordion displaying the changes made to entities separated by
  * additions and deletions. Each changes display uses the `mat-expansion-panel`. The display of an entity's name can be
  * optionally controlled by the provided `entityNameFunc` function and defaults to the
- * {@link shared.UtilService beautified local name} of the IRI. The display of the changes can optionally include a
+ * {@link shared.ToastService beautified local name} of the IRI. The display of the changes can optionally include a
  * toggle to include all triples for an entity in the expansion panel body. This controlled by the presence of the
  * `commitId` input. If not present, the toggle will not be shown.
  *
@@ -68,13 +69,13 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     @Output() showMoreResultsEmitter = new EventEmitter<{limit: number, offset: number}>();
 
     types = [
-        OWL + 'Class',
-        OWL + 'ObjectProperty',
-        OWL + 'DatatypeProperty',
-        OWL + 'AnnotationProperty',
-        OWL + 'NamedIndividual',
-        SKOS + 'Concept',
-        SKOS + 'ConceptScheme'
+        `${OWL}Class`,
+        `${OWL}ObjectProperty`,
+        `${OWL}DatatypeProperty`,
+        `${OWL}AnnotationProperty`,
+        `${OWL}NamedIndividual`,
+        `${SKOS}Concept`,
+        `${SKOS}ConceptScheme`
     ];
 
     difference = new Difference();
@@ -82,7 +83,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     offsetIndex = 0;
     changesItems: ChangesItem[] = [];
 
-    constructor(private util: UtilService, private cm: CatalogManagerService, public os: OntologyStateService) {}
+    constructor(private toast: ToastService, private cm: CatalogManagerService, public os: OntologyStateService) {}
 
     ngOnInit(): void {
         if (this.startIndex) {
@@ -107,11 +108,11 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
             const changesItems: ChangesItem[] = Object.keys(mergedInProgressCommitsMap).map(id => ({
                 id,
                 difference: mergedInProgressCommitsMap[id],
-                entityName: this.entityNameFunc ? this.entityNameFunc(id) : this.util.getBeautifulIRI(id),
+                entityName: this.entityNameFunc ? this.entityNameFunc(id) : getBeautifulIRI(id),
                 disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id),
                 showFull: false,
                 resource: undefined,
-                isBlankNode: this.util.isBlankNodeId(id)
+                isBlankNode: isBlankNodeId(id)
             }));
             this.changesItems = sortBy(changesItems, 'entityName');
         }
@@ -130,7 +131,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
                     .subscribe((resources: JSONLDObject[]) => {
                         item.resource = resources.find(obj => obj['@id'] === item.id);
                     }, () => {
-                        this.util.createErrorToast('Error retrieving full entity information');
+                        this.toast.createErrorToast('Error retrieving full entity information');
                     });
             } else {
                 item.resource = undefined;

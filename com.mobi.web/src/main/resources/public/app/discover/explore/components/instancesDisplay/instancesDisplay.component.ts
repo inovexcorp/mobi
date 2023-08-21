@@ -26,10 +26,10 @@ import {initial, merge, head, last, set} from 'lodash';
 import { v4 } from 'uuid';
 
 import { CATALOG, POLICY } from '../../../../prefixes';
-import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ExploreService } from '../../../services/explore.service';
 
 /**
@@ -46,8 +46,8 @@ import { ExploreService } from '../../../services/explore.service';
 export class InstancesDisplayComponent implements OnInit {
     className = '';
 
-    constructor(public state: DiscoverStateService, private es: ExploreService, private splitIRI: SplitIRIPipe,
-        private pep: PolicyEnforcementService, private util: UtilService) {}
+    constructor(public state: DiscoverStateService, private es: ExploreService, private pep: PolicyEnforcementService, 
+        private toast: ToastService) {}
     
     ngOnInit(): void {
         this.className = last(this.state.explore.breadcrumbs);
@@ -55,7 +55,7 @@ export class InstancesDisplayComponent implements OnInit {
     setPage(pageEvent: PageEvent): void {
         const pepRequest = {
             resourceId: this.state.explore.recordId,
-            actionId: POLICY + 'Read'
+            actionId: `${POLICY}Read`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -71,21 +71,21 @@ export class InstancesDisplayComponent implements OnInit {
                             this.state.explore.hasPermissionError = false;
                             this.state.explore.instanceDetails.data = [];
                             merge(this.state.explore.instanceDetails, this.es.createPagedResultsObject(response));
-                        }, this.util.createErrorToast); 
+                        }, error => this.toast.createErrorToast(error)); 
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to read dataset');
+                    this.toast.createErrorToast('You don\'t have permission to read dataset');
                     this.state.explore.instanceDetails.data = [];
                     this.state.explore.breadcrumbs = initial(this.state.explore.breadcrumbs);
                     this.state.explore.hasPermissionError = true;
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
     create(): void {
         const pepRequest = {
             resourceId: this.state.explore.recordId,
-            actionId: CATALOG + 'Modify'
+            actionId: `${CATALOG}Modify`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -93,7 +93,7 @@ export class InstancesDisplayComponent implements OnInit {
                 if (canModify) {
                     this.state.explore.creating = true;
                     const details = head(this.state.explore.instanceDetails.data);
-                    const split = this.splitIRI.transform(details.instanceIRI);
+                    const split = splitIRI(details.instanceIRI);
                     const iri = split.begin + split.then + v4();
                     this.state.explore.instance.entity = [{
                         '@id': iri,
@@ -102,10 +102,10 @@ export class InstancesDisplayComponent implements OnInit {
                     set(this.state.explore.instance, 'metadata.instanceIRI', iri);
                     this.state.explore.breadcrumbs.push('New Instance');
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.toast.createErrorToast('You don\'t have permission to modify dataset');
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
 }

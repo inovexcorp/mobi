@@ -25,6 +25,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM
@@ -36,7 +37,6 @@ import { Mapping } from '../../../shared/models/mapping.class';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { IriTemplateOverlayComponent } from './iriTemplateOverlay.component';
 
@@ -48,7 +48,6 @@ describe('IRI Template Overlay component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const begin = 'http://test';
     const then = '/';
@@ -56,8 +55,8 @@ describe('IRI Template Overlay component', function() {
     const classMappingId = 'classMappingId';
     const classMapping: JSONLDObject = {
         '@id': classMappingId,
-        hasPrefix: begin + then,
-        localName: localName
+        [`${DELIM}hasPrefix`]: [{ '@value': begin + then }],
+        [`${DELIM}localName`]: [{ '@value': localName }]
     };
     let mappingStub: jasmine.SpyObj<Mapping>;
 
@@ -73,7 +72,6 @@ describe('IRI Template Overlay component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(MappingManagerService),
                 MockProvider(DelimitedManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -87,20 +85,12 @@ describe('IRI Template Overlay component', function() {
         mappingManagerStub = TestBed.inject(MappingManagerService) as jasmine.SpyObj<MappingManagerService>;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<IriTemplateOverlayComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         mapperStateStub.selectedClassMappingId = 'classMapping';
         mappingStub = jasmine.createSpyObj('Mapping', [
             'getClassMapping'
         ]);
         mappingStub.getClassMapping.and.returnValue(classMapping);
-        utilStub.getPropertyValue.and.callFake((entity, iri) => {
-            if (iri === DELIM + 'hasPrefix') {
-                return classMapping.hasPrefix;
-            } else if (iri === DELIM + 'localName') {
-                return classMapping.localName;
-            }
-        });
         mapperStateStub.selectedClassMappingId = classMappingId;
         mapperStateStub.selected = {
             difference: new Difference(),
@@ -119,7 +109,6 @@ describe('IRI Template Overlay component', function() {
         mapperStateStub = null;
         mappingManagerStub = null;
         delimitedManagerStub = null;
-        utilStub = null;
         mappingStub = null;
     });
 
@@ -128,8 +117,6 @@ describe('IRI Template Overlay component', function() {
             component.ngOnInit();
             expect(mappingStub.getClassMapping).toHaveBeenCalledWith(classMappingId);
             expect(component.classMapping).toEqual(classMapping);
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'hasPrefix');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'localName');
             expect(component.iriTemplateForm.controls.beginsWith.value).toEqual(begin);
             expect(component.iriTemplateForm.controls.then.value).toEqual(then);
             expect(component.localNameOptions.length).toEqual(2);
@@ -138,12 +125,12 @@ describe('IRI Template Overlay component', function() {
             expect(component.iriTemplateForm.controls.endsWith.value).toEqual('${0}');
         });
         it('if a column is not already selected', function() {
-            utilStub.getPropertyValue.and.returnValue(classMapping.hasPrefix);
+            const classMappingClone = cloneDeep(classMapping);
+            delete classMappingClone[`${DELIM}localName`];
+            mappingStub.getClassMapping.and.returnValue(classMappingClone);
             component.ngOnInit();
             expect(mappingStub.getClassMapping).toHaveBeenCalledWith(classMappingId);
-            expect(component.classMapping).toEqual(classMapping);
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'hasPrefix');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'localName');
+            expect(component.classMapping).toEqual(classMappingClone);
             expect(component.iriTemplateForm.controls.beginsWith.value).toEqual(begin);
             expect(component.iriTemplateForm.controls.then.value).toEqual(then);
             expect(component.localNameOptions.length).toEqual(2);
@@ -177,11 +164,9 @@ describe('IRI Template Overlay component', function() {
             component.iriTemplateForm.controls.endsWith.setValue(component.uuidOption.value);
             component.classMapping = classMapping;
             component.set();
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'hasPrefix');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'localName');
             expect(mappingManagerStub.editIriTemplate).toHaveBeenCalledWith(mappingStub, classMappingId, 'new#', component.uuidOption.value);
-            expect(mapperStateStub.changeProp).toHaveBeenCalledWith(classMappingId, DELIM + 'hasPrefix', 'new#', begin + then);
-            expect(mapperStateStub.changeProp).toHaveBeenCalledWith(classMappingId, DELIM + 'localName', component.uuidOption.value, localName);
+            expect(mapperStateStub.changeProp).toHaveBeenCalledWith(classMappingId, `${DELIM}hasPrefix`, 'new#', begin + then);
+            expect(mapperStateStub.changeProp).toHaveBeenCalledWith(classMappingId, `${DELIM}localName`, component.uuidOption.value, localName);
             expect(matDialogRef.close).toHaveBeenCalledWith();
         });
     });

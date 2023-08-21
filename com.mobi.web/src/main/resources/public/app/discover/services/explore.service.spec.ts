@@ -24,11 +24,8 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
-import { HttpParams } from '@angular/common/http';
 
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../shared/services/util.service';
 import { ClassDetails } from '../models/classDetails.interface';
 import { InstanceDetails } from '../models/instanceDetails.interface';
 import { PropertyDetails } from '../models/propertyDetails.interface';
@@ -36,9 +33,8 @@ import { ProgressSpinnerService } from '../../shared/components/progress-spinner
 import { ExploreService } from './explore.service';
 
 describe('Explore Service', function() {
-    let utilStub: jasmine.SpyObj<UtilService>;
-    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let service: ExploreService;
+    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
     const error = 'Error Message';
     const obj = {
@@ -55,53 +51,24 @@ describe('Explore Service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 ExploreService,
-                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService),
             ]
         });
         service = TestBed.inject(ExploreService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         
-        utilStub.createHttpParams.and.callThrough();
-        utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
-        utilStub.rejectError.and.callFake(() => Promise.reject(error));
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
         progressSpinnerStub.track.and.callFake((ob) => ob);
     });
 
     afterEach(function() {
         service = null;
-        utilStub = null;
         progressSpinnerStub = null;
     });
     describe('getClassDetails calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/class-details', function() {
         it('succeeds', function() {
             const data: ClassDetails[]= [obj];
-            const url = service.prefix + encodeURIComponent('recordId') + '/class-details';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/class-details`;
             service.getClassDetails('recordId')
                 .subscribe(function(response) {
                     expect(response).toEqual(data);
@@ -109,11 +76,10 @@ describe('Explore Service', function() {
                     fail('Should have been resolved.');
                 });
             const req = httpMock.expectOne({url, method: 'GET'});
-            expect(req.request.method).toBe('GET');
             req.flush(data);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/class-details';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/class-details`;
             service.getClassDetails('recordId').subscribe(() => fail('Promise should have rejected'), response => {
                 expect(response).toEqual(error);
             });
@@ -131,29 +97,29 @@ describe('Explore Service', function() {
                     description: 'description'
                 }
             ];
-            const url = service.prefix + encodeURIComponent('recordId') + '/classes/' + encodeURIComponent('classId')
-            + '/instance-details';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/classes/${encodeURIComponent('classId')}/instance-details`;
             service.getClassInstanceDetails('recordId', 'classId', {limit: 99, offset: 0})
                 .subscribe(function(response) {
                     expect(response.body).toEqual(data);
                 }, function() {
                     fail('Should have been resolved.');
                 });
-                const req = httpMock.expectOne({url, method: 'GET'});
-                expect(req.request.method).toBe('GET');
-                req.flush(data);
+                const request = httpMock.expectOne(req => req.url === url && req.method === 'GET');
+                expect(request.request.params.get('limit')).toEqual('99');
+                expect(request.request.params.get('offset')).toEqual('0');
+                request.flush(data);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/classes/' + encodeURIComponent('classId')
-             + '/instance-details';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/classes/${encodeURIComponent('classId')}/instance-details`;
             service.getClassInstanceDetails('recordId', 'classId', {limit: 99, offset: 0})
                 .subscribe(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
                     expect(response).toBe(error);
                 });
-           
-                const request = httpMock.expectOne({url, method: 'GET'});
+                const request = httpMock.expectOne(req => req.url === url && req.method === 'GET');
+                expect(request.request.params.get('limit')).toEqual('99');
+                expect(request.request.params.get('offset')).toEqual('0');
                 request.flush('flush', { status: 400, statusText: error });
         });
     });
@@ -167,8 +133,7 @@ describe('Explore Service', function() {
                     restrictions: []
                 }
             ];
-            const url = service.prefix + encodeURIComponent('recordId') + '/classes/' + encodeURIComponent('classId')
-                + '/property-details';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/classes/${encodeURIComponent('classId')}/property-details`;
             service.getClassPropertyDetails('recordId', 'classId')
                 .subscribe(function(response) {
                     expect(response).toEqual(data);
@@ -176,12 +141,10 @@ describe('Explore Service', function() {
                     fail('Should have been resolved.');
                 });
             const req = httpMock.expectOne({url, method: 'GET'});
-            expect(req.request.method).toBe('GET');
             req.flush(data);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/classes/' + encodeURIComponent('classId')
-                + '/property-details';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/classes/${encodeURIComponent('classId')}/property-details`;
             service.getClassPropertyDetails('recordId', 'classId')
                 .subscribe(function() {
                     fail('Should have been rejected.');
@@ -196,7 +159,7 @@ describe('Explore Service', function() {
     describe('createInstance calls the correct functions when POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances', function() {
         it('succeeds', function() {
             const data = 'data';
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances`;
             service.createInstance('recordId', [{'@id': 'id'}])
                 .subscribe(function(response) {
                     expect(response).toEqual(data);
@@ -204,11 +167,10 @@ describe('Explore Service', function() {
                     fail('Should have been resolved.');
                 });
             const req = httpMock.expectOne({url, method: 'POST'});
-            expect(req.request.method).toBe('POST');
             req.flush(data);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances';
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances`;
             service.createInstance('recordId', [{'@id': 'id'}])
                 .subscribe(function() {
                     fail('Should have been rejected.');
@@ -227,7 +189,7 @@ describe('Explore Service', function() {
                   '@id': ''
                 }
             ];
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances/${encodeURIComponent('instanceId')}`;
             service.getInstance('recordId', 'instanceId')
                 .subscribe(function(response) {
                     expect(response).toEqual(data);
@@ -235,11 +197,10 @@ describe('Explore Service', function() {
                     fail('Should have been resolved.');
                 });
             const req = httpMock.expectOne({url, method: 'GET'});
-            expect(req.request.method).toBe('GET');
             req.flush(data);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances/${encodeURIComponent('instanceId')}`;
             service.getInstance('recordId', 'instanceId')
                 .subscribe(function() {
                     fail('Should have been rejected.');
@@ -253,20 +214,18 @@ describe('Explore Service', function() {
     });
     describe('updateInstance calls the correct functions when PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
         it('succeeds', function() {
-            const data = 'data';
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances/${encodeURIComponent('instanceId')}`;
             service.updateInstance('recordId', 'instanceId', [{'@id': 'id'}])
-                .subscribe(function(response) {
-                    expect(response).toEqual(data);
+                .subscribe(function() {
+                    expect(true).toBeTrue();
                 }, function() {
                     fail('Should have been resolved.');
                 });
             const req = httpMock.expectOne({url, method: 'PUT'});
-            expect(req.request.method).toBe('PUT');
-            req.flush(data);
+            req.flush(200);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances/${encodeURIComponent('instanceId')}`;
             service.updateInstance('recordId', 'instanceId', [{'@id': 'id'}])
                 .subscribe(function() {
                     fail('Should have been rejected.');
@@ -280,19 +239,18 @@ describe('Explore Service', function() {
     });
     describe('deleteInstance calls the correct functions when DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
         it('succeeds', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances/${encodeURIComponent('instanceId')}`;
             service.deleteInstance('recordId', 'instanceId')
-                .subscribe(function(response) {
-                    expect(response).toEqual(200);
+                .subscribe(function() {
+                    expect(true).toBeTrue();
                 }, function() {
                     fail('Should have been resolved.');
                 });
             const req = httpMock.expectOne({url, method: 'DELETE'});
-            expect(req.request.method).toBe('DELETE');
             req.flush(200);
         });
         it('fails', function() {
-            const url = service.prefix + encodeURIComponent('recordId') + '/instances/' + encodeURIComponent('instanceId');
+            const url = `${service.prefix}${encodeURIComponent('recordId')}/instances/${encodeURIComponent('instanceId')}`;
             service.deleteInstance('recordId', 'instanceId')
                 .subscribe(function() {
                     fail('Should have been rejected.');

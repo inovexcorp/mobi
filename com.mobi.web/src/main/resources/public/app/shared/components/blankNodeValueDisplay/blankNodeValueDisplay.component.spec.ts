@@ -67,7 +67,7 @@ describe('Blank Node Value Display component', function() {
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         trustedHtmlStub = TestBed.inject(TrustedHtmlPipe) as jasmine.SpyObj<TrustedHtmlPipe>;
 
-        component.node = {'@id': 'someId', name :'someName'};
+        component.node = {'@id': 'someId', name: 'someName'};
         ontologyStateStub.getBlankNodeValue.and.returnValue(bnode);
         trustedHtmlStub.transform.and.returnValue(bnode);
     });

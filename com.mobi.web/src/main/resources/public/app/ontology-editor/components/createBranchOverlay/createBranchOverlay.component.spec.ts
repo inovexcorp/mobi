@@ -60,7 +60,7 @@ describe('Create Branch Overlay component', function() {
     const branchId = 'branchId';
     const branch: JSONLDObject = {
         '@id': branchId,
-        [CATALOG + 'head']: [{'@id': commitId}]
+        [`${CATALOG}head`]: [{'@id': commitId}]
     };
 
     beforeEach(async () => {

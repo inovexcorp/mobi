@@ -22,10 +22,11 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import {forkJoin, of} from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { MockProvider } from 'ng-mocks';
 
+import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { SharedModule } from '../../shared/shared.module';
-import { listItem, visData, propertyRanges } from './testData';
 import { OntologyStateService } from '../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../shared/services/ontologyManager.service';
 import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
@@ -33,11 +34,9 @@ import { HierarchyResponse } from '../../shared/models/hierarchyResponse.interfa
 import { EntityNames } from '../../shared/models/entityNames.interface';
 import { IriList } from '../../shared/models/iriList.interface';
 import { PropertyToRanges } from '../../shared/models/propertyToRanges.interface';
-import { UtilService } from '../../shared/services/util.service';
-import { MockProvider } from 'ng-mocks';
-import { OntologyVisualizationDataService } from './ontologyVisualizationData.service';
 import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service'
-import { cleanStylesFromDOM } from '../../../test/ts/Shared';
+import { listItem, visData } from './testData';
+import { OntologyVisualizationDataService } from './ontologyVisualizationData.service';
 
 describe('OntologyVisualization Data Service', () => {
     let dataVisualizationStub : OntologyVisualizationDataService;
@@ -59,7 +58,6 @@ describe('OntologyVisualization Data Service', () => {
                 OntologyVisualizationDataService,
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService)
             ]
         }).compileComponents();

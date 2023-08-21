@@ -32,11 +32,12 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { DELIM, RDFS, XSD } from '../../../prefixes';
+import { DCTERMS, DELIM, RDFS } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -47,7 +48,6 @@ import { DelimitedManagerService } from '../../../shared/services/delimitedManag
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { IriTemplateOverlayComponent } from '../iriTemplateOverlay/iriTemplateOverlay.component';
 import { PropMappingOverlayComponent } from '../propMappingOverlay/propMappingOverlay.component';
 import { ClassMappingDetailsComponent, PropMappingPreview } from './classMappingDetails.component';
@@ -60,12 +60,17 @@ describe('Class Mapping Details component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
     const classMappingId = 'classMappingId';
     const propMappingId = 'propMappingId';
-    const classMapping: JSONLDObject = {'@id': classMappingId};
+    const className = 'class';
+    const classMapping: JSONLDObject = {
+      '@id': classMappingId,
+      [`${DCTERMS}title`]: [{ '@value': className }],
+      [`${DELIM}hasPrefix`]: [{ '@value': 'prefix:' }],
+      [`${DELIM}localName`]: [{ '@value': 'localName' }],
+    };
     const propMapping: JSONLDObject = {'@id': propMappingId};
     const invalidProp: MappingInvalidProp = {
         id: propMapping['@id'],
@@ -99,7 +104,6 @@ describe('Class Mapping Details component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
                 MockProvider(PropertyManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -115,7 +119,6 @@ describe('Class Mapping Details component', function() {
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
 
         mappingStub = jasmine.createSpyObj('Mapping', [
@@ -137,7 +140,6 @@ describe('Class Mapping Details component', function() {
         mappingManagerStub = null;
         mapperStateStub = null;
         delimitedManagerStub = null;
-        utilStub = null;
         matDialog = null;
         mappingStub = null;
     });
@@ -200,12 +202,9 @@ describe('Class Mapping Details component', function() {
         it('should set the IRI template for the class mapping', function() {
             spyOn(component, 'setPropMappings');
             component.classMappingId = classMappingId;
-            utilStub.getPropertyValue.and.callFake((obj, prop) => prop === DELIM + 'hasPrefix' ? 'prefix:' : 'localName');
             component.classMappingId = classMappingId;
             component.setIriTemplate();
             expect(mappingStub.getClassMapping).toHaveBeenCalledWith(classMappingId);
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'hasPrefix');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMapping, DELIM + 'localName');
             expect(component.iriTemplate).toEqual('prefix:localName');
         });
         describe('should get the value of a property', function() {
@@ -219,14 +218,11 @@ describe('Class Mapping Details component', function() {
                 expect(delimitedManagerStub.getHeader).toHaveBeenCalledWith(index);
             });
             it('if it is an object property mapping', function() {
-                const className = 'class';
                 spyOn(component, 'getLinkedClassId').and.returnValue(classMappingId);
-                utilStub.getDctermsValue.and.returnValue(className);
                 mappingManagerStub.isDataMapping.and.returnValue(false);
                 expect(component.getPropValue(propMapping)).toEqual(className);
                 expect(mappingStub.getClassMapping).toHaveBeenCalledWith(classMappingId);
                 expect(component.getLinkedClassId).toHaveBeenCalledWith(propMapping);
-                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(classMapping, 'title');
             });
         });
         it('should retrieve a preview of a data property value', function() {
@@ -240,56 +236,29 @@ describe('Class Mapping Details component', function() {
             expect(component.getDataValuePreview(propMapping)).toEqual('(None)');
         });
         describe('should get a preview of the datatype of a property mapping', function() {
-            beforeEach(function() {
-                utilStub.getBeautifulIRI.and.callFake(a => a);
-            });
             it('if the datatype is not set', function() {
                 const propIRI = 'propIRI';
-                utilStub.getPropertyId.and.callFake((obj, prop) => {
-                    if (prop === DELIM + 'datatypeSpec') {
-                        return;
-                    } else if (prop === DELIM + 'hasProperty') {
-                        return propIRI;
-                    } else {
-                        return 'range';
-                    }
-                });
                 const mappingProperty: MappingProperty = {
-                    propObj: {'@id': propIRI},
+                    propObj: {'@id': propIRI, [`${RDFS}range`]: [{ '@id': 'range' }]},
                     isDeprecated: false,
                     isObjectProperty: false,
                     name: '',
                     ontologyId: ''
                 };
+                const propMappingClone = cloneDeep(propMapping);
+                propMappingClone[`${DELIM}hasProperty`] = [{ '@id': propIRI }];
                 mapperStateStub.getPropsByClassMappingId.and.returnValue([mappingProperty]);
-                expect(component.getDatatypePreview(propMapping)).toEqual('range');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMapping, DELIM + 'hasProperty');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMapping, DELIM + 'datatypeSpec');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith({'@id': propIRI}, RDFS + 'range');
-                expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith('range');
+                expect(component.getDatatypePreview(propMappingClone)).toEqual('Range');
             });
             it('if the datatype is set', function() {
-                utilStub.getPropertyId.and.callFake((obj, prop) => {
-                    if (prop === DELIM + 'datatypeSpec') {
-                        return 'datatypeSpec';
-                    } else {
-                        return undefined;
-                    }
-                });
+                const propMappingClone = cloneDeep(propMapping);
+                propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': 'datatypeSpec' }];
                 mapperStateStub.getPropsByClassMappingId.and.returnValue([]);
-                expect(component.getDatatypePreview(propMapping)).toEqual('datatypeSpec');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMapping, DELIM + 'hasProperty');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMapping, DELIM + 'datatypeSpec');
-                expect(utilStub.getPropertyId).not.toHaveBeenCalledWith(undefined, RDFS + 'range');
-                expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith('datatypeSpec');
+                expect(component.getDatatypePreview(propMappingClone)).toEqual('Datatype Spec');
             });
             it('if the property has no range', function() {
                 mapperStateStub.getPropsByClassMappingId.and.returnValue([]);
-                expect(component.getDatatypePreview(propMapping)).toEqual(XSD + 'string');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMapping, DELIM + 'hasProperty');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMapping, DELIM + 'datatypeSpec');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(undefined, RDFS + 'range');
-                expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith(XSD + 'string');
+                expect(component.getDatatypePreview(propMapping)).toEqual('String');
             });
         });
         it('should get a preview of the language of a property mapping', function() {
@@ -301,20 +270,20 @@ describe('Class Mapping Details component', function() {
             propertyManagerStub.languageList = [];
             expect(component.getLanguagePreview(propMapping)).toEqual('');
         });
-        it('should get the language tab of a property mapping', function() {
-            utilStub.getPropertyValue.and.returnValue('en');
-            expect(component.getLanguageTag(propMapping)).toEqual('en');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(propMapping, DELIM + 'languageSpec');
+        it('should get the language tag of a property mapping', function() {
+            const propMappingClone = cloneDeep(propMapping);
+            propMappingClone[`${DELIM}languageSpec`] = [{ '@value': 'en' }];
+            expect(component.getLanguageTag(propMappingClone)).toEqual('en');
         });
         it('should get the id of the linked class mapping of a property mapping', function() {
-            utilStub.getPropertyId.and.returnValue('classId');
-            expect(component.getLinkedClassId(propMapping)).toEqual('classId');
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMapping, DELIM + 'classMapping');
+            const propMappingClone = cloneDeep(propMapping);
+            propMappingClone[`${DELIM}classMapping`] = [{ '@id': 'classId' }];
+            expect(component.getLinkedClassId(propMappingClone)).toEqual('classId');
         });
         it('should get the linked column index of a property mapping', function() {
-            utilStub.getPropertyValue.and.returnValue('0');
-            expect(component.getLinkedColumnIndex(propMapping)).toEqual('0');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(propMapping, DELIM + 'columnIndex');
+            const propMappingClone = cloneDeep(propMapping);
+            propMappingClone[`${DELIM}columnIndex`] = [{ '@value': '0' }];
+            expect(component.getLinkedColumnIndex(propMappingClone)).toEqual('0');
         });
         describe('should switch the selected class mapping', function() {
             beforeEach(function() {

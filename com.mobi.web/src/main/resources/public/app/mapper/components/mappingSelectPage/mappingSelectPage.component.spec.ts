@@ -38,7 +38,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 
 import {
-    cleanStylesFromDOM,
+    cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR,
 } from '../../../../../public/test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
@@ -60,7 +60,7 @@ import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { MappingSelectPageComponent } from './mappingSelectPage.component';
 
 describe('Mapping Select Page component', function() {
@@ -73,7 +73,7 @@ describe('Mapping Select Page component', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error message';
     const catalogId = 'catalogId';
@@ -82,9 +82,11 @@ describe('Mapping Select Page component', function() {
     const branchId = 'branchId';
     const record: JSONLDObject = {
         '@id': recordId,
-        [CATALOG + 'keyword']: [{
-            '@value': 'keyword'
-        }]
+        [`${DCTERMS}title`]: [{ '@value': 'title' }],
+        [`${DCTERMS}description`]: [{ '@value': 'description' }],
+        [`${DCTERMS}modified`]: [{ '@value': DATE_STR }],
+        [`${CATALOG}keyword`]: [{ '@value': 'keyword' }],
+        [`${CATALOG}masterBranch`]: [{ '@id': branchId }],
     };
     const mappingRecord: MappingRecord = {
         id: recordId,
@@ -141,7 +143,7 @@ describe('Mapping Select Page component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(PolicyEnforcementService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -158,7 +160,7 @@ describe('Mapping Select Page component', function() {
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         
         catalogManagerStub.localCatalog = {'@id': catalogId};
@@ -168,7 +170,7 @@ describe('Mapping Select Page component', function() {
             pageIndex: 0,
             searchText: '',
             sortOption: {
-                field: DCTERMS + 'title',
+                field: `${DCTERMS}title`,
                 label: 'Title',
                 asc: true
             }
@@ -189,7 +191,7 @@ describe('Mapping Select Page component', function() {
         catalogManagerStub = null;
         progressSpinnerStub = null;
         policyEnforcementStub = null;
-        utilStub = null;
+        toastStub = null;
         matDialog = null;
     });
 
@@ -241,11 +243,6 @@ describe('Mapping Select Page component', function() {
             expect(component.setResults).toHaveBeenCalledWith();
         });
         describe('should set the mapping results', function() {
-            beforeEach(function() {
-                utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-                utilStub.getPropertyId.and.returnValue(branchId);
-                utilStub.getDate.and.returnValue('Date');
-            });
             it('successfully', fakeAsync(function() {
                 component.setResults();
                 tick();
@@ -256,12 +253,12 @@ describe('Mapping Select Page component', function() {
                     id: recordId,
                     title: 'title',
                     description: 'description',
-                    modified: 'Date',
+                    modified: SHORT_DATE_STR,
                     keywords: ['keyword'],
                     branch: branchId
                 }]);
                 expect(mapperStateStub.totalSize).toEqual(totalSize);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 catalogManagerStub.getRecords.and.returnValue(throwError(error));
@@ -271,7 +268,7 @@ describe('Mapping Select Page component', function() {
                 expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.mappingList);
                 expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.mappingList);
                 expect(component.results).toEqual([]);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
         it('should view a mapping', fakeAsync(function() {
@@ -299,7 +296,7 @@ describe('Mapping Select Page component', function() {
                 expect(mapperStateStub.getClasses).toHaveBeenCalledWith([mappingOntology]);
                 expect(mapperStateStub.availableClasses).toEqual([mappingClass]);
                 expect(mapperStateStub.step).toEqual(mapperStateStub.fileUploadStep);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(throwError(error));
@@ -312,7 +309,7 @@ describe('Mapping Select Page component', function() {
                 expect(mapperStateStub.getClasses).not.toHaveBeenCalled();
                 expect(mapperStateStub.availableClasses).toEqual([]);
                 expect(mapperStateStub.step).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
         describe('should set the correct state for editing a mapping', function() {
@@ -325,62 +322,62 @@ describe('Mapping Select Page component', function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
                 component.edit(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: CATALOG + 'Modify', actionAttrs: { [CATALOG + 'branch']: branchId}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${CATALOG}Modify`, actionAttrs: { [`${CATALOG}branch`]: branchId}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
                 expect(mapperStateStub.editMapping).toEqual(true);
                 expect(mapperStateStub.sourceOntologies).toEqual([mappingOntology]);
                 expect(mapperStateStub.getClasses).toHaveBeenCalledWith([mappingOntology]);
                 expect(mapperStateStub.availableClasses).toEqual([mappingClass]);
                 expect(mapperStateStub.step).toEqual(mapperStateStub.fileUploadStep);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.edit(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: CATALOG + 'Modify', actionAttrs: { [CATALOG + 'branch']: branchId}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${CATALOG}Modify`, actionAttrs: { [`${CATALOG}branch`]: branchId}});
                 expect(component.setStateIfCompatible).not.toHaveBeenCalled();
                 expect(mapperStateStub.editMapping).toEqual(false);
                 expect(mapperStateStub.sourceOntologies).toEqual([]);
                 expect(mapperStateStub.getClasses).not.toHaveBeenCalled();
                 expect(mapperStateStub.availableClasses).toEqual([]);
                 expect(mapperStateStub.step).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
             it('unless an error occurs', fakeAsync(function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(throwError(error));
                 component.edit(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: CATALOG + 'Modify', actionAttrs: { [CATALOG + 'branch']: branchId}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${CATALOG}Modify`, actionAttrs: { [`${CATALOG}branch`]: branchId}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
                 expect(mapperStateStub.editMapping).toEqual(false);
                 expect(mapperStateStub.sourceOntologies).toEqual([]);
                 expect(mapperStateStub.getClasses).not.toHaveBeenCalled();
                 expect(mapperStateStub.availableClasses).toEqual([]);
                 expect(mapperStateStub.step).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
         describe('should set the correct state for creating a new mapping', function() {
             it('if the user has permission', fakeAsync(function() {
                 component.showNew();
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: POLICY + 'Create', actionAttrs: { [RDF + 'type']: DELIM + 'MappingRecord'}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(mapperStateStub.startCreateMapping).toHaveBeenCalledWith();
                 expect(mapperStateStub.selected).toEqual({mapping: undefined, difference: jasmine.any(Difference)});
                 expect(matDialog.open).toHaveBeenCalledWith(CreateMappingOverlayComponent);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.showNew();
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: POLICY + 'Create', actionAttrs: { [RDF + 'type']: DELIM + 'MappingRecord'}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(mapperStateStub.startCreateMapping).not.toHaveBeenCalled();
                 expect(mapperStateStub.selected).toBeUndefined();
                 expect(matDialog.open).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
         describe('should set the correct state for deleting a mapping', function() {
@@ -390,19 +387,19 @@ describe('Mapping Select Page component', function() {
             it('if the user has permission', fakeAsync(function() {
                 component.confirmDeleteMapping(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Delete'});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${POLICY}Delete`});
                 expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.any(String)}});
                 expect(component.deleteMapping).toHaveBeenCalledWith(mappingRecord);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.confirmDeleteMapping(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: POLICY + 'Delete'});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${POLICY}Delete`});
                 expect(matDialog.open).not.toHaveBeenCalled();
                 expect(component.deleteMapping).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
         it('should open the downloadMappingOverlay', function() {
@@ -414,32 +411,32 @@ describe('Mapping Select Page component', function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
                 component.duplicate(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: POLICY + 'Create', actionAttrs: { [RDF + 'type']: DELIM + 'MappingRecord'}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
                 expect(mapperStateStub.startCreateMapping).toHaveBeenCalledWith();
                 expect(matDialog.open).toHaveBeenCalledWith(CreateMappingOverlayComponent);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.duplicate(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: POLICY + 'Create', actionAttrs: { [RDF + 'type']: DELIM + 'MappingRecord'}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(component.setStateIfCompatible).not.toHaveBeenCalled();
                 expect(mapperStateStub.startCreateMapping).not.toHaveBeenCalled();
                 expect(matDialog.open).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
             it('unless an error occurs', fakeAsync(function() {
                 spyOn(component, 'setStateIfCompatible').and.returnValue(throwError(error));
                 component.duplicate(mappingRecord);
                 tick();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: POLICY + 'Create', actionAttrs: { [RDF + 'type']: DELIM + 'MappingRecord'}});
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
                 expect(mapperStateStub.startCreateMapping).not.toHaveBeenCalled();
                 expect(matDialog.open).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
         describe('should delete a mapping', function() {
@@ -452,7 +449,7 @@ describe('Mapping Select Page component', function() {
                 tick();
                 expect(mapperStateStub.resetPagination).toHaveBeenCalledWith();
                 expect(component.setResults).toHaveBeenCalledWith();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 mappingManagerStub.deleteMapping.and.returnValue(throwError(error));
@@ -460,7 +457,7 @@ describe('Mapping Select Page component', function() {
                 tick();
                 expect(mapperStateStub.resetPagination).not.toHaveBeenCalled();
                 expect(component.setResults).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
         describe('should set the selected mapping', function() {
@@ -477,7 +474,7 @@ describe('Mapping Select Page component', function() {
                 expect(mappingManagerStub.getSourceOntologies).not.toHaveBeenCalled();
                 expect(mappingManagerStub.areCompatible).not.toHaveBeenCalled();
                 expect(mapperStateStub.selected).toBeUndefined();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless getting the source ontologies throws an error', fakeAsync(function() {
                 mappingManagerStub.getSourceOntologies.and.returnValue(throwError(error));
@@ -489,7 +486,7 @@ describe('Mapping Select Page component', function() {
                 expect(mappingManagerStub.getSourceOntologies).toHaveBeenCalledWith(mappingState.mapping.getSourceOntologyInfo());
                 expect(mappingManagerStub.areCompatible).not.toHaveBeenCalled();
                 expect(mapperStateStub.selected).toBeUndefined();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the mapping is not compatible with the source ontologies', fakeAsync(function() {
                 mappingManagerStub.getSourceOntologies.and.returnValue(of([mappingOntology]));
@@ -502,7 +499,7 @@ describe('Mapping Select Page component', function() {
                 expect(mappingManagerStub.getSourceOntologies).toHaveBeenCalledWith(mappingState.mapping.getSourceOntologyInfo());
                 expect(mappingManagerStub.areCompatible).toHaveBeenCalledWith(mappingState.mapping, [mappingOntology]);
                 expect(mapperStateStub.selected).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: jasmine.any(Number)});
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: jasmine.any(Number)});
             }));
             it('successfully', fakeAsync(function() {
                 mappingManagerStub.getSourceOntologies.and.returnValue(of([mappingOntology]));
@@ -515,7 +512,7 @@ describe('Mapping Select Page component', function() {
                 expect(mappingManagerStub.getSourceOntologies).toHaveBeenCalledWith(mappingState.mapping.getSourceOntologyInfo());
                 expect(mappingManagerStub.areCompatible).toHaveBeenCalledWith(mappingState.mapping, [mappingOntology]);
                 expect(mapperStateStub.selected).toEqual(mappingState);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
     });

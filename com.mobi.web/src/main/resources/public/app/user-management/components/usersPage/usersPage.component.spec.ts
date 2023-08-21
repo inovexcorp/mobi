@@ -41,7 +41,7 @@ import { User } from '../../../shared/models/user.interface';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CreateUserOverlayComponent } from '../createUserOverlay/createUserOverlay.component';
 import { EditUserProfileOverlayComponent } from '../editUserProfileOverlay/editUserProfileOverlay.component';
 import { ResetPasswordOverlayComponent } from '../resetPasswordOverlay/resetPasswordOverlay.component';
@@ -56,7 +56,7 @@ describe('Users Page component', function() {
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let user: User;
 
     beforeEach(async () => {
@@ -78,7 +78,7 @@ describe('Users Page component', function() {
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
                 MockProvider(LoginManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -92,7 +92,7 @@ describe('Users Page component', function() {
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         user = {
             username: 'batman',
@@ -115,7 +115,7 @@ describe('Users Page component', function() {
         userStateStub = null;
         matDialog = null;
         loginManagerStub = null;
-        utilStub = null;
+        toastStub = null;
         user = null;
     });
 
@@ -217,7 +217,7 @@ describe('Users Page component', function() {
                 await component.deleteUser();
                 await fixture.whenStable();
                 expect(userManagerStub.deleteUser).toHaveBeenCalledWith(user.username);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(userStateStub.selectedUser).toEqual(user);
                 expect(component.selectedCurrentUser).toBeTrue();
                 expect(component.selectedAdminUser).toBeTrue();
@@ -232,13 +232,13 @@ describe('Users Page component', function() {
 
                 userManagerStub.deleteUser('user').subscribe(() => {
                     expect(userManagerStub.deleteUser).toHaveBeenCalledWith(user.username);
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(userStateStub.selectedUser).toBeUndefined();
                     expect(component.selectedCurrentUser).toBeFalse();
                     expect(component.selectedAdminUser).toBeFalse();
                     expect(component.setAdmin).toHaveBeenCalledWith();
                     expect(component.setUserGroups).toHaveBeenCalledWith();
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 });
                 
             });
@@ -261,7 +261,7 @@ describe('Users Page component', function() {
                     await fixture.whenStable();
                     expect(userManagerStub.addUserRoles).toHaveBeenCalledWith(user.username, ['admin']);
                     expect(userManagerStub.deleteUserRole).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless an error occurs',  async function() {
                     userManagerStub.addUserRoles.and.returnValue(throwError('Error message'));
@@ -269,7 +269,7 @@ describe('Users Page component', function() {
                     await fixture.whenStable();
                     expect(userManagerStub.addUserRoles).toHaveBeenCalledWith(user.username, ['admin']);
                     expect(userManagerStub.deleteUserRole).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
                 });
             });
             describe('from true to false', function() {
@@ -284,7 +284,7 @@ describe('Users Page component', function() {
                     await fixture.whenStable();
                     expect(userManagerStub.addUserRoles).not.toHaveBeenCalled();
                     expect(userManagerStub.deleteUserRole).toHaveBeenCalledWith(user.username, 'admin');
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless an error occurs', async function() {
                     userManagerStub.deleteUserRole.and.returnValue(throwError('Error message'));
@@ -293,7 +293,7 @@ describe('Users Page component', function() {
                     await fixture.whenStable();
                     expect(userManagerStub.addUserRoles).not.toHaveBeenCalled();
                     expect(userManagerStub.deleteUserRole).toHaveBeenCalledWith(user.username, 'admin');
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
                 });
             });
         });

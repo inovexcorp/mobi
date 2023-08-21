@@ -54,7 +54,7 @@ export class MergeRequestListComponent implements OnInit {
     showDeleteOverlay(request: MergeRequest): void {
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: '<p>Are you sure you want to delete ' + request.title + '?</p>'
+                content: `<p>Are you sure you want to delete ${request.title}?</p>`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {

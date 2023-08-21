@@ -69,7 +69,7 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
     }
     setPreview(): void {
         this._setMode(this.activePage.serialization);
-        this.om.getQueryResults(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.previewQuery, this.activePage.serialization, false, true)
+        this.om.postQueryResults(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.previewQuery, this.activePage.serialization, false, true)
             .subscribe(ontology => {
                 this.activePage.preview = ontology;
                 this.activePageChange.emit(this.activePage);

@@ -38,7 +38,7 @@ import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay
  * A component that creates a Bootstrap `row` div with two columns containing sections for uploading and previewing
  * delimited data. The left column contains a {@link mapper.FileUploadFormComponent} and buttons to cancel the current
  * workflow or continue. If there are invalid property mapping in the current mapping, you can only continue if editing
- * a mapping. The right column contains a {@link mapper.component:previewDataGrid preview} of the loaded delimited data.
+ * a mapping. The right column contains a {@link mapper.PreviewDataGridComponent} of the loaded delimited data.
  */
 @Component({
     selector: 'file-upload-page',

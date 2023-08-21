@@ -21,10 +21,10 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,19 +33,20 @@ import { MatSelectModule } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
-import { UploadRecordModalComponent } from './uploadRecordModal.component';
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { Difference } from '../../../shared/models/difference.class';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { UploadRecordModalComponent } from './uploadRecordModal.component';
 
 describe('Upload Record Modal component', function() {
     let component: UploadRecordModalComponent;
@@ -54,11 +55,8 @@ describe('Upload Record Modal component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<UploadRecordModalComponent>>;
     let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    const uploadResponse = {
-        status: 200
-    };
     const file: File = new File([''], 'filename', { type: 'text/html' });
     const rdfUpdate: RdfUpdate = {
         file: file,
@@ -91,8 +89,7 @@ describe('Upload Record Modal component', function() {
             ],
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
-                { provide: MAT_DIALOG_DATA, useValue: {} },
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphManagerService),
                 MockProvider(ShapesGraphStateService)
@@ -113,11 +110,12 @@ describe('Upload Record Modal component', function() {
             commitId: 'commit1',
             title: 'title'
         };
+        shapesGraphStateStub.updateShapesGraphMetadata.and.returnValue(of(null));
 
-        shapesGraphManagerStub.uploadChanges.and.resolveTo(uploadResponse);
+        shapesGraphManagerStub.uploadChanges.and.returnValue(of(new HttpResponse<null>({body: null, status: 200})));
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.getInProgressCommit.and.returnValue(of(inProgressCommit));
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -128,7 +126,7 @@ describe('Upload Record Modal component', function() {
         matDialogRef = null;
         shapesGraphManagerStub = null;
         shapesGraphStateStub = null;
-        utilStub = null;
+        toastStub = null;
         catalogManagerStub = null;
     });
 
@@ -143,12 +141,12 @@ describe('Upload Record Modal component', function() {
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(inProgressCommit);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith(true);
             });
             it('unless an error occurs', async function() {
                 component.selectedFile = file;
-                shapesGraphManagerStub.uploadChanges.and.rejectWith('');
+                shapesGraphManagerStub.uploadChanges.and.returnValue(throwError({error: '', errorMessage: '', errorDetails: []}));
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
                 component.uploadChanges();
                 fixture.detectChanges();
@@ -156,13 +154,13 @@ describe('Upload Record Modal component', function() {
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             });
             it('unless there are no changes in the uploaded file', fakeAsync (function() {
                 fixture.detectChanges();
                 component.selectedFile = file;
-                shapesGraphManagerStub.uploadChanges.and.resolveTo({status: 204});
+                shapesGraphManagerStub.uploadChanges.and.returnValue(of(new HttpResponse<null>({body: null, status: 204})));
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
                 component.uploadChanges();
                 fixture.detectChanges();
@@ -170,8 +168,8 @@ describe('Upload Record Modal component', function() {
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 expect(component.error).toEqual({error: '', errorDetails: [], errorMessage: 'No changes'});
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));

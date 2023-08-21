@@ -33,14 +33,14 @@ import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { FocusDirective } from '../../directives/focus/focus.directive';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { InlineEditComponent } from './inlineEdit.component';
 
 describe('Inline Edit component', function() {
     let component: InlineEditComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<InlineEditComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -55,14 +55,14 @@ describe('Inline Edit component', function() {
                 MockDirective(FocusDirective)
             ],
             providers: [
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(InlineEditComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -70,7 +70,7 @@ describe('Inline Edit component', function() {
         component = null;
         element = null;
         fixture = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('should initialize correctly on text change', function() {
@@ -87,7 +87,7 @@ describe('Inline Edit component', function() {
                 component.saveChanges();
                 expect(component.text).toEqual('Text');
                 expect(component.edit).toEqual(false);
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
             });
             it('should save changes', function() {
                 spyOn(component.saveEvent, 'emit');

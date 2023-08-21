@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
@@ -33,7 +33,6 @@ import { DATASET, DCTERMS } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { CatalogManagerService } from './catalogManager.service';
 import { DiscoverStateService } from './discoverState.service';
-import { UtilService } from './util.service';
 import { DatasetManagerService } from './datasetManager.service';
 
 describe('Dataset Manager service', function() {
@@ -41,7 +40,6 @@ describe('Dataset Manager service', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
 
     const error = 'Error Message';
@@ -55,49 +53,21 @@ describe('Dataset Manager service', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
             ]
         });
 
         service = TestBed.inject(DatasetManagerService);
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
-        utilStub.paginatedConfigToParams.and.callFake(x => Object.assign({}, x) || {});
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
         progressSpinnerStub.track.and.callFake(ob => ob);
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
-        utilStub = null;
         catalogManagerStub = null;
         discoverStateStub = null;
         httpMock = null;
@@ -109,9 +79,11 @@ describe('Dataset Manager service', function() {
             this.config = {
                 limit: 10,
                 offset: 0,
-                sort: 'http://purl.org/dc/terms/title',
+                sortOption: {
+                  field: `${DCTERMS}title`,
+                  asc: true
+                },
                 searchText: 'search',
-                ascending: true
             };
             this.url = service.prefix;
         });
@@ -134,14 +106,14 @@ describe('Dataset Manager service', function() {
             expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
             expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
             expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
-            expect(request.request.params.get('sort')).toEqual(this.config.sort);
-            expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
+            expect(request.request.params.get('sort')).toEqual(this.config.sortOption.field);
+            expect(request.request.params.get('ascending')).toEqual('' + this.config.sortOption.asc);
             request.flush([]);
         });
     });
     describe('should retrieve a DatasetRecord', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
         });
         it('unless an error occurs', function() {
             service.getDatasetRecord(recordId)
@@ -225,8 +197,8 @@ describe('Dataset Manager service', function() {
     });
     describe('should delete a DatasetRecord', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId);
-            service.datasetRecords = [[{'@id': recordId, '@type': [DATASET + 'DatasetRecord']}]];
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
+            service.datasetRecords = [[{'@id': recordId, '@type': [`${DATASET}DatasetRecord`]}]];
         });
         it('unless an error occurs', function() {
             service.deleteDatasetRecord(recordId)
@@ -258,7 +230,7 @@ describe('Dataset Manager service', function() {
     });
     describe('should clear a DatasetRecord', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId) + '/data';
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}/data`;
         });
         it('unless an error occurs', function() {
             service.clearDatasetRecord(recordId)
@@ -288,7 +260,7 @@ describe('Dataset Manager service', function() {
     });
     describe('should update a DatasetRecord', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
         });
         it('unless an error occurs', fakeAsync(function() {
             catalogManagerStub.updateRecord.and.callFake(() => throwError(error));
@@ -301,14 +273,14 @@ describe('Dataset Manager service', function() {
         }));
         it('on success.', fakeAsync(function() {
             const expected = [
-                [{'@id': 'record1', 'dcterms:title': [{'@value': 'title 1'}]}],
-                [{'@id': 'record3', 'dcterms:title': [{'@value': 'title 3'}]}],
-                [{'@id': recordId, 'dcterms:title': [{'@value': ''}]}]
+                [{'@id': 'record1', [`${DCTERMS}title`]: [{'@value': 'title 1'}]}],
+                [{'@id': 'record3', [`${DCTERMS}title`]: [{'@value': 'title 3'}]}],
+                [{'@id': recordId, [`${DCTERMS}title`]: [{'@value': ''}]}]
             ];
             service.datasetRecords = [
-                [{'@id': 'record1', 'dcterms:title': [{'@value': 'title 1'}]}],
-                [{'@id': recordId, 'dcterms:title': [{'@value': 'title 2'}]}],
-                [{'@id': 'record3', 'dcterms:title': [{'@value': 'title 3'}]}]
+                [{'@id': 'record1', [`${DCTERMS}title`]: [{'@value': 'title 1'}]}],
+                [{'@id': recordId, [`${DCTERMS}title`]: [{'@value': 'title 2'}]}],
+                [{'@id': 'record3', [`${DCTERMS}title`]: [{'@value': 'title 3'}]}]
             ];
             catalogManagerStub.updateRecord.and.callFake(() => of());
             service.updateDatasetRecord(recordId, '', expected[2])
@@ -321,7 +293,7 @@ describe('Dataset Manager service', function() {
     });
     describe('should upload data to a Dataset', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId) + '/data';
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}/data`;
         });
         it('unless an error occurs', function() {
             service.uploadData(recordId, new File([''], ''))
@@ -343,14 +315,14 @@ describe('Dataset Manager service', function() {
     });
     describe('initialize should call the correct method when getDatasetRecords was', function() {
         it('resolved', fakeAsync(function() {
-            const datasetRecord = [{'@id': 'dataset', '@type': [DATASET + 'DatasetRecord']}];
+            const datasetRecord = [{'@id': 'dataset', '@type': [`${DATASET}DatasetRecord`]}];
             spyOn(service, 'getDatasetRecords').and.returnValue(of(new HttpResponse({body: [datasetRecord]})));
             service.initialize()
                 .subscribe(() => {}, () => fail('Observable should have succeeded'));
             tick();
             const config = {
                 sortOption: {
-                    field: DCTERMS + 'title',
+                    field: `${DCTERMS}title`,
                     label: 'Title (asc)',
                     asc: true
                 }
@@ -367,7 +339,7 @@ describe('Dataset Manager service', function() {
             tick();
             const config = {
                 sortOption: {
-                    field: DCTERMS + 'title',
+                    field: `${DCTERMS}title`,
                     label: 'Title (asc)',
                     asc: true
                 }
@@ -380,7 +352,7 @@ describe('Dataset Manager service', function() {
             this.identifier = {'@id': 'id'};
             this.record = {
                 '@id': recordId,
-                [DATASET + 'ontology']: [this.identifier]
+                [`${DATASET}ontology`]: [this.identifier]
             };
             this.arr = [this.identifier, {'@id': 'extra'}, this.record];
         });
@@ -393,12 +365,12 @@ describe('Dataset Manager service', function() {
         });
     });
     it('should retrieve a DatasetRecord from a JSON-LD array', function() {
-        const record = {'@id': recordId, '@type': [DATASET + 'DatasetRecord']};
+        const record = {'@id': recordId, '@type': [`${DATASET}DatasetRecord`]};
         const arr = [record, {'@id': 'other'}];
         expect(service.getRecordFromArray(arr)).toEqual(record);
     });
     it('should split a JSON-LD array into a Dataset object', function() {
-        const record = {'@id': recordId, '@type': [DATASET + 'DatasetRecord']};
+        const record = {'@id': recordId, '@type': [`${DATASET}DatasetRecord`]};
         const identifier = {'@id': 'id'};
         spyOn(service, 'getRecordFromArray').and.returnValue(record);
         spyOn(service, 'getOntologyIdentifiers').and.returnValue([identifier]);

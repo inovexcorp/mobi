@@ -103,9 +103,9 @@ export class UploadSnackbarComponent implements OnDestroy {
     }
     getTitle(): string {
         if (this.os.uploadPending > 0) {
-            return 'Uploading ' + (this.os.uploadPending === 1 ? '1 item' : this.os.uploadPending + ' items');
+            return `Uploading ${this.os.uploadPending} item${this.os.uploadPending === 1 ? '' : 's'}`;
         } else {
-            return this.os.uploadList.length + ' upload(s) complete';
+            return `${this.os.uploadList.length} upload(s) complete`;
         }
     }
     showUploadErrorsOverlay(item: OntologyUploadItem): void {

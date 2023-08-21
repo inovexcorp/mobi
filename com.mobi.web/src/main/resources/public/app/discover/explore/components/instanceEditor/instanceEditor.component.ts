@@ -30,7 +30,7 @@ import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { CATALOG } from '../../../../prefixes';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
 
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 /**
  * @class explore.InstanceEditorComponent
@@ -49,13 +49,13 @@ export class InstanceEditorComponent {
     isValid = true;
 
     constructor(public ds: DiscoverStateService, private es: ExploreService, private eu: ExploreUtilsService,
-                private util: UtilService, private pep: PolicyEnforcementService) {
+                private toast: ToastService, private pep: PolicyEnforcementService) {
     }
 
     save(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: CATALOG + 'Modify'
+            actionId: `${CATALOG}Modify`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -74,20 +74,20 @@ export class InstanceEditorComponent {
                             this.ds.explore.instance.metadata = find(response.body, {instanceIRI: instance['@id']});
                             this.ds.explore.breadcrumbs[this.ds.explore.breadcrumbs.length - 1] = this.ds.explore.instance.metadata.title;
                             this.ds.explore.editing = false;
-                        }, (error) => this.util.createErrorToast(error));
+                        }, (error) => this.toast.createErrorToast(error));
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.toast.createErrorToast('You don\'t have permission to modify dataset');
                     this.cancel();
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
     cancel(): void {
         this.ds.explore.instance.entity = this.ds.explore.instance.original;
         this.ds.explore.editing = false;
     }
-    checkValidation(event): void {
+    checkValidation(event: {value: boolean}): void {
         this.isValid = event.value;
     }
 }

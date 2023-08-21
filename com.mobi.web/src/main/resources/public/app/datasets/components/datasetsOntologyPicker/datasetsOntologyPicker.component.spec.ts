@@ -31,21 +31,19 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { get } from 'lodash';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { CATALOG, DCTERMS, ONTOLOGYEDITOR, XSD } from '../../../prefixes';
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR, OWL, XSD } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { DatasetsOntologyPickerComponent } from './datasetsOntologyPicker.component';
 
 describe('Datasets Ontology Picker component', function() {
@@ -53,7 +51,6 @@ describe('Datasets Ontology Picker component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<DatasetsOntologyPickerComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const catalogId = 'http://mobi.com/catalog-local';
     const ontology1Id = 'ontology1Record';
@@ -85,7 +82,6 @@ describe('Datasets Ontology Picker component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
             ]
         }).compileComponents();
 
@@ -93,52 +89,49 @@ describe('Datasets Ontology Picker component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontology1Record = {
                 '@id': ontology1Id,
-                '@type': ['http://www.w3.org/2002/07/owl#Thing',
-                        'http://mobi.com/ontologies/catalog#Record',
-                        'http://mobi.com/ontologies/catalog#VersionedRecord',
-                        'http://mobi.com/ontologies/ontology-editor#OntologyRecord',
-                        'http://mobi.com/ontologies/catalog#VersionedRDFRecord'],
-                [CATALOG + 'branch']: [{ '@id': 'ontology1Branch' }],
-                [CATALOG + 'catalog']: [{ '@id': catalogId }],
-                [CATALOG + 'masterBranch']: [{ '@id': 'ontology1Branch' }],
-                [ONTOLOGYEDITOR + 'ontologyIRI']: [{ '@id': 'ontology1' }],
-                [DCTERMS + 'description']: [{ '@value': '' }],
-                [DCTERMS + 'issued']: [{
-                        '@type': XSD + 'dateTime',
+                '@type': [`${OWL}Thing`,
+                        `${CATALOG}Record`,
+                        `${CATALOG}VersionedRecord`,
+                        `${ONTOLOGYEDITOR}OntologyRecord`,
+                        `${CATALOG}VersionedRDFRecord`],
+                [`${CATALOG}branch`]: [{ '@id': 'ontology1Branch' }],
+                [`${CATALOG}catalog`]: [{ '@id': catalogId }],
+                [`${CATALOG}masterBranch`]: [{ '@id': 'ontology1Branch' }],
+                [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology1' }],
+                [`${DCTERMS}description`]: [{ '@value': '' }],
+                [`${DCTERMS}issued`]: [{
+                        '@type': `${XSD}dateTime`,
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                [DCTERMS + 'modified']: [{
-                        '@type': XSD + 'dateTime',
+                [`${DCTERMS}modified`]: [{
+                        '@type': `${XSD}dateTime`,
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                [DCTERMS + 'publisher']: [{ '@id': 'http://mobi.com/users/user1' }],
-                [DCTERMS + 'title']: [{ '@value': ontology1Title }]
+                [`${DCTERMS}publisher`]: [{ '@id': 'http://mobi.com/users/user1' }],
+                [`${DCTERMS}title`]: [{ '@value': ontology1Title }]
         };
         ontology2Record = {
                 '@id': ontology2Id,
-                '@type': ['http://www.w3.org/2002/07/owl#Thing',
-                        'http://mobi.com/ontologies/catalog#Record',
-                        'http://mobi.com/ontologies/catalog#VersionedRecord',
-                        'http://mobi.com/ontologies/ontology-editor#OntologyRecord',
-                        'http://mobi.com/ontologies/catalog#VersionedRDFRecord'],
-                [CATALOG + 'branch']: [{ '@id': 'ontology2Branch' }],
-                [CATALOG + 'catalog']: [{ '@id': catalogId }],
-                [CATALOG + 'masterBranch']: [{ '@id': 'ontology2Branch' }],
-                [ONTOLOGYEDITOR + 'ontologyIRI']: [{ '@id': 'ontology2' }],
-                [DCTERMS + 'description']: [{ '@value': '' }],
-                [DCTERMS + 'issued']: [{
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+                '@type': [`${OWL}Thing`,
+                        `${CATALOG}Record`,
+                        `${CATALOG}VersionedRecord`,
+                        `${ONTOLOGYEDITOR}OntologyRecord`,
+                        `${CATALOG}VersionedRDFRecord`],
+                [`${CATALOG}branch`]: [{ '@id': 'ontology2Branch' }],
+                [`${CATALOG}catalog`]: [{ '@id': catalogId }],
+                [`${CATALOG}masterBranch`]: [{ '@id': 'ontology2Branch' }],
+                [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology2' }],
+                [`${DCTERMS}description`]: [{ '@value': '' }],
+                [`${DCTERMS}issued`]: [{
+                        '@type': `${XSD}dateTime`,
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                [DCTERMS + 'modified']: [{
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+                [`${DCTERMS}modified`]: [{
+                        '@type': `${XSD}dateTime`,
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                [DCTERMS + 'publisher']: [{ '@id': 'http://mobi.com/users/user1' }],
-                [DCTERMS + 'title']: [{ '@value': ontology2Title }]
+                [`${DCTERMS}publisher`]: [{ '@id': 'http://mobi.com/users/user1' }],
+                [`${DCTERMS}title`]: [{ '@value': ontology2Title }]
         };
-        utilStub.getDctermsValue.and.callFake((obj, prop) => get(obj, '[\'' + DCTERMS + prop + '\'][0][\'@value\']'));
-        utilStub.getPropertyId.and.callFake((obj, prop) => get(obj, '[\'' + prop + '\'][0][\'@id\']'));
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
 
@@ -151,7 +144,6 @@ describe('Datasets Ontology Picker component', function() {
         element = null;
         fixture = null;
         catalogManagerStub = null;
-        utilStub = null;
     });
 
     it('should initialize correctly', function() {
@@ -161,7 +153,7 @@ describe('Datasets Ontology Picker component', function() {
         expect(component.ontologySearchConfig).toEqual({
             pageIndex: 0,
             sortOption: undefined,
-            type: ONTOLOGYEDITOR + 'OntologyRecord',
+            type: `${ONTOLOGYEDITOR}OntologyRecord`,
             limit: 100,
             searchText: ''
         });
@@ -170,7 +162,6 @@ describe('Datasets Ontology Picker component', function() {
     describe('controller methods', function() {
         it('should get the ontology IRI of an OntologyRecord', function() {
             expect(component.getOntologyIRI(ontology1Record)).toEqual(ontology1IRI);
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(ontology1Record, ONTOLOGYEDITOR + 'ontologyIRI');
         });
         describe('should set the list of ontologies', function() {
             beforeEach(function() {

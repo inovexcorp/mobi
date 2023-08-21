@@ -26,20 +26,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { invert, values } from 'lodash';
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
-
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { RDFS } from '../../../prefixes';
-import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
-import { UtilService } from '../../../shared/services/util.service';
-import { AxiomOverlayComponent } from './axiomOverlay.component';
+import { values } from 'lodash';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -49,6 +36,18 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+
+import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { RDFS } from '../../../prefixes';
+import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { AxiomOverlayComponent } from './axiomOverlay.component';
 
 describe('Axiom Overlay component', function() {
     let component: AxiomOverlayComponent;
@@ -57,13 +56,12 @@ describe('Axiom Overlay component', function() {
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<AxiomOverlayComponent>>;
-    let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
     let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
     let propertyServiceStub: jasmine.SpyObj<PropertyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const data = {axiomList: []};
-    const axiom = {iri: 'axiom', valuesKey: 'list'};
+    const axiom = {iri: 'http://test.com/axiom', valuesKey: 'list'};
     const localNameMap = {
         'ClassA': 'http://test.com/ClassA',
         'PropA': 'http://test.com/PropA'
@@ -91,9 +89,8 @@ describe('Axiom Overlay component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                MockProvider(SplitIRIPipe),
                 MockProvider(PropertyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(ManchesterConverterService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) }
@@ -107,9 +104,8 @@ describe('Axiom Overlay component', function() {
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyManagerServiceStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        splitIriStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<AxiomOverlayComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         propertyServiceStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
 
@@ -120,10 +116,7 @@ describe('Axiom Overlay component', function() {
             'prop2': [{'@value': 'value2', '@type': 'type', '@language': 'language'}]
         };
 
-        const invertedMap = invert(localNameMap);
         ontologyStateServiceStub.listItem.iriList = values(localNameMap);
-        splitIriStub.transform.and.callFake(iri => ({begin: 'www.test.com', then: '/', end: invertedMap[iri]}));
-
         fixture.detectChanges();
     });
 
@@ -227,14 +220,10 @@ describe('Axiom Overlay component', function() {
     });
     describe('controller methods', function() {
         it('should get the namespace of an axiom IRI', function() {
-            utilStub.getIRINamespace.and.returnValue('namespace');
-            expect(component.getIRINamespace(axiom)).toEqual('namespace');
-            expect(utilStub.getIRINamespace).toHaveBeenCalledWith('axiom');
+            expect(component.getIRINamespace(axiom)).toEqual('http://test.com/');
         });
         it('should get the localName of an axiom IRI', function() {
-            utilStub.getIRILocalName.and.returnValue('localName');
-            expect(component.getIRILocalName(axiom)).toEqual('localName');
-            expect(utilStub.getIRILocalName).toHaveBeenCalledWith('axiom');
+            expect(component.getIRILocalName(axiom)).toEqual('axiom');
         });
         describe('should add an axiom', function() {
             beforeEach(function() {
@@ -250,7 +239,7 @@ describe('Axiom Overlay component', function() {
                 });
                 describe('and the axiom is rdfs:range', function() {
                     beforeEach(function() {
-                        component.axiom.iri = RDFS + 'range';
+                        component.axiom.iri = `${RDFS}range`;
                     });
                     it('unless a value is duplicated', function() {
                         propertyServiceStub.addId.and.returnValue(false);
@@ -262,7 +251,7 @@ describe('Axiom Overlay component', function() {
                         expect(ontologyStateServiceStub.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontologyStateServiceStub.saveCurrentChanges).not.toHaveBeenCalled();
                         expect(matDialogRef.close).not.toHaveBeenCalled();
-                        expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                        expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                     });
                     it('and at least one value was added', function() {
                         component.addAxiom();
@@ -273,7 +262,7 @@ describe('Axiom Overlay component', function() {
                         expect(ontologyStateServiceStub.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected);
                         expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
                         expect(matDialogRef.close).toHaveBeenCalledWith({axiom: component.axiom.iri, values: component.values});
-                        expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                        expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     });
                 });
                 describe('and the axiom is not rdfs:range', function() {
@@ -287,7 +276,7 @@ describe('Axiom Overlay component', function() {
                         expect(ontologyStateServiceStub.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontologyStateServiceStub.saveCurrentChanges).not.toHaveBeenCalled();
                         expect(matDialogRef.close).not.toHaveBeenCalled();
-                        expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                        expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                     });
                     it('and at least one value was added', function() {
                         component.addAxiom();
@@ -298,7 +287,7 @@ describe('Axiom Overlay component', function() {
                         expect(ontologyStateServiceStub.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontologyStateServiceStub.saveCurrentChanges).toHaveBeenCalledWith();
                         expect(matDialogRef.close).toHaveBeenCalledWith({axiom: component.axiom.iri, values: component.values});
-                        expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                        expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     });
                 });
             });
@@ -339,7 +328,7 @@ describe('Axiom Overlay component', function() {
                         this.manchesterResult.jsonld = this.blankNodes;
                     });
                     it('and the axiom is rdfs:range', function() {
-                        component.axiom.iri = RDFS + 'range';
+                        component.axiom.iri = `${RDFS}range`;
                         component.addAxiom();
                         expect(manchesterConverterStub.manchesterToJsonld).toHaveBeenCalledWith(component.expression, localNameMap, false);
                         expect(propertyServiceStub.addId).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.selected, component.axiom.iri, this.blankNodes[0]['@id']);

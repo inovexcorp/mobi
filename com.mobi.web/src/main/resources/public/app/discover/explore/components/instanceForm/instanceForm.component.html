@@ -34,14 +34,14 @@
             <div class="form-group" *ngFor="let instanceProperty of instance | keyvalue">
                 <ng-container *ngIf="instanceProperty.key !== '@id' && instanceProperty.key !== '@type'">
                     <div class="field-label" [ngClass]="{'changed': isChanged(instanceProperty.key)}">
-                        {{util.getBeautifulIRI(instanceProperty.key)}}
+                        {{getPropertyDisplay(instanceProperty.key)}}
                         {{getRestrictionText(instanceProperty.key)}}
                     </div>
                     <br/>
                     <div class="boolean-property" *ngIf="eu.isBoolean(instanceProperty.key, properties)">
                         <mat-checkbox [checked]="checkValue(instanceProperty.value[0]['@value'])"
                                       (change)="handleCheckBoxClick($event.checked, instanceProperty.key); addToChanged(instanceProperty.key)"
-                                      aria-label="{{util.getBeautifulIRI(instanceProperty.key)}}">
+                                      aria-label="{{getPropertyDisplay(instanceProperty.key)}}">
                         </mat-checkbox>
                     </div>
                     <mat-form-field class="w-100" *ngIf="eu.isPropertyOfType(instanceProperty.key, 'Data', properties) && !eu.isBoolean(instanceProperty.key, properties)">

@@ -41,7 +41,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { 
     cleanStylesFromDOM
 } from '../../../../../../public/test/ts/Shared';
-import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
@@ -50,7 +49,7 @@ import { OWL } from '../../../../prefixes';
 import { NewInstancePropertyOverlayComponent } from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
 import { CopyClipboardDirective } from '../../../../shared/directives/copyClipboard/copyClipboard.directive';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ErrorDisplayComponent } from '../../../../shared/components/errorDisplay/errorDisplay.component';
 import { InstanceFormComponent } from './instanceForm.component';
 
@@ -62,8 +61,7 @@ describe('Instance Form component', function() {
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let dialogStub : jasmine.SpyObj<MatDialog>;
     let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
-    let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     const iriObj =   {
         'begin': 'http://mobi.com/data/TestOntology',
         'then': '/',
@@ -95,8 +93,7 @@ describe('Instance Form component', function() {
                 MockProvider(DiscoverStateService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                MockProvider(SplitIRIPipe),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
@@ -107,8 +104,7 @@ describe('Instance Form component', function() {
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         exploreUtilsServiceStub = TestBed.inject(ExploreUtilsService) as jasmine.SpyObj<ExploreUtilsService>;
-        splitIriStub = TestBed.inject (SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -158,42 +154,46 @@ describe('Instance Form component', function() {
                 return of(res);
             }
         } as MatDialogRef<typeof dialogStub>);
-        component.properties = [{
-            propertyIRI: 'propertyId',
-            type: 'Data',
-            range: [],
-            restrictions: [ {
-                cardinality: 0,
-                cardinalityType: ''
-            }]
-        }, {
-            propertyIRI: 'propertyId2',
-            type: 'Data',
-            range: [],
-            restrictions: [{
-                cardinality: 0,
-                cardinalityType: ''
-            }]
-        }, {
-            propertyIRI: 'propertyId3',
-            type: 'Data',
-            range: [],
-            restrictions: [ {
-                cardinality: 0,
-                cardinalityType: ''
-            }]
-        }, {
-            propertyIRI: 'propertyId4',
-            type: 'Data',
-            range: [],
-            restrictions: [ {
-                cardinality: 0,
-                cardinalityType: ''
-            }]
-        }];
+        component.propertyDetailsMap = {
+            propertyId: {
+                propertyIRI: 'propertyId',
+                type: 'Data',
+                range: [],
+                restrictions: [ {
+                    cardinality: 0,
+                    cardinalityType: ''
+                }]
+            }, 
+            propertyId2: {
+                propertyIRI: 'propertyId2',
+                type: 'Data',
+                range: [],
+                restrictions: [{
+                    cardinality: 0,
+                    cardinalityType: ''
+                }]
+            }, 
+            propertyId3: {
+                propertyIRI: 'propertyId3',
+                type: 'Data',
+                range: [],
+                restrictions: [ {
+                    cardinality: 0,
+                    cardinalityType: ''
+                }]
+            }, 
+            propertyId4: {
+                propertyIRI: 'propertyId4',
+                type: 'Data',
+                range: [],
+                restrictions: [ {
+                    cardinality: 0,
+                    cardinalityType: ''
+                }]
+            }
+        };
         component.changed = ['iri'];
         component.missingProperties = [];
-        utilStub.getBeautifulIRI.and.callFake(a => a);
     });
 
     afterEach(function() {
@@ -205,7 +205,6 @@ describe('Instance Form component', function() {
         exploreServiceStub = null;
         dialogStub = null;
         exploreUtilsServiceStub = null;
-        splitIriStub = null;
     });
 
     describe('controller bound variables', function() {
@@ -272,9 +271,6 @@ describe('Instance Form component', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function () {
-            splitIriStub.transform.and.returnValue(iriObj);
-        });
         describe('getOptions should result in the correct list when the propertyIRI', function () {
             describe('has a range and getClassInstanceDetails is', function () {
                 beforeEach(function () {
@@ -336,7 +332,7 @@ describe('Instance Form component', function() {
                         offset: 0,
                         infer: true
                     }, true);
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });
             it('does not have a range', function () {
@@ -363,7 +359,7 @@ describe('Instance Form component', function() {
             component.newInstanceProperty();
             expect(dialogStub.open).toHaveBeenCalledWith(NewInstancePropertyOverlayComponent, {
                 data: {
-                    properties: component.properties,
+                    properties: Object.values(component.propertyDetailsMap),
                     instance: component.instance
                 }
             });
@@ -395,7 +391,6 @@ describe('Instance Form component', function() {
             component.showIriOverlay();
 
             fixture.detectChanges();
-            expect(splitIriStub.transform).toHaveBeenCalledWith(component.instance['@id']);
             expect(dialogStub.open).toHaveBeenCalledWith( EditIriOverlayComponent, {
                 data: {
                     iriBegin: 'http://mobi.com/data/TestOntology',
@@ -435,83 +430,90 @@ describe('Instance Form component', function() {
                 propertyId4: [{'@value': 'just the one'}],
                 propertyId3: [{'@value': 'one'}, {'@value': 'two'}],
             };
-            component.properties = [{
-                propertyIRI: 'propertyId',
-                restrictions: [{
-                    cardinality: 1,
-                    cardinalityType: OWL + 'cardinality'
-                }],
-                type: 'Data',
-                range: [],
-            }, {
-                propertyIRI: 'propertyId2',
-                restrictions: [{
-                    cardinality: 1,
-                    cardinalityType: OWL+ 'minCardinality'
-                }],
-                type: 'Data',
-                range: [],
-            }, {
-                propertyIRI: 'propertyId3',
-                restrictions: [{
-                    cardinality: 1,
-                    cardinalityType: OWL + 'maxCardinality'
-                }],
-                type: 'Data',
-                range: [],
-            }, {
-                propertyIRI: 'propertyId4',
-                restrictions: [{
-                    cardinality: 1,
-                    cardinalityType: OWL + 'cardinality'
-                }],
-                type: 'Data',
-                range: [],
-            }];
+            component.propertyDetailsMap = {
+                propertyId: {
+                    propertyIRI: 'propertyId',
+                    restrictions: [{
+                        cardinality: 1,
+                        cardinalityType: `${OWL}cardinality`
+                    }],
+                    type: 'Data',
+                    range: [],
+                }, 
+                propertyId2: {
+                    propertyIRI: 'propertyId2',
+                    restrictions: [{
+                        cardinality: 1,
+                        cardinalityType: `${OWL}minCardinality`
+                    }],
+                    type: 'Data',
+                    range: [],
+                }, 
+                propertyId3: {
+                    propertyIRI: 'propertyId3',
+                    restrictions: [{
+                        cardinality: 1,
+                        cardinalityType: `${OWL}maxCardinality`
+                    }],
+                    type: 'Data',
+                    range: [],
+                }, 
+                propertyId4: {
+                    propertyIRI: 'propertyId4',
+                    restrictions: [{
+                        cardinality: 1,
+                        cardinalityType: `${OWL}cardinality`
+                    }],
+                    type: 'Data',
+                    range: [],
+                }
+            };
             const expected = [
-                'Must have exactly 1 value(s) for propertyId',
-                'Must have at least 1 value(s) for propertyId2',
-                'Must have at most 1 value(s) for propertyId3',
+                'Must have exactly 1 value(s) for Property Id',
+                'Must have at least 1 value(s) for Property Id 2',
+                'Must have at most 1 value(s) for Property Id 3',
             ];
             expect(component.getMissingProperties()).toEqual(expected);
-            ['propertyId', 'propertyId2', 'propertyId3'].forEach(function(item) {
-                expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith(item);
-            });
             fixture.detectChanges();
             expect(component.isValid).toBe(false);
         });
         describe('getRestrictionText should return the correct value for', function () {
             beforeEach(function () {
-                component.properties = [{
-                    propertyIRI: 'propertyId',
-                    restrictions: [{
-                        cardinality: 1,
-                        cardinalityType: OWL + 'cardinality'
-                    }],
-                    type: 'Data',
-                    range: [],
-                }, {
-                    propertyIRI: 'propertyId2',
-                    restrictions: [{
-                        cardinality: 1,
-                        cardinalityType: OWL + 'minCardinality'
-                    }],
-                    type: 'Data',
-                    range: [],
-                }, {
-                    propertyIRI: 'propertyId3',
-                    restrictions: [{
-                        cardinality: 1,
-                        cardinalityType: OWL + 'maxCardinality'
-                    }],
-                    type: 'Data',
-                    range: [],
-                }, {
-                    propertyIRI: 'propertyId4',
-                    restrictions: [],
-                    type: '',
-                    range: [],
-                }];
+                component.propertyDetailsMap = {
+                    propertyId: {
+                        propertyIRI: 'propertyId',
+                        restrictions: [{
+                            cardinality: 1,
+                            cardinalityType: `${OWL}cardinality`
+                        }],
+                        type: 'Data',
+                        range: [],
+                    }, 
+                    propertyId2: {
+                        propertyIRI: 'propertyId2',
+                        restrictions: [{
+                            cardinality: 1,
+                            cardinalityType: `${OWL}minCardinality`
+                        }],
+                        type: 'Data',
+                        range: [],
+                    }, 
+                    propertyId3: {
+                        propertyIRI: 'propertyId3',
+                        restrictions: [{
+                            cardinality: 1,
+                            cardinalityType: `${OWL}maxCardinality`
+                        }],
+                        type: 'Data',
+                        range: [],
+                    }, 
+                    propertyId4: {
+                        propertyIRI: 'propertyId4',
+                        restrictions: [],
+                        type: '',
+                        range: [],
+                    }
+                };
             });
             it('exact restriction', function () {
                 expect(component.getRestrictionText('propertyId')).toBe('[exactly 1]');

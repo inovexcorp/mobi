@@ -25,6 +25,12 @@ import { filter } from 'lodash';
 import { OnChanges, Component, Input, ViewChild, Output, EventEmitter } from '@angular/core';
 import { MatMenuTrigger } from '@angular/material/menu';
 
+export interface HierarchyFilter {
+  name: string,
+  checked: boolean,
+  flag: boolean,
+  filter: (HierarchyNode) => boolean
+}
 /**
  * @class ontology-editor.HierarchyFilterComponent
  *
@@ -40,8 +46,8 @@ import { MatMenuTrigger } from '@angular/material/menu';
     styleUrls: ['./hierarchyFilter.component.scss']
 })
 export class HierarchyFilterComponent implements OnChanges {
-    @Input() filters: Array<any>;
-    @Output() updateFilters = new EventEmitter<Array<any>>();
+    @Input() filters: Array<HierarchyFilter>;
+    @Output() updateFilters = new EventEmitter<Array<HierarchyFilter>>();
     @Output() submitEvent = new EventEmitter<null>();
 
     @ViewChild('trigger', { static: true }) trigger: MatMenuTrigger;

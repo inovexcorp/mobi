@@ -26,7 +26,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class ontology-editor.UploadChangesOverlayComponent
@@ -44,7 +44,7 @@ export class UploadChangesOverlayComponent {
     error: RESTError;
     file = undefined;
 
-    constructor(public os: OntologyStateService, private dialogRef: MatDialogRef<UploadChangesOverlayComponent>, private util: UtilService) {}
+    constructor(public os: OntologyStateService, private dialogRef: MatDialogRef<UploadChangesOverlayComponent>, private toast: ToastService) {}
 
     submit(): void {
         if (this.os.hasInProgressCommit()) {

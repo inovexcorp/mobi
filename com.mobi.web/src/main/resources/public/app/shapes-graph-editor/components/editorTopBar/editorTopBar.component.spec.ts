@@ -44,7 +44,7 @@ import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordMod
 import { CommitModalComponent } from '../commitModal/commitModal.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { EditorTopBarComponent } from './editorTopBar.component';
 
 describe('Editor Top Bar component', function() {
@@ -54,7 +54,7 @@ describe('Editor Top Bar component', function() {
     let matDialog: jasmine.SpyObj<MatDialog>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const catalogId = 'catalog';
 
@@ -76,7 +76,7 @@ describe('Editor Top Bar component', function() {
             providers: [
                 MockProvider(ShapesGraphStateService),
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -96,13 +96,13 @@ describe('Editor Top Bar component', function() {
             commitId: 'commit1',
             title: 'title'
         };
-        shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
+        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(of(null));
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.localCatalog = {'@id': catalogId};
         const commitDifference = new CommitDifference();
         commitDifference.commit = {'@id': 'commit3'};
         catalogManagerStub.getBranchHeadCommit.and.returnValue(of(commitDifference));
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -113,7 +113,7 @@ describe('Editor Top Bar component', function() {
         matDialog = null;
         shapesGraphStateStub = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('controller methods', function() {
@@ -154,17 +154,17 @@ describe('Editor Top Bar component', function() {
                        tick();
                        expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
                        expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title');
-                       expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Shapes Graph branch has been updated.');
-                       expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                       expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Shapes Graph branch has been updated.');
+                       expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                    }));
                    it('unless an error occurs', fakeAsync(function() {
-                       shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
+                       shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(throwError('Error'));
                        component.update();
                        tick();
                        expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
                        expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title');
-                       expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                       expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                       expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                       expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
                    }));
                 });
             });
@@ -174,8 +174,8 @@ describe('Editor Top Bar component', function() {
                 tick();
                 expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
                 expect(shapesGraphStateStub.changeShapesGraphVersion).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
             }));
         });
     });

@@ -34,7 +34,6 @@ import { ValueDisplayComponent } from '../../../shared/components/valueDisplay/v
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { PropertyValuesComponent } from './propertyValues.component';
 
 describe('Property Values component', function() {
@@ -42,7 +41,6 @@ describe('Property Values component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<PropertyValuesComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const property = 'property';
     const entity = {
@@ -70,17 +68,14 @@ describe('Property Values component', function() {
             providers: [
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService),
             ]
         }).compileComponents();
         fixture = TestBed.createComponent(PropertyValuesComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateStub.isLinkable.and.callFake(id => id === 'id');
-        utilStub.isBlankNodeId.and.callFake(id => id === '_:bnode');
     });
 
     afterEach(function() {
@@ -89,7 +84,6 @@ describe('Property Values component', function() {
         element = null;
         fixture = null;
         ontologyStateStub = null;
-        utilStub = null;
     });
 
     describe('should handle changes to', function() {

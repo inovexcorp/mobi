@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { has } from 'lodash';
 import { Component, Input } from '@angular/core';
 
-import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { DiscoverStateService } from '../../services/discoverState.service';
-import { UtilService } from '../../services/util.service';
+import { getBeautifulIRI } from '../../utility';
+import { JSONLDId } from '../../models/JSONLDId.interface';
+import { JSONLDValue } from '../../models/JSONLDValue.interface';
 
 /**
  * @class shared.ValueDisplayComponent
@@ -42,12 +42,12 @@ import { UtilService } from '../../services/util.service';
 })
 export class ValueDisplayComponent {
 
-    @Input() value: JSONLDObject;
+    @Input() value: JSONLDId|JSONLDValue;
     @Input() highlightText: string;
 
-    constructor(public ds: DiscoverStateService, public util: UtilService) {}
+    constructor(private ds: DiscoverStateService) {}
 
-    has(obj: any, key: string): boolean {
-        return has(obj, key);
+    getDisplay(str: string): string {
+      return this.ds.explore.instance.objectMap[str] || getBeautifulIRI(str);
     }
 }
