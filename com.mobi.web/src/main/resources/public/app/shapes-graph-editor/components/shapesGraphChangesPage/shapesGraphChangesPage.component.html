@@ -39,8 +39,8 @@
                         <mat-accordion *ngFor="let item of showList">
                             <mat-expansion-panel class="my-2">
                                 <mat-expansion-panel-header>
-                                    <mat-panel-title matTooltip="{{util.getBeautifulIRI(item.id)}}" class="col-4 remove-min-width text-truncate">
-                                        {{ util.getBeautifulIRI(item.id) }}
+                                    <mat-panel-title matTooltip="{{item.beautiful}}" class="col-4 remove-min-width text-truncate">
+                                        {{ item.beautiful }}
                                     </mat-panel-title>
                                 <mat-panel-description matTooltip="{{item.id}}" class="remove-min-width text-truncate">
                                     {{ item.id }}

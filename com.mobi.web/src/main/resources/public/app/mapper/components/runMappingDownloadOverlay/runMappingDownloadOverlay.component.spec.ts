@@ -41,7 +41,7 @@ import { Difference } from '../../../shared/models/difference.class';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { MapperSerializationSelectComponent } from '../mapperSerializationSelect/mapperSerializationSelect.component';
 import { RunMappingDownloadOverlayComponent } from './runMappingDownloadOverlay.component';
 
@@ -53,7 +53,7 @@ describe('Run Mapping Download Overlay component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error message';
 
@@ -78,7 +78,7 @@ describe('Run Mapping Download Overlay component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
                 { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -92,7 +92,7 @@ describe('Run Mapping Download Overlay component', function() {
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         camelCaseStub.transform.and.callFake(a => a);
         mapperStateStub.selected = {
@@ -123,7 +123,7 @@ describe('Run Mapping Download Overlay component', function() {
         mapperStateStub = null;
         delimitedManagerStub = null;
         camelCaseStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize with the correct values', function() {
@@ -174,7 +174,7 @@ describe('Run Mapping Download Overlay component', function() {
                         expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                         expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                         expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
-                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                         expect(matDialogRef.close).toHaveBeenCalledWith();
                         expect(component.errorMessage).toEqual('');
                     }));
@@ -188,7 +188,7 @@ describe('Run Mapping Download Overlay component', function() {
                     expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                     expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                     expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                 });
             });

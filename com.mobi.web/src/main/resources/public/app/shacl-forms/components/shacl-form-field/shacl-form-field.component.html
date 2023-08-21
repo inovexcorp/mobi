@@ -1,0 +1,50 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="shacl-form-field" *ngIf="formFieldConfig.fieldType" [formGroup]="parentFormGroup">
+  <div class="toggle-field pb-2" *ngIf="formFieldConfig.fieldType === 'toggle'">
+      <mat-slide-toggle [formControlName]="controlName">{{label}}</mat-slide-toggle>
+  </div>
+  <div class="text-field" *ngIf="formFieldConfig.fieldType === 'text'">
+      <mat-form-field class="w-100">
+          <mat-label>{{label}}</mat-label>
+          <input matInput [formControlName]="controlName">
+          <mat-error *ngIf="fieldFormControl.invalid">Not a valid value</mat-error>
+      </mat-form-field>
+  </div>
+  <div class="radio-field pb-3" *ngIf="formFieldConfig.fieldType === 'radio'">
+    <mat-radio-group class="d-flex flex-column" [formControlName]="controlName">
+        <mat-radio-button *ngFor="let value of formFieldConfig.values"
+                          [value]="value">
+            {{ value }}
+        </mat-radio-button>
+    </mat-radio-group>
+  </div>
+  <div class="checkbox-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'checkbox'" >
+    <mat-checkbox *ngFor="let checkbox of checkboxes" 
+                  (change)="checkboxChange($event)" [value]="checkbox.value" 
+                  [checked]="checkbox.checked" 
+                  [disabled]="disableCheckboxes && !checkbox.checked">
+      {{ checkbox.value }}
+    </mat-checkbox>
+  </div>
+</div>

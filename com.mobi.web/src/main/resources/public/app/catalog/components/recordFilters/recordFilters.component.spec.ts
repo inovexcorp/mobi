@@ -39,7 +39,7 @@ import { SearchBarComponent } from '../../../shared/components/searchBar/searchB
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DCTERMS } from '../../../prefixes';
 import { UserManagerService } from '../../../shared/services/userManager.service';
@@ -51,7 +51,6 @@ describe('Record Filters component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<RecordFiltersComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
 
     const catalogId = 'catalogId';
@@ -63,13 +62,13 @@ describe('Record Filters component', function() {
       lastName: 'Davis'
     };
     const keywordObject = function(keyword, count): KeywordCount {
-        return { 'http://mobi.com/ontologies/catalog#keyword': keyword, 'count': count };
+        return { ['http://mobi.com/ontologies/catalog#keyword']: keyword, 'count': count };
     };
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
     const records: JSONLDObject[] = [{
       '@id': 'record1',
-      [DCTERMS + 'publisher']: [{'@id': user.iri}]
+      [`${DCTERMS}publisher`]: [{'@id': user.iri}]
     }];
     const keywords = [keywordObject(keyword, 6)];
     
@@ -91,7 +90,7 @@ describe('Record Filters component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
                 MockProvider(UserManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         }).compileComponents();
 
@@ -100,8 +99,6 @@ describe('Record Filters component', function() {
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.getBeautifulIRI.and.callFake(a => a);
 
         catalogManagerStub.recordTypes = ['test1', 'test2'];
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
@@ -124,7 +121,6 @@ describe('Record Filters component', function() {
         element = null;
         fixture = null;
         catalogManagerStub = null;
-        utilStub = null;
     });
 
     describe('initializes correctly', function() {
@@ -190,7 +186,7 @@ describe('Record Filters component', function() {
             });
         });
         it('recordTypeFilter filter text method returns correctly', function() {
-            expect(this.recordTypeFilter.getItemText(this.firstRecordFilterItem)).toEqual('test1');
+            expect(this.recordTypeFilter.getItemText(this.firstRecordFilterItem)).toEqual('Test 1');
         });
         describe('creatorTypeFilter should filter records', function() {
           it('if the filter has been checked', function() {
@@ -242,7 +238,7 @@ describe('Record Filters component', function() {
             component.ngOnInit();
             fixture.detectChanges();
             expect(element.queryAll(By.css('.record-filters')).length).toEqual(1);
-            const expectedHtmlResults = [[ 'Record Type', 'test1,test2', 0, 0 ], [ 'Creators', `${user.username} (1)`, 1, 0 ], [ 'Keywords', `${keyword} (6)`, 1, 1 ]];
+            const expectedHtmlResults = [[ 'Record Type', 'Test 1,Test 2', 0, 0 ], [ 'Creators', `${user.username} (1)`, 1, 0 ], [ 'Keywords', `${keyword} (6)`, 1, 1 ]];
             expect(this.getHtmlResults(this)).toEqual(expectedHtmlResults);
         });
     });

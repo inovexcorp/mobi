@@ -89,7 +89,7 @@ describe('SVGElementHelperService', () => {
       name: 'name',
       email: '',
       timestamp: 0
-    }
+    };
     const svg = service.renderCommitMessage(commitSVGElement, 'dateString');
     expect(svg).toBeTruthy();
   });
@@ -100,7 +100,7 @@ describe('SVGElementHelperService', () => {
       name: 'name',
       email: 'email',
       timestamp: 0
-    }
+    };
     const svg = service.renderCommitMessage(commitSVGElement, 'dateString');
     expect(svg).toBeTruthy();
   });

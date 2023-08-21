@@ -29,10 +29,12 @@ import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { condenseCommitId, getBeautifulIRI, isBlankNodeId } from '../../../shared/utility';
 
-interface CommitChanges {
+export interface CommitChanges {
     id: string,
+    beautiful: string,
     difference: Difference,
     disableAll: boolean,
     showFull: boolean,
@@ -66,10 +68,10 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     private readonly warningMessageCheckout = 'You will need to commit or remove all changes before checking out a commit';
     private readonly errorMessageNoData = 'Error retrieving full entity information';
     catalogId: string = get(this.cm.localCatalog, '@id', '');
-    typeIRI = RDF + 'type';
-    types = [OWL + 'Class', OWL + 'ObjectProperty', OWL + 'DatatypeProperty',
-             OWL + 'AnnotationProperty', OWL + 'NamedIndividual', SKOS
-             + 'Concept', SKOS + 'ConceptScheme'];
+    typeIRI = `${RDF}type`;
+    types = [`${OWL}Class`, `${OWL}ObjectProperty`, `${OWL}DatatypeProperty`,
+             `${OWL}AnnotationProperty`, `${OWL}NamedIndividual`, `${SKOS}Concept`, 
+             `${SKOS}ConceptScheme`];
 
     commits: Commit[] = [];
     list: CommitChanges[] = [];
@@ -82,7 +84,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     index = 0;
     size = 100;
 
-    constructor(public state: ShapesGraphStateService, private cm: CatalogManagerService, private util: UtilService) {}
+    constructor(public state: ShapesGraphStateService, private cm: CatalogManagerService, private toast: ToastService) {}
 
     ngOnChanges(): void {
         let mergedInProgressCommitsMap: { [key: string]: Difference } = this.additions.reduce((dict, currentItem) => {
@@ -99,11 +101,12 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         }, mergedInProgressCommitsMap);
         this.list = Object.keys(mergedInProgressCommitsMap).map(id => ({
             id,
+            beautiful: getBeautifulIRI(id),
             difference: mergedInProgressCommitsMap[id],
             disableAll: this.hasSpecificType(mergedInProgressCommitsMap[id], id),
             showFull: false,
             resource: undefined,
-            isBlankNode: this.util.isBlankNodeId(id)
+            isBlankNode: isBlankNodeId(id)
         }));
         this.showList = this.getList();
     }
@@ -111,10 +114,13 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         this.cm.deleteInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
             .subscribe(() => {
                 this.state.clearInProgressCommit();
-                this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
-                this.util.createSuccessToast('In Progress Commit removed successfully.');
+                this.toast.createSuccessToast('In Progress Commit removed successfully.');
                 this.index = 0;
-            }, errorMessage => this.util.createErrorToast(`Error removing In Progress Commit: ${errorMessage}`));
+                this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, 
+                    this.state.listItem.versionedRdfRecord.branchId, 
+                    this.state.listItem.versionedRdfRecord.commitId
+                ).subscribe(() => {}, () => this.toast.createErrorToast('Error updating Shapes Graph metadata'));
+            }, errorMessage => this.toast.createErrorToast(`Error removing In Progress Commit: ${errorMessage}`));
     }
     getMoreResults(): void {
         this.index++;
@@ -136,25 +142,26 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         return commit.id;
     }
     openCommit(commit: Commit): void {
-        if(this.state.isCommittable()) {
-            this.util.createWarningToast(this.warningMessageCheckout);
+        if (this.state.isCommittable()) {
+            this.toast.createWarningToast(this.warningMessageCheckout);
             return;
         }
-        this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, this.util.condenseCommitId(commit.id))
-            .then(() => {}, error => this.util.createErrorToast(error));
+        this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, 
+          condenseCommitId(commit.id))
+            .subscribe(() => {}, error => this.toast.createErrorToast(error));
     }
     toggleFull(item: CommitChanges): void {
         if (item.showFull) {
             this.cm.getCompiledResource(this.state.listItem.versionedRdfRecord.commitId, item.id)
                 .subscribe((resources: JSONLDObject[]) => {
                     const resource = resources.find(obj => obj['@id'] === item.id);
-                    if(resource) {
+                    if (resource) {
                         item.resource = resource;
                     } else {
-                        this.util.createErrorToast(this.errorMessageNoData);
+                        this.toast.createErrorToast(this.errorMessageNoData);
                     }
                 }, () => {
-                    this.util.createErrorToast(this.errorMessageNoData);
+                    this.toast.createErrorToast(this.errorMessageNoData);
                 });
         } else {
             item.resource = undefined;

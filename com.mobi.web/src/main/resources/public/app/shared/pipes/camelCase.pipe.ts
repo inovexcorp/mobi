@@ -30,10 +30,10 @@ export class CamelCasePipe implements PipeTransform {
         let result = '';
 
         if (value && typeof value !== 'object') {
-            let capitalize = false,
-                whitespace = /\s/,
-                alphaNumeric = /[a-zA-Z0-9]/,
-                i = 0;
+            let capitalize = false;
+            let i = 0;
+            const whitespace = /\s/;
+            const alphaNumeric = /[a-zA-Z0-9]/;
 
             while (i < value.length) {
                 if (value[i].match(whitespace) !== null) {

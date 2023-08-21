@@ -28,7 +28,8 @@ import { cloneDeep, find } from 'lodash';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { FOAF } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { replacePropertyId, replacePropertyValue } from '../../../shared/utility';
 
 /**
  * @class user-management.EditUserProfileOverlayComponent
@@ -46,7 +47,7 @@ export class EditUserProfileOverlayComponent {
     editProfileForm: UntypedFormGroup;
 
     constructor(private dialogRef: MatDialogRef<EditUserProfileOverlayComponent>, private fb: UntypedFormBuilder,
-        private state: UserStateService, private um: UserManagerService, private util: UtilService) {
+        private state: UserStateService, private um: UserManagerService, private toast: ToastService) {
             this.editProfileForm = this.fb.group({
                 firstName: [this.state.selectedUser.firstName],
                 lastName: [this.state.selectedUser.lastName],
@@ -57,13 +58,13 @@ export class EditUserProfileOverlayComponent {
     set(): void {
         const newUser = cloneDeep(this.state.selectedUser);
         newUser.firstName = this.editProfileForm.controls.firstName.value;
-        this.util.replacePropertyValue(newUser.jsonld, FOAF + 'firstName', this.state.selectedUser.firstName, newUser.firstName);
+        replacePropertyValue(newUser.jsonld, `${FOAF}firstName`, this.state.selectedUser.firstName, newUser.firstName);
         newUser.lastName = this.editProfileForm.controls.lastName.value;
-        this.util.replacePropertyValue(newUser.jsonld, FOAF + 'lastName', this.state.selectedUser.lastName, newUser.lastName);
+        replacePropertyValue(newUser.jsonld, `${FOAF}lastName`, this.state.selectedUser.lastName, newUser.lastName);
         newUser.email = this.editProfileForm.controls.email.value ? 'mailto:' + this.editProfileForm.controls.email.value : '';
-        this.util.replacePropertyId(newUser.jsonld, FOAF + 'mbox', this.state.selectedUser.email, newUser.email);
+        replacePropertyId(newUser.jsonld, `${FOAF}mbox`, this.state.selectedUser.email, newUser.email);
         this.um.updateUser(this.state.selectedUser.username, newUser).subscribe(() => {
-            this.util.createSuccessToast('User profile successfully saved');
+            this.toast.createSuccessToast('User profile successfully saved');
             this.errorMessage = '';
             this.state.selectedUser = find(this.um.users, { username: newUser.username });
             this.dialogRef.close();

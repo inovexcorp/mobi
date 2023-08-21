@@ -38,10 +38,9 @@ import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { InstanceCardsComponent } from '../instanceCards/instanceCards.component';
-import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { InstancesDisplayComponent } from './instancesDisplay.component';
-import { UtilService } from '../../../../shared/services/util.service';
 
 describe('Instances Display component', function() {
     let component: InstancesDisplayComponent;
@@ -50,8 +49,7 @@ describe('Instances Display component', function() {
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
-    let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     const page: PageEvent = new PageEvent();
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
@@ -73,12 +71,11 @@ describe('Instances Display component', function() {
             providers: [
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                MockProvider(SplitIRIPipe),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
@@ -87,9 +84,8 @@ describe('Instances Display component', function() {
         element = fixture.debugElement;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
-        splitIriStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
@@ -132,8 +128,7 @@ describe('Instances Display component', function() {
         discoverStateStub = null;
         policyEnforcementStub = null;
         exploreServiceStub = null;
-        utilStub = null;
-        splitIriStub = null;
+        toastStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -150,13 +145,6 @@ describe('Instances Display component', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(() => {
-            splitIriStub.transform.and.returnValue({
-                begin: 'begin',
-                then: 'then',
-                end: 'end'
-            });
-        });
         describe('setPage should call the correct methods and set variables', function() {
             beforeEach(function() {
                 page.pageIndex = totalSize;
@@ -196,7 +184,7 @@ describe('Instances Display component', function() {
                     offset: (page.pageIndex) * discoverStateStub.explore.instanceDetails.limit
                 });
                expect(discoverStateStub.explore.instanceDetails.currentPage).toEqual(page.pageIndex);
-               expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+               expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             });
             it('when user has read permission to dataset record and getClassInstanceDetails has error', async () => {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
@@ -213,7 +201,7 @@ describe('Instances Display component', function() {
                     }
                 );
                 expect(exploreServiceStub.createPagedResultsObject).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
             });
             it('when user does not have read permission to dataset record', async () =>  {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
@@ -225,37 +213,35 @@ describe('Instances Display component', function() {
                 expect(exploreServiceStub.createPagedResultsObject).not.toHaveBeenCalled();
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
                 expect(discoverStateStub.explore.instanceDetails.data).toEqual([]);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
             });
         });
         it('create method should set the correct variables when user has have modify permission', async function() {
             policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
             discoverStateStub.explore.creating = false;
-            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI', title: 'title', description: 'description'}];
+            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'http://test.com#instanceIRI', title: 'title', description: 'description'}];
             discoverStateStub.explore.classId = 'classId';
             component.create();
             component.ngOnInit();
             fixture.detectChanges();
             await fixture.whenStable();
             expect(discoverStateStub.explore.creating).toBe(true);
-            expect(splitIriStub.transform).toHaveBeenCalled();
-            expect(discoverStateStub.explore.instance.entity[0]['@id']).toContain('begin');
+            expect(discoverStateStub.explore.instance.entity[0]['@id']).toContain('http://test.com#');
             expect(discoverStateStub.explore.instance.entity[0]['@type']).toEqual(['classId']);
             expect(last(discoverStateStub.explore.breadcrumbs)).toBe('New Instance');
-            expect(discoverStateStub.explore.instance.metadata.instanceIRI).toContain('beginthen');
+            expect(discoverStateStub.explore.instance.metadata.instanceIRI).toContain('http://test.com#');
         });
         it('create method when user does not have modify permission', async () => {
             policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
             discoverStateStub.explore.creating = false;
-            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI', title: 'title', description: 'description'}];
+            discoverStateStub.explore.instanceDetails.data = [{instanceIRI: 'http://test.com#instanceIRI', title: 'title', description: 'description'}];
             discoverStateStub.explore.classId = 'classId';
             component.create();
             component.ngOnInit();
             fixture.detectChanges();
             await fixture.whenStable();
             expect(discoverStateStub.explore.creating).toBe(false);
-            expect(splitIriStub.transform).not.toHaveBeenCalledWith('instanceIRI');
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             expect(discoverStateStub.explore.instance.metadata).toBeUndefined();
         });
         it('button should say [Deprecated] if the class is deprecated', function() {

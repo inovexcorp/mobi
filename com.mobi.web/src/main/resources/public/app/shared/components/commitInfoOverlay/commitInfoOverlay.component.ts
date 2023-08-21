@@ -25,18 +25,19 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { get, merge, union } from 'lodash';
-import { catchError, map, switchMap } from 'rxjs/operators';
-import { of, throwError, Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { of, Observable } from 'rxjs';
 
 import { CommitDifference } from '../../models/commitDifference.interface';
 import { UserManagerService } from '../../services/userManager.service';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { EntityNames } from '../../models/entityNames.interface';
 import { Commit } from '../../models/commit.interface';
 import { ONTOLOGYEDITOR } from '../../../prefixes';
+import { getBeautifulIRI, getDate, getObjIrisFromDifference } from '../../utility';
 
 /**
  * @class shared.CommitInfoOverlayComponent
@@ -62,14 +63,16 @@ export class CommitInfoOverlayComponent implements OnInit {
     entityNames = {};
     tempAdditions: JSONLDObject[] = [];
     tempDeletions: JSONLDObject[] = [];
+    date = '';
 
     constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, 
                 @Inject(MAT_DIALOG_DATA) public data: {ontRecordId: string, commit: Commit, type: string},
-                public util: UtilService, public um: UserManagerService, private cm: CatalogManagerService,
+                private toast: ToastService, public um: UserManagerService, private cm: CatalogManagerService,
                 private om: OntologyManagerService) {
     }
 
     ngOnInit(): void {
+        this.date = getDate(this.data.commit.date, 'short');
         this.retrieveMoreResults(100, 0);
     }
     cancel(): void {
@@ -86,7 +89,7 @@ export class CommitInfoOverlayComponent implements OnInit {
 
                     if (this.data.ontRecordId && (this.data.type === ONTOLOGYEDITOR + 'OntologyRecord')) {
                         const diffIris = union(this.tempAdditions.map(obj => obj['@id']), this.tempDeletions.map(obj => obj['@id']));
-                        const filterIris = union(diffIris, this.util.getObjIrisFromDifference(this.tempAdditions), this.util.getObjIrisFromDifference(this.tempDeletions));
+                        const filterIris = union(diffIris, getObjIrisFromDifference(this.tempAdditions), getObjIrisFromDifference(this.tempDeletions));
                         return this.om.getOntologyEntityNames(this.data.ontRecordId, '', this.data.commit.id, false, false, filterIris);
                     }
                     return of(null);
@@ -100,20 +103,14 @@ export class CommitInfoOverlayComponent implements OnInit {
                     this.tempAdditions = [];
                     this.tempDeletions = [];
                     return null;
-                }),
-                catchError(errorMessage => {
-                    if (errorMessage) {
-                        this.util.createErrorToast(errorMessage);
-                    }
-                    return throwError(errorMessage);
                 })
-            ).subscribe(() => {}, this.util.createErrorToast);
+            ).subscribe(() => {}, error => this.toast.createErrorToast(error));
     }
     getEntityName(iri: string): string {
         if (get(this.entityNames, [iri, 'label'])) {
             return this.entityNames[iri].label;
         } else {
-            return this.util.getBeautifulIRI(iri);
+            return getBeautifulIRI(iri);
         }
     }
 }

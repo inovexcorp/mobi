@@ -36,18 +36,14 @@ import { Mapping } from '../models/mapping.class';
 import { MappingOntology } from '../models/mappingOntology.interface';
 import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
 import { CamelCasePipe } from '../pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { OntologyManagerService } from './ontologyManager.service';
-import { UtilService } from './util.service';
 import { MappingManagerService } from './mappingManager.service';
 
 describe('Mapping Manager service', function() {
     let service: MappingManagerService;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
     let httpMock: HttpTestingController;
 
     const error = 'Error Message';
@@ -73,18 +69,14 @@ describe('Mapping Manager service', function() {
                 MappingManagerService,
                 MockProvider(ProgressSpinnerService),
                 {provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe)},
-                {provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe)},
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
             ]
         });
 
         service = TestBed.inject(MappingManagerService);
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
 
         mappingStub = jasmine.createSpyObj('Mapping', [
@@ -104,39 +96,13 @@ describe('Mapping Manager service', function() {
         progressSpinnerStub.track.and.callFake(ob => ob);
         ontologyManagerStub.getEntity.and.returnValue(emptyObj);
         ontologyManagerStub.getOntologyIRI.and.returnValue('ontology');
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
         ontologyManagerStub = null;
-        utilStub = null;
         camelCaseStub = null;
-        splitIRIStub = null;
         httpMock = null;
         mappingStub = null;
     });
@@ -175,7 +141,7 @@ describe('Mapping Manager service', function() {
     });
     describe('should retrieve a mapping by id', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
         });
         it('unless an error occurs', function() {
             service.getMapping(recordId)
@@ -196,7 +162,7 @@ describe('Mapping Manager service', function() {
     });
     describe('should download a mapping by id with the', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
             spyOn(window, 'open');
         });
         it('provided format', function() {
@@ -206,7 +172,7 @@ describe('Mapping Manager service', function() {
                 }
             });
             service.downloadMapping(recordId, 'turtle');
-            expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
+            expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
         });
         it('default format', function() {
             const params = new HttpParams({
@@ -215,12 +181,12 @@ describe('Mapping Manager service', function() {
                 }
             });
             service.downloadMapping(recordId);
-            expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
+            expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
         });
     });
     describe('should delete a mapping by id', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
         });
         it('unless an error occurs', function() {
             service.deleteMapping(recordId)
@@ -241,7 +207,7 @@ describe('Mapping Manager service', function() {
     });
     it('should get the mapping IRI based on a title', function() {
         camelCaseStub.transform.and.returnValue('title');
-        expect(service.getMappingId('title')).toEqual(MAPPINGS + 'title');
+        expect(service.getMappingId('title')).toEqual(`${MAPPINGS}title`);
         expect(camelCaseStub.transform).toHaveBeenCalledWith('title', 'class');
     });
     describe('should add a class mapping to a mapping', function() {
@@ -255,11 +221,10 @@ describe('Mapping Manager service', function() {
             expect(mappingStub.addClassMapping).not.toHaveBeenCalled();
         });
         it('if the class exists in the passed ontology', function() {
-            splitIRIStub.transform.and.returnValue({begin: '', then: '', end: 'end'});
-            ontologyManagerStub.getOntologyIRI.and.returnValue('ontologyIRI');
-            expect(service.addClass(mappingStub, [emptyObj], 'classid')).toEqual(emptyObj);
-            expect(ontologyManagerStub.getEntity).toHaveBeenCalledWith([[emptyObj]], 'classid');
-            expect(mappingStub.addClassMapping).toHaveBeenCalledWith('classid', DATA + 'end/end/');
+            ontologyManagerStub.getOntologyIRI.and.returnValue('http://test.com#ontologyIRI');
+            expect(service.addClass(mappingStub, [emptyObj], 'http://test.com#classId')).toEqual(emptyObj);
+            expect(ontologyManagerStub.getEntity).toHaveBeenCalledWith([[emptyObj]], 'http://test.com#classId');
+            expect(mappingStub.addClassMapping).toHaveBeenCalledWith('http://test.com#classId', `${DATA}ontologyIRI/classid/`);
         });
     });
     describe('should set the IRI template of a class mapping', function() {
@@ -272,8 +237,8 @@ describe('Mapping Manager service', function() {
             mappingStub.getClassMapping.and.returnValue(classMapping);
             service.editIriTemplate(mappingStub, 'classId', 'test/', '${0}');
             expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
-            expect(classMapping[DELIM + 'hasPrefix']).toEqual([{'@value': 'test/'}]);
-            expect(classMapping[DELIM + 'localName']).toEqual([{'@value': '${0}'}]);
+            expect(classMapping[`${DELIM}hasPrefix`]).toEqual([{'@value': 'test/'}]);
+            expect(classMapping[`${DELIM}localName`]).toEqual([{'@value': '${0}'}]);
         });
     });
     describe('should add a data property mapping to a mapping', function() {
@@ -325,10 +290,11 @@ describe('Mapping Manager service', function() {
         beforeEach(function() {
             mappingStub.hasClassMapping.and.returnValue(true);
             const rangeClassMapping = Object.assign({}, emptyObj);
-            rangeClassMapping[DELIM + 'mapsTo'] = [{'@id': 'range'}];
+            rangeClassMapping[`${DELIM}mapsTo`] = [{'@id': 'range'}];
             mappingStub.getClassMapping.and.returnValue(rangeClassMapping);
             mappingStub.addObjectPropMapping.and.returnValue(emptyObj);
-            ontologyManagerStub.getEntity.and.returnValue(emptyObj);
+            this.propEntity = Object.assign({}, emptyObj);
+            ontologyManagerStub.getEntity.and.returnValue(this.propEntity);
             ontologyManagerStub.isObjectProperty.and.returnValue(true);
         });
         it('unless the parent class mapping does not exist in the mapping', function() {
@@ -352,15 +318,13 @@ describe('Mapping Manager service', function() {
             expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
         });
         it('unless the range of the object property does not matched the range class mapping', function() {
-            utilStub.getPropertyId.and.returnValue('error');
+            this.propEntity[`${RDFS}range`] = [{ '@id': 'error' }];
             expect(service.addObjectProp(mappingStub, [emptyObj], 'classMappingId', 'propId', 'rangeClassMappingId')).toBeUndefined();
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(emptyObj, RDFS + 'range');
             expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
         });
         it('if all conditions pass', function() {
-            utilStub.getPropertyId.and.returnValue('range');
+            this.propEntity[`${RDFS}range`] = [{ '@id': 'range' }];
             expect(service.addObjectProp(mappingStub, [emptyObj], 'classMappingId', 'propId', 'rangeClassMappingId')).toEqual(emptyObj);
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(emptyObj, RDFS + 'range');
             expect(mappingStub.addObjectPropMapping).toHaveBeenCalledWith('propId', 'classMappingId', 'rangeClassMappingId');
         });
     });
@@ -449,15 +413,15 @@ describe('Mapping Manager service', function() {
         beforeEach(function() {
             this.classMapping = {
                 '@id': 'classMapping',
-                [DELIM + 'mapsTo']: [{'@id': classId}]
+                [`${DELIM}mapsTo`]: [{'@id': classId}]
             };
             this.dataPropMapping = {
                 '@id': 'dataMapping',
-                [DELIM + 'hasProperty']: [{'@id': propId}]
+                [`${DELIM}hasProperty`]: [{'@id': propId}]
             };
             this.objectPropMapping = {
                 '@id': 'objectMapping',
-                [DELIM + 'hasProperty']: [{'@id': propId}]
+                [`${DELIM}hasProperty`]: [{'@id': propId}]
             };
             this.withClassSpy = spyOn(service, 'findSourceOntologyWithClass');
             this.withPropSpy = spyOn(service, 'findSourceOntologyWithProp');
@@ -560,21 +524,23 @@ describe('Mapping Manager service', function() {
             this.withPropSpy.and.returnValue(mappingOntology);
             ontologyManagerStub.isObjectProperty.and.returnValue(true);
             mappingStub.getClassIdByMappingId.and.returnValue(classId);
-            utilStub.getPropertyId.and.returnValue(classId);
+            const propObj = Object.assign({}, emptyObj);
+            propObj[`${RDFS}range`] = [{ '@id': classId }];
+            ontologyManagerStub.getEntity.and.returnValue(propObj);
             expect(service.findIncompatibleMappings(mappingStub, [mappingOntology])).toEqual([this.classMapping, this.objectPropMapping]);
         });
     });
     it('should test whether a mapping entity is a class mapping', function() {
         expect(service.isClassMapping(emptyObj)).toBe(false);
-        expect(service.isClassMapping({'@id': '', '@type': [DELIM + 'ClassMapping']})).toBe(true);
+        expect(service.isClassMapping({'@id': '', '@type': [`${DELIM}ClassMapping`]})).toBe(true);
     });
     it('should test whether a mapping entity is an object mapping', function() {
         expect(service.isObjectMapping(emptyObj)).toBe(false);
-        expect(service.isObjectMapping({'@id': '', '@type': [DELIM + 'ObjectMapping']})).toBe(true);
+        expect(service.isObjectMapping({'@id': '', '@type': [`${DELIM}ObjectMapping`]})).toBe(true);
     });
     it('should test whether a mapping entity is a data mapping', function() {
         expect(service.isDataMapping(emptyObj)).toBe(false);
-        expect(service.isDataMapping({'@id': '', '@type': [DELIM + 'DataMapping']})).toBe(true);
+        expect(service.isDataMapping({'@id': '', '@type': [`${DELIM}DataMapping`]})).toBe(true);
     });
     it('should return the title of a property mapping', function() {
         expect(service.getPropMappingTitle('class', 'prop')).toEqual('class: prop');

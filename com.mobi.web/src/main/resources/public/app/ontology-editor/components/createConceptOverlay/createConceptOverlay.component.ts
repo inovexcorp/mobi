@@ -29,7 +29,7 @@ import { OWL, SKOS } from '../../../prefixes';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
 /**
@@ -62,8 +62,7 @@ export class CreateConceptOverlayComponent implements OnInit {
     constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateConceptOverlayComponent>, 
         public os: OntologyStateService,  
-        private camelCasePipe: CamelCasePipe,
-        private splitIRIPipe: SplitIRIPipe) {}
+        private camelCasePipe: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
@@ -72,7 +71,7 @@ export class CreateConceptOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            const split = splitIRI(this.createForm.controls.iri.value);
             this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
         }
     }
@@ -84,8 +83,8 @@ export class CreateConceptOverlayComponent implements OnInit {
     get concept(): JSONLDObject {
         const concept = {
             '@id': this.createForm.controls.iri.value,
-            '@type': [OWL + 'NamedIndividual', SKOS + 'Concept'],
-            [SKOS + 'prefLabel']: [{
+            '@type': [`${OWL}NamedIndividual`, `${SKOS}Concept`],
+            [`${SKOS}prefLabel`]: [{
                 '@value': this.createForm.controls.title.value
             }]
 
@@ -105,7 +104,7 @@ export class CreateConceptOverlayComponent implements OnInit {
         this.os.addIndividual(concept);
         if (this.selectedSchemes.length) {
             this.selectedSchemes.forEach(scheme => {
-                this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, {'@id': scheme, [SKOS + 'hasTopConcept']: [{'@id': concept['@id']}]});
+                this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, {'@id': scheme, [`${SKOS}hasTopConcept`]: [{'@id': concept['@id']}]});
                 this.os.addEntityToHierarchy(this.os.listItem.conceptSchemes, concept['@id'], scheme);
             });
             this.os.listItem.conceptSchemes.flat = this.os.flattenHierarchy(this.os.listItem.conceptSchemes);

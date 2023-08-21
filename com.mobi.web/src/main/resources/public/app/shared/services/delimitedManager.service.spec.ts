@@ -24,20 +24,17 @@ import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM
 } from '../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from './util.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 
 describe('Delimited Manager service', function() {
     let service: DelimitedManagerService;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const mappingRecordIRI = 'http://test.org/mapping';
@@ -50,7 +47,6 @@ describe('Delimited Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 DelimitedManagerService,
-                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService),
             ]
         });
@@ -58,43 +54,17 @@ describe('Delimited Manager service', function() {
         service = TestBed.inject(DelimitedManagerService);
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         
         service.fileName = 'test';
         service.separator = ',';
         service.containsHeaders = true;
         progressSpinnerStub.track.and.callFake((ob) => ob);
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
     });
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
         httpMock = null;
         progressSpinnerStub = null;
-        utilStub = null;
     });
 
     describe('should upload a delimited file', function() {
@@ -118,7 +88,7 @@ describe('Delimited Manager service', function() {
     });
     describe('should retrieve a preview of an uploaded delimited file', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(service.fileName);
+            this.url = `${service.prefix}/${encodeURIComponent(service.fileName)}`;
             service.dataRows = [];
         });
         it('unless an error occurs', function() {
@@ -168,13 +138,13 @@ describe('Delimited Manager service', function() {
             }
         });
         service.mapAndDownload(mappingRecordIRI, format, fileName);
-        expect(window.open).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(service.fileName) + '/map?' + params.toString());
+        expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(service.fileName)}/map?${params.toString()}`);
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {
         beforeEach(function () {
             this.jsonld = [{'@id': 'test'}];
             this.format = 'jsonld';
-            this.url = service.prefix + '/' + encodeURIComponent(service.fileName) + '/map-preview';
+            this.url = `${service.prefix}/${encodeURIComponent(service.fileName)}/map-preview`;
         });
         it('unless an error occurs', function() {
             service.previewMap(this.jsonld, this.format)
@@ -218,7 +188,7 @@ describe('Delimited Manager service', function() {
     });
     describe('should upload mapped data from an uploaded delimited file into a dataset', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(service.fileName) + '/map';
+            this.url = `${service.prefix}/${encodeURIComponent(service.fileName)}/map`;
         });
         it('unless an error occurs', function() {
             service.mapAndUpload(mappingRecordIRI, datasetRecordIRI)
@@ -241,7 +211,7 @@ describe('Delimited Manager service', function() {
     });
     describe('should upload mapped data from an uploaded delimited file into an ontology', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(service.fileName) + '/map-to-ontology';
+            this.url = `${service.prefix}/${encodeURIComponent(service.fileName)}/map-to-ontology`;
         });
         it('unless an error occurs', function() {
             service.mapAndCommit(mappingRecordIRI, ontologyRecordIRI, branchIRI, true)

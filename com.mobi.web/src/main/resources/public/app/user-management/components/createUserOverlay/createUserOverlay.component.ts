@@ -28,7 +28,7 @@ import { map } from 'lodash';
 import { REGEX } from '../../../constants';
 import { User } from '../../../shared/models/user.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
 
 /**
@@ -55,7 +55,7 @@ export class CreateUserOverlayComponent {
     });
 
     constructor(private dialogRef: MatDialogRef<CreateUserOverlayComponent>, private fb: UntypedFormBuilder,
-        private um: UserManagerService, private util: UtilService) {}
+        private um: UserManagerService, private toast: ToastService) {}
 
     getUsernames(): string[] {
         return map(this.um.users, 'username');
@@ -78,7 +78,7 @@ export class CreateUserOverlayComponent {
         }
         this.um.addUser(newUser, this.createUserForm.controls.unmaskPassword.value)
             .subscribe(() => {
-                this.util.createSuccessToast('User successfully created');
+                this.toast.createSuccessToast('User successfully created');
                 this.errorMessage = '';
                 this.dialogRef.close();
             }, error => this.errorMessage = error);

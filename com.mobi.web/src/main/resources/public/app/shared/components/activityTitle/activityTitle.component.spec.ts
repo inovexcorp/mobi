@@ -30,16 +30,15 @@ import {
     cleanStylesFromDOM
 } from '../../../../test/ts/Shared'; 
 import { UserManagerService } from '../../services/userManager.service';
-import { UtilService } from '../../services/util.service';
 import { ProvManagerService } from '../../services/provManager.service';
 import { ActivityTitleComponent } from './activityTitle.component';
+import { DCTERMS } from '../../../prefixes';
 
 describe('Activity Title component', function() {
     let component: ActivityTitleComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ActivityTitleComponent>;
     let provManagerStub: jasmine.SpyObj<ProvManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
 
     beforeEach(async () => {
@@ -49,7 +48,6 @@ describe('Activity Title component', function() {
             ],
             providers: [
                 MockProvider(ProvManagerService),
-                MockProvider(UtilService),
                 MockProvider(UserManagerService)
             ]
         });
@@ -60,12 +58,14 @@ describe('Activity Title component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         provManagerStub = TestBed.inject(ProvManagerService) as jasmine.SpyObj<ProvManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
 
         provManagerStub.activityTypes = [{type: 'type1', word: 'word1', pred: 'pred'}, {type: 'type', word: 'word', pred: 'pred'}];
         component.activity = { '@type': [], pred: [{'@id': 'entity'}, {'@id': 'entity1'}] };
-        component.entities = [{'@id': 'entity'}, {'@id': 'entity1'}];
+        component.entities = [
+          { '@id': 'entity', [`${DCTERMS}title`]: [{ '@value': 'entity' }] },
+          { '@id': 'entity1', [`${DCTERMS}title`]: [{ '@value': 'entity1' }] }
+        ];
     });
 
     afterAll(function() {
@@ -74,7 +74,6 @@ describe('Activity Title component', function() {
         element = null;
         fixture = null;
         provManagerStub = null;
-        utilStub = null;
         userManagerStub = null;
     });
 
@@ -114,9 +113,6 @@ describe('Activity Title component', function() {
             });
         });
         describe('entities if the activity is', function() {
-            beforeEach(function() {
-                utilStub.getDctermsValue.and.callFake(obj => obj['@id']);
-            });
             it('a supported type', function() {
                 component.activity['@type'] = ['type'];
                 fixture.detectChanges();

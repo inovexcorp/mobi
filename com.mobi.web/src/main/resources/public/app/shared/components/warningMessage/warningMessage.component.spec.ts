@@ -29,7 +29,6 @@ import { By } from '@angular/platform-browser';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 
 describe('Warning Message component', function() {
-    let component: WarningMessageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<WarningMessageComponent>;
 
@@ -43,7 +42,6 @@ describe('Warning Message component', function() {
         }).compileComponents();
 
         fixture = TestBed.createComponent(WarningMessageComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
 
         fixture.detectChanges();
@@ -51,7 +49,6 @@ describe('Warning Message component', function() {
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
     });

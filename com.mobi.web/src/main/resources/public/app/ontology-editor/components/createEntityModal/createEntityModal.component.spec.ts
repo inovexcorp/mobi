@@ -109,12 +109,12 @@ describe('Create Entity Modal component', function() {
             expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
         });
         ['button.create-class', 'button.create-data-property', 'button.create-object-property', 'button.create-annotation-property', 'button.create-individual'].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });
         ['button.create-concept', 'button.create-concept-scheme'].forEach(test => {
-            it('with a ' + test + ' if the ontology is a vocabulary', function() {
+            it(`with a ${test} if the ontology is a vocabulary`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(0);
     
                 ontologyStateServiceStub.listItem.isVocabulary = true;

@@ -42,7 +42,7 @@ import { MemberTableComponent } from '../memberTable/memberTable.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { CreateGroupOverlayComponent } from './createGroupOverlay.component';
 
@@ -75,7 +75,7 @@ describe('Create Group Overlay component', function() {
             ],
             providers: [
                 MockProvider(UserManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(LoginManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]

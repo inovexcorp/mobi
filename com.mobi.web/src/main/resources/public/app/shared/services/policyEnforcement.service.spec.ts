@@ -23,17 +23,14 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { throwError } from 'rxjs';
 
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { XACMLDecision } from '../models/XACMLDecision.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
-import { UtilService } from './util.service';
 
 describe('Policy Enforcement service', function() {
     let service: PolicyEnforcementService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -71,27 +68,17 @@ describe('Policy Enforcement service', function() {
             providers: [
                 PolicyEnforcementService,
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
             ]
         });
 
         service = TestBed.inject(PolicyEnforcementService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
         progressSpinnerStub.track.and.callFake((ob) => ob);
     });
 
     afterEach(() => {
         service = null;
-        utilStub = null;
         progressSpinnerStub = null;
         httpMock.verify();
     });

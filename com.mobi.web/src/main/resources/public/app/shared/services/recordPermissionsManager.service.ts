@@ -23,12 +23,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { RecordPermissions } from '../models/recordPermissions.interface';
-import { UtilService } from './util.service';
+import { handleError } from '../utility';
 
 /**
  * @class shared.RecordPermissionsManagerService
@@ -37,9 +37,9 @@ import { UtilService } from './util.service';
  */
 @Injectable()
 export class RecordPermissionsManagerService {
-    prefix = REST_PREFIX + 'record-permissions';
+    prefix = `${REST_PREFIX}record-permissions`;
     
-    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * Calls the GET /mobirest/record-permissions/{recordId} endpoint to get the Record Policy JSON
@@ -51,8 +51,8 @@ export class RecordPermissionsManagerService {
      * with an error message
      */
     getRecordPolicy(recordId: string): Observable<RecordPermissions> {
-        return this.spinnerSvc.track(this.http.get<RecordPermissions>(this.prefix + '/' + encodeURIComponent(recordId)))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.get<RecordPermissions>(`${this.prefix}/${encodeURIComponent(recordId)}`))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -64,8 +64,8 @@ export class RecordPermissionsManagerService {
      * @return {Observable} An Observable that resolves if the update was successful or is rejected with an error
      * message
      */
-    updateRecordPolicy(recordId: string, newPolicy: RecordPermissions): Observable<null> {
-        return this.spinnerSvc.track(this.http.put(this.prefix + '/' + encodeURIComponent(recordId), newPolicy))
-            .pipe(catchError(this.util.handleError));
+    updateRecordPolicy(recordId: string, newPolicy: RecordPermissions): Observable<void> {
+        return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(recordId)}`, newPolicy))
+            .pipe(catchError(handleError), map(() => {}));
     }
 }

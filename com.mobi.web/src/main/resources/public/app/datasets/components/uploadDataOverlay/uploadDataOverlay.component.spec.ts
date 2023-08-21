@@ -39,8 +39,9 @@ import { SpinnerComponent } from '../../../shared/components/progress-spinner/co
 import { Dataset } from '../../../shared/models/dataset.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { UploadDataOverlayComponent } from './uploadDataOverlay.component';
+import { DCTERMS } from '../../../prefixes';
 
 describe('Upload Data Overlay component', function() {
     let component: UploadDataOverlayComponent;
@@ -49,10 +50,13 @@ describe('Upload Data Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<UploadDataOverlayComponent>>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
     let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const recordId = 'recordId';
-    const record = {'@id': recordId};
+    const record = {
+      '@id': recordId,
+      [`${DCTERMS}title`]: [{ '@value': 'Test' }]
+    };
     const dataset: Dataset = {record, identifiers: []};
 
     beforeEach(async () => {
@@ -71,7 +75,7 @@ describe('Upload Data Overlay component', function() {
             providers: [
                 MockProvider(DatasetManagerService),
                 MockProvider(DatasetStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         }).compileComponents();
@@ -82,10 +86,9 @@ describe('Upload Data Overlay component', function() {
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<UploadDataOverlayComponent>>;
         datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
         datasetStateStub = TestBed.inject(DatasetStateService) as jasmine.SpyObj<DatasetStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         datasetStateStub.selectedDataset = dataset;
-        utilStub.getDctermsValue.and.returnValue('Test');
     });
 
     afterEach(function() {
@@ -95,12 +98,11 @@ describe('Upload Data Overlay component', function() {
         fixture = null;
         datasetManagerStub = null;
         datasetStateStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('initializes with the correct values', function() {
         component.ngOnInit();
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(record, 'title');
         expect(component.datasetTitle).toEqual('Test');
         expect(component.importing).toEqual(false);
     });
@@ -111,7 +113,7 @@ describe('Upload Data Overlay component', function() {
                 component.submit();
                 tick();
                 expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj, true);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
                 expect(component.importing).toEqual(false);
                 expect(component.error).toEqual('Error Message');
@@ -124,7 +126,7 @@ describe('Upload Data Overlay component', function() {
                 tick(1);
                 expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj, true);
                 expect(component.importing).toEqual(false);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith();
                 expect(component.error).toEqual('');
             }));

@@ -21,8 +21,8 @@
  * #L%
  */
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { get, has, merge } from 'lodash';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { has, merge } from 'lodash';
+import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
@@ -36,12 +36,10 @@ import { MappingClass } from '../models/mappingClass.interface';
 import { MappingOntology } from '../models/mappingOntology.interface';
 import { MappingProperty } from '../models/mappingProperty.interface';
 import { MappingRecord } from '../models/mappingRecord.interface';
-import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
 import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { MappingManagerService } from './mappingManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
-import { UtilService } from './util.service';
 import { MapperStateService } from './mapperState.service';
 
 describe('Mapper State service', function() {
@@ -49,9 +47,7 @@ describe('Mapper State service', function() {
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     let mappingStub: jasmine.SpyObj<Mapping>;
     const error = 'Error message';
@@ -79,11 +75,6 @@ describe('Mapper State service', function() {
         name: 'mappingClass',
         isDeprecated: false
     };
-    const splitIRI = {
-        begin: 'begin',
-        then: '/',
-        end: 'end'
-    };
     const mappingOntology: MappingOntology = {
         id: ontologyId,
         entities: []
@@ -96,9 +87,7 @@ describe('Mapper State service', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(MappingManagerService),
                 MockProvider(DelimitedManagerService),
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
             ]
         });
 
@@ -107,8 +96,6 @@ describe('Mapper State service', function() {
         mappingManagerStub = TestBed.inject(MappingManagerService) as jasmine.SpyObj<MappingManagerService>;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         mappingStub = jasmine.createSpyObj('Mapping', [
@@ -123,7 +110,6 @@ describe('Mapper State service', function() {
             'removeClassMapping',
             'removePropMapping',
         ]);
-        splitIRIStub.transform.and.returnValue(splitIRI);
         service.selected = {
             difference: new Difference(),
             mapping: mappingStub
@@ -134,12 +120,10 @@ describe('Mapper State service', function() {
         cleanStylesFromDOM();
         service = null;
         ontologyManagerStub = null;
-        utilStub = null;
         mappingManagerStub = null;
         delimitedManagerStub = null;
         catalogManagerStub = null;
         mappingStub = null;
-        splitIRIStub = null;
     });
 
     it('should initialize important variables', function() {
@@ -179,10 +163,10 @@ describe('Mapper State service', function() {
     describe('should retrieve a MappingState for the provided record', function() {
         const mappingEntity: JSONLDObject = {
             '@id': 'mapping',
-            '@type': [DELIM + 'Mapping'],
-            [DELIM + 'sourceRecord']: [{'@id': ontologyId}],
-            [DELIM + 'sourceBranch']: [{'@id': ''}],
-            [DELIM + 'sourceCommit']: [{'@id': ''}],
+            '@type': [`${DELIM}Mapping`],
+            [`${DELIM}sourceRecord`]: [{'@id': ontologyId}],
+            [`${DELIM}sourceBranch`]: [{'@id': ''}],
+            [`${DELIM}sourceCommit`]: [{'@id': ''}],
         };
         it('unless getMapping fails', fakeAsync(function() {
             mappingManagerStub.getMapping.and.returnValue(throwError(error));
@@ -271,16 +255,14 @@ describe('Mapper State service', function() {
                     catalogManagerStub.updateInProgressCommit.and.returnValue(of(null));
                 });
                 it('and createBranchCommit resolves', fakeAsync(function() {
-                    utilStub.getDctermsValue.and.callFake(obj => obj.title);
                     catalogManagerStub.createBranchCommit.and.returnValue(of(null));
-                    const add1 = {'@id': 'add1', title: 'Class'};
-                    const add2 = {'@id': 'add2', title: 'Prop 1'};
+                    const add1 = {'@id': 'add1', [`${DCTERMS}title`]: [{ '@value': 'Class' }]};
+                    const add2 = {'@id': 'add2', [`${DCTERMS}title`]: [{ '@value': 'Prop 1' }]};
                     const add3 = {'@id': 'add3'};
-                    const del1 = {'@id': 'del1', title: 'Prop 2'};
+                    const del1 = {'@id': 'del1', [`${DCTERMS}title`]: [{ '@value': 'Prop 2' }]};
                     service.selected.difference.additions = [add1, add2, add3];
                     service.selected.difference.deletions = [del1, add2];
                     mappingStub.getJsonld.and.returnValue([add1, add2, add3]);
-                    utilStub.getBeautifulIRI.and.returnValue('iri');
                     service.saveMapping()
                         .subscribe(response => {
                             expect(response).toEqual(service.selected.record.id);
@@ -288,12 +270,7 @@ describe('Mapper State service', function() {
                     tick();
                     expect(mappingManagerStub.upload).not.toHaveBeenCalled();
                     expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.selected.record.id, catalogId, service.selected.difference);
-                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(add1, 'title');
-                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(add2, 'title');
-                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(add3, 'title');
-                    expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith(add3['@id']);
-                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(del1, 'title');
-                    expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith(service.selected.record.branch, service.selected.record.id, catalogId, 'Changed Class, Prop 1, iri, Prop 2');
+                    expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith(service.selected.record.branch, service.selected.record.id, catalogId, 'Changed Class, Prop 1, Add 3, Prop 2');
                 }));
                 it('and createBranchCommit rejects', fakeAsync(function() {
                     catalogManagerStub.createBranchCommit.and.returnValue(throwError(error));
@@ -346,17 +323,18 @@ describe('Mapper State service', function() {
         delimitedManagerStub.dataRows = [['']];
         const invalidProp: JSONLDObject = {
             '@id': 'invalid',
-            [DELIM + 'columnIndex']: '1'
+            [`${DCTERMS}title`]: [{ '@value': 'Title' }],
+            [`${DELIM}columnIndex`]: [{ '@value': '1' }]
         };
         const validProp: JSONLDObject = {
             '@id': 'valid',
-            [DELIM + 'columnIndex']: '0'
+            [`${DCTERMS}title`]: [{ '@value': 'Title' }],
+            [`${DELIM}columnIndex`]: [{ '@value': '0' }]
         };
         const classMapping: JSONLDObject = {
-            '@id': 'classMapping'
+            '@id': 'classMapping',
+            [`${DCTERMS}title`]: [{ '@value': 'Title' }]
         };
-        utilStub.getPropertyValue.and.callFake((obj, prop) => obj[prop]);
-        utilStub.getDctermsValue.and.returnValue('Title');
         mappingStub.getAllDataMappings.and.returnValue([invalidProp, validProp]);
         mappingStub.findClassWithDataMapping.and.returnValue(classMapping);
         mappingManagerStub.getPropMappingTitle.and.returnValue('Prop Name');
@@ -369,20 +347,13 @@ describe('Mapper State service', function() {
         expect(mappingStub.findClassWithDataMapping).toHaveBeenCalledWith(invalidProp['@id']);
         expect(mappingStub.findClassWithDataMapping).toHaveBeenCalledWith(validProp['@id']);
         expect(mappingManagerStub.getPropMappingTitle).toHaveBeenCalledWith('Title', 'Title');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(classMapping, 'title');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(invalidProp, 'title');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(validProp, 'title');
-        expect(utilStub.getPropertyValue).toHaveBeenCalledWith(invalidProp, DELIM + 'columnIndex');
-        expect(utilStub.getPropertyValue).toHaveBeenCalledWith(validProp, DELIM + 'columnIndex');
     });
     it('should return a list of all the mapped column indexes', function() {
-        const dataMappings = [{'@id': ''}];
-        utilStub.getPropertyValue.and.returnValue('0');
+        const dataMappings = [{'@id': '', [`${DELIM}columnIndex`]: [{ '@value': '0' }]}];
         mappingStub.getAllDataMappings.and.returnValue(dataMappings);
         const results = service.getMappedColumns();
         expect(results.length).toBe(dataMappings.length);
-        results.forEach((result, idx) => {
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(dataMappings[idx], DELIM + 'columnIndex');
+        results.forEach(result => {
             expect(result).toBe('0');
         });
     });
@@ -426,43 +397,40 @@ describe('Mapper State service', function() {
         service.sourceOntologies = [];
         const classId = 'class';
         const classProps: MappingProperty[] = [{
-            name: '',
+            name: 'Prop 1',
             isDeprecated: false,
             isObjectProperty: false,
             ontologyId,
             propObj: {'@id': 'prop1'}
         }];
         const noDomainProps: MappingProperty[] = [{
-            name: '',
+            name: 'Prop 2',
             isDeprecated: false,
             isObjectProperty: false,
             ontologyId,
             propObj: {'@id': 'prop2'}
         }];
         const annotationProps: MappingProperty[] = [{
-            name: '',
+            name: 'Prop 3',
             isDeprecated: false,
             isObjectProperty: false,
             ontologyId,
             propObj: {'@id': 'prop3'}
         }];
-        mappingManagerStub.annotationProperties = ['test'];
-        utilStub.getBeautifulIRI.and.returnValue('iri');
+        mappingManagerStub.annotationProperties = ['http://test.com/test'];
         spyOn(service, 'getClassProps').and.returnValue(classProps.concat(noDomainProps, annotationProps));
 
         service.setProps(classId);
         expect(service.getClassProps).toHaveBeenCalledWith([], classId);
         expect(service.propsByClass[classId]).toContain(classProps[0]);
         expect(service.propsByClass[classId]).toContain(noDomainProps[0]);
-        expect(service.propsByClass[classId] ).toContain(annotationProps[0]);
-        mappingManagerStub.annotationProperties.forEach(prop => {
-            expect(service.propsByClass[classId]).toContain({
-                ontologyId: splitIRI.begin,
-                propObj: {'@id': prop},
-                name: 'iri',
-                isDeprecated: false,
-                isObjectProperty: false
-            });
+        expect(service.propsByClass[classId]).toContain(annotationProps[0]);
+        expect(service.propsByClass[classId]).toContain({
+            ontologyId: 'http://test.com',
+            propObj: {'@id': 'http://test.com/test'},
+            name: 'Test',
+            isDeprecated: false,
+            isObjectProperty: false
         });
     });
     it('should set the list of properties for a class mapping', function() {
@@ -571,10 +539,6 @@ describe('Mapper State service', function() {
         const newValue = 'new';
         const originalValue = 'original';
         const otherValue = 'other';
-        beforeEach(function() {
-            utilStub.getPropertyValue.and.callFake((obj, propId) => get(obj, `['${propId}'][0]['@value']`, ''));
-            utilStub.getPropertyId.and.callFake((obj, propId) => get(obj, `['${propId}'][0]['@id']`, ''));
-        });
         it('unless the new value is the same as the original', function() {
             service.changeProp(entityId, propId, newValue, newValue);
             expect(service.selected.difference.additions).toEqual([]);
@@ -769,52 +733,45 @@ describe('Mapper State service', function() {
             expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
             expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
             expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
-            expect(utilStub.setDctermsValue).toHaveBeenCalledWith(newClassMapping, 'title', entityName);
             expect(service.changeProp).not.toHaveBeenCalled();
             expect(service.selected.difference.additions).toContain(newClassMapping);
         });
         describe('the class has already been mapped', function() {
-            beforeEach(function() {
-                utilStub.getDctermsValue.and.callFake(obj => obj[DCTERMS + 'title'][0]['@value']);
-            });
             it('and it does not have an index', function() {
                 const originalClassMapping = {'@id': 'original'};
-                originalClassMapping[DCTERMS + 'title'] = [{'@value': entityName}];
+                originalClassMapping[`${DCTERMS}title`] = [{'@value': entityName}];
                 mappingStub.getClassMappingsByClassId.and.returnValue([originalClassMapping]);
                 expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
                 expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
                 expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
-                expect(originalClassMapping[DCTERMS + 'title'][0]['@value']).toEqual(entityName + ' (1)');
-                expect(service.changeProp).toHaveBeenCalledWith(originalClassMapping['@id'], DCTERMS + 'title', entityName + ' (1)', entityName);
-                expect(utilStub.setDctermsValue).toHaveBeenCalledWith(newClassMapping, 'title', entityName + ' (2)');
+                expect(originalClassMapping[`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (1)`);
+                expect(service.changeProp).toHaveBeenCalledWith(originalClassMapping['@id'], `${DCTERMS}title`, `${entityName} (1)`, entityName);
                 expect(service.selected.difference.additions).toContain(newClassMapping);
             });
             it('with a missing number', function() {
                 const originalMappings = [{'@id': 'original1'}, {'@id': 'original2'}];
-                originalMappings[0][DCTERMS + 'title'] = [{'@value': entityName + ' (1)'}];
-                originalMappings[1][DCTERMS + 'title'] = [{'@value': entityName + ' (3)'}];
+                originalMappings[0][`${DCTERMS}title`] = [{'@value': `${entityName} (1)`}];
+                originalMappings[1][`${DCTERMS}title`] = [{'@value': `${entityName} (3)`}];
                 mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
                 expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
                 expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
                 expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
-                expect(originalMappings[0][DCTERMS + 'title'][0]['@value']).toEqual(entityName + ' (1)');
-                expect(originalMappings[1][DCTERMS + 'title'][0]['@value']).toEqual(entityName + ' (3)');
+                expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (1)`);
+                expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (3)`);
                 expect(service.changeProp).not.toHaveBeenCalled();
-                expect(utilStub.setDctermsValue).toHaveBeenCalledWith(newClassMapping, 'title', entityName + ' (2)');
                 expect(service.selected.difference.additions).toContain(newClassMapping);
             });
             it('with no missing numbers', function() {
                 const originalMappings = [{'@id': 'original1'}, {'@id': 'original2'}];
-                originalMappings[0][DCTERMS + 'title'] = [{'@value': entityName + ' (1)'}];
-                originalMappings[1][DCTERMS + 'title'] = [{'@value': entityName + ' (2)'}];
+                originalMappings[0][`${DCTERMS}title`] = [{'@value': `${entityName} (1)`}];
+                originalMappings[1][`${DCTERMS}title`] = [{'@value': `${entityName} (2)`}];
                 mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
                 expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
                 expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
                 expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
-                expect(originalMappings[0][DCTERMS + 'title'][0]['@value']).toEqual(entityName + ' (1)');
-                expect(originalMappings[1][DCTERMS + 'title'][0]['@value']).toEqual(entityName + ' (2)');
+                expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (1)`);
+                expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (2)`);
                 expect(service.changeProp).not.toHaveBeenCalled();
-                expect(utilStub.setDctermsValue).toHaveBeenCalledWith(newClassMapping, 'title', entityName + ' (3)');
                 expect(service.selected.difference.additions).toContain(newClassMapping);
             });
         });
@@ -827,7 +784,6 @@ describe('Mapper State service', function() {
         expect(service.addDataMapping(mappingProperty, 'classMappingId', 0)).toEqual(newPropMapping);
         expect(mappingManagerStub.addDataProp).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, 'classMappingId', mappingProperty.propObj['@id'], 0, undefined, undefined);
         expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(mappingProperty.propObj);
-        expect(utilStub.setDctermsValue).toHaveBeenCalledWith(newPropMapping, 'title', 'Prop');
         expect(service.selected.difference.additions).toContain(newPropMapping);
     });
     it('should add an object property mapping', function() {
@@ -838,7 +794,6 @@ describe('Mapper State service', function() {
         expect(service.addObjectMapping(mappingProperty, 'classMappingId', 'rangeClassMappingId')).toEqual(newPropMapping);
         expect(mappingManagerStub.addObjectProp).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, 'classMappingId', mappingProperty.propObj['@id'], 'rangeClassMappingId');
         expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(mappingProperty.propObj);
-        expect(utilStub.setDctermsValue).toHaveBeenCalledWith(newPropMapping, 'title', 'Prop');
         expect(service.selected.difference.additions).toContain(newPropMapping);
     });
     describe('should reflect the deletion of entity in the difference', function() {
@@ -866,8 +821,11 @@ describe('Mapper State service', function() {
         });
     });
     describe('should delete a class mapping and update the difference', function() {
-        const classMapping = {'@id': 'classMapping', [DELIM + 'mapsTo']: [{'@id': 'classId'}]};
-        const propMapping = {'@id': 'propMapping'};
+        const classMapping: JSONLDObject = {
+          '@id': 'classMapping',
+          [`${DELIM}mapsTo`]: [{'@id': 'classId'}]
+        };
+        const propMapping: JSONLDObject = {'@id': 'propMapping'};
         beforeEach(function() {
             service.invalidProps = [{ id: propMapping['@id'], index: 0 }];
             mappingStub.getPropsLinkingToClass.and.returnValue([]);
@@ -876,11 +834,12 @@ describe('Mapper State service', function() {
             spyOn(service, 'deleteEntity');
             spyOn(service, 'removeProps');
             spyOn(service, 'changeProp');
-            utilStub.getDctermsValue.and.returnValue('original (1)');
         });
         it('if it is the second to last of the specific class', function() {
-            const lastClassMapping = {'@id': 'leftover'};
-            lastClassMapping[DCTERMS + 'title'] = [{'@value': 'original (1)'}];
+            const lastClassMapping = {
+              '@id': 'leftover',
+              [`${DCTERMS}title`]: [{ '@value': 'original (1)'}]
+            };
             mappingStub.getClassMappingsByClassId.and.returnValue([lastClassMapping]);
             service.deleteClass(classMapping['@id']);
             expect(mappingStub.getPropsLinkingToClass).toHaveBeenCalledWith(classMapping['@id']);
@@ -891,8 +850,7 @@ describe('Mapper State service', function() {
             expect(service.removeProps).not.toHaveBeenCalled();
             expect(service.invalidProps.length).toEqual(0);
             expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith('classId');
-            expect(utilStub.getDctermsValue).toHaveBeenCalledWith(lastClassMapping, 'title');
-            expect(service.changeProp).toHaveBeenCalledWith(lastClassMapping['@id'], DCTERMS + 'title', 'original', 'original (1)');
+            expect(service.changeProp).toHaveBeenCalledWith(lastClassMapping['@id'], `${DCTERMS}title`, 'original', 'original (1)');
         });
         it('if it is not the second to last of the specific class', function() {
             mappingStub.getClassMappingsByClassId.and.returnValue([{'@id': 'first'}, {'@id': 'second'}]);
@@ -905,7 +863,6 @@ describe('Mapper State service', function() {
             expect(service.removeProps).not.toHaveBeenCalled();
             expect(service.invalidProps.length).toEqual(0);
             expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith('classId');
-            expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
             expect(service.changeProp).not.toHaveBeenCalled();
         });
         it('if it is the last of the specific class', function() {
@@ -919,7 +876,6 @@ describe('Mapper State service', function() {
             expect(service.removeProps).toHaveBeenCalledWith('classId');
             expect(service.invalidProps.length).toEqual(0);
             expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith('classId');
-            expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
             expect(service.changeProp).not.toHaveBeenCalled();
         });
     });
@@ -933,13 +889,10 @@ describe('Mapper State service', function() {
             mappingManagerStub.isDataMapping.and.returnValue(true);
         });
         it('if it was added originally', function () {
-            utilStub.hasPropertyId.and.returnValue(true);
-            const additionObj = {'@id': classMappingId};
+            const additionObj = {'@id': classMappingId, [`${DELIM}dataProperty`]: [{ '@id': propMapping['@id'] }]};
             (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
             service.deleteProp(propMapping['@id'], classMappingId);
             expect(service.deleteEntity).toHaveBeenCalledWith(propMapping);
-            expect(utilStub.hasPropertyId).toHaveBeenCalledWith(additionObj, DELIM + 'dataProperty', propMapping['@id']);
-            expect(utilStub.removePropertyId).toHaveBeenCalledWith(additionObj, DELIM + 'dataProperty', propMapping['@id']);
             expect(service.selected.difference.deletions).toEqual([]);
             expect(service.invalidProps.length).toEqual(0);
         });
@@ -949,12 +902,12 @@ describe('Mapper State service', function() {
                 (service.selected.difference.additions as JSONLDObject[]).push(this.additionObj);
             });
             it('and the parent class mapping does not exist in deletions', function () {
-                const deletionObj = {'@id': classMappingId};
-                deletionObj[DELIM + 'dataProperty'] = [{'@id': propMapping['@id']}];
+                const deletionObj = {
+                  '@id': classMappingId,
+                  [`${DELIM}dataProperty`]: [{'@id': propMapping['@id']}]
+                };
                 service.deleteProp(propMapping['@id'], classMappingId);
                 expect(service.deleteEntity).toHaveBeenCalledWith(propMapping);
-                expect(utilStub.hasPropertyId).toHaveBeenCalledWith(this.additionObj, DELIM + 'dataProperty', propMapping['@id']);
-                expect(utilStub.removePropertyId).not.toHaveBeenCalled();
                 expect(service.selected.difference.deletions).toContain(deletionObj);
                 expect(service.invalidProps.length).toEqual(0);
             });
@@ -963,9 +916,7 @@ describe('Mapper State service', function() {
                 (service.selected.difference.deletions as JSONLDObject[]).push(deletionObj);
                 service.deleteProp(propMapping['@id'], classMappingId);
                 expect(service.deleteEntity).toHaveBeenCalledWith(propMapping);
-                expect(utilStub.hasPropertyId).toHaveBeenCalledWith(this.additionObj, DELIM + 'dataProperty', propMapping['@id']);
-                expect(utilStub.removePropertyId).not.toHaveBeenCalled();
-                expect(deletionObj[DELIM + 'dataProperty']).toEqual([{'@id': propMapping['@id']}]);
+                expect(deletionObj[`${DELIM}dataProperty`]).toEqual([{'@id': propMapping['@id']}]);
                 expect(service.invalidProps.length).toEqual(0);
             });
         });

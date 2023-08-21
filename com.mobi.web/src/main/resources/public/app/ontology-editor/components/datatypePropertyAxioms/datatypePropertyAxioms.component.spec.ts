@@ -37,7 +37,6 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { DatatypePropertyAxiomsComponent } from './datatypePropertyAxioms.component';
-import { UtilService } from '../../../shared/services/util.service';
 
 describe('Datatype Property Axioms component', function() {
     let component: DatatypePropertyAxiomsComponent;
@@ -45,7 +44,6 @@ describe('Datatype Property Axioms component', function() {
     let fixture: ComponentFixture<DatatypePropertyAxiomsComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let dialogStub : jasmine.SpyObj<MatDialog>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let propertyServiceStub;
 
     beforeEach(async () => {
@@ -59,7 +57,6 @@ describe('Datatype Property Axioms component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(MatDialog),
                 MockProvider(PropertyManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     }) }
@@ -74,7 +71,6 @@ describe('Datatype Property Axioms component', function() {
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         propertyServiceStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         dialogStub = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = {
@@ -92,7 +88,6 @@ describe('Datatype Property Axioms component', function() {
         fixture = null;
         ontologyStateStub = null;
         dialogStub = null;
-        utilStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -135,8 +130,8 @@ describe('Datatype Property Axioms component', function() {
                 expect(ontologyStateStub.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateStub.flattenHierarchy).not.toHaveBeenCalled();
 
-                utilStub.isBlankNodeId.and.returnValue(true);
-                component.removeFromHierarchy(RDFS + 'subPropertyOf', this.axiomObject);
+                this.axiomObject['@id'] = '_:genid0';
+                component.removeFromHierarchy(`${RDFS}subPropertyOf`, this.axiomObject);
                 expect(ontologyStateStub.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateStub.flattenHierarchy).not.toHaveBeenCalled();
             });
@@ -149,7 +144,7 @@ describe('Datatype Property Axioms component', function() {
                     entityInfo: { label: 'new', names: ['new', 'test'] },
                     joinedPath: 'www.test.com',
                 }]);
-                component.removeFromHierarchy(RDFS + 'subPropertyOf', this.axiomObject);
+                component.removeFromHierarchy(`${RDFS}subPropertyOf`, this.axiomObject);
 
                 expect(ontologyStateStub.deleteEntityFromParentInHierarchy)
                     .toHaveBeenCalledWith(ontologyStateStub.listItem.dataProperties,

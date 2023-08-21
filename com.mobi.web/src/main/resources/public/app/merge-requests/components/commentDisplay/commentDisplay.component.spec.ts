@@ -37,22 +37,24 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { CommentDisplayComponent } from './commentDisplay.component';
+import { DCTERMS } from '../../../prefixes';
 
 describe('Comment Display component', function() {
     let component: CommentDisplayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommentDisplayComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
     const userId = 'user';
     const username = 'username';
     const comment: JSONLDObject = {
         '@id': 'comment',
-        '@type': []
+        '@type': [],
+        [`${DCTERMS}description`]: [{ '@value': 'description' }],
+        [`${DCTERMS}issued`]: [{ '@value': 'issued' }],
+        [`${DCTERMS}creator`]: [{ '@id': userId }],
     };
 
     beforeEach(async () => {
@@ -68,7 +70,6 @@ describe('Comment Display component', function() {
             providers: [
                 MockProvider(UserManagerService),
                 MockProvider(LoginManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -81,11 +82,8 @@ describe('Comment Display component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         
-        utilStub.getDctermsId.and.returnValue(userId);
-        utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
         userManagerStub.users = [{
             iri: userId,
             username,
@@ -103,15 +101,11 @@ describe('Comment Display component', function() {
         element = null;
         fixture = null;
         userManagerStub = null;
-        utilStub = null;
         matDialog = null;
     });
 
     it('initializes correctly on comment change', function() {
         component.comment = comment;
-        expect(utilStub.getDctermsId).toHaveBeenCalledWith(comment, 'creator');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(comment, 'description');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(comment, 'issued');
         expect(component.commentText).toEqual('description');
         expect(component.creatorIRI).toEqual(userId);
         expect(component.creator).toEqual(username);

@@ -25,11 +25,10 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { Difference } from '../../models/difference.class';
-import { UtilService } from '../../services/util.service';
 import { CommitCompiledResourceComponent } from '../commitCompiledResource/commitCompiledResource.component';
 import { Conflict } from '../../models/conflict.interface';
 import { ResolveConflictsFormComponent } from './resolveConflictsForm.component';
@@ -47,10 +46,7 @@ describe('Resolve Conflicts Form component', function() {
             declarations: [
                 ResolveConflictsFormComponent,
                 MockComponent(CommitCompiledResourceComponent),
-            ],
-            providers: [
-                MockProvider(UtilService)
-            ],
+            ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(ResolveConflictsFormComponent);

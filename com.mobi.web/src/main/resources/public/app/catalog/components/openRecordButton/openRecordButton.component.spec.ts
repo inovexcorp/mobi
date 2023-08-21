@@ -34,11 +34,11 @@ import {
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { CATALOG, DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
+import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -54,13 +54,14 @@ describe('Open Record Button component', function() {
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let router: Router;
 
     const recordId = 'recordId';
     const record: JSONLDObject = {
         '@id': recordId,
-        '@type': [CATALOG + 'Record']
+        '@type': [`${CATALOG}Record`],
+        [`${DCTERMS}title`]: [{ '@value': 'title' }]
     };
 
     beforeEach(async () => {
@@ -76,7 +77,7 @@ describe('Open Record Button component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(PolicyEnforcementService),
                 MockProvider(PolicyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         }).compileComponents();
 
@@ -89,13 +90,12 @@ describe('Open Record Button component', function() {
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
         policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
         shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
         spyOn(router, 'navigate');
 
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
-        utilStub.getDctermsValue.and.returnValue('');
     });
 
     afterEach(function() {
@@ -107,7 +107,7 @@ describe('Open Record Button component', function() {
         mapperStateStub = null;
         ontologyStateStub = null;
         policyEnforcementStub = null;
-        utilStub = null;
+        toastStub = null;
         router = null;
     });
 
@@ -124,26 +124,26 @@ describe('Open Record Button component', function() {
                 spyOn(this.event, 'stopPropagation');
             });
             it('OntologyRecord', function() {
-                component.recordType = ONTOLOGYEDITOR + 'OntologyRecord';
+                component.recordType = `${ONTOLOGYEDITOR}OntologyRecord`;
                 spyOn(component, 'openOntology');
                 component.openRecord(this.event);
                 expect(component.openOntology).toHaveBeenCalledWith();
                 expect(this.event.stopPropagation).toHaveBeenCalledWith();
             });
             it('MappingRecord', function() {
-                component.recordType = DELIM + 'MappingRecord';
+                component.recordType = `${DELIM}MappingRecord`;
                 spyOn(component, 'openMapping');
                 component.openRecord(this.event);
                 expect(component.openMapping).toHaveBeenCalledWith();
             });
             it('DatasetRecord', function() {
-                component.recordType = DATASET + 'DatasetRecord';
+                component.recordType = `${DATASET}DatasetRecord`;
                 spyOn(component, 'openDataset');
                 component.openRecord(this.event);
                 expect(component.openDataset).toHaveBeenCalledWith();
             });
             it('ShapesGraphRecord', function() {
-                component.recordType = SHAPESGRAPHEDITOR + 'ShapesGraphRecord';
+                component.recordType = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
                 spyOn(component, 'openShapesGraph');
                 component.openRecord(this.event);
                 expect(component.openShapesGraph).toHaveBeenCalledWith();
@@ -151,7 +151,6 @@ describe('Open Record Button component', function() {
         });
         describe('openOntology should navigate to the ontology editor module and open the ontology', function() {
             beforeEach(function() {
-                utilStub.getDctermsValue.and.returnValue('title');
                 component.record = record;
             });
             it('if it is already open', function() {
@@ -160,7 +159,7 @@ describe('Open Record Button component', function() {
                 ontologyStateStub.list = [listItem];
                 component.openOntology();
                 expect(ontologyStateStub.openOntology).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 expect(listItem.active).toBeTrue();
                 expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
             });
@@ -168,24 +167,21 @@ describe('Open Record Button component', function() {
                 it('successfully', async function() {
                     ontologyStateStub.openOntology.and.returnValue(of(null));
                     await component.openOntology();
-                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(record, 'title');
                     expect(ontologyStateStub.openOntology).toHaveBeenCalledWith(recordId, 'title');
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
                 });
                 it('unless an error occurs', fakeAsync(function() {
                     ontologyStateStub.openOntology.and.returnValue(throwError('Error message'));
                     component.openOntology();
                     tick();
-                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(record, 'title');
                     expect(ontologyStateStub.openOntology).toHaveBeenCalledWith(recordId, 'title');
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
                     expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
                 }));
             });
         });
         it('openMapping should navigate to the mapping module and select the mapping', function() {
-            utilStub.getDctermsValue.and.returnValue('title');
             component.record = record;
             mapperStateStub.paginationConfig = {
                 searchText: ''
@@ -202,10 +198,10 @@ describe('Open Record Button component', function() {
             component.record = record;
             const recordSelect = {
                 recordId: 'recordId',
-                title: '',
+                title: 'title',
                 description: ''
             };
-            shapesGraphStateStub.openShapesGraph.and.resolveTo();
+            shapesGraphStateStub.openShapesGraph.and.returnValue(of(null));
             component.openShapesGraph();
             expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
             expect(shapesGraphStateStub.openShapesGraph).toHaveBeenCalledWith(recordSelect);
@@ -223,13 +219,13 @@ describe('Open Record Button component', function() {
             });
             describe('when it is an ontology record and', function() {
                 beforeEach(function() {
-                    catalogStateStub.getRecordType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
+                    catalogStateStub.getRecordType.and.returnValue(`${ONTOLOGYEDITOR}OntologyRecord`);
                 });
                 it('the user can view', fakeAsync(function() {
                     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
                     component.update();
                     tick();
-                    expect(component.recordType).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
+                    expect(component.recordType).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: policyManagerStub.actionRead});
                     expect(component.showButton).toEqual(true);
                 }));
@@ -237,7 +233,7 @@ describe('Open Record Button component', function() {
                     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                     component.update();
                     tick();
-                    expect(component.recordType).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
+                    expect(component.recordType).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: policyManagerStub.actionRead});
                     expect(component.showButton).toEqual(false);
                 }));

@@ -21,9 +21,8 @@
  * #L%
  */
 import { OnChanges, OnInit, Component, Input, SimpleChanges } from '@angular/core';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 
-import { TrustedHtmlPipe } from '../../../shared/pipes/trustedHtml.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 /**
  * @class shapes-graph-editor.StaticIriLimitedComponent
@@ -45,7 +44,7 @@ export class StaticIriLimitedComponent implements OnInit, OnChanges {
     iriThen;
     iriEnd;
 
-    constructor(private splitIRI: SplitIRIPipe, private trustedHtml: TrustedHtmlPipe) {}
+    constructor() {}
 
     ngOnInit(): void {
         this.setVariables();
@@ -58,7 +57,7 @@ export class StaticIriLimitedComponent implements OnInit, OnChanges {
     }
 
     setVariables(): void {
-        const splitIri = this.splitIRI.transform(this.iri);
+        const splitIri = splitIRI(this.iri);
         this.iriBegin = splitIri.begin;
         this.iriThen = splitIri.then;
         this.iriEnd = splitIri.end;

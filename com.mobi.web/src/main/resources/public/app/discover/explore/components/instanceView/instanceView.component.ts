@@ -24,10 +24,13 @@ import { cloneDeep, omit } from 'lodash';
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
-import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { CATALOG } from '../../../../prefixes';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { getBeautifulIRI } from '../../../../shared/utility';
+import { JSONLDId } from '../../../../shared/models/JSONLDId.interface';
+import { JSONLDValue } from '../../../../shared/models/JSONLDValue.interface';
+import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
 
 /**
  * @class explore.InstanceViewComponent
@@ -45,25 +48,23 @@ import { UtilService } from '../../../../shared/services/util.service';
 })
 
 export class InstanceViewComponent implements OnInit, OnChanges {
-    @Input() entity: any = {};
+    @Input() entityArr: JSONLDObject[] = []; // Only used to keep the view up to date
 
-    constructor(public ds: DiscoverStateService, private eu: ExploreUtilsService, private pep: PolicyEnforcementService,
-        private util: UtilService) {}
+    propertyValues: {property: string, display: string, more: boolean, values: (JSONLDId|JSONLDValue)[]}[] = [];
+
+    constructor(public ds: DiscoverStateService, private pep: PolicyEnforcementService,
+        private toast: ToastService) {}
 
     ngOnInit(): void {
-        this.entity = this.getEntity();
+        this._setPropertyValues();
     }
     ngOnChanges(): void {
-        this.entity = this.getEntity();
-    }
-    getLimit(array: any[], limit: number): number {
-        const len = array.length;
-        return len === limit ? 1 : len;
+        this._setPropertyValues();
     }
     edit(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: CATALOG + 'Modify'
+            actionId: `${CATALOG}Modify`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -72,14 +73,23 @@ export class InstanceViewComponent implements OnInit, OnChanges {
                     this.ds.explore.editing = true;
                     this.ds.explore.instance.original = cloneDeep(this.ds.explore.instance.entity);
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.toast.createErrorToast('You don\'t have permission to modify dataset');
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
 
-    private getEntity() {
-        return omit(this.ds.getInstance(), ['@id', '@type']);
+    private _setPropertyValues(): void {
+        const entity: {[key: string]: (JSONLDId|JSONLDValue)[]} = omit(this.ds.getInstance(), ['@id', '@type']);
+        this.propertyValues = [];
+        Object.keys(entity).forEach(property => {
+            this.propertyValues.push({
+                property,
+                more: false,
+                display: getBeautifulIRI(property),
+                values: entity[property]
+            });
+        });
     }
 }

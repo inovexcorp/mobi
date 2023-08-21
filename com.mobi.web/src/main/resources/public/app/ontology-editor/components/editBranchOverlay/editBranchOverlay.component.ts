@@ -23,13 +23,13 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { unset, get } from 'lodash';
+import { get } from 'lodash';
 
 import { DCTERMS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDctermsValue, updateDctermsValue } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.EditBranchOverlayComponent
@@ -54,19 +54,19 @@ export class EditBranchOverlayComponent implements OnInit {
 
     constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<EditBranchOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: {branch: JSONLDObject},
-        private cm: CatalogManagerService, private os: OntologyStateService, public util: UtilService) {}
+        private cm: CatalogManagerService, private os: OntologyStateService) {}
         
     ngOnInit(): void {
-        this.editBranchForm.controls.title.setValue(this.util.getDctermsValue(this.data.branch, 'title'));
-        this.editBranchForm.controls.description.setValue(this.util.getDctermsValue(this.data.branch, 'description'));
+        this.editBranchForm.controls.title.setValue(getDctermsValue(this.data.branch, 'title'));
+        this.editBranchForm.controls.description.setValue(getDctermsValue(this.data.branch, 'description'));
     }
     edit(): void {
         const catalogId = get(this.cm.localCatalog, '@id', '');
-        this.util.updateDctermsValue(this.data.branch, 'title', this.editBranchForm.controls.title.value);
+        updateDctermsValue(this.data.branch, 'title', this.editBranchForm.controls.title.value);
         if (!this.editBranchForm.controls.description.value) {
-            unset(this.data.branch, DCTERMS + 'description');
+            delete this.data.branch[`${DCTERMS}description`];
         } else {
-            this.util.updateDctermsValue(this.data.branch, 'description', this.editBranchForm.controls.description.value);
+            updateDctermsValue(this.data.branch, 'description', this.editBranchForm.controls.description.value);
         }
         this.cm.updateRecordBranch(this.data.branch['@id'], this.os.listItem.versionedRdfRecord.recordId, catalogId, this.data.branch)
             .subscribe(() => {

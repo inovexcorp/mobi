@@ -33,6 +33,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../../prefixes';
@@ -41,7 +42,6 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { EditBranchOverlayComponent } from './editBranchOverlay.component';
 
 describe('Edit Branch Overlay component', function() {
@@ -51,7 +51,6 @@ describe('Edit Branch Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<EditBranchOverlayComponent>>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
@@ -59,7 +58,9 @@ describe('Edit Branch Overlay component', function() {
     const branchId = 'branchId';
     const branch: JSONLDObject = {
         '@id': branchId,
-        '@type': [CATALOG + 'Branch'],
+        '@type': [`${CATALOG}Branch`],
+        [`${DCTERMS}title`]: [{ '@value': 'title' }],
+        [`${DCTERMS}description`]: [{ '@value': 'description' }],
     };
     const listItem: OntologyListItem = new OntologyListItem();
     listItem.versionedRdfRecord.recordId = recordId;
@@ -83,7 +84,6 @@ describe('Edit Branch Overlay component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
                 { provide: MAT_DIALOG_DATA, useValue: { branch } },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -95,7 +95,6 @@ describe('Edit Branch Overlay component', function() {
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<EditBranchOverlayComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateStub.listItem = listItem;
         catalogManagerStub.localCatalog = {'@id': catalogId};
@@ -109,14 +108,11 @@ describe('Edit Branch Overlay component', function() {
         matDialogRef = null;
         ontologyStateStub = null;
         catalogManagerStub = null;
-        utilStub = null;
     });
 
     it('should initialize correctly', function() {
-        utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
+        component.data.branch = branch;
         component.ngOnInit();
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(branch, 'description');
         expect(component.editBranchForm.controls.title.value).toEqual('title');
         expect(component.editBranchForm.controls.description.value).toEqual('description');
     });
@@ -124,26 +120,18 @@ describe('Edit Branch Overlay component', function() {
         describe('edit calls the correct methods', function() {
             beforeEach(function() {
                 component.editBranchForm.controls.title.setValue('title');
-                component.data.branch = Object.assign({}, branch);
-                component.data.branch[DCTERMS + 'description'] = [{'@value': 'description'}];
+                component.data.branch = cloneDeep(branch);
                 catalogManagerStub.updateRecordBranch.and.returnValue(of(null));
-            });
-            afterEach(function() {
-                component.data.branch = branch;
             });
             describe('with initial setup', function() {
                 it('when branch description is not set', function() {
                     component.edit();
-                    expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(component.data.branch, 'title', 'title');
-                    expect(component.data.branch[DCTERMS + 'description']).toBeFalsy();
-                    expect(utilStub.updateDctermsValue).not.toHaveBeenCalledWith(component.data.branch, 'description', jasmine.any(String));
+                    expect(component.data.branch[`${DCTERMS}description`]).toBeFalsy();
                 });
                 it('when branch description is set', function() {
-                    component.editBranchForm.controls.description.setValue('description');
+                    component.editBranchForm.controls.description.setValue('new description');
                     component.edit();
-                    expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(component.data.branch, 'title', 'title');
-                    expect(component.data.branch[DCTERMS + 'description']).toBeTruthy();
-                    expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(component.data.branch, 'description', 'description');
+                    expect(component.data.branch[`${DCTERMS}description`]).toEqual([{ '@value': 'new description'}]);
                 });
             });
             it('when resolved', fakeAsync(function() {
@@ -188,6 +176,7 @@ describe('Edit Branch Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
         });
         it('depending on the validity of the form', function() {
+            fixture.detectChanges();
             const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
             expect(button).not.toBeNull();
             expect(button.properties['disabled']).toBeFalsy();

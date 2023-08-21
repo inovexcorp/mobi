@@ -44,7 +44,7 @@ import { MemberTableComponent } from '../memberTable/memberTable.component';
 import { GroupsListComponent } from '../groupsList/groupsList.component';
 import { CreateGroupOverlayComponent } from '../createGroupOverlay/createGroupOverlay.component';
 import { EditGroupInfoOverlayComponent } from '../editGroupInfoOverlay/editGroupInfoOverlay.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { GroupsPageComponent } from './groupsPage.component';
 
@@ -56,7 +56,7 @@ describe('Groups Page component', function() {
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let group: Group;
 
     beforeEach(async () => {
@@ -80,7 +80,7 @@ describe('Groups Page component', function() {
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
                 MockProvider(LoginManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -94,7 +94,7 @@ describe('Groups Page component', function() {
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         group = {
             title: 'group',
@@ -115,7 +115,7 @@ describe('Groups Page component', function() {
         userStateStub = null;
         matDialog = null;
         loginManagerStub = null;
-        utilStub = null;
+        toastStub = null;
         group = null;
     });
 
@@ -163,7 +163,7 @@ describe('Groups Page component', function() {
                     tick();
                     expect(userManagerStub.addGroupRoles).toHaveBeenCalledWith(group.title, ['admin']);
                     expect(userManagerStub.deleteGroupRole).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
                     userManagerStub.addGroupRoles.and.returnValue(throwError('Error message'));
@@ -171,7 +171,7 @@ describe('Groups Page component', function() {
                     tick();
                     expect(userManagerStub.addGroupRoles).toHaveBeenCalledWith(group.title, ['admin']);
                     expect(userManagerStub.deleteGroupRole).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
                 }));
             });
             describe('from true to false', function() {
@@ -185,7 +185,7 @@ describe('Groups Page component', function() {
                     tick();
                     expect(userManagerStub.addGroupRoles).not.toHaveBeenCalled();
                     expect(userManagerStub.deleteGroupRole).toHaveBeenCalledWith(group.title, 'admin');
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
                     userManagerStub.deleteGroupRole.and.returnValue(throwError('Error message'));
@@ -193,7 +193,7 @@ describe('Groups Page component', function() {
                     tick();
                     expect(userManagerStub.addGroupRoles).not.toHaveBeenCalled();
                     expect(userManagerStub.deleteGroupRole).toHaveBeenCalledWith(group.title, 'admin');
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
                 }));
             });
         });
@@ -229,7 +229,7 @@ describe('Groups Page component', function() {
                 expect(userManagerStub.deleteGroup).toHaveBeenCalledWith(group.title);
                 expect(userStateStub.selectedGroup).toEqual(group);
                 expect(component.setAdmin).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('successfully', fakeAsync(function() {
                 userManagerStub.deleteGroup.and.returnValue(of(null));
@@ -238,7 +238,7 @@ describe('Groups Page component', function() {
                 expect(userManagerStub.deleteGroup).toHaveBeenCalledWith(group.title);
                 expect(userStateStub.selectedGroup).toBeUndefined();
                 expect(component.setAdmin).toHaveBeenCalledWith();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         describe('should add a group member', function() {
@@ -258,16 +258,16 @@ describe('Groups Page component', function() {
                 component.addMember(this.user);
                 tick();
                 expect(userManagerStub.addUserGroup).toHaveBeenCalledWith(this.user.username, group.title);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('successfully', fakeAsync(function() {
                 userManagerStub.addUserGroup.and.returnValue(of(null));
                 component.addMember(this.user);
                 tick();
                 expect(userManagerStub.addUserGroup).toHaveBeenCalledWith(this.user.username, group.title);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         it('should open a modal for removing a member', function() {
@@ -286,16 +286,16 @@ describe('Groups Page component', function() {
                 component.removeMember('batman');
                 tick();
                 expect(userManagerStub.deleteUserGroup).toHaveBeenCalledWith('batman', group.title);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('successfully', fakeAsync(function() {
                 userManagerStub.deleteUserGroup.and.returnValue(of(null));
                 component.removeMember('batman');
                 tick();
                 expect(userManagerStub.deleteUserGroup).toHaveBeenCalledWith('batman', group.title);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
     });

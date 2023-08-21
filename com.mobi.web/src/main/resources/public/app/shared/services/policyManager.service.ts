@@ -26,9 +26,9 @@ import { HttpClient } from '@angular/common/http';
 import { REST_PREFIX } from '../../constants';
 import { CATALOG, POLICY } from '../../prefixes';
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { UtilService } from './util.service';
+import { catchError, map } from 'rxjs/operators';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { createHttpParams, handleError } from '../utility';
 
 /**
  * @class shared.PolicyManagerService
@@ -37,14 +37,14 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
  */
 @Injectable()
 export class PolicyManagerService {
-    prefix = REST_PREFIX + 'policies';
+    prefix = `${REST_PREFIX}policies`;
 
     // Common IRIs used in policies
-    actionCreate = POLICY + 'Create';
-    actionRead = POLICY + 'Read';
-    actionUpdate = POLICY + 'Update';
-    actionDelete = POLICY + 'Delete';
-    actionModify = CATALOG + 'Modify';
+    actionCreate = `${POLICY}Create`;
+    actionRead = `${POLICY}Read`;
+    actionUpdate = `${POLICY}Update`;
+    actionDelete = `${POLICY}Delete`;
+    actionModify = `${CATALOG}Modify`;
     subjectId = 'urn:oasis:names:tc:xacml:1.0:subject:subject-id';
     resourceId = 'urn:oasis:names:tc:xacml:1.0:resource:resource-id';
     actionId = 'urn:oasis:names:tc:xacml:1.0:action:action-id';
@@ -53,7 +53,7 @@ export class PolicyManagerService {
     actionCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:action';
     stringEqual = 'urn:oasis:names:tc:xacml:1.0:function:string-equal';
 
-    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * Calls the GET /mobirest/policies endpoint with the passed filter values for
@@ -70,15 +70,15 @@ export class PolicyManagerService {
      */
     getPolicies(relatedResource?: string, relatedSubject?: string, relatedAction?: string, systemOnly = false): Observable<any[]> {
         const config = {
-            params: this.util.createHttpParams({
+            params: createHttpParams({
                 relatedResource,
                 relatedSubject,
                 relatedAction,
                 systemOnly
             })
         };
-        return this.spinnerSvc.track(this.http.get(this.prefix, config))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.get<any[]>(this.prefix, config))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -89,8 +89,8 @@ export class PolicyManagerService {
      * error message
      */
     getPolicy(policyId: string): Observable<any> {
-        return this.spinnerSvc.track(this.http.get(this.prefix + '/' + encodeURIComponent(policyId)))
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.track(this.http.get(`${this.prefix}/${encodeURIComponent(policyId)}`))
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -101,8 +101,8 @@ export class PolicyManagerService {
      * @returns {Observable} An Observable that resolves if the update was successful or is rejected with an error
      * message
      */
-    updatePolicy(newPolicy: any): Observable<null> {
-        return this.spinnerSvc.track(this.http.put(this.prefix + '/' + encodeURIComponent(newPolicy.PolicyId), newPolicy, {responseType: 'text'}))
-            .pipe(catchError(this.util.handleError));
+    updatePolicy(newPolicy: any): Observable<void> {
+        return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(newPolicy.PolicyId)}`, newPolicy, {responseType: 'text'}))
+            .pipe(catchError(handleError), map(() => {}));
     }
 }

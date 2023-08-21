@@ -31,9 +31,9 @@ import { DelimitedManagerService } from '../../../shared/services/delimitedManag
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { IriTemplateOverlayComponent } from '../iriTemplateOverlay/iriTemplateOverlay.component';
 import { PropMappingOverlayComponent } from '../propMappingOverlay/propMappingOverlay.component';
+import { getBeautifulIRI, getDctermsValue, getPropertyId, getPropertyValue } from '../../../shared/utility';
 
 interface DataMappingInfo {
     value: string,
@@ -93,7 +93,7 @@ export class ClassMappingDetailsComponent {
     @Output() updateClassMappings = new EventEmitter<void>();
     
     constructor(private dialog: MatDialog, private mm: MappingManagerService, public state: MapperStateService,
-        private dm: DelimitedManagerService, private pm: PropertyManagerService, private util: UtilService) {}
+        private dm: DelimitedManagerService, private pm: PropertyManagerService) {}
 
     editIriTemplate(): void {
         this.dialog.open(IriTemplateOverlayComponent).afterClosed().subscribe(() => {
@@ -126,8 +126,8 @@ export class ClassMappingDetailsComponent {
     }
     setIriTemplate(): void {
         const classMapping = this.state.selected.mapping.getClassMapping(this.classMappingId);
-        const prefix = this.util.getPropertyValue(classMapping, DELIM + 'hasPrefix');
-        const localName = this.util.getPropertyValue(classMapping, DELIM + 'localName');
+        const prefix = getPropertyValue(classMapping, `${DELIM}hasPrefix`);
+        const localName = getPropertyValue(classMapping, `${DELIM}localName`);
         this.iriTemplate = prefix + localName;
     }
     getPropValue(propMapping: JSONLDObject): string {
@@ -135,7 +135,7 @@ export class ClassMappingDetailsComponent {
             return this.dm.getHeader(this.getLinkedColumnIndex(propMapping));
         } else {
             const classMapping = this.state.selected.mapping.getClassMapping(this.getLinkedClassId(propMapping));
-            return this.util.getDctermsValue(classMapping, 'title');
+            return getDctermsValue(classMapping, 'title');
         }
     }
     getDataValuePreview(propMapping: JSONLDObject): string {
@@ -144,23 +144,23 @@ export class ClassMappingDetailsComponent {
     }
     getDatatypePreview(propMapping: JSONLDObject): string {
         const props = this.state.getPropsByClassMappingId(this.classMappingId);
-        const mapProp = this.util.getPropertyId(propMapping, DELIM + 'hasProperty');
+        const mapProp = getPropertyId(propMapping, `${DELIM}hasProperty`);
         const prop = find(props, {propObj: {'@id': mapProp}});
-        const propIRI = this.util.getPropertyId(propMapping, DELIM + 'datatypeSpec') || this.util.getPropertyId(prop?.propObj, RDFS + 'range') || XSD + 'string';
-        return this.util.getBeautifulIRI(propIRI);
+        const propIRI = getPropertyId(propMapping, `${DELIM}datatypeSpec`) || getPropertyId(prop?.propObj, `${RDFS}range`) || `${XSD}string`;
+        return getBeautifulIRI(propIRI);
     }
     getLanguagePreview(propMapping: JSONLDObject): string {
         const languageObj = find(this.pm.languageList, {value: this.getLanguageTag(propMapping)});
         return languageObj ? languageObj.label : '';
     }
     getLanguageTag(propMapping: JSONLDObject): string {
-        return this.util.getPropertyValue(propMapping, DELIM + 'languageSpec');
+        return getPropertyValue(propMapping, `${DELIM}languageSpec`);
     }
     getLinkedClassId(propMapping: JSONLDObject): string {
-        return this.util.getPropertyId(propMapping, DELIM + 'classMapping');
+        return getPropertyId(propMapping, `${DELIM}classMapping`);
     }
     getLinkedColumnIndex(propMapping: JSONLDObject): string {
-        return this.util.getPropertyValue(propMapping, DELIM + 'columnIndex');
+        return getPropertyValue(propMapping, `${DELIM}columnIndex`);
     }
     switchClass(propMapping: JSONLDObject): void {
         if (this.mm.isObjectMapping(propMapping)) {
@@ -187,7 +187,7 @@ export class ClassMappingDetailsComponent {
         const classMapping = this.state.selected.mapping.getClassMapping(this.classMappingId);
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: `<p>Are you sure you want to delete <strong>${propMapping.title}</strong> from <strong>${this.util.getDctermsValue(classMapping, 'title')}</strong>?</p>`
+                content: `<p>Are you sure you want to delete <strong>${propMapping.title}</strong> from <strong>${getDctermsValue(classMapping, 'title')}</strong>?</p>`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
@@ -206,7 +206,7 @@ export class ClassMappingDetailsComponent {
             const propMappingPreview: PropMappingPreview = {
                 jsonld: propMapping,
                 isInvalid: this.isInvalid(propMapping),
-                title: this.util.getDctermsValue(propMapping, 'title')
+                title: getDctermsValue(propMapping, 'title')
             };
             if (this.mm.isDataMapping(propMapping)) {
                 propMappingPreview.dataMappingInfo = {

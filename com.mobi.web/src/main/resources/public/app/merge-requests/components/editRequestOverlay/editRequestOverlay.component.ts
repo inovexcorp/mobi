@@ -32,7 +32,8 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { updateDctermsValue } from '../../../shared/utility';
 
 /**
  * @name merge-requests.EditRequestOverlayComponent
@@ -56,7 +57,7 @@ export class EditRequestOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<EditRequestOverlayComponent>, private fb: UntypedFormBuilder,
         public state: MergeRequestsStateService, public mm: MergeRequestManagerService,
-        public cm: CatalogManagerService, public um: UserManagerService, public util: UtilService) {}
+        public cm: CatalogManagerService, public um: UserManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this._initRequestConfig();
@@ -64,7 +65,7 @@ export class EditRequestOverlayComponent implements OnInit {
             .subscribe((response: HttpResponse<JSONLDObject[]>) => {
                 this.branches = response.body;
             }, error => {
-                this.util.createErrorToast(error);
+                this.toast.createErrorToast(error);
                 this.branches = [];
             });
     } 
@@ -74,10 +75,11 @@ export class EditRequestOverlayComponent implements OnInit {
         this.mm.updateRequest(jsonld['@id'], jsonld)
             .subscribe(() => {
                 const recordTitle = this.state.selected.recordTitle;
-                this.util.createSuccessToast('Successfully updated request');
+                this.toast.createSuccessToast('Successfully updated request');
                 this.state.selected = this.state.getRequestObj(jsonld);
                 this.state.selected.recordTitle = recordTitle;
-                this.state.setRequestDetails(this.state.selected).subscribe(() => {}, this.util.createErrorToast);
+                this.state.setRequestDetails(this.state.selected)
+                  .subscribe(() => {}, error => this.toast.createErrorToast(error));
                 this.state.selected.sourceBranch = Object.prototype.hasOwnProperty.call(this.state.selected,'sourceBranch')
                     ? this.state.selected.sourceBranch : emptyObject;
 
@@ -99,17 +101,17 @@ export class EditRequestOverlayComponent implements OnInit {
     private _getMergeRequestJson() {
         const jsonld = Object.assign({}, this.state.selected.jsonld);
 
-        this.util.updateDctermsValue(jsonld, 'title', this.editRequestForm.controls.title.value);
-        this.util.updateDctermsValue(jsonld, 'description', this.editRequestForm.controls.description.value);
-        jsonld[MERGEREQ + 'targetBranch'] = [{'@id': this.targetBranch['@id']}];
-        jsonld[MERGEREQ + 'assignee'] = [];
-        jsonld[MERGEREQ + 'removeSource'] = [{'@type': XSD + 'boolean', '@value': this.editRequestForm.controls.removeSource.value.toString()}];
+        updateDctermsValue(jsonld, 'title', this.editRequestForm.controls.title.value);
+        updateDctermsValue(jsonld, 'description', this.editRequestForm.controls.description.value);
+        jsonld[`${MERGEREQ}targetBranch`] = [{'@id': this.targetBranch['@id']}];
+        jsonld[`${MERGEREQ}assignee`] = [];
+        jsonld[`${MERGEREQ}removeSource`] = [{'@type': `${XSD}boolean`, '@value': this.editRequestForm.controls.removeSource.value.toString()}];
 
-        jsonld[MERGEREQ + 'assignee'] = [];
+        jsonld[`${MERGEREQ}assignee`] = [];
         this.assignees.forEach(username => {
             const user = this.um.users.find(user => user.username === username);
             if (user) {
-                jsonld[MERGEREQ + 'assignee'].push({'@id': user.iri});
+                jsonld[`${MERGEREQ}assignee`].push({'@id': user.iri});
             }
         });
         return jsonld;

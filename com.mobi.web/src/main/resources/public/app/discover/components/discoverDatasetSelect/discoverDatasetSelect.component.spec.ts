@@ -37,11 +37,9 @@ describe('Discover Dataset Select Component', function() {
     let component: DiscoverDatasetSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<DiscoverDatasetSelectComponent>;
-    let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            // imports: [ SharedModule ],
             declarations: [
                 DiscoverDatasetSelectComponent,
                 MockComponent(DatasetSelectComponent)
@@ -54,7 +52,6 @@ describe('Discover Dataset Select Component', function() {
         fixture = TestBed.createComponent(DiscoverDatasetSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
 
         spyOn(component.recordIdChange, 'emit');
 
@@ -69,7 +66,6 @@ describe('Discover Dataset Select Component', function() {
         component = null;
         element = null;
         fixture = null;
-        discoverStateStub = null;
     });
 
     describe('contains the correct html', function() {

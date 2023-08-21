@@ -69,6 +69,7 @@ describe('Assignee Input component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
+        userManagerStub.filterUsers.and.callFake(arr => arr);
 
         component.parentForm = new UntypedFormGroup({
             assignees: new UntypedFormControl('')
@@ -121,7 +122,7 @@ describe('Assignee Input component', function() {
             expect(element.queryAll(By.css('.assignee-input')).length).toEqual(1);
         });
         ['mat-form-field', 'mat-chip-list', 'mat-autocomplete', 'input[placeholder="Assignees"]'].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });

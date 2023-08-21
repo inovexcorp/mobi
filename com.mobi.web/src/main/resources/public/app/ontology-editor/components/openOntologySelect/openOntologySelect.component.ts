@@ -37,7 +37,8 @@ import { CATALOG, DCTERMS, ONTOLOGYSTATE } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { EditBranchOverlayComponent } from '../editBranchOverlay/editBranchOverlay.component';
 import { OntologyAction } from '../../../shared/models/ontologyAction';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { condenseCommitId, getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 interface OptionGroup {
     title: string
@@ -82,7 +83,7 @@ export class OptionIcon {
     templateUrl: './openOntologySelect.component.html',
     styleUrls: ['./openOntologySelect.component.scss']
 })
-export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck*/ {
+export class OpenOntologySelectComponent implements OnInit, OnChanges {
     @Input() listItem: OntologyListItem;
     
     state: State;
@@ -99,7 +100,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     constructor(private dialog: MatDialog, 
         public cm: CatalogManagerService, 
         public os: OntologyStateService, 
-        public util: UtilService) {}
+        private toast: ToastService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -129,8 +130,8 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     }
     updateState(): void {
         this.state = this.os.getStateByRecordId(this.listItem?.versionedRdfRecord.recordId);
-        const recordState = find(get(this.state, 'model', []), {'@type': [ONTOLOGYSTATE + 'StateRecord']});
-        const currentStateId = this.util.getPropertyId(recordState, ONTOLOGYSTATE + 'currentState');
+        const recordState = find(get(this.state, 'model', []), {'@type': [`${ONTOLOGYSTATE}StateRecord`]});
+        const currentStateId = getPropertyId(recordState, `${ONTOLOGYSTATE}currentState`);
         this.currentState = find(this.state.model, {'@id': currentStateId});
         this._setSelected();
         this.ontologySearchControl.setValue(this.selected?.title);
@@ -161,9 +162,9 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     }
     canDelete(entity: JSONLDObject): boolean {
         if (this.cm.isBranch(entity)) {
-            return get(entity, '@id') !== this.listItem.versionedRdfRecord.branchId && this.listItem.userCanModify && this.util.getDctermsValue(entity, 'title') !== 'MASTER';
+            return get(entity, '@id') !== this.listItem.versionedRdfRecord.branchId && this.listItem.userCanModify && getDctermsValue(entity, 'title') !== 'MASTER';
         } else if (this.cm.isTag(entity)) {
-            return this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'tag') !== get(entity, '@id') && this.listItem.userCanModify;
+            return getPropertyId(this.currentState, `${ONTOLOGYSTATE}tag`) !== get(entity, '@id') && this.listItem.userCanModify;
         } else {
             return false;
         }
@@ -179,10 +180,10 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
         this.selected = option;
         if (this.selected.type === 'Branch') {
             const branchId = this.selected.jsonld['@id'];
-            let commitId = this.util.getPropertyId(find(this.state?.model, {[ONTOLOGYSTATE + 'branch']: [{'@id': branchId}]}), ONTOLOGYSTATE + 'commit');
+            let commitId = getPropertyId(find(this.state?.model, {[`${ONTOLOGYSTATE}branch`]: [{'@id': branchId}]}), `${ONTOLOGYSTATE}commit`);
             this.cm.getRecordBranch(branchId, this.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
                 switchMap((branch: JSONLDObject) => {
-                    const headCommitId = get(branch, [CATALOG + 'head', 0, '@id'], '');
+                    const headCommitId = getPropertyId(branch, `${CATALOG}head`);
                     if (!commitId) {
                         commitId = headCommitId;
                     }
@@ -190,16 +191,16 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
                 })).subscribe(() => {
                     this.ontologySearchControl.setValue(this.selected.title);
                     this.os.resetStateTabs(this.listItem);
-                }, error => this.util.createErrorToast(error));
+                }, error => this.toast.createErrorToast(error));
         } else if (this.selected.type === 'Tag') {
             const tagId = this.selected.jsonld['@id'];
-            const commitId = this.util.getPropertyId(this.selected.jsonld, CATALOG + 'commit');
+            const commitId = getPropertyId(this.selected.jsonld, `${CATALOG}commit`);
             this.cm.getCommit(commitId).pipe(
                 switchMap(() => this.os.updateOntologyWithCommit(this.listItem.versionedRdfRecord.recordId, commitId, tagId))
             ).subscribe(() => {
                 this.ontologySearchControl.setValue(this.selected.title);
                 this.os.resetStateTabs(this.listItem);
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
         }
     }
     openPanel(): void {
@@ -214,11 +215,11 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
         if (option.type === 'Branch') {
             let msg = '';
             if (option.isUserBranch) {
-                msg += '<p>You have made diverging changes from the head of Branch: <strong>' + option.title + '</strong>. Continuing with this operation will only delete your diverging changes.</p>';
+                msg += `<p>You have made diverging changes from the head of Branch: <strong>${option.title}</strong>. Continuing with this operation will only delete your diverging changes.</p>`;
             }
             this.dialog.open(ConfirmModalComponent, {
                 data: {
-                    content: msg + '<p>Are you sure that you want to delete Branch: <strong>' + option.title + '</strong>?</p>'
+                    content: `${msg}<p>Are you sure that you want to delete Branch: <strong>${option.title}</strong>?</p>`
                 }
             }).afterClosed().subscribe((result: boolean) => {
                 if (result) {
@@ -228,7 +229,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
         } else if (option.type === 'Tag') {
             this.dialog.open(ConfirmModalComponent, {
                 data: {
-                    content: '<p>Are you sure that you want to delete Tag: <strong>' + option.title + '</strong>?</p>'
+                    content: `<p>Are you sure that you want to delete Tag: <strong>${option.title}</strong>?</p>`
                 }
             }).afterClosed().subscribe((result: boolean) => {
                 if (result) {
@@ -253,7 +254,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
             switchMap(() => this.os.deleteBranchState(this.listItem.versionedRdfRecord.recordId, branch['@id']))
         ).subscribe(() => {
             if (!this.os.isStateBranch(this.currentState)) {
-                this.cm.getCommit(this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'commit'))
+                this.cm.getCommit(getPropertyId(this.currentState, `${ONTOLOGYSTATE}commit`))
                     .subscribe(noop, () => {
                         this.changeToMaster();
                     });
@@ -261,20 +262,20 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
                 this.ontologySearchControl.setValue(this.selected.title);
                 this.os.resetStateTabs(this.listItem);
             }
-        }, error => this.util.createErrorToast(error));
+        }, error => this.toast.createErrorToast(error));
     }
     deleteTag(tag: JSONLDObject): void {
         this.cm.deleteRecordVersion(tag['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId).subscribe(() => {
             remove(this.listItem.tags, {'@id': tag['@id']});
             if (!this.os.isStateTag(this.currentState)) {
-                this.cm.getCommit(this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'commit')).subscribe(noop, () => {
+                this.cm.getCommit(getPropertyId(this.currentState, `${ONTOLOGYSTATE}commit`)).subscribe(noop, () => {
                     this.changeToMaster();
                 });
             } else {
                 this.ontologySearchControl.setValue(this.selected.title);
                 this.os.resetStateTabs(this.listItem);
             }
-        }, error => this.util.createErrorToast(error));
+        }, error => this.toast.createErrorToast(error));
     }
     handleBranchEdit(branch: JSONLDObject): void {
         if (branch['@id'] === this.listItem.versionedRdfRecord.branchId) {
@@ -283,33 +284,33 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
         }
     }
     changeToMaster(): void {
-        this.util.createWarningToast((this.os.isStateTag(this.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
+        this.toast.createWarningToast(`${(this.os.isStateTag(this.currentState) ? 'Tag' : 'Commit')} no longer exists. Opening MASTER`);
         this.updateSelected({
             title: 'MASTER',
             type: 'Branch',
             isUserBranch: false,
             canDelete: false,
-            jsonld: {'@id': this.listItem.masterBranchIri, '@type': [CATALOG + 'Branch']},
+            jsonld: {'@id': this.listItem.masterBranchIri, '@type': [`${CATALOG}Branch`]},
             icon: OptionIcon.BRANCH
         });
     }
 
     private _setSelected() {
         if (this.os.isStateBranch(this.currentState)) {
-            this.selected = this._createBranchOption(find(this.listItem.branches, {'@id': this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'branch')}));
+            this.selected = this._createBranchOption(find(this.listItem.branches, {'@id': getPropertyId(this.currentState, `${ONTOLOGYSTATE}branch`)}));
         } else if (this.os.isStateTag(this.currentState)) {
-            this.selected = this._createTagOption(find(this.listItem.tags, {'@id': this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'tag')}));
+            this.selected = this._createTagOption(find(this.listItem.tags, {'@id': getPropertyId(this.currentState, `${ONTOLOGYSTATE}tag`)}));
         } else {
-            const commitId = this.util.getPropertyId(this.currentState, ONTOLOGYSTATE + 'commit');
+            const commitId = getPropertyId(this.currentState, `${ONTOLOGYSTATE}commit`);
             this.selected = {
-                title: this.util.condenseCommitId(commitId),
+                title: condenseCommitId(commitId),
                 type: 'Commit',
                 isUserBranch: false,
                 canDelete: false,
                 jsonld: {
                     '@id': commitId,
-                    '@type': [CATALOG + 'Commit'],
-                    [DCTERMS + 'title']: [{'@value': this.util.condenseCommitId(commitId)}]
+                    '@type': [`${CATALOG}Commit`],
+                    [`${DCTERMS}title`]: [{'@value': condenseCommitId(commitId)}]
                 },
                 icon: OptionIcon.COMMIT
             };
@@ -317,7 +318,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     }
     private _createBranchOption(jsonld: JSONLDObject): Option {
         return {
-            title: this.util.getDctermsValue(jsonld, 'title'),
+            title: getDctermsValue(jsonld, 'title'),
             type: 'Branch',
             canDelete: this.canDelete(jsonld),
             isUserBranch: this.cm.isUserBranch(jsonld),
@@ -327,7 +328,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges/*, DoCheck
     }
     private _createTagOption(jsonld: JSONLDObject): Option {
         return {
-            title: this.util.getDctermsValue(jsonld, 'title'),
+            title: getDctermsValue(jsonld, 'title'),
             type: 'Tag',
             canDelete: this.canDelete(jsonld),
             isUserBranch: false,

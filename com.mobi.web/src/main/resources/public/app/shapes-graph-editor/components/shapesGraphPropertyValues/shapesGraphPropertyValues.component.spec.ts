@@ -22,12 +22,11 @@
 */
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ValueDisplayComponent } from '../../../shared/components/valueDisplay/valueDisplay.component';
-import { UtilService } from '../../../shared/services/util.service';
 import { ShapesGraphPropertyValuesComponent } from './shapesGraphPropertyValues.component';
 
 describe('Shapes Graph Property Values component', function() {
@@ -40,9 +39,6 @@ describe('Shapes Graph Property Values component', function() {
             declarations: [
                 ShapesGraphPropertyValuesComponent,
                 MockComponent(ValueDisplayComponent),
-            ],
-            providers: [
-                MockProvider(UtilService)
             ]
         }).compileComponents();
 
@@ -50,7 +46,7 @@ describe('Shapes Graph Property Values component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
 
-        component.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
+        component.entity = {'@id': 'shapesGraph', 'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
         component.property = 'prop';
 
         fixture.detectChanges();
@@ -63,6 +59,9 @@ describe('Shapes Graph Property Values component', function() {
         fixture = null;
     });
 
+    it('sets the property display correctly', function() {
+        expect(component.propertyDisplay).toEqual('Prop');
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.shapes-graph-property-values')).length).toEqual(1);

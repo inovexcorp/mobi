@@ -33,7 +33,7 @@
         </div>
         <div class="property-values my-2" *ngFor="let element of resource | keyvalue">
             <div class="prop-header d-flex align-items-center">
-                <p class="text text-truncate m-0" title="{{element.key}}">{{entityNameFunc ? entityNameFunc(element.key) : util.getBeautifulIRI(element.key)}}</p>
+                <p class="text text-truncate m-0" title="{{element.key}}">{{getDisplay(element.key)}}</p>
                 <small class="ml-1 text-muted text-truncate flex-1 remove-min-width">&lt;<span>{{element.key}}</span>&gt;</small>
             </div>
             <div class="prop-value-container" *ngFor="let item of element.value">
@@ -43,7 +43,7 @@
                         <span class="text-monospace px-1" *ngIf="item.del">--</span>
                     </div>
                     <div class="value-display px-4 flex-1 remove-min-width">
-                        <span *ngIf="item['@id']" class="value-display"><span>{{entityNameFunc ? entityNameFunc(item['@id']) : util.getBeautifulIRI(item['@id'])}}</span> <small *ngIf="!util.isBlankNodeId(item['@id'])"> &lt;<span>{{item['@id']}}</span>&gt;</small></span>
+                        <span *ngIf="item['@id']" class="value-display"><span>{{getDisplay(item['@id'])}}</span> <small *ngIf="!isBlankNodeId(item['@id'])"> &lt;<span>{{item['@id']}}</span>&gt;</small></span>
                         <span *ngIf="item['@value']" class="value-display"><span>{{item['@value']}}</span>
                             <small *ngIf="item['@type']" class="item-type type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}"> [type: <span [innerHtml]="item['@type'] | prefixation"></span>]</small>
                             <small *ngIf="item['@language']" class="item-language type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}"> [language: <span [innerHtml]="item['@language'] | prefixation"></span>]</small>

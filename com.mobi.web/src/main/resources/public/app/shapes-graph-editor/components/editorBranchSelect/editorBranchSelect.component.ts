@@ -25,23 +25,24 @@ import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChi
 import { UntypedFormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatAutocompleteTrigger, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { find, get, noop, remove } from 'lodash';
+import { find, get, remove } from 'lodash';
 import { forkJoin, Observable } from 'rxjs';
-import { first, map, startWith } from 'rxjs/operators';
+import { first, map, startWith, switchMap } from 'rxjs/operators';
 
 import { CATALOG } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { condenseCommitId, getDctermsValue, getPropertyId } from '../../../shared/utility';
 
-interface OptionGroup {
+export interface OptionGroup {
     title: string,
     options: Option[]
 }
 
-interface Option {
+export interface Option {
     title: string,
     branchIri?: string,
     tagIri?: string,
@@ -77,7 +78,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
     filteredOptions: Observable<OptionGroup[]>
 
     constructor(private state: ShapesGraphStateService, private cm: CatalogManagerService,
-                private dialog: MatDialog, private util: UtilService) {}
+                private dialog: MatDialog, private toast: ToastService) {}
 
     ngOnInit(): void {
         this.setFilteredOptions();
@@ -95,50 +96,57 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
         }
     }
     filter(val: string): OptionGroup[] {
-        const filteredBranches = this.branches.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
+        const filteredBranches = this.branches
+          .filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
         const rtn = [{ title: 'Branches', options: filteredBranches }];
         if (this.tags.length > 0) {
-            const filteredTags = this.tags.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
+            const filteredTags = this.tags
+              .filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
             rtn.push({ title: 'Tags', options: filteredTags });
         }
         if (this.commits.length > 0) {
-            const filteredCommits = this.commits.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
+            const filteredCommits = this.commits
+              .filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
             rtn.push({ title: 'Commits', options: filteredCommits });
         }
         return rtn;
     }
-    selectVersion(event: MatAutocompleteSelectedEvent): Promise<any> {
+    selectVersion(event: MatAutocompleteSelectedEvent): void {
         if (this.state.isCommittable()) {
-            this.util.createWarningToast('Cannot switch branches while there are uncommitted changes');
+            this.toast.createWarningToast('Cannot switch branches while there are uncommitted changes');
             return;
         }
         if (event?.option?.value?.branchIri && event?.option?.value?.commitIri) {
             const branchId = event.option.value.branchIri;
-            return this.cm.getRecordBranch(branchId, this.state.listItem.versionedRdfRecord.recordId,
-                get(this.cm.localCatalog, '@id', '')).pipe(first()).toPromise()
-                .then(branch => {
-                    return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, branchId, get(branch, [CATALOG + 'head', 0, '@id']), undefined, event.option.value.title);
-                }, error => { 
-                    return Promise.reject(error);
+            this.cm.getRecordBranch(branchId, this.state.listItem.versionedRdfRecord.recordId,
+                get(this.cm.localCatalog, '@id', '')).pipe(
+                switchMap(branch => {
+                    return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
+                        branchId, 
+                        getPropertyId(branch, `${CATALOG}head`), 
+                        undefined, 
+                        event.option.value.title);
                 })
-                .then(() => {
-                     this.resetSearch();
-                }, error => { 
-                    this.util.createErrorToast(error);
-                });
+            ).subscribe(() => {
+                  this.resetSearch();
+            }, error => { 
+                this.toast.createErrorToast(error);
+            });
         }
         if (event?.option?.value?.tagIri && event?.option?.value?.commitIri) {
-            return this.cm.getCommit(event.option.value.commitIri).pipe(first()).toPromise()
-                .then(headCommit => {
-                    return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, undefined, headCommit['@id'], event.option.value.tagIri, event.option.value.title);
-                }, (error) => {
-                   return Promise.reject(error);
+            this.cm.getCommit(event.option.value.commitIri).pipe(
+                switchMap(headCommit => {
+                    return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
+                      undefined, 
+                      headCommit['@id'], 
+                      event.option.value.tagIri, 
+                      event.option.value.title);
                 })
-                .then(() =>  {
-                   return this.resetSearch();
-                }, error => { 
-                    this.util.createErrorToast(error);
-                });
+            ).subscribe(() =>  {
+                return this.resetSearch();
+            }, error => { 
+                this.toast.createErrorToast(error);
+            });
         }
     }
     close(): void {
@@ -149,7 +157,10 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
         if (this.state?.listItem?.currentVersionTitle) {
             this.branchSearchControl.setValue(this.state.listItem.currentVersionTitle);
             const branch = find(this.branches, {'branchIri': this.state.listItem.versionedRdfRecord.branchId});
-            const tag = find(this.tags, {'commitIri': this.state.listItem.versionedRdfRecord.commitId, 'tagIri': this.state.listItem.versionedRdfRecord.tagId});
+            const tag = find(this.tags, {
+              'commitIri': this.state.listItem.versionedRdfRecord.commitId, 
+              'tagIri': this.state.listItem.versionedRdfRecord.tagId
+            });
             const commit = find(this.commits, {'commitIri': this.state.listItem.versionedRdfRecord.commitId});
 
             if (branch) {
@@ -181,27 +192,29 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
             };
         }
     }
-    retrieveBranchesAndTags(): Promise<any> {
-        const getBranchesOb: Observable<HttpResponse<JSONLDObject[]>> = this.cm.getRecordBranches(this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id'));
-        const getTagsOb: Observable<HttpResponse<JSONLDObject[]>> = this.cm.getRecordVersions(this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id'));
+    retrieveBranchesAndTags(): Promise<void> {
+        const getBranchesOb: Observable<HttpResponse<JSONLDObject[]>> = 
+          this.cm.getRecordBranches(this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id'));
+        const getTagsOb: Observable<HttpResponse<JSONLDObject[]>> = 
+          this.cm.getRecordVersions(this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id'));
         return forkJoin([getBranchesOb, getTagsOb]).toPromise()
             .then((responses: HttpResponse<JSONLDObject[]>[]) => {
                 const branches: JSONLDObject[] = responses[0].body;
                 this.branches = branches.map(branch => {
                     return {
                         branchIri: branch['@id'],
-                        commitIri: this.util.getPropertyId(branch, CATALOG + 'head'),
-                        title: this.util.getDctermsValue(branch, 'title'),
-                        description: this.util.getDctermsValue(branch, 'description')
+                        commitIri: getPropertyId(branch, `${CATALOG}head`),
+                        title: getDctermsValue(branch, 'title'),
+                        description: getDctermsValue(branch, 'description')
                     } as Option;
                 });
                 const tags: JSONLDObject[] = responses[1].body;
                 this.tags = tags.map(tag => {
                     return {
                         tagIri: tag['@id'],
-                        commitIri: this.util.getPropertyId(tag, CATALOG + 'commit'),
-                        title: this.util.getDctermsValue(tag, 'title'),
-                        description: this.util.getDctermsValue(tag, 'description')
+                        commitIri: getPropertyId(tag, `${CATALOG}commit`),
+                        title: getDctermsValue(tag, 'title'),
+                        description: getDctermsValue(tag, 'description')
                     } as Option;
                 });
                 let promise = Promise.resolve();
@@ -212,14 +225,14 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
                 this.resetSearch();
                 return promise;
             }, error => Promise.reject(error))
-            .then(noop, error => this.util.createErrorToast(error));
+            .then(() => {}, error => this.toast.createErrorToast(error));
     }
     showDeleteBranchConfirmationOverlay(option: Option, event: Event): void {
         this.autocompleteTrigger.closePanel();
         event.stopPropagation();
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: '<p>Are you sure you want to delete branch <strong>' + option.title + '</strong>?</p>'
+                content: `<p>Are you sure you want to delete branch <strong>${option.title}</strong>?</p>`
             }
         }).afterClosed().subscribe(result => {
             if (result) {
@@ -233,7 +246,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
         event.stopPropagation();
         this.dialog.open(ConfirmModalComponent, {
             data: {
-                content: '<p>Are you sure you want to delete tag <strong>' + option.title + '</strong>?</p>'
+                content: `<p>Are you sure you want to delete tag <strong>${option.title}</strong>?</p>`
             }
         }).afterClosed().subscribe(result => {
             if (result) {
@@ -244,15 +257,17 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
     }
 
     private deleteShapesGraphBranch(branchId: string): void {
-        this.state.deleteShapesGraphBranch(this.recordIri, branchId)
-            .then(() => this.util.createSuccessToast('Branch ' + branchId + ' deleted successfully!'), this.util.createErrorToast);
+        this.state.deleteShapesGraphBranch(this.recordIri, branchId).subscribe(
+            () => this.toast.createSuccessToast(`Branch ${branchId} deleted successfully!`), 
+            error => this.toast.createErrorToast(error)
+        );
     }
     private deleteShapesGraphTag(tagId: string): void {
-        this.cm.deleteRecordVersion(tagId, this.recordIri, get(this.cm.localCatalog, '@id', '')).pipe(first()).toPromise()
-            .then(() => {
+        this.cm.deleteRecordVersion(tagId, this.recordIri, get(this.cm.localCatalog, '@id', ''))
+            .subscribe(() => {
                 remove(this.state.listItem.tags, {'@id': tagId});
-                this.util.createSuccessToast('Tag ' + tagId + ' deleted successfully!');
-            }, this.util.createErrorToast);
+                this.toast.createSuccessToast(`Tag ${tagId} deleted successfully!`);
+            }, error => this.toast.createErrorToast(error));
     }
     protected setFilteredOptions(): void {
         this.filteredOptions = this.branchSearchControl.valueChanges
@@ -270,29 +285,30 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
             this.resetSearch();
         }
     }
-    private checkVersionDeleted(): Promise<any> {
+    private checkVersionDeleted(): Promise<void> {
         let promise = Promise.resolve();
         this.commits = [];
         if (this.state.listItem.versionedRdfRecord.branchId) {
             const branch = find(this.branches, {branchIri: this.state.listItem.versionedRdfRecord.branchId});
             if (!branch) {
-                this.util.createWarningToast('Branch ' + this.state.listItem.currentVersionTitle
-                    + ' cannot be found. Switching to MASTER');
+                this.toast.createWarningToast(`Branch ${this.state.listItem.currentVersionTitle} cannot be found. Switching to MASTER`);
                 promise = this.resetToMaster();
             } else {
                 this.state.listItem.currentVersionTitle = branch.title;
             }
         } else if (this.state.listItem.versionedRdfRecord.tagId) {
-            const tag = find(this.tags, {commitIri: this.state.listItem.versionedRdfRecord.commitId, tagIri: this.state.listItem.versionedRdfRecord.tagId});
+            const tag = find(this.tags, {
+              commitIri: this.state.listItem.versionedRdfRecord.commitId, 
+              tagIri: this.state.listItem.versionedRdfRecord.tagId
+            });
             if (!tag) {
-                this.util.createWarningToast('Tag ' + this.state.listItem.currentVersionTitle
-                    + ' cannot be found. Switching to MASTER');
+                this.toast.createWarningToast(`Tag ${this.state.listItem.currentVersionTitle} cannot be found. Switching to MASTER`);
                 promise = this.resetToMaster();
             } else {
                 this.state.listItem.currentVersionTitle = tag.title;
             }
         } else if (this.state.listItem.versionedRdfRecord.commitId) {
-            const title = this.util.condenseCommitId(this.state.listItem.versionedRdfRecord.commitId);
+            const title = condenseCommitId(this.state.listItem.versionedRdfRecord.commitId);
             this.state.listItem.currentVersionTitle = title;
             this.commits = [{
                 title,
@@ -301,17 +317,18 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
         }
         return promise;
     }
-    private resetToMaster(): Promise<any> {
+    private resetToMaster(): Promise<void> {
         this.autocompleteTrigger.closePanel();
-        return this.state.deleteState(this.state.listItem.versionedRdfRecord.recordId).toPromise().then(() => {
-            this.state.closeShapesGraph(this.state.listItem.versionedRdfRecord.recordId);
-            return this.state.openShapesGraph({
-                recordId: this.state.listItem.versionedRdfRecord.recordId,
-                title: this.state.listItem.versionedRdfRecord.title
-            });
-        }, error => Promise.reject(error))
-            .then(() => {
-                this.state.listItem.currentVersionTitle = 'MASTER';
-            }, error => Promise.reject(error));
+        return this.state.deleteState(this.state.listItem.versionedRdfRecord.recordId).toPromise()
+          .then(() => {
+              this.state.closeShapesGraph(this.state.listItem.versionedRdfRecord.recordId);
+              return this.state.openShapesGraph({
+                  recordId: this.state.listItem.versionedRdfRecord.recordId,
+                  title: this.state.listItem.versionedRdfRecord.title
+              }).pipe(first()).toPromise();
+          }, error => Promise.reject(error))
+          .then(() => {
+              this.state.listItem.currentVersionTitle = 'MASTER';
+          }, error => Promise.reject(error));
     }
 }

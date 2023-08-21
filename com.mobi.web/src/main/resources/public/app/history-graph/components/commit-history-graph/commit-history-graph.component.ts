@@ -31,26 +31,23 @@ import {
   Output,
   SimpleChanges
 } from '@angular/core';
-import { SVGElementHelperService } from '../../services/svgelement-helper.service';
-
+import { MatDialog } from '@angular/material/dialog';
 import { find } from 'lodash';
 import { v4 } from 'uuid';
-
 import { Branch as GitGraphBranch, createGitgraph, templateExtend, TemplateName } from '@gitgraph/js';
 import { Commit as GitGraphCommit } from '@gitgraph/core/lib/commit';
-
 import { GitgraphOptions, GitgraphCommitOptions, GitgraphMergeOptions, GitgraphBranchOptions, MergeStyle } from '@gitgraph/core';
 import { GitgraphUserApi } from '@gitgraph/core/lib/user-api/gitgraph-user-api';
 
-import { UtilService } from '../../../shared/services/util.service';
+import { SVGElementHelperService } from '../../services/svgelement-helper.service';
 import { Commit } from '../../../shared/models/commit.interface';
-import { MatDialog } from '@angular/material/dialog';
 import { CommitInfoOverlayComponent } from '../../../shared/components/commitInfoOverlay/commitInfoOverlay.component';
 import { GraphHelperService } from '../../services/graph-helper.service';
 import { GitAction } from '../../models/git-action.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { BranchNames } from '../../models/branch-names.interface';
 import { Tag } from '../../../shared/models/tag.interface';
+import { condenseCommitId, getDate, getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class history-graph.CommitHistoryGraphComponent
@@ -82,8 +79,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
   @Input() tags: Tag[] = [];
   @Output() commitDotOnClick = new EventEmitter<Commit>();
 
-  constructor(private util: UtilService,
-    private dialog: MatDialog, 
+  constructor(private dialog: MatDialog, 
     private svgElementHelperService: SVGElementHelperService,
     private graphHelperService: GraphHelperService, private iterableDiffers: IterableDiffers) {}
 
@@ -131,7 +127,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     })
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.branchesDiffer = this.iterableDiffers.find([]).create(null);
     this.tagMapInit(this.tags);
   }
@@ -147,7 +143,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     }
   }
 
-  ngDoCheck() {
+  ngDoCheck(): void {
     const changes = this.branchesDiffer.diff(this.branches);
     if (changes) {
       this.dataBindingsChanged = true;
@@ -180,7 +176,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     let headTitleTemp = this.headTitle || '';
     if (!headTitleTemp) {
       const lastCommitId = this.commits[0]?.id;
-      headTitleTemp = lastCommitId ? this.util.condenseCommitId(lastCommitId) : 'master';
+      headTitleTemp = lastCommitId ? condenseCommitId(lastCommitId) : 'master';
     }
     this.errors = [];
     this.reset();
@@ -246,17 +242,17 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     const commitDate = gitAction.commit.date || '' ; 
     return {
       subject: gitAction.commit.message,
-      hash: this.util.condenseCommitId(commitId),
+      hash: condenseCommitId(commitId),
       author: gitAction.commit.creator.username,
       tag: this.getTags(commitId),
       renderDot: (svgCommit: GitGraphCommit) => {
         return this.svgElementHelperService.renderCommitDot(svgCommit, this.componentUuidId, this.commitDotClickable); 
       },
       renderMessage: (svgCommit: GitGraphCommit) => { 
-        return this.svgElementHelperService.renderCommitMessage(svgCommit, this.util.getDate(commitDate, 'd MMM yyyy')); 
+        return this.svgElementHelperService.renderCommitMessage(svgCommit, getDate(commitDate, 'd MMM yyyy')); 
       },
-      onMessageClick: (_svgCommit: GitGraphCommit) => this.openCommitOverlay(commitId),
-      onClick: (_svgCommit: GitGraphCommit) => this.commitDotOnClick.emit(gitAction.commit)
+      onMessageClick: () => this.openCommitOverlay(commitId),
+      onClick: () => this.commitDotOnClick.emit(gitAction.commit)
     };
   }
   openCommitOverlay(commitId: string): void {
@@ -275,7 +271,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
   getBranchesName(): BranchNames[] {
     return this.branches.map (branch => {
       return  {
-        name: this.util.getDctermsValue(branch, 'title') || ''
+        name: getDctermsValue(branch, 'title') || ''
       };
     });
   }

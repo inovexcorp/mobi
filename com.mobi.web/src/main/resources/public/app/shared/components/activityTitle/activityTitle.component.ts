@@ -26,9 +26,9 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { UserManagerService } from '../../services/userManager.service';
 import { User } from '../../models/user.interface';
 import { PROV } from '../../../prefixes';
-import { UtilService } from '../../services/util.service';
 import { ProvManagerService } from '../../services/provManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { getDctermsValue, getPropertyId } from '../../utility';
 
 /**
  * @class home.ActivityTitleComponent
@@ -54,16 +54,16 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
     public word = 'affected';
     public entitiesStr = '(None)';
 
-    constructor(private pm: ProvManagerService, private util: UtilService, private um: UserManagerService) {}
+    constructor(private pm: ProvManagerService, private um: UserManagerService) {}
     
     ngOnInit(): void {
-        this.setUsername(this.util.getPropertyId(this.activity, PROV + 'wasAssociatedWith'));
+        this.setUsername(getPropertyId(this.activity, `${PROV}wasAssociatedWith`));
         this.setWord(this.activity);
         this.setEntities(this.activity);
     }
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.activity) {
-            this.setUsername(this.util.getPropertyId(changes.activity.currentValue, PROV + 'wasAssociatedWith'));
+            this.setUsername(getPropertyId(changes.activity.currentValue, `${PROV}wasAssociatedWith`));
             this.setWord(changes.activity.currentValue);
             this.setEntities(changes.activity.currentValue);
         }
@@ -77,9 +77,9 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
                 return false;
             }
         });
-        const entityTitles = get(activity, '[\'' + pred + '\']', []).map(idObj => {
+        const entityTitles = get(activity, `['${pred}']`, []).map(idObj => {
             const entity = this.entities.find(obj => obj['@id'] === idObj['@id']);
-            return this.util.getDctermsValue(entity, 'title');
+            return getDctermsValue(entity, 'title');
         });
         this.entitiesStr = entityTitles.join(', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }

@@ -32,16 +32,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { DCTERMS } from '../../../prefixes';
 import { BranchSelectComponent } from './branchSelect.component';
-import { UtilService } from '../../services/util.service';
-import { MockProvider } from 'ng-mocks';
 
 describe('Branch Select component', function() {
     let component: BranchSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<BranchSelectComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let jsonld;
+    let display;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -56,18 +55,19 @@ describe('Branch Select component', function() {
             ],
             declarations: [
                 BranchSelectComponent
-            ],
-            providers: [
-                MockProvider(UtilService)
             ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(BranchSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
-        jsonld = {'@id': 'thing', '@type': []};
+        jsonld = {
+            '@id': 'thing',
+            '@type': [],
+            [`${DCTERMS}title`]: [{ '@value': 'title' }]
+        };
+        display = { branch: jsonld, title: 'title' };
 
         component.model = jsonld;
         component.branches = [];
@@ -80,7 +80,6 @@ describe('Branch Select component', function() {
         component = null;
         element = null;
         fixture = null;
-        utilStub = null;
     });
 
     describe('should initialize with the correct value for', function() {
@@ -101,7 +100,7 @@ describe('Branch Select component', function() {
         it('should emit when a branch is selected', function() {
             const event: MatAutocompleteSelectedEvent = {
                 option: {
-                    value: jsonld
+                    value: display
                 }
             } as MatAutocompleteSelectedEvent;
             spyOn(component.modelChange, 'emit');
@@ -111,12 +110,9 @@ describe('Branch Select component', function() {
         describe('should return title', function() {
             it('as an empty string', function() {
                 expect(component.getDisplayText(undefined)).toEqual('');
-                expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
             });
             it('with a value', function() {
-                utilStub.getDctermsValue.and.returnValue('value');
-                expect(component.getDisplayText(jsonld)).toEqual('value');
-                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(jsonld, 'title');
+                expect(component.getDisplayText(display)).toEqual('title');
             });
         });
     });

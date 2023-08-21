@@ -31,7 +31,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { stat } from 'fs';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { Observable, of, Subscription, throwError } from 'rxjs';
 

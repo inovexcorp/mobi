@@ -38,7 +38,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
-    cleanStylesFromDOM,
+    cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR,
 } from '../../../../../public/test/ts/Shared';
 import { CATALOG, DATASET, DCTERMS, POLICY } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
@@ -53,7 +53,7 @@ import { DatasetManagerService } from '../../../shared/services/datasetManager.s
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { RepositoryManagerService } from '../../../shared/services/repositoryManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { DatasetsOntologyPickerComponent } from '../datasetsOntologyPicker/datasetsOntologyPicker.component';
 import { EditDatasetOverlayComponent } from '../editDatasetOverlay/editDatasetOverlay.component';
 import { NewDatasetOverlayComponent } from '../newDatasetOverlay/newDatasetOverlay.component';
@@ -68,19 +68,26 @@ describe('Datasets List component', function() {
     let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let repositoryManagerStub: jasmine.SpyObj<RepositoryManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
-    const record: JSONLDObject = {'@id': recordId};
+    const record: JSONLDObject = {
+      '@id': recordId,
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${DCTERMS}description`]: [{ '@value': 'description' }],
+      [`${DCTERMS}modified`]: [{ '@value': DATE_STR }],
+      [`${DATASET}dataset`]: [{ '@id': 'datasetIRI' }],
+      [`${DATASET}repository`]: [{ '@value': 'repositoryId' }],
+    };
     const dataset = {record, identifiers: []};
     const displayItem = {
         title: 'title',
         datasetIRI: 'datasetIRI',
         description: 'description',
-        modified: 'modified',
+        modified: SHORT_DATE_STR,
         ontologies: ['ont 1', 'ont2'],
         repositoryId: 'repo',
         dataset
@@ -118,7 +125,7 @@ describe('Datasets List component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(PolicyEnforcementService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(RepositoryManagerService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
@@ -135,7 +142,7 @@ describe('Datasets List component', function() {
         datasetStateStub = TestBed.inject(DatasetStateService) as jasmine.SpyObj<DatasetStateService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
@@ -144,7 +151,7 @@ describe('Datasets List component', function() {
             pageIndex: 0,
             searchText: '',
             sortOption: {
-                field: DCTERMS + 'title',
+                field: `${DCTERMS}title`,
                 label: 'Title',
                 asc: true
             }
@@ -161,7 +168,7 @@ describe('Datasets List component', function() {
         datasetManagerStub = null;
         catalogManagerStub = null;
         policyEnforcementStub = null;
-        utilStub = null;
+        toastStub = null;
         matDialog = null;
     });
 
@@ -187,14 +194,12 @@ describe('Datasets List component', function() {
             const ontologyId = 'ontologyId';
             const dataset = {
                 record,
-                identifiers: [ {'@id': 'bnode', [DATASET + 'linksToRecord']: [{'@id': ontologyId}]} ]
+                identifiers: [ {'@id': 'bnode', [`${DATASET}linksToRecord`]: [{'@id': ontologyId}]} ]
             };
             expect(component.getIdentifiedOntologyIds(dataset)).toEqual([ontologyId]);
         });
         it('should get the title of a record', function() {
-            utilStub.getDctermsValue.and.returnValue('title');
             expect(component.getRecordTitle(record)).toEqual('title');
-            expect(utilStub.getDctermsValue).toHaveBeenCalledWith(record, 'title');
         });
         describe('should set cached ontology titles', function() {
             it('unless there are no ontologies set on the datasets', fakeAsync(function() {
@@ -258,10 +263,10 @@ describe('Datasets List component', function() {
                 component.delete(dataset);
                 tick();
                 expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(datasetStateStub.resetPagination).not.toHaveBeenCalledWith();
                 expect(datasetStateStub.setResults).not.toHaveBeenCalledWith();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
             }));
             describe('successfully', function() {
                 beforeEach(function() {
@@ -273,11 +278,11 @@ describe('Datasets List component', function() {
                     component.delete(dataset);
                     tick();
                     expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(datasetStateStub.paginationConfig.pageIndex).toBe(0);
                     expect(component.setResults).toHaveBeenCalledWith();
                     expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('if there is more than one result on the current page', fakeAsync(function() {
                     component.results = [displayItem, {
@@ -292,21 +297,21 @@ describe('Datasets List component', function() {
                     component.delete(dataset);
                     tick();
                     expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(datasetStateStub.paginationConfig.pageIndex).toBe(1);
                     expect(component.setResults).toHaveBeenCalledWith();
                     expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('if there are no results on the current page', fakeAsync(function() {
                     component.delete(dataset);
                     tick();
                     expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(datasetStateStub.paginationConfig.pageIndex).toBe(1);
                     expect(component.setResults).toHaveBeenCalledWith();
                     expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('if the current page is the first one', fakeAsync(function() {
                     datasetStateStub.paginationConfig.pageIndex = 0;
@@ -314,11 +319,11 @@ describe('Datasets List component', function() {
                     component.delete(dataset);
                     tick();
                     expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(datasetStateStub.paginationConfig.pageIndex).toBe(0);
                     expect(component.setResults).toHaveBeenCalledWith();
                     expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
             });
         });
@@ -327,10 +332,6 @@ describe('Datasets List component', function() {
             spyOn(component, 'getIdentifiedOntologyIds').and.returnValue(['id']);
             component.cachedOntologyTitles = {'id': 'Ontology'};
             datasetStateStub.setResults.and.callFake(() => of([dataset]));
-            utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-            utilStub.getPropertyId.and.returnValue('datasetIRI');
-            utilStub.getPropertyValue.and.returnValue('repositoryId');
-            utilStub.getDate.and.returnValue('Date');
             component.setResults();
             tick();
             expect(datasetStateStub.setResults).toHaveBeenCalledWith();
@@ -339,7 +340,7 @@ describe('Datasets List component', function() {
                 title: 'title',
                 description: 'description',
                 datasetIRI: 'datasetIRI',
-                modified: 'Date',
+                modified: SHORT_DATE_STR,
                 repositoryId: 'repositoryId',
                 ontologies: ['Ontology'],
                 dataset
@@ -351,16 +352,16 @@ describe('Datasets List component', function() {
                 component.clear(dataset);
                 tick();
                 expect(datasetManagerStub.clearDatasetRecord).toHaveBeenCalledWith(recordId);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
             }));
             it('successfully', fakeAsync(function() {
                 datasetManagerStub.clearDatasetRecord.and.callFake(() => of(null));
                 component.clear(dataset);
                 tick();
                 expect(datasetManagerStub.clearDatasetRecord).toHaveBeenCalledWith(recordId);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         it('should show the newDatasetOverlay', fakeAsync(function() {
@@ -376,7 +377,7 @@ describe('Datasets List component', function() {
             tick();
             expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
                 resourceId: dataset.record['@id'],
-                actionId: POLICY + 'Update'
+                actionId: `${POLICY}Update`
             });
             expect(datasetStateStub.selectedDataset).toEqual(dataset);
             expect(matDialog.open).toHaveBeenCalledWith(EditDatasetOverlayComponent);
@@ -387,7 +388,7 @@ describe('Datasets List component', function() {
             tick();
             expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
                 resourceId: dataset.record['@id'],
-                actionId: CATALOG + 'Modify'
+                actionId: `${CATALOG}Modify`
             });
             expect(datasetStateStub.selectedDataset).toEqual(dataset);
             expect(matDialog.open).toHaveBeenCalledWith(UploadDataOverlayComponent);
@@ -398,7 +399,7 @@ describe('Datasets List component', function() {
             tick();
             expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
                 resourceId: dataset.record['@id'],
-                actionId: POLICY + 'Delete'
+                actionId: `${POLICY}Delete`
             });
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to delete')}});
             expect(component.delete).toHaveBeenCalledWith(dataset);
@@ -409,7 +410,7 @@ describe('Datasets List component', function() {
             tick();
             expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
                 resourceId: dataset.record['@id'],
-                actionId: CATALOG + 'Modify'
+                actionId: `${CATALOG}Modify`
             });
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to clear')}});
             expect(component.clear).toHaveBeenCalledWith(dataset);

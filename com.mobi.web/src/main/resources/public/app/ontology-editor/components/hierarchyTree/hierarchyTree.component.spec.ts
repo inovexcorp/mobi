@@ -36,7 +36,6 @@ import { HierarchyFilterComponent } from '../hierarchyFilter/hierarchyFilter.com
 import { SharedModule } from '../../../shared/shared.module';
 import { DCTERMS } from '../../../prefixes';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
-import { UtilService } from '../../../shared/services/util.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { HierarchyTreeComponent } from './hierarchyTree.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -46,7 +45,6 @@ describe('Hierarchy Tree component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<HierarchyTreeComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -59,7 +57,6 @@ describe('Hierarchy Tree component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
             ]
         });
     });
@@ -70,7 +67,6 @@ describe('Hierarchy Tree component', function() {
         element = fixture.debugElement;
 
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         component.hierarchy = [{
@@ -105,7 +101,6 @@ describe('Hierarchy Tree component', function() {
             }
         }];
         ontologyStateStub.getActiveKey.and.returnValue('classes');
-        utilStub.getBeautifulIRI.and.returnValue('test');
         component.index = 0;
         component.filterText = '';
         component.searchText = '';
@@ -166,7 +161,7 @@ describe('Hierarchy Tree component', function() {
             component.toggleOpen(node);
             expect(node.isOpened).toEqual(true);
             expect(ontologyStateStub.listItem.editorTabStates[component.activeTab].open[node.joinedPath]).toEqual(true);
-            expect(component.isShown).toHaveBeenCalled();
+            expect(component.isShown).toHaveBeenCalledWith(true, jasmine.any(Object));
             expect(component.filteredHierarchy).toEqual([]);
         });
         describe('matchesDropdownFilters', function() {
@@ -240,12 +235,10 @@ describe('Hierarchy Tree component', function() {
                         });
                         it('and does not have a matching entity local name', function () {
                             component.filterText = 'fail';
-                            utilStub.getBeautifulIRI.and.returnValue('id');
                             expect(component.searchFilter(this.filterNode)).toEqual(false);
                         });
                         it('and does have a matching entity local name', function() {
-                            component.filterText = 'title';
-                            utilStub.getBeautifulIRI.and.returnValue('title');
+                            component.filterText = 'iri';
                             expect(component.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });
@@ -265,7 +258,7 @@ describe('Hierarchy Tree component', function() {
                     path: ['recordId', 'otherIri', 'iri'],
                     entity: {
                         '@id': 'urn:id',
-                        [DCTERMS + 'title']: [{'@value': 'Title'}]
+                        [`${DCTERMS}title`]: [{'@value': 'Title'}]
                     }
                 };
                 this.activeEntityNode = {
@@ -275,7 +268,7 @@ describe('Hierarchy Tree component', function() {
                     path: ['recordId', 'otherIri', 'iri'],
                     entity: {
                         '@id': 'urn:id',
-                        [DCTERMS + 'title']: [{'@value': 'Title'}]
+                        [`${DCTERMS}title`]: [{'@value': 'Title'}]
                     }
                 };
             });

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
     startsWith,
     get,
@@ -52,12 +52,12 @@ import { MappingProperty } from '../models/mappingProperty.interface';
 import { MappingRecord } from '../models/mappingRecord.interface';
 import { MappingState } from '../models/mappingState.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
-import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
+import { splitIRI } from '../pipes/splitIRI.pipe';
 import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { MappingManagerService } from './mappingManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
-import { UtilService } from './util.service';
+import { getBeautifulIRI, getDctermsValue, getPropertyId, getPropertyValue, hasPropertyId, removePropertyId, setDctermsValue } from '../utility';
 
 /**
  * @class shared.MapperStateService
@@ -68,7 +68,7 @@ import { UtilService } from './util.service';
 @Injectable()
 export class MapperStateService {
     constructor(private mm: MappingManagerService, private cm: CatalogManagerService, private dm: DelimitedManagerService,
-        private split: SplitIRIPipe, private om: OntologyManagerService, private util: UtilService) {}
+        private om: OntologyManagerService) {}
 
     // Static step indexes
     selectMappingStep = 0;
@@ -84,9 +84,9 @@ export class MapperStateService {
         limit: 10,
         pageIndex: 0,
         searchText: '',
-        type: DELIM + 'MappingRecord',
+        type: `${DELIM}MappingRecord`,
         sortOption: {
-            field: DCTERMS + 'title',
+            field: `${DCTERMS}title`,
             label: 'Title',
             asc: true
         }
@@ -163,7 +163,7 @@ export class MapperStateService {
     newProp = false;
     /**
      * An array of strings containing column indexes to highlight in the
-     * {@link mapper.component:previewDataGrid previewDataGrid}.
+     * {@link mapper.PreviewDataGridComponent previewDataGrid}.
      * @type {string[]}
      */
     highlightIndexes = [];
@@ -266,7 +266,7 @@ export class MapperStateService {
                     switchMap(() => {
                         const addedNames = (this.selected.difference.additions as JSONLDObject[]).map(diff => this._getChangedEntityName(diff));
                         const deletedNames = (this.selected.difference.deletions as JSONLDObject[]).map(diff => this._getChangedEntityName(diff));
-                        const commitMessage = 'Changed ' + join(union(addedNames, deletedNames), ', ');
+                        const commitMessage = `Changed ${join(union(addedNames, deletedNames), ', ')}`;
                         return this.cm.createBranchCommit(this.selected.record.branch, this.selected.record.id, catalogId, commitMessage);
                     }),
                     map(() => this.selected.record.id)
@@ -275,7 +275,7 @@ export class MapperStateService {
     }
     /**
      * Retrieves and saves the master branch of the current mapping for use on the
-     * {@link mapper.component:mappingCommitsPage mappingCommitsPage}.
+     * {@link mapper.MappingCommitsPageComponent mappingCommitsPage}.
      */
     setMasterBranch(): Observable<null> {
         const catalogId = get(this.cm.localCatalog, '@id', '');
@@ -297,8 +297,8 @@ export class MapperStateService {
                 const classMapping = this.selected.mapping.findClassWithDataMapping(dataMapping['@id']);
                 return {
                     id: dataMapping['@id'],
-                    index: parseInt(this.util.getPropertyValue(dataMapping, DELIM + 'columnIndex'), 10),
-                    dataPropName: this.mm.getPropMappingTitle(this.util.getDctermsValue(classMapping, 'title'), this.util.getDctermsValue(dataMapping, 'title'))
+                    index: parseInt(getPropertyValue(dataMapping, `${DELIM}columnIndex`), 10),
+                    dataPropName: this.mm.getPropMappingTitle(getDctermsValue(classMapping, 'title'), getDctermsValue(dataMapping, 'title'))
                 } as MappingInvalidProp;
             })
             .filter(propObj => propObj.index > this.dm.dataRows[0].length - 1)
@@ -311,7 +311,7 @@ export class MapperStateService {
      * @return {string[]} an array of strings of column indexes that have been mapped
      */
     getMappedColumns(): string[] {
-        return uniq(this.selected.mapping.getAllDataMappings().map(dataMapping => this.util.getPropertyValue(dataMapping, DELIM + 'columnIndex')));
+        return uniq(this.selected.mapping.getAllDataMappings().map(dataMapping => getPropertyValue(dataMapping, `${DELIM}columnIndex`)));
     }
     /**
      * Returns the boolean indicating whether a class has properties to map.
@@ -374,9 +374,9 @@ export class MapperStateService {
      */
     setProps(classId: string): void {
         const annotations = this.mm.annotationProperties.map(id => ({
-            ontologyId: this.split.transform(id).begin,
+            ontologyId: splitIRI(id).begin,
             propObj: {'@id': id},
-            name: this.util.getBeautifulIRI(id),
+            name: getBeautifulIRI(id),
             isDeprecated: false,
             isObjectProperty: false
         }));
@@ -475,7 +475,7 @@ export class MapperStateService {
             let additionsObj = find(this.selected.difference.additions as JSONLDObject[], {'@id': entityId});
             let deletionsObj = find(this.selected.difference.deletions as JSONLDObject[], {'@id': entityId});
             if (additionsObj) {
-                const deletionsValue = isId ? this.util.getPropertyId(deletionsObj, propId) : this.util.getPropertyValue(deletionsObj, propId);
+                const deletionsValue = isId ? getPropertyId(deletionsObj, propId) : getPropertyValue(deletionsObj, propId);
                 if (deletionsValue === newValue) {
                     delete additionsObj[propId];
                     if (isEqual(additionsObj, {'@id': entityId})) {
@@ -515,12 +515,13 @@ export class MapperStateService {
         const classMapping = this.mm.addClass(this.selected.mapping, ontology.entities, classIdObj.classObj['@id']);
         const className = this.om.getEntityName(classIdObj.classObj);
         if (!originalClassMappings.length) {
-            this.util.setDctermsValue(classMapping, 'title', className);
+            setDctermsValue(classMapping, 'title', className);
         } else {
             originalClassMappings.forEach(classMapping => {
-                if (this.util.getDctermsValue(classMapping, 'title') === className) {
-                    classMapping[DCTERMS + 'title'][0]['@value'] = className + ' (1)';
-                    this.changeProp(classMapping['@id'], DCTERMS + 'title', className + ' (1)', className);
+                if (getDctermsValue(classMapping, 'title') === className) {
+                    // TODO: Should make a replaceDctermsValue function
+                    classMapping[`${DCTERMS}title`][0]['@value'] = `${className} (1)`;
+                    this.changeProp(classMapping['@id'], `${DCTERMS}title`, `${className} (1)`, className);
                     return false;
                 }
             });
@@ -544,7 +545,7 @@ export class MapperStateService {
         languageSpec?: string): JSONLDObject {
         const ontology = find(this.sourceOntologies, {id: propIdObj.ontologyId});
         const propMapping = this.mm.addDataProp(this.selected.mapping, get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], columnIndex, datatypeSpec, languageSpec);
-        this.util.setDctermsValue(propMapping, 'title', this.om.getEntityName(propIdObj.propObj));
+        setDctermsValue(propMapping, 'title', this.om.getEntityName(propIdObj.propObj));
         (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
         return propMapping;
     }
@@ -560,7 +561,7 @@ export class MapperStateService {
     addObjectMapping(propIdObj: MappingProperty, classMappingId: string, rangeClassMappingId: string): JSONLDObject {
         const ontology = find(this.sourceOntologies, {id: propIdObj.ontologyId});
         const propMapping = this.mm.addObjectProp(this.selected.mapping, get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], rangeClassMappingId);
-        this.util.setDctermsValue(propMapping, 'title', this.om.getEntityName(propIdObj.propObj));
+        setDctermsValue(propMapping, 'title', this.om.getEntityName(propIdObj.propObj));
         (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
         return propMapping;
     }
@@ -591,9 +592,9 @@ export class MapperStateService {
      */
     deleteClass(classMappingId: string): void {
         const propsLinkingToClass = this.selected.mapping.getPropsLinkingToClass(classMappingId).map(propMapping => ({
-                propMapping,
-                classMappingId: this.selected.mapping.findClassWithObjectMapping(propMapping['@id'])['@id']
-            }));
+            propMapping,
+            classMappingId: this.selected.mapping.findClassWithObjectMapping(propMapping['@id'])['@id']
+        }));
         const classMappingProps = this.selected.mapping.getPropMappingsByClass(classMappingId);
         const deletedClass = this.selected.mapping.removeClassMapping(classMappingId);
         this.deleteEntity(deletedClass);
@@ -608,10 +609,11 @@ export class MapperStateService {
             this.removeProps(classId);
         } else if (classMappings.length === 1) {
             const lastClassMapping = classMappings[0];
-            const originalTitle = this.util.getDctermsValue(lastClassMapping, 'title');
+            const originalTitle = getDctermsValue(lastClassMapping, 'title');
             const newTitle = originalTitle.replace(/ \((\d+)\)$/, '');
-            lastClassMapping[DCTERMS + 'title'][0]['@value'] = newTitle;
-            this.changeProp(lastClassMapping['@id'], DCTERMS + 'title', newTitle, originalTitle);
+            // TODO: Should make a replaceDctermsValue function
+            lastClassMapping[`${DCTERMS}title`][0]['@value'] = newTitle;
+            this.changeProp(lastClassMapping['@id'], `${DCTERMS}title`, newTitle, originalTitle);
         }
     }
     /**
@@ -630,8 +632,8 @@ export class MapperStateService {
         this.deleteEntity(propMapping);
         const additionsObj = find(this.selected.difference.additions as JSONLDObject[], {'@id': parentClassMappingId});
         const prop = DELIM + (this.mm.isDataMapping(propMapping) ? 'dataProperty' : 'objectProperty');
-        if (this.util.hasPropertyId(additionsObj, prop, propMapping['@id'])) {
-            this.util.removePropertyId(additionsObj, prop, propMapping['@id']);
+        if (hasPropertyId(additionsObj, prop, propMapping['@id'])) {
+            removePropertyId(additionsObj, prop, propMapping['@id']);
             if (isEqual(additionsObj, {'@id': parentClassMappingId})) {
                 remove(this.selected.difference.additions as JSONLDObject[], additionsObj);
             }
@@ -650,13 +652,13 @@ export class MapperStateService {
     }
     private _getChangedEntityName(diffObj) {
         const entity = find(this.selected.mapping.getJsonld(), {'@id': diffObj['@id']}) || diffObj;
-        return this.util.getDctermsValue(entity, 'title') || this.util.getBeautifulIRI(diffObj['@id']);
+        return getDctermsValue(entity, 'title') || getBeautifulIRI(diffObj['@id']);
     }
     private _setNewTitle(classMapping: JSONLDObject, className: string, existingClassMappings: JSONLDObject[]) {
         const regex = / \((\d+)\)$/;
         const sortedNums = existingClassMappings
             // Collect all titles that start with the name of the passed entity
-            .map(obj => this.util.getDctermsValue(obj, 'title'))
+            .map(obj => getDctermsValue(obj, 'title'))
             .filter(title => startsWith(title, className))
             // Collect the index number based on the set string format
             .map(title => parseInt(nth(regex.exec(title), 1), 10))
@@ -672,6 +674,6 @@ export class MapperStateService {
                 break;
             }
         }
-        this.util.setDctermsValue(classMapping, 'title', className + newIdx);
+        setDctermsValue(classMapping, 'title', className + newIdx);
     }
 }

@@ -31,8 +31,9 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { createJson } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.ImportsBlockComponent
@@ -56,7 +57,7 @@ export class ImportsBlockComponent implements OnChanges {
 
     @Input() listItem: OntologyListItem;
 
-    constructor(private dialog: MatDialog, public os: OntologyStateService, private util: UtilService, 
+    constructor(private dialog: MatDialog, public os: OntologyStateService, private toast: ToastService, 
         private pm: PropertyManagerService) {}
 
     ngOnChanges(): void {
@@ -67,9 +68,9 @@ export class ImportsBlockComponent implements OnChanges {
         this.showRemoveOverlay = true;
         let msg = '';
         if (this.os.hasChanges(this.listItem)) {
-            msg = '<p><strong>NOTE: You have some unsaved changes.</strong></p><p>Would you like to save those changes and remove the import: <strong>' + url + '</strong>?</p>';
+            msg = `<p><strong>NOTE: You have some unsaved changes.</strong></p><p>Would you like to save those changes and remove the import: <strong>${url}</strong>?</p>`;
         } else {
-            msg = '<p>Are you sure you want to remove the import: <strong>' + url + '</strong>?</p>';
+            msg = `<p>Are you sure you want to remove the import: <strong>${url}</strong>?</p>`;
         }
         this.dialog.open(ConfirmModalComponent, { data: { content: msg } }).afterClosed().subscribe(result => {
             if (result) {
@@ -78,8 +79,8 @@ export class ImportsBlockComponent implements OnChanges {
         });
     }
     remove(url: string): void {
-        this.os.addToDeletions(this.listItem.versionedRdfRecord.recordId, this.util.createJson(this.listItem.selected['@id'], OWL + 'imports', {'@id': url}));
-        this.pm.remove(this.listItem.selected, OWL + 'imports', findIndex(this.listItem.selected[OWL + 'imports'], {'@id': url}));
+        this.os.addToDeletions(this.listItem.versionedRdfRecord.recordId, createJson(this.listItem.selected['@id'], `${OWL}imports`, {'@id': url}));
+        this.pm.remove(this.listItem.selected, `${OWL}imports`, findIndex(this.listItem.selected[`${OWL}imports`], {'@id': url}));
         this.os.saveCurrentChanges(this.listItem).pipe(
             switchMap(() => this.os.updateOntology(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, this.listItem.upToDate, this.listItem.inProgressCommit))
         ).subscribe(() => {
@@ -96,14 +97,14 @@ export class ImportsBlockComponent implements OnChanges {
                 this.listItem.hasPendingRefresh = true;
                 this.setImports();
                 this.setIndirectImports();
-                this.util.createSuccessToast('Refreshed Imports');
-            }, error => this.util.createErrorToast(error));
+                this.toast.createSuccessToast('Refreshed Imports');
+            }, error => this.toast.createErrorToast(error));
     }
     setImports(): void {
-        this.imports = sortBy(this.listItem.selected[OWL + 'imports'], '@id');
+        this.imports = sortBy(this.listItem.selected[`${OWL}imports`], '@id');
     }
     setIndirectImports(): void {
-        const directImports = map(get(this.listItem.selected, OWL + 'imports'), '@id');
+        const directImports = map(get(this.listItem.selected, `${OWL}imports`), '@id');
         const goodImports = map(this.listItem.importedOntologies, item => pick(item, 'id', 'ontologyId'));
         const failedImports = map(this.listItem.failedImports, iri => ({ id: iri, ontologyId: iri }));
         const allImports = concat(goodImports, failedImports);

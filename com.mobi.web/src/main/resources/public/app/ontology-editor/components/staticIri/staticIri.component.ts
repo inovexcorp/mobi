@@ -21,12 +21,12 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
+import { UntypedFormGroup, ValidatorFn } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 
 import { EditIriOverlayComponent } from '../../../shared/components/editIriOverlay/editIriOverlay.component';
 import { OnEditEventI } from '../../../shared/models/onEditEvent.interface';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
@@ -61,7 +61,7 @@ export class StaticIriComponent implements OnInit, OnChanges {
     iriThen: string;
     iriEnd: string;
 
-    constructor(private splitIRI: SplitIRIPipe, private dialog: MatDialog, public os: OntologyStateService) {}
+    constructor(private dialog: MatDialog, public os: OntologyStateService) {}
     
     ngOnInit(): void {
         this.setVariables();
@@ -72,13 +72,14 @@ export class StaticIriComponent implements OnInit, OnChanges {
         }
     }
     setVariables(): void {
-        const splitIri = this.splitIRI.transform(this.iri);
+        const splitIri = splitIRI(this.iri);
         this.iriBegin = splitIri.begin;
         this.iriThen = splitIri.then;
         this.iriEnd = splitIri.end;
     }
     showIriOverlay(): void {
-        const dataObj: any = {
+        const dataObj: { iriBegin: string, iriThen: string, iriEnd: string, validator?: ValidatorFn, 
+          validatorMsg?: string, validatorKey?: string} = {
             iriBegin: this.iriBegin,
             iriThen: this.iriThen,
             iriEnd: this.iriEnd,

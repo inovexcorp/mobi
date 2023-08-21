@@ -21,7 +21,7 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -33,6 +33,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -85,7 +86,7 @@ describe('New Shapes Graph Record Modal component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<NewShapesGraphRecordModalComponent>>;
         shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-        shapesGraphStateStub.uploadShapesGraph.and.resolveTo();
+        shapesGraphStateStub.uploadShapesGraph.and.returnValue(of(null));
     });
 
     afterEach(function() {
@@ -98,19 +99,18 @@ describe('New Shapes Graph Record Modal component', function() {
     });
 
     describe('controller methods', function() {
-        it('should create a shapes graph record and close the dialog',  async function() {
+        it('should create a shapes graph record and close the dialog', fakeAsync(function() {
             component.createRecordForm.controls['title'].setValue(rdfUpload.title);
             component.createRecordForm.controls['description'].setValue(rdfUpload.description);
             component.keywordControls.push(component['fb'].control(rdfUpload.keywords[0]));
             component.keywordControls.push(component['fb'].control(rdfUpload.keywords[1]));
             component.selectedFile = file;
             component.create();
-            fixture.detectChanges();
-            await fixture.whenStable();
+            tick();
 
             expect(shapesGraphStateStub.uploadShapesGraph).toHaveBeenCalledWith(rdfUpload);
             expect(matDialogRef.close).toHaveBeenCalledWith(true);
-        });
+        }));
         it('should add a keyword to the keyword list', function() {
             expect(component.createRecordForm.controls['keywords'].value.length).toBe(0);
             const inputElement: HTMLElement = element.query(By.css('input')).nativeElement;
@@ -143,7 +143,7 @@ describe('New Shapes Graph Record Modal component', function() {
             let errorDisplay = element.queryAll(By.css('error-display'));
             expect(errorDisplay.length).toEqual(0);
 
-            component.error = {'errorMessage': 'error', 'errorDetails': []};
+            component.error = { errorMessage: 'error', error: '', errorDetails: [] };
             fixture.detectChanges();
             await fixture.whenStable();
             errorDisplay = element.queryAll(By.css('error-display'));
@@ -172,6 +172,6 @@ describe('New Shapes Graph Record Modal component', function() {
         const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.create).toHaveBeenCalled();
+        expect(component.create).toHaveBeenCalledWith();
     });
 });

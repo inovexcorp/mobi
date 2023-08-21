@@ -24,11 +24,11 @@ import { get } from 'lodash';
 import { Component, OnInit } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { first } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 import { REGEX } from '../../../constants';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
@@ -63,7 +63,7 @@ export class CreateTagModal implements OnInit {
 
     constructor(private state: ShapesGraphStateService, private cm: CatalogManagerService,
                 private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CreateTagModal>,
-                private splitIRI: SplitIRIPipe, private camelCase: CamelCasePipe) {}
+                private camelCase: CamelCasePipe) {}
 
     ngOnInit(): void {
         let iri = this.state.listItem.shapesGraphId;
@@ -75,24 +75,26 @@ export class CreateTagModal implements OnInit {
     }
     nameChanged(): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRI.transform(this.createTagForm.controls.iri.value);
-            const iri = split.begin + split.then + this.camelCase.transform(this.createTagForm.controls.title.value, 'class');
+            const split = splitIRI(this.createTagForm.controls.iri.value);
+            const iri = split.begin + split.then + this.camelCase.transform(this.createTagForm.controls.title.value, 
+              'class');
             this.createTagForm.controls.iri.setValue(iri);
         }
     }
-    createTag(): Promise<any> {
+    createTag(): void {
         const tagConfig: TagConfig = {
             title: this.createTagForm.controls.title.value,
             iri: this.createTagForm.controls.iri.value,
             commitId: this.state.listItem.versionedRdfRecord.commitId,
             description: this.createTagForm.controls.description.value
         };
-        return this.cm.createRecordTag(this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id', ''), tagConfig).pipe(first()).toPromise()
-            .then(tagId => {
-                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, undefined, this.state.listItem.versionedRdfRecord.commitId, tagId, this.createTagForm.controls.title.value, true);
-            }, error => Promise.reject(error))
-            .then(() => this.dialogRef.close(true), error => {
-                this.error = error;
-            });
+        this.cm.createRecordTag(this.state.listItem.versionedRdfRecord.recordId, this.catalogId, tagConfig).pipe(
+            switchMap(tagId => this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
+                undefined, this.state.listItem.versionedRdfRecord.commitId, tagId, 
+                this.createTagForm.controls.title.value, true)
+            )
+        ).subscribe(() => this.dialogRef.close(true), error => {
+            this.error = error;
+        });
     }
 }

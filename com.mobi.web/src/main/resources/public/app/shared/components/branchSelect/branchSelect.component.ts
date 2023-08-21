@@ -28,7 +28,12 @@ import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { UtilService } from '../../services/util.service';
+import { getDctermsValue } from '../../utility';
+
+interface BranchDisplay {
+  branch: JSONLDObject,
+  title: string
+}
 
 /**
  * @class shared.BranchSelectComponent
@@ -57,15 +62,14 @@ export class BranchSelectComponent implements OnInit, OnChanges {
     @Input() isDisabledWhen: boolean;
 
     branchControl = new UntypedFormControl();
-    filteredBranches: Observable<JSONLDObject[]>;
+    filteredBranches: Observable<BranchDisplay[]>;
 
-    constructor(public util: UtilService) {
-    }
+    constructor() {}
 
     ngOnInit(): void {
         this._setFilteredBranches();
         if (this.model) {
-            this.branchControl.setValue(this.model);
+            this.branchControl.setValue({ branch: this.model, title: getDctermsValue(this.model, 'title') });
         }
     }
     ngOnChanges(changes: SimpleChanges): void {
@@ -77,21 +81,24 @@ export class BranchSelectComponent implements OnInit, OnChanges {
             }
         }
         if (changes?.model) {
-            this.branchControl.setValue(changes.model.currentValue);
+            this.branchControl.setValue({
+              branch: changes.model.currentValue,
+              title: getDctermsValue(changes.model.currentValue, 'title')
+            });
         }
         if (changes?.branches) {
             this._setFilteredBranches();
         }
     }
     selectedBranch(event: MatAutocompleteSelectedEvent): void {
-        const branch: JSONLDObject = event.option.value;
+        const branch: JSONLDObject = event.option.value.branch;
         this.modelChange.emit(branch);
     }
-    getDisplayText(value: JSONLDObject): string {
+    getDisplayText(value: BranchDisplay): string {
         if (!value) {
             return '';
         }
-        return this.util.getDctermsValue(value, 'title');
+        return value.title;
     }
 
     private _setFilteredBranches(): void {
@@ -100,11 +107,13 @@ export class BranchSelectComponent implements OnInit, OnChanges {
             map(value => this._filter(value)),
         );
     }
-    private _filter(value: string): JSONLDObject[] {
+    private _filter(value: string): BranchDisplay[] {
+        const branchDisplays = this.branches.map(branch => ({ branch, title: getDctermsValue(branch, 'title')}));
         if (typeof value !== 'string') {
-            return this.branches;
+            return branchDisplays;
         }
         const filterValue = value.toLowerCase();
-        return this.branches.filter(branch => this.util.getDctermsValue(branch, 'title').toLowerCase().includes(filterValue));
+        return branchDisplays
+          .filter(branch => branch.title.toLowerCase().includes(filterValue));
     }
 }

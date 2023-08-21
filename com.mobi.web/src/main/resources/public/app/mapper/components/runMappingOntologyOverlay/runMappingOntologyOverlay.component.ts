@@ -36,7 +36,8 @@ import { DelimitedManagerService } from '../../../shared/services/delimitedManag
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 interface OntologyPreview {
     id: string,
@@ -73,7 +74,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<RunMappingOntologyOverlayComponent>, private state: MapperStateService,
         private dm: DelimitedManagerService, private cm: CatalogManagerService, private os: OntologyStateService, 
-        private util: UtilService) {}
+        private toast: ToastService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -89,8 +90,8 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
                             '';
                     const paginatedConfig = {
                         limit: 50,
-                        type: ONTOLOGYEDITOR + 'OntologyRecord',
-                        sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
+                        type: `${ONTOLOGYEDITOR}OntologyRecord`,
+                        sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
                         searchText
                     };
                     return this.cm.getRecords(this.catalogId, paginatedConfig, true)
@@ -98,7 +99,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
                             map((response: HttpResponse<JSONLDObject[]>) => {
                                 return response.body.map(record => ({
                                     id: record['@id'],
-                                    title: this.util.getDctermsValue(record, 'title'),
+                                    title: getDctermsValue(record, 'title'),
                                     ontologyIRI: this.getOntologyIRI(record)
                                 }));
                             })
@@ -116,7 +117,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
         }
     }
     getOntologyIRI(ontology: JSONLDObject): string {
-        return this.util.getPropertyId(ontology, ONTOLOGYEDITOR + 'ontologyIRI');
+        return getPropertyId(ontology, `${ONTOLOGYEDITOR}ontologyIRI`);
     }
     run(): void {
         if (this.state.editMapping && this.state.isMappingChanged()) {
@@ -132,7 +133,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
     private _runMapping(id: string): void {
         this.dm.mapAndCommit(id, this.ontology.id, this.branch['@id'], this.update).subscribe(response => {
             if (response.status === 204) {
-                this.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
+                this.toast.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
                 this._reset();
             } else {
                 this._testOntology(this.ontology);
@@ -155,28 +156,28 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
             if (get(item, 'versionedRdfRecord.branchId') === this.branch['@id']) {
                 item.upToDate = false;
                 if (item.merge.active) {
-                    this.util.createWarningToast(`You have a merge in progress in the Ontology Editor for ${ontology.title} that is out of date. Please reopen the merge form.`, {timeOut: 5000});
+                    this.toast.createWarningToast(`You have a merge in progress in the Ontology Editor for ${ontology.title} that is out of date. Please reopen the merge form.`, {timeOut: 5000});
                     toast = true;
                 }
             }
             if (item.merge.active && get(item.merge.target, '@id') === this.branch['@id']) {
-                this.util.createWarningToast(`You have a merge in progress in the Ontology Editor for ${ontology.title} that is out of date. Please reopen the merge form to avoid conflicts.`, {timeOut: 5000});
+                this.toast.createWarningToast(`You have a merge in progress in the Ontology Editor for ${ontology.title} that is out of date. Please reopen the merge form to avoid conflicts.`, {timeOut: 5000});
                 toast = true;
             }
         }
         if (!toast) {
-            this.util.createSuccessToast('Successfully ran mapping');
+            this.toast.createSuccessToast('Successfully ran mapping');
         }
     }
     private _setOntologyBranches(ontology: OntologyPreview): void {
         const paginatedConfig = {
-            sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
+            sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
         };
         if (ontology.id) {
             this.cm.getRecordBranches(ontology.id, this.catalogId, paginatedConfig)
                 .subscribe((response: HttpResponse<JSONLDObject[]>) => {
                     this.branches = response.body;
-                    this.branch = this.branches.find(branch => this.util.getDctermsValue(branch, 'title') === 'MASTER');
+                    this.branch = this.branches.find(branch => getDctermsValue(branch, 'title') === 'MASTER');
                 });
         }
     }

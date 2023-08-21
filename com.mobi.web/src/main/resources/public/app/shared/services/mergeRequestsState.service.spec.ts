@@ -24,11 +24,14 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import {
+    DATE_STR,
+    SHORTDATE_DATE_STR,
     cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
-import { CATALOG, MERGEREQ, ONTOLOGYEDITOR, OWL } from '../../prefixes';
+import { CATALOG, DCTERMS, MERGEREQ, ONTOLOGYEDITOR, OWL } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
 import { Conflict } from '../models/conflict.interface';
@@ -38,7 +41,7 @@ import { CatalogManagerService } from './catalogManager.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { UserManagerService } from './userManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 
 describe('Merge Requests State service', function() {
@@ -47,7 +50,7 @@ describe('Merge Requests State service', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     const acceptedRequest = { accepted: true };
     const openRequest = { accepted: false };
 
@@ -56,18 +59,27 @@ describe('Merge Requests State service', function() {
     const requestId = 'requestId';
     const recordId = 'recordId';
     const request: JSONLDObject = { '@id': requestId };
-    const sourceBranch: JSONLDObject = {'@id': 'source'};
-    const targetBranch: JSONLDObject = {'@id': 'target'};
+    const sourceBranch: JSONLDObject = {
+      '@id': 'source',
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${CATALOG}head`]: [{ '@id': 'sourceHead' }]
+    };
+    const targetBranch: JSONLDObject = {
+      '@id': 'target',
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${CATALOG}head`]: [{ '@id': 'targetHead' }]
+    };
     const comment: JSONLDObject = {'@id': 'comment'};
     const record: JSONLDObject = {
         '@id': recordId,
         '@type': [
-            OWL + 'Thing',
-            CATALOG + 'Record',
-            CATALOG + 'VersionedRecord',
-            CATALOG + 'VersionedRDFRecord',
-            ONTOLOGYEDITOR + 'OntologyRecord'
-        ]
+            `${OWL}Thing`,
+            `${CATALOG}Record`,
+            `${CATALOG}VersionedRecord`,
+            `${CATALOG}VersionedRDFRecord`,
+            `${ONTOLOGYEDITOR}OntologyRecord`
+        ],
+        [`${DCTERMS}title`]: [{ '@value': 'title' }]
     };
     const requestObj: MergeRequest = {
         title: 'title',
@@ -76,7 +88,7 @@ describe('Merge Requests State service', function() {
         recordIri: recordId,
         assignees: [],
         jsonld: request,
-        recordType: ONTOLOGYEDITOR + 'OntologyRecord'
+        recordType: `${ONTOLOGYEDITOR}OntologyRecord`
     };
     const headers = {'has-more-results': 'false'};
 
@@ -90,7 +102,7 @@ describe('Merge Requests State service', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(UserManagerService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
@@ -99,7 +111,7 @@ describe('Merge Requests State service', function() {
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         difference = new CommitDifference();
         difference.additions = [{'@id': 'iri1'}];
@@ -117,7 +129,7 @@ describe('Merge Requests State service', function() {
         catalogManagerStub = null;
         ontologyManagerStub = null;
         userManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('should initialize the service', function() {
@@ -173,7 +185,6 @@ describe('Merge Requests State service', function() {
             service.catalogId = catalogId;
             this.requestObj = Object.assign({}, requestObj);
             spyOn(service, 'getRequestObj').and.returnValue(this.requestObj);
-            utilStub.getDctermsValue.and.callFake((entity, propId) => propId);
         });
         describe('provided and getRequests', function() {
             describe('resolves', function() {
@@ -189,10 +200,9 @@ describe('Merge Requests State service', function() {
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(record, 'title');
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                         expect(this.requestObj.recordTitle).toEqual('title');
-                        expect(this.requestObj.recordType).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
+                        expect(this.requestObj.recordType).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
                         expect(service.requests).toEqual([this.requestObj]);
                     }));
                     it('rejects', fakeAsync(function() {
@@ -203,8 +213,7 @@ describe('Merge Requests State service', function() {
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                         expect(service.requests).toEqual([]);
                     }));
                 });
@@ -216,8 +225,7 @@ describe('Merge Requests State service', function() {
                 expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
                 expect(service.getRequestObj).not.toHaveBeenCalled();
                 expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
-                expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 expect(service.requests).toEqual([]);
             }));
         });
@@ -235,10 +243,9 @@ describe('Merge Requests State service', function() {
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(record, 'title');
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                         expect(this.requestObj.recordTitle).toEqual('title');
-                        expect(this.requestObj.recordType).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
+                        expect(this.requestObj.recordType).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
                         expect(service.requests).toEqual([this.requestObj]);
                     }));
                     it('rejects', fakeAsync(function() {
@@ -249,8 +256,7 @@ describe('Merge Requests State service', function() {
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
-                        expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                         expect(service.requests).toEqual([]);
                     }));
                 });
@@ -262,8 +268,7 @@ describe('Merge Requests State service', function() {
                 expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
                 expect(service.getRequestObj).not.toHaveBeenCalled();
                 expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
-                expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 expect(service.requests).toEqual([]);
             }));
         });
@@ -271,13 +276,15 @@ describe('Merge Requests State service', function() {
     describe('should set metadata on a merge request if it is', function() {
         beforeEach(function() {
             service.catalogId = catalogId;
-            utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-            utilStub.getPropertyId.and.callFake((obj, prop) => prop);
-            utilStub.getPropertyValue.and.callFake((obj, prop) => prop);
+            this.copyRequest = cloneDeep(requestObj);
         });
         describe('accepted and', function() {
             beforeEach(function() {
                 mergeRequestManagerStub.isAccepted.and.returnValue(true);
+                this.copyRequest.jsonld[`${MERGEREQ}sourceBranchTitle`] = [{ '@value': 'sourceBranchTitle' }];
+                this.copyRequest.jsonld[`${MERGEREQ}targetBranchTitle`] = [{ '@value': 'targetBranchTitle' }];
+                this.copyRequest.jsonld[`${MERGEREQ}sourceCommit`] = [{ '@id': 'sourceCommit' }];
+                this.copyRequest.jsonld[`${MERGEREQ}targetCommit`] = [{ '@id': 'targetCommit' }];
             });
             describe('getComments resolves and', function() {
                 beforeEach(function() {
@@ -290,40 +297,38 @@ describe('Merge Requests State service', function() {
                     });
                     it('processDifferenceResponse resolves', fakeAsync(function() {
                         spyOn(service, 'processDifferenceResponse').and.returnValue(of(null));
-                        const copyRequest = Object.assign({}, requestObj);
-                        service.setRequestDetails(copyRequest)
+                        service.setRequestDetails(this.copyRequest)
                             .subscribe(() => {
-                                expect(copyRequest.sourceBranch).toEqual({'@id': ''});
-                                expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                                expect(copyRequest.removeSource).toBeUndefined();
-                                expect(copyRequest.comments).toEqual([[comment]]);
-                                expect(copyRequest.sourceTitle).toEqual(MERGEREQ + 'sourceBranchTitle');
-                                expect(copyRequest.targetTitle).toEqual(MERGEREQ + 'targetBranchTitle');
-                                expect(copyRequest.sourceCommit).toEqual(MERGEREQ + 'sourceCommit');
-                                expect(copyRequest.targetCommit).toEqual(MERGEREQ + 'targetCommit');
+                                expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
+                                expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                                expect(this.copyRequest.removeSource).toBeUndefined();
+                                expect(this.copyRequest.comments).toEqual([[comment]]);
+                                expect(this.copyRequest.sourceTitle).toEqual('sourceBranchTitle');
+                                expect(this.copyRequest.targetTitle).toEqual('targetBranchTitle');
+                                expect(this.copyRequest.sourceCommit).toEqual('sourceCommit');
+                                expect(this.copyRequest.targetCommit).toEqual('targetCommit');
                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
-                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(MERGEREQ + 'sourceCommit', MERGEREQ + 'targetCommit', 100, 0);
-                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', MERGEREQ + 'sourceCommit', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
+                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceCommit', 'targetCommit', 100, 0);
+                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', 'sourceCommit', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`);
                             });
                         tick();
                     }));
                     it('processDifferenceResponse rejects', fakeAsync(function() {
                         spyOn(service, 'processDifferenceResponse').and.returnValue(throwError(error));
-                        const copyRequest = Object.assign({}, requestObj);
-                        service.setRequestDetails(copyRequest)
+                        service.setRequestDetails(this.copyRequest)
                             .subscribe(() => fail('Observable should have rejected'), response => {
                                 expect(response).toEqual(error);
-                                expect(copyRequest.sourceBranch).toEqual({'@id': ''});
-                                expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                                expect(copyRequest.removeSource).toBeUndefined();
-                                expect(copyRequest.comments).toEqual([[comment]]);
-                                expect(copyRequest.sourceTitle).toEqual(MERGEREQ + 'sourceBranchTitle');
-                                expect(copyRequest.targetTitle).toEqual(MERGEREQ + 'targetBranchTitle');
-                                expect(copyRequest.sourceCommit).toEqual(MERGEREQ + 'sourceCommit');
-                                expect(copyRequest.targetCommit).toEqual(MERGEREQ + 'targetCommit');
+                                expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
+                                expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                                expect(this.copyRequest.removeSource).toBeUndefined();
+                                expect(this.copyRequest.comments).toEqual([[comment]]);
+                                expect(this.copyRequest.sourceTitle).toEqual('sourceBranchTitle');
+                                expect(this.copyRequest.targetTitle).toEqual('targetBranchTitle');
+                                expect(this.copyRequest.sourceCommit).toEqual('sourceCommit');
+                                expect(this.copyRequest.targetCommit).toEqual('targetCommit');
                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
-                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(MERGEREQ + 'sourceCommit', MERGEREQ + 'targetCommit', 100, 0);
-                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', MERGEREQ + 'sourceCommit', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
+                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceCommit', 'targetCommit', 100, 0);
+                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', 'sourceCommit', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`);
                             });
                         tick();
                     }));
@@ -331,20 +336,19 @@ describe('Merge Requests State service', function() {
                 it('getDifference rejects', fakeAsync(function() {
                     spyOn(service, 'processDifferenceResponse');
                     catalogManagerStub.getDifference.and.returnValue(throwError(error));
-                    const copyRequest = Object.assign({}, requestObj);
-                    service.setRequestDetails(copyRequest)
+                    service.setRequestDetails(this.copyRequest)
                         .subscribe(() => fail('Observable should have rejected'), response => {
                             expect(response).toEqual(error);
-                            expect(copyRequest.sourceBranch).toEqual({'@id': ''});
-                            expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                            expect(copyRequest.removeSource).toBeUndefined();
-                            expect(copyRequest.comments).toEqual([[comment]]);
-                            expect(copyRequest.sourceTitle).toEqual(MERGEREQ + 'sourceBranchTitle');
-                            expect(copyRequest.targetTitle).toEqual(MERGEREQ + 'targetBranchTitle');
-                            expect(copyRequest.sourceCommit).toEqual(MERGEREQ + 'sourceCommit');
-                            expect(copyRequest.targetCommit).toEqual(MERGEREQ + 'targetCommit');
+                            expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
+                            expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                            expect(this.copyRequest.removeSource).toBeUndefined();
+                            expect(this.copyRequest.comments).toEqual([[comment]]);
+                            expect(this.copyRequest.sourceTitle).toEqual('sourceBranchTitle');
+                            expect(this.copyRequest.targetTitle).toEqual('targetBranchTitle');
+                            expect(this.copyRequest.sourceCommit).toEqual('sourceCommit');
+                            expect(this.copyRequest.targetCommit).toEqual('targetCommit');
                             expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
-                            expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(MERGEREQ + 'sourceCommit', MERGEREQ + 'targetCommit', 100, 0);
+                            expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceCommit', 'targetCommit', 100, 0);
                             expect(service.processDifferenceResponse).not.toHaveBeenCalled();
                         });
                     tick();
@@ -353,18 +357,17 @@ describe('Merge Requests State service', function() {
             it('getComments rejects', fakeAsync(function() {
                 spyOn(service, 'processDifferenceResponse');
                 mergeRequestManagerStub.getComments.and.returnValue(throwError(error));
-                const copyRequest = Object.assign({}, requestObj);
-                service.setRequestDetails(copyRequest)
+                service.setRequestDetails(this.copyRequest)
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
-                        expect(copyRequest.sourceBranch).toEqual({'@id': ''});
-                        expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                        expect(copyRequest.removeSource).toBeUndefined();
-                        expect(copyRequest.comments).toEqual([]);
-                        expect(copyRequest.sourceTitle).toEqual(MERGEREQ + 'sourceBranchTitle');
-                        expect(copyRequest.targetTitle).toEqual(MERGEREQ + 'targetBranchTitle');
-                        expect(copyRequest.sourceCommit).toEqual(MERGEREQ + 'sourceCommit');
-                        expect(copyRequest.targetCommit).toEqual(MERGEREQ + 'targetCommit');
+                        expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
+                        expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                        expect(this.copyRequest.removeSource).toBeUndefined();
+                        expect(this.copyRequest.comments).toEqual([]);
+                        expect(this.copyRequest.sourceTitle).toEqual('sourceBranchTitle');
+                        expect(this.copyRequest.targetTitle).toEqual('targetBranchTitle');
+                        expect(this.copyRequest.sourceCommit).toEqual('sourceCommit');
+                        expect(this.copyRequest.targetCommit).toEqual('targetCommit');
                         expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                         expect(catalogManagerStub.getDifference).not.toHaveBeenCalled();
                         expect(service.processDifferenceResponse).not.toHaveBeenCalled();
@@ -375,13 +378,7 @@ describe('Merge Requests State service', function() {
         describe('open', function() {
             beforeEach(function() {
                 mergeRequestManagerStub.isAccepted.and.returnValue(false);
-                utilStub.getPropertyId.and.callFake((obj, prop) => {
-                    if (prop === MERGEREQ + 'sourceBranch') {
-                        return sourceBranch['@id'];
-                    } else {
-                        return prop;
-                    }
-                });
+                this.copyRequest.jsonld[`${MERGEREQ}sourceBranch`] = [{ '@id': sourceBranch['@id'] }];
                 spyOn(service, 'shouldRemoveSource').and.returnValue(false);
             });
             describe('getComments resolves and', function() {
@@ -391,15 +388,7 @@ describe('Merge Requests State service', function() {
                 describe('getRecordBranch resolves and', function() {
                     describe('there is a target branch', function() {
                         beforeEach(function() {
-                            utilStub.getPropertyId.and.callFake((obj, prop) => {
-                                if (prop === MERGEREQ + 'targetBranch') {
-                                    return targetBranch['@id'];
-                                } else if (prop === MERGEREQ + 'sourceBranch') {
-                                    return sourceBranch['@id'];
-                                } else {
-                                    return prop;
-                                }
-                            });
+                            this.copyRequest.jsonld[`${MERGEREQ}targetBranch`] = [{ '@id': targetBranch['@id'] }];
                         });
                         describe('getRecordBranch resolves and', function() {
                             beforeEach(function() {
@@ -427,57 +416,47 @@ describe('Merge Requests State service', function() {
                                             right: new Difference(),
                                         };
                                         catalogManagerStub.getBranchConflicts.and.returnValue(of([conflict]));
-                                        const copyRequest = Object.assign({}, requestObj);
-                                        service.setRequestDetails(copyRequest)
+                                        service.setRequestDetails(this.copyRequest)
                                             .subscribe(() => {
-                                                expect(copyRequest.sourceBranch).toEqual(sourceBranch);
-                                                expect(copyRequest.targetBranch).toEqual(targetBranch);
-                                                expect(copyRequest.removeSource).toBeFalse();
-                                                expect(copyRequest.comments).toEqual([[comment]]);
-                                                expect(copyRequest.sourceTitle).toEqual('title');
-                                                expect(copyRequest.targetTitle).toEqual('title');
-                                                expect(copyRequest.sourceCommit).toEqual(CATALOG + 'head');
-                                                expect(copyRequest.targetCommit).toEqual(CATALOG + 'head');
-                                                expect(copyRequest.conflicts).toEqual([conflict]);
+                                                expect(this.copyRequest.sourceBranch).toEqual(sourceBranch);
+                                                expect(this.copyRequest.targetBranch).toEqual(targetBranch);
+                                                expect(this.copyRequest.removeSource).toBeFalse();
+                                                expect(this.copyRequest.comments).toEqual([[comment]]);
+                                                expect(this.copyRequest.sourceTitle).toEqual('title');
+                                                expect(this.copyRequest.targetTitle).toEqual('title');
+                                                expect(this.copyRequest.sourceCommit).toEqual('sourceHead');
+                                                expect(this.copyRequest.targetCommit).toEqual('targetHead');
+                                                expect(this.copyRequest.conflicts).toEqual([conflict]);
                                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(sourceBranch['@id'], recordId, catalogId);
                                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(targetBranch['@id'], recordId, catalogId);
-                                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'sourceBranch');
-                                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'targetBranch');
-                                                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
-                                                expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
-                                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(CATALOG + 'head', CATALOG + 'head', catalogManagerStub.differencePageSize, 0);
-                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
+                                                expect(service.shouldRemoveSource).toHaveBeenCalledWith(this.copyRequest.jsonld);
+                                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', catalogManagerStub.differencePageSize, 0);
+                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`);
                                                 expect(catalogManagerStub.getBranchConflicts).toHaveBeenCalledWith(sourceBranch['@id'], targetBranch['@id'], recordId, catalogId);
                                             }, () => fail('Observable should have resolved'));
                                         tick();
                                     }));
                                     it('getBranchConflicts rejects', fakeAsync(function() {
                                         catalogManagerStub.getBranchConflicts.and.returnValue(throwError(error));
-                                        const copyRequest = Object.assign({}, requestObj);
-                                        service.setRequestDetails(copyRequest)
+                                        service.setRequestDetails(this.copyRequest)
                                             .subscribe(() => fail('Observable should have rejected'), response => {
                                                 expect(response).toEqual(error);
-                                                expect(copyRequest.sourceBranch).toEqual(sourceBranch);
-                                                expect(copyRequest.targetBranch).toEqual(targetBranch);
-                                                expect(copyRequest.removeSource).toBeFalse();
-                                                expect(copyRequest.comments).toEqual([[comment]]);
-                                                expect(copyRequest.sourceTitle).toEqual('title');
-                                                expect(copyRequest.targetTitle).toEqual('title');
-                                                expect(copyRequest.sourceCommit).toEqual(CATALOG + 'head');
-                                                expect(copyRequest.targetCommit).toEqual(CATALOG + 'head');
-                                                expect(copyRequest.conflicts).toBeUndefined();
+                                                expect(this.copyRequest.sourceBranch).toEqual(sourceBranch);
+                                                expect(this.copyRequest.targetBranch).toEqual(targetBranch);
+                                                expect(this.copyRequest.removeSource).toBeFalse();
+                                                expect(this.copyRequest.comments).toEqual([[comment]]);
+                                                expect(this.copyRequest.sourceTitle).toEqual('title');
+                                                expect(this.copyRequest.targetTitle).toEqual('title');
+                                                expect(this.copyRequest.sourceCommit).toEqual('sourceHead');
+                                                expect(this.copyRequest.targetCommit).toEqual('targetHead');
+                                                expect(this.copyRequest.conflicts).toBeUndefined();
                                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(sourceBranch['@id'], recordId, catalogId);
                                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(targetBranch['@id'], recordId, catalogId);
-                                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'sourceBranch');
-                                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'targetBranch');
-                                                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
-                                                expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
-                                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(CATALOG + 'head', CATALOG + 'head', catalogManagerStub.differencePageSize, 0);
-                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
+                                                expect(service.shouldRemoveSource).toHaveBeenCalledWith(this.copyRequest.jsonld);
+                                                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', catalogManagerStub.differencePageSize, 0);
+                                                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`);
                                                 expect(catalogManagerStub.getBranchConflicts).toHaveBeenCalledWith(sourceBranch['@id'], targetBranch['@id'], recordId, catalogId);
                                             });
                                         tick();
@@ -485,29 +464,24 @@ describe('Merge Requests State service', function() {
                                 });
                                 it('processDifferenceResponse rejects', fakeAsync(function() {
                                     spyOn(service, 'processDifferenceResponse').and.returnValue(throwError(error));
-                                    const copyRequest = Object.assign({}, requestObj);
-                                    service.setRequestDetails(copyRequest)
+                                    service.setRequestDetails(this.copyRequest)
                                         .subscribe(() => fail('Observable should have rejected'), response => {
                                             expect(response).toEqual(error);
-                                            expect(copyRequest.sourceBranch).toEqual(sourceBranch);
-                                            expect(copyRequest.targetBranch).toEqual(targetBranch);
-                                            expect(copyRequest.removeSource).toBeFalse();
-                                            expect(copyRequest.comments).toEqual([[comment]]);
-                                            expect(copyRequest.sourceTitle).toEqual('title');
-                                            expect(copyRequest.targetTitle).toEqual('title');
-                                            expect(copyRequest.sourceCommit).toEqual(CATALOG + 'head');
-                                            expect(copyRequest.targetCommit).toEqual(CATALOG + 'head');
-                                            expect(copyRequest.conflicts).toBeUndefined();
+                                            expect(this.copyRequest.sourceBranch).toEqual(sourceBranch);
+                                            expect(this.copyRequest.targetBranch).toEqual(targetBranch);
+                                            expect(this.copyRequest.removeSource).toBeFalse();
+                                            expect(this.copyRequest.comments).toEqual([[comment]]);
+                                            expect(this.copyRequest.sourceTitle).toEqual('title');
+                                            expect(this.copyRequest.targetTitle).toEqual('title');
+                                            expect(this.copyRequest.sourceCommit).toEqual('sourceHead');
+                                            expect(this.copyRequest.targetCommit).toEqual('targetHead');
+                                            expect(this.copyRequest.conflicts).toBeUndefined();
                                             expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                             expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(sourceBranch['@id'], recordId, catalogId);
                                             expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(targetBranch['@id'], recordId, catalogId);
-                                            expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'sourceBranch');
-                                            expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                                            expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'targetBranch');
-                                            expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
-                                            expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
-                                            expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(CATALOG + 'head', CATALOG + 'head', catalogManagerStub.differencePageSize, 0);
-                                            expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], CATALOG + 'head', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord');
+                                            expect(service.shouldRemoveSource).toHaveBeenCalledWith(this.copyRequest.jsonld);
+                                            expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', catalogManagerStub.differencePageSize, 0);
+                                            expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`);
                                             expect(catalogManagerStub.getBranchConflicts).not.toHaveBeenCalled();
                                         });
                                     tick();
@@ -516,28 +490,23 @@ describe('Merge Requests State service', function() {
                             it('getDifference rejects', fakeAsync(function() {
                                 spyOn(service, 'processDifferenceResponse');
                                 catalogManagerStub.getDifference.and.returnValue(throwError(error));
-                                const copyRequest = Object.assign({}, requestObj);
-                                service.setRequestDetails(copyRequest)
+                                service.setRequestDetails(this.copyRequest)
                                     .subscribe(() => fail('Observable should have rejected'), response => {
                                         expect(response).toEqual(error);
-                                        expect(copyRequest.sourceBranch).toEqual(sourceBranch);
-                                        expect(copyRequest.targetBranch).toEqual(targetBranch);
-                                        expect(copyRequest.removeSource).toBeFalse();
-                                        expect(copyRequest.comments).toEqual([[comment]]);
-                                        expect(copyRequest.sourceTitle).toEqual('title');
-                                        expect(copyRequest.targetTitle).toEqual('title');
-                                        expect(copyRequest.sourceCommit).toEqual(CATALOG + 'head');
-                                        expect(copyRequest.targetCommit).toEqual(CATALOG + 'head');
-                                            expect(copyRequest.conflicts).toBeUndefined();
-                                            expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
+                                        expect(this.copyRequest.sourceBranch).toEqual(sourceBranch);
+                                        expect(this.copyRequest.targetBranch).toEqual(targetBranch);
+                                        expect(this.copyRequest.removeSource).toBeFalse();
+                                        expect(this.copyRequest.comments).toEqual([[comment]]);
+                                        expect(this.copyRequest.sourceTitle).toEqual('title');
+                                        expect(this.copyRequest.targetTitle).toEqual('title');
+                                        expect(this.copyRequest.sourceCommit).toEqual('sourceHead');
+                                        expect(this.copyRequest.targetCommit).toEqual('targetHead');
+                                        expect(this.copyRequest.conflicts).toBeUndefined();
+                                        expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(sourceBranch['@id'], recordId, catalogId);
                                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(targetBranch['@id'], recordId, catalogId);
-                                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'sourceBranch');
-                                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'targetBranch');
-                                        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
-                                        expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
-                                        expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(CATALOG + 'head', CATALOG + 'head', catalogManagerStub.differencePageSize, 0);
+                                        expect(service.shouldRemoveSource).toHaveBeenCalledWith(this.copyRequest.jsonld);
+                                        expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', catalogManagerStub.differencePageSize, 0);
                                         expect(service.processDifferenceResponse).not.toHaveBeenCalled();
                                         expect(catalogManagerStub.getBranchConflicts).not.toHaveBeenCalled();
                                     });
@@ -553,27 +522,22 @@ describe('Merge Requests State service', function() {
                                     return of(sourceBranch);
                                 }
                             });
-                            const copyRequest = Object.assign({}, requestObj);
-                            service.setRequestDetails(copyRequest)
+                            service.setRequestDetails(this.copyRequest)
                                 .subscribe(() => fail('Observable should have rejected'), response => {
                                     expect(response).toEqual(error);
-                                    expect(copyRequest.sourceBranch).toEqual(sourceBranch);
-                                    expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                                    expect(copyRequest.removeSource).toBeFalse();
-                                    expect(copyRequest.comments).toEqual([[comment]]);
-                                    expect(copyRequest.sourceTitle).toEqual('title');
-                                    expect(copyRequest.targetTitle).toEqual('');
-                                    expect(copyRequest.sourceCommit).toEqual(CATALOG + 'head');
-                                    expect(copyRequest.targetCommit).toEqual('');
-                                    expect(copyRequest.conflicts).toBeUndefined();
+                                    expect(this.copyRequest.sourceBranch).toEqual(sourceBranch);
+                                    expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                                    expect(this.copyRequest.removeSource).toBeFalse();
+                                    expect(this.copyRequest.comments).toEqual([[comment]]);
+                                    expect(this.copyRequest.sourceTitle).toEqual('title');
+                                    expect(this.copyRequest.targetTitle).toEqual('');
+                                    expect(this.copyRequest.sourceCommit).toEqual('sourceHead');
+                                    expect(this.copyRequest.targetCommit).toEqual('');
+                                    expect(this.copyRequest.conflicts).toBeUndefined();
                                     expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                     expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(sourceBranch['@id'], recordId, catalogId);
                                     expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(targetBranch['@id'], recordId, catalogId);
-                                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'sourceBranch');
-                                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'targetBranch');
-                                    expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
-                                    expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
+                                    expect(service.shouldRemoveSource).toHaveBeenCalledWith(this.copyRequest.jsonld);
                                     expect(catalogManagerStub.getDifference).not.toHaveBeenCalled();
                                     expect(service.processDifferenceResponse).not.toHaveBeenCalled();
                                     expect(catalogManagerStub.getBranchConflicts).not.toHaveBeenCalled();
@@ -583,36 +547,22 @@ describe('Merge Requests State service', function() {
                     });
                     it('there is no targetBranch', fakeAsync(function() {
                         spyOn(service, 'processDifferenceResponse');
-                        utilStub.getPropertyId.and.callFake((obj, prop) => {
-                            if (prop === MERGEREQ + 'targetBranch') {
-                                return '';
-                            } else if (prop === MERGEREQ + 'sourceBranch') {
-                                return sourceBranch['@id'];
-                            } else {
-                                return prop;
-                            }
-                        });
                         catalogManagerStub.getRecordBranch.and.returnValue(of(sourceBranch));
-                        const copyRequest = Object.assign({}, requestObj);
-                        service.setRequestDetails(copyRequest)
+                        service.setRequestDetails(this.copyRequest)
                             .subscribe(() => {
-                                expect(copyRequest.sourceBranch).toEqual(sourceBranch);
-                                expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                                expect(copyRequest.removeSource).toBeFalse();
-                                expect(copyRequest.comments).toEqual([[comment]]);
-                                expect(copyRequest.sourceTitle).toEqual('title');
-                                expect(copyRequest.targetTitle).toEqual('');
-                                expect(copyRequest.sourceCommit).toEqual(CATALOG + 'head');
-                                expect(copyRequest.targetCommit).toEqual('');
-                                expect(copyRequest.conflicts).toBeUndefined();
+                                expect(this.copyRequest.sourceBranch).toEqual(sourceBranch);
+                                expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                                expect(this.copyRequest.removeSource).toBeFalse();
+                                expect(this.copyRequest.comments).toEqual([[comment]]);
+                                expect(this.copyRequest.sourceTitle).toEqual('title');
+                                expect(this.copyRequest.targetTitle).toEqual('');
+                                expect(this.copyRequest.sourceCommit).toEqual('sourceHead');
+                                expect(this.copyRequest.targetCommit).toEqual('');
+                                expect(this.copyRequest.conflicts).toBeUndefined();
                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                 expect(catalogManagerStub.getRecordBranch.calls.count()).toEqual(1);
                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(sourceBranch['@id'], recordId, catalogId);
-                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'sourceBranch');
-                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                                expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'targetBranch');
-                                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(sourceBranch, 'title');
-                                expect(service.shouldRemoveSource).toHaveBeenCalledWith(request);
+                                expect(service.shouldRemoveSource).toHaveBeenCalledWith(this.copyRequest.jsonld);
                                 expect(catalogManagerStub.getDifference).not.toHaveBeenCalled();
                                 expect(service.processDifferenceResponse).not.toHaveBeenCalled();
                                 expect(catalogManagerStub.getBranchConflicts).not.toHaveBeenCalled();
@@ -623,25 +573,20 @@ describe('Merge Requests State service', function() {
                 it('getRecordBranch rejects', fakeAsync(function() {
                     spyOn(service, 'processDifferenceResponse');
                     catalogManagerStub.getRecordBranch.and.returnValue(throwError(error));
-                    const copyRequest = Object.assign({}, requestObj);
-                    service.setRequestDetails(copyRequest)
+                    service.setRequestDetails(this.copyRequest)
                         .subscribe(() => fail('Observable should have rejected'), response => {
                             expect(response).toEqual(error);
-                            expect(copyRequest.sourceBranch).toEqual({'@id': ''});
-                            expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                            expect(copyRequest.removeSource).toBeUndefined();
-                            expect(copyRequest.comments).toEqual([[comment]]);
-                            expect(copyRequest.sourceTitle).toEqual('');
-                            expect(copyRequest.targetTitle).toEqual('');
-                            expect(copyRequest.sourceCommit).toEqual('');
-                            expect(copyRequest.targetCommit).toEqual('');
-                            expect(copyRequest.conflicts).toBeUndefined();
+                            expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
+                            expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                            expect(this.copyRequest.removeSource).toBeUndefined();
+                            expect(this.copyRequest.comments).toEqual([[comment]]);
+                            expect(this.copyRequest.sourceTitle).toEqual('');
+                            expect(this.copyRequest.targetTitle).toEqual('');
+                            expect(this.copyRequest.sourceCommit).toEqual('');
+                            expect(this.copyRequest.targetCommit).toEqual('');
+                            expect(this.copyRequest.conflicts).toBeUndefined();
                             expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                             expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(sourceBranch['@id'], recordId, catalogId);
-                            expect(utilStub.getPropertyId).toHaveBeenCalledWith(request, MERGEREQ + 'sourceBranch');
-                            expect(utilStub.getPropertyId).not.toHaveBeenCalledWith(jasmine.any(Object), CATALOG + 'head');
-                            expect(utilStub.getPropertyId).not.toHaveBeenCalledWith(request, MERGEREQ + 'targetBranch');
-                            expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
                             expect(service.shouldRemoveSource).not.toHaveBeenCalled();
                             expect(catalogManagerStub.getDifference).not.toHaveBeenCalled();
                             expect(service.processDifferenceResponse).not.toHaveBeenCalled();
@@ -653,23 +598,20 @@ describe('Merge Requests State service', function() {
             it('getComments rejects', fakeAsync(function() {
                 spyOn(service, 'processDifferenceResponse');
                 mergeRequestManagerStub.getComments.and.returnValue(throwError(error));
-                const copyRequest = Object.assign({}, requestObj);
-                service.setRequestDetails(copyRequest)
+                service.setRequestDetails(this.copyRequest)
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
-                        expect(copyRequest.sourceBranch).toEqual({'@id': ''});
-                        expect(copyRequest.targetBranch).toEqual({'@id': ''});
-                        expect(copyRequest.removeSource).toBeUndefined();
-                        expect(copyRequest.comments).toEqual([]);
-                        expect(copyRequest.sourceTitle).toEqual('');
-                        expect(copyRequest.targetTitle).toEqual('');
-                        expect(copyRequest.sourceCommit).toEqual('');
-                        expect(copyRequest.targetCommit).toEqual('');
-                        expect(copyRequest.conflicts).toBeUndefined();
+                        expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
+                        expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
+                        expect(this.copyRequest.removeSource).toBeUndefined();
+                        expect(this.copyRequest.comments).toEqual([]);
+                        expect(this.copyRequest.sourceTitle).toEqual('');
+                        expect(this.copyRequest.targetTitle).toEqual('');
+                        expect(this.copyRequest.sourceCommit).toEqual('');
+                        expect(this.copyRequest.targetCommit).toEqual('');
+                        expect(this.copyRequest.conflicts).toBeUndefined();
                         expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                         expect(catalogManagerStub.getRecordBranch).not.toHaveBeenCalled();
-                        expect(utilStub.getPropertyId).not.toHaveBeenCalled();
-                        expect(utilStub.getDctermsValue).not.toHaveBeenCalled();
                         expect(service.shouldRemoveSource).not.toHaveBeenCalled();
                         expect(catalogManagerStub.getDifference).not.toHaveBeenCalled();
                         expect(service.processDifferenceResponse).not.toHaveBeenCalled();
@@ -710,12 +652,12 @@ describe('Merge Requests State service', function() {
         }));
     });
     it('should check whether the source should be removed on a Merge Request', function() {
-        utilStub.getPropertyValue.and.returnValue('true');
-        expect(service.shouldRemoveSource(request)).toBeTrue();
-        utilStub.getPropertyValue.and.returnValue('false');
         expect(service.shouldRemoveSource(request)).toBeFalse();
-        utilStub.getPropertyValue.and.returnValue('');
-        expect(service.shouldRemoveSource(request)).toBeFalse();
+        const copyRequest = Object.assign({}, request);
+        copyRequest[`${MERGEREQ}removeSource`] = [{ '@value': 'true' }];
+        expect(service.shouldRemoveSource(copyRequest)).toBeTrue();
+        copyRequest[`${MERGEREQ}removeSource`] = [{ '@value': 'false' }];
+        expect(service.shouldRemoveSource(copyRequest)).toBeFalse();
     });
     describe('should delete a request', function() {
         beforeEach(function() {
@@ -728,9 +670,9 @@ describe('Merge Requests State service', function() {
             tick();
             expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
             expect(service.selected).toEqual(requestObj);
-            expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+            expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
             expect(service.setRequests).not.toHaveBeenCalled();
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
         }));
         describe('successfully', function() {
             beforeEach(function() {
@@ -741,9 +683,9 @@ describe('Merge Requests State service', function() {
                 tick();
                 expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
                 expect(service.selected).toBeUndefined();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(service.setRequests).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('without a selected request', fakeAsync(function() {
                 service.selected = undefined;
@@ -751,17 +693,13 @@ describe('Merge Requests State service', function() {
                 tick();
                 expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
                 expect(service.selected).toBeUndefined();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(service.setRequests).toHaveBeenCalledWith(openRequest);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
     });
     it('should get the MergeRequest object from a JSON-LD object', function() {
-        utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-        utilStub.getDctermsId.and.callFake((obj, prop) => prop);
-        utilStub.getPropertyId.and.returnValue(recordId);
-        utilStub.getDate.and.returnValue('date');
         userManagerStub.users = [
             {
                 username: 'creator',
@@ -783,30 +721,37 @@ describe('Merge Requests State service', function() {
             }
         ];
         const jsonld = Object.assign({}, request);
-        jsonld[MERGEREQ + 'assignee'] = [{'@id': 'assignee'}];
+        jsonld[`${DCTERMS}title`] = [{ '@value': 'title' }];
+        jsonld[`${DCTERMS}description`] = [{ '@value': 'description' }];
+        jsonld[`${DCTERMS}issued`] = [{ '@value': DATE_STR }];
+        jsonld[`${DCTERMS}creator`] = [{ '@id': 'creator' }];
+        jsonld[`${MERGEREQ}onRecord`] = [{ '@id': recordId }];
+        jsonld[`${MERGEREQ}assignee`] = [{'@id': 'assignee'}];
         expect(service.getRequestObj(jsonld)).toEqual({
             jsonld,
             title: 'title',
             description: 'description',
-            date: 'date',
+            date: SHORTDATE_DATE_STR,
             creator: 'creator',
             recordIri: recordId,
             assignees: ['assignee']
         });
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(jsonld, 'title');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(jsonld, 'issued');
-        expect(utilStub.getDate).toHaveBeenCalledWith('issued', 'shortDate');
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(jsonld, 'description');
-        expect(utilStub.getDctermsId).toHaveBeenCalledWith(jsonld, 'creator');
-        expect(utilStub.getPropertyId).toHaveBeenCalledWith(jsonld, MERGEREQ + 'onRecord');
+        expect(service.getRequestObj(request)).toEqual({
+            jsonld: request,
+            title: '',
+            description: 'No description',
+            date: '(No Date Specified)',
+            creator: undefined,
+            recordIri: '',
+            assignees: []
+        });
     });
     describe('should process a response from getDifference', function() {
         it('unless one is not provided', fakeAsync(function() {
             spyOn(service, 'setDifference');
-            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', undefined, ONTOLOGYEDITOR + 'OntologyRecord')
+            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', undefined, `${ONTOLOGYEDITOR}OntologyRecord`)
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(jasmine.stringContaining('Difference is not set'));
-                    expect(utilStub.getObjIrisFromDifference).not.toHaveBeenCalled();
                     expect(ontologyManagerStub.getOntologyEntityNames).not.toHaveBeenCalled();
                     expect(service.entityNames).toEqual({});
                     expect(service.setDifference).not.toHaveBeenCalled();
@@ -825,11 +770,9 @@ describe('Merge Requests State service', function() {
             it('unless getOntologyEntityNames rejects', fakeAsync(function() {
                 spyOn(service, 'setDifference');
                 ontologyManagerStub.getOntologyEntityNames.and.returnValue(throwError(error));
-                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord')
+                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`)
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
-                        expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([this.addObj]);
-                        expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([this.delObj]);
                         expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'commitId', false, false, [this.addObj['@id'], this.delObj['@id']]);
                         expect(service.entityNames).toEqual({});
                         expect(service.setDifference).toHaveBeenCalledWith(this.httpResponse);
@@ -849,10 +792,8 @@ describe('Merge Requests State service', function() {
                     },
                 };
                 ontologyManagerStub.getOntologyEntityNames.and.returnValue(of(newNames));
-                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse, ONTOLOGYEDITOR + 'OntologyRecord')
+                service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`)
                     .subscribe(() => {
-                        expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([this.addObj]);
-                        expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([this.delObj]);
                         expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'commitId', false, false, [this.addObj['@id'], this.delObj['@id']]);
                         expect(service.entityNames).toEqual(newNames);
                         expect(service.setDifference).toHaveBeenCalledWith(this.httpResponse);
@@ -863,9 +804,8 @@ describe('Merge Requests State service', function() {
         it('unless the difference is empty', fakeAsync(function() {
             spyOn(service, 'setDifference');
             const httpResponse = new HttpResponse<CommitDifference>({body: new CommitDifference()});
-            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', httpResponse, ONTOLOGYEDITOR + 'OntologyRecord')
+            service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`)
                 .subscribe(() => {
-                    expect(utilStub.getObjIrisFromDifference).toHaveBeenCalledWith([]);
                     expect(ontologyManagerStub.getOntologyEntityNames).not.toHaveBeenCalled();
                     expect(service.entityNames).toEqual({});
                     expect(service.setDifference).not.toHaveBeenCalled();
@@ -897,13 +837,12 @@ describe('Merge Requests State service', function() {
     describe('should retrieve the label of an entityName', function() {
         beforeEach(function() {
             service.entityNames = { 'iri1': { 'label': 'label1', names: [] } };
-            utilStub.getBeautifulIRI.and.returnValue('beautifulIri');
         });
         it('exists in entityNames', function() {
             expect(service.getEntityNameLabel('iri1')).toEqual('label1');
         }) ;
         it('does not exist in entityNames', function() {
-            expect(service.getEntityNameLabel('iri2')).toEqual('beautifulIri');
+            expect(service.getEntityNameLabel('iri2')).toEqual('Iri 2');
         });
     });
     describe('should update the requestConfig difference', function() {
@@ -919,35 +858,28 @@ describe('Merge Requests State service', function() {
             };
             catalogManagerStub.differencePageSize = 100;
             spyOn(service, 'clearDifference');
-            utilStub.getPropertyId.and.callFake(obj => {
-                if (obj === sourceBranch) {
-                    return 'sourceHead';
-                } else {
-                    return 'targetHead';
-                }
-            });
         });
         describe('when getDifference resolves', function() {
             it('unless processDifferenceResponse rejects', fakeAsync(function() {
                 spyOn(service, 'processDifferenceResponse').and.returnValue(throwError(error));
-                catalogManagerStub.getType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
+                catalogManagerStub.getType.and.returnValue(`${ONTOLOGYEDITOR}OntologyRecord`);
                 service.updateRequestConfigDifference()
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
                         expect(service.clearDifference).toHaveBeenCalledWith();
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', 100, 0);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), `${ONTOLOGYEDITOR}OntologyRecord`);
                     });
                 tick();
             }));
             it('and processDifferenceResponse resolves', fakeAsync(function() {
                 spyOn(service, 'processDifferenceResponse').and.returnValue(of(null));
-                catalogManagerStub.getType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
+                catalogManagerStub.getType.and.returnValue(`${ONTOLOGYEDITOR}OntologyRecord`);
                 service.updateRequestConfigDifference()
                     .subscribe(() => {
                         expect(service.clearDifference).toHaveBeenCalledWith();
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', 100, 0);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), `${ONTOLOGYEDITOR}OntologyRecord`);
                     }, () => fail('Observable should have resolved'));
                 tick();
             }));
@@ -1005,12 +937,10 @@ describe('Merge Requests State service', function() {
                 service.selected.sourceBranch = sourceBranch;
                 service.retrieveMoreResults(paginationDetails);
                 tick();
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(undefined, CATALOG + 'head');
                 expect(service.startIndex).toEqual(paginationDetails.offset);
-                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(undefined, undefined, paginationDetails.limit, paginationDetails.offset);
-                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], undefined, jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', undefined, paginationDetails.limit, paginationDetails.offset);
+                expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), `${ONTOLOGYEDITOR}OntologyRecord`);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
             describe('and processDifferenceResponse resolves', function() {
                 beforeEach(function() {
@@ -1027,34 +957,24 @@ describe('Merge Requests State service', function() {
                         service.selected.targetCommit = 'targetCommit';
                         service.retrieveMoreResults(paginationDetails);
                         tick();
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith({'@id': ''}, CATALOG + 'head');
                         expect(service.startIndex).toEqual(paginationDetails.offset);
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceCommit', 'targetCommit', paginationDetails.limit, paginationDetails.offset);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', 'sourceCommit', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', 'sourceCommit', jasmine.any(HttpResponse), `${ONTOLOGYEDITOR}OntologyRecord`);
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                     it('with a source and target branch set', fakeAsync(function() {
                         service.selected.sourceBranch = sourceBranch;
                         service.selected.targetBranch = targetBranch;
-                        utilStub.getPropertyId.and.callFake(obj => {
-                            if (obj === sourceBranch) {
-                                return 'sourceHead';
-                            } else {
-                                return 'targetHead';
-                            }
-                        });
                         service.retrieveMoreResults(paginationDetails);
                         tick();
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                        expect(utilStub.getPropertyId).toHaveBeenCalledWith(targetBranch, CATALOG + 'head');
                         expect(service.startIndex).toEqual(paginationDetails.offset);
                         expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', paginationDetails.limit, paginationDetails.offset);
-                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), `${ONTOLOGYEDITOR}OntologyRecord`);
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                 });
                 it('and a request is being created', fakeAsync(function() {
-                    catalogManagerStub.getType.and.returnValue(ONTOLOGYEDITOR + 'OntologyRecord');
+                    catalogManagerStub.getType.and.returnValue(`${ONTOLOGYEDITOR}OntologyRecord`);
                     service.requestConfig = {
                         sourceBranchId: sourceBranch['@id'],
                         sourceBranch,
@@ -1064,21 +984,12 @@ describe('Merge Requests State service', function() {
                         recordId,
                         removeSource: false
                     };
-                    utilStub.getPropertyId.and.callFake(obj => {
-                        if (obj === sourceBranch) {
-                            return 'sourceHead';
-                        } else {
-                            return 'targetHead';
-                        }
-                    });
                     service.retrieveMoreResults(paginationDetails);
                     tick();
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(sourceBranch, CATALOG + 'head');
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(targetBranch, CATALOG + 'head');
                     expect(service.startIndex).toEqual(paginationDetails.offset);
                     expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceHead', 'targetHead', paginationDetails.limit, paginationDetails.offset);
-                    expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), ONTOLOGYEDITOR + 'OntologyRecord');
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, sourceBranch['@id'], 'sourceHead', jasmine.any(HttpResponse), `${ONTOLOGYEDITOR}OntologyRecord`);
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
             });
         });
@@ -1088,19 +999,17 @@ describe('Merge Requests State service', function() {
             service.selected = requestObj;
             service.retrieveMoreResults(paginationDetails);
             tick();
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(undefined, CATALOG + 'head');
             expect(service.startIndex).toEqual(paginationDetails.offset);
             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(undefined, undefined, paginationDetails.limit, paginationDetails.offset);
             expect(service.processDifferenceResponse).not.toHaveBeenCalled();
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
         }));
         it('unless a request is not selected and one is not being created', function() {
             spyOn(service, 'processDifferenceResponse');
             service.retrieveMoreResults(paginationDetails);
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith('Could not load more results.');
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith('Could not load more results.');
             expect(catalogManagerStub.getDifference).not.toHaveBeenCalled();
             expect(service.processDifferenceResponse).not.toHaveBeenCalled();
-            expect(utilStub.getPropertyId).not.toHaveBeenCalled();
         });
     });
 });

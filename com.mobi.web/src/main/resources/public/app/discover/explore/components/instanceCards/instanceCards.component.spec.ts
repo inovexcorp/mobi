@@ -41,7 +41,7 @@ import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { InstanceCardsComponent } from './instanceCards.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
@@ -52,7 +52,7 @@ describe('Instance Cards component', function() {
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let dialogStub : jasmine.SpyObj<MatDialog>;
     const data = [
         {
@@ -105,7 +105,7 @@ describe('Instance Cards component', function() {
                 MockProvider(ExploreService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
             ]
         }).compileComponents();
@@ -116,7 +116,7 @@ describe('Instance Cards component', function() {
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         dialogStub = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
 
         policyEnforcementStub.deny = 'Deny';
@@ -161,7 +161,7 @@ describe('Instance Cards component', function() {
         discoverStateStub = null;
         exploreServiceStub = null;
         policyEnforcementStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -209,7 +209,7 @@ describe('Instance Cards component', function() {
                     fixture.detectChanges();
                     await fixture.whenStable();
                     expect(exploreServiceStub.getInstance).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
                     expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                     expect(discoverStateStub.explore.breadcrumbs).toEqual(['']);
                     expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
@@ -220,7 +220,7 @@ describe('Instance Cards component', function() {
                 component.view(record);
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Could not retrieve record permissions');
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith('Could not retrieve record permissions');
             });
             it('and user does not have read permission', async () => {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
@@ -228,7 +228,7 @@ describe('Instance Cards component', function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             });
 
         });
@@ -247,23 +247,23 @@ describe('Instance Cards component', function() {
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                         expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                         expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
                         expect(discoverStateStub.explore.classDetails).toEqual([]);
                         expect(discoverStateStub.clickCrumb).toHaveBeenCalledWith(0);
-                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     });
                     it('rejected', function() {
                         exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                         expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                         expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
                         expect(discoverStateStub.clickCrumb).not.toHaveBeenCalled();
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                     });
                 });
                 describe('there are more instances and getClassInstanceDetails is', function() {
@@ -282,27 +282,27 @@ describe('Instance Cards component', function() {
                             component.delete(data[0]);
                             fixture.detectChanges();
                             expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                            expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                            expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                             expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                             expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {pageIndex: 1, limit: 1});
-                            expect(exploreServiceStub.createPagedResultsObject).toHaveBeenCalled();
+                            expect(exploreServiceStub.createPagedResultsObject).toHaveBeenCalledWith(jasmine.any(HttpResponse));
                             expect(discoverStateStub.explore.instanceDetails.data).toEqual(resultsObject.data);
                             expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
                             expect(discoverStateStub.explore.instanceDetails.currentPage).toBe(1);
-                            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                         });
                         it('was not the only one on the page', function() {
                             component.delete(data[1]);
                             fixture.detectChanges();
                             expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[1].instanceIRI);
-                            expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                            expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                             expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                             expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {pageIndex: 2, limit: 1});
-                            expect(exploreServiceStub.createPagedResultsObject).toHaveBeenCalled();
+                            expect(exploreServiceStub.createPagedResultsObject).toHaveBeenCalledWith(jasmine.any(HttpResponse));
                             expect(discoverStateStub.explore.instanceDetails.data).toEqual(resultsObject.data);
                             expect(discoverStateStub.explore.instanceDetails.total).toBe(4);
                             expect(discoverStateStub.explore.instanceDetails.currentPage).toBe(2);
-                            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                         });
                     });
                     it('rejected', function() {
@@ -311,10 +311,10 @@ describe('Instance Cards component', function() {
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
-                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                         expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                         expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {pageIndex: 2, limit: 1});
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
                     });
                 });
             });
@@ -326,7 +326,7 @@ describe('Instance Cards component', function() {
                 expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[1].instanceIRI);
                 expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                 expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
         it('confirmDelete should call the correct methods', function() {
@@ -340,10 +340,10 @@ describe('Instance Cards component', function() {
             fixture.detectChanges();
             expect(dialogStub.open).toHaveBeenCalledWith(ConfirmModalComponent, {
                 data: {
-                    content: 'Are you sure you want to delete <strong>' + data[0].title + '</strong>?'
+                    content: `Are you sure you want to delete <strong>${data[0].title}</strong>?`
                 }
             });
-            expect(component.delete).toHaveBeenCalled();
+            expect(component.delete).toHaveBeenCalledWith(data[0]);
         });
     });
 });

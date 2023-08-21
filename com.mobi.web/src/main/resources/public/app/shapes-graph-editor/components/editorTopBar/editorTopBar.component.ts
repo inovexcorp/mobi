@@ -23,7 +23,7 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { get } from 'lodash';
-import { first } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
@@ -32,12 +32,12 @@ import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRec
 import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordModal.component';
 import { CommitModalComponent } from '../commitModal/commitModal.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class shapes-graph-editor.EditorTopBarComponent
  *
- * `edit-top-bar` is a component that provides the top navigation bar for ShapesGraphRecords.
+ * `editor-top-bar` is a component that provides the top navigation bar for ShapesGraphRecords.
  */
 @Component({
     selector: 'editor-top-bar',
@@ -47,7 +47,7 @@ import { UtilService } from '../../../shared/services/util.service';
 export class EditorTopBarComponent {
 
     constructor(private dialog: MatDialog, public state: ShapesGraphStateService, private cm: CatalogManagerService,
-        private util: UtilService) {}
+        private toast: ToastService) {}
 
     createBranch(): void {
         this.dialog.open(CreateBranchModal, {});
@@ -84,12 +84,21 @@ export class EditorTopBarComponent {
         return !this.state?.listItem?.versionedRdfRecord?.recordId;
     }
 
-    update(): Promise<void> {
-        return this.cm.getBranchHeadCommit(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id', '')).pipe(first()).toPromise()
-            .then(headCommit => {
+    update(): void {
+        this.cm.getBranchHeadCommit(this.state.listItem.versionedRdfRecord.branchId, 
+          this.state.listItem.versionedRdfRecord.recordId, 
+          get(this.cm.localCatalog, '@id', '')).pipe(
+            switchMap(headCommit => {
                 const commitId = get(headCommit, 'commit[\'@id\']', '');
-                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, commitId, undefined, this.state.listItem.versionedRdfRecord.title);
-            }, error => Promise.reject(error))
-            .then(() => this.util.createSuccessToast('Shapes Graph branch has been updated.'), error => this.util.createErrorToast(error));
+                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
+                    this.state.listItem.versionedRdfRecord.branchId, 
+                    commitId,
+                    undefined, 
+                    this.state.listItem.versionedRdfRecord.title);
+            })
+        ).subscribe(
+            () => this.toast.createSuccessToast('Shapes Graph branch has been updated.'), 
+            error => this.toast.createErrorToast(error)
+        );
     }
 }

@@ -38,10 +38,11 @@ import { DatasetManagerService } from '../../../shared/services/datasetManager.s
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { RepositoryManagerService } from '../../../shared/services/repositoryManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { EditDatasetOverlayComponent } from '../editDatasetOverlay/editDatasetOverlay.component';
 import { NewDatasetOverlayComponent } from '../newDatasetOverlay/newDatasetOverlay.component';
 import { UploadDataOverlayComponent } from '../uploadDataOverlay/uploadDataOverlay.component';
+import { getDate, getDctermsValue, getPropertyId, getPropertyValue } from '../../../shared/utility';
 
 interface DatasetDisplayItem {
     title: string,
@@ -77,7 +78,7 @@ export class DatasetsListComponent implements OnInit {
     
     constructor(public dm: DatasetManagerService, public state: DatasetStateService, public cm: CatalogManagerService, 
         private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, private pep: PolicyEnforcementService, 
-        public util: UtilService, private rm: RepositoryManagerService) {}
+        private toast: ToastService, private rm: RepositoryManagerService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -91,10 +92,10 @@ export class DatasetsListComponent implements OnInit {
         });
     }
     getIdentifiedOntologyIds(dataset: Dataset): string[] {
-        return map(dataset.identifiers, identifier => identifier[DATASET + 'linksToRecord'][0]['@id']);
+        return map(dataset.identifiers, identifier => identifier[`${DATASET}linksToRecord`][0]['@id']);
     }
     getRecordTitle(record: JSONLDObject): string {
-        return this.util.getDctermsValue(record, 'title');
+        return getDctermsValue(record, 'title');
     }
     setCachedOntologyTitles(datasets: Dataset[]): Observable<null> {
         const toRetrieve = [];
@@ -129,24 +130,24 @@ export class DatasetsListComponent implements OnInit {
     delete(dataset: Dataset): void {
         this.dm.deleteDatasetRecord(dataset.record['@id'])
             .subscribe(() => {
-                this.util.createSuccessToast('Dataset successfully deleted');
+                this.toast.createSuccessToast('Dataset successfully deleted');
                 if (this.results.length === 1 && this.state.paginationConfig.pageIndex > 0) {
                     this.state.paginationConfig.pageIndex -= 1;
                 }
                 this.setResults();
                 this.state.submittedSearch = !!this.state.paginationConfig.searchText;
-            }, this.util.createErrorToast);
+            }, error => this.toast.createErrorToast(error));
     }
     setResults(): void {
         this.spinnerSvc.startLoadingForComponent(this.datasetsList);
         this.state.setResults().subscribe(results => {
             this.setCachedOntologyTitles(results).subscribe(() => {
                 this.results = results.map(dataset => ({
-                    title: this.util.getDctermsValue(dataset.record, 'title'),
-                    datasetIRI: this.util.getPropertyId(dataset.record, DATASET + 'dataset'),
-                    description: this.util.getDctermsValue(dataset.record, 'description') || '(No Description)',
-                    modified: this.util.getDate(this.util.getDctermsValue(dataset.record, 'modified'), 'short'),
-                    repositoryId: this.util.getPropertyValue(dataset.record, DATASET + 'repository'),
+                    title: getDctermsValue(dataset.record, 'title'),
+                    datasetIRI: getPropertyId(dataset.record, `${DATASET}dataset`),
+                    description: getDctermsValue(dataset.record, 'description') || '(No Description)',
+                    modified: getDate(getDctermsValue(dataset.record, 'modified'), 'short'),
+                    repositoryId: getPropertyValue(dataset.record, `${DATASET}repository`),
                     ontologies: this.getIdentifiedOntologyIds(dataset).map(ontologyId => this.cachedOntologyTitles[ontologyId]),
                     dataset
                 }));
@@ -157,13 +158,13 @@ export class DatasetsListComponent implements OnInit {
     clear(dataset: Dataset): void {
         this.dm.clearDatasetRecord(dataset.record['@id'])
             .subscribe(() => {
-                this.util.createSuccessToast('Dataset successfully cleared');
-            }, this.util.createErrorToast);
+                this.toast.createSuccessToast('Dataset successfully cleared');
+            }, error => this.toast.createErrorToast(error));
     }
     showUploadData(dataset: Dataset): void {
         const request = {
             resourceId: dataset.record['@id'],
-            actionId: CATALOG + 'Modify'
+            actionId: `${CATALOG}Modify`
         };
         this.pep.evaluateRequest(request)
             .subscribe(response => {
@@ -172,16 +173,16 @@ export class DatasetsListComponent implements OnInit {
                     this.state.selectedDataset = dataset;
                     this.dialog.open(UploadDataOverlayComponent);
                 } else {
-                    this.util.createErrorToast('You do not have permission to modify dataset record');
+                    this.toast.createErrorToast('You do not have permission to modify dataset record');
                 }
             }, () => {
-                this.util.createErrorToast('Could not retrieve record permissions');
+                this.toast.createErrorToast('Could not retrieve record permissions');
             });
     }
     showEdit(dataset: Dataset): void {
         const request = {
             resourceId: dataset.record['@id'],
-            actionId: POLICY + 'Update'
+            actionId: `${POLICY}Update`
         };
         this.pep.evaluateRequest(request)
             .subscribe(response => {
@@ -194,10 +195,10 @@ export class DatasetsListComponent implements OnInit {
                         }
                     });
                 } else {
-                    this.util.createErrorToast('You do not have permission to update dataset record');
+                    this.toast.createErrorToast('You do not have permission to update dataset record');
                 }
             }, () => {
-                this.util.createErrorToast('Could not retrieve record permissions');
+                this.toast.createErrorToast('Could not retrieve record permissions');
             });
     }
     showNew(): void {
@@ -210,7 +211,7 @@ export class DatasetsListComponent implements OnInit {
     showClear(dataset: Dataset): void {
         const request = {
             resourceId: dataset.record['@id'],
-            actionId: CATALOG + 'Modify'
+            actionId: `${CATALOG}Modify`
         };
         this.pep.evaluateRequest(request)
             .subscribe(response => {
@@ -218,7 +219,7 @@ export class DatasetsListComponent implements OnInit {
                 if (hasPermission) {
                     this.dialog.open(ConfirmModalComponent, {
                         data: {
-                            content: 'Are you sure you want to clear <strong>' + this.util.getDctermsValue(dataset.record, 'title') + '</strong>?'
+                            content: `Are you sure you want to clear <strong>${getDctermsValue(dataset.record, 'title')}</strong>?`
                         }
                     }).afterClosed().subscribe((result: boolean) => {
                         if (result) {
@@ -226,14 +227,14 @@ export class DatasetsListComponent implements OnInit {
                         }
                     });
                 } else {
-                    this.util.createErrorToast('Could not retrieve record permissions');
+                    this.toast.createErrorToast('Could not retrieve record permissions');
                 }
             });
     }
     showDelete(dataset: Dataset): void {
         const request = {
             resourceId: dataset.record['@id'],
-            actionId: POLICY + 'Delete'
+            actionId: `${POLICY}Delete`
         };
         this.pep.evaluateRequest(request)
             .subscribe(response => {
@@ -241,7 +242,7 @@ export class DatasetsListComponent implements OnInit {
                 if (hasPermission) {
                     this.dialog.open(ConfirmModalComponent, {
                         data: {
-                            content: 'Are you sure you want to delete <strong>' + this.util.getDctermsValue(dataset.record, 'title') + '</strong>?'
+                            content: `Are you sure you want to delete <strong>${getDctermsValue(dataset.record, 'title')}</strong>?`
                         }
                     }).afterClosed().subscribe((result: boolean) => {
                         if (result) {
@@ -249,10 +250,10 @@ export class DatasetsListComponent implements OnInit {
                         }
                     });
                 } else {
-                    this.util.createErrorToast('You do not have permission to delete dataset record');
+                    this.toast.createErrorToast('You do not have permission to delete dataset record');
                 }
             }, () => {
-                this.util.createErrorToast('Could not retrieve record permissions');
+                this.toast.createErrorToast('Could not retrieve record permissions');
             });
     }
     searchRecords(): void {

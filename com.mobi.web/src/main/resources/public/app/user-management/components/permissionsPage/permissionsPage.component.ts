@@ -31,7 +31,7 @@ import { User } from '../../../shared/models/user.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class user-management.PermissionsPageComponent
@@ -49,11 +49,11 @@ import { UtilService } from '../../../shared/services/util.service';
 export class PermissionsPageComponent implements OnInit {
     catalogId = '';
     systemRepoId = 'http://mobi.com/system-repo';
-    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + FOAF + 'member' + '>') + ')';
+    groupAttributeId = `http://mobi.com/policy/prop-path(${encodeURIComponent('^<' + FOAF + 'member>')})`;
     userRole = 'http://mobi.com/roles/user';
     policies: Policy[] = [];
 
-    constructor(private pm: PolicyManagerService, private cm: CatalogManagerService, private util: UtilService,
+    constructor(private pm: PolicyManagerService, private cm: CatalogManagerService, private toast: ToastService,
         private um: UserManagerService) {}
     
     ngOnInit(): void {
@@ -65,8 +65,8 @@ export class PermissionsPageComponent implements OnInit {
         forkJoin(map(changedPolicies, item => this.pm.updatePolicy(item.policy)))
             .subscribe(() => {
                 changedPolicies.forEach(item => item.changed = false);
-                this.util.createSuccessToast('Permissions updated');
-            }, error => this.util.createErrorToast(error));
+                this.toast.createSuccessToast('Permissions updated');
+            }, error => this.toast.createErrorToast(error));
     }
     hasChanges(): boolean {
         return some(this.policies, 'changed');
@@ -89,7 +89,7 @@ export class PermissionsPageComponent implements OnInit {
                     .filter('title')
                     .forEach(item => this.setInfo(item))
                     .value());
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     private setInfo(item: Policy): void {
         const rules = get(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
@@ -100,7 +100,7 @@ export class PermissionsPageComponent implements OnInit {
                 value: get(match, 'AttributeValue.content[0]')
             }))
             .value();
-        if ( find( matches, { id: USER + 'hasUserRole', value: this.userRole } )) {
+        if ( find( matches, { id: `${USER}hasUserRole`, value: this.userRole } )) {
             item.everyone = true;
         } else {
             item.selectedUsers = this.sortUsers(chain(matches)

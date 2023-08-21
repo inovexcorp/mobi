@@ -28,23 +28,38 @@ import { MockProvider } from 'ng-mocks';
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { DELIM } from '../../../prefixes';
+import { DCTERMS, DELIM } from '../../../prefixes';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { MappingPreviewComponent } from './mappingPreview.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 describe('Mapping Preview component', function() {
     let component: MappingPreviewComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<MappingPreviewComponent>;
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
-    const classMappingA = {'@id': 'classMappingA'};
-    const classMappingB = {'@id': 'classMappingB'};
-    const propMappingA = {'@id': 'propMappingA'};
-    const propMappingB = {'@id': 'propMappingB'};
+    const classMappingA: JSONLDObject = {
+      '@id': 'classMappingA',
+      [`${DCTERMS}title`]: [{ '@value': 'ClassA' }],
+      [`${DELIM}hasPrefix`]: [{ '@value': 'prefix:' }],
+      [`${DELIM}localName`]: [{ '@value': 'localName' }],
+    };
+    const classMappingB: JSONLDObject = {
+      '@id': 'classMappingB',
+      [`${DCTERMS}title`]: [{ '@value': 'ClassB' }],
+    };
+    const propMappingA: JSONLDObject = {
+      '@id': 'propMappingA',
+      [`${DCTERMS}title`]: [{ '@value': 'PropA' }],
+      [`${DELIM}columnIndex`]: [{ '@value': '0' }]
+    };
+    const propMappingB: JSONLDObject = {
+      '@id': 'propMappingB',
+      [`${DCTERMS}title`]: [{ '@value': 'PropB' }],
+      [`${DELIM}classMapping`]: [{ '@id': 'classMappingA' }]
+    };
     let mappingStub: jasmine.SpyObj<Mapping>;
 
     beforeEach(async () => {
@@ -54,17 +69,13 @@ describe('Mapping Preview component', function() {
             ],
             providers: [
                 MockProvider(MappingManagerService),
-                MockProvider(UtilService),
             ]
-        });
-    });
-
-    beforeEach(function() {
+        }).compileComponents();
+    
         fixture = TestBed.createComponent(MappingPreviewComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mappingManagerStub = TestBed.inject(MappingManagerService) as jasmine.SpyObj<MappingManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         mappingStub = jasmine.createSpyObj('Mapping', [
             'getClassMapping',
@@ -73,7 +84,6 @@ describe('Mapping Preview component', function() {
         ]);
         mappingStub.getAllClassMappings.and.returnValue([classMappingB, classMappingA]);
         mappingStub.getPropMappingsByClass.and.returnValue([propMappingB, propMappingA]);
-        utilStub.getDctermsValue.and.returnValue('');
     });
 
     afterEach(function() {
@@ -82,7 +92,6 @@ describe('Mapping Preview component', function() {
         element = null;
         fixture = null;
         mappingManagerStub = null;
-        utilStub = null;
     });
 
     it('should correctly handle changes to the mapping', function() {
@@ -92,34 +101,19 @@ describe('Mapping Preview component', function() {
     });
     describe('controller methods', function() {
         it('should create the IRI template for the class mapping', function() {
-            utilStub.getPropertyValue.and.callFake((obj, prop) => {
-                if (prop === DELIM + 'hasPrefix') {
-                    return 'prefix:';
-                } else {
-                    return 'localName';
-                }
-            });
             expect(component.getIriTemplate(classMappingA)).toEqual('prefix:localName');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMappingA, DELIM + 'hasPrefix');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith(classMappingA, DELIM + 'localName');
         });
         describe('should get the value of a property mapping', function() {
             it('if it is data property', function() {
                 mappingManagerStub.isDataMapping.and.returnValue(true);
-                utilStub.getPropertyValue.and.returnValue('0');
                 expect(component.getPropValue(propMappingA)).toEqual('0');
-                expect(utilStub.getPropertyValue).toHaveBeenCalledWith(propMappingA, DELIM + 'columnIndex');
             });
             it('if is an object property', function() {
                 spyOn(component, 'setClassMappings');
                 mappingManagerStub.isDataMapping.and.returnValue(false);
-                utilStub.getDctermsValue.and.returnValue('Class');
-                utilStub.getPropertyId.and.returnValue('classMapping');
                 mappingStub.getClassMapping.and.returnValue(classMappingA);
                 component.mapping = mappingStub;
-                expect(component.getPropValue(propMappingA)).toEqual('Class');
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(propMappingA, DELIM + 'classMapping');
-                expect(utilStub.getDctermsValue).toHaveBeenCalledWith(classMappingA, 'title');
+                expect(component.getPropValue(propMappingA)).toEqual('ClassA');
             });
         });
         it('should test whether a property mapping is invalid', function() {
@@ -132,17 +126,16 @@ describe('Mapping Preview component', function() {
             spyOn(component, 'getIriTemplate').and.returnValue('IRI Template');
             spyOn(component, 'getPropValue').and.returnValue('Prop Value');
             spyOn(component, 'isInvalid').and.returnValue(false);
-            utilStub.getDctermsValue.and.callFake(obj => obj['@id']);
             component.mapping = mappingStub;
             expect(component.classMappings.length).toEqual(2);
             expect(component.classMappings[0].id).toEqual(classMappingA['@id']);
             component.classMappings.forEach(classMapping => {
-                expect(classMapping.title).toEqual(classMapping.id);
+                expect(classMapping.title).toEqual(jasmine.stringContaining('Class'));
                 expect(classMapping.iriTemplate).toEqual('IRI Template');
                 expect(classMapping.propMappings.length).toEqual(2);
                 expect(classMapping.propMappings[0].id).toEqual(propMappingA['@id']);
                 classMapping.propMappings.forEach(propMapping => {
-                    expect(propMapping.title).toEqual(propMapping.id);
+                    expect(propMapping.title).toEqual(jasmine.stringContaining('Prop'));
                     expect(propMapping.value).toEqual('Prop Value');
                     expect(propMapping.isInvalid).toEqual(false);
                 });

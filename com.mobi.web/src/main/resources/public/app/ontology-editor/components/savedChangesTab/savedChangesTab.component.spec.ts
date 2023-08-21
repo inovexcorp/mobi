@@ -30,7 +30,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { range, remove } from 'lodash';
+import { range } from 'lodash';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
@@ -46,7 +46,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { SavedChangesTabComponent } from './savedChangesTab.component';
 
 describe('Saved Changes Tab component', function() {
@@ -54,9 +54,8 @@ describe('Saved Changes Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<SavedChangesTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
@@ -73,8 +72,8 @@ describe('Saved Changes Tab component', function() {
     };
     const branch = {
         '@id': 'branch123',
-        [CATALOG + 'head']: [{'@id': 'commit123'}],
-        [DCTERMS + 'title']: [{'@value': 'MASTER'}]
+        [`${CATALOG}head`]: [{'@id': 'commit123'}],
+        [`${DCTERMS}title`]: [{'@value': 'MASTER'}]
     };
     const branches = [branch];
 
@@ -98,7 +97,7 @@ describe('Saved Changes Tab component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
@@ -111,9 +110,7 @@ describe('Saved Changes Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.isBlankNodeId.and.returnValue(false);
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
     });
@@ -124,9 +121,8 @@ describe('Saved Changes Tab component', function() {
         element = null;
         fixture = null;
         ontologyStateStub = null;
-        ontologyManagerStub = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should update the list of changes when additions/deletions change', function() {
@@ -269,8 +265,8 @@ describe('Saved Changes Tab component', function() {
                 tick();
                 expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(String));
                 expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, commitId);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
             it('successfully', fakeAsync(function() {
                 ontologyStateStub.updateOntology.and.returnValue(of(null));
@@ -278,8 +274,8 @@ describe('Saved Changes Tab component', function() {
                 tick();
                 expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(String));
                 expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, commitId);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         describe('restoreBranchWithUserBranch calls the correct method', function() {
@@ -287,27 +283,27 @@ describe('Saved Changes Tab component', function() {
                 component.catalogId = catalogId;
                 this.newBranch = {
                     '@id': newBranchId,
-                    [CATALOG + 'head']: [{'@id': commitId}],
-                    [DCTERMS + 'title']: [{'@value': branchTitle}],
-                    [DCTERMS + 'description']: [{'@value': branchDescription}]
+                    [`${CATALOG}head`]: [{'@id': commitId}],
+                    [`${DCTERMS}title`]: [{'@value': branchTitle}],
+                    [`${DCTERMS}description`]: [{'@value': branchDescription}]
                 };
 
                 this.userBranch = {
                     '@id': userBranchId,
-                    '@type': [CATALOG + 'UserBranch'],
-                    [CATALOG + 'head']: [{'@id': commitId}],
-                    [CATALOG + 'createdFrom']: [{'@id': createdFromId}],
-                    [DCTERMS + 'title']: [{'@value': branchTitle}],
-                    [DCTERMS + 'description']: [{'@value': branchDescription}]
+                    '@type': [`${CATALOG}UserBranch`],
+                    [`${CATALOG}head`]: [{'@id': commitId}],
+                    [`${CATALOG}createdFrom`]: [{'@id': createdFromId}],
+                    [`${DCTERMS}title`]: [{'@value': branchTitle}],
+                    [`${DCTERMS}description`]: [{'@value': branchDescription}]
                 };
 
                 this.otherUserBranch = {
                     '@id': otherUserBranchId,
-                    '@type': [CATALOG + 'UserBranch'],
-                    [CATALOG + 'head']: [{'@id': commitId}],
-                    [CATALOG + 'createdFrom']: [{'@id': createdFromId}],
-                    [DCTERMS + 'title']: [{'@value': branchTitle}],
-                    [DCTERMS + 'description']: [{'@value': branchDescription}]
+                    '@type': [`${CATALOG}UserBranch`],
+                    [`${CATALOG}head`]: [{'@id': commitId}],
+                    [`${CATALOG}createdFrom`]: [{'@id': createdFromId}],
+                    [`${DCTERMS}title`]: [{'@value': branchTitle}],
+                    [`${DCTERMS}description`]: [{'@value': branchDescription}]
                 };
 
                 ontologyStateStub.listItem.versionedRdfRecord.branchId = userBranchId;
@@ -320,22 +316,6 @@ describe('Saved Changes Tab component', function() {
                     title: branchTitle,
                     description: branchDescription
                 };
-
-                utilStub.getPropertyId.and.callFake((branch, prop) => {
-                    if (prop === CATALOG + 'createdFrom') {
-                        return createdFromId;
-                    } else if (prop === CATALOG + 'head') {
-                       return commitId;
-                   }
-                });
-
-                utilStub.getDctermsValue.and.callFake((branch, prop) => {
-                    if (prop === 'title') {
-                        return branchTitle;
-                    } else if (prop === 'description') {
-                        return branchDescription;
-                    }
-                });
             });
             describe('when createRecordBranch is resolved', function() {
                 beforeEach(function() {
@@ -356,8 +336,6 @@ describe('Saved Changes Tab component', function() {
                             });
                             it('and when deleteBranchState is resolved', fakeAsync(function() {
                                 ontologyStateStub.deleteBranchState.and.returnValue(of(null));
-                                ontologyStateStub.listItem.versionedRdfRecord.branchId = newBranchId;
-                                remove(ontologyStateStub.listItem.branches, branch => branch['@id'] === userBranchId);
                                 ontologyStateStub.removeBranch.and.returnValue(of(null));
                                 catalogManagerStub.updateRecordBranch.and.returnValue(of(null));
                                 component.restoreBranchWithUserBranch();
@@ -365,14 +343,14 @@ describe('Saved Changes Tab component', function() {
                                 expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.branchConfig, ontologyStateStub.listItem.versionedRdfRecord.commitId);
                                 expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(newBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
                                 expect(ontologyStateStub.updateState).toHaveBeenCalledWith({recordId: ontologyStateStub.listItem.versionedRdfRecord.recordId, commitId: commitId, branchId: newBranchId});
-                                expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, newBranchId);
-                                expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, newBranchId);
+                                expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, userBranchId);
+                                expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, userBranchId);
                                 expect(catalogManagerStub.updateRecordBranch).toHaveBeenCalledWith(otherUserBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.otherUserBranch);
                             }));
                             it('and when deleteBranchState is rejected', fakeAsync(function() {
                                 ontologyStateStub.deleteBranchState.and.returnValue(throwError(error));
                                 component.restoreBranchWithUserBranch();
-                                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                                 tick();
                             }));
                         });
@@ -380,7 +358,7 @@ describe('Saved Changes Tab component', function() {
                             catalogManagerStub.deleteRecordBranch.and.returnValue(throwError(error));
                             component.restoreBranchWithUserBranch();
                             tick();
-                            expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                         }));
                     });
                     it('and when updateState is rejected', fakeAsync(function() {
@@ -390,7 +368,7 @@ describe('Saved Changes Tab component', function() {
                         expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.branchConfig, ontologyStateStub.listItem.versionedRdfRecord.commitId);
                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(newBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
                         expect(ontologyStateStub.updateState).toHaveBeenCalledWith({recordId: ontologyStateStub.listItem.versionedRdfRecord.recordId, commitId: commitId, branchId: newBranchId});
-                        expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                     }));
                 });
                 it('and when getRecordBranch is rejected', fakeAsync(function() {
@@ -399,7 +377,7 @@ describe('Saved Changes Tab component', function() {
                     tick();
                     expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.branchConfig, ontologyStateStub.listItem.versionedRdfRecord.commitId);
                     expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(newBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 }));
             });
             it('when createRecordBranch is rejected', fakeAsync(function() {
@@ -407,15 +385,15 @@ describe('Saved Changes Tab component', function() {
                 component.restoreBranchWithUserBranch();
                 tick();
                 expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.branchConfig, ontologyStateStub.listItem.versionedRdfRecord.commitId);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
         describe('mergeUserBranch calls the correct methods', function() {
             beforeEach(function() {
-                this.source = {'@id': 'source'};
-                this.target = {'@id': 'target'};
+                this.target = { '@id': 'target' };
+                this.source = { '@id': 'source', [`${CATALOG}createdFrom`]: [{ '@id': this.target['@id'] }] };
                 ontologyStateStub.listItem.branches = [this.source, this.target];
-                utilStub.getPropertyId.and.returnValue(this.target['@id']);
+                ontologyStateStub.listItem.versionedRdfRecord.branchId = this.source['@id'];
                 ontologyStateStub.checkConflicts.and.returnValue(of(null));
             });
             describe('when checkConflicts is resolved', function() {
@@ -430,8 +408,8 @@ describe('Saved Changes Tab component', function() {
                     expect(ontologyStateStub.merge).toHaveBeenCalledWith();
                     expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
                     expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('and when merge is rejected', fakeAsync(function() {
                     ontologyStateStub.merge.and.returnValue(throwError(error));
@@ -444,8 +422,8 @@ describe('Saved Changes Tab component', function() {
                     expect(ontologyStateStub.merge).toHaveBeenCalledWith();
                     expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
                     expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                    expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Pulling changes failed');
+                    expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Pulling changes failed');
                 }));
             });
             it('when checkConflicts is rejected', fakeAsync(function() {
@@ -459,8 +437,8 @@ describe('Saved Changes Tab component', function() {
                 expect(ontologyStateStub.merge).not.toHaveBeenCalled();
                 expect(ontologyStateStub.cancelMerge).not.toHaveBeenCalled();
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
         });
         describe('removeChanges calls the correct manager methods and sets the correct variables', function() {
@@ -492,7 +470,7 @@ describe('Saved Changes Tab component', function() {
                     expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
                     expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
                     expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, ontologyStateStub.listItem.upToDate);
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                     expect(component.index).toEqual(100);
                 }));
             });
@@ -504,7 +482,7 @@ describe('Saved Changes Tab component', function() {
                 expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
                 expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 expect(component.index).toEqual(100);
             }));
         });
@@ -527,7 +505,7 @@ describe('Saved Changes Tab component', function() {
                 tick();
                 expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.commitId, obj['@id']);
                 expect(item.resource).toEqual(obj);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
@@ -536,7 +514,7 @@ describe('Saved Changes Tab component', function() {
                 tick();
                 expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.commitId, obj['@id']);
                 expect(item.resource).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
     });

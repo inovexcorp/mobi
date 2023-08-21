@@ -39,19 +39,18 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
 import { v4 } from 'uuid';
-
+import { HttpResponse } from '@angular/common/http';
+import { get, find } from 'lodash';
 import { first } from 'rxjs/operators';
 
 import { Commit } from '../../models/commit.interface';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
-import { UtilService } from '../../services/util.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { Tag } from '../../models/tag.interface';
 import { CATALOG } from '../../../prefixes';
-import { HttpResponse } from '@angular/common/http';
-import { get, find } from 'lodash';
+import { getDctermsValue, getPropertyId } from '../../utility';
 
 /**
  * @class shared.CommitHistoryTableComponent
@@ -93,8 +92,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
 
     @ViewChild('commitHistoryTable', { static: true }) commitHistoryTable: ElementRef;
 
-    constructor(public util: UtilService,
-        private cm: CatalogManagerService,
+    constructor(private cm: CatalogManagerService,
         private spinnerSvc: ProgressSpinnerService,
         public um: UserManagerService,
         private iterableDiffers: IterableDiffers,
@@ -103,7 +101,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     error = '';
     commits: Commit[] = [];
     tagObjects: Tag[] = [];
-    id = 'commit-history-table' + v4();
+    id = `commit-history-table${v4()}`;
     showGraph: boolean;
     commitDotClickable: boolean;
     tagDiffer: IterableDiffer<JSONLDObject>;
@@ -121,7 +119,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             this.getTags();
         }
     }
-    ngDoCheck() {
+    ngDoCheck(): void {
         const changes = this.tagDiffer.diff(this.tags);
         if (changes) {
             this.getTags();
@@ -139,7 +137,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             }
         });
     }
-    commitDotClicked(commit): void {
+    commitDotClicked(commit: Commit): void {
         this.commitDotOnClick.emit(commit);
     }
     getCommits(): void {
@@ -168,9 +166,9 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             this.tagObjects = this.tags.map(tag => {
                 return {
                     tagIri: tag['@id'],
-                    commitIri: this.util.getPropertyId(tag, CATALOG + 'commit'),
-                    title: this.util.getDctermsValue(tag, 'title'),
-                    description: this.util.getDctermsValue(tag, 'description')
+                    commitIri: getPropertyId(tag, `${CATALOG}commit`),
+                    title: getDctermsValue(tag, 'title'),
+                    description: getDctermsValue(tag, 'description')
                 } as Tag;
             });
         } else if (this.recordId) {
@@ -180,9 +178,9 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
                     this.tagObjects = response.body.map(tag => {
                         return {
                             tagIri: tag['@id'],
-                            commitIri: this.util.getPropertyId(tag, CATALOG + 'commit'),
-                            title: this.util.getDctermsValue(tag, 'title'),
-                            description: this.util.getDctermsValue(tag, 'description')
+                            commitIri: getPropertyId(tag, `${CATALOG}commit`),
+                            title: getDctermsValue(tag, 'title'),
+                            description: getDctermsValue(tag, 'description')
                         } as Tag;
                     });
                     this.error = '';

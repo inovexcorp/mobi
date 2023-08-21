@@ -22,15 +22,11 @@
 */
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { MockProvider, MockComponent } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShowPropertiesPipe } from '../../../shared/pipes/showProperties.pipe';
-import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphPropertyValuesComponent } from '../shapesGraphPropertyValues/shapesGraphPropertyValues.component';
 import { ShapesGraphPropertiesBlockComponent } from './shapesGraphPropertiesBlock.component';
 
@@ -38,7 +34,6 @@ describe('Shapes Graph Properties Block component', function() {
     let component: ShapesGraphPropertiesBlockComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphPropertiesBlockComponent>;
-    let shapesGraphStateStub;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -48,21 +43,16 @@ describe('Shapes Graph Properties Block component', function() {
                 ShowPropertiesPipe
             ],
             providers: [
-                ShowPropertiesPipe,
-                MockProvider(ShapesGraphStateService),
-                MockProvider(ShapesGraphManagerService),
-                MockProvider(PropertyManagerService)
+                ShowPropertiesPipe
             ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(ShapesGraphPropertiesBlockComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-        shapesGraphStateStub.listItem = new VersionedRdfListItem();
-        shapesGraphStateStub.listItem.metadata = {};
 
         component.shapesGraph = {
+            '@id': 'shapesGraph',
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
@@ -75,14 +65,13 @@ describe('Shapes Graph Properties Block component', function() {
         component = null;
         element = null;
         fixture = null;
-        shapesGraphStateStub = null;
     });
 
     it('initializes with the correct data', function() {
         component.shapesGraph = {
+            '@id': 'id',
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}],
-            '@id': 'id'
         };
         component.ngOnChanges();
         expect(component.properties).toEqual(['prop1', 'prop2']);

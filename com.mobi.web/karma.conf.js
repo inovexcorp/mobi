@@ -21,6 +21,10 @@ module.exports = function (config) {
         fixWebpackSourcePaths: true
       },
       reporters: ['progress', 'kjhtml'],
+      jasmineHtmlReporter: {
+        suppressAll: true, // Suppress all messages (overrides other suppress settings)
+        suppressFailed: true // Suppress failed messages
+      },
       port: 9876,
       colors: true,
       logLevel: config.LOG_INFO,

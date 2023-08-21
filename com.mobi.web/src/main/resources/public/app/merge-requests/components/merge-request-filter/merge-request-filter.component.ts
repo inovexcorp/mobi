@@ -25,9 +25,9 @@ import { forEach } from 'lodash';
 
 import { MergeRequestFilter } from '../../models/merge-request-filter';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
-import { UtilService } from '../../../shared/services/util.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { MergeRequestFilterEvent } from '../../models/merge-request-filter-event';
+import { getBeautifulIRI } from '../../../shared/utility';
 
 @Component({
   selector: 'merge-request-filter',
@@ -45,7 +45,8 @@ export class MergeRequestFilterComponent implements OnInit {
   @Input() requestStatus: boolean;
   @Output() changeFilter = new EventEmitter<MergeRequestFilterEvent>();
   statusValue: any;
-  constructor(public state: MergeRequestsStateService, public util: UtilService) {}
+
+  constructor(public state: MergeRequestsStateService) {}
 
   ngOnInit(): void {
     const componentContext = this;
@@ -60,7 +61,7 @@ export class MergeRequestFilterComponent implements OnInit {
         this.setFilterItems();
       },
       getItemText: function(filterItem: FilterItem) {
-        return componentContext.util.getBeautifulIRI(filterItem.value);
+        return getBeautifulIRI(filterItem.value);
       },
       setFilterItems: function() {
         this.filterItems = componentContext.requestStatusOptions.map( item => {
@@ -72,7 +73,7 @@ export class MergeRequestFilterComponent implements OnInit {
           return {
             value: item.label,
             checked: item.value === componentContext.requestStatus
-          }
+          };
         });
       },
       filter: function(filterItem: FilterItem) {

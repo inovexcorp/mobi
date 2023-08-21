@@ -30,7 +30,8 @@ import { CATALOG } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class merge-requests.RequestDetailsFormComponent
@@ -57,30 +58,30 @@ export class RequestDetailsFormComponent implements OnInit, OnDestroy {
     @ViewChild('assigneeInput') assigneeInput: ElementRef;
 
     constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService, private fb: UntypedFormBuilder, 
-        public util: UtilService) {}
+        private toast: ToastService) {}
 
     ngOnInit(): void {
         this.state.clearDifference();
-        this.recordTitle = this.util.getDctermsValue(this.state.selectedRecord, 'title');
-        this.state.requestConfig.title = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+        this.recordTitle = getDctermsValue(this.state.selectedRecord, 'title');
+        this.state.requestConfig.title = getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
         this.cm.getRecordBranches(this.state.requestConfig.recordId, get(this.cm.localCatalog, '@id'))
             .subscribe((response: HttpResponse<JSONLDObject[]>) => {
                 this.state.updateRequestConfigBranch('sourceBranch', response.body);
                 this.state.updateRequestConfigBranch( 'targetBranch', response.body);
                 if (this.state.requestConfig.sourceBranch && this.state.requestConfig.targetBranch) {
-                    this.branchTitle = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
-                    this.sourceCommitId = this.util.getPropertyId(this.state.requestConfig.sourceBranch, CATALOG + 'head');
-                    this.targetBranchTitle = this.util.getDctermsValue(this.state.requestConfig.targetBranch, 'title');
-                    this.targetCommitId = this.util.getPropertyId(this.state.requestConfig.targetBranch, CATALOG + 'head');
+                    this.branchTitle = getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+                    this.sourceCommitId = getPropertyId(this.state.requestConfig.sourceBranch, `${CATALOG}head`);
+                    this.targetBranchTitle = getDctermsValue(this.state.requestConfig.targetBranch, 'title');
+                    this.targetCommitId = getPropertyId(this.state.requestConfig.targetBranch, `${CATALOG}head`);
                     this.state.updateRequestConfigDifference()
-                        .subscribe(() => {}, error => this.util.createErrorToast(error));
+                        .subscribe(() => {}, error => this.toast.createErrorToast(error));
                 } else {
                     this.state.createRequestStep = 1;
                     this.state.difference = undefined;
-                    this.util.createErrorToast('Branch was deleted');
+                    this.toast.createErrorToast('Branch was deleted');
                 }
             }, error => {
-                this.util.createErrorToast(error);
+                this.toast.createErrorToast(error);
             });
     }
     ngOnDestroy(): void {

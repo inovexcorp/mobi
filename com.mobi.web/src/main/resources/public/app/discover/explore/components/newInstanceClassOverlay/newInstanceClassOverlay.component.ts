@@ -29,14 +29,14 @@ import { Observable } from 'rxjs';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 import { v4 } from 'uuid';
 
-import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { ExploreService } from '../../../services/explore.service';
 
 /**
- * @class explore.component:newInstanceClassOverlay
+ * @class explore.NewInstanceClassOverlayComponent
  *
  * A component that creates contents for a modal that adds an instance of a class
  * selected from the provided list to the currently {@link shared.DiscoverStateService selected dataset}. The modal
@@ -53,9 +53,8 @@ export class NewInstanceClassOverlayComponent implements OnInit {
     classControl = new UntypedFormControl();
     filteredClasses: Observable<{id: string, title: string, deprecated: boolean}[]>;
 
-    constructor(private dialogRef: MatDialogRef<NewInstanceClassOverlayComponent>,
-        private state: DiscoverStateService, private es: ExploreService, 
-        private splitIRI: SplitIRIPipe, public util: UtilService,
+    constructor(private dialogRef: MatDialogRef<NewInstanceClassOverlayComponent>, private state: DiscoverStateService, 
+        private es: ExploreService, private toast: ToastService, 
         @Inject(MAT_DIALOG_DATA) public data: {classes: {id: string, title: string, deprecated: boolean}[]}
     ) {}
 
@@ -101,11 +100,11 @@ export class NewInstanceClassOverlayComponent implements OnInit {
                 let iri;
                 if (this.state.explore.instanceDetails.data.length) {
                     const instanceDetails: InstanceDetails = head(this.state.explore.instanceDetails.data);
-                    const split = this.splitIRI.transform(instanceDetails.instanceIRI);
+                    const split = splitIRI(instanceDetails.instanceIRI);
                     iri = split.begin + split.then + v4();
                 } else {
-                    const split = this.splitIRI.transform(this.selectedClass.id);
-                    iri = 'http://mobi.com/data/' + split.end.toLowerCase() + '/' + v4();
+                    const split = splitIRI(this.selectedClass.id);
+                    iri = `http://mobi.com/data/${split.end.toLowerCase()}/${v4()}`;
                 }
                 this.state.explore.instance.entity = [{
                     '@id': iri,
@@ -115,6 +114,6 @@ export class NewInstanceClassOverlayComponent implements OnInit {
                 this.state.explore.breadcrumbs.push(this.selectedClass.title);
                 this.state.explore.breadcrumbs.push('New Instance');
                 this.dialogRef.close();
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
 }

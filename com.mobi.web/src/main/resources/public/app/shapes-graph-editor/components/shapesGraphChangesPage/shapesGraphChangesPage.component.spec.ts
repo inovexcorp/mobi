@@ -40,32 +40,30 @@ import { CommitHistoryTableComponent } from '../../../shared/components/commitHi
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { OWL } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CommitCompiledResourceComponent } from '../../../shared/components/commitCompiledResource/commitCompiledResource.component';
 import { Commit } from '../../../shared/models/commit.interface';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { ShapesGraphChangesPageComponent } from './shapesGraphChangesPage.component';
-
-interface CommitChanges {
-    id: string,
-    difference: Difference,
-    disableAll: boolean,
-    showFull: boolean,
-    resource: JSONLDObject,
-    isBlankNode: boolean
-}
+import { CommitChanges, ShapesGraphChangesPageComponent } from './shapesGraphChangesPage.component';
 
 describe('Shapes Graph Changes Page component', function() {
     let component: ShapesGraphChangesPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphChangesPageComponent>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
 
-    const commitId = 'commitId';
+    const commitId = 'http://test.com#1234567890';
     const entityId = 'entityId';
-    const commitChanges: CommitChanges = {id: entityId, difference: new Difference(), disableAll: false, showFull: false, resource: undefined, isBlankNode: false};
+    const commitChanges: CommitChanges = {
+      id: entityId, 
+      beautiful: '',
+      difference: new Difference(),
+      disableAll: false,
+      showFull: false,
+      resource: undefined,
+      isBlankNode: false
+    };
     const commit: Commit = {
         id: commitId,
         creator: undefined,
@@ -91,7 +89,7 @@ describe('Shapes Graph Changes Page component', function() {
                 ShapesGraphChangesPageComponent
             ],
             providers: [
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphStateService)
             ]
@@ -107,9 +105,8 @@ describe('Shapes Graph Changes Page component', function() {
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
         shapesGraphStateStub.listItem.inProgressCommit = new Difference();
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.condenseCommitId.and.returnValue(commitId);
-        utilStub.isBlankNodeId.and.returnValue(false);
+        shapesGraphStateStub.updateShapesGraphMetadata.and.returnValue(of(null));
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -118,18 +115,18 @@ describe('Shapes Graph Changes Page component', function() {
         element = null;
         fixture = null;
         shapesGraphStateStub = null;
-        utilStub = null;
+        toastStub = null;
         catalogManagerStub = null;
     });
 
     describe('should update the list of changes when additions/deletions change', function() {
         it('if there are less than 100 changes', function() {
-            component.additions = [{'@id': '1', 'value': ['stuff']}];
-            component.deletions = [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}];
+            component.additions = [{'@id': 'http://test.com#1', 'value': ['stuff']}];
+            component.deletions = [{'@id': 'http://test.com#1', 'value': ['otherstuff']}, {'@id': 'http://test.com#2'}];
             component.ngOnChanges();
             expect(component.showList).toEqual([
-                {id: '1', difference: new Difference([{'@id': '1', 'value': ['stuff']}], [{'@id': '1', 'value': ['otherstuff']}]), disableAll: false, showFull: false, resource: undefined, isBlankNode: false},
-                {id: '2', difference: new Difference([], [{'@id': '2'}]), disableAll: false, showFull: false, resource: undefined, isBlankNode: false},
+                {id: 'http://test.com#1', beautiful: '1', difference: new Difference([{'@id': 'http://test.com#1', 'value': ['stuff']}], [{'@id': 'http://test.com#1', 'value': ['otherstuff']}]), disableAll: false, showFull: false, resource: undefined, isBlankNode: false},
+                {id: 'http://test.com#2', beautiful: '2', difference: new Difference([], [{'@id': 'http://test.com#2'}]), disableAll: false, showFull: false, resource: undefined, isBlankNode: false},
             ]);
         });
         it('if there are more than 100 changes', function() {
@@ -151,8 +148,8 @@ describe('Shapes Graph Changes Page component', function() {
                 await fixture.whenStable();
 
                 expect(shapesGraphStateStub.clearInProgressCommit).toHaveBeenCalledWith();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 expect(component.index).toEqual(0);
             });
             it('unless an error occurs', async function() {
@@ -166,8 +163,8 @@ describe('Shapes Graph Changes Page component', function() {
                 await fixture.whenStable();
 
                 expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(diff);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(component.index).toEqual(100);
             });
         });
@@ -182,11 +179,11 @@ describe('Shapes Graph Changes Page component', function() {
         });
         describe('should check if a specific type exists', function() {
             it('in additions', function() {
-                const difference = new Difference([{'@id': entityId, '@type': [OWL + 'Class']}]);
+                const difference = new Difference([{'@id': entityId, '@type': [`${OWL}Class`]}]);
                 expect(component.hasSpecificType(difference, entityId)).toBeTrue();
             });
             it('in deletions', function() {
-                const difference = new Difference([], [{'@id': entityId, '@type': [OWL + 'Class']}]);
+                const difference = new Difference([], [{'@id': entityId, '@type': [`${OWL}Class`]}]);
                 expect(component.hasSpecificType(difference, entityId)).toBeTrue();
             });
             it('when it exists with no types', function() {
@@ -205,45 +202,56 @@ describe('Shapes Graph Changes Page component', function() {
             expect(component.getCommitId(commit)).toEqual(commitId);
         });
         describe('should open a selected commit', function() {
-            it('successfully', async function() {
-                shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
+            it('successfully', fakeAsync(function() {
+                shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(of(null));
 
-                await component.openCommit(commit);
-                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, commitId, null, commitId);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-            });
-            it('unless an error occurs', async function() {
-                shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
+                component.openCommit(commit);
+                tick();
+                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, commitId, null, '1234567890');
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(throwError('Error'));
 
-                await component.openCommit(commit);
-                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, commitId, null, commitId);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
-            });
+                component.openCommit(commit);
+                tick();
+                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, commitId, null, '1234567890');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
+            }));
         });
         describe('toggleFull sets the full resource on a changes item', function() {
             it('unless the full display should be removed', function() {
-                const item = {id: entityId, entityName: '', difference: new Difference(), disableAll: false, resource: {'@id': entityId}, showFull: false, isBlankNode: false};
+                const item = {id: entityId, beautiful: '', entityName: '', difference: new Difference(), disableAll: false, resource: {'@id': entityId}, showFull: false, isBlankNode: false};
                 component.toggleFull(item);
                 expect(catalogManagerStub.getCompiledResource).not.toHaveBeenCalled();
                 expect(item.resource).toBeUndefined();
             });
             it('successfully', fakeAsync(function() {
                 catalogManagerStub.getCompiledResource.and.returnValue(of([{'@id': 'id'}, {'@id': entityId}]));
-                const item = {id: entityId, entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                const item = {id: entityId, beautiful: '', entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
                 component.toggleFull(item);
                 tick();
                 expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(shapesGraphStateStub.listItem.versionedRdfRecord.commitId, entityId);
                 expect(item.resource).toEqual({'@id': entityId});
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 catalogManagerStub.getCompiledResource.and.returnValue(throwError('Error Message'));
-                const item = {id: entityId, entityName: '', difference: new Difference(), disableAll: false, resource: undefined, showFull: true, isBlankNode: false};
+                const item = {
+                  id: entityId, 
+                  beautiful: '',
+                  entityName: '', 
+                  difference: new Difference(), 
+                  disableAll: false, 
+                  resource: undefined, 
+                  showFull: true, 
+                  isBlankNode: false
+                };
                 component.toggleFull(item);
                 tick();
                 expect(catalogManagerStub.getCompiledResource).toHaveBeenCalledWith(shapesGraphStateStub.listItem.versionedRdfRecord.commitId, entityId);
                 expect(item.resource).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
     });

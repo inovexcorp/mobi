@@ -77,9 +77,9 @@ describe('Profile Tab component', function() {
             jsonld: {
                 '@id': 'user',
                 '@type': [],
-                [FOAF + 'firstName']: [{'@value': 'John'}],
-                [FOAF + 'lastName']: [{'@value': 'Doe'}],
-                [FOAF + 'mbox']: [{'@id': 'mailto:john.doe@test.com'}]
+                [`${FOAF}firstName`]: [{'@value': 'John'}],
+                [`${FOAF}lastName`]: [{'@value': 'Doe'}],
+                [`${FOAF}mbox`]: [{'@id': 'mailto:john.doe@test.com'}]
             },
             username: 'user',
             firstName: 'John',
@@ -153,9 +153,9 @@ describe('Profile Tab component', function() {
                 component.save();
                 tick();
                 expect(component.currentUser.jsonld).toEqual(jasmine.objectContaining({
-                    [FOAF + 'firstName']: [{'@value': 'Mal'}],
-                    [FOAF + 'lastName']: [{'@value': 'Reynolds'}],
-                    [FOAF + 'mbox']: [{'@id': 'mailto:mal@serenity.com'}]
+                    [`${FOAF}firstName`]: [{'@value': 'Mal'}],
+                    [`${FOAF}lastName`]: [{'@value': 'Reynolds'}],
+                    [`${FOAF}mbox`]: [{'@id': 'mailto:mal@serenity.com'}]
                 }));
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(loginManagerStub.currentUser, userManagerStub.users[0]);
                 expect(component.success).toEqual(true);

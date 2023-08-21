@@ -84,6 +84,6 @@ export class AddMemberButtonComponent {
         this.userFilter = undefined;
     }
     getName(user: User): string {
-        return (user ? (user.firstName || user.lastName) ? (user.firstName + ' ' + user.lastName) : user.username : '').trim();
+        return (user ? (user.firstName || user.lastName) ? (`${user.firstName} ${user.lastName}`) : user.username : '').trim();
     }
 }

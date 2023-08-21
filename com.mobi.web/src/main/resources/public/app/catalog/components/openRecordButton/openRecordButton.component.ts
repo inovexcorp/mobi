@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Input } from '@angular/core';
-import { find, noop, isEmpty } from 'lodash';
+import { find, isEmpty } from 'lodash';
 import { Router } from '@angular/router';
 
 import { RecordSelectFiltered } from '../../../shapes-graph-editor/models/recordSelectFiltered.interface';
@@ -33,8 +33,9 @@ import { DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../pref
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -70,27 +71,27 @@ export class OpenRecordButtonComponent {
     constructor(public router: Router, public cs: CatalogStateService, public ms: MapperStateService,
         public os: OntologyStateService, public pep: PolicyEnforcementService,
         public pm: PolicyManagerService, public sgs: ShapesGraphStateService,
-        public util: UtilService) {}
+        private toast: ToastService) {}
 
     openRecord(event: MouseEvent): void {
         if (this.stopProp) {
             event.stopPropagation();
         }
         switch (this.recordType) {
-            case ONTOLOGYEDITOR + 'OntologyRecord':
+            case `${ONTOLOGYEDITOR}OntologyRecord`:
                 this.openOntology();
                 break;
-            case DELIM + 'MappingRecord':
+            case `${DELIM}MappingRecord`:
                 this.openMapping();
                 break;
-            case DATASET + 'DatasetRecord':
+            case `${DATASET}DatasetRecord`:
                 this.openDataset();
                 break;
-            case SHAPESGRAPHEDITOR + 'ShapesGraphRecord':
+            case `${SHAPESGRAPHEDITOR}ShapesGraphRecord`:
                 this.openShapesGraph();
                 break;
             default:
-                this.util.createWarningToast('No module for record type ' + this.recordType);
+                this.toast.createWarningToast('No module for record type ' + this.recordType);
         }
     }
     openOntology(): void {
@@ -103,12 +104,12 @@ export class OpenRecordButtonComponent {
             this.os.listItem = listItem;
             this.os.listItem.active = true;
         } else {
-            this.os.openOntology(this.record['@id'], this.util.getDctermsValue(this.record, 'title'))
-                .subscribe(noop, this.util.createErrorToast);
+            this.os.openOntology(this.record['@id'], getDctermsValue(this.record, 'title'))
+                .subscribe(() => {}, error => this.toast.createErrorToast(error));
         }
     }
     openMapping(): void {
-        this.ms.paginationConfig.searchText = this.util.getDctermsValue(this.record, 'title');
+        this.ms.paginationConfig.searchText = getDctermsValue(this.record, 'title');
         this.router.navigate(['/mapper']);
     }
     openDataset(): void {
@@ -117,16 +118,16 @@ export class OpenRecordButtonComponent {
     openShapesGraph(): void {
         const recordSelect: RecordSelectFiltered = {
             recordId: this.record['@id'],
-            title: this.util.getDctermsValue(this.record, 'title'),
-            description: this.util.getDctermsValue(this.record, 'description')
+            title: getDctermsValue(this.record, 'title'),
+            description: getDctermsValue(this.record, 'description')
         };
         this.router.navigate(['/shapes-graph-editor']);
-        this.sgs.openShapesGraph(recordSelect).then(noop, this.util.createErrorToast);
+        this.sgs.openShapesGraph(recordSelect).subscribe(() => {}, error => this.toast.createErrorToast(error));
     }
     update(): void {
         this.recordType = this.cs.getRecordType(this.record);
 
-        if (this.recordType === ONTOLOGYEDITOR + 'OntologyRecord') {
+        if (this.recordType === `${ONTOLOGYEDITOR}OntologyRecord`) {
             const request = {
                 resourceId: this.record['@id'],
                 actionId: this.pm.actionRead

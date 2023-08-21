@@ -89,7 +89,7 @@ export class CatalogRecordKeywordsComponent {
     }
     saveChanges(): void {
         this.edit = false;
-        this.record[CATALOG + 'keyword'] = map(this.addKeywordsForm.controls.keywords.value, keyword => ({'@value': keyword}));
+        this.record[`${CATALOG}keyword`] = map(this.addKeywordsForm.controls.keywords.value, keyword => ({'@value': keyword}));
         this.saveEvent.emit(this.record);
     }
     cancelChanges(): void {
@@ -99,6 +99,6 @@ export class CatalogRecordKeywordsComponent {
     }
 
     private getKeywords(record: JSONLDObject) {
-        return map(get(record, CATALOG + 'keyword', []), '@value').sort();
+        return map(get(record, `${CATALOG}keyword`, []), '@value').sort();
     }
 }

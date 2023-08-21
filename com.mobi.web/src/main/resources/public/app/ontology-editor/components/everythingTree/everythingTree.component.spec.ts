@@ -26,6 +26,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 import {
     cleanStylesFromDOM
@@ -38,9 +39,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { DCTERMS } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
-import { UtilService } from '../../../shared/services/util.service';
 import { EverythingTreeComponent } from './everythingTree.component';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 
 describe('Everything Tree component', function() {
     let component: EverythingTreeComponent;
@@ -48,7 +47,6 @@ describe('Everything Tree component', function() {
     let fixture: ComponentFixture<EverythingTreeComponent>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -61,7 +59,6 @@ describe('Everything Tree component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService)
             ]
         });
     });
@@ -72,7 +69,6 @@ describe('Everything Tree component', function() {
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyManagerServiceStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
         ontologyStateServiceStub.joinPath.and.callFake((path) => {
@@ -121,7 +117,6 @@ describe('Everything Tree component', function() {
         element = null;
         ontologyStateServiceStub = null;
         ontologyManagerServiceStub = null;
-        utilStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -174,7 +169,7 @@ describe('Everything Tree component', function() {
             component.toggleOpen(node);
             expect(node.isOpened).toEqual(true);
             expect(ontologyStateServiceStub.listItem.editorTabStates[component.activeTab].open[node.joinedPath]).toEqual(true);
-            expect(component.isShown).toHaveBeenCalled();
+            expect(component.isShown).toHaveBeenCalledWith(jasmine.any(Object));
             expect(component.filteredHierarchy).toEqual([]);
         });
         describe('matchesDropdownFilters', function() {
@@ -232,7 +227,7 @@ describe('Everything Tree component', function() {
                 };
                 component.hierarchy = [this.filterNodeParent, this.filterNode, this.filterNodeFolder];
                 component.filterText = 'ti';
-                ontologyManagerServiceStub.entityNameProps = [DCTERMS + 'title'];
+                ontologyManagerServiceStub.entityNameProps = [`${DCTERMS}title`];
                 ontologyStateServiceStub.joinPath.and.callFake((path) => {
                     return join(path, '.');
                 });
@@ -246,7 +241,6 @@ describe('Everything Tree component', function() {
                     describe('that do not have a matching text value', function () {
                         beforeEach(function () {
                             this.filterNode.entityInfo.names = [];
-                            utilStub.getBeautifulIRI.and.returnValue('id');
                         });
                         describe('and does not have a matching entity local name', function () {
                             it('and the node has no children', function () {
@@ -258,7 +252,7 @@ describe('Everything Tree component', function() {
                             });
                         });
                         it('and does have a matching entity local name', function() {
-                            utilStub.getBeautifulIRI.and.returnValue('title');
+                            this.filterNode.entityIRI = 'tiber';
                             expect(component.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });

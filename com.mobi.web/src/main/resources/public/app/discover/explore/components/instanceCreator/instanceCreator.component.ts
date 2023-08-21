@@ -31,7 +31,8 @@ import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { DCTERMS, RDFS, CATALOG } from '../../../../prefixes';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { getBeautifulIRI } from '../../../../shared/utility';
 
 /**
  * @class explore.InstanceCreatorComponent
@@ -51,13 +52,13 @@ export class InstanceCreatorComponent {
     isValid = true;
 
     constructor(private es: ExploreService, private eu: ExploreUtilsService, public ds: DiscoverStateService,
-                private util: UtilService, private pep: PolicyEnforcementService) {
+                private toast: ToastService, private pep: PolicyEnforcementService) {
     }
 
     save(): void {
         const pepRequest = {
             resourceId: this.ds.explore.recordId,
-            actionId: CATALOG + 'Modify'
+            actionId: `${CATALOG}Modify`
         };
         this.pep.evaluateRequest(pepRequest)
             .subscribe(response => {
@@ -73,9 +74,11 @@ export class InstanceCreatorComponent {
                         }), switchMap(response => {
                             const resultsObject = this.es.createPagedResultsObject(response as HttpResponse<InstanceDetails[]>);
                             this.ds.explore.instanceDetails.data = resultsObject.data;
-                            const metadata: any = {instanceIRI: instance['@id']};
-                            metadata.title = this.getPreferredValue(instance, [DCTERMS + 'title', RDFS + 'label'], this.util.getBeautifulIRI(instance['@id']));
-                            metadata.description = this.getPreferredValue(instance, [DCTERMS + 'description', RDFS + 'comment'], '');
+                            const metadata: InstanceDetails = {
+                              instanceIRI: instance['@id'],
+                              title: this.getPreferredValue(instance, [`${DCTERMS}title`, `${RDFS}label`], getBeautifulIRI(instance['@id'])),
+                              description: this.getPreferredValue(instance, [`${DCTERMS}description`, `${RDFS}comment`], '')
+                            };
                             this.ds.explore.instance.metadata = metadata;
                             this.ds.explore.breadcrumbs[this.ds.explore.breadcrumbs.length - 1] = this.ds.explore.instance.metadata.title;
                             this.ds.explore.creating = false;
@@ -83,13 +86,13 @@ export class InstanceCreatorComponent {
                         }))
                         .subscribe((response) => {
                             this.ds.explore.classDetails = response;
-                        }, (error) => this.util.createErrorToast(error));
+                        }, (error) => this.toast.createErrorToast(error));
                 } else {
-                    this.util.createErrorToast('You don\'t have permission to modify dataset');
+                    this.toast.createErrorToast('You don\'t have permission to modify dataset');
                     this.cancel();
                 }
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
             });
     }
     cancel(): void {
@@ -97,7 +100,7 @@ export class InstanceCreatorComponent {
         this.ds.explore.creating = false;
         this.ds.explore.breadcrumbs = initial(this.ds.explore.breadcrumbs);
     }
-    checkValidation(event): void {
+    checkValidation(event: {value: boolean}): void {
         this.isValid = event.value;
     }
 

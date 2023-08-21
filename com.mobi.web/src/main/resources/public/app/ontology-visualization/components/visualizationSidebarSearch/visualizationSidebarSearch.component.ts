@@ -32,7 +32,8 @@ import { GraphState } from '../../classes';
 import { ControlRecordUtilsService } from '../../services/controlRecordUtils.service';
 
 /**
- * @class VisualizationSidebarSearch
+ * @class ontology-visualization.VisualizationSidebarSearch
+ * 
  * Enable searching sidebar
  */
 @Component({

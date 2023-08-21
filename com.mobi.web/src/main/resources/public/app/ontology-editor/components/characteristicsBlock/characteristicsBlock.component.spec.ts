@@ -110,11 +110,11 @@ describe('Characteristics Block component', function() {
             this.id = 'id';
             this.statement = {
                 '@id': this.id,
-                '@type': [OWL + 'FunctionalProperty']
+                '@type': [`${OWL}FunctionalProperty`]
             };
             this.characteristicObj = {
                 checked: true,
-                typeIRI: OWL + 'FunctionalProperty',
+                typeIRI: `${OWL}FunctionalProperty`,
                 displayText: '',
                 objectOnly: false
             };
@@ -125,7 +125,7 @@ describe('Characteristics Block component', function() {
             it('is checked and no match in deletions', function() {
                 component.onChange(this.characteristicObj, true);
                 expect(this.characteristicObj.checked).toEqual(true);
-                expect(component.types).toContain(OWL + 'FunctionalProperty');
+                expect(component.types).toContain(`${OWL}FunctionalProperty`);
                 expect(component.typesChange.emit).toHaveBeenCalledWith(component.types);
                 expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.statement);
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith(ontologyStateStub.listItem, false);
@@ -134,7 +134,7 @@ describe('Characteristics Block component', function() {
                 ontologyStateStub.listItem.deletions = [Object.assign({}, this.statement)];
                 component.onChange(this.characteristicObj, true);
                 expect(this.characteristicObj.checked).toEqual(true);
-                expect(component.types).toContain(OWL + 'FunctionalProperty');
+                expect(component.types).toContain(`${OWL}FunctionalProperty`);
                 expect(component.typesChange.emit).toHaveBeenCalledWith(component.types);
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.listItem.deletions.length).toEqual(0);
@@ -146,7 +146,7 @@ describe('Characteristics Block component', function() {
                 ontologyStateStub.listItem.deletions = [object];
                 component.onChange(this.characteristicObj, true);
                 expect(this.characteristicObj.checked).toEqual(true);
-                expect(component.types).toContain(OWL + 'FunctionalProperty');
+                expect(component.types).toContain(`${OWL}FunctionalProperty`);
                 expect(component.typesChange.emit).toHaveBeenCalledWith(component.types);
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(some(ontologyStateStub.listItem.deletions, {'@id': this.id, other: 'value'})).toEqual(true);
@@ -156,7 +156,7 @@ describe('Characteristics Block component', function() {
                 ontologyStateStub.listItem.selected = Object.assign({}, this.statement);
                 component.onChange(this.characteristicObj, false);
                 expect(this.characteristicObj.checked).toEqual(false);
-                expect(component.types).not.toContain(OWL + 'FunctionalProperty');
+                expect(component.types).not.toContain(`${OWL}FunctionalProperty`);
                 expect(component.typesChange.emit).toHaveBeenCalledWith(component.types);
                 expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.statement);
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith(ontologyStateStub.listItem, false);
@@ -166,7 +166,7 @@ describe('Characteristics Block component', function() {
                 ontologyStateStub.listItem.selected = Object.assign({}, this.statement);
                 component.onChange(this.characteristicObj, false);
                 expect(this.characteristicObj.checked).toEqual(false);
-                expect(component.types).not.toContain(OWL + 'FunctionalProperty');
+                expect(component.types).not.toContain(`${OWL}FunctionalProperty`);
                 expect(component.typesChange.emit).toHaveBeenCalledWith(component.types);
                 expect(ontologyStateStub.addToDeletions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.listItem.additions.length).toEqual(0);
@@ -179,7 +179,7 @@ describe('Characteristics Block component', function() {
                 ontologyStateStub.listItem.selected = Object.assign({}, this.statement);
                 component.onChange(this.characteristicObj, false);
                 expect(this.characteristicObj.checked).toEqual(false);
-                expect(component.types).not.toContain(OWL + 'FunctionalProperty');
+                expect(component.types).not.toContain(`${OWL}FunctionalProperty`);
                 expect(component.typesChange.emit).toHaveBeenCalledWith(component.types);
                 expect(ontologyStateStub.addToDeletions).not.toHaveBeenCalled();
                 expect(some(ontologyStateStub.listItem.additions, {'@id': this.id, other: 'value'})).toEqual(true);
@@ -192,7 +192,7 @@ describe('Characteristics Block component', function() {
             obj.checked = false;
         });
         spyOn(component, 'onChange');
-        component.types = [OWL + 'FunctionalProperty', OWL + 'AsymmetricProperty', OWL + 'SymmetricProperty', OWL + 'TransitiveProperty', OWL + 'ReflexiveProperty', OWL + 'IrreflexiveProperty'];
+        component.types = [`${OWL}FunctionalProperty`, `${OWL}AsymmetricProperty`, `${OWL}SymmetricProperty`, `${OWL}TransitiveProperty`, `${OWL}ReflexiveProperty`, `${OWL}IrreflexiveProperty`];
         component.ngOnChanges();
         expect(component.onChange).not.toHaveBeenCalled();
         component.characteristics.forEach(obj => {

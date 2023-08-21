@@ -30,7 +30,8 @@ import { GraphStateDataI } from '../classes/graphState';
 import { D3Forces, SimulationOptions } from '../interfaces/simulation.interface';
 
 /**
- * @class D3SimulatorService
+ * @class ontology-visualization.D3SimulatorService
+ * 
  * Service is used to run D3 simulations
  */
 @Injectable()

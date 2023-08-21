@@ -29,13 +29,15 @@ export interface SPARQLSelectResults {
         link?: string[]
     },
     results: {
-        bindings: {
-            [key: string]: {
-                type: string,
-                value: string,
-                datatype?: string,
-                'xml:lang'?: string
-            }
-        }[]
+        bindings: SPARQLSelectBinding[]
+    }
+}
+
+export interface SPARQLSelectBinding {
+    [key: string]: {
+        type: string,
+        value: string,
+        datatype?: string,
+        'xml:lang'?: string
     }
 }

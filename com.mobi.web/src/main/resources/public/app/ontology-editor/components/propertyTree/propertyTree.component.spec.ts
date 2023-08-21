@@ -26,6 +26,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
@@ -36,9 +37,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { DCTERMS } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
-import { UtilService } from '../../../shared/services/util.service';
 import { PropertyTreeComponent } from './propertyTree.component';
-import { ScrollingModule } from "@angular/cdk/scrolling";
 
 describe('Property Tree component', function() {
     let component: PropertyTreeComponent;
@@ -46,7 +45,6 @@ describe('Property Tree component', function() {
     let fixture: ComponentFixture<PropertyTreeComponent>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerServiceStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const propsList = [{
         entityIRI: 'class1',
@@ -75,7 +73,6 @@ describe('Property Tree component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService)
             ]
         }).compileComponents();
 
@@ -84,7 +81,6 @@ describe('Property Tree component', function() {
         element = fixture.debugElement;
         ontologyStateServiceStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyManagerServiceStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
 
@@ -100,7 +96,6 @@ describe('Property Tree component', function() {
             }
         });
         ontologyStateServiceStub.getActiveKey.and.returnValue('properties');
-        utilStub.getBeautifulIRI.and.returnValue('test');
         component.datatypeProps = [{
             entityIRI: 'dataProp1',
             hasChildren: true,
@@ -142,7 +137,6 @@ describe('Property Tree component', function() {
         element = null;
         ontologyStateServiceStub = null;
         ontologyManagerServiceStub = null;
-        utilStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -212,7 +206,7 @@ describe('Property Tree component', function() {
             component.toggleOpen(node);
             expect(node.isOpened).toEqual(true);
             expect(ontologyStateServiceStub.listItem.editorTabStates[component.activeTab].open[node.joinedPath]).toEqual(true);
-            expect(component.isShown).toHaveBeenCalled();
+            expect(component.isShown).toHaveBeenCalledWith(jasmine.any(Object));
             expect(component.filteredHierarchy).toEqual([]);
         });
         describe('matchesDropdownFilters', function() {
@@ -295,7 +289,7 @@ describe('Property Tree component', function() {
                         return 'recordId.otherIri';
                     }
                 });
-                ontologyManagerServiceStub.entityNameProps = [DCTERMS + 'title'];
+                ontologyManagerServiceStub.entityNameProps = [`${DCTERMS}title`];
                 ontologyStateServiceStub.joinPath.and.callFake((path) => {
                     return join(path, '.');
                 });
@@ -336,11 +330,10 @@ describe('Property Tree component', function() {
                             this.filterNode.entityInfo.names = [];
                         });
                         it('and does not have a matching entity local name', function () {
-                            utilStub.getBeautifulIRI.and.returnValue('id');
                             expect(component.searchFilter(this.filterNode)).toEqual(false);
                         });
                         it('and does have a matching entity local name', function() {
-                            utilStub.getBeautifulIRI.and.returnValue('title');
+                            this.filterNode.entityIRI = 'tiber';
                             expect(component.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });

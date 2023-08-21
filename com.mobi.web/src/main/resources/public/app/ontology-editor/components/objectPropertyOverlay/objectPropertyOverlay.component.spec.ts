@@ -41,7 +41,7 @@ import {
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OWL } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
 import { ObjectPropertyOverlayComponent } from './objectPropertyOverlay.component';
@@ -53,9 +53,9 @@ describe('Object Property Overlay component', function() {
     let fixture:ComponentFixture<ObjectPropertyOverlayComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<ObjectPropertyOverlayComponent>>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
-    const type = [OWL + 'NamedIndividual', 'type1', 'type2'];
+    const type = [`${OWL}NamedIndividual`, 'type1', 'type2'];
     const listItem = new OntologyListItem();
     const entityIRI = 'entity';
     const data = {
@@ -87,7 +87,7 @@ describe('Object Property Overlay component', function() {
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PropertyManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -100,7 +100,7 @@ describe('Object Property Overlay component', function() {
         element = fixture.debugElement;
         nativeElement = element.nativeElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<ObjectPropertyOverlayComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
 
@@ -120,7 +120,7 @@ describe('Object Property Overlay component', function() {
         fixture = null;
         propertyManagerStub = null;
         matDialogRef = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('initializes with the correct values', function() {
@@ -161,7 +161,6 @@ describe('Object Property Overlay component', function() {
                 component.propertyValue = [value];
                 component.objectPropertyForm.controls.propertySelect.setValue('prop');
                 ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
-                utilStub.createJson.and.returnValue({'@id': ''});
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerStub.addId.and.returnValue(false);
@@ -169,7 +168,7 @@ describe('Object Property Overlay component', function() {
                 expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             describe('if the selected entity is', function() {
@@ -177,9 +176,12 @@ describe('Object Property Overlay component', function() {
                     ontologyStateStub.containsDerivedConcept.and.returnValue(true);
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
-                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                      '@id': ontologyStateStub.listItem.selected['@id'],
+                      [property]: [{ '@id': value }]
+                    });
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                     expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith(type);
                     expect(ontologyStateStub.updateVocabularyHierarchies).toHaveBeenCalledWith(property, [{'@id': value}]);
@@ -188,9 +190,12 @@ describe('Object Property Overlay component', function() {
                     ontologyStateStub.containsDerivedConceptScheme.and.returnValue(true);
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property,  value);
-                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                      '@id': ontologyStateStub.listItem.selected['@id'],
+                      [property]: [{ '@id': value }]
+                    });
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                     expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith(type);
                     expect(ontologyStateStub.updateVocabularyHierarchies).toHaveBeenCalledWith(property, [{'@id': value}]);
@@ -198,9 +203,12 @@ describe('Object Property Overlay component', function() {
                 it('not a derived Concept or ConceptScheme', function() {
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
-                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                      '@id': ontologyStateStub.listItem.selected['@id'],
+                      [property]: [{ '@id': value }]
+                    });
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                     expect(ontologyStateStub.containsDerivedConcept).toHaveBeenCalledWith(type);
                     expect(ontologyStateStub.containsDerivedConceptScheme).toHaveBeenCalledWith(type);

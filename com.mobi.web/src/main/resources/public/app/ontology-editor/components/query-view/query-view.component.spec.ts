@@ -21,18 +21,19 @@
  * #L%
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { QueryViewComponent } from './query-view.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
 import { YasguiService } from '../../../shared/services/yasgui.service';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { DebugElement } from '@angular/core';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { By } from '@angular/platform-browser';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { YasguiQuery } from '../../../shared/models/yasguiQuery.class';
+import { QueryViewComponent } from './query-view.component';
 
 describe('QueryViewComponent', () => {
     let component: QueryViewComponent;
@@ -54,6 +55,7 @@ describe('QueryViewComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
+                NoopAnimationsModule,
                 MatDialogModule
             ],
             declarations: [
@@ -62,7 +64,7 @@ describe('QueryViewComponent', () => {
             ],
             providers: [
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService)
+                MockProvider(ToastService)
             ]
         }).overrideComponent(QueryViewComponent, {
             set: {

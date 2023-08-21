@@ -30,4 +30,4 @@ export interface PropertyOverlayDataOptions {
     index?: number;
     language?: string;
     isIRIProperty?: boolean;
-};
+}

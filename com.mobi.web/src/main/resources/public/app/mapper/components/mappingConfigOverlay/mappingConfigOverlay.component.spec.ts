@@ -34,9 +34,10 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import {
-    cleanStylesFromDOM,
+    cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR,
 } from '../../../../../public/test/ts/Shared';
 import { CATALOG, DCTERMS, DELIM, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -55,7 +56,6 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
-import { UtilService } from '../../../shared/services/util.service';
 import { MappingConfigOverlayComponent } from './mappingConfigOverlay.component';
 
 describe('Mapping Config Overlay component', function() {
@@ -68,7 +68,6 @@ describe('Mapping Config Overlay component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const error = 'Error Message';
     const mappingId = 'mappingId';
@@ -76,9 +75,20 @@ describe('Mapping Config Overlay component', function() {
     const branchId = 'branchId';
     const commitId = 'commitId';
     const ontologyIRI = 'ontologyIRI';
-    const sortOption: SortOption = {field: DCTERMS + 'title', asc: true, label: ''};
-    const branch: JSONLDObject = {'@id': branchId};
-    const ontologyRecord: JSONLDObject = {'@id': 'ont1'};
+    const sortOption: SortOption = {field: `${DCTERMS}title`, asc: true, label: ''};
+    const branch: JSONLDObject = {
+      '@id': branchId,
+      '@type': [`${CATALOG}Branch`],
+      [`${CATALOG}head`]: [{ '@id': commitId }]
+    };
+    const ontologyRecord: JSONLDObject = {
+      '@id': 'ont1',
+      '@type': [`${ONTOLOGYEDITOR}OntologyRecord`],
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${DCTERMS}description`]: [{ '@value': 'description' }],
+      [`${DCTERMS}modified`]: [{ '@value': DATE_STR }],
+      [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology' }]
+    };
     const ontologyInfo: MappingOntologyInfo = {
         recordId: ontologyRecord['@id'],
         branchId,
@@ -131,7 +141,6 @@ describe('Mapping Config Overlay component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -148,7 +157,6 @@ describe('Mapping Config Overlay component', function() {
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
         mappingManagerStub = TestBed.inject(MappingManagerService) as jasmine.SpyObj<MappingManagerService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<MappingConfigOverlayComponent>>;
 
@@ -182,7 +190,6 @@ describe('Mapping Config Overlay component', function() {
         mappingManagerStub = null;
         catalogManagerStub = null;
         ontologyManagerStub = null;
-        utilStub = null;
         mappingStub = null;
     });
 
@@ -193,7 +200,7 @@ describe('Mapping Config Overlay component', function() {
         it('for the configuration for getting ontology records', function() {
             expect(component.recordsConfig.pageIndex).toEqual(0);
             expect(component.recordsConfig.sortOption).toEqual(sortOption);
-            expect(component.recordsConfig.type).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
+            expect(component.recordsConfig.type).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
             expect(component.recordsConfig.limit).toEqual(100);
             expect(component.recordsConfig.searchText).toEqual('');
         });
@@ -211,12 +218,9 @@ describe('Mapping Config Overlay component', function() {
             beforeEach(function() {
                 mapperStateStub.selected.ontology = ontologyRecord;
                 spyOn(component, 'getOntologyIRI').and.returnValue(ontologyIRI);
-                utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-                utilStub.getDate.and.returnValue('date');
                 mapperStateStub.sourceOntologies = [originalOntology];
                 mapperStateStub.getClasses.and.returnValue([mappingClass]);
                 mappingStub.getSourceOntologyInfo.and.returnValue(ontologyInfo);
-                catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
             });
             it('unless an error occurs', fakeAsync(function() {
                 catalogManagerStub.getRecordMasterBranch.and.returnValue(throwError(error));
@@ -232,7 +236,7 @@ describe('Mapping Config Overlay component', function() {
                 expect(component.setOntologies).toHaveBeenCalledWith();
             }));
             it('and no changes have been committed to the ontology since it was set', fakeAsync(function() {
-                utilStub.getPropertyId.and.returnValue(commitId);
+                catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
                 const expectedState = {
                     recordId: ontologyRecord['@id'],
                     branchId,
@@ -250,11 +254,10 @@ describe('Mapping Config Overlay component', function() {
                     ontologyIRI,
                     title: 'title',
                     description: 'description',
-                    modified: 'date',
+                    modified: SHORT_DATE_STR,
                     selected: true
                 });
                 expect(catalogManagerStub.getRecordMasterBranch).toHaveBeenCalledWith(ontologyRecord['@id'], catalogId);
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
                 expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
                 expect(component.ontologyStates).toContain(expectedState);
                 expect(component.selectedOntologyState).toEqual(expectedState);
@@ -263,7 +266,9 @@ describe('Mapping Config Overlay component', function() {
                 expect(component.setOntologies).toHaveBeenCalledWith();
             }));
             it('and changes have been committed to the ontology since it was set', fakeAsync(function() {
-                utilStub.getPropertyId.and.returnValue('otherCommit');
+                const branchClone = cloneDeep(branch);
+                branchClone[`${CATALOG}head`] = [{ '@id': 'otherCommit' }];
+                catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branchClone));
                 const expectedState = {
                     recordId: ontologyRecord['@id'],
                     branchId,
@@ -281,11 +286,10 @@ describe('Mapping Config Overlay component', function() {
                     ontologyIRI,
                     title: 'title',
                     description: 'description',
-                    modified: 'date',
+                    modified: SHORT_DATE_STR,
                     selected: true
                 });
                 expect(catalogManagerStub.getRecordMasterBranch).toHaveBeenCalledWith(ontologyRecord['@id'], catalogId);
-                expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
                 expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
                 expect(component.ontologyStates).toContain(expectedState);
                 expect(component.selectedOntologyState).toEqual(expectedState);
@@ -296,9 +300,7 @@ describe('Mapping Config Overlay component', function() {
     });
     describe('controller methods', function() {
         it('should get the ontology IRI of an OntologyRecord', function() {
-            utilStub.getPropertyId.and.returnValue('ontology');
             expect(component.getOntologyIRI(ontologyRecord)).toEqual('ontology');
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(ontologyRecord, ONTOLOGYEDITOR + 'ontologyIRI');
         });
         it('should handle changing of the ontology', function() {
             const event = {
@@ -329,8 +331,6 @@ describe('Mapping Config Overlay component', function() {
                     this.otherRecord = {'@id': 'otherRecord'};
                     catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [ontologyRecord, this.otherRecord]})));
                     spyOn(component, 'getOntologyIRI').and.returnValue(ontologyIRI);
-                    utilStub.getDctermsValue.and.callFake((obj, prop) => prop);
-                    utilStub.getDate.and.returnValue('date');
                 });
                 it('if an ontology is selected', fakeAsync(function() {
                     component.setOntologies();
@@ -338,8 +338,8 @@ describe('Mapping Config Overlay component', function() {
                     expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.ontologyListBox);
                     expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, component.recordsConfig, true);
                     expect(component.ontologies).toEqual([
-                        {recordId: ontologyRecord['@id'], modified: 'date', ontologyIRI, title: 'title', description: 'description', selected: false, jsonld: ontologyRecord},
-                        {recordId: this.otherRecord['@id'], modified: 'date', ontologyIRI, title: 'title', description: 'description', selected: false, jsonld: this.otherRecord}
+                        {recordId: ontologyRecord['@id'], modified: SHORT_DATE_STR, ontologyIRI, title: 'title', description: 'description', selected: false, jsonld: ontologyRecord},
+                        {recordId: this.otherRecord['@id'], modified: '(No Date Specified)', ontologyIRI, title: '', description: '', selected: false, jsonld: this.otherRecord}
                     ]);
                     expect(component.recordsErrorMessage).toEqual('');
                     expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.ontologyListBox);
@@ -351,8 +351,8 @@ describe('Mapping Config Overlay component', function() {
                     expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.ontologyListBox);
                     expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, component.recordsConfig, true);
                     expect(component.ontologies).toEqual([
-                        {recordId: ontologyRecord['@id'], modified: 'date', ontologyIRI, title: 'title', description: 'description', selected: true, jsonld: ontologyRecord},
-                        {recordId: this.otherRecord['@id'], modified: 'date', ontologyIRI, title: 'title', description: 'description', selected: false, jsonld: this.otherRecord}
+                        {recordId: ontologyRecord['@id'], modified: SHORT_DATE_STR, ontologyIRI, title: 'title', description: 'description', selected: true, jsonld: ontologyRecord},
+                        {recordId: this.otherRecord['@id'], modified: '(No Date Specified)', ontologyIRI, title: '', description: '', selected: false, jsonld: this.otherRecord}
                     ]);
                     expect(component.recordsErrorMessage).toEqual('');
                     expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.ontologyListBox);
@@ -443,7 +443,6 @@ describe('Mapping Config Overlay component', function() {
                     expect(component.classes).toEqual([]);
                 }));
                 it('unless an error occurs with getOntology', fakeAsync(function() {
-                    utilStub.getPropertyId.and.returnValue(commitId);
                     catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
                     mappingManagerStub.getOntology.and.returnValue(throwError(error));
                     component.selectOntology(selectedOntology);
@@ -454,7 +453,6 @@ describe('Mapping Config Overlay component', function() {
                         branchId,
                         commitId
                     });
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
                     expect(ontologyManagerStub.getImportedOntologies).not.toHaveBeenCalled();
                     expect(component.errorMessage).toEqual('Error retrieving ontology');
                     expect(component.selectedOntology).toBeUndefined();
@@ -462,7 +460,6 @@ describe('Mapping Config Overlay component', function() {
                     expect(component.classes).toEqual([]);
                 }));
                 it('unless an error occurs with getImportedOntologies', fakeAsync(function() {
-                    utilStub.getPropertyId.and.returnValue(commitId);
                     catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
                     mappingManagerStub.getOntology.and.returnValue(of(originalOntology));
                     ontologyManagerStub.getImportedOntologies.and.returnValue(throwError(error));
@@ -474,7 +471,6 @@ describe('Mapping Config Overlay component', function() {
                         branchId,
                         commitId
                     });
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
                     expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(selectedOntology.recordId, branchId, commitId);
                     expect(component.errorMessage).toEqual('Error retrieving ontology');
                     expect(component.selectedOntology).toBeUndefined();
@@ -491,7 +487,6 @@ describe('Mapping Config Overlay component', function() {
                             classes: [mappingClass]
                         }
                     };
-                    utilStub.getPropertyId.and.returnValue(commitId);
                     catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
                     mappingManagerStub.getOntology.and.returnValue(of(originalOntology));
                     ontologyManagerStub.getImportedOntologies.and.returnValue(of([{id: importedOntology.id, ontology: importedOntology.entities, documentFormat: '', ontologyId: ''}]));
@@ -504,7 +499,6 @@ describe('Mapping Config Overlay component', function() {
                         branchId,
                         commitId
                     });
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
                     expect(ontologyManagerStub.getImportedOntologies).toHaveBeenCalledWith(selectedOntology.recordId, branchId, commitId);
                     expect(mapperStateStub.getClasses).toHaveBeenCalledWith(expectedState.latest.ontologies);
                     expect(component.ontologyStates).toContain(expectedState);
@@ -542,7 +536,6 @@ describe('Mapping Config Overlay component', function() {
                 });
                 describe('if the', function() {
                     beforeEach(function() {
-                        utilStub.getPropertyId.and.returnValue(commitId);
                         catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
                         mappingManagerStub.getOntology.and.returnValue(of(originalOntology));
                         ontologyManagerStub.getImportedOntologies.and.returnValue(of([{id: importedOntology.id, ontology: importedOntology.entities, documentFormat: '', ontologyId: ''}]));
@@ -573,7 +566,6 @@ describe('Mapping Config Overlay component', function() {
                             component.selectVersion();
                             tick();
                             expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branchId, ontologyRecord['@id'], catalogId);
-                            expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
                             expect(mappingManagerStub.getOntology).toHaveBeenCalledWith({
                                 recordId: ontologyRecord['@id'],
                                 branchId,
@@ -674,7 +666,7 @@ describe('Mapping Config Overlay component', function() {
                     };
                     mappingStub.getSourceOntologyInfo.and.returnValue(this.oldOntologyInfo);
                     mappingStub.getMappingEntity.and.returnValue({'@id': mappingId});
-                    this.classMapping = {'@id': 'classMapping', [DELIM + 'mapsTo']: [{'@id': 'class'}]};
+                    this.classMapping = {'@id': 'classMapping', [`${DELIM}mapsTo`]: [{'@id': 'class'}]};
                     component.classes = [mappingClass];
                     mappingStub.getAllClassMappings.and.returnValue([this.classMapping]);
                 });
@@ -685,9 +677,9 @@ describe('Mapping Config Overlay component', function() {
                     expect(mappingStub.setSourceOntologyInfo).toHaveBeenCalledWith({ recordId: ontologyRecord['@id'], branchId, commitId });
                     expect(mappingStub.getMappingEntity).toHaveBeenCalledWith();
                     expect(mapperStateStub.selected.ontology).toEqual(selectedOntology.jsonld);
-                    expect(mapperStateStub.changeProp).toHaveBeenCalledWith(mappingId, DELIM + 'sourceRecord', ontologyRecord['@id'], this.oldOntologyInfo.recordId, true);
-                    expect(mapperStateStub.changeProp).toHaveBeenCalledWith(mappingId, DELIM + 'sourceBranch', branchId, this.oldOntologyInfo.branchId, true);
-                    expect(mapperStateStub.changeProp).toHaveBeenCalledWith(mappingId, DELIM + 'sourceCommit', commitId, this.oldOntologyInfo.commitId, true);
+                    expect(mapperStateStub.changeProp).toHaveBeenCalledWith(mappingId, `${DELIM}sourceRecord`, ontologyRecord['@id'], this.oldOntologyInfo.recordId, true);
+                    expect(mapperStateStub.changeProp).toHaveBeenCalledWith(mappingId, `${DELIM}sourceBranch`, branchId, this.oldOntologyInfo.branchId, true);
+                    expect(mapperStateStub.changeProp).toHaveBeenCalledWith(mappingId, `${DELIM}sourceCommit`, commitId, this.oldOntologyInfo.commitId, true);
                     expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                     expect(mapperStateStub.setProps).toHaveBeenCalledWith('class');
                     expect(mapperStateStub.availableClasses).toEqual(component.classes);

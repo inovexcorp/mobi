@@ -27,7 +27,8 @@ import { GraphState } from '../classes';
 import { ControlGroupRecordI, ControlRecordI, ControlRecordSearchGroupedI, ControlRecordSearchI, ControlRecordSearchResultI, GroupedRecord } from '../classes/controlRecords';
 
 /**
- * @class ControlRecordUtilsService
+ * @class ontology-visualization.ControlRecordUtilsService
+ * 
  * Service used as ControlRecord utils
  */
 @Injectable()

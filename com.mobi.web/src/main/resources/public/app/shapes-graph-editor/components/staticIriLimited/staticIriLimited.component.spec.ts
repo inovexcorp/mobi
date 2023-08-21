@@ -23,12 +23,11 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
-import { MockPipe, MockDirective } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { TrustedHtmlPipe } from '../../../shared/pipes/trustedHtml.pipe';
-import { SplitIRI } from '../../../shared/models/splitIRI.interface';
 import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
 import { StaticIriLimitedComponent } from './staticIriLimited.component';
 
@@ -42,13 +41,6 @@ describe('Static IRI Limited component', function() {
             declarations: [
                 StaticIriLimitedComponent,
                 MockDirective(CopyClipboardDirective),
-                MockPipe(SplitIRIPipe, () => {
-                    return {
-                        begin: '',
-                        then: '',
-                        end: ''
-                    } as SplitIRI;
-                }),
                 TrustedHtmlPipe
             ],
             providers: [
@@ -61,7 +53,7 @@ describe('Static IRI Limited component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
 
-        component.iri = 'full/id';
+        component.iri = 'http://test.com/id';
 
         fixture.detectChanges();
     });
@@ -85,7 +77,7 @@ describe('Static IRI Limited component', function() {
             component.iriThen = '';
             component.iriEnd = '';
             component.setVariables();
-            expect(component.iriBegin).toEqual('full');
+            expect(component.iriBegin).toEqual('http://test.com');
             expect(component.iriThen).toEqual('/');
             expect(component.iriEnd).toEqual('id');
         });

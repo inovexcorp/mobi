@@ -30,7 +30,7 @@ import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { XACMLDecision } from '../models/XACMLDecision.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
-import { UtilService } from './util.service';
+import { handleError } from '../utility';
 
 /**
  * @class shared.PolicyEnforcementService
@@ -39,12 +39,12 @@ import { UtilService } from './util.service';
  */
 @Injectable()
 export class PolicyEnforcementService {
-    prefix = REST_PREFIX + 'pep';
+    prefix = `${REST_PREFIX}pep`;
     permit = 'Permit';
     deny = 'Deny';
     indeterminate = 'Indeterminate';
 
-    constructor(private http: HttpClient, private spinnerSrv: ProgressSpinnerService, private util: UtilService) {}
+    constructor(private http: HttpClient, private spinnerSrv: ProgressSpinnerService) {}
 
     /**
      * Calls the POST /mobirest/pep endpoint with the passed XACML parameters to be evaluated.
@@ -65,7 +65,7 @@ export class PolicyEnforcementService {
     evaluateRequest(jsonRequest: XACMLRequest, isTracked = false): Observable<string> {
         const filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
         return this._trackedRequest(this.http.post(this.prefix, filteredRequest, {responseType: 'text'}), isTracked)
-            .pipe(catchError(this.util.handleError));
+            .pipe(catchError(handleError));
     }
 
     /**
@@ -85,8 +85,8 @@ export class PolicyEnforcementService {
      */
     evaluateMultiDecisionRequest(jsonRequest: XACMLRequest, isTracked = false): Observable<XACMLDecision[]> {
         const filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
-        return this._trackedRequest(this.http.post<XACMLDecision[]>(this.prefix + '/multiDecisionRequest', filteredRequest), isTracked)
-            .pipe(catchError(this.util.handleError));
+        return this._trackedRequest(this.http.post<XACMLDecision[]>(`${this.prefix}/multiDecisionRequest`, filteredRequest), isTracked)
+            .pipe(catchError(handleError));
     }
 
     private _trackedRequest<T>(request: Observable<T>, tracked: boolean): Observable<T> {

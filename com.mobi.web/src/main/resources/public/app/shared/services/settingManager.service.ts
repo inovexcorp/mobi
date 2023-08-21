@@ -25,17 +25,18 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { has } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { REST_PREFIX } from '../../constants';
 import { SETTING, SHACL } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { SettingConstants } from '../models/settingConstants.class';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
+import { createHttpParams, getPropertyValue, handleError, handleErrorObject } from '../utility';
 
 /**
- * @class shared.service:settingManagerService
+ * @class shared.SettingManagerService
  *
  * A service that provides access to the Mobi Settings REST endpoints and variables
  * to hold information about the different types of settings.
@@ -46,46 +47,52 @@ export class SettingManagerService {
     prefSettingType = { iri: `${SETTING}Preference`, userText: 'Preferences'};
     appSettingType = { iri: `${SETTING}ApplicationSetting`, userText: 'Application Settings'};
     
-    constructor(private http: HttpClient, private util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
+    namespaceGroup = 'http://mobi.com/ontologies/namespace#NamespaceApplicationSettingGroup';
+    defaultOntologyNamespaceSetting = 'http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSetting';
+    defaultOntologyNamespacePropertyShape = 'http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplication'
+        + 'SettingPropertyShape';
+
+    constructor(private http: HttpClient, private toast: ToastService, private spinnerSvc: ProgressSpinnerService) {}
 
     getDefaultNamespace(): Observable<string> {
-        return this.getApplicationSettingByType('http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSetting').pipe(
+        return this.getApplicationSettingByType(this.defaultOntologyNamespaceSetting).pipe(
             switchMap(response => {
                 const applicationSetting = response;
                 if (applicationSetting.length > 1) {
-                    this.util.createErrorToast('Too many values present for application setting');
+                    this.toast.createErrorToast('Too many values present for application setting');
                     return throwError('');
                 } else if (applicationSetting.length === 1) {
                     const defaultNamespace = applicationSetting[0];
                     if (has(defaultNamespace, SettingConstants.HAS_DATA_VALUE)) {
-                        return of(this.util.getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE));
+                        return of(getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE));
                     }
                     return throwError('');
                 } else {
-                    this.util.createErrorToast('No values found for application setting. For some reason, endpoint did not return error.');
+                    this.toast.createErrorToast('No values found for application setting. For some reason, endpoint '
+                        + 'did not return error.');
                     return throwError('');
                 }
             }),
             catchError(() => {
-                return this.getApplicationSettingDefinitions('http://mobi.com/ontologies/namespace#NamespaceApplicationSettingGroup').pipe(
+                return this.getApplicationSettingDefinitions(this.namespaceGroup).pipe(
                     switchMap(response => {
-                        const newArray = response.filter(el =>{
-                            return el['@id'] === 'http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSettingPropertyShape';
+                        const newArray = response.filter(el => {
+                            return el['@id'] === this.defaultOntologyNamespacePropertyShape;
                         });
                         if (newArray.length !== 1) {
-                            this.util.createErrorToast(`Number of matching property shapes must be one, not ${newArray.length}`);
+                            this.toast.createErrorToast(`Number of matching property shapes must be one, not ${newArray.length}`);
                             return throwError('');
                         }
                         const defaultNamespacePropertyShape = newArray[0];
                         if (has(defaultNamespacePropertyShape, `${SHACL}defaultValue`)) {
-                            return of(this.util.getPropertyValue(defaultNamespacePropertyShape, `${SHACL}defaultValue`));
+                            return of(getPropertyValue(defaultNamespacePropertyShape, `${SHACL}defaultValue`));
                         } else {
-                            this.util.createErrorToast('No default value found for default namespace');
+                            this.toast.createErrorToast('No default value found for default namespace');
                             return throwError('');
                         }
                     }),
                     catchError(() => {
-                        this.util.createErrorToast('Could not retrieve setting definitions');
+                        this.toast.createErrorToast('Could not retrieve setting definitions');
                         return throwError('');
                     })
                 );
@@ -130,8 +137,9 @@ export class SettingManagerService {
      */
     getSettings(type: string, isTracked = false): Observable<{ [key: string]: JSONLDObject[] }> {
         const params = { type };
-        const request = this.http.get<{ [key: string]: JSONLDObject[] }>(this.prefix, { params: this.util.createHttpParams(params) });
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+        const request = this.http.get<{ [key: string]: JSONLDObject[] }>(this.prefix, 
+            { params: createHttpParams(params) });
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     /**
@@ -172,8 +180,8 @@ export class SettingManagerService {
     getSettingByType(type: string, settingSubType: string, isTracked = false): Observable<JSONLDObject[]> {
         const params = { type };
         const request = this.http.get<JSONLDObject[]>(`${this.prefix}/types/${encodeURIComponent(settingSubType)}`, 
-            {params: this.util.createHttpParams(params)});
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+            {params: createHttpParams(params)});
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     /**
@@ -181,12 +189,14 @@ export class SettingManagerService {
      *
      * @param {string} preferenceId The id of the user preference that will be updated 
      * @param {string} preferenceType The type of user preference being updated
-     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new user preference values and referenced entities
+     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new user preference values and referenced 
+     * entities
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
-     * error message
+     * error object
      */
-    updateUserPreference(preferenceId: string, preferenceType: string, userPreference: JSONLDObject[], isTracked = false): Observable<null> {
+    updateUserPreference(preferenceId: string, preferenceType: string, userPreference: JSONLDObject[], 
+      isTracked = false): Observable<void> {
         return this.updateSetting(this.prefSettingType.iri, preferenceId, preferenceType, userPreference, isTracked);
     }
 
@@ -196,18 +206,21 @@ export class SettingManagerService {
      *
      * @param {string} applicationSettingId The id of the application setting that will be updated 
      * @param {string} applicationSettingType The type of application setting being updated
-     * @param {JSONLDObject[]} applicationSetting The JSON-LD containing the new application setting values and referenced entities
+     * @param {JSONLDObject[]} applicationSetting The JSON-LD containing the new application setting values and 
+     * referenced entities
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
-     * error message
+     * error object
      */
-    updateApplicationSetting(applicationSettingId: string, applicationSettingType: string, applicationSetting: JSONLDObject[], isTracked = false): Observable<null> {
-        return this.updateSetting(this.appSettingType.iri, applicationSettingId, applicationSettingType, applicationSetting, isTracked);
+    updateApplicationSetting(applicationSettingId: string, applicationSettingType: string, 
+      applicationSetting: JSONLDObject[], isTracked = false): Observable<void> {
+        return this.updateSetting(this.appSettingType.iri, applicationSettingId, applicationSettingType, 
+            applicationSetting, isTracked);
     }
 
     /**
      * Calls the PUT /mobirest/settings/{settingId} endpoint and updates the Setting with the passed in settingId
-     * using the JSON-LD provided in the passed in object.
+     * using the JSON-LD provided in the passed in object. Errors are returned in the form of a {@link RESTError}.
      *
      * @param {string} type The setting type of the setting to be updated
      * @param {string} settingId The id of the setting that will be updated 
@@ -215,24 +228,27 @@ export class SettingManagerService {
      * @param {JSONLDObject[]} setting The JSON-LD containing the new setting values and referenced entities
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
-     * error message
+     * error object
      */
-    updateSetting(type: string, settingId: string, subType: string, setting: JSONLDObject[], isTracked = false): Observable<null> {
+    updateSetting(type: string, settingId: string, subType: string, setting: JSONLDObject[], 
+      isTracked = false): Observable<void> {
         const params = { subType, type };
-        const request = this.http.put(`${this.prefix}/${encodeURIComponent(settingId)}`, setting, {params: this.util.createHttpParams(params)});
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+        const request = this.http.put(`${this.prefix}/${encodeURIComponent(settingId)}`, setting, 
+            {params: createHttpParams(params)});
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject), map(() => {}));
     }
 
     /**
      * Creates a new user preference in the system using the passed in user preference.
      *
      * @param {string} preferenceType The type of user preference being created
-     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new user preference values and referenced entities
+     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new user preference values and referenced 
+     * entities
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
-     * error message
+     * error object
      */
-    createUserPreference(preferenceType: string, userPreference: JSONLDObject[], isTracked = false): Observable<null> {
+    createUserPreference(preferenceType: string, userPreference: JSONLDObject[], isTracked = false): Observable<void> {
         return this.createSetting(this.prefSettingType.iri , preferenceType, userPreference, isTracked);
     }
 
@@ -240,29 +256,33 @@ export class SettingManagerService {
      * Creates a new application setting in the system using the passed in application setting.
      *
      * @param {string} applicationSettingType The type of application setting being created
-     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new application setting values and referenced entities
+     * @param {JSONLDObject[]} userPreference The JSON-LD containing the new application setting values and referenced 
+     * entities
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
-     * error message
+     * error object
      */
-    createApplicationSetting(applicationSettingType: string, applicationSetting: JSONLDObject[], isTracked = false): Observable<null> {
+    createApplicationSetting(applicationSettingType: string, applicationSetting: JSONLDObject[], 
+      isTracked = false): Observable<void> {
         return this.createSetting(this.appSettingType.iri, applicationSettingType, applicationSetting, isTracked);
     }
 
     /**
-     * Calls the POST /mobirest/settings endpoint and creates an instance of setting as well as it's referenced entities for of the type defined by the passed in subType using the JSON-LD provided in the passed in object.
+     * Calls the POST /mobirest/settings endpoint and creates an instance of setting as well as it's referenced entities 
+     * for of the type defined by the passed in subType using the JSON-LD provided in the passed in object. Errors are
+     * returned in the form of a {@link RESTError}.
      *
      * @param {string} type The setting type being updated
      * @param {string} subType The specific subType of setting being updated
      * @param {JSONLDObject[]} setting The JSON-LD containing the new setting values and referenced entities
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
-     * error message
+     * error object
      */
-    createSetting(type: string, subType: string, setting: JSONLDObject[], isTracked = false): Observable<null> {
+    createSetting(type: string, subType: string, setting: JSONLDObject[], isTracked = false): Observable<void> {
         const params = { subType, type };
-        const request = this.http.post(this.prefix, setting, {params: this.util.createHttpParams(params)});
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+        const request = this.http.post(this.prefix, setting, {params: createHttpParams(params), responseType: 'text'});
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject), map(() => {}));
     }
 
     /**
@@ -275,8 +295,8 @@ export class SettingManagerService {
      */
     getSettingGroups(type: string, isTracked = false): Observable<JSONLDObject[]> {
         const params = { type };
-        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/groups`, {params: this.util.createHttpParams(params)});
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/groups`, {params: createHttpParams(params)});
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     /**
@@ -304,7 +324,7 @@ export class SettingManagerService {
     /**
      * Retrieve all preference definitions that are part of the passed in preference group.
      * 
-     * @param {string} settingGroup The preference group to retrieve preference definitions for
+     * @param {string} settingGroup The preference group to retrieve definitions for
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
@@ -316,7 +336,7 @@ export class SettingManagerService {
     /**
      * Retrieve all application setting definitions that are part of the passed in application setting group.
      * 
-     * @param {string} applicationSettingGroup The application setting group to retrieve application setting definitions for
+     * @param {string} applicationSettingGroup The application setting group to retrieve definitions for
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
@@ -337,8 +357,8 @@ export class SettingManagerService {
      */
     getSettingDefinitions(settingGroup: string, type: string, isTracked = false): Observable<JSONLDObject[]> {
         const params = { type };
-        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`, 
-            {params: this.util.createHttpParams(params)});
-        return this.util.trackedRequest(request, isTracked).pipe(catchError(this.util.handleError));
+        const url = `${this.prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`;
+        const request = this.http.get<JSONLDObject[]>(url, {params: createHttpParams(params)});
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 }

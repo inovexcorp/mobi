@@ -22,6 +22,7 @@
  */
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { UserConfig } from 'gridjs';
+import { TColumn } from 'gridjs/dist/src/types';
 import { range } from 'lodash';
 
 /**
@@ -82,10 +83,10 @@ export class PreviewDataGridComponent implements OnInit, OnChanges {
             };
         }
     }
-    createColumns(headers: string[]): any[] {
+    createColumns(headers: string[]): (TColumn|string)[] {
         if (this.highlightIndexes && this.highlightIndexes.length) {
             return headers.map((header, idx) => {
-                const obj: any = {
+                const obj: TColumn = {
                     name: header
                 };
                 if (this.highlightIndexes.includes('' + idx)) {

@@ -21,8 +21,9 @@
  * #L%
  */
 import { Injectable, } from '@angular/core';
-import { Observable, Subject, of, BehaviorSubject } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, tap, switchMap, shareReplay } from 'rxjs/operators';
+
 import { buildColorScale } from '../helpers/graphSettings';
 import { SidebarState, GraphState } from '../classes';
 import { inProgressCommitI } from '../interfaces/visualization.interfaces';
@@ -30,13 +31,13 @@ import { OntologyVisualizationDataService }  from './ontologyVisualizationData.s
 import { OntologyAction } from '../../shared/models/ontologyAction';
 import { OntologyStateService } from '../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
-import { UtilService } from '../../shared/services/util.service';
 import { SidePanelAction, SidePanelPayloadI } from '../classes/sidebarState';
 import { ControlRecordUtilsService } from './controlRecordUtils.service';
 import { OntologyRecordActionI } from '../../shared/services/ontologyRecordAction.interface';
+import { getBeautifulIRI } from '../../shared/utility';
 
 /**
- * @class OntologyVisualization.service
+ * @class ontology-visualization.OntologyVisualizationService
  *
  * A service that communicates with various rest endpoint 
  * and defines/holds the data needed for the visualization to render the network diagrams.
@@ -58,8 +59,7 @@ export class OntologyVisualizationService {
     constructor(
         private ds: OntologyVisualizationDataService,
         private os: OntologyStateService,
-        private controlRecordUtils: ControlRecordUtilsService,
-        private util: UtilService) {
+        private controlRecordUtils: ControlRecordUtilsService) {
         if (this.os.ontologyRecordAction$) {
             this.os.ontologyRecordAction$.subscribe((record: OntologyRecordActionI) => this.removeOntologyCache(record));
         }
@@ -124,7 +124,7 @@ export class OntologyVisualizationService {
                         allGraphNodes: [],
                         allGraphEdges: [],
                         selectedNodes: false,
-                        getName: (iri) => this.util.getBeautifulIRI(iri),
+                        getName: (iri) => getBeautifulIRI(iri),
                         allGraphNodesComparer: this.controlRecordUtils.comparer
                     });
                     this.graphStateCache.set(commitId, commitGraphState);

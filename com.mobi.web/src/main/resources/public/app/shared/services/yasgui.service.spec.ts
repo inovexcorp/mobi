@@ -35,7 +35,7 @@ import {
     getJsonLDResponseText 
 } from './yasguiMockResponse';
 import { DiscoverStateService } from './discoverState.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { YasguiService } from './yasgui.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
 
@@ -53,7 +53,7 @@ describe('YASGUI service', function() {
             providers: [
                 YasguiService,
                 MockProvider(DiscoverStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }

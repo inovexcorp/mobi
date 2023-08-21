@@ -39,7 +39,6 @@ import { CircleButtonStackComponent } from './circleButtonStack.component';
 class TestCircleButtonStackComponent {}
 
 describe('Circle Button Stack component', function() {
-    let component: CircleButtonStackComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CircleButtonStackComponent>;
 
@@ -56,13 +55,11 @@ describe('Circle Button Stack component', function() {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CircleButtonStackComponent);
-        component = fixture.componentInstance;
         element = fixture.debugElement;
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
-        component = null;
         element = null;
         fixture = null;
     });

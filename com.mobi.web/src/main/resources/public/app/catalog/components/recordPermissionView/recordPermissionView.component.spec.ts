@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {cloneDeep, forEach} from 'lodash';
+import { cloneDeep, forEach } from 'lodash';
 import { DebugElement } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,10 +34,11 @@ import {
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserAccessControlsComponent } from '../../../shared/components/userAccessControls/userAccessControls.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { RecordPermissionsManagerService } from '../../../shared/services/recordPermissionsManager.service';
-import { RecordPermissionViewComponent } from './recordPermissionView.component';
 import { Policy } from '../../../shared/models/policy.interface';
+import { DCTERMS } from '../../../prefixes';
+import { RecordPermissionViewComponent } from './recordPermissionView.component';
 
 describe('Record Permission View component', () => {
     let component: RecordPermissionViewComponent;
@@ -46,7 +47,7 @@ describe('Record Permission View component', () => {
     let fixture: ComponentFixture<RecordPermissionViewComponent>;
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let recordPermissionsStub: jasmine.SpyObj<RecordPermissionsManagerService>;
     let policyItemsArray: Policy[] = [];
     let policyRecordId;
@@ -66,7 +67,7 @@ describe('Record Permission View component', () => {
                 MockProvider(UserManagerService),
                 MockProvider(CatalogStateService),
                 MockProvider(RecordPermissionsManagerService),
-                MockProvider(UtilService)
+                MockProvider(ToastService)
             ],
         }).compileComponents();
 
@@ -76,7 +77,7 @@ describe('Record Permission View component', () => {
         nativeElement = element.nativeElement;
         catalogStateStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         recordPermissionsStub = TestBed.inject(RecordPermissionsManagerService) as jasmine.SpyObj<RecordPermissionsManagerService>;
 
         userManagerStub.users = [
@@ -226,11 +227,10 @@ describe('Record Permission View component', () => {
         recordPermissionsStub.getRecordPolicy.and.returnValue(of(cloneDeep(typePolicy)));
         catalogStateStub.selectedRecord = {
             '@id': policyRecordId,
-            'http://purl.org/dc/terms/title': [ {
+            [`${DCTERMS}title`]: [ {
                 '@value': 'title.ttl'
             } ]
         };
-        utilStub.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('title.ttl');
         catalogStateStub.editPermissionSelectedRecord = true;
     });
 
@@ -239,7 +239,7 @@ describe('Record Permission View component', () => {
         component = null;
         element = null;
         fixture = null;
-        utilStub = null;
+        toastStub = null;
         catalogStateStub = null;
         userManagerStub = null;
         recordPermissionsStub = null;
@@ -262,7 +262,7 @@ describe('Record Permission View component', () => {
             component.ngOnInit();
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
         });
    });
     describe(' methods', function() {
@@ -274,8 +274,8 @@ describe('Record Permission View component', () => {
                 fixture.detectChanges();
                 await fixture.whenStable();
                 expect(recordPermissionsStub.updateRecordPolicy).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
             });
             it('successfully with changes', async function() {
                 recordPermissionsStub.updateRecordPolicy.and.returnValue(of(null));
@@ -288,8 +288,8 @@ describe('Record Permission View component', () => {
                 fixture.detectChanges();
                 await fixture.whenStable();
                 expect(recordPermissionsStub.updateRecordPolicy).toHaveBeenCalledWith(policyRecordId, typePolicy);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(component.hasChanges()).toEqual(false);
             });
         });

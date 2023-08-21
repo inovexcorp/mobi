@@ -42,7 +42,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ClassMappingDetailsComponent } from '../classMappingDetails/classMappingDetails.component';
 import { ClassMappingOverlayComponent } from '../classMappingOverlay/classMappingOverlay.component';
 import { ClassMappingSelectComponent } from '../classMappingSelect/classMappingSelect.component';
@@ -51,6 +51,7 @@ import { PreviewDataGridComponent } from '../previewDataGrid/previewDataGrid.com
 import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/runMappingDatasetOverlay.component';
 import { RunMappingDownloadOverlayComponent } from '../runMappingDownloadOverlay/runMappingDownloadOverlay.component';
 import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay/runMappingOntologyOverlay.component';
+import { DCTERMS } from '../../../prefixes';
 import { EditMappingTabComponent } from './editMappingTab.component';
 
 describe('Edit Mapping Tab component', function() {
@@ -92,7 +93,7 @@ describe('Edit Mapping Tab component', function() {
             providers: [
                 MockProvider(MapperStateService),
                 MockProvider(DelimitedManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(classMapping)}
                 }) }
@@ -138,8 +139,10 @@ describe('Edit Mapping Tab component', function() {
     });
 
     it('should initialize correctly', function() {
+        spyOn(component, 'setOntologyTitle');
         spyOn(component, 'setClassMappings');
         component.ngOnInit();
+        expect(component.setOntologyTitle).toHaveBeenCalledWith();
         expect(component.setClassMappings).toHaveBeenCalledWith();
     });
     it('should handle being destroyed', function() {
@@ -157,10 +160,12 @@ describe('Edit Mapping Tab component', function() {
             expect(mapperStateStub.selectedClassMappingId).toEqual(classMapping['@id']);
         }));
         it('should open the mappingConfigOverlay', fakeAsync(function() {
-            spyOn(component, 'setClassMappings');
+          spyOn(component, 'setOntologyTitle');
+          spyOn(component, 'setClassMappings');
             component.openMappingConfig();
             tick();
             expect(matDialog.open).toHaveBeenCalledWith(MappingConfigOverlayComponent);
+            expect(component.setOntologyTitle).toHaveBeenCalledWith();
             expect(component.setClassMappings).toHaveBeenCalledWith();
         }));
         describe('should delete a class mapping from the mapping', function() {
@@ -183,6 +188,14 @@ describe('Edit Mapping Tab component', function() {
                 expect(mapperStateStub.selectedClassMappingId).toEqual('other');
                 expect(component.setClassMappings).toHaveBeenCalledWith();
             });
+        });
+        it('should set the title of the selected ontology', function() {
+            mapperStateStub.selected.ontology = {
+              '@id': 'ontology',
+              [`${DCTERMS}title`]: [{ '@value': 'title' }]
+            };
+            component.setOntologyTitle();
+            expect(component.ontologyTitle).toEqual('title');
         });
         it('should set the class mappings of the mapping', function() {
             mappingStub.getAllClassMappings.and.returnValue([classMapping]);

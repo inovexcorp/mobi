@@ -40,7 +40,8 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { INDENT } from '../../../constants';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { getBeautifulIRI } from '../../../shared/utility';
+import { HierarchyFilter } from '../hierarchyFilter/hierarchyFilter.component';
 
 /**
  * @class ontology-editor.HierarchyTreeComponent
@@ -52,13 +53,6 @@ import { UtilService } from '../../../shared/services/util.service';
  * @param {HierarchyNode[]} hierarchy An array which represents a flattened hierarchy
  * @param {Function} updateSearch A function to update the state variable used to track the search filter text
  */
-
-interface HierarchyFilterI{
-    name: string,
-    checked: boolean,
-    flag: boolean,
-    filter(node: HierarchyNode): boolean;
-}
 
 @Component({
     selector: 'hierarchy-tree',
@@ -84,14 +78,14 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, Aft
     midFilteredHierarchy = [];
     activeTab = '';
     dropdownFilterActive = false;
-    dropdownFilters: HierarchyFilterI[] = [];
-    activeEntityFilter: HierarchyFilterI;
-    deprecatedEntityFilter: HierarchyFilterI;
+    dropdownFilters: HierarchyFilter[] = [];
+    activeEntityFilter: HierarchyFilter;
+    deprecatedEntityFilter: HierarchyFilter;
     chunks = [];
     visibleIndex = 0;
     renderedHierarchy = false;
 
-    constructor(public os: OntologyStateService, public om: OntologyManagerService, private util: UtilService) {}
+    constructor(public os: OntologyStateService, public om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.activeEntityFilter = {
@@ -107,7 +101,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, Aft
             }
         };
         this.deprecatedEntityFilter = {
-            name: 'Hide deprecated ' + this.parentLabel,
+            name: `Hide deprecated ${this.parentLabel}`,
             checked: false,
             flag: false,
             filter: node => {
@@ -167,7 +161,8 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, Aft
         } else {
             this.expandChildren(node.joinedPath);
         }
-        this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this, Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0));
+        const hasOpenedNodes = Object.keys(this.os.listItem.editorTabStates[this.activeTab].open).length !== 0;
+        this.filteredHierarchy = this.preFilteredHierarchy.filter(node => this.isShown(hasOpenedNodes, node));
         this.virtualScroll?.scrollToIndex(this.visibleIndex);
     }
     collapseChildren(nodeJoinedPath: string): void {
@@ -200,7 +195,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, Aft
         }
 
         // Check if beautified entity id matches search text
-        if (this.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(this.filterText.toLowerCase())) {
+        if (getBeautifulIRI(node.entityIRI).toLowerCase().includes(this.filterText.toLowerCase())) {
             searchMatch = true;
         }
         
@@ -283,7 +278,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, Aft
         this.createHierarchy();
     }
 
-    updateDropdownFilters(value): void {
+    updateDropdownFilters(value: HierarchyFilter[]): void {
         this.dropdownFilters = value;
     }
 
@@ -315,7 +310,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, Aft
     }
 
     ngAfterContentChecked(): void {
-        if (this.filteredHierarchy.length == this.virtualScroll?.getDataLength() && !this.renderedHierarchy) {
+        if (this.filteredHierarchy.length === this.virtualScroll?.getDataLength() && !this.renderedHierarchy) {
             this.createHierarchy();
             this.renderedHierarchy = true;
         }

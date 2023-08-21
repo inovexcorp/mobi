@@ -35,7 +35,7 @@ import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { ManchesterConverterService } from '../../../shared/services/manchesterConverter.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { IndividualTypesModalComponent } from '../individualTypesModal/individualTypesModal.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { SelectedDetailsComponent } from './selectedDetails.component';
@@ -49,7 +49,7 @@ describe('Selected Details component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const iri = 'iri';
     
@@ -69,7 +69,7 @@ describe('Selected Details component', function() {
                 MockProvider(OntologyStateService),
                 { provide: PrefixationPipe, useClass: MockPipe(PrefixationPipe) },
                 MockProvider(ManchesterConverterService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -84,7 +84,7 @@ describe('Selected Details component', function() {
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         prefixationStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
         manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = { '@id': iri };
@@ -101,7 +101,7 @@ describe('Selected Details component', function() {
         matDialog = null;
         ontologyManagerStub = null;
         manchesterConverterStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -209,23 +209,21 @@ describe('Selected Details component', function() {
             });
         });
         describe('getTypes functions properly', function() {
-            const expected = 'test, test2';
             it('when @type is empty', function() {
                 ontologyStateStub.listItem.selected = undefined;
                 expect(component.getTypes()).toEqual('');
             });
             it('when @type has items', function() {
                 ontologyStateStub.listItem.selected['@type'] = ['test', 'test2'];
-                expect(component.getTypes()).toEqual(expected);
+                expect(component.getTypes()).toEqual('test, test2');
             });
             it('when @type has blank node items', function() {
                 ontologyStateStub.listItem.selectedBlankNodes = [];
                 ontologyStateStub.getBnodeIndex.and.returnValue({});
-                utilStub.isBlankNodeId.and.returnValue(true);
-                ontologyStateStub.listItem.selected['@type'] = ['test', 'test2'];
+                ontologyStateStub.listItem.selected['@type'] = ['_:genid0', 'test2'];
                 manchesterConverterStub.jsonldToManchester.and.callFake(a => a);
-                expect(component.getTypes()).toEqual(expected);
-                expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateStub.listItem.selectedBlankNodes, {}, true);
+                expect(component.getTypes()).toEqual('_:genid0, test2');
+                expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith('_:genid0', ontologyStateStub.listItem.selectedBlankNodes, {}, true);
                 expect(ontologyStateStub.getBnodeIndex).toHaveBeenCalledWith();
             });
         });
@@ -240,7 +238,7 @@ describe('Selected Details component', function() {
                 expect(ontologyStateStub.onEdit).toHaveBeenCalledWith('begin', 'middle', 'end');
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(ontologyStateStub.updateLabel).toHaveBeenCalledWith();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('when ontologyState.onEdit rejects', fakeAsync(function() {
                 ontologyStateStub.onEdit.and.returnValue(throwError('error'));
@@ -249,7 +247,7 @@ describe('Selected Details component', function() {
                 expect(ontologyStateStub.onEdit).toHaveBeenCalledWith('begin', 'middle', 'end');
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(ontologyStateStub.updateLabel).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
             }));
         });
         it('should open the individual types modal', function() {

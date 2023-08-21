@@ -31,7 +31,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import {
@@ -39,17 +39,19 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { DCTERMS } from '../../../prefixes';
 import { ClassMappingSelectComponent } from './classMappingSelect.component';
 
 describe('Class Mapping Select component', function() {
     let component: ClassMappingSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ClassMappingSelectComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
-    const classMapping: JSONLDObject = { '@id': 'classMapping' };
+    const classMapping: JSONLDObject = {
+      '@id': 'classMapping',
+      [`${DCTERMS}title`]: [{ '@value': 'Title' }]
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -68,7 +70,6 @@ describe('Class Mapping Select component', function() {
                 MockComponent(ConfirmModalComponent)
             ],
             providers: [
-                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -80,7 +81,6 @@ describe('Class Mapping Select component', function() {
         fixture = TestBed.createComponent(ClassMappingSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     });
 
@@ -89,7 +89,6 @@ describe('Class Mapping Select component', function() {
         component = null;
         element = null;
         fixture = null;
-        utilStub = null;
         matDialog = null;
     });
 
@@ -105,9 +104,7 @@ describe('Class Mapping Select component', function() {
     });
     describe('controller methods', function() {
         it('should get the title of a class mapping', function() {
-            utilStub.getDctermsValue.and.returnValue('Title');
             expect(component.getTitle(classMapping)).toEqual('Title');
-            expect(utilStub.getDctermsValue).toHaveBeenCalledWith(classMapping, 'title');
         });
         it('should select a Class Mapping', function() {
             component.classMappings = [];

@@ -33,7 +33,6 @@ import { HttpResponse } from '@angular/common/http';
 import { 
     cleanStylesFromDOM
  } from '../../../../../../public/test/ts/Shared';
-import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ExploreService } from '../../../services/explore.service';
@@ -41,7 +40,7 @@ import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { NewInstancePropertyOverlayComponent } from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import { InstanceDetails } from '../../../models/instanceDetails.interface';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { NewInstanceClassOverlayComponent } from './newInstanceClassOverlay.component';
 
 describe('New Instance Class Overlay component', function() {
@@ -51,8 +50,7 @@ describe('New Instance Class Overlay component', function() {
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<NewInstancePropertyOverlayComponent>>;
     let exploreServiceStub: jasmine.SpyObj<ExploreService>;
-    let splitIriStub: jasmine.SpyObj<SplitIRIPipe>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     const data = {
         classes: [{id: 'test'}, {id: 'blah'}]
     };
@@ -64,7 +62,7 @@ describe('New Instance Class Overlay component', function() {
                 NewInstanceClassOverlayComponent,
             ],
             providers: [
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
@@ -73,7 +71,6 @@ describe('New Instance Class Overlay component', function() {
                 MockProvider(DiscoverStateService),
                 MockProvider(ExploreUtilsService),
                 MockProvider(MatDialog),
-                MockProvider(SplitIRIPipe),
                 MockProvider('prefixes', 'prefixes'),
             ]
         }).compileComponents();
@@ -84,8 +81,7 @@ describe('New Instance Class Overlay component', function() {
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<NewInstancePropertyOverlayComponent>>;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
-        splitIriStub = TestBed.inject (SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         discoverStateStub.explore = {
             breadcrumbs: ['Classes'],
@@ -124,7 +120,7 @@ describe('New Instance Class Overlay component', function() {
         fixture = null;
         discoverStateStub = null;
         matDialogRef = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -162,7 +158,7 @@ describe('New Instance Class Overlay component', function() {
         describe('should create an instance of a class', function() {
             beforeEach(function() {
                 component.selectedClass = {
-                    id: 'class',
+                    id: 'http://test.com#class',
                     title: 'Class',
                     deprecated: true
                 };
@@ -173,17 +169,16 @@ describe('New Instance Class Overlay component', function() {
                 exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('Error message'));
                 component.submit();
                 fixture.detectChanges();
-                expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith('www.test.com', 'class', {pageIndex: 0, limit: 99});
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith('www.test.com', 'http://test.com#class', {pageIndex: 0, limit: 99});
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             });
             describe('when getClassInstanceDetails resolves', function() {
                 beforeEach(function() {
                     exploreServiceStub.getClassInstanceDetails.and.returnValue(of(new HttpResponse<InstanceDetails[]>({body: []})));
-                    splitIriStub.transform.and.returnValue({begin: 'begin/', then: 'then/', end: 'end'});
                 });
                 it('if instances already exist', fakeAsync( function() {
-                    exploreServiceStub.createPagedResultsObject.and.returnValue({data: [{instanceIRI: 'instance', title: 'test', description: 'desc'}], total: 1});
+                    exploreServiceStub.createPagedResultsObject.and.returnValue({data: [{instanceIRI: 'http://test.com#instance', title: 'test', description: 'desc'}], total: 1});
                     component.submit();
                     fixture.detectChanges();
                     tick();
@@ -193,11 +188,10 @@ describe('New Instance Class Overlay component', function() {
                         expect(discoverStateStub.explore.classId).toEqual(component.selectedClass.id);
                         expect(discoverStateStub.explore.classDeprecated).toEqual(component.selectedClass.deprecated);
                         expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
-                        expect(discoverStateStub.explore.instanceDetails.data).toEqual([{instanceIRI: 'instance', title: 'test', description: 'desc'}]);
-                        expect(splitIriStub.transform).toHaveBeenCalledWith('instance');
+                        expect(discoverStateStub.explore.instanceDetails.data).toEqual([{instanceIRI: 'http://test.com#instance', title: 'test', description: 'desc'}]);
                         expect(discoverStateStub.explore.instance.entity[0]['@type']).toEqual([component.selectedClass.id]);
-                        expect(discoverStateStub.explore.instance.entity[0]['@id'].startsWith('begin/then/')).toBeTruthy();
-                        expect(discoverStateStub.explore.instance.metadata.instanceIRI.startsWith('begin/then/')).toBeTruthy();
+                        expect(discoverStateStub.explore.instance.entity[0]['@id'].startsWith('http://test.com#')).toBeTruthy();
+                        expect(discoverStateStub.explore.instance.metadata.instanceIRI.startsWith('http://test.com#')).toBeTruthy();
                         expect(discoverStateStub.explore.breadcrumbs).toEqual(['Classes', component.selectedClass.title, 'New Instance']);
                         expect(matDialogRef.close).toHaveBeenCalledWith();
                     });
@@ -214,10 +208,9 @@ describe('New Instance Class Overlay component', function() {
                         expect(discoverStateStub.explore.classDeprecated).toEqual(component.selectedClass.deprecated);
                         expect(discoverStateStub.resetPagedInstanceDetails).toHaveBeenCalledWith();
                         expect(discoverStateStub.explore.instanceDetails.data).toEqual([]);
-                        expect(splitIriStub.transform).toHaveBeenCalledWith(component.selectedClass.id);
                         expect(discoverStateStub.explore.instance.entity[0]['@type']).toEqual([component.selectedClass.id]);
-                        expect(discoverStateStub.explore.instance.entity[0]['@id'].startsWith('http://mobi.com/data/end/')).toBeTruthy();
-                        expect(discoverStateStub.explore.instance.metadata.instanceIRI.startsWith('http://mobi.com/data/end/')).toBeTruthy();
+                        expect(discoverStateStub.explore.instance.entity[0]['@id'].startsWith('http://mobi.com/data/class/')).toBeTruthy();
+                        expect(discoverStateStub.explore.instance.metadata.instanceIRI.startsWith('http://mobi.com/data/class/')).toBeTruthy();
                         expect(discoverStateStub.explore.breadcrumbs).toEqual(['Classes', component.selectedClass.title, 'New Instance']);
                         expect(matDialogRef.close).toHaveBeenCalledWith();
                     });

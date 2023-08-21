@@ -24,26 +24,30 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { ShowdownComponent } from 'ngx-showdown';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { MarkdownEditorComponent } from '../../../shared/components/markdownEditor/markdownEditor.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { DCTERMS } from '../../../prefixes';
 import { RecordMarkdownComponent } from './recordMarkdown.component';
 
 describe('Record Markdown component', function() {
     let component: RecordMarkdownComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<RecordMarkdownComponent>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     const recordId = 'recordId';
     const abstract = '#Test';
-    const record: JSONLDObject = {'@id': recordId, '@type': []};
+    const record: JSONLDObject = {
+      '@id': recordId,
+      '@type': [],
+      [`${DCTERMS}abstract`]: [{ '@value': abstract }]
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -55,18 +59,12 @@ describe('Record Markdown component', function() {
                 RecordMarkdownComponent,
                 MockComponent(ShowdownComponent),
                 MockComponent(MarkdownEditorComponent)
-            ],
-            providers: [
-                MockProvider(UtilService)
-            ],
+            ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(RecordMarkdownComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-
-        utilStub.getDctermsValue.and.callFake((obj, propId) => propId === 'abstract' ? abstract : '');
     });
 
     afterEach(function() {
@@ -74,16 +72,17 @@ describe('Record Markdown component', function() {
         component = null;
         element = null;
         fixture = null;
-        utilStub = null;
     });
 
     it('initializes correctly on record change', function() {
         component.record = record;
-        expect(utilStub.getDctermsValue).toHaveBeenCalledWith(record, 'abstract');
         expect(component.text).toEqual(abstract);
     });
     describe('controller methods', function() {
         describe('should show the markdown editor', function() {
+            beforeEach(function() {
+                component.record = record;
+            });
             it('if the record can be edited', function() {
                 component.canEdit = true;
                 component.showEdit();
@@ -98,24 +97,26 @@ describe('Record Markdown component', function() {
         });
         describe('should save the markdown edit', function() {
             beforeEach(function() {
-                component.record = record;
+                component.record = cloneDeep(record);
                 component.edit = true;
                 spyOn(component.updateRecord, 'emit');
             });
             describe('if the edited value is different than the original value', function() {
                 it('if the new value is empty', function() {
+                    const expectedRecord = cloneDeep(record);
+                    delete expectedRecord[`${DCTERMS}abstract`];
                     component.editMarkdown = '';
                     component.saveEdit();
-                    expect(component.updateRecord.emit).toHaveBeenCalledWith(record);
-                    expect(utilStub.removeDctermsValue).toHaveBeenCalledWith(record, 'abstract', abstract);
+                    expect(component.updateRecord.emit).toHaveBeenCalledWith(expectedRecord);
                     expect(component.edit).toEqual(false);
                     expect(component.editMarkdown).toEqual('');
                 });
                 it('if the new value is not empty', function() {
+                    const expectedRecord = cloneDeep(record);
+                    expectedRecord[`${DCTERMS}abstract`] = [{ '@value': 'Test' }];
                     component.editMarkdown = 'Test';
                     component.saveEdit();
-                    expect(component.updateRecord.emit).toHaveBeenCalledWith(record);
-                    expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(record, 'abstract', 'Test');
+                    expect(component.updateRecord.emit).toHaveBeenCalledWith(expectedRecord);
                     expect(component.edit).toEqual(false);
                     expect(component.editMarkdown).toEqual('');
                 });
@@ -124,7 +125,6 @@ describe('Record Markdown component', function() {
                 component.editMarkdown = abstract;
                 component.saveEdit();
                 expect(component.updateRecord.emit).not.toHaveBeenCalled();
-                expect(utilStub.updateDctermsValue).not.toHaveBeenCalled();
                 expect(component.edit).toEqual(false);
                 expect(component.editMarkdown).toEqual('');
             });

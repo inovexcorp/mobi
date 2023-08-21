@@ -22,11 +22,20 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { get, map, uniq, noop, forEach, filter, find, union, concat, merge } from 'lodash';
-import { forkJoin, from, Observable, of, throwError } from 'rxjs';
+import { get, map, uniq, filter, find, union, concat, merge } from 'lodash';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { CATALOG, MERGEREQ, OWL, ONTOLOGYEDITOR } from '../../prefixes';
 
+import { 
+    getBeautifulIRI, 
+    getDate, 
+    getDctermsId, 
+    getDctermsValue, 
+    getObjIrisFromDifference, 
+    getPropertyId, 
+    getPropertyValue
+} from '../utility';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Conflict } from '../models/conflict.interface';
 import { Difference } from '../models/difference.class';
@@ -38,9 +47,8 @@ import { CatalogManagerService } from './catalogManager.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { UserManagerService } from './userManager.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { SortOption } from '../models/sortOption.interface';
-import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 
 /**
@@ -80,7 +88,7 @@ export class MergeRequestsStateService {
     recordType: string;
 
     constructor(private mm: MergeRequestManagerService, private cm: CatalogManagerService,
-        private um: UserManagerService, private om: OntologyManagerService, private util: UtilService) {}
+        private um: UserManagerService, private om: OntologyManagerService, private toast: ToastService) {}
 
     /**
      * Contains an object representing the currently selected request.
@@ -226,14 +234,15 @@ export class MergeRequestsStateService {
                     return forkJoin(recordsToRetrieve.map(iri => this.cm.getRecord(iri, this.catalogId)));
                 })
             ).subscribe((responses: JSONLDObject[][]) => {
-                const matchingRecords: JSONLDObject[] = responses.map(recordArr => recordArr.find(jsonldObj => recordsToRetrieve.includes(jsonldObj['@id'])));
-                forEach(matchingRecords, record => {
-                    const title = this.util.getDctermsValue(record, 'title');
+                const matchingRecords: JSONLDObject[] = responses.map(recordArr => 
+                      recordArr.find(jsonldObj => recordsToRetrieve.includes(jsonldObj['@id'])));
+                matchingRecords.forEach(record => {
+                    const title = getDctermsValue(record, 'title');
                     const type = record['@type'].find(type => ![
-                        OWL + 'Thing',
-                        CATALOG + 'Record',
-                        CATALOG + 'VersionedRecord',
-                        CATALOG + 'VersionedRDFRecord',
+                        `${OWL}Thing`,
+                        `${CATALOG}Record`,
+                        `${CATALOG}VersionedRecord`,
+                        `${CATALOG}VersionedRDFRecord`,
                     ].includes(type));
                     filter(this.requests, {recordIri: record['@id']}).forEach(request => {
                         request.recordTitle = title;
@@ -242,7 +251,7 @@ export class MergeRequestsStateService {
                 });
             }, error => {
                 this.requests = [];
-                this.util.createErrorToast(error);
+                this.toast.createErrorToast(error);
             });
     }
     /**
@@ -263,48 +272,51 @@ export class MergeRequestsStateService {
         request.removeSource = undefined;
         request.comments = [];
         if (this.mm.isAccepted(request.jsonld)) {
-            request.sourceTitle = this.util.getPropertyValue(request.jsonld, MERGEREQ + 'sourceBranchTitle');
-            request.targetTitle = this.util.getPropertyValue(request.jsonld, MERGEREQ + 'targetBranchTitle');
-            request.sourceCommit = this.util.getPropertyId(request.jsonld, MERGEREQ + 'sourceCommit');
-            request.targetCommit = this.util.getPropertyId(request.jsonld, MERGEREQ + 'targetCommit');
+            request.sourceTitle = getPropertyValue(request.jsonld, `${MERGEREQ}sourceBranchTitle`);
+            request.targetTitle = getPropertyValue(request.jsonld, `${MERGEREQ}targetBranchTitle`);
+            request.sourceCommit = getPropertyId(request.jsonld, `${MERGEREQ}sourceCommit`);
+            request.targetCommit = getPropertyId(request.jsonld, `${MERGEREQ}targetCommit`);
             return this.mm.getComments(request.jsonld['@id'])
                 .pipe(switchMap(comments => {
                     request.comments = comments;
-                    return this.cm.getDifference(request.sourceCommit, request.targetCommit, this.cm.differencePageSize, 0);
+                    return this.cm.getDifference(request.sourceCommit, request.targetCommit, 
+                        this.cm.differencePageSize, 0);
                 }),
-                switchMap((response: HttpResponse<CommitDifference>) => {
-                    return this.processDifferenceResponse(request.recordIri, '', request.sourceCommit, response, request.recordType);
-                }));
+                switchMap((response: HttpResponse<CommitDifference>) =>
+                    this.processDifferenceResponse(request.recordIri, '', request.sourceCommit, response, 
+                        request.recordType)
+                ));
         } else {
             return this.mm.getComments(request.jsonld['@id'])
                 .pipe(
                     switchMap(comments => {
                         request.comments = comments;
-                        const sourceIri = this.util.getPropertyId(request.jsonld, MERGEREQ + 'sourceBranch');
+                        const sourceIri = getPropertyId(request.jsonld, `${MERGEREQ}sourceBranch`);
                         return this.cm.getRecordBranch(sourceIri, request.recordIri, this.catalogId);
                     }),
                     switchMap((branch: JSONLDObject) => {
                         request.sourceBranch = branch;
-                        request.sourceCommit = this.util.getPropertyId(branch, CATALOG + 'head');
-                        request.sourceTitle = this.util.getDctermsValue(branch, 'title');
+                        request.sourceCommit = getPropertyId(branch, `${CATALOG}head`);
+                        request.sourceTitle = getDctermsValue(branch, 'title');
                         request.removeSource = this.shouldRemoveSource(request.jsonld);
                         
-                        const targetIri = this.util.getPropertyId(request.jsonld, MERGEREQ + 'targetBranch');
+                        const targetIri = getPropertyId(request.jsonld, `${MERGEREQ}targetBranch`);
                         if (targetIri) {
                             return this.cm.getRecordBranch(targetIri, request.recordIri, this.catalogId)
                                 .pipe(
                                     switchMap((branch: JSONLDObject) => {
                                         request.targetBranch = branch;
-                                        request.targetCommit = this.util.getPropertyId(branch, CATALOG + 'head');
-                                        request.targetTitle = this.util.getDctermsValue(branch, 'title');
-                                        return this.cm.getDifference(request.sourceCommit, request.targetCommit, this.cm.differencePageSize, 0);
+                                        request.targetCommit = getPropertyId(branch, `${CATALOG}head`);
+                                        request.targetTitle = getDctermsValue(branch, 'title');
+                                        return this.cm.getDifference(request.sourceCommit, request.targetCommit, 
+                                            this.cm.differencePageSize, 0);
                                     }),
-                                    switchMap((response: HttpResponse<CommitDifference>) => {
-                                        return this.processDifferenceResponse(request.recordIri, request.sourceBranch['@id'], request.sourceCommit, response, request.recordType);
-                                    }),
-                                    switchMap(() => {
-                                        return this.cm.getBranchConflicts(request.sourceBranch['@id'], targetIri, request.recordIri, this.catalogId);
-                                    }),
+                                    switchMap((response: HttpResponse<CommitDifference>) =>
+                                        this.processDifferenceResponse(request.recordIri, request.sourceBranch['@id'], 
+                                            request.sourceCommit, response, request.recordType)
+                                    ),
+                                    switchMap(() => this.cm.getBranchConflicts(request.sourceBranch['@id'], 
+                                        targetIri, request.recordIri, this.catalogId)),
                                     switchMap((conflicts: Conflict[]) => {
                                         request.conflicts = conflicts;
                                         return of(null);
@@ -329,10 +341,9 @@ export class MergeRequestsStateService {
      * @return {Observable} An Observable indicating the success of the resolution
      */
     resolveRequestConflicts(request: MergeRequest, resolutions: Difference): Observable<null> {
-        return this.cm.mergeBranches(request.targetBranch['@id'], request.sourceBranch['@id'], request.recordIri, this.catalogId, resolutions)
-            .pipe(switchMap(() => {
-                return this.setRequestDetails(request);
-            }));
+        return this.cm.mergeBranches(request.targetBranch['@id'], request.sourceBranch['@id'], request.recordIri, 
+          this.catalogId, resolutions)
+            .pipe(switchMap(() => this.setRequestDetails(request)));
     }
     /**
      * Checks if the JSON-LD for a Merge Request has the removeSource property set to true. Returns boolean result.
@@ -341,7 +352,7 @@ export class MergeRequestsStateService {
      * @returns {boolean} True if the removeSource property is true, otherwise false
      */
     shouldRemoveSource(jsonld: JSONLDObject): boolean {
-        return this.util.getPropertyValue(jsonld, MERGEREQ + 'removeSource') === 'true';
+        return getPropertyValue(jsonld, `${MERGEREQ}removeSource`) === 'true';
     }
     /**
      * Deletes the provided Merge Request from the application. If successful, unselects the current `selected` request
@@ -354,11 +365,11 @@ export class MergeRequestsStateService {
             .subscribe(() => {
                 const hasSelected = !!this.selected;
                 this.selected = undefined;
-                this.util.createSuccessToast('Request successfully deleted');
+                this.toast.createSuccessToast('Request successfully deleted');
                 if (!hasSelected) {
                     this.setRequests({accepted: this.acceptedFilter});
                 }
-            }, this.util.createErrorToast);
+            }, error => this.toast.createErrorToast(error));
     }
     /**
      * Transforms the provided JSON-LD into a MergeRequest object.
@@ -369,12 +380,13 @@ export class MergeRequestsStateService {
     getRequestObj(jsonld: JSONLDObject): MergeRequest {
         return {
             jsonld,
-            title: this.util.getDctermsValue(jsonld, 'title'),
-            description: this.util.getDctermsValue(jsonld, 'description') || 'No description',
+            title: getDctermsValue(jsonld, 'title'),
+            description: getDctermsValue(jsonld, 'description') || 'No description',
             date: this._getDate(jsonld),
             creator: this._getCreator(jsonld),
-            recordIri: this.util.getPropertyId(jsonld, MERGEREQ + 'onRecord'),
-            assignees: map(get(jsonld, '[\'' + MERGEREQ + 'assignee\']'), obj => get(find(this.um.users, {iri: obj['@id']}), 'username'))
+            recordIri: getPropertyId(jsonld, `${MERGEREQ}onRecord`),
+            assignees: get(jsonld, `['${MERGEREQ}assignee']`, [])
+                .map(obj => get(find(this.um.users, {iri: obj['@id']}), 'username'))
         };
     }
     /**
@@ -396,8 +408,10 @@ export class MergeRequestsStateService {
             return throwError('Difference is not set. Cannot get ontology entity names.');
         }
         const difference = diffResponse.body;
-        const diffIris = union(map(difference.additions as JSONLDObject[], '@id'), map(difference.deletions as JSONLDObject[], '@id'));
-        const iris = union(diffIris, this.util.getObjIrisFromDifference(difference.additions as JSONLDObject[]), this.util.getObjIrisFromDifference(difference.deletions as JSONLDObject[]));
+        const diffIris = union(map(difference.additions as JSONLDObject[], '@id'), 
+            map(difference.deletions as JSONLDObject[], '@id'));
+        const iris = union(diffIris, getObjIrisFromDifference(difference.additions as JSONLDObject[]), 
+            getObjIrisFromDifference(difference.deletions as JSONLDObject[]));
 
         if (iris.length > 0) {
             if (type === ONTOLOGYEDITOR + 'OntologyRecord') {
@@ -434,8 +448,10 @@ export class MergeRequestsStateService {
         if (!this.difference) {
             this.difference = new Difference();
         }
-        this.difference.additions = concat(this.difference.additions as JSONLDObject[], difference.additions as JSONLDObject[]);
-        this.difference.deletions = concat(this.difference.deletions as JSONLDObject[], difference.deletions as JSONLDObject[]);
+        this.difference.additions = concat(this.difference.additions as JSONLDObject[], 
+            difference.additions as JSONLDObject[]);
+        this.difference.deletions = concat(this.difference.deletions as JSONLDObject[], 
+            difference.deletions as JSONLDObject[]);
         const headers = diffResponse.headers;
         this.difference.hasMoreResults = headers.get('has-more-results') === 'true';
     }
@@ -450,7 +466,7 @@ export class MergeRequestsStateService {
         if (get(this.entityNames, [iri, 'label'])) {
             return this.entityNames[iri].label;
         } else {
-            return this.util.getBeautifulIRI(iri);
+            return getBeautifulIRI(iri);
         }
     }
     /**
@@ -461,11 +477,14 @@ export class MergeRequestsStateService {
      */
     updateRequestConfigDifference(): Observable<null> {
         this.clearDifference();
-        return this.cm.getDifference(this.util.getPropertyId(this.requestConfig.sourceBranch, CATALOG + 'head'), this.util.getPropertyId(this.requestConfig.targetBranch, CATALOG + 'head'), this.cm.differencePageSize, 0)
+        return this.cm.getDifference(getPropertyId(this.requestConfig.sourceBranch, `${CATALOG}head`), 
+          getPropertyId(this.requestConfig.targetBranch, `${CATALOG}head`), this.cm.differencePageSize, 0)
             .pipe(
-                switchMap((response: HttpResponse<CommitDifference>) => {
-                    return this.processDifferenceResponse(this.requestConfig.recordId, this.requestConfig.sourceBranchId, this.util.getPropertyId(this.requestConfig.sourceBranch, CATALOG + 'head'), response, this.selected ? this.selected.recordType : this.cm.getType(this.selectedRecord));
-                }),
+                switchMap((response: HttpResponse<CommitDifference>) => 
+                    this.processDifferenceResponse(this.requestConfig.recordId, this.requestConfig.sourceBranchId, 
+                        getPropertyId(this.requestConfig.sourceBranch, `${CATALOG}head`), response, 
+                        this.selected ? this.selected.recordType : this.cm.getType(this.selectedRecord))
+                ),
                 catchError(errorMessage => {
                     this.clearDifference();
                     return throwError(errorMessage);
@@ -503,27 +522,29 @@ export class MergeRequestsStateService {
      */
     retrieveMoreResults(paginationDetails: {limit: number, offset: number}): void {
         if (!this.selected && !this.requestConfig.recordId) {
-            this.util.createErrorToast('Could not load more results.');
+            this.toast.createErrorToast('Could not load more results.');
             return;
         }
         const sourceBranch = this.selected ? this.selected.sourceBranch : this.requestConfig.sourceBranch;
-        const sourceHead = this.util.getPropertyId(sourceBranch, CATALOG + 'head') || this.selected.sourceCommit;
+        const sourceHead = getPropertyId(sourceBranch, `${CATALOG}head`) || this.selected.sourceCommit;
         const targetBranch = this.selected ? this.selected.targetBranch : this.requestConfig.targetBranch;
-        const targetHead = this.util.getPropertyId(targetBranch, CATALOG + 'head') || this.selected.targetCommit;
+        const targetHead = getPropertyId(targetBranch, `${CATALOG}head`) || this.selected.targetCommit;
         this.startIndex = paginationDetails.offset;
         this.cm.getDifference(sourceHead, targetHead, paginationDetails.limit, paginationDetails.offset)
-            .pipe(switchMap((response: HttpResponse<CommitDifference>) => {
-                return this.processDifferenceResponse(this.selected ? this.selected.recordIri : this.requestConfig.recordId, sourceBranch['@id'], sourceHead, response, this.selected ? this.selected.recordType : this.cm.getType(this.selectedRecord));
-            }))
-            .subscribe(noop, this.util.createErrorToast);
+            .pipe(switchMap((response: HttpResponse<CommitDifference>) =>
+                this.processDifferenceResponse(this.selected ? this.selected.recordIri : this.requestConfig.recordId, 
+                    sourceBranch['@id'], sourceHead, response, 
+                    this.selected ? this.selected.recordType : this.cm.getType(this.selectedRecord))
+            ))
+            .subscribe(() => {}, error => this.toast.createErrorToast(error));
     }
 
     private _getDate(jsonld: JSONLDObject) {
-        const dateStr = this.util.getDctermsValue(jsonld, 'issued');
-        return this.util.getDate(dateStr, 'shortDate');
+        const dateStr = getDctermsValue(jsonld, 'issued');
+        return getDate(dateStr, 'shortDate');
     }
     private _getCreator(jsonld: JSONLDObject) {
-        const iri = this.util.getDctermsId(jsonld, 'creator');
+        const iri = getDctermsId(jsonld, 'creator');
         return get(find(this.um.users, {iri}), 'username');
     }
 }

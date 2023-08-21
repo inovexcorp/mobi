@@ -30,6 +30,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OWL } from '../../../prefixes';
@@ -38,10 +39,9 @@ import { InfoMessageComponent } from '../../../shared/components/infoMessage/inf
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
 import { ImportsBlockComponent } from './importsBlock.component';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 describe('Imports Block component', function() {
     let component: ImportsBlockComponent;
@@ -50,7 +50,7 @@ describe('Imports Block component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error Message';
     const ontologyId = 'ontologyId';
@@ -78,7 +78,7 @@ describe('Imports Block component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 MockProvider(PropertyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -92,7 +92,7 @@ describe('Imports Block component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         
         ontologyStateStub.canModify.and.returnValue(true);
@@ -102,7 +102,7 @@ describe('Imports Block component', function() {
         component.listItem.versionedRdfRecord.commitId = commitId;
         component.listItem.selected = {
             '@id': ontologyId,
-            [OWL + 'imports']: [importId]
+            [`${OWL}imports`]: [importId]
         };
     });
 
@@ -114,7 +114,7 @@ describe('Imports Block component', function() {
         ontologyStateStub = null;
         propertyManagerStub = null;
         matDialog = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('should handle changes correctly', function() {
@@ -213,7 +213,6 @@ describe('Imports Block component', function() {
             beforeEach(function() {
                 spyOn(component, 'setImports');
                 spyOn(component, 'setIndirectImports');
-                utilStub.createJson.and.returnValue({'@id': ''});
             });
             describe('when save changes resolves', function() {
                 beforeEach(function() {
@@ -224,9 +223,11 @@ describe('Imports Block component', function() {
                     ontologyStateStub.isCommittable.and.returnValue(true);
                     component.remove(url);
                     tick();
-                    expect(utilStub.createJson).toHaveBeenCalledWith(ontologyId, OWL + 'imports', {'@id': url});
-                    expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(recordId, jasmine.any(Object));
-                    expect(propertyManagerStub.remove).toHaveBeenCalledWith(component.listItem.selected, OWL + 'imports', 0);
+                    expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(recordId, {
+                      '@id': ontologyId,
+                      [`${OWL}imports`]: [{ '@id': url }]
+                    });
+                    expect(propertyManagerStub.remove).toHaveBeenCalledWith(component.listItem.selected, `${OWL}imports`, 0);
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith(component.listItem);
                     expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId, component.listItem.upToDate, component.listItem.inProgressCommit);
                     expect(component.setImports).toHaveBeenCalledWith();
@@ -236,9 +237,11 @@ describe('Imports Block component', function() {
                     ontologyStateStub.updateOntology.and.returnValue(throwError(error));
                     component.remove(url);
                     tick();
-                    expect(utilStub.createJson).toHaveBeenCalledWith(ontologyId, OWL + 'imports', {'@id': url});
-                    expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(recordId, jasmine.any(Object));
-                    expect(propertyManagerStub.remove).toHaveBeenCalledWith(component.listItem.selected, OWL + 'imports', 0);
+                    expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(recordId, {
+                      '@id': ontologyId,
+                      [`${OWL}imports`]: [{ '@id': url }]
+                    });
+                    expect(propertyManagerStub.remove).toHaveBeenCalledWith(component.listItem.selected, `${OWL}imports`, 0);
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith(component.listItem);
                     expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId, component.listItem.upToDate, component.listItem.inProgressCommit);
                     expect(component.setImports).not.toHaveBeenCalled();
@@ -249,9 +252,11 @@ describe('Imports Block component', function() {
                 ontologyStateStub.saveCurrentChanges.and.returnValue(throwError(error));
                 component.remove(url);
                 tick();
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyId, OWL + 'imports', {'@id': url});
-                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(recordId, jasmine.any(Object));
-                expect(propertyManagerStub.remove).toHaveBeenCalledWith(component.listItem.selected, OWL + 'imports', 0);
+                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(recordId, {
+                  '@id': ontologyId,
+                  [`${OWL}imports`]: [{ '@id': url }]
+                });
+                expect(propertyManagerStub.remove).toHaveBeenCalledWith(component.listItem.selected, `${OWL}imports`, 0);
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith(component.listItem);
                 expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
                 expect(component.setImports).not.toHaveBeenCalled();
@@ -277,7 +282,7 @@ describe('Imports Block component', function() {
                 component.refresh();
                 tick();
                 expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId, component.listItem.upToDate, component.listItem.inProgressCommit, true);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(component.setImports).toHaveBeenCalledWith();
                 expect(component.setIndirectImports).toHaveBeenCalledWith();
             }));
@@ -286,11 +291,11 @@ describe('Imports Block component', function() {
                 component.refresh();
                 tick();
                 expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId, component.listItem.upToDate, component.listItem.inProgressCommit, true);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
         it('setImports should set the value correctly', function() {
-            component.listItem.selected[OWL + 'imports'] = [importId, {'@id': 'http://banana.com'}];
+            component.listItem.selected[`${OWL}imports`] = [importId, {'@id': 'http://banana.com'}];
             component.setImports();
             expect(component.imports).toEqual([{'@id': 'http://banana.com'}, importId]);
         });

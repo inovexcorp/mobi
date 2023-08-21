@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, Output, EventEmitter } from '@angular/core';
 import { get } from 'lodash';
 
 import { CATALOG } from '../../../prefixes';
@@ -30,7 +30,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { Commit } from '../../../shared/models/commit.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class merge-requests.RequestBranchSelectComponent
@@ -52,17 +53,17 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
     branchTitle = '';
     recordTitle = '';
     type = ''
-    commits = [];
+    commits: Commit[] = [];
     @Output() emitCommits = new EventEmitter<{commits: Commit[]}>();
 
     @ViewChild('commitDifferenceTabset', { static: true }) commitDifferenceTabset: ElementRef;
 
     constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService,
-        private spinnerSvc: ProgressSpinnerService, public util: UtilService) {}
+        private spinnerSvc: ProgressSpinnerService, private toast: ToastService) {}
 
     ngOnInit(): void {
         this.type = this.cm.getType(this.state.selectedRecord);
-        this.recordTitle = this.util.getDctermsValue(this.state.selectedRecord, 'title');
+        this.recordTitle = getDctermsValue(this.state.selectedRecord, 'title');
         this.state.clearDifference();
         this.state.sameBranch = false;
         this.cm.getRecordBranches(this.state.requestConfig.recordId, get(this.cm.localCatalog, '@id'))
@@ -72,13 +73,13 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
                 this.state.updateRequestConfigBranch( 'targetBranch', this.branches);
                 if (this.state.requestConfig.sourceBranch && this.state.requestConfig.targetBranch) {
                     this.state.sameBranch = this.state.requestConfig.sourceBranch['@id'] === this.state.requestConfig.targetBranch['@id'];
-                    this.branchTitle = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
-                    this.sourceCommitId = this.util.getPropertyId(this.state.requestConfig.sourceBranch, CATALOG + 'head');
-                    this.targetCommitId = this.util.getPropertyId(this.state.requestConfig.targetBranch, CATALOG + 'head');
+                    this.branchTitle = getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+                    this.sourceCommitId = getPropertyId(this.state.requestConfig.sourceBranch, `${CATALOG}head`);
+                    this.targetCommitId = getPropertyId(this.state.requestConfig.targetBranch, `${CATALOG}head`);
                     this._updateDifference(true);
                 }
             }, error => {
-                this.util.createErrorToast(error);
+                this.toast.createErrorToast(error);
                 this.branches = [];
             });
     }
@@ -94,8 +95,8 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
         this.state.sameBranch = false;
         this.state.clearDifference();
         if (this.state.requestConfig.sourceBranch) {
-            this.branchTitle = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
-            this.sourceCommitId = this.util.getPropertyId(this.state.requestConfig.sourceBranch, CATALOG + 'head');
+            this.branchTitle = getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+            this.sourceCommitId = getPropertyId(this.state.requestConfig.sourceBranch, `${CATALOG}head`);
             this.state.requestConfig.sourceBranchId = this.state.requestConfig.sourceBranch['@id'];
             if (this.state.requestConfig.targetBranch) {
                 this.state.sameBranch = this.state.requestConfig.sourceBranch['@id'] === this.state.requestConfig.targetBranch['@id'];
@@ -111,7 +112,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
         this.state.sameBranch = false;
         this.state.clearDifference();
         if (this.state.requestConfig.targetBranch) {
-            this.targetCommitId = this.util.getPropertyId(this.state.requestConfig.targetBranch, CATALOG + 'head');
+            this.targetCommitId = getPropertyId(this.state.requestConfig.targetBranch, `${CATALOG}head`);
             this.state.requestConfig.targetBranchId = this.state.requestConfig.targetBranch['@id'];
             if (this.state.requestConfig.sourceBranch) {
                 this.state.sameBranch = this.state.requestConfig.sourceBranch['@id'] === this.state.requestConfig.targetBranch['@id'];
@@ -122,7 +123,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
         }
     }
 
-    receiveCommits(value):void {
+    receiveCommits(value: Commit[]):void {
         this.commits = value;
         this.emitCommits.emit({commits: this.commits});
     }
@@ -132,7 +133,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
         this.state.updateRequestConfigDifference().subscribe(() => {
             this.spinnerSvc.finishLoadingForComponent(this.commitDifferenceTabset);
         }, error => {
-            this.util.createErrorToast(error);
+            this.toast.createErrorToast(error);
             if (clearBranches) {
                 this.branches = [];
             }

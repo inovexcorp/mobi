@@ -23,7 +23,7 @@
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
 
 /**
  * @class shared.InlineEditComponent
@@ -65,12 +65,12 @@ export class InlineEditComponent {
     @Input() placeholder: string;
     @Output() saveEvent = new EventEmitter<string>();
 
-    constructor(public util: UtilService) {}
+    constructor(private toast: ToastService) {}
     
     saveChanges(): void {
         if (this.required && this.editedText === '') {
             this.onBlur();
-            this.util.createWarningToast('Text input must not be empty');
+            this.toast.createWarningToast('Text input must not be empty');
         } else {
             this.edit = false;
             this.saveEvent.emit(this.editedText);

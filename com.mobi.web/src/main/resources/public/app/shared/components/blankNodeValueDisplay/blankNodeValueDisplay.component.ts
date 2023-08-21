@@ -51,8 +51,8 @@ export class BlankNodeValueDisplayComponent implements OnInit {
                 private prefixation: PrefixationPipe
     ) {}
 
-    ngOnInit() {
-        this.calcNodeProperties()
+    ngOnInit(): void {
+        this.calcNodeProperties();
     }
 
     private calcNodeProperties(): void {

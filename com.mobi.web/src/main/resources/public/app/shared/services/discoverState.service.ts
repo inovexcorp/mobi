@@ -25,6 +25,7 @@ import { take, includes, get, find } from 'lodash';
 
 import { ExploreState } from '../models/exploreState.interface';
 import { YasguiQuery } from '../models/yasguiQuery.class';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 
 /**
  * @class shared.DiscoverStateService
@@ -149,7 +150,7 @@ export class DiscoverStateService {
      *
      * @returns {Object} An object which contains the instance's JSON-LD.
      */
-    getInstance(): any {
+    getInstance(): JSONLDObject {
         return find(this.explore.instance.entity, obj => includes(get(obj, '@type'), this.explore.classId));
     }
 

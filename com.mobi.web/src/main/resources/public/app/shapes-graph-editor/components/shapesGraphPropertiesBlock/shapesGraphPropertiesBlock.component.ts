@@ -22,8 +22,7 @@
  */
 import { Component, OnChanges, Input } from '@angular/core';
 
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
  * @class shapes-graph-editor.ShapesGraphPropertiesBlockComponent
@@ -31,17 +30,17 @@ import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphM
  * A component that creates a section that displays the shapesGraph properties (and
  * annotations) on the provided shapesGraph using {@link shapes-graph-editor.ShapesGraphPropertyValuesComponent}.
  * 
- * @param {Object} shapesGraph A JSON-LD object representing a shapesGraph 
+ * @param {JSONLDObject} shapesGraph A JSON-LD object representing a shapesGraph 
  */
 @Component({
     selector: 'shapes-graph-properties-block',
     templateUrl: './shapesGraphPropertiesBlock.component.html'
 })
 export class ShapesGraphPropertiesBlockComponent implements OnChanges {
-    @Input() shapesGraph;
+    @Input() shapesGraph: JSONLDObject;
     properties: Array<string> = [];
 
-    constructor(public state: ShapesGraphStateService, public sm: ShapesGraphManagerService) {}
+    constructor() {}
     
     ngOnChanges(): void {
         this.properties = Object.keys(this.shapesGraph).filter(property => property.charAt(0) !== '@');

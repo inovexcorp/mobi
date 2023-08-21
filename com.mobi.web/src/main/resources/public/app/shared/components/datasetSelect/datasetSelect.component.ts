@@ -29,7 +29,7 @@ import { debounceTime, finalize, map, startWith, switchMap } from 'rxjs/operator
 import { DCTERMS } from '../../../prefixes';
 import { DatasetManagerService } from '../../services/datasetManager.service';
 import { DiscoverStateService } from '../../services/discoverState.service';
-import { UtilService } from '../../services/util.service';
+import { getDctermsValue } from '../../utility';
 
 interface DatasetPreview {
     id: string,
@@ -50,7 +50,7 @@ export class DatasetSelectComponent implements OnInit {
 
     filteredDatasets: Observable<DatasetPreview[]>;
 
-    constructor(private dam: DatasetManagerService, public state: DiscoverStateService, private util: UtilService) {}
+    constructor(private dam: DatasetManagerService, public state: DiscoverStateService) {}
 
     ngOnInit(): void {
         this.resetSearch();
@@ -71,7 +71,7 @@ export class DatasetSelectComponent implements OnInit {
                         pageIndex: 0,
                         sortOption: {
                             label: 'Title',
-                            field: DCTERMS + 'title',
+                            field: `${DCTERMS}title`,
                             asc: true
                         }
                     }, true).pipe(
@@ -80,7 +80,7 @@ export class DatasetSelectComponent implements OnInit {
                                 const record = this.dam.getRecordFromArray(arr);
                                 return {
                                     id: record['@id'],
-                                    title: this.util.getDctermsValue(record, 'title')
+                                    title: getDctermsValue(record, 'title')
                                 };
                             });
                         }),

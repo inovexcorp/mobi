@@ -29,7 +29,8 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { getDate, getDctermsValue, getPropertyId, updateDctermsValue } from '../../../shared/utility';
 
 /**
  * @class catalog.RecordViewComponent
@@ -58,15 +59,15 @@ export class RecordViewComponent implements OnInit {
     canEdit = false;
 
     constructor(public state: CatalogStateService, public cm: CatalogManagerService, public os: OntologyStateService, 
-        public pep: PolicyEnforcementService, public util: UtilService) {}
+        public pep: PolicyEnforcementService, private toast: ToastService) {}
 
     ngOnInit(): void {
-        this.cm.getRecord(this.state.selectedRecord['@id'], this.util.getPropertyId(this.state.selectedRecord, CATALOG + 'catalog'))
+        this.cm.getRecord(this.state.selectedRecord['@id'], getPropertyId(this.state.selectedRecord, `${CATALOG}catalog`))
             .subscribe((response: JSONLDObject[]) => {
                 this.setInfo(response);
                 this.setCanEdit();
             }, (errorMessage) => {
-                this.util.createErrorToast(errorMessage);
+                this.toast.createErrorToast(errorMessage);
                 this.state.selectedRecord = undefined;
             });
     }
@@ -78,16 +79,16 @@ export class RecordViewComponent implements OnInit {
         if (indexToUpdate !== -1) {
             this.completeRecord[indexToUpdate] = newRecord;
         } else {
-            this.util.createErrorToast('Could not find record: ' + newRecord['@id']);
+            this.toast.createErrorToast('Could not find record: ' + newRecord['@id']);
         }
         
-        this.cm.updateRecord(newRecord['@id'], this.util.getPropertyId(newRecord, CATALOG + 'catalog'), this.completeRecord)
+        this.cm.updateRecord(newRecord['@id'], getPropertyId(this.state.selectedRecord, `${CATALOG}catalog`), this.completeRecord)
             .subscribe((response: JSONLDObject[]) => {
                 this.setInfo(response);
-                this.util.createSuccessToast('Successfully updated the record');
+                this.toast.createSuccessToast('Successfully updated the record');
                 this.state.selectedRecord = newRecord;
             }, errorMessage => {
-                this.util.createErrorToast(errorMessage);
+                this.toast.createErrorToast(errorMessage);
             });
     }
     updateTitle(newTitle: string): void {
@@ -95,23 +96,23 @@ export class RecordViewComponent implements OnInit {
         if (openRecord) {
             openRecord.versionedRdfRecord.title = newTitle;
         }
-        this.util.updateDctermsValue(this.record, 'title', newTitle);
+        updateDctermsValue(this.record, 'title', newTitle);
         this.updateRecord(this.record);
     }
     updateDescription(newDescription: string): void {
-        this.util.updateDctermsValue(this.record, 'description', newDescription.trim());
+        updateDctermsValue(this.record, 'description', newDescription.trim());
         this.updateRecord(this.record);
     }
     setCanEdit(): void {
         const request = {
             resourceId: this.record['@id'],
-            actionId: POLICY + 'Update'
+            actionId: `${POLICY}Update`
         };
         this.pep.evaluateRequest(request)
             .subscribe(response => {
                 this.canEdit = response !== this.pep.deny;
             }, () => {
-                this.util.createWarningToast('Could not retrieve record permissions');
+                this.toast.createWarningToast('Could not retrieve record permissions');
                 this.canEdit = false;
             });
     }
@@ -122,10 +123,9 @@ export class RecordViewComponent implements OnInit {
         this.completeRecord = record;
         const matchingRecord = find(record, ['@id', this.state.selectedRecord['@id']]);
         this.record = matchingRecord;
-        this.title = this.util.getDctermsValue(this.record, 'title');
-        this.description = this.util.getDctermsValue(this.record, 'description');
-        this.modified = this.util.getDate(this.util.getDctermsValue(this.record, 'modified'), 'short');
-        this.issued = this.util.getDate(this.util.getDctermsValue(this.record, 'issued'), 'short');
+        this.title = getDctermsValue(this.record, 'title');
+        this.description = getDctermsValue(this.record, 'description');
+        this.modified = getDate(getDctermsValue(this.record, 'modified'), 'short');
+        this.issued = getDate(getDctermsValue(this.record, 'issued'), 'short');
     }
-
 }

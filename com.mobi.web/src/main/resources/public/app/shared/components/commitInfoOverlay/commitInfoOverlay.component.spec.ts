@@ -37,7 +37,7 @@ import { UserManagerService } from '../../services/userManager.service';
 import { CommitChangesDisplayComponent } from '../commitChangesDisplay/commitChangesDisplay.component';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { Commit } from '../../models/commit.interface';
 import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
 import { ONTOLOGYEDITOR } from '../../../prefixes';
@@ -48,7 +48,7 @@ describe('Commit Info Overlay component', function() {
     let fixture: ComponentFixture<CommitInfoOverlayComponent>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let dialogStub: jasmine.SpyObj<MatDialogRef<CommitInfoOverlayComponent>>;
     let difference: CommitDifference;
     let headers;
@@ -59,6 +59,7 @@ describe('Commit Info Overlay component', function() {
     const data: {commit: Commit, ontRecordId: string, type: string} = {
         commit: {
             id: commitId,
+            condensedId: commitId,
             creator: undefined,
             date: '',
             message: '',
@@ -82,7 +83,7 @@ describe('Commit Info Overlay component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 MockProvider(UserManagerService)
@@ -96,7 +97,7 @@ describe('Commit Info Overlay component', function() {
         headers = {'has-more-results': 'false'};
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         dialogStub = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<CommitInfoOverlayComponent>>;
         catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
     });
@@ -108,7 +109,7 @@ describe('Commit Info Overlay component', function() {
         fixture = null;
         catalogManagerStub = null;
         ontologyManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize with the correct value for', function() {
@@ -183,7 +184,6 @@ describe('Commit Info Overlay component', function() {
                         };
                         fixture.detectChanges();
                         await fixture.whenStable();
-                        utilStub.getObjIrisFromDifference.and.returnValue([]);
                     });
                     describe('and getOntologyEntityNames', function() {
                         it('resolves', async function() {
@@ -203,7 +203,7 @@ describe('Commit Info Overlay component', function() {
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                             expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
-                            expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+                            expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
                         });
                     });
                 });
@@ -252,20 +252,17 @@ describe('Commit Info Overlay component', function() {
                 catalogManagerStub.getDifference.and.returnValue(throwError('Error Message'));
                 await component.retrieveMoreResults(100, 0);
                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
         });
         describe('getEntityName returns when the calculated entityName', function() {
             it('exists', function() {
                 component.entityNames['iri'] = {label: 'iriLabel'};
                 expect(component.getEntityName('iri')).toEqual('iriLabel');
-                expect(utilStub.getBeautifulIRI).not.toHaveBeenCalled();
             });
             it('does not exist', function() {
                 component.entityNames = undefined;
-                utilStub.getBeautifulIRI.and.returnValue('beautifulIri');
-                expect(component.getEntityName('iri')).toEqual('beautifulIri');
-                expect(utilStub.getBeautifulIRI).toHaveBeenCalledWith('iri');
+                expect(component.getEntityName('iri')).toEqual('Iri');
             });
         });
     });

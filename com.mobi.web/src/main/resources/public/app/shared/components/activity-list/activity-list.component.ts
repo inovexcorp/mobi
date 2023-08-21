@@ -26,10 +26,11 @@ import { finalize } from 'rxjs/operators';
 
 import { ActivityPaginatedConfig } from '../../models/activity-paginated-config';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { ProvManagerService } from '../../../shared/services/provManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { PROV } from '../../../prefixes';
+import { getDate, getPropertyValue } from '../../utility';
 
 interface ActivityDisplay {
     jsonld: JSONLDObject,
@@ -60,7 +61,7 @@ export class ActivityListComponent implements OnInit, OnDestroy {
 
     @ViewChild('activityList', { static: true }) activityList: ElementRef;
 
-    constructor(public pm: ProvManagerService, public util: UtilService, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(public pm: ProvManagerService, private toast: ToastService, private spinnerSvc: ProgressSpinnerService) {}
 
     ngOnInit(): void {
         this.setPage();
@@ -89,13 +90,13 @@ export class ActivityListComponent implements OnInit, OnDestroy {
                 this.totalSize = Number(response.headers.get('x-total-count')) || 0;
             }, errorMessage => {
                 if (errorMessage) {
-                    this.util.createErrorToast(errorMessage);
+                    this.toast.createErrorToast(errorMessage);
                 }
             });
     }
     getTimeStamp(activity: JSONLDObject): string {
-        const dateStr = this.util.getPropertyValue(activity, PROV + 'endedAtTime');
-        return this.util.getDate(dateStr, 'short');
+        const dateStr = getPropertyValue(activity, `${PROV}endedAtTime`);
+        return getDate(dateStr, 'short');
     }
     getConfig(): ActivityPaginatedConfig {
         const config: ActivityPaginatedConfig = {pageIndex: 0, limit: this.limit};

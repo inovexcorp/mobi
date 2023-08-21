@@ -22,12 +22,23 @@
  */
 
 import { has, map, get, forEach, omit, find, cloneDeep } from 'lodash';
-
 import { Component, OnChanges, Input, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { UtilService } from '../../services/util.service';
 import { Difference } from '../../models/difference.class';
+import { getBeautifulIRI, isBlankNodeId } from '../../utility';
+import { JSONLDId } from '../../models/JSONLDId.interface';
+import { JSONLDValue } from '../../models/JSONLDValue.interface';
+
+interface JSONLDIdDisplay extends JSONLDId {
+    add?: boolean,
+    del?: boolean
+}
+
+interface JSONLDValueDisplay extends JSONLDValue {
+  add?: boolean,
+  del?: boolean
+}
 
 /**
  * @class shared.CommitCompiledResourceComponent
@@ -52,17 +63,21 @@ export class CommitCompiledResourceComponent implements OnChanges {
     @Input() triples?: JSONLDObject;
     @Input() changes: Difference;
 
-    resource = undefined;
+    isBlankNodeId = isBlankNodeId;
+    resource: {[key: string]: (JSONLDIdDisplay | JSONLDValueDisplay)[] } = undefined;
     types: {type: string, add?: boolean, del?: boolean}[] = [];
 
     @ViewChild('compiledResource', { static: true }) compiledResource: ElementRef;
     
-    constructor(public util: UtilService) {}
+    constructor() {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (has(changes, 'triples') || has(changes, 'changes')) {
             this.setResource();
         }
+    }
+    getDisplay(str: string): string {
+      return this.entityNameFunc ? this.entityNameFunc(str) : getBeautifulIRI(str);
     }
     setResource(): void {
         if (this.triples || this.changes) {
@@ -90,7 +105,7 @@ export class CommitCompiledResourceComponent implements OnChanges {
             const deletions = omit(deletionsObj, ['@id', '@type']);
             forEach(additions, (values, prop) => {
                 forEach(values, value => {
-                    const resourceVal: any = find(this.resource[prop], value);
+                    const resourceVal: JSONLDIdDisplay | JSONLDValueDisplay = find(this.resource[prop], value);
                     if (resourceVal) {
                         resourceVal.add = true;
                     } else {
@@ -106,7 +121,7 @@ export class CommitCompiledResourceComponent implements OnChanges {
             });
             forEach(deletions, (values, prop) => {
                 forEach(values, value => {
-                    const resourceVal: any = find(this.resource[prop], value);
+                    const resourceVal: JSONLDIdDisplay | JSONLDValueDisplay = find(this.resource[prop], value);
                     if (resourceVal) {
                         resourceVal.del = true;
                     } else {

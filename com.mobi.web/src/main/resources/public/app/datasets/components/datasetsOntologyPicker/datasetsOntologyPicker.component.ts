@@ -21,9 +21,9 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, OnChanges } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, OnChanges } from '@angular/core';
 import { MatSelectionListChange } from '@angular/material/list';
-import { find, get, remove, some, sortBy, filter } from 'lodash';
+import { find, get, some, sortBy, filter } from 'lodash';
 import { finalize } from 'rxjs/operators';
 
 import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
@@ -31,8 +31,8 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
 import { OntologyDetails } from '../../models/ontologyDetails.interface';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class datasets.DatasetsOntologyPickerComponent
@@ -65,17 +65,16 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
 
     @ViewChild('datasetOntologies', { static: true }) datasetOntologies: ElementRef;
 
-    constructor(public cm: CatalogManagerService, public util: UtilService, 
-        private spinnerSvc: ProgressSpinnerService) {}
+    constructor(public cm: CatalogManagerService, private spinnerSvc: ProgressSpinnerService) {}
 
     ngOnChanges(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
-        this.ontologySearchConfig.sortOption = find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true});
-        this.ontologySearchConfig.type = ONTOLOGYEDITOR + 'OntologyRecord';
+        this.ontologySearchConfig.sortOption = find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true});
+        this.ontologySearchConfig.type = `${ONTOLOGYEDITOR}OntologyRecord`;
         this.setOntologies();
     }
     getOntologyIRI(record: JSONLDObject): string {
-        return this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI');
+        return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
     }
     setOntologies(): void {
         this.spinnerSvc.startLoadingForComponent(this.datasetOntologies, 30);
@@ -92,7 +91,7 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
         this.ontologies = response.body.map(record => ({
             recordId: record['@id'],
             ontologyIRI: this.getOntologyIRI(record),
-            title: this.util.getDctermsValue(record, 'title'),
+            title: getDctermsValue(record, 'title'),
             selected: some(this.selected, {recordId: record['@id']}),
             jsonld: record
         }));

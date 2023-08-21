@@ -24,7 +24,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { isEmpty } from 'lodash';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDctermsValue, removeDctermsValue, updateDctermsValue } from '../../../shared/utility';
 
 /**
  * @class catalog.RecordMarkdownComponent
@@ -63,24 +63,24 @@ export class RecordMarkdownComponent {
     @Input() canEdit: boolean;
     @Output() updateRecord = new EventEmitter<JSONLDObject>();
 
-    constructor(public util: UtilService) {}
+    constructor() {}
     
     showEdit(): void {
         if (this.canEdit) {
             this.edit = true;
-            this.editMarkdown = this.util.getDctermsValue(this.record, 'abstract');
+            this.editMarkdown = getDctermsValue(this.record, 'abstract');
         }
     }
     saveEdit(): void {
-        const originalValue = this.util.getDctermsValue(this.record, 'abstract');
+        const originalValue = getDctermsValue(this.record, 'abstract');
         if (originalValue === this.editMarkdown) {
             this.edit = false;
             this.editMarkdown = '';
         } else {
             if (!this.editMarkdown) {
-                this.util.removeDctermsValue(this.record, 'abstract', originalValue);
+                removeDctermsValue(this.record, 'abstract', originalValue);
             } else {
-                this.util.updateDctermsValue(this.record, 'abstract', this.editMarkdown);
+                updateDctermsValue(this.record, 'abstract', this.editMarkdown);
             }
             this.updateRecord.emit(this.record);
             this.edit = false;
@@ -96,7 +96,7 @@ export class RecordMarkdownComponent {
     
     private _updateHtml(record: JSONLDObject): void {
         if (record && !isEmpty(record)) {
-            this.text = this.util.getDctermsValue(record, 'abstract');
+            this.text = getDctermsValue(record, 'abstract');
         }
     }
 }

@@ -38,7 +38,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDate, getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 interface SelectedOntology {
     jsonld: JSONLDObject,
@@ -85,8 +85,8 @@ export class MappingConfigOverlayComponent implements OnInit {
     ontologyStates: StateObject[] = [];
     recordsConfig = {
         pageIndex: 0,
-        sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
-        type: ONTOLOGYEDITOR + 'OntologyRecord',
+        sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
+        type: `${ONTOLOGYEDITOR}OntologyRecord`,
         limit: 100,
         searchText: ''
     };
@@ -99,8 +99,8 @@ export class MappingConfigOverlayComponent implements OnInit {
     @ViewChild('ontologyListBox', { static: true }) ontologyListBox: ElementRef;
 
     constructor(private dialog: MatDialogRef<MappingConfigOverlayComponent>, private spinnerSvc: ProgressSpinnerService,
-        public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
-        public util: UtilService, private om: OntologyManagerService) {}
+        public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService, 
+        private om: OntologyManagerService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
@@ -110,9 +110,9 @@ export class MappingConfigOverlayComponent implements OnInit {
                 jsonld: ontologyJsonld,
                 recordId: ontologyJsonld['@id'],
                 ontologyIRI: this.getOntologyIRI(ontologyJsonld),
-                title: this.util.getDctermsValue(ontologyJsonld, 'title'),
-                description: this.util.getDctermsValue(ontologyJsonld, 'description'),
-                modified: this.util.getDate(this.util.getDctermsValue(ontologyJsonld, 'modified'), 'short'),
+                title: getDctermsValue(ontologyJsonld, 'title'),
+                description: getDctermsValue(ontologyJsonld, 'description'),
+                modified: getDate(getDctermsValue(ontologyJsonld, 'modified'), 'short'),
                 selected: true
             };
             const stateObj: StateObject = {
@@ -123,7 +123,7 @@ export class MappingConfigOverlayComponent implements OnInit {
                 stateObj.branchId = branch['@id'];
                 versionObj.ontologies = this.state.sourceOntologies;
                 this._setClasses(versionObj);
-                const latestCommitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                const latestCommitId = getPropertyId(branch, `${CATALOG}head`);
                 const savedCommitId = get(this.state.selected.mapping.getSourceOntologyInfo(), 'commitId');
                 if (savedCommitId === latestCommitId) {
                     stateObj.latest = set(versionObj, 'commitId', latestCommitId);
@@ -138,7 +138,7 @@ export class MappingConfigOverlayComponent implements OnInit {
         this.setOntologies();
     }
     getOntologyIRI(record: JSONLDObject): string {
-        return this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI');
+        return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
     }
     ontologyChange(event: MatSelectionListChange): void {
         this.toggleOntology(event.options[0].value);
@@ -184,7 +184,7 @@ export class MappingConfigOverlayComponent implements OnInit {
                 .pipe(
                     switchMap(branch => {
                         ontologyState.branchId = branch['@id'];
-                        versionObj.commitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                        versionObj.commitId = getPropertyId(branch, `${CATALOG}head`);
                         const ontologyInfo = {
                             recordId: this.selectedOntology.recordId,
                             branchId: ontologyState.branchId,
@@ -218,7 +218,7 @@ export class MappingConfigOverlayComponent implements OnInit {
                     this.cm.getRecordBranch(this.selectedOntologyState.branchId, this.selectedOntologyState.recordId, this.catalogId)
                         .pipe(
                             switchMap(branch => {
-                                versionObj.commitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                                versionObj.commitId = getPropertyId(branch, `${CATALOG}head`);
                                 const ontologyInfo = {
                                     recordId: this.selectedOntologyState.recordId,
                                     branchId: this.selectedOntologyState.branchId,
@@ -280,9 +280,9 @@ export class MappingConfigOverlayComponent implements OnInit {
             });
             this.state.selected.mapping.setSourceOntologyInfo(selectedOntologyInfo);
             const mappingId = this.state.selected.mapping.getMappingEntity()['@id'];
-            this.state.changeProp(mappingId, DELIM + 'sourceRecord', selectedOntologyInfo.recordId, originalOntologyInfo.recordId, true);
-            this.state.changeProp(mappingId, DELIM + 'sourceBranch', selectedOntologyInfo.branchId, originalOntologyInfo.branchId, true);
-            this.state.changeProp(mappingId, DELIM + 'sourceCommit', selectedOntologyInfo.commitId, originalOntologyInfo.commitId, true);
+            this.state.changeProp(mappingId, `${DELIM}sourceRecord`, selectedOntologyInfo.recordId, originalOntologyInfo.recordId, true);
+            this.state.changeProp(mappingId, `${DELIM}sourceBranch`, selectedOntologyInfo.branchId, originalOntologyInfo.branchId, true);
+            this.state.changeProp(mappingId, `${DELIM}sourceCommit`, selectedOntologyInfo.commitId, originalOntologyInfo.commitId, true);
             this.state.selected.ontology = this.selectedOntology.jsonld;
             this.state.resetEdit();
             const classMappings = this.state.selected.mapping.getAllClassMappings();
@@ -298,9 +298,9 @@ export class MappingConfigOverlayComponent implements OnInit {
         this.ontologies = map(response.body, record => ({
             recordId: record['@id'],
             ontologyIRI: this.getOntologyIRI(record),
-            title: this.util.getDctermsValue(record, 'title'),
-            description: this.util.getDctermsValue(record, 'description'),
-            modified: this.util.getDate(this.util.getDctermsValue(record, 'modified'), 'short'),
+            title: getDctermsValue(record, 'title'),
+            description: getDctermsValue(record, 'description'),
+            modified: getDate(getDctermsValue(record, 'modified'), 'short'),
             selected: false,
             jsonld: record
         }));

@@ -23,7 +23,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class catalog.RecordCardComponent
@@ -49,14 +49,14 @@ export class RecordCardComponent implements OnInit {
     descriptionLimit = 200;
     title = '';
     description = '';
-    modified = '';
+    modified: Date;
 
-    constructor(public util: UtilService) {}
+    constructor() {}
 
     ngOnInit(): void {
-        this.title = this.util.getDctermsValue(this.record, 'title');
-        this.description = this.util.getDctermsValue(this.record, 'description') || '(No description)';
-        this.modified = this.util.getDate(this.util.getDctermsValue(this.record, 'modified'), 'short');
+        this.title = getDctermsValue(this.record, 'title');
+        this.description = getDctermsValue(this.record, 'description') || '(No description)';
+        this.modified = new Date(getDctermsValue(this.record, 'modified'));
     }
     handleClick(): void {
         this.clickCard.emit(this.record);

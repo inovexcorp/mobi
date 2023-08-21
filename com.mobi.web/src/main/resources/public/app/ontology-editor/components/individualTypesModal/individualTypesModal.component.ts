@@ -43,7 +43,7 @@ export class IndividualTypesModalComponent implements OnInit {
     entityName = '';
     types = [];
     error = '';
-    namedIndividualIri = OWL + 'NamedIndividual';
+    namedIndividualIri = `${OWL}NamedIndividual`;
 
     constructor(private matDialogRef: MatDialogRef<IndividualTypesModalComponent>, public om: OntologyManagerService,
         public os: OntologyStateService) {}
@@ -94,7 +94,7 @@ export class IndividualTypesModalComponent implements OnInit {
 
             // Handle removed types
             removedTypes.forEach((type: string ) => {
-                const parentAndIndivs = get(this.os.listItem.classesAndIndividuals, '[\'' + type + '\']', []);
+                const parentAndIndivs = get(this.os.listItem.classesAndIndividuals, `['${type}']`, []);
                 if (parentAndIndivs.length) {
                     remove(parentAndIndivs, item => item === this.os.listItem.selected['@id']);
                     if (!parentAndIndivs.length) {

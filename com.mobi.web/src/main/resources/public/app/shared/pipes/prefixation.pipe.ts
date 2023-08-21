@@ -37,7 +37,7 @@ export class PrefixationPipe implements PipeTransform {
         if (typeof result === 'string') {
             forOwn(merge({}, prefixes, extraPrefixes), (namespace, prefix) => {
                 if (includes(result, namespace)) {
-                    result = replace(result, namespace, prefix.toLowerCase() + ':');
+                    result = replace(result, namespace, `${prefix.toLowerCase()}:`);
                     return;
                 }
             });

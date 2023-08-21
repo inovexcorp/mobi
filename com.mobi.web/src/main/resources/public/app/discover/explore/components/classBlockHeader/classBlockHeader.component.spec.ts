@@ -36,7 +36,7 @@ import { NewInstanceClassOverlayComponent } from '../newInstanceClassOverlay/new
 import { ExploreService } from '../../../services/explore.service';
 import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ClassBlockHeaderComponent } from './classBlockHeader.component';
 import { ProgressSpinnerService } from '../../../../shared/components/progress-spinner/services/progressSpinner.service';
 
@@ -49,7 +49,7 @@ describe('Class Block Header component', function() {
     let exploreUtilsServiceStub: jasmine.SpyObj<ExploreUtilsService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -62,7 +62,7 @@ describe('Class Block Header component', function() {
                 MockProvider(ExploreService),
                 MockProvider(DiscoverStateService),
                 MockProvider(ExploreUtilsService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
                 MockProvider(ProgressSpinnerService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
@@ -77,7 +77,7 @@ describe('Class Block Header component', function() {
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         exploreServiceStub = TestBed.inject(ExploreService) as jasmine.SpyObj<ExploreService>;
         exploreUtilsServiceStub = TestBed.inject(ExploreUtilsService) as jasmine.SpyObj<ExploreUtilsService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         policyEnforcementStub.permit = 'Permit';
@@ -120,7 +120,7 @@ describe('Class Block Header component', function() {
         discoverStateStub = null;
         exploreServiceStub = null;
         exploreUtilsServiceStub = null;
-        utilStub = null;
+        toastStub = null;
         matDialog = null;
     });
 
@@ -171,7 +171,7 @@ describe('Class Block Header component', function() {
                 component.showCreate();
                 fixture.detectChanges();
                 tick();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialog.open).not.toHaveBeenCalled();
             }));
             it('no modify permission', fakeAsync(function() {
@@ -180,7 +180,7 @@ describe('Class Block Header component', function() {
                 component.showCreate();
                 fixture.detectChanges();
                 tick();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to modify dataset');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to modify dataset');
                 expect(matDialog.open).not.toHaveBeenCalled();
             }));
         });
@@ -241,7 +241,7 @@ describe('Class Block Header component', function() {
                 tick();
                 expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateStub.explore.classDetails).toEqual([]);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(false);
             }));
             it('rejects and user does not have permission to read', fakeAsync(function() {
@@ -251,7 +251,7 @@ describe('Class Block Header component', function() {
                 fixture.detectChanges();
                 tick();
                 expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
                 expect(discoverStateStub.explore.hasPermissionError).toEqual(true);
                 expect(discoverStateStub.explore.recordId).toEqual('');
                 expect(discoverStateStub.explore.breadcrumbs).toEqual(['Classes']);

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { pullAt, map, trim, uniq, set, find } from 'lodash';
+import { pullAt, map, trim, uniq, set } from 'lodash';
 import { MatDialogRef } from '@angular/material/dialog';
-import { finalize, shareReplay, startWith } from 'rxjs/operators';
+import { finalize, shareReplay } from 'rxjs/operators';
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';

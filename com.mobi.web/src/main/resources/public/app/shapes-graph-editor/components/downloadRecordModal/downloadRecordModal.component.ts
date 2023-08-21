@@ -43,10 +43,11 @@ export class DownloadRecordModalComponent implements OnInit {
     });
     rdfFormats: string[] = ['turtle', 'rdf/xml', 'jsonld'];
 
-    constructor(private dialogRef: MatDialogRef<DownloadRecordModalComponent>, @Inject(MAT_DIALOG_DATA) public data: any,
+    constructor(private dialogRef: MatDialogRef<DownloadRecordModalComponent>, 
+        @Inject(MAT_DIALOG_DATA) public data: {recordId: string, branchId: string, commitId: string, title: string},
                 private fb: UntypedFormBuilder, private sm: ShapesGraphManagerService) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.downloadRecordForm.controls.fileName.setValue(this.data.title);
     }
     download(): void {

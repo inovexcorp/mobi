@@ -37,7 +37,7 @@ import { RequestBranchSelectComponent } from '../requestBranchSelect/requestBran
 import { RequestDetailsFormComponent } from '../requestDetailsForm/requestDetailsForm.component';
 import { RequestRecordSelectComponent } from '../requestRecordSelect/requestRecordSelect.component';
 import { Commit } from '../../../shared/models/commit.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CreateRequestComponent } from './createRequest.component';
 
 describe('Create Request component', function() {
@@ -46,7 +46,7 @@ describe('Create Request component', function() {
     let fixture: ComponentFixture<CreateRequestComponent>;
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let commit: Commit;
 
     const id = 'entityId';
@@ -66,7 +66,7 @@ describe('Create Request component', function() {
             providers: [
                 MockProvider(MergeRequestManagerService),
                 MockProvider(MergeRequestsStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         });
     });
@@ -77,7 +77,7 @@ describe('Create Request component', function() {
         element = fixture.debugElement;
         mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         mergeRequestsStateStub.requestConfig = {
             title: '',
@@ -109,7 +109,7 @@ describe('Create Request component', function() {
         fixture = null;
         mergeRequestManagerStub = null;
         mergeRequestsStateStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('should initialize properly', function() {
@@ -132,18 +132,18 @@ describe('Create Request component', function() {
                 component.submit();
                 tick();
                 expect(mergeRequestManagerStub.createRequest).toHaveBeenCalledWith(mergeRequestsStateStub.requestConfig);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(mergeRequestsStateStub.createRequest).toBeFalse();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
                 mergeRequestManagerStub.createRequest.and.returnValue(throwError('error'));
                 component.submit();
                 tick();
                 expect(mergeRequestManagerStub.createRequest).toHaveBeenCalledWith(mergeRequestsStateStub.requestConfig);
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(mergeRequestsStateStub.createRequest).toBeTrue();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
         });
         it('should reset the request branch select', function() {

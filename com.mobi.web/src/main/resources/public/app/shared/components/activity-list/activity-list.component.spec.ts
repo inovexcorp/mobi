@@ -32,7 +32,7 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { ActivityTitleComponent } from '../../../shared/components/activityTitle/activityTitle.component';
 import { ProvManagerService } from '../../../shared/services/provManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { PROV } from '../../../prefixes';
 import { ActivityListComponent } from './activity-list.component';
@@ -42,7 +42,7 @@ describe('ActivityListComponent', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ActivityListComponent>;
     let provManagerStub: jasmine.SpyObj<ProvManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
     const recordIri = 'urn:record';
@@ -64,7 +64,7 @@ describe('ActivityListComponent', function() {
         ],
         providers: [
             MockProvider(ProvManagerService),
-            MockProvider(UtilService),
+            MockProvider(ToastService),
             MockProvider(ProgressSpinnerService)
         ],
         });
@@ -78,7 +78,7 @@ describe('ActivityListComponent', function() {
         component.userIri = userIri;
 
         provManagerStub = TestBed.inject(ProvManagerService) as jasmine.SpyObj<ProvManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         provManagerStub.getActivities.and.returnValue(of(response));
     });
@@ -89,7 +89,7 @@ describe('ActivityListComponent', function() {
         element = null;
         fixture = null;
         provManagerStub = null;
-        utilStub = null;
+        toastStub = null;
         progressSpinnerStub = null;
     });
 
@@ -105,7 +105,7 @@ describe('ActivityListComponent', function() {
             expect(component.entities).toEqual([]);
             expect(component.totalSize).toEqual(0);
             expect(component.limit).toEqual(10);
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
         }));
         it('successfully', fakeAsync(function() {
             spyOn(component, 'getTimeStamp').and.returnValue('Today');
@@ -116,7 +116,7 @@ describe('ActivityListComponent', function() {
             expect(component.entities).toEqual(response.body.entities);
             expect(component.totalSize).toEqual(totalSize);
             expect(component.limit).toEqual(10);
-            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
         }));
     });
     describe('controller methods', function() {
@@ -145,11 +145,7 @@ describe('ActivityListComponent', function() {
             expect(component.setPage).toHaveBeenCalledWith();
         });
         it('should get the time stamp of an Activity', function() {
-            utilStub.getPropertyValue.and.returnValue('2017-01-01T00:00:00');
-            utilStub.getDate.and.returnValue('date');
-            expect(component.getTimeStamp({'@id': ''})).toEqual('date');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith({'@id': ''}, PROV + 'endedAtTime');
-            expect(utilStub.getDate).toHaveBeenCalledWith('2017-01-01T00:00:00', 'short');
+            expect(component.getTimeStamp({ '@id': '', [`${PROV}endedAtTime`]: [{ '@value': '2017-01-01T00:00:00' }] })).toEqual('1/1/17, 12:00 AM');
         });
     });
     describe('contains the correct html', function() {

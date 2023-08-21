@@ -50,7 +50,7 @@ export class PropertyManagerService {
      * `owlAnnotations` holds an array of OWL annotations.
      * @type {string[]}
      */
-    owlAnnotations = [OWL + 'deprecated', OWL + 'versionInfo'];
+    owlAnnotations = [`${OWL}deprecated`, `${OWL}versionInfo`];
     /**
      * `skosAnnotations` holds an array of SKOS annotations.
      * @type {string[]}
@@ -87,16 +87,16 @@ export class PropertyManagerService {
      * entities.
      * @type {string[]}
      */
-    schemeRelationshipList = [SKOS + 'hasTopConcept'];
+    schemeRelationshipList = [`${SKOS}hasTopConcept`];
     /**
      * `classAxiomList` holds an array of objects representing supported axioms on owl:Classes with the
      * key name for the list of values from a {@link shared.OntologyStateService#listItem}.
      * @type {{iri: string, valuesKey: string}[]}
      */
     classAxiomList: {iri: string, valuesKey: string}[] = [
-        {iri: RDFS + 'subClassOf', valuesKey: 'classes'},
-        {iri: OWL + 'disjointWith', valuesKey: 'classes'},
-        {iri: OWL + 'equivalentClass', valuesKey: 'classes'}
+        {iri: `${RDFS}subClassOf`, valuesKey: 'classes'},
+        {iri: `${OWL}disjointWith`, valuesKey: 'classes'},
+        {iri: `${OWL}equivalentClass`, valuesKey: 'classes'}
     ];
     /**
      * `datatypeAxiomList` holds an array of objects representing supported axioms on owl:DatatypeProperties
@@ -104,11 +104,11 @@ export class PropertyManagerService {
      * @type {{iri: string, valuesKey: string}[]}
      */
     datatypeAxiomList: {iri: string, valuesKey: string}[] = [
-        {iri: RDFS + 'domain', valuesKey: 'classes'},
-        {iri: RDFS + 'range', valuesKey: 'dataPropertyRange'},
-        {iri: OWL + 'equivalentProperty', valuesKey: 'dataProperties'},
-        {iri: RDFS + 'subPropertyOf', valuesKey: 'dataProperties'},
-        {iri: OWL + 'disjointWith', valuesKey: 'dataProperties'}
+        {iri: `${RDFS}domain`, valuesKey: 'classes'},
+        {iri: `${RDFS}range`, valuesKey: 'dataPropertyRange'},
+        {iri: `${OWL}equivalentProperty`, valuesKey: 'dataProperties'},
+        {iri: `${RDFS}subPropertyOf`, valuesKey: 'dataProperties'},
+        {iri: `${OWL}disjointWith`, valuesKey: 'dataProperties'}
     ];
     /**
      * `objectAxiomList` holds an array of objects representing supported axioms on owl:ObjectProperties
@@ -116,12 +116,12 @@ export class PropertyManagerService {
      * @type {{iri: string, valuesKey: string}[]}
      */
     objectAxiomList: {iri: string, valuesKey: string}[] = [
-        {iri: RDFS + 'domain', valuesKey: 'classes'},
-        {iri: RDFS + 'range', valuesKey: 'classes'},
-        {iri: OWL + 'equivalentProperty', valuesKey: 'objectProperties'},
-        {iri: RDFS + 'subPropertyOf', valuesKey: 'objectProperties'},
-        {iri: OWL + 'inverseOf', valuesKey: 'objectProperties'},
-        {iri: OWL + 'disjointWith', valuesKey: 'objectProperties'}
+        {iri: `${RDFS}domain`, valuesKey: 'classes'},
+        {iri: `${RDFS}range`, valuesKey: 'classes'},
+        {iri: `${OWL}equivalentProperty`, valuesKey: 'objectProperties'},
+        {iri: `${RDFS}subPropertyOf`, valuesKey: 'objectProperties'},
+        {iri: `${OWL}inverseOf`, valuesKey: 'objectProperties'},
+        {iri: `${OWL}disjointWith`, valuesKey: 'objectProperties'}
     ];
     /**
      * `languageList` holds an array of objects representing supported language tags and their english representations

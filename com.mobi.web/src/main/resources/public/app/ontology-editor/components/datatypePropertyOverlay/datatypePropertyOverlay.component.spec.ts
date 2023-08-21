@@ -42,7 +42,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { DatatypePropertyBlockComponent } from '../datatypePropertyBlock/datatypePropertyBlock.component';
 import { RDF, XSD } from '../../../prefixes';
 import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
@@ -55,14 +55,14 @@ describe('Datatype Property Overlay component', function() {
     let fixture:ComponentFixture<DatatypePropertyOverlayComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<DatatypePropertyBlockComponent>>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
 
     const data = {
         editingProperty: false,
         propertySelect: 'id',
         propertyValue: 'sd',
-        propertyType: XSD + 'string',
+        propertyType: `${XSD}string`,
         propertyIndex: 0,
         propertyLanguage: 'en'
     };
@@ -89,7 +89,7 @@ describe('Datatype Property Overlay component', function() {
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PropertyManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -102,7 +102,7 @@ describe('Datatype Property Overlay component', function() {
         component = fixture.componentInstance;
         nativeElement = element.nativeElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<DatatypePropertyBlockComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyStateStub.listItem = new OntologyListItem();
@@ -117,7 +117,7 @@ describe('Datatype Property Overlay component', function() {
         fixture = null;
         propertyManagerStub = null;
         matDialogRef = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     // TODO: Initialize test
@@ -201,16 +201,14 @@ describe('Datatype Property Overlay component', function() {
                 propertyManagerStub.addValue.and.returnValue(true);
                 this.langStringSpy = spyOn(component, 'isLangString').and.returnValue(true);
                 ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
-                utilStub.createJson.and.returnValue({'@id': ''});
                 propertyManagerStub.createValueObj.and.returnValue({'@value': ''});
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerStub.addValue.and.returnValue(false);
                 component.addProperty();
                 expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop', 'value', '', 'en');
-                expect(utilStub.createJson).not.toHaveBeenCalled();
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
@@ -218,18 +216,24 @@ describe('Datatype Property Overlay component', function() {
                 component.propertyForm.controls.language.setValue('');
                 component.propertyType = [''];
                 component.addProperty();
-                expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop', 'value', XSD + 'string', '');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop', jasmine.any(Object));
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop', 'value', `${XSD}string`, '');
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop': [{'@value': ''}]
+                });
+                // expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
             });
             it('with a language and isLangString is true', function() {
                 component.addProperty();
                 expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop', 'value', '', 'en');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop', jasmine.any(Object));
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop': [{'@value': ''}]
+                });
+                // expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
@@ -237,9 +241,12 @@ describe('Datatype Property Overlay component', function() {
                 this.langStringSpy.and.returnValue(false);
                 component.addProperty();
                 expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop', 'value', 'type', '');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop', jasmine.any(Object));
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop': [{'@value': ''}]
+                });
+                // expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
@@ -247,10 +254,13 @@ describe('Datatype Property Overlay component', function() {
                 component.propertyForm.controls.language.setValue('');
                 component.addProperty();
                 expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop', 'value', 'type', '');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop', jasmine.any(Object));
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop': [{'@value': ''}]
+                });
+                // expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
         });
@@ -266,82 +276,99 @@ describe('Datatype Property Overlay component', function() {
                 component.propertyForm.controls.propertyValue.setValue('sd');
                 component.propertyForm.controls.language.setValue('en');
                 component.propertyType = ['type'];
-                ontologyStateStub.listItem.selected['prop2'] = [{}];
                 propertyManagerStub.editValue.and.returnValue(true);
                 this.isLangStringSpy = spyOn(component, 'isLangString').and.returnValue(true);
                 propertyManagerStub.createValueObj.and.returnValue({'@value': 'newValue'});
                 ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
-                utilStub.createJson.and.returnValue({'@id': ''});
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerStub.editValue.and.returnValue(false);
                 component.editProperty();
                 expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop2', data.propertyIndex, 'sd', '', 'en');
-                expect(utilStub.createJson).not.toHaveBeenCalled();
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.addToDeletions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             it('if the type is provided and no language', function() {
                 component.propertyForm.controls.language.setValue('');
                 component.editProperty();
                 expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop2', component.data.propertyIndex, 'sd', 'type', '');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', jasmine.any(Object));
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', {'@value': 'newValue'});
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'newValue'}]
+                });
+                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'value2', '@type': '', '@language': 'language'}]
+                });
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             it('if the type is not provided and no language', function() {
                 component.propertyForm.controls.language.setValue('');
                 component.propertyType = [''];
                 component.editProperty();
-                expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop2', component.data.propertyIndex, 'sd', XSD + 'string', '');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', jasmine.any(Object));
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', {'@value': 'newValue'});
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop2', component.data.propertyIndex, 'sd', `${XSD}string`, '');
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'newValue'}]
+                });
+                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'value2', '@type': '', '@language': 'language'}]
+                });
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             it('if the language is provided and isLangString is true', function() {
                 component.editProperty();
                 expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop2', component.data.propertyIndex, 'sd', '', 'en');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', jasmine.any(Object));
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', {'@value': 'newValue'});
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'newValue'}]
+                });
+                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'value2', '@type': '', '@language': 'language'}]
+                });
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             it('if the language is provided and isLangString is false', function() {
                 this.isLangStringSpy.and.returnValue(false);
                 component.editProperty();
                 expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop2', data.propertyIndex, 'sd', 'type', '');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', jasmine.any(Object));
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', {'@value': 'newValue'});
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'newValue'}]
+                });
+                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'value2', '@type': '', '@language': 'language'}]
+                });
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
             it('if the language is not provided', function() {
                 component.propertyForm.controls.language.setValue('');
                 component.editProperty();
                 expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, 'prop2', data.propertyIndex, 'sd', 'type', '');
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', jasmine.any(Object));
-                expect(utilStub.createJson).toHaveBeenCalledWith(ontologyStateStub.listItem.selected['@id'], 'prop2', {'@value': 'newValue'});
-                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
+                expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'newValue'}]
+                });
+                expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
+                  '@id': ontologyStateStub.listItem.selected['@id'],
+                  'prop2': [{'@value': 'value2', '@type': '', '@language': 'language'}]
+                });
                 expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             });
         });
@@ -355,7 +382,7 @@ describe('Datatype Property Overlay component', function() {
                 expect(component.isLangString()).toEqual(false);
             });
             it('when it is a string type', function() {
-                component.propertyType = [RDF + 'langString'];
+                component.propertyType = [`${RDF}langString`];
                 expect(component.isLangString()).toEqual(true);
             });
         });

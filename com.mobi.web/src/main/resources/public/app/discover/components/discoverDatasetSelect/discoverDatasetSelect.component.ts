@@ -50,7 +50,7 @@ export class DiscoverDatasetSelectComponent {
         this.recordId = '';
         this.recordIdChange.emit({});
     }
-    onChange(recordObject): void {
+    onChange(recordObject: {recordId: string, recordTitle: string}): void {
         this.recordId = recordObject.recordId;
         this.recordIdChange.emit({'recordId': this.recordId, 'recordTitle': recordObject.recordTitle});
     }

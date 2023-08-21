@@ -21,9 +21,9 @@
  * #L%
  */
 import { Component } from '@angular/core';
+
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
-import { OptionalJSONLD } from '../../../shared/models/OptionalJSONLD.class';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
  * @class shapes-graph-editor.ShapesGraphEditorPageComponent
@@ -37,9 +37,9 @@ import { OptionalJSONLD } from '../../../shared/models/OptionalJSONLD.class';
 })
 export class ShapesGraphEditorPageComponent {
 
-    constructor(public state: ShapesGraphStateService, public sm: ShapesGraphManagerService) {}
+    constructor(public state: ShapesGraphStateService) {}
 
-    keys(object: OptionalJSONLD): Array<string> {
+    keys(object: JSONLDObject): Array<string> {
         return Object.keys(object);
     }
 }

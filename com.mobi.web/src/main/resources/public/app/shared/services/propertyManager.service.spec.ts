@@ -43,111 +43,111 @@ describe('Property Manager service', function() {
     describe('should initialize with the correct value for', function() {
         it('defaultAnnotations', function() {
             [
-                RDFS + 'comment',
-                RDFS + 'label',
-                RDFS + 'seeAlso',
-                RDFS + 'isDefinedBy',
-                DCTERMS + 'description',
-                DCTERMS + 'title',
-                DCTERMS + 'contributor',
-                DC + 'description',
-                DC + 'title',
-                DC + 'contributor',
+                `${RDFS}comment`,
+                `${RDFS}label`,
+                `${RDFS}seeAlso`,
+                `${RDFS}isDefinedBy`,
+                `${DCTERMS}description`,
+                `${DCTERMS}title`,
+                `${DCTERMS}contributor`,
+                `${DC}description`,
+                `${DC}title`,
+                `${DC}contributor`,
             ].forEach(str => {
                 expect(service.defaultAnnotations).toContain(str);
             });
         });
         it('owlAnnotations', function() {
-            expect(service.owlAnnotations).toEqual([OWL + 'deprecated', OWL + 'versionInfo']);
+            expect(service.owlAnnotations).toEqual([`${OWL}deprecated`, `${OWL}versionInfo`]);
         });
         it('skosAnnotations', function() {
             expect(service.skosAnnotations).toEqual([
-                SKOS + 'altLabel',
-                SKOS + 'changeNote',
-                SKOS + 'definition',
-                SKOS + 'editorialNote',
-                SKOS + 'example',
-                SKOS + 'hiddenLabel',
-                SKOS + 'historyNote',
-                SKOS + 'note',
-                SKOS + 'prefLabel',
-                SKOS + 'scopeNote'
+                `${SKOS}altLabel`,
+                `${SKOS}changeNote`,
+                `${SKOS}definition`,
+                `${SKOS}editorialNote`,
+                `${SKOS}example`,
+                `${SKOS}hiddenLabel`,
+                `${SKOS}historyNote`,
+                `${SKOS}note`,
+                `${SKOS}prefLabel`,
+                `${SKOS}scopeNote`
             ]);
         });
         it('defaultDatatypes', function() {
             expect(service.defaultDatatypes).toEqual([
-                XSD + 'anyURI',
-                XSD + 'boolean',
-                XSD + 'byte',
-                XSD + 'date',
-                XSD + 'dateTime',
-                XSD + 'decimal',
-                XSD + 'double',
-                XSD + 'float',
-                XSD + 'int',
-                XSD + 'integer',
-                XSD + 'language',
-                XSD + 'long',
-                XSD + 'string',
-                RDF + 'langString'
+                `${XSD}anyURI`,
+                `${XSD}boolean`,
+                `${XSD}byte`,
+                `${XSD}date`,
+                `${XSD}dateTime`,
+                `${XSD}decimal`,
+                `${XSD}double`,
+                `${XSD}float`,
+                `${XSD}int`,
+                `${XSD}integer`,
+                `${XSD}language`,
+                `${XSD}long`,
+                `${XSD}string`,
+                `${RDF}langString`
             ]);
         });
         it('ontologyProperties', function() {
             expect(service.ontologyProperties).toEqual([
-                OWL + 'priorVersion',
-                OWL + 'backwardCompatibleWith',
-                OWL + 'incompatibleWith',
-                OWL + 'versionIRI'
+                `${OWL}priorVersion`,
+                `${OWL}backwardCompatibleWith`,
+                `${OWL}incompatibleWith`,
+                `${OWL}versionIRI`
             ]);
         });
         it('conceptSchemeRelationshipList', function() {
             expect(service.conceptSchemeRelationshipList).toEqual([
-                SKOS + 'topConceptOf',
-                SKOS + 'inScheme'
+                `${SKOS}topConceptOf`,
+                `${SKOS}inScheme`
             ]);
         });
         it('conceptRelationshipList', function() {
             expect(service.conceptRelationshipList).toEqual([
-                SKOS + 'broaderTransitive',
-                SKOS + 'broader',
-                SKOS + 'broadMatch',
-                SKOS + 'narrowerTransitive',
-                SKOS + 'narrower',
-                SKOS + 'narrowMatch',
-                SKOS + 'related',
-                SKOS + 'relatedMatch',
-                SKOS + 'mappingRelation',
-                SKOS + 'closeMatch',
-                SKOS + 'exactMatch'
+                `${SKOS}broaderTransitive`,
+                `${SKOS}broader`,
+                `${SKOS}broadMatch`,
+                `${SKOS}narrowerTransitive`,
+                `${SKOS}narrower`,
+                `${SKOS}narrowMatch`,
+                `${SKOS}related`,
+                `${SKOS}relatedMatch`,
+                `${SKOS}mappingRelation`,
+                `${SKOS}closeMatch`,
+                `${SKOS}exactMatch`
             ]);
         });
         it('schemeRelationshipList', function() {
-            expect(service.schemeRelationshipList).toEqual([SKOS + 'hasTopConcept']);
+            expect(service.schemeRelationshipList).toEqual([`${SKOS}hasTopConcept`]);
         });
         it('classAxiomList', function() {
             expect(service.classAxiomList).toEqual([
-                {iri: RDFS + 'subClassOf', valuesKey: 'classes'},
-                {iri: OWL + 'disjointWith', valuesKey: 'classes'},
-                {iri: OWL + 'equivalentClass', valuesKey: 'classes'}
+                {iri: `${RDFS}subClassOf`, valuesKey: 'classes'},
+                {iri: `${OWL}disjointWith`, valuesKey: 'classes'},
+                {iri: `${OWL}equivalentClass`, valuesKey: 'classes'}
             ]);
         });
         it('datatypeAxiomList', function() {
             expect(service.datatypeAxiomList).toEqual([
-                {iri: RDFS + 'domain', valuesKey: 'classes'},
-                {iri: RDFS + 'range', valuesKey: 'dataPropertyRange'},
-                {iri: OWL + 'equivalentProperty', valuesKey: 'dataProperties'},
-                {iri: RDFS + 'subPropertyOf', valuesKey: 'dataProperties'},
-                {iri: OWL + 'disjointWith', valuesKey: 'dataProperties'}
+                {iri: `${RDFS}domain`, valuesKey: 'classes'},
+                {iri: `${RDFS}range`, valuesKey: 'dataPropertyRange'},
+                {iri: `${OWL}equivalentProperty`, valuesKey: 'dataProperties'},
+                {iri: `${RDFS}subPropertyOf`, valuesKey: 'dataProperties'},
+                {iri: `${OWL}disjointWith`, valuesKey: 'dataProperties'}
             ]);
         });
         it('objectAxiomList', function() {
             expect(service.objectAxiomList).toEqual([
-                {iri: RDFS + 'domain', valuesKey: 'classes'},
-                {iri: RDFS + 'range', valuesKey: 'classes'},
-                {iri: OWL + 'equivalentProperty', valuesKey: 'objectProperties'},
-                {iri: RDFS + 'subPropertyOf', valuesKey: 'objectProperties'},
-                {iri: OWL + 'inverseOf', valuesKey: 'objectProperties'},
-                {iri: OWL + 'disjointWith', valuesKey: 'objectProperties'}
+                {iri: `${RDFS}domain`, valuesKey: 'classes'},
+                {iri: `${RDFS}range`, valuesKey: 'classes'},
+                {iri: `${OWL}equivalentProperty`, valuesKey: 'objectProperties'},
+                {iri: `${RDFS}subPropertyOf`, valuesKey: 'objectProperties'},
+                {iri: `${OWL}inverseOf`, valuesKey: 'objectProperties'},
+                {iri: `${OWL}disjointWith`, valuesKey: 'objectProperties'}
             ]);
         });
     });

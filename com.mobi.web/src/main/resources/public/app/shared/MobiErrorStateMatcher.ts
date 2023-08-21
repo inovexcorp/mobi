@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { UntypedFormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { Injectable } from '@angular/core';
 
@@ -30,7 +30,7 @@ import { Injectable } from '@angular/core';
  */
 @Injectable()
 export class MobiErrorStateMatcher implements ErrorStateMatcher {
-    isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    isErrorState(control: UntypedFormControl | null): boolean {
         return !!(control && control.invalid && control.touched);
     }
 }

@@ -32,7 +32,7 @@
         <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
         <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="selectedBranch($event)" [displayWith]="getDisplayText.bind(this)">
             <mat-option *ngFor="let branch of filteredBranches | async" [value]="branch">
-                {{ util.getDctermsValue(branch, 'title') }}
+                {{ branch.title }}
             </mat-option>
         </mat-autocomplete>
     </mat-form-field>

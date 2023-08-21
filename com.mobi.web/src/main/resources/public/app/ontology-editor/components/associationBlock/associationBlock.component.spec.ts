@@ -81,6 +81,12 @@ describe('Association Block component', function() {
         ontologyStateServiceStub = null;
     });
 
+    describe('controller methods', function() {
+        it('should update the search value', function() {
+            component.updateSearch('test');
+            expect(ontologyStateServiceStub.listItem.editorTabStates.overview.searchText).toEqual('test');
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.association-block')).length).toEqual(1);

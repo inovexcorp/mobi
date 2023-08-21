@@ -33,7 +33,7 @@ import { MergeBlockComponent } from '../mergeBlock/mergeBlock.component';
 import { ResolveConflictsBlock } from '../../../shared/components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { Difference } from '../../../shared/models/difference.class';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { MergeTabComponent } from './mergeTab.component';
 
 describe('Merge Tab component', function() {
@@ -41,7 +41,7 @@ describe('Merge Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<MergeTabComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -53,7 +53,7 @@ describe('Merge Tab component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(UtilService)
+                MockProvider(ToastService)
             ],
         });
     });
@@ -64,7 +64,7 @@ describe('Merge Tab component', function() {
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         ontologyStateStub.listItem = new OntologyListItem();
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         fixture.detectChanges();
     });
 
@@ -74,7 +74,7 @@ describe('Merge Tab component', function() {
         element = null;
         fixture = null;
         ontologyStateStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('controller methods', function() {
@@ -85,7 +85,7 @@ describe('Merge Tab component', function() {
                 tick();
                 expect(ontologyStateStub.merge).toHaveBeenCalledWith();
                 expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith();
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(ontologyStateStub.cancelMerge).toHaveBeenCalledWith();
                 expect(component.error).toEqual('');
             }));
@@ -95,7 +95,7 @@ describe('Merge Tab component', function() {
                 tick();
                 expect(ontologyStateStub.merge).toHaveBeenCalledWith();
                 expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(ontologyStateStub.cancelMerge).not.toHaveBeenCalled();
                 expect(component.error).toEqual('Error Message');
             }));

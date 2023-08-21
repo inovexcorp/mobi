@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { filter, has, findIndex, some, get, every, cloneDeep } from 'lodash';
+import { has, findIndex, some, get, every, cloneDeep } from 'lodash';
 import {
     Component,
     EventEmitter,
@@ -36,7 +36,8 @@ import {
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { INDENT } from '../../../constants';
 import { HierarchyNode } from '../../../shared/models/hierarchyNode.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { getBeautifulIRI } from '../../../shared/utility';
+import { HierarchyFilter } from '../hierarchyFilter/hierarchyFilter.component';
 
 /**
  * @class ontology-editor.EverythingTreeComponent
@@ -66,13 +67,13 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
     midFilteredHierarchy = [];
     activeTab = '';
     dropdownFilterActive = false;
-    dropdownFilters = [];
-    activeEntityFilter;
-    deprecatedEntityFilter;
+    dropdownFilters: HierarchyFilter[] = [];
+    activeEntityFilter: HierarchyFilter;
+    deprecatedEntityFilter: HierarchyFilter;
     chunks = [];
     visibleIndex = 0;
 
-    constructor(public os: OntologyStateService, private util: UtilService) {}
+    constructor(public os: OntologyStateService) {}
 
     ngOnInit(): void {
         this.activeEntityFilter = {
@@ -134,7 +135,7 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
             node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened);
         }
         node.isOpened ? this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = true : delete this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
-        this.filteredHierarchy = filter(this.preFilteredHierarchy, this.isShown.bind(this));
+        this.filteredHierarchy = this.preFilteredHierarchy.filter(node => this.isShown(node));
         this.virtualScroll?.scrollToIndex(this.visibleIndex);
     }
     matchesSearchFilter(node: HierarchyNode): boolean {
@@ -151,7 +152,7 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
         }
 
         // Check if beautified entity id matches search text
-        if (this.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(this.filterText.toLowerCase())) {
+        if (getBeautifulIRI(node.entityIRI).toLowerCase().includes(this.filterText.toLowerCase())) {
             searchMatch = true;
         }
 
@@ -230,7 +231,7 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
     updateSearchText(value: string): void {
         this.searchText = value;
     }
-    updateDropdownFilters(value): void {
+    updateDropdownFilters(value: HierarchyFilter[]): void {
         this.dropdownFilters = value;
     }
 
@@ -239,9 +240,9 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
             this.os.listItem.editorTabStates[this.activeTab].open = {};
         }
         this.updateSearch.emit(this.filterText);
-        this.preFilteredHierarchy = this.hierarchy.filter(this.searchFilter.bind(this));
-        this.midFilteredHierarchy = this.preFilteredHierarchy.filter(this.openEntities.bind(this));
-        this.filteredHierarchy = this.midFilteredHierarchy.filter(this.isShown.bind(this));
+        this.preFilteredHierarchy = this.hierarchy.filter(node => this.searchFilter(node));
+        this.midFilteredHierarchy = this.preFilteredHierarchy.filter(node => this.openEntities(node));
+        this.filteredHierarchy = this.midFilteredHierarchy.filter(node => this.isShown(node));
         this.virtualScroll?.scrollToIndex(0);
     }
     private removeFilters() {

@@ -42,7 +42,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { RecordCardComponent } from '../recordCard/recordCard.component';
 import { RecordFiltersComponent } from '../recordFilters/recordFilters.component';
 import { RecordsViewComponent } from './recordsView.component';
@@ -53,7 +53,7 @@ describe('Records View component', function() {
     let fixture: ComponentFixture<RecordsViewComponent>;
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const catalogId = 'catalogId';
     const recordId = 'recordId';
@@ -90,7 +90,7 @@ describe('Records View component', function() {
             providers: [
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
-                MockProvider(UtilService)
+                MockProvider(ToastService)
             ],
         }).compileComponents();
 
@@ -99,7 +99,7 @@ describe('Records View component', function() {
         element = fixture.debugElement;
         catalogStateStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: records, headers: new HttpHeaders(headers)})));
@@ -112,7 +112,7 @@ describe('Records View component', function() {
         fixture = null;
         catalogStateStub = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize', function() {
@@ -191,7 +191,7 @@ describe('Records View component', function() {
                 expect(catalogStateStub.recordSortOption).toEqual(sortOption);
                 expect(catalogStateStub.totalRecordSize).toEqual(totalSize);
                 expect(component.records).toEqual([record]);
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless getRecords rejects', fakeAsync(function() {
                 catalogManagerStub.getRecords.and.returnValue(throwError('Error Message'));
@@ -202,7 +202,7 @@ describe('Records View component', function() {
                 expect(catalogStateStub.recordSortOption).toBeUndefined();
                 expect(catalogStateStub.totalRecordSize).toEqual(0);
                 expect(component.records).toEqual([]);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
             }));
         });
     });

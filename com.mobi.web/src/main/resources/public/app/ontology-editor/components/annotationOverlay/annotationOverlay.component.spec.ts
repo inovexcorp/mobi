@@ -43,9 +43,9 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
 import { AnnotationOverlayComponent } from './annotationOverlay.component';
-import { IriSelectOntologyComponent } from "../iriSelectOntology/iriSelectOntology.component";
 
 describe('Annotation Overlay component', function() {
     let component: AnnotationOverlayComponent;
@@ -55,7 +55,7 @@ describe('Annotation Overlay component', function() {
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const annotation = 'annotation1';
     const entityIRI = 'entity';
@@ -83,7 +83,7 @@ describe('Annotation Overlay component', function() {
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
                 MockProvider(PropertyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MAT_DIALOG_DATA, useValue: { editing: false } },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -98,7 +98,7 @@ describe('Annotation Overlay component', function() {
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<AnnotationOverlayComponent>>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         
         ontologyStateStub.listItem = new OntologyListItem();
         ontologyStateStub.listItem.selected = {'@id': entityIRI};
@@ -113,7 +113,7 @@ describe('Annotation Overlay component', function() {
         ontologyStateStub = null;
         ontologyManagerStub = null;
         propertyManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('initializes with the correct data', function() {
@@ -146,7 +146,7 @@ describe('Annotation Overlay component', function() {
             expect(component.annotationForm.controls.annotation.value).toEqual(annotation);
             expect(component.annotationForm.controls.annotation.disabled).toBeTrue();
             expect(component.annotationForm.controls.value.value).toEqual('value');
-            expect(component.annotationForm.controls.type.value).toEqual(XSD + 'string');
+            expect(component.annotationForm.controls.type.value).toEqual(`${XSD}string`);
             expect(component.annotationForm.controls.language.value).toEqual(undefined);
         });
         it('if a new annotation is being added', function() {
@@ -156,7 +156,7 @@ describe('Annotation Overlay component', function() {
             expect(component.annotationForm.controls.annotation.value).toEqual('');
             expect(component.annotationForm.controls.annotation.disabled).toBeFalse();
             expect(component.annotationForm.controls.value.value).toEqual('');
-            expect(component.annotationForm.controls.type.value).toEqual(XSD + 'string');
+            expect(component.annotationForm.controls.type.value).toEqual(`${XSD}string`);
             expect(component.annotationForm.controls.language.value).toEqual('');
         });
     });
@@ -205,7 +205,7 @@ describe('Annotation Overlay component', function() {
             expect(element.queryAll(By.css('language-select')).length).toEqual(0);
             expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(0);
             
-            component.annotationForm.controls.annotation.setValue(OWL + 'deprecated');
+            component.annotationForm.controls.annotation.setValue(`${OWL}deprecated`);
             fixture.detectChanges();
             expect(element.queryAll(By.css('textarea')).length).toEqual(0);
             expect(element.queryAll(By.css('language-select')).length).toEqual(0);
@@ -232,36 +232,35 @@ describe('Annotation Overlay component', function() {
     });
     describe('controller methods', function() {
         it('should correctly group and filter the list of annotations', function() {
-            utilStub.getIRINamespace.and.callFake(a => a[0]);
             ontologyStateStub.getEntityNameByListItem.and.callFake(a => a);
-            spyOn(component, 'isPropDisabled').and.callFake(a => a === 'Aprop2');
-            component.annotations = ['Aprop1', 'Bprop3', 'Aprop2', 'Cother'];
+            spyOn(component, 'isPropDisabled').and.callFake(a => a === 'http://A#prop2');
+            component.annotations = ['http://A#prop1', 'http://B#prop3', 'http://A#prop2', 'http://C#other'];
             expect(component.filter('PROP')).toEqual([
-                { namespace: 'A', options: [
-                    { annotation: 'Aprop1', disabled: false, name: 'Aprop1' },
-                    { annotation: 'Aprop2', disabled: true, name: 'Aprop2' },
+                { namespace: 'http://A#', options: [
+                    { annotation: 'http://A#prop1', disabled: false, name: 'http://A#prop1' },
+                    { annotation: 'http://A#prop2', disabled: true, name: 'http://A#prop2' },
                 ]},
-                { namespace: 'B', options: [
-                    { annotation: 'Bprop3', disabled: false, name: 'Bprop3' },
+                { namespace: 'http://B#', options: [
+                    { annotation: 'http://B#prop3', disabled: false, name: 'http://B#prop3' },
                 ]}
             ]);
         });
         it('isPropDisabled should test whether an annotation value should be disabled', function() {
             expect(component.isPropDisabled('test')).toEqual(false);
-            expect(component.isPropDisabled(OWL + 'deprecated')).toEqual(false);
+            expect(component.isPropDisabled(`${OWL}deprecated`)).toEqual(false);
 
-            ontologyStateStub.listItem.selected[OWL + 'deprecated'] = [];
-            expect(component.isPropDisabled(OWL + 'deprecated')).toEqual(true);
+            ontologyStateStub.listItem.selected[`${OWL}deprecated`] = [];
+            expect(component.isPropDisabled(`${OWL}deprecated`)).toEqual(true);
         });
         describe('selectProp should set the correct state if it is', function() {
             it('owl:deprecated', function() {
                 const event: MatAutocompleteSelectedEvent = {
                     option: {
-                        value: OWL + 'deprecated'
+                        value: `${OWL}deprecated`
                     }
                 } as MatAutocompleteSelectedEvent;
                 component.selectProp(event);
-                expect(component.annotationForm.controls.type.value).toEqual(XSD + 'boolean');
+                expect(component.annotationForm.controls.type.value).toEqual(`${XSD}boolean`);
                 expect(component.annotationForm.controls.language.value).toEqual('');
             });
             it('not owl:deprecated', function() {
@@ -271,7 +270,7 @@ describe('Annotation Overlay component', function() {
                     }
                 } as MatAutocompleteSelectedEvent;
                 component.selectProp(event);
-                expect(component.annotationForm.controls.type.value).toEqual(XSD + 'string');
+                expect(component.annotationForm.controls.type.value).toEqual(`${XSD}string`);
                 expect(component.annotationForm.controls.language.value).toEqual('');
             });
         });
@@ -297,34 +296,33 @@ describe('Annotation Overlay component', function() {
             beforeEach(function() {
                 ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
                 component.annotationForm.controls.value.setValue('value');
-                component.annotationForm.controls.type.setValue(XSD + 'string');
-                utilStub.createJson.and.returnValue({'@id': ''});
+                component.annotationForm.controls.type.setValue(`${XSD}string`);
             });
             describe('the value was added successfully', function() {
                 beforeEach(function() {
                     propertyManagerStub.addValue.and.returnValue(true);
-                    ontologyManagerStub.entityNameProps = [DCTERMS + 'title'];
+                    ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
                 });
                 it('and it is a name prop', function() {
-                    component.annotationForm.controls.annotation.setValue(DCTERMS + 'title');
+                    component.annotationForm.controls.annotation.setValue(`${DCTERMS}title`);
                     component.addAnnotation();
-                    expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, DCTERMS + 'title', 'value', XSD + 'string', '');
+                    expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${DCTERMS}title`, 'value', `${XSD}string`, '');
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, DCTERMS + 'title', 'value');
+                    expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, `${DCTERMS}title`, 'value');
                     expect(ontologyStateStub.updateLabel).toHaveBeenCalledWith();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                 });
                 it('and it is not a name prop', function() {
                     component.annotationForm.controls.annotation.setValue(annotation);
                     component.addAnnotation();
-                    expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 'value', XSD + 'string', '');
+                    expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 'value', `${XSD}string`, '');
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, annotation, 'value');
                     expect(ontologyStateStub.updateLabel).not.toHaveBeenCalled();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                 });
             });
@@ -332,12 +330,12 @@ describe('Annotation Overlay component', function() {
                 component.annotationForm.controls.annotation.setValue(annotation);
                 propertyManagerStub.addValue.and.returnValue(false);
                 component.addAnnotation();
-                expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 'value', XSD + 'string', '');
+                expect(propertyManagerStub.addValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 'value', `${XSD}string`, '');
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(ontologyStateStub.annotationModified).not.toHaveBeenCalled();
                 expect(ontologyStateStub.updateLabel).not.toHaveBeenCalled();
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith(false);
             });
         });
@@ -345,37 +343,36 @@ describe('Annotation Overlay component', function() {
             beforeEach(function() {
                 ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
                 component.annotationForm.controls.value.setValue('value');
-                component.annotationForm.controls.type.setValue(XSD + 'string');
+                component.annotationForm.controls.type.setValue(`${XSD}string`);
                 component.data.index = 0;
-                utilStub.createJson.and.returnValue({'@id': ''});
             });
             describe('if the value was edited successfully', function() {
                 beforeEach(function() {
                     propertyManagerStub.editValue.and.returnValue(true);
-                    ontologyManagerStub.entityNameProps = [DCTERMS + 'title'];
+                    ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
                 });
                 it('and it is a name prop', function() {
-                    component.annotationForm.controls.annotation.setValue(DCTERMS + 'title');
+                    component.annotationForm.controls.annotation.setValue(`${DCTERMS}title`);
                     component.editAnnotation();
-                    expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, DCTERMS + 'title', 0, 'value', XSD + 'string', '');
+                    expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${DCTERMS}title`, 0, 'value', `${XSD}string`, '');
                     expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, DCTERMS + 'title', 'value');
+                    expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, `${DCTERMS}title`, 'value');
                     expect(ontologyStateStub.updateLabel).toHaveBeenCalledWith();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                 });
                 it('and it is not a name prop', function() {
                     component.annotationForm.controls.annotation.setValue(annotation);
                     component.editAnnotation();
-                    expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 0, 'value', XSD + 'string', '');
+                    expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 0, 'value', `${XSD}string`, '');
                     expect(ontologyStateStub.addToDeletions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, annotation, 'value');
                     expect(ontologyStateStub.updateLabel).not.toHaveBeenCalled();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                 });
                 it('and it has a language', function() {
@@ -388,7 +385,7 @@ describe('Annotation Overlay component', function() {
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, annotation, 'value');
                     expect(ontologyStateStub.updateLabel).not.toHaveBeenCalled();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                 });
             });
@@ -396,13 +393,13 @@ describe('Annotation Overlay component', function() {
                 component.annotationForm.controls.annotation.setValue(annotation);
                 propertyManagerStub.editValue.and.returnValue(false);
                 component.editAnnotation();
-                expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 0, 'value', XSD + 'string', '');
+                expect(propertyManagerStub.editValue).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, annotation, 0, 'value', `${XSD}string`, '');
                 expect(ontologyStateStub.addToDeletions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(ontologyStateStub.annotationModified).not.toHaveBeenCalled();
                 expect(ontologyStateStub.updateLabel).not.toHaveBeenCalled();
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith(false);
             });
         });

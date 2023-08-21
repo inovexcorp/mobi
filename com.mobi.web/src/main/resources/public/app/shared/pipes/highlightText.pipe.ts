@@ -39,8 +39,8 @@ export class HighlightTextPipe implements PipeTransform {
     }
 
     if (background) {
-      return value.replace(regex, '<span class="highlight-text"><mark>' + match[0] + '</mark></span>');
+      return value.replace(regex, `<span class="highlight-text"><mark>${match[0]}</mark></span>`);
     }
-    return value.replace(regex, '<span class="highlight-text">' + match[0] + '</span>');
+    return value.replace(regex, `<span class="highlight-text">${match[0]}</span>`);
   }
 }

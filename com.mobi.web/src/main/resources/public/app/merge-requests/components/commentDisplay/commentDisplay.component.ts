@@ -28,7 +28,7 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getDctermsId, getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class merge-requests.CommentDisplayComponent
@@ -62,11 +62,11 @@ export class CommentDisplayComponent {
     @Input() accepted: boolean;
     @Input() set comment(value: JSONLDObject) {
         this._comment = value;
-        this.commentText = this.util.getDctermsValue(value, 'description');
-        this.creatorIRI = this.util.getDctermsId(value, 'creator');
+        this.commentText = getDctermsValue(value, 'description');
+        this.creatorIRI = getDctermsId(value, 'creator');
         this.creator = get(find(this.um.users, {iri: this.creatorIRI}), 'username', '(Unknown)');
         this.isCreator = this.lm.currentUserIRI === this.creatorIRI;
-        this.issued = this.util.getDctermsValue(value, 'issued');
+        this.issued = getDctermsValue(value, 'issued');
     }
     get comment(): JSONLDObject {
         return this._comment;
@@ -74,8 +74,7 @@ export class CommentDisplayComponent {
     
     @Output() delete = new EventEmitter<string>();
 
-    constructor(private dialog: MatDialog, private um: UserManagerService, private lm: LoginManagerService, 
-        public util: UtilService) {}
+    constructor(private dialog: MatDialog, private um: UserManagerService, private lm: LoginManagerService) {}
 
     confirmDelete(): void {
         this.dialog.open(ConfirmModalComponent, {

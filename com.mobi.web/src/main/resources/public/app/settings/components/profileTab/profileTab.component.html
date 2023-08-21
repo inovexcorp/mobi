@@ -29,15 +29,15 @@
                 <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
             </p>
             <mat-form-field class="w-100">
-                <mat-label>First Name <small class="text-muted">(Optional)</small></mat-label>
+                <mat-label>First Name</mat-label>
                 <input matInput name="firstName" formControlName="firstName">
             </mat-form-field>
             <mat-form-field class="w-100">
-                <mat-label>Last Name <small class="text-muted">(Optional)</small></mat-label>
+                <mat-label>Last Name</mat-label>
                 <input matInput name="lastName" formControlName="lastName">
             </mat-form-field>
             <mat-form-field class="w-100">
-                <mat-label>Email <small class="text-muted">(Optional)</small></mat-label>
+                <mat-label>Email</mat-label>
                 <input matInput name="email" formControlName="email">
                 <mat-error *ngIf="profileForm.controls.email.invalid">Not a valid email</mat-error>
             </mat-form-field>

@@ -39,6 +39,12 @@ import { OntologyVisualizationDataService } from './services/ontologyVisualizati
 import { D3SimulatorService } from './services/d3Simulator.service';
 import { ControlRecordUtilsService } from './services/controlRecordUtils.service';
 
+/**
+ * @namespace ontology-visualization
+ *
+ * The `ontology-visualization` module provides the components and services required for visualizing an ontology
+ * using an interactable "ball and stick" diagram.
+ */
 @NgModule({
     imports: [
         BrowserModule,
@@ -68,5 +74,4 @@ import { ControlRecordUtilsService } from './services/controlRecordUtils.service
         OntologyVisualizationDataService,
     ]
 })
-
 export class OntologyVisualizationModule {}

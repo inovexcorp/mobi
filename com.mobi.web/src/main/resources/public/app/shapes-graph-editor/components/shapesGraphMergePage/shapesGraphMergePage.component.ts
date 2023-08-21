@@ -29,10 +29,11 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import {UserManagerService} from '../../../shared/services/userManager.service';
 import {LoginManagerService} from '../../../shared/services/loginManager.service';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class shapes-graph-editor.ShapesGraphMergePageComponent
@@ -56,7 +57,7 @@ import {LoginManagerService} from '../../../shared/services/loginManager.service
 export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
 
     constructor(private cm: CatalogManagerService,
-                private util: UtilService,
+                private toast: ToastService,
                 public state: ShapesGraphStateService,
                 public um: UserManagerService,
                 private lm: LoginManagerService,
@@ -78,11 +79,11 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
             .then((response: HttpResponse<JSONLDObject[]>) => {
                 this.branches = reject(response.body, {'@id': this.state.listItem.versionedRdfRecord.branchId});
                 const branch = find(response.body, {'@id': this.state.listItem.versionedRdfRecord.branchId});
-                this.branchTitle = this.util.getDctermsValue(branch, 'title');
+                this.branchTitle = getDctermsValue(branch, 'title');
                 this.state.listItem.merge.difference = undefined;
                 this.state.listItem.merge.startIndex = 0;
                 this.state.listItem.merge.target = undefined;
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     ngOnDestroy(): void {
         if (this.state.listItem.merge) {
@@ -97,11 +98,11 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
         if (this.state.listItem.merge.target) {
             this.cm.getRecordBranch(this.state.listItem.merge.target['@id'], this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
                 switchMap((target: JSONLDObject) => {
-                    this.targetHeadCommitId = this.util.getPropertyId(target, CATALOG + 'head');
+                    this.targetHeadCommitId = getPropertyId(target, `${CATALOG}head`);
                     return this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0);
                 }))
                 .subscribe(() => {}, errorMessage => {
-                    this.util.createErrorToast(errorMessage);
+                    this.toast.createErrorToast(errorMessage);
                     this.state.listItem.merge.difference = undefined;
                 });
 
@@ -109,9 +110,9 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
             if (!this.isAdminUser) {
                 const managePermissionRequest = {
                     resourceId: this.state.listItem.versionedRdfRecord.recordId,
-                    actionId: CATALOG + 'Modify',
+                    actionId: `${CATALOG}Modify`,
                     actionAttrs: {
-                        [CATALOG + 'branch']: this.state.listItem.merge.target['@id']
+                        [`${CATALOG}branch`]: this.state.listItem.merge.target['@id']
                     }
                 };
 
@@ -131,19 +132,19 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
     }
     retrieveMoreResults(event: {limit: number, offset: number}): void {
         this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, event.limit, event.offset)
-            .subscribe(() => {}, this.util.createErrorToast);
+            .subscribe(() => {}, error => this.toast.createErrorToast(error));
     }
     submit(): void {
         this.state.attemptMerge()
             .subscribe(() => {
-                this.util.createSuccessToast('Your merge was successful.');
+                this.toast.createSuccessToast('Your merge was successful.');
                 this.state.cancelMerge();
             }, error => this.error = error);
     }
     submitConflictMerge(): void {
         this.state.merge()
             .subscribe(() => {
-                this.util.createSuccessToast('Your merge was successful with resolutions.');
+                this.toast.createSuccessToast('Your merge was successful with resolutions.');
                 this.state.cancelMerge();
             }, error => this.conflictError = error);
     }

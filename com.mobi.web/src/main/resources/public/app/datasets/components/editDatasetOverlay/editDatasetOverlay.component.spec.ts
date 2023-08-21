@@ -31,14 +31,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { forEach } from 'lodash';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { CATALOG, DATASET, ONTOLOGYEDITOR } from '../../../prefixes';
+import { CATALOG, DATASET, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { Dataset } from '../../../shared/models/dataset.interface';
@@ -47,9 +46,10 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
 import { RepositoryManagerService } from '../../../shared/services/repositoryManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { DatasetsOntologyPickerComponent } from '../datasetsOntologyPicker/datasetsOntologyPicker.component';
 import { EditDatasetOverlayComponent } from './editDatasetOverlay.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 describe('Edit Dataset Overlay component', function() {
     let component: EditDatasetOverlayComponent;
@@ -59,16 +59,31 @@ describe('Edit Dataset Overlay component', function() {
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
     let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let repositoryManagerStub: jasmine.SpyObj<RepositoryManagerService>;
 
     const catalogId = 'catalog';
     const recordId = 'recordId';
     const ontologyRecordId1 = 'ontologyRecordId1';
     const ontologyRecordId2 = 'ontologyRecordId2';
-    const bnodeId = 'http://mobi.com/.well-known/genid/1234';
-    const record = {'@id': recordId};
-    const dataset: Dataset = { record, identifiers: [{'@id': 'bnode1'}, {'@id': 'bnode2'}]};
+    const record: JSONLDObject = {
+      '@id': recordId,
+      '@type': [`${DATASET}DatasetRecord`],
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${DCTERMS}description`]: [{ '@value': 'description' }],
+      [`${DATASET}dataset`]: [{ '@id': 'dataset' }],
+      [`${DATASET}repository`]: [{ '@value': 'repository' }],
+    };
+    const ontologyRecord: JSONLDObject = {
+      '@id': ontologyRecordId1,
+      '@type': [`${ONTOLOGYEDITOR}OntologyRecord`],
+      [`${DCTERMS}title`]: [{ '@value': 'title' }],
+      [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology' }]
+    };
+    const dataset: Dataset = { record, identifiers: [
+      {'@id': 'bnode1', [`${DATASET}linksToRecord`]: [{ '@id': ontologyRecordId1 }]},
+      {'@id': 'bnode2', [`${DATASET}linksToRecord`]: [{ '@id': ontologyRecordId2 }]}]
+    };
     const repo: Repository = {id: 'system', title: 'System Repository', type: 'native'};
     
     beforeEach(async () => {
@@ -94,7 +109,7 @@ describe('Edit Dataset Overlay component', function() {
                 MockProvider(DatasetStateService),
                 MockProvider(CatalogManagerService),
                 MockProvider(RepositoryManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         }).compileComponents();
@@ -108,42 +123,14 @@ describe('Edit Dataset Overlay component', function() {
         datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
         datasetStateStub = TestBed.inject(DatasetStateService) as jasmine.SpyObj<DatasetStateService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
-        utilStub.getSkolemizedIRI.and.returnValue(bnodeId);
-        utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            switch (propertyIRI) {
-                case DATASET + 'dataset':
-                    return 'dataset';
-                case DATASET + 'linksToRecord':
-                    if (entity['@id'] ==='bnode1') {
-                        return ontologyRecordId1;
-                    } else {
-                        return ontologyRecordId2;
-                    }
-                case CATALOG + 'head':
-                    return 'commit';
-                default:
-                    return '';
-            }
-        });
-        utilStub.getPropertyValue.and.returnValue('repository');
-        utilStub.getDctermsValue.and.callFake((entity, property) => {
-            switch (property) {
-                case 'title':
-                    return 'title';
-                case 'description':
-                    return 'description';
-                default:
-                    return '';
-            }
-        });
-        record[CATALOG + 'keyword'] = [{'@value': 'A'}];
+        record[`${CATALOG}keyword`] = [{'@value': 'A'}];
         catalogManagerStub.localCatalog = {'@id': catalogId};
         datasetStateStub.selectedDataset = Object.assign({}, dataset);
         catalogManagerStub.getRecord.and.callFake((id) => {
             if (id === ontologyRecordId1) {
-                return of([{'@id': ontologyRecordId1}]);
+                return of([ontologyRecord]);
             } else {
                 return throwError('Error Message');
             }
@@ -158,7 +145,7 @@ describe('Edit Dataset Overlay component', function() {
         datasetStateStub = null;
         datasetManagerStub = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
     
     it('should correctly initialize the form', fakeAsync(function() {
@@ -178,14 +165,12 @@ describe('Edit Dataset Overlay component', function() {
             ontologyIRI: 'ontologyIRI',
             title: 'title',
             selected: true,
-            jsonld: {'@id': ontologyRecordId1}
+            jsonld: ontologyRecord
         }]);
     }));
     describe('controller methods', function() {
         it('should get the ontology IRI of an OntologyRecord', function() {
-            utilStub.getPropertyId.and.returnValue('ontology');
-            expect(component.getOntologyIRI(record)).toEqual('ontology');
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(record, ONTOLOGYEDITOR + 'ontologyIRI');
+            expect(component.getOntologyIRI(ontologyRecord)).toEqual('ontology');
         });
         describe('should update a dataset', function() {
             beforeEach(function() {
@@ -196,7 +181,7 @@ describe('Edit Dataset Overlay component', function() {
                 component.update();
                 tick();
                 expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, jasmine.any(Array));
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
                 expect(component.error).toBe('Error Message');
             }));
@@ -209,13 +194,8 @@ describe('Edit Dataset Overlay component', function() {
                     component.editDatasetForm.controls.description.setValue('new');
                     component.update();
                     tick();
-                    expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(jasmine.objectContaining({'@id': recordId}), 'title', 'new');
-                    expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(jasmine.objectContaining({'@id': recordId}), 'description', 'new');
-                    forEach(component.editDatasetForm.controls.keywords.value, function(keyword) {
-                        expect(utilStub.setPropertyValue).toHaveBeenCalledWith(jasmine.objectContaining({'@id': recordId}), CATALOG + 'keyword', keyword);
-                    });
                     expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, jasmine.any(Array));
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                     expect(component.error).toBe('');
                 }));
@@ -223,13 +203,13 @@ describe('Edit Dataset Overlay component', function() {
                     component.selectedOntologies = [];
                     component.update();
                     tick();
-                    expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, [{'@id': recordId, [CATALOG + 'keyword']: []}]);
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, [jasmine.objectContaining({'@id': recordId})]);
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                     expect(component.error).toBe('');
                 }));
                 it('when an ontology is added.', fakeAsync(function() {
-                    const branch = {'@id': 'branch'};
+                    const branch = {'@id': 'branch', [`${CATALOG}head`]: [{ '@id': 'commit' }] };
                     component.selectedOntologies = [{
                         recordId: 'newOntology',
                         ontologyIRI: 'ontologyIRI',
@@ -239,19 +219,16 @@ describe('Edit Dataset Overlay component', function() {
                     }];
                     catalogManagerStub.getRecordMasterBranch.and.callFake(() => of(branch));
                     const expectedBlankNode = {
-                        '@id': bnodeId,
-                        [DATASET + 'linksToRecord']: [{'@id': 'newOntology'}],
-                        [DATASET + 'linksToBranch']: [{'@id': 'branch'}],
-                        [DATASET + 'linksToCommit']: [{'@id': 'commit'}]
+                        '@id': jasmine.stringContaining('genid'),
+                        [`${DATASET}linksToRecord`]: [{'@id': 'newOntology'}],
+                        [`${DATASET}linksToBranch`]: [{'@id': 'branch'}],
+                        [`${DATASET}linksToCommit`]: [{'@id': 'commit'}]
                     };
                     component.update();
                     tick();
                     expect(catalogManagerStub.getRecordMasterBranch).toHaveBeenCalledWith('newOntology', catalogId);
-                    expect(utilStub.getSkolemizedIRI).toHaveBeenCalledWith();
-                    expect(utilStub.getPropertyId).toHaveBeenCalledWith(branch, CATALOG + 'head');
-                    expect(utilStub.setPropertyId).toHaveBeenCalledWith(jasmine.objectContaining({'@id': recordId}), DATASET + 'ontology', jasmine.any(String));
-                    expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, [expectedBlankNode, {'@id': recordId, [CATALOG + 'keyword']: []}]);
-                    expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, [expectedBlankNode, jasmine.objectContaining({'@id': recordId})]);
+                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
                     expect(component.error).toBe('');
                 }));

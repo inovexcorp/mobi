@@ -29,7 +29,7 @@ import { DCTERMS, OWL, SKOS } from '../../../prefixes';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
 /**
@@ -63,8 +63,7 @@ export class CreateConceptSchemeOverlayComponent implements OnInit {
     constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateConceptSchemeOverlayComponent>,
         public os: OntologyStateService,
-        private camelCasePipe: CamelCasePipe,
-        private splitIRIPipe: SplitIRIPipe) {}
+        private camelCasePipe: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
@@ -73,7 +72,7 @@ export class CreateConceptSchemeOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            const split = splitIRI(this.createForm.controls.iri.value);
             this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
         }
     }
@@ -85,13 +84,13 @@ export class CreateConceptSchemeOverlayComponent implements OnInit {
     get scheme(): JSONLDObject{
         const scheme = {
             '@id': this.createForm.controls.iri.value,
-            '@type': [OWL + 'NamedIndividual', SKOS + 'ConceptScheme'],
-            [DCTERMS + 'title']: [{
+            '@type': [`${OWL}NamedIndividual`, `${SKOS}ConceptScheme`],
+            [`${DCTERMS}title`]: [{
                 '@value': this.createForm.controls.title.value
             }]
         };
         if (this.selectedConcepts.length) {
-            scheme[SKOS + 'hasTopConcept'] = this.selectedConcepts.map(iri => ({'@id': iri}));
+            scheme[`${SKOS}hasTopConcept`] = this.selectedConcepts.map(iri => ({'@id': iri}));
         }
         this.os.addLanguageToNewEntity(scheme, this.createForm.controls.language.value);
         return scheme;

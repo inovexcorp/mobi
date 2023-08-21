@@ -68,7 +68,7 @@ export class ObjectPropertyBlockComponent implements OnChanges {
     showRemovePropertyOverlay(input: {iri: string, index: number}): void {
         this.dialog.open(ConfirmModalComponent,{
             data: {
-                content: this.os.getRemovePropOverlayMessage(input.iri, input.index) + '</strong>?'
+                content: `${this.os.getRemovePropOverlayMessage(input.iri, input.index)}</strong>?`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {

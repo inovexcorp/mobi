@@ -41,7 +41,7 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CreateUserOverlayComponent } from './createUserOverlay.component';
 
 describe('Create User Overlay component', function() {
@@ -70,7 +70,7 @@ describe('Create User Overlay component', function() {
             providers: [
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         }).compileComponents();

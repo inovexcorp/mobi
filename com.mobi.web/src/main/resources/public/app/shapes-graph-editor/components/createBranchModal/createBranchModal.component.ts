@@ -24,11 +24,11 @@ import { get } from 'lodash';
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { first } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 interface BranchConfig {
     title: string,
@@ -53,23 +53,21 @@ export class CreateBranchModal {
         description: ['']
     });
 
-    constructor(private state: ShapesGraphStateService, private util: UtilService, private cm: CatalogManagerService,
+    constructor(private state: ShapesGraphStateService, private toast: ToastService, private cm: CatalogManagerService,
         private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<CreateBranchModal>) {}
 
-    createBranch(): Promise<any> {
+    createBranch(): void {
         const branchConfig: BranchConfig = {
             title: this.createBranchForm.controls.title.value,
             description: this.createBranchForm.controls.description.value
         };
 
-        return this.cm.createRecordBranch(this.state.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig,
-            this.state.listItem.versionedRdfRecord.commitId).pipe(first()).toPromise()
-            .then(branchId => {
-                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, branchId, this.state.listItem.versionedRdfRecord.commitId, undefined, this.createBranchForm.controls.title.value);
-            }, error => Promise.reject(error))
-            .then(() => this.dialogRef.close(true), error => {
-                this.dialogRef.close(false);
-                this.util.createErrorToast(error);
-            });
+        this.cm.createRecordBranch(this.state.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig,
+          this.state.listItem.versionedRdfRecord.commitId).pipe(
+            switchMap(branchId => this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, branchId, this.state.listItem.versionedRdfRecord.commitId, undefined, this.createBranchForm.controls.title.value))
+          ).subscribe(() => this.dialogRef.close(true), error => {
+              this.dialogRef.close(false);
+              this.toast.createErrorToast(error);
+          });
     }
 }

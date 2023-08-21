@@ -38,7 +38,6 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { ObjectPropertyAxiomsComponent } from './objectPropertyAxioms.component';
-import { UtilService } from '../../../shared/services/util.service';
 
 describe('Object Property Axioms component', function() {
     let component: ObjectPropertyAxiomsComponent;
@@ -46,7 +45,6 @@ describe('Object Property Axioms component', function() {
     let fixture: ComponentFixture<ObjectPropertyAxiomsComponent>;
     let ontologyStateServiceStub: jasmine.SpyObj<OntologyStateService>;
     let dialogStub : jasmine.SpyObj<MatDialog>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let propertyServiceStub;
 
     beforeEach(async () => {
@@ -60,7 +58,6 @@ describe('Object Property Axioms component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(MatDialog),
                 MockProvider(PropertyManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     }) }
@@ -75,12 +72,11 @@ describe('Object Property Axioms component', function() {
         ontologyStateServiceStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         propertyServiceStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         dialogStub = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         ontologyStateServiceStub.listItem = new OntologyListItem();
         ontologyStateServiceStub.listItem.selected = {
             '@id': 'axiom1',
-            'http://www.w3.org/2000/01/rdf-schema#subClassOf': [{'@id': 'value1'}],
+            [`${RDFS}subClassOf`]: [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2', '@type': 'type', '@language': 'language'}]
         };
         fixture.detectChanges();
@@ -93,7 +89,6 @@ describe('Object Property Axioms component', function() {
         fixture = null;
         ontologyStateServiceStub = null;
         dialogStub = null;
-        utilStub = null;
     });
 
     describe('contains the correct html', function() {
@@ -136,8 +131,8 @@ describe('Object Property Axioms component', function() {
                 expect(ontologyStateServiceStub.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.flattenHierarchy).not.toHaveBeenCalled();
 
-                utilStub.isBlankNodeId.and.returnValue(true);
-                component.removeFromHierarchy(RDFS + 'subPropertyOf', this.axiomObject);
+                this.axiomObject['@id'] = '_:genid0';
+                component.removeFromHierarchy(`${RDFS}subPropertyOf`, this.axiomObject);
                 expect(ontologyStateServiceStub.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.flattenHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateServiceStub.setVocabularyStuff).not.toHaveBeenCalled();
@@ -151,7 +146,7 @@ describe('Object Property Axioms component', function() {
                     entityInfo: { label: 'new', names: ['new', 'test'] },
                     joinedPath: 'www.test.com',
                 }]);
-                component.removeFromHierarchy(RDFS + 'subPropertyOf', this.axiomObject);
+                component.removeFromHierarchy(`${RDFS}subPropertyOf`, this.axiomObject);
                 expect(ontologyStateServiceStub.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.objectProperties, ontologyStateServiceStub.listItem.selected['@id'], this.axiomObject['@id']);
                 expect(ontologyStateServiceStub.flattenHierarchy).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.objectProperties);
                 expect(ontologyStateServiceStub.listItem.objectProperties.flat).toEqual([{

@@ -74,5 +74,6 @@ export class YateComponent implements OnChanges, AfterViewInit {
                 }
             });
         this.yate.setSize('100%', '100%');
+        this.yate.setValue(content);
     }
 }

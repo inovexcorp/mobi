@@ -22,7 +22,7 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -39,7 +39,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { find } from 'lodash';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
@@ -49,14 +49,14 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
-import { EditorRecordSelectComponent } from './editorRecordSelect.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { DCTERMS } from '../../../prefixes';
+import { DCTERMS, POLICY } from '../../../prefixes';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { EditorRecordSelectComponent, OptionGroup } from './editorRecordSelect.component';
 
 describe('Editor Record Select component', function() {
     let component: EditorRecordSelectComponent;
@@ -67,7 +67,7 @@ describe('Editor Record Select component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let policyManagerStub;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const record1Item = new ShapesGraphListItem();
     const record2Item = new ShapesGraphListItem();
@@ -115,7 +115,7 @@ describe('Editor Record Select component', function() {
                 MockProvider(ShapesGraphManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(PolicyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
@@ -127,7 +127,7 @@ describe('Editor Record Select component', function() {
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.localCatalog = {'@id': 'catalog', '@type': []};
         shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-        shapesGraphStateStub.deleteShapesGraph.and.resolveTo({});
+        shapesGraphStateStub.deleteShapesGraph.and.returnValue(of(null));
         fixture = TestBed.createComponent(EditorRecordSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -139,7 +139,7 @@ describe('Editor Record Select component', function() {
             {
               'urn:oasis:names:tc:xacml:3.0:attribute-category:resource': 'record3',
               'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject': 'urn:testUser',
-              'urn:oasis:names:tc:xacml:3.0:attribute-category:action': 'http://mobi.com/ontologies/policy#Delete',
+              'urn:oasis:names:tc:xacml:3.0:attribute-category:action': `${POLICY}Delete`,
               'decision': 'Permit'
             }
           ]));
@@ -151,29 +151,22 @@ describe('Editor Record Select component', function() {
         record3Item.versionedRdfRecord.recordId = record3.recordId;
         record3Item.versionedRdfRecord.title = record3.title;
         shapesGraphStateStub.list = [record1Item, record2Item];
-        shapesGraphStateStub.openShapesGraph.and.resolveTo();
+        shapesGraphStateStub.openShapesGraph.and.returnValue(of(null));
         shapesGraphStateStub.closeShapesGraph.and.callFake(ShapesGraphStateService.prototype.closeShapesGraph);
 
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
-        policyManagerStub.actionDelete = 'http://mobi.com/ontologies/policy#Delete';
+        policyManagerStub.actionDelete = `${POLICY}Delete`;
 
-        catalogManagerStub.sortOptions = [{field: DCTERMS + 'title', asc: true, label: ''}];
+        catalogManagerStub.sortOptions = [{field: `${DCTERMS}title`, asc: true, label: ''}];
         catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({
             body: [
-                {'@id': record1.recordId, '@type': [], 'title': record1.title},
-                {'@id': record2.recordId, '@type': [], 'title': record2.title},
-                {'@id': record3.recordId, '@type': [], 'title': record3.title}
+                {'@id': record1.recordId, '@type': [], [`${DCTERMS}title`]: [{ '@value': record1.title }]},
+                {'@id': record2.recordId, '@type': [], [`${DCTERMS}title`]: [{ '@value': record2.title }]},
+                {'@id': record3.recordId, '@type': [], [`${DCTERMS}title`]: [{ '@value': record3.title }]}
             ]
         })));
-        utilStub.getDctermsValue.and.callFake((obj, prop) => {
-            if (prop === 'title') {
-                return obj.title;
-            } else {
-                return '';
-            }
-        });
         component.recordIri = record1.recordId;
         policyEnforcementStub.deny = 'Deny';
     });
@@ -208,8 +201,8 @@ describe('Editor Record Select component', function() {
             spyOn(component, 'resetSearch');
             spyOn(component.textInput.nativeElement, 'blur');
             component.close();
-            expect(component.textInput.nativeElement.blur).toHaveBeenCalled();
-            expect(component.resetSearch).toHaveBeenCalled();
+            expect(component.textInput.nativeElement.blur).toHaveBeenCalledWith();
+            expect(component.resetSearch).toHaveBeenCalledWith();
         });
         it('should change reset the search if the record has changed', function() {
             expect(component.recordIri).toEqual(record1.recordId);
@@ -226,24 +219,24 @@ describe('Editor Record Select component', function() {
                     }
                 }
             });
-            expect(component.resetSearch).toHaveBeenCalled();
+            expect(component.resetSearch).toHaveBeenCalledWith();
             expect(component.recordSearchControl.setValue).toHaveBeenCalledWith('newRecordId');
         });
         it('should open the delete confirmation modal', function() {
             spyOn(component.autocompleteTrigger, 'closePanel');
             component.showDeleteConfirmationOverlay(record1, new Event('delete'));
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to delete')}});
-            expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+            expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
 
         });
         it('should filter records based on provided text', async function() {
             await component.ngOnInit();
-            const result: any = component.filter('one');
-            const open: any = find(result, {title: 'Open'});
+            const result: OptionGroup[] = component.filter('one');
+            const open: OptionGroup = find(result, {title: 'Open'});
 
             expect(open.options.length).toEqual(1);
             expect(open.options[0]).toEqual(record1);
-            const unopened: any = find(result, {title: 'Unopened'});
+            const unopened: OptionGroup = find(result, {title: 'Unopened'});
 
             expect(unopened.options.length).toEqual(1);
             expect(unopened.options[0]).toEqual(record3);
@@ -255,8 +248,9 @@ describe('Editor Record Select component', function() {
             expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
             expect(matDialog.open).toHaveBeenCalledWith(NewShapesGraphRecordModalComponent);
         });
-        it('should select the record and update state', async function() {
-            await component.ngOnInit();
+        it('should select the record and update state', fakeAsync(function() {
+            component.ngOnInit();
+            tick();
             spyOn(component.recordSearchControl, 'setValue');
             expect(component.opened.length).toEqual(2);
             expect(component.unopened.length).toEqual(1);
@@ -267,15 +261,15 @@ describe('Editor Record Select component', function() {
                     value: record3
                 }
             } as MatAutocompleteSelectedEvent;
-            await component.selectRecord(event);
+            component.selectRecord(event);
+            tick();
             expect(component.opened.length).toEqual(3);
             expect(component.unopened.length).toEqual(0);
             expect(component.opened).toContain(record3);
             expect(component.unopened).not.toContain(record3);
             expect(shapesGraphStateStub.openShapesGraph).toHaveBeenCalledWith(record3);
             expect(component.recordSearchControl.setValue).toHaveBeenCalledWith(record3.title);
-
-        });
+        }));
         it('should reset the search value', function() {
             component.recordSearchControl.setValue('');
             shapesGraphStateStub.listItem.versionedRdfRecord.title = 'Test';
@@ -302,7 +296,7 @@ describe('Editor Record Select component', function() {
                       'record3'
                     ],
                     'actionId': [
-                      'http://mobi.com/ontologies/policy#Delete'
+                      `${POLICY}Delete`
                     ]
                   }, jasmine.anything());
             });
@@ -311,7 +305,7 @@ describe('Editor Record Select component', function() {
                     {
                       'urn:oasis:names:tc:xacml:3.0:attribute-category:resource': 'record3',
                       'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject': 'urn:testUser',
-                      'urn:oasis:names:tc:xacml:3.0:attribute-category:action': 'http://mobi.com/ontologies/policy#Delete',
+                      'urn:oasis:names:tc:xacml:3.0:attribute-category:action': `${POLICY}Delete`,
                       'decision': 'Deny'
                     }
                   ]));
@@ -327,7 +321,7 @@ describe('Editor Record Select component', function() {
                       'record3'
                     ],
                     'actionId': [
-                      'http://mobi.com/ontologies/policy#Delete'
+                      `${POLICY}Delete`
                     ]
                   }, jasmine.anything());
                 expect(component.unopened.length).toEqual(1);
@@ -337,17 +331,17 @@ describe('Editor Record Select component', function() {
         
         describe('should delete shapes graph record', function() {
             it('successfully', async function() {
-                shapesGraphStateStub.deleteShapesGraph.and.resolveTo({});
+                shapesGraphStateStub.deleteShapesGraph.and.returnValue(of(null));
                 await component.deleteShapesGraphRecord('record1');
                 expect(shapesGraphStateStub.deleteShapesGraph).toHaveBeenCalledWith('record1');
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
             });
             it('unless an error occurs', async function() {
-                shapesGraphStateStub.deleteShapesGraph.and.rejectWith('error');
+                shapesGraphStateStub.deleteShapesGraph.and.returnValue(throwError('error'));
                 await component.deleteShapesGraphRecord('record1');
                 expect(shapesGraphStateStub.deleteShapesGraph).toHaveBeenCalledWith('record1');
-                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
         it('should close shapes graph record', async function() {
@@ -375,7 +369,7 @@ describe('Editor Record Select component', function() {
             expect(shapesGraphStateStub.listItem.versionedRdfRecord.commitId).toEqual('');
             expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
 
-            expect(component['setFilteredOptions']).toHaveBeenCalled();
+            expect(component['setFilteredOptions']).toHaveBeenCalledWith();
         });
     });
     describe('contains the correct html', function() {
@@ -441,7 +435,7 @@ describe('Editor Record Select component', function() {
         createButton.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.showDeleteConfirmationOverlay).toHaveBeenCalled();
+        expect(component.showDeleteConfirmationOverlay).toHaveBeenCalledWith(jasmine.any(Object), null);
     });
     it('should select a record when clicked', async function() {
         spyOn(component, 'selectRecord');

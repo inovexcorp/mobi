@@ -37,7 +37,7 @@ import {
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { PasswordTabComponent } from './passwordTab.component';
 
@@ -47,7 +47,7 @@ describe('Password Tab component', function() {
     let fixture: ComponentFixture<PasswordTabComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -66,7 +66,7 @@ describe('Password Tab component', function() {
             providers: [
                 MockProvider(LoginManagerService),
                 MockProvider(UserManagerService),
-                MockProvider(UtilService)
+                MockProvider(ToastService)
             ]
         }).compileComponents();
 
@@ -75,7 +75,7 @@ describe('Password Tab component', function() {
         element = fixture.debugElement;
         loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         loginManagerStub.currentUser = 'user';
         userManagerStub.users = [{ external: false, firstName: 'John', lastName: 'Doe', email: '', roles: [], username: 'user' }];
@@ -88,7 +88,7 @@ describe('Password Tab component', function() {
         fixture = null;
         userManagerStub = null;
         loginManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('should initialize with the current user', function() {
@@ -152,7 +152,7 @@ describe('Password Tab component', function() {
                 component.save();
                 tick();
                 expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, currentPassword, password);
-                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(component.errorMessage).toEqual('');
                 expect(component.passwordForm.controls.currentPassword.value).toBeFalsy();
                 expect(component.passwordForm.controls.unmaskPassword.value).toBeFalsy();

@@ -28,18 +28,15 @@ import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 /**
- * @ngdoc component
- * @name shapes-graph-editor.component:selectedDetails
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:shapesGraphStateService
- * @requires shared.pipes:prefixationPipe
+ * @class shapes-graph-editor.SelectedDetailsComponent
+ * @requires shared.OntologyManagerService
+ * @requires shared.ShapesGraphStateService
+ * @requires shared.PrefixationPipe
  *
- * @description
  * `shapesGraphDetails` is a component that creates div with details about the entity representing 
  * the current shapesGraph. This includes the entity's name, a
- * {@link shapes-graph-editor.component:staticIriLimited}, and a display of the types of the entity. The display is
+ * {@link shapes-graph-editor.StaticIriLimitedComponent}, and a display of the types of the entity. The display is
  * `readOnly`.
- * 
  */
 @Component({
     selector: 'shapes-graph-details',

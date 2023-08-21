@@ -44,8 +44,9 @@ import { UserStateService } from './userState.service';
 import { YasguiService } from './yasgui.service';
 import { OntologyStateService } from './ontologyState.service';
 import { REST_PREFIX } from '../../constants';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 import { ProvManagerService } from './provManager.service';
+import { createHttpParams } from '../utility';
 
 /**
  * @class shared.LoginManagerService
@@ -54,7 +55,7 @@ import { ProvManagerService } from './provManager.service';
  */
 @Injectable()
 export class LoginManagerService {
-    prefix = REST_PREFIX + 'session';
+    prefix = `${REST_PREFIX}session`;
     weGood = false;
 
     constructor(private http: HttpClient, private router: Router,
@@ -65,7 +66,8 @@ export class LoginManagerService {
         private mrs: MergeRequestsStateService, private om: OntologyManagerService,
         private os: OntologyStateService, private sgs: ShapesGraphStateService,
         private sm: StateManagerService, private um: UserManagerService,
-        private us: UserStateService, private util: UtilService, private yasgui: YasguiService, private prov: ProvManagerService) {}
+        private us: UserStateService, private toast: ToastService, private yasgui: YasguiService, 
+        private prov: ProvManagerService) {}
     
     /**
      * `currentUser` holds the username of the user that is currently logged into Mobi.
@@ -90,12 +92,12 @@ export class LoginManagerService {
      */
     login(username: string, password: string): Observable<boolean> {
         const params = { username, password };
-        return this.http.post(this.prefix, null, {params: this.util.createHttpParams(params), responseType: 'text', observe: 'response'}).pipe(
+        return this.http.post(this.prefix, null, {params: createHttpParams(params), responseType: 'text', observe: 'response'}).pipe(
             switchMap(response => {
                 if (response.status === 200 && response.body) {
                     this.currentUser = response.body;
                     if (get(response.headers, 'accounts-merged', false) === 'true') {
-                        this.util.createWarningToast('Local User Account found. Accounts have been merged.');
+                        this.toast.createWarningToast('Local User Account found. Accounts have been merged.');
                     }
                     return from(this.um.getUser(this.currentUser))
                         .pipe(
@@ -183,7 +185,7 @@ export class LoginManagerService {
                     ]);
                 }
                 if (this.checkMergedAccounts()) {
-                    this.util.createWarningToast('Local User Account found. Accounts have been merged.');
+                    this.toast.createWarningToast('Local User Account found. Accounts have been merged.');
                 }
 
                 return forkJoin(requests);

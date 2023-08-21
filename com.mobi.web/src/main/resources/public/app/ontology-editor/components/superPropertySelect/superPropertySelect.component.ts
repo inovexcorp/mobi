@@ -26,7 +26,7 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild }
 import { UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete'; 
 import { MatChipInputEvent } from '@angular/material/chips';
-import { findIndex, includes } from 'lodash';
+import { findIndex } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, debounceTime, startWith } from 'rxjs/operators';
 

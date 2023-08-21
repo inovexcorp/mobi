@@ -28,7 +28,6 @@ import { v4 } from 'uuid';
 
 import { CATALOG } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
-import { Conflict } from '../models/conflict.interface';
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
@@ -36,7 +35,8 @@ import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { StateManagerService } from './stateManager.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
+import { condenseCommitId, getPropertyId } from '../utility';
 
 /**
  * Service for common VersionedRdfState methods to be used in the ontology-editor or shapes-graph-editor.
@@ -44,7 +44,7 @@ import { UtilService } from './util.service';
 export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     protected sm: StateManagerService;
     protected cm: CatalogManagerService;
-    protected util: UtilService;
+    protected toast: ToastService;
     protected statePrefix: string;
     protected branchStateNamespace: string;
     protected tagStateNamespace: string;
@@ -67,9 +67,10 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     /**
      * Retrieves the id of the listItem.
      *
-     * @return {Promise} A Promise containing the id of the listItem that resolves if the state creation was successful.
+     * @return {Observable} An Observable containing the id of the listItem that resolves if the state creation was 
+     *    successful.
      */
-    abstract getId(): Promise<string>;
+    abstract getId(): Observable<string>;
 
     /**
      * Creates a new state for the application type for the current user.
@@ -81,29 +82,29 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
         let stateIri;
         const recordState: JSONLDObject = {
             '@id': this.statePrefix + v4(),
-            '@type': [this.statePrefix + 'StateRecord'],
-            [this.statePrefix + 'record']: [{'@id': versionedRdfStateBase.recordId}],
+            '@type': [`${this.statePrefix}StateRecord`],
+            [`${this.statePrefix}record`]: [{'@id': versionedRdfStateBase.recordId}],
         };
         const commitStatePartial: Partial<JSONLDObject> = {
-            '@type': [this.statePrefix + 'StateCommit'],
-            [this.statePrefix + 'commit']: [{'@id': versionedRdfStateBase.commitId}]
+            '@type': [`${this.statePrefix}StateCommit`],
+            [`${this.statePrefix}commit`]: [{'@id': versionedRdfStateBase.commitId}]
         };
         if (versionedRdfStateBase.branchId) {
             stateIri = this.branchStateNamespace + v4();
-            recordState[this.statePrefix + 'branchStates'] = [{'@id': stateIri}];
+            recordState[`${this.statePrefix}branchStates`] = [{'@id': stateIri}];
             commitStatePartial['@id'] = stateIri;
-            commitStatePartial['@type'].push(this.statePrefix + 'StateBranch');
-            commitStatePartial[this.statePrefix + 'branch'] = [{'@id': versionedRdfStateBase.branchId}];
+            commitStatePartial['@type'].push(`${this.statePrefix}StateBranch`);
+            commitStatePartial[`${this.statePrefix}branch`] = [{'@id': versionedRdfStateBase.branchId}];
         } else if (versionedRdfStateBase.tagId) {
             stateIri = this.tagStateNamespace + v4();
             commitStatePartial['@id'] = stateIri;
-            commitStatePartial['@type'].push(this.statePrefix + 'StateTag');
-            commitStatePartial[this.statePrefix + 'tag'] = [{'@id': versionedRdfStateBase.tagId}];
+            commitStatePartial['@type'].push(`${this.statePrefix}StateTag`);
+            commitStatePartial[`${this.statePrefix}tag`] = [{'@id': versionedRdfStateBase.tagId}];
         } else {
             stateIri = this.commitStateNamespace + v4();
             commitStatePartial['@id'] = stateIri;
         }
-        recordState[this.statePrefix + 'currentState'] = [{'@id': stateIri}];
+        recordState[`${this.statePrefix}currentState`] = [{'@id': stateIri}];
 
         const commitState: JSONLDObject = {
             ...commitStatePartial
@@ -120,7 +121,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     getStateByRecordId(recordId: string): State {
         return find(this.sm.states, {
             model: [{
-                [this.statePrefix + 'record']: [{'@id': recordId}]
+                [`${this.statePrefix}record`]: [{'@id': recordId}]
             }]
         });
     }
@@ -134,46 +135,46 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
         const stateObj: State = cloneDeep(this.getStateByRecordId(versionedRdfStateBase.recordId));
         const stateId: string = stateObj.id;
         const model: JSONLDObject[] = stateObj.model;
-        const recordState: JSONLDObject = find(model, {'@type': [this.statePrefix + 'StateRecord']});
-        let currentStateId: string = get(recordState, `[' ${this.statePrefix}currentState'][0]['@id']`);
+        const recordState: JSONLDObject = find(model, {'@type': [`${this.statePrefix}StateRecord`]});
+        let currentStateId: string = get(recordState, `['${this.statePrefix}currentState'][0]['@id']`);
         const currentState: JSONLDObject = find(model, {'@id': currentStateId});
 
-        if (currentState && !includes(get(currentState, '@type', []), this.statePrefix + 'StateBranch')) {
+        if (currentState && !includes(get(currentState, '@type', []), `${this.statePrefix}StateBranch`)) {
             remove(model, currentState);
         }
 
         if (versionedRdfStateBase.branchId) {
-            const branchState: JSONLDObject = find(model, {[this.statePrefix + 'branch']: [{'@id': versionedRdfStateBase.branchId}]});
+            const branchState: JSONLDObject = find(model, {[`${this.statePrefix}branch`]: [{'@id': versionedRdfStateBase.branchId}]});
             if (branchState) {
                 currentStateId = branchState['@id'];
-                branchState[this.statePrefix + 'commit'] = [{'@id': versionedRdfStateBase.commitId}];
+                branchState[`${this.statePrefix}commit`] = [{'@id': versionedRdfStateBase.commitId}];
             } else {
                 currentStateId = this.branchStateNamespace + v4();
-                recordState[this.statePrefix + 'branchStates'] = concat(get(recordState, `['${this.statePrefix}branchStates']`, []), [{'@id': currentStateId}]);
+                recordState[`${this.statePrefix}branchStates`] = concat(get(recordState, `['${this.statePrefix}branchStates']`, []), [{'@id': currentStateId}]);
                 model.push({
                     '@id': currentStateId,
-                    '@type': [this.statePrefix + 'StateCommit', this.statePrefix + 'StateBranch'],
-                    [this.statePrefix + 'branch']: [{'@id': versionedRdfStateBase.branchId}],
-                    [this.statePrefix + 'commit']: [{'@id': versionedRdfStateBase.commitId}]
+                    '@type': [`${this.statePrefix}StateCommit`, `${this.statePrefix}StateBranch`],
+                    [`${this.statePrefix}branch`]: [{'@id': versionedRdfStateBase.branchId}],
+                    [`${this.statePrefix}commit`]: [{'@id': versionedRdfStateBase.commitId}]
                 });
             }
         } else if (versionedRdfStateBase.tagId) {
             currentStateId = this.tagStateNamespace + v4();
             model.push({
                 '@id': currentStateId,
-                '@type': [this.statePrefix + 'StateCommit', this.statePrefix + 'StateTag'],
-                [this.statePrefix + 'tag']: [{'@id': versionedRdfStateBase.tagId}],
-                [this.statePrefix + 'commit']: [{'@id': versionedRdfStateBase.commitId}]
+                '@type': [`${this.statePrefix}StateCommit`, `${this.statePrefix}StateTag`],
+                [`${this.statePrefix}tag`]: [{'@id': versionedRdfStateBase.tagId}],
+                [`${this.statePrefix}commit`]: [{'@id': versionedRdfStateBase.commitId}]
             });
         } else {
             currentStateId = this.commitStateNamespace + v4();
             model.push({
                 '@id': currentStateId,
-                '@type': [this.statePrefix + 'StateCommit'],
-                [this.statePrefix + 'commit']: [{'@id': versionedRdfStateBase.commitId}]
+                '@type': [`${this.statePrefix}StateCommit`],
+                [`${this.statePrefix}commit`]: [{'@id': versionedRdfStateBase.commitId}]
             });
         }
-        recordState[this.statePrefix + 'currentState'] = [{'@id': currentStateId}];
+        recordState[`${this.statePrefix}currentState`] = [{'@id': currentStateId}];
         return this.sm.updateState(stateId, model);
     }
     /**
@@ -185,11 +186,11 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      */
     deleteBranchState(recordId: string, branchId:string): Observable<null> {
         const stateObj: State = cloneDeep(this.getStateByRecordId(recordId));
-        const record: JSONLDObject = find(stateObj.model, {'@type': [this.statePrefix + 'StateRecord']});
-        const branchState: JSONLDObject = head(remove(stateObj.model, {[this.statePrefix + 'branch']: [{'@id': branchId}]}));
-        remove(record[this.statePrefix + 'branchStates'], {'@id': get(branchState, '@id')});
-        if (!record[this.statePrefix + 'branchStates'].length) {
-            delete record[this.statePrefix + 'branchStates'];
+        const record: JSONLDObject = find(stateObj.model, {'@type': [`${this.statePrefix}StateRecord`]});
+        const branchState: JSONLDObject = head(remove(stateObj.model, {[`${this.statePrefix}branch`]: [{'@id': branchId}]}));
+        remove(record[`${this.statePrefix}branchStates`], {'@id': get(branchState, '@id')});
+        if (!record[`${this.statePrefix}branchStates`].length) {
+            delete record[`${this.statePrefix}branchStates`];
         }
         return this.sm.updateState(stateObj.id, stateObj.model);
     }
@@ -233,7 +234,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * @return {string} the ID of the State object.
      */
     getCurrentStateId(state: State): string {
-        const recordState = find(state.model, {'@type': [this.statePrefix + 'StateRecord']});
+        const recordState = find(state.model, {'@type': [`${this.statePrefix}StateRecord`]});
         return get(recordState, `['${this.statePrefix}currentState'][0]['@id']`, '');
     }
     /**
@@ -252,7 +253,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * @return {boolean} Whether the JSONLDObject is a StateTag.
      */
     isStateTag(jsonld: JSONLDObject): boolean {
-        return includes(jsonld['@type'], this.statePrefix + 'StateTag');
+        return includes(jsonld['@type'], `${this.statePrefix}StateTag`);
     }
     /**
      * Checks if the state is a branch.
@@ -261,7 +262,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * @return {boolean} Whether the JSONLDObject is a StateBranch.
      */
     isStateBranch(jsonld: JSONLDObject): boolean {
-        return includes(jsonld['@type'], this.statePrefix + 'StateBranch');
+        return includes(jsonld['@type'], `${this.statePrefix}StateBranch`);
     }
 
     /**
@@ -277,9 +278,9 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
         if (!isEmpty(state)) {
             let inProgressCommit = new Difference();
             const currentState: JSONLDObject = this.getCurrentState(state);
-            const commitId = this.util.getPropertyId(currentState, this.statePrefix + 'commit');
-            const tagId = this.util.getPropertyId(currentState, this.statePrefix + 'tag');
-            const branchId = this.util.getPropertyId(currentState, this.statePrefix + 'branch');
+            const commitId = getPropertyId(currentState, `${this.statePrefix}commit`);
+            const tagId = getPropertyId(currentState, `${this.statePrefix}tag`);
+            const branchId = getPropertyId(currentState, `${this.statePrefix}branch`);
             let upToDate = false;
             let ob;
             let branchToastShown = false;
@@ -287,12 +288,12 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
                 ob = this.cm.getRecordBranch(branchId, recordId, this.catalogId)
                     .pipe(
                         catchError(error => {
-                            this.util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                            this.toast.createWarningToast(`Branch ${branchId} does not exist. Opening HEAD of MASTER.`, {timeOut: 5000});
                             branchToastShown = true;
                             return throwError(error);
                         }),
                         switchMap(branch => {
-                            upToDate = this.util.getPropertyId(branch, CATALOG + 'head') === commitId;
+                            upToDate = getPropertyId(branch, `${CATALOG}head`) === commitId;
                             return this.cm.getInProgressCommit(recordId, this.catalogId);
                         })
                     );
@@ -301,7 +302,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
                 ob = this.cm.getRecordVersion(tagId, recordId, this.catalogId)
                     .pipe(
                         catchError(() => {
-                            this.util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + this.util.condenseCommitId(commitId), {timeOut: 5000});
+                            this.toast.createWarningToast(`Tag ${tagId} does not exist. Opening commit ${condenseCommitId(commitId)}`, {timeOut: 5000});
                             return this.updateState({recordId, commitId});
                         }),
                         switchMap(() => this.cm.getInProgressCommit(recordId, this.catalogId))
@@ -325,7 +326,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
                     }),
                     catchError(() => {
                         if (!branchToastShown) {
-                            this.util.createWarningToast('Commit ' + this.util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeOut: 5000});
+                            this.toast.createWarningToast(`Commit ${condenseCommitId(commitId)} does not exist. Opening HEAD of MASTER.`, {timeOut: 5000});
                         }
                         return this.deleteState(recordId).pipe(switchMap(() => this.getLatestMaster(recordId)));
                     })
@@ -346,7 +347,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
             .pipe(
                 switchMap(masterBranch => {
                     branchId = get(masterBranch, '@id', '');
-                    commitId = get(masterBranch, '[\'' + CATALOG + 'head\'][0][\'@id\']', '');
+                    commitId = getPropertyId(masterBranch, `${CATALOG}head`);
                     return this.createState({recordId, commitId, branchId});
                 }),
                 map(() => {
@@ -396,7 +397,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
                 if (!isEmpty(conflicts)) {
                     conflicts.forEach(conflict => {
                         conflict.resolved = false;
-                        this.listItem.merge.conflicts.push(conflict as Conflict);
+                        this.listItem.merge.conflicts.push(conflict);
                     });
                     throw new Error('');
                 }

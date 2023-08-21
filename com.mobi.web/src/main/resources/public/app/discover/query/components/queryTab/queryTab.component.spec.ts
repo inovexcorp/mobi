@@ -37,7 +37,7 @@ import { ErrorDisplayComponent } from '../../../../shared/components/errorDispla
 import { ProgressSpinnerService } from '../../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import { PolicyEnforcementService } from '../../../../shared/services/policyEnforcement.service';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { YasguiService } from '../../../../shared/services/yasgui.service';
 import { DiscoverDatasetSelectComponent} from '../../../components/discoverDatasetSelect/discoverDatasetSelect.component';
 import { QueryTabComponent } from './queryTab.component';
@@ -50,7 +50,7 @@ describe('Query Tab component', function() {
     let yasguiStub: jasmine.SpyObj<YasguiService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     let yasguiInstance;
@@ -62,7 +62,7 @@ describe('Query Tab component', function() {
     const datasetRecordIRI = 'datasetRecordIRI';
     const fakeRequest = {
         resourceId: datasetRecordIRI,
-        actionId: POLICY + 'Read'
+        actionId: `${POLICY}Read`
     };
 
     beforeEach(async () => {
@@ -82,7 +82,7 @@ describe('Query Tab component', function() {
                 MockProvider(DiscoverStateService),
                 MockProvider(YasguiService),
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
             ]
         });
@@ -96,7 +96,7 @@ describe('Query Tab component', function() {
         yasguiStub = TestBed.inject(YasguiService) as jasmine.SpyObj<YasguiService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
 
@@ -134,7 +134,7 @@ describe('Query Tab component', function() {
         fixture = null;
         discoverStateStub = null;
         yasguiStub = null;
-        utilStub = null;
+        toastStub = null;
         policyEnforcementStub = null;
         yasguiInstance = null;
         tab = null;
@@ -194,8 +194,8 @@ describe('Query Tab component', function() {
                     expect(progressSpinnerStub.startLoadingForComponent).not.toHaveBeenCalled();
                     expect(yasguiStub.submitQuery).not.toHaveBeenCalled();
                     expect(progressSpinnerStub.finishLoadingForComponent).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                    expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('unless a deny is returned', fakeAsync(function() {
@@ -207,8 +207,8 @@ describe('Query Tab component', function() {
                     expect(progressSpinnerStub.startLoadingForComponent).not.toHaveBeenCalled();
                     expect(yasguiStub.submitQuery).not.toHaveBeenCalled();
                     expect(progressSpinnerStub.finishLoadingForComponent).not.toHaveBeenCalled();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('if a permit is returned', fakeAsync(function() {
@@ -220,8 +220,8 @@ describe('Query Tab component', function() {
                     expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.discoverQuery);
                     expect(yasguiStub.submitQuery).toHaveBeenCalledWith();
                     expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.discoverQuery);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(discoverStateStub.query.submitDisabled).toBeFalse();
                 }));
             });
@@ -234,7 +234,7 @@ describe('Query Tab component', function() {
                 expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.discoverQuery);
                 expect(yasguiStub.submitQuery).toHaveBeenCalledWith();
                 expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.discoverQuery);
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(discoverStateStub.query.submitDisabled).toBeFalse();
             }));
         });
@@ -249,8 +249,8 @@ describe('Query Tab component', function() {
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith(fakeRequest);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                    expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('unless a deny is returned', fakeAsync(function() {
@@ -259,8 +259,8 @@ describe('Query Tab component', function() {
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith(fakeRequest);
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(discoverStateStub.query.submitDisabled).toBeTrue();
                 }));
                 it('if a permit is returned', fakeAsync(function() {
@@ -269,8 +269,8 @@ describe('Query Tab component', function() {
                     tick();
                     expect(component.createPepReadRequest).toHaveBeenCalledWith(datasetRecordIRI);
                     expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith(fakeRequest);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                    expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                     expect(discoverStateStub.query.submitDisabled).toBeFalse();
                 }));
             });
@@ -279,17 +279,17 @@ describe('Query Tab component', function() {
                 component.permissionCheck(undefined);
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(component.createPepReadRequest).toHaveBeenCalled();
-                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalled();
-                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(utilStub.createWarningToast).not.toHaveBeenCalled();
+                expect(component.createPepReadRequest).toHaveBeenCalledWith('http://mobi.com/system-repo');
+                expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith(fakeRequest);
+                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                 expect(discoverStateStub.query.submitDisabled).toBeFalse();
             });
         });
         it('createPepReadRequest returns a request object for reading a dataset', function() {
             expect(component.createPepReadRequest(datasetRecordIRI)).toEqual({
                 resourceId: datasetRecordIRI,
-                actionId: POLICY + 'Read'
+                actionId: `${POLICY}Read`
             });
         });
         describe('setValues should initialize', function() {

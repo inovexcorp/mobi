@@ -30,7 +30,7 @@ import { DCTERMS, OWL, RDFS } from '../../../prefixes';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { REGEX } from '../../../constants';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 
@@ -57,27 +57,27 @@ interface CharacteristicI {
 export class CreateObjectPropertyOverlayComponent implements OnInit {
     characteristics: CharacteristicI[] = [
         {
-            typeIRI: OWL + 'FunctionalProperty',
+            typeIRI: `${OWL}FunctionalProperty`,
             displayText: 'Functional Property',
         },
         {
-            typeIRI: OWL + 'AsymmetricProperty',
+            typeIRI: `${OWL}AsymmetricProperty`,
             displayText: 'Asymmetric Property',
         },
         {
-            typeIRI: OWL + 'SymmetricProperty',
+            typeIRI: `${OWL}SymmetricProperty`,
             displayText: 'Symmetric Property',
         },
         {
-            typeIRI: OWL + 'TransitiveProperty',
+            typeIRI: `${OWL}TransitiveProperty`,
             displayText: 'Transitive Property',
         },
         {
-            typeIRI: OWL + 'ReflexiveProperty',
+            typeIRI: `${OWL}ReflexiveProperty`,
             displayText: 'Reflexive Property',
         },
         {
-            typeIRI: OWL + 'IrreflexiveProperty',
+            typeIRI: `${OWL}IrreflexiveProperty`,
             displayText: 'Irreflexive Property',
         }
     ];
@@ -101,8 +101,7 @@ export class CreateObjectPropertyOverlayComponent implements OnInit {
     constructor(private fb: UntypedFormBuilder,
         private dialogRef: MatDialogRef<CreateObjectPropertyOverlayComponent>, 
         public os: OntologyStateService,
-        private camelCasePipe: CamelCasePipe,
-        private splitIRIPipe: SplitIRIPipe) {}
+        private camelCasePipe: CamelCasePipe) {}
 
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
@@ -110,7 +109,7 @@ export class CreateObjectPropertyOverlayComponent implements OnInit {
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
-            const split = this.splitIRIPipe.transform(this.createForm.controls.iri.value);
+            const split = splitIRI(this.createForm.controls.iri.value);
             this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
         }
     }
@@ -122,16 +121,16 @@ export class CreateObjectPropertyOverlayComponent implements OnInit {
     get property(): JSONLDObject {
         const property = {
             '@id': this.createForm.controls.iri.value,
-            '@type': [OWL + 'ObjectProperty'],
-            [DCTERMS + 'title']: [{
+            '@type': [`${OWL}ObjectProperty`],
+            [`${DCTERMS}title`]: [{
                 '@value': this.createForm.controls.name.value
             }],
-            [DCTERMS + 'description']: [{
+            [`${DCTERMS}description`]: [{
                 '@value': this.createForm.controls.description.value
             }]
         };
-        if (property[DCTERMS + 'description'][0]['@value'] === '') {
-            unset(property, DCTERMS + 'description');
+        if (property[`${DCTERMS}description`][0]['@value'] === '') {
+            unset(property, `${DCTERMS}description`);
         }
         this.createForm.controls.characteristics.value.forEach((val, index) => {
             if (val) {
@@ -140,13 +139,13 @@ export class CreateObjectPropertyOverlayComponent implements OnInit {
         });
         this.os.addLanguageToNewEntity(property, this.createForm.controls.language.value);
         if (this.selectedDomains.length) {
-            property[RDFS + 'domain'] = this.selectedDomains.map(iri => ({'@id': iri}));
+            property[`${RDFS}domain`] = this.selectedDomains.map(iri => ({'@id': iri}));
         }
         if (this.selectedRanges.length) {
-            property[RDFS + 'range'] = this.selectedRanges.map(iri => ({'@id': iri}));
+            property[`${RDFS}range`] = this.selectedRanges.map(iri => ({'@id': iri}));
         }
         if (this.selectedSubProperties.length) {
-            property[RDFS + 'subPropertyOf'] = this.selectedSubProperties;
+            property[`${RDFS}subPropertyOf`] = this.selectedSubProperties;
         }
         return property;
     }

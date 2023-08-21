@@ -36,7 +36,7 @@ import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { DCTERMS } from '../../../prefixes';
 import { EditGroupInfoOverlayComponent } from './editGroupInfoOverlay.component';
 
 describe('Edit Group Info Overlay component', function() {
@@ -46,7 +46,6 @@ describe('Edit Group Info Overlay component', function() {
     let userStateStub: jasmine.SpyObj<UserStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<EditGroupInfoOverlayComponent>>;
-    let utilStub: jasmine.SpyObj<UtilService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -65,7 +64,6 @@ describe('Edit Group Info Overlay component', function() {
             providers: [
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
-                MockProvider(UtilService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         }).compileComponents();
@@ -73,7 +71,6 @@ describe('Edit Group Info Overlay component', function() {
         userStateStub = TestBed.inject(UserStateService) as jasmine.SpyObj<UserStateService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as  jasmine.SpyObj<MatDialogRef<EditGroupInfoOverlayComponent>>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         userStateStub.selectedGroup = {
             jsonld: {
                 '@id': 'id',
@@ -98,7 +95,6 @@ describe('Edit Group Info Overlay component', function() {
         userManagerStub = null;
         userStateStub = null;
         matDialogRef = null;
-        utilStub = null;
     });
 
     it('initializes with the correct values', function() {
@@ -110,15 +106,14 @@ describe('Edit Group Info Overlay component', function() {
                 userManagerStub.groups = [userStateStub.selectedGroup];
                 this.newGroup = Object.assign({}, userStateStub.selectedGroup);
                 this.newGroup.description = 'New';
+                this.newGroup.jsonld[`${DCTERMS}description`] = [{ '@value': this.newGroup.description }];
                 component.editGroupInfoForm.controls.description.setValue(this.newGroup.description);
             });
             it('unless an error occurs', fakeAsync(function() {
                 userManagerStub.updateGroup.and.returnValue(throwError('Error message'));
                 component.set();
                 tick();
-                expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(userStateStub.selectedGroup.jsonld, 'description', this.newGroup.description);
                 expect(userManagerStub.updateGroup).toHaveBeenCalledWith(userStateStub.selectedGroup.title, this.newGroup);
-                expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(this.newGroup.jsonld, 'description', this.newGroup.description);
                 expect(component.errorMessage).toBe('Error message');
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
@@ -127,7 +122,6 @@ describe('Edit Group Info Overlay component', function() {
                 component.set();
                 tick();
                 expect(userManagerStub.updateGroup).toHaveBeenCalledWith(userStateStub.selectedGroup.title, this.newGroup);
-                expect(utilStub.updateDctermsValue).toHaveBeenCalledWith(this.newGroup.jsonld, 'description', this.newGroup.description);
                 expect(component.errorMessage).toBe('');
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));

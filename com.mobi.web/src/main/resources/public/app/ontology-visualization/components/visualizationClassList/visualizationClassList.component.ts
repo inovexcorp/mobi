@@ -37,7 +37,8 @@ import { OnClassToggledEvent } from '../../interfaces/classList.interface';
 import { ControlRecordI, GroupedRecord } from '../../classes/controlRecords';
 
 /**
- * @class VisualizationClassListComponent
+ * @class ontology-visualization.VisualizationClassListComponent
+ * 
  * Dump Component for displaying the classes for an ontology
  * Emits events to the parent class
  */

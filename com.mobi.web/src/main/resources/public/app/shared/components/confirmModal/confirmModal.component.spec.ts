@@ -102,13 +102,13 @@ describe('Confirm Modal component', function() {
         const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
         cancelButton.triggerEventHandler('click', {});
         fixture.detectChanges();
-        expect(component.deny).toHaveBeenCalled();
+        expect(component.deny).toHaveBeenCalledWith();
     });
     it('should call add when the submit button is clicked', function() {
         spyOn(component, 'confirm');
         const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.confirm).toHaveBeenCalled();
+        expect(component.confirm).toHaveBeenCalledWith();
     });
 });

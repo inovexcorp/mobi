@@ -68,7 +68,7 @@ export class UserAccessControlsComponent implements OnInit {
     @ViewChild('userInput', { read: MatAutocompleteTrigger, static: true }) userTrigger: MatAutocompleteTrigger;
     @ViewChild('groupInput', { read: MatAutocompleteTrigger, static: true }) groupTrigger: MatAutocompleteTrigger;
 
-    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + FOAF + 'member' + '>') + ')';
+    groupAttributeId = `http://mobi.com/policy/prop-path(${encodeURIComponent('^<' + FOAF + 'member>')})`;
     userRole = 'http://mobi.com/roles/user';
 
     userSearchControl: UntypedFormControl = new UntypedFormControl();
@@ -179,7 +179,7 @@ export class UserAccessControlsComponent implements OnInit {
         if (this.item.everyone) {
             if (!this.ruleId) {
                 set(this.item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
-                this.addMatch(this.userRole, USER + 'hasUserRole', this.item.policy);
+                this.addMatch(this.userRole, `${USER}hasUserRole`, this.item.policy);
             }
             this.item.selectedUsers = [];
             this.item.selectedGroups = [];
@@ -226,12 +226,12 @@ export class UserAccessControlsComponent implements OnInit {
                 AttributeValue: {
                     content: [value],
                     otherAttributes: {},
-                    DataType: XSD + 'string'
+                    DataType: `${XSD}string`
                 },
                 AttributeDesignator: {
                     Category: this.pm.subjectCategory,
                     AttributeId: id,
-                    DataType: XSD + 'string',
+                    DataType: `${XSD}string`,
                     MustBePresent: true
                 },
                 MatchId: this.pm.stringEqual

@@ -21,17 +21,17 @@
  * #L%
  */
 import { get, chunk, intersection, find, concat, forEach, sortBy } from 'lodash';
-import { first, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { CATALOG, OWL, SKOS } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { Difference } from '../../../shared/models/difference.class';
+import { getDctermsValue, getPropertyId, isBlankNodeId, replacePropertyId } from '../../../shared/utility';
 
 export interface ChangesItem {
     id: string,
@@ -65,13 +65,13 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
     @Input() difference: Difference;
 
     types = [
-        OWL + 'Class',
-        OWL + 'ObjectProperty',
-        OWL + 'DatatypeProperty',
-        OWL + 'AnnotationProperty',
-        OWL + 'NamedIndividual',
-        SKOS + 'Concept',
-        SKOS + 'ConceptScheme'
+        `${OWL}Class`,
+        `${OWL}ObjectProperty`,
+        `${OWL}DatatypeProperty`,
+        `${OWL}AnnotationProperty`,
+        `${OWL}NamedIndividual`,
+        `${SKOS}Concept`,
+        `${SKOS}ConceptScheme`
     ];
     list: ChangesItem[] = [];
     showList: ChangesItem[] = [];
@@ -85,8 +85,7 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
     error = '';
     chunks = [];
 
-    constructor(public os: OntologyStateService, private om: OntologyManagerService, private cm: CatalogManagerService,
-        private util: UtilService) {}
+    constructor(public os: OntologyStateService, private cm: CatalogManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -111,7 +110,7 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
             disableAll: this._hasSpecificType(mergedInProgressCommitsMap[id], id),
             showFull: false,
             resource: undefined,
-            isBlankNode: this.util.isBlankNodeId(id)
+            isBlankNode: isBlankNodeId(id)
         }));
         this.list = sortBy(this.list, 'entityName');
         this.showList = this._getList();
@@ -126,15 +125,15 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
                 const commitId = get(headCommit, 'commit[\'@id\']', '');
                 return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, commitId);
             }))
-            .subscribe(() => this.util.createSuccessToast('Your ontology has been updated.'), error => this.util.createErrorToast(error));
+            .subscribe(() => this.toast.createSuccessToast('Your ontology has been updated.'), error => this.toast.createErrorToast(error));
     }
     restoreBranchWithUserBranch(): void {
         const userBranchId = this.os.listItem.versionedRdfRecord.branchId;
         const userBranch = find(this.os.listItem.branches, {'@id': userBranchId});
-        const createdFromId = this.util.getPropertyId(userBranch, CATALOG + 'createdFrom');
+        const createdFromId = getPropertyId(userBranch, `${CATALOG}createdFrom`);
         const branchConfig = {
-            title: this.util.getDctermsValue(userBranch, 'title'),
-            description: this.util.getDctermsValue(userBranch, 'description')
+            title: getDctermsValue(userBranch, 'title'),
+            description: getDctermsValue(userBranch, 'description')
         };
 
         let createdBranchId;
@@ -147,7 +146,7 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
             switchMap((branch: JSONLDObject) => {
                 this.os.listItem.branches.push(branch);
                 this.os.listItem.versionedRdfRecord.branchId = branch['@id'];
-                const commitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                const commitId = getPropertyId(branch, `${CATALOG}head`);
                 return this.os.updateState({recordId: this.os.listItem.versionedRdfRecord.recordId, commitId, branchId: createdBranchId});
             }),
             switchMap(() => this.cm.deleteRecordBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId, localCatalogId)),
@@ -155,22 +154,22 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
             .subscribe(() => {
                 this.os.removeBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId).subscribe();
                 this._changeUserBranchesCreatedFrom(createdFromId, createdBranchId);
-                this.util.createSuccessToast('Branch has been restored with changes.');
-            }, error => this.util.createErrorToast(error));
+                this.toast.createSuccessToast('Branch has been restored with changes.');
+            }, error => this.toast.createErrorToast(error));
     }
     mergeUserBranch(): void {
         const branch = find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId});
-        this.os.listItem.merge.target = find(this.os.listItem.branches, {'@id': this.util.getPropertyId(branch, CATALOG + 'createdFrom')});
+        this.os.listItem.merge.target = find(this.os.listItem.branches, {'@id': getPropertyId(branch, `${CATALOG}createdFrom`)});
         this.os.listItem.merge.checkbox = true;
         this.os.checkConflicts()
             .subscribe(() => {
                 this.os.merge()
                     .subscribe(() => {
                         this.os.resetStateTabs();
-                        this.util.createSuccessToast('Changes have been pulled successfully');
+                        this.toast.createSuccessToast('Changes have been pulled successfully');
                         this.os.cancelMerge();
                     }, () => {
-                        this.util.createErrorToast('Pulling changes failed');
+                        this.toast.createErrorToast('Pulling changes failed');
                         this.os.cancelMerge();
                     });
             }, () => this.os.listItem.merge.active = true);
@@ -179,12 +178,12 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
         this.cm.deleteInProgressCommit(this.os.listItem.versionedRdfRecord.recordId, this.catalogId)
             .pipe(switchMap(() => {
                 this.os.resetStateTabs();
-                return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.upToDate).pipe(first()).toPromise();
+                return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.upToDate);
             }))
             .subscribe(() => {
                 this.os.clearInProgressCommit();
                 this.index = 0;
-            }, errorMessage => this.util.createErrorToast(errorMessage));
+            }, errorMessage => this.toast.createErrorToast(errorMessage));
     }
     getMoreResults(): void {
         this.index++;
@@ -200,7 +199,7 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
                 .subscribe((resources: JSONLDObject[]) => {
                     item.resource = resources.find(obj => obj['@id'] === item.id);
                 }, () => {
-                    this.util.createErrorToast('Error retrieving full entity information');
+                    this.toast.createErrorToast('Error retrieving full entity information');
                 });
         } else {
             item.resource = undefined;
@@ -210,11 +209,11 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
     private _changeUserBranchesCreatedFrom(oldCreatedFromId: string, newCreatedFromId: string): void {
         forEach(this.os.listItem.branches, branch => {
             if (this.cm.isUserBranch(branch)) {
-                const currentCreatedFromId = this.util.getPropertyId(branch, CATALOG + 'createdFrom');
+                const currentCreatedFromId = getPropertyId(branch, `${CATALOG}createdFrom`);
                 if (currentCreatedFromId === oldCreatedFromId) {
-                    this.util.replacePropertyId(branch, CATALOG + 'createdFrom', this.util.getPropertyId(branch, CATALOG + 'createdFrom'), newCreatedFromId);
+                    replacePropertyId(branch, `${CATALOG}createdFrom`, getPropertyId(branch, `${CATALOG}createdFrom`), newCreatedFromId);
                     this.cm.updateRecordBranch(branch['@id'], this.os.listItem.versionedRdfRecord.recordId, this.catalogId, branch)
-                        .subscribe(() => this.util.createSuccessToast('Updated referenced branch.'), error => this.util.createErrorToast(error));
+                        .subscribe(() => this.toast.createSuccessToast('Updated referenced branch.'), error => this.toast.createErrorToast(error));
                 }
             }
         });

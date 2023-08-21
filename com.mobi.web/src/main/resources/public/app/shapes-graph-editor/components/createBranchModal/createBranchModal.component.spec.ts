@@ -39,9 +39,9 @@ import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { CreateBranchModal } from './createBranchModal.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { CreateBranchModal } from './createBranchModal.component';
 
 describe('Create branch component', function() {
     let component: CreateBranchModal;
@@ -50,7 +50,7 @@ describe('Create branch component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateBranchModal>>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -73,7 +73,7 @@ describe('Create branch component', function() {
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(ShapesGraphStateService)
             ]
         }).compileComponents();
@@ -88,15 +88,11 @@ describe('Create branch component', function() {
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
         shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'commitId';
-        shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
+        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(of(null));
 
         catalogManagerStub.createRecordBranch.and.returnValue(of('newBranchId'));
 
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-    });
-
-    beforeEach(function() {
-        
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -126,16 +122,16 @@ describe('Create branch component', function() {
                     expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith('recordId', 'catalog', this.branchConfig, 'commitId');
                     expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('recordId', 'newBranchId', 'commitId', undefined, this.branchConfig.title);
                     expect(matDialogRef.close).toHaveBeenCalledWith(true);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless an error occurs', async function() {
-                    shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
+                    shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(throwError('Error'));
                     await component.createBranch();
 
                     expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith('recordId', 'catalog', this.branchConfig, 'commitId');
                     expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('recordId', 'newBranchId', 'commitId', undefined, this.branchConfig.title);
                     expect(matDialogRef.close).toHaveBeenCalledWith(false);
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
                 });
             });
             it('unless an error occurs', async function() {
@@ -145,7 +141,7 @@ describe('Create branch component', function() {
                 expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith('recordId', 'catalog', this.branchConfig, 'commitId');
                 expect(shapesGraphStateStub.changeShapesGraphVersion).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith(false);
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
             });
         });
     });
@@ -169,6 +165,6 @@ describe('Create branch component', function() {
         const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.createBranch).toHaveBeenCalled();
+        expect(component.createBranch).toHaveBeenCalledWith();
     });
 });

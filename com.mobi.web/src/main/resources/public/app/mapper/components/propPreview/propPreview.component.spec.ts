@@ -23,16 +23,15 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockProvider, MockPipe } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { RDFS } from '../../../prefixes';
 import { PropPreviewComponent } from './propPreview.component';
 
 describe('Prop Preview component', function() {
@@ -40,15 +39,13 @@ describe('Prop Preview component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<PropPreviewComponent>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
     
     const classId = 'classId';
     const propId = 'propId';
-    const range = 'range';
     const propObj = {
-        '@id': propId
+        '@id': propId,
+        [`${RDFS}range`]: [{ '@id': classId }]
     };
     const mappingClass: MappingClass = {
         classObj: {'@id': classId},
@@ -64,8 +61,6 @@ describe('Prop Preview component', function() {
             ],
             providers: [
                 MockProvider(MapperStateService),
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
-                MockProvider(UtilService),
                 MockProvider(OntologyManagerService),
             ]
         });
@@ -76,19 +71,11 @@ describe('Prop Preview component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
 
         mapperStateStub.availableClasses = [mappingClass];
         ontologyManagerStub.getEntityName.and.returnValue('Name');
         ontologyManagerStub.getEntityDescription.and.returnValue('Description');
-        utilStub.getPropertyId.and.returnValue(classId);
-        splitIRIStub.transform.and.returnValue({
-            begin: '',
-            then: '',
-            end: range
-        });
     });
 
     afterEach(function() {
@@ -97,9 +84,7 @@ describe('Prop Preview component', function() {
         element = null;
         fixture = null;
         mapperStateStub = null;
-        splitIRIStub = null;
         ontologyManagerStub = null;
-        utilStub = null;
     });
 
     describe('should set the correct variables when the propObj changes', function() {
@@ -110,8 +95,7 @@ describe('Prop Preview component', function() {
             expect(ontologyManagerStub.getEntityDescription).toHaveBeenCalledWith(propObj);
             expect(component.name).toEqual('Name');
             expect(component.description).toEqual('Description');
-            expect(component.rangeName).toEqual(range);
-            expect(splitIRIStub.transform).toHaveBeenCalledWith(classId);
+            expect(component.rangeName).toEqual(classId);
             expect(component.rangeIsDeprecated).toBeFalse();
             expect(component.rangeId).toEqual(classId);
         });
@@ -128,7 +112,6 @@ describe('Prop Preview component', function() {
                 expect(component.rangeName).toEqual(mappingClass.name);
                 expect(component.rangeIsDeprecated).toBeTrue();
                 expect(component.rangeId).toEqual(classId);
-                expect(splitIRIStub.transform).not.toHaveBeenCalled();
             });
             it('and the range does not exist', function() {
                 mapperStateStub.availableClasses = [];
@@ -140,7 +123,6 @@ describe('Prop Preview component', function() {
                 expect(component.rangeName).toEqual('(No range)');
                 expect(component.rangeIsDeprecated).toBeFalse();
                 expect(component.rangeId).toEqual(classId);
-                expect(splitIRIStub.transform).not.toHaveBeenCalled();
             });
         });
     });

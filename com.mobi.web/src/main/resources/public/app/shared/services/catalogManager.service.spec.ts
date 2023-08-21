@@ -23,7 +23,7 @@
 import { HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { find } from 'lodash';
+import { cloneDeep, find } from 'lodash';
 import { MockProvider } from 'ng-mocks';
 import { Observable, of, throwError } from 'rxjs';
 
@@ -34,12 +34,10 @@ import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { SortOption } from '../models/sortOption.interface';
 import { CATALOG, DCTERMS } from '../../prefixes';
-import { UtilService } from './util.service';
 import { CatalogManagerService } from './catalogManager.service';
 
 describe('Catalog Manager service', function() {
     let service: CatalogManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
@@ -50,9 +48,9 @@ describe('Catalog Manager service', function() {
     const distributionId = 'http://mobi.com/distributions/test';
     const versionId = 'http://mobi.com/versions/test';
     const branchId = 'http://mobi.com/branches/test';
-    const commitId = 'http://mobi.com/commits/test';
+    const commitId = 'http://mobi.com/commits/1234567890';
     const emptyObj: JSONLDObject = {'@id': '', '@type': []};
-    const sortOption: SortOption = {field: 'http://purl.org/dc/terms/title', asc: false, label: 'title'};
+    const sortOption: SortOption = {field: `${DCTERMS}title`, asc: false, label: 'title'};
     const difference: Difference = new Difference();
     const commitDifference: CommitDifference = new CommitDifference();
     commitDifference.commit = emptyObj;
@@ -62,48 +60,21 @@ describe('Catalog Manager service', function() {
             imports: [ HttpClientTestingModule ],
             providers: [
                 CatalogManagerService,
-                MockProvider(UtilService),
                 MockProvider(ProgressSpinnerService),
             ]
         });
 
         service = TestBed.inject(CatalogManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
-        utilStub.paginatedConfigToParams.and.callFake(x => Object.assign({}, x) || {});
         progressSpinnerStub.track.and.callFake((ob) => ob);
-        utilStub.trackedRequest.and.callFake((ob, tracked) => tracked ? ob : progressSpinnerStub.track(ob));
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
-        utilStub.createHttpParams.and.callFake(params => {
-            let httpParams: HttpParams = new HttpParams();
-            Object.keys(params).forEach(param => {
-                if (params[param] !== undefined && params[param] !== null && params[param] !== '') {
-                    if (Array.isArray(params[param])) {
-                        params[param].forEach(el => {
-                            httpParams = httpParams.append(param, '' + el);
-                        });
-                    } else {
-                        httpParams = httpParams.append(param, '' + params[param]);
-                    }
-                }
-            });
-        
-            return httpParams;
-        });
+        progressSpinnerStub.trackedRequest.and.callFake((ob, tracked) => tracked ? ob : progressSpinnerStub.track(ob));
     });
 
     afterEach(function() {
         cleanStylesFromDOM();
         service = null;
-        utilStub = null;
         httpMock = null;
         progressSpinnerStub = null;
     });
@@ -160,12 +131,12 @@ describe('Catalog Manager service', function() {
                 const localCatalog = {
                     '@id': '',
                     '@type': [],
-                    [DCTERMS + 'title']: [{'@value': 'Mobi Catalog (Local)'}]
+                    [`${DCTERMS}title`]: [{'@value': 'Mobi Catalog (Local)'}]
                 };
                 const distributedCatalog = {
                     '@id': '',
                     '@type': [],
-                    [DCTERMS + 'title']: [{'@value': 'Mobi Catalog (Distributed)'}]
+                    [`${DCTERMS}title`]: [{'@value': 'Mobi Catalog (Distributed)'}]
                 };
                 service.initialize()
                     .subscribe(() => {
@@ -188,7 +159,7 @@ describe('Catalog Manager service', function() {
             .subscribe(value => {
                 expect(value).toEqual([]);
             }, () => fail('Observable should have resolved'));
-        const request = httpMock.expectOne({url: service.prefix + '/record-types', method: 'GET'});
+        const request = httpMock.expectOne({url: `${service.prefix}/record-types`, method: 'GET'});
         request.flush([]);
     });
     it('should get the IRIs for all sort options', function() {
@@ -196,12 +167,12 @@ describe('Catalog Manager service', function() {
             .subscribe(value => {
                 expect(value).toEqual([]);
             }, () => fail('Observable should have resolved'));
-        const request = httpMock.expectOne({url: service.prefix + '/sort-options', method: 'GET'});
+        const request = httpMock.expectOne({url: `${service.prefix}/sort-options`, method: 'GET'});
         request.flush([]);
     });
     describe('should get a page of results based on the passed URL', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/local/records';
+            this.url = `${service.prefix}/local/records`;
         });
         it('unless there is an error', function() {
             service.getResultsPage(this.url)
@@ -223,7 +194,7 @@ describe('Catalog Manager service', function() {
     describe('should retrieve a list of Keyword', function() {
         beforeEach(function() {
             this.promiseId = 'id';
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/keywords';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/keywords`;
             this.config = {
                 limit: 10,
                 offset: 0
@@ -297,13 +268,15 @@ describe('Catalog Manager service', function() {
     describe('should retrieve a list of Records', function() {
         beforeEach(function() {
             this.promiseId = 'id';
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records`;
             this.config = {
                 limit: 10,
                 offset: 0,
-                sort: 'http://purl.org/dc/terms/issued',
-                ascending: true,
-                type: CATALOG + 'Record',
+                sortOption: {
+                    field: `${DCTERMS}issued`,
+                    asc: true,
+                },
+                type: `${CATALOG}Record`,
                 searchText: 'Text',
                 keywords: ['A', 'B'],
                 creators: ['urn:userA', 'urn:userB'],
@@ -333,8 +306,8 @@ describe('Catalog Manager service', function() {
                     expect(request.request.params.getAll('keywords')).toEqual(this.config.keywords);
                     expect(request.request.params.getAll('creators')).toEqual(this.config.creators);
                     expect(request.request.params.get('type')).toEqual(this.config.type);
-                    expect(request.request.params.get('sort')).toEqual(this.config.sort);
-                    expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
+                    expect(request.request.params.get('sort')).toEqual(this.config.sortOption.field);
+                    expect(request.request.params.get('ascending')).toEqual('' + this.config.sortOption.asc);
                     request.flush([]);
                 });
                 it('and no config passed', function() {
@@ -369,8 +342,8 @@ describe('Catalog Manager service', function() {
                     expect(request.request.params.getAll('keywords')).toEqual(this.config.keywords);
                     expect(request.request.params.getAll('creators')).toEqual(this.config.creators);
                     expect(request.request.params.get('type')).toEqual(this.config.type);
-                    expect(request.request.params.get('sort')).toEqual(this.config.sort);
-                    expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
+                    expect(request.request.params.get('sort')).toEqual(this.config.sortOption.field);
+                    expect(request.request.params.get('ascending')).toEqual('' + this.config.sortOption.asc);
                     request.flush([]);
                 });
                 it('and no config passed', function() {
@@ -394,7 +367,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a Record', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}`;
         });
         it('unless an error occurs', function() {
             service.getRecord(recordId, catalogId)
@@ -415,9 +388,9 @@ describe('Catalog Manager service', function() {
     });
     describe('should create a new Record', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records`;
             this.recordConfig = {
-                type: CATALOG + 'Record',
+                type: `${CATALOG}Record`,
                 title: 'Title',
                 description: 'Description',
                 keywords: ['keyword0', 'keyword1']
@@ -463,7 +436,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}`;
         });
         it('unless an error occurs', function() {
             service.updateRecord(recordId, catalogId, [emptyObj])
@@ -486,7 +459,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should delete a Record', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}`;
         });
         it('unless an error occurs', function() {
             service.deleteRecord(recordId, catalogId)
@@ -510,10 +483,12 @@ describe('Catalog Manager service', function() {
             this.config = {
                 limit: 10,
                 offset: 0,
-                sort: 'http://purl.org/dc/terms/issued',
-                ascending: true
+                sortOption: {
+                    field: `${DCTERMS}issued`,
+                    asc: true
+                },
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions`;
             service.sortOptions = [sortOption];
         });
         it('unless an error occurs', function() {
@@ -532,8 +507,8 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
             expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
-            expect(request.request.params.get('sort')).toEqual(this.config.sort);
-            expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
+            expect(request.request.params.get('sort')).toEqual(this.config.sortOption.field);
+            expect(request.request.params.get('ascending')).toEqual('' + this.config.sortOption.asc);
             request.flush([]);
         });
         it('without any config passed', function() {
@@ -551,7 +526,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a Record Distribution', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions/${encodeURIComponent(distributionId)}`;
         });
         it('unless an error occurs', function() {
             service.getRecordDistribution(distributionId, recordId, catalogId)
@@ -579,7 +554,7 @@ describe('Catalog Manager service', function() {
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions`;
         });
         it('unless an error occurs', function() {
             service.createRecordDistribution(recordId, catalogId, this.distributionConfig)
@@ -625,7 +600,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record Distribution', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions/${encodeURIComponent(distributionId)}`;
         });
         it('unless an error occurs', function() {
             service.updateRecordDistribution(distributionId, recordId, catalogId, emptyObj)
@@ -648,7 +623,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should delete a Record Distribution', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/distributions/${encodeURIComponent(distributionId)}`;
         });
         it('unless an error occurs', function() {
             service.deleteRecordDistribution(distributionId, recordId, catalogId)
@@ -672,10 +647,12 @@ describe('Catalog Manager service', function() {
             this.config = {
                 limit: 10,
                 offset: 0,
-                sort: 'http://purl.org/dc/terms/issued',
-                ascending: true
+                sortOption: {
+                    field: `${DCTERMS}issued`,
+                    asc: true
+                },
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions`;
             service.sortOptions = [sortOption];
         });
         it('unless an error occurs', function() {
@@ -694,8 +671,8 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
             expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
-            expect(request.request.params.get('sort')).toEqual(this.config.sort);
-            expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
+            expect(request.request.params.get('sort')).toEqual(this.config.sortOption.field);
+            expect(request.request.params.get('ascending')).toEqual('' + this.config.sortOption.asc);
             request.flush([]);
         });
         it('without any config', function() {
@@ -713,7 +690,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve the latest Record Version', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/latest`;
         });
         it('unless an error occurs', function() {
             service.getRecordLatestVersion(recordId, catalogId)
@@ -734,7 +711,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a Record Version', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}`;
         });
         it('unless an error occurs', function() {
             service.getRecordVersion(versionId, recordId, catalogId)
@@ -759,7 +736,7 @@ describe('Catalog Manager service', function() {
                 title: 'Title',
                 description: 'Description'
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions`;
         });
         it('unless an error occurs', function() {
             service.createRecordVersion(recordId, catalogId, this.versionConfig)
@@ -802,7 +779,7 @@ describe('Catalog Manager service', function() {
                 commitId: commitId,
                 iri: versionId
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/tags';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/tags`;
         });
         it('unless an error occurs', function() {
             service.createRecordTag(recordId, catalogId, this.tagConfig)
@@ -843,7 +820,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record Version', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}`;
         });
         it('unless an error occurs', function() {
             service.updateRecordVersion(versionId, recordId, catalogId, emptyObj)
@@ -866,7 +843,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should delete a Record Version', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}`;
         });
         it('unless an error occurs', function() {
             service.deleteRecordVersion(versionId, recordId, catalogId)
@@ -887,7 +864,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve the Commit of a Version', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/commit`;
         });
         it('unless an error occurs', function() {
             service.getVersionCommit(versionId, recordId, catalogId, 'jsonld')
@@ -922,10 +899,12 @@ describe('Catalog Manager service', function() {
             this.config = {
                 limit: 10,
                 offset: 0,
-                sort: 'http://purl.org/dc/terms/issued',
-                ascending: true
+                sortOption: {
+                    field: `${DCTERMS}issued`,
+                    asc: true
+                },
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions`;
             service.sortOptions = [sortOption];
         });
         it('unless an error occurs', function() {
@@ -944,8 +923,8 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
             expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
-            expect(request.request.params.get('sort')).toEqual(this.config.sort);
-            expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
+            expect(request.request.params.get('sort')).toEqual(this.config.sortOption.field);
+            expect(request.request.params.get('ascending')).toEqual('' + this.config.sortOption.asc);
             request.flush([]);
         });
         it('without any config', function() {
@@ -963,7 +942,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a Version Distribution', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions/` + encodeURIComponent(distributionId);
         });
         it('unless an error occurs', function() {
             service.getVersionDistribution(distributionId, versionId, recordId, catalogId)
@@ -991,7 +970,7 @@ describe('Catalog Manager service', function() {
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions`;
         });
         it('unless an error occurs', function() {
             service.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig)
@@ -1037,7 +1016,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Version Distribution', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions/` + encodeURIComponent(distributionId);
         });
         it('unless an error occurs', function() {
             service.updateVersionDistribution(distributionId, versionId, recordId, catalogId, emptyObj)
@@ -1060,7 +1039,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should delete a Version Distribution', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/versions/${encodeURIComponent(versionId)}/distributions/` + encodeURIComponent(distributionId);
         });
         it('unless an error occurs', function() {
             service.deleteVersionDistribution(distributionId, versionId, recordId, catalogId)
@@ -1081,12 +1060,14 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Record Branches', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches`;
             this.config = {
                 limit: 10,
                 offset: 0,
-                sort: 'http://purl.org/dc/terms/issued',
-                ascending: true
+                sortOption: {
+                    field: `${DCTERMS}issued`,
+                    asc: true
+                },
             };
             service.sortOptions = [sortOption];
         });
@@ -1107,8 +1088,8 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
             expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
-            expect(request.request.params.get('sort')).toEqual(this.config.sort);
-            expect(request.request.params.get('ascending')).toEqual('' + this.config.ascending);
+            expect(request.request.params.get('sort')).toEqual(this.config.sortOption.field);
+            expect(request.request.params.get('ascending')).toEqual('' + this.config.sortOption.asc);
             expect(request.request.params.get('applyUserFilter')).toEqual('true');
             request.flush([]);
         });
@@ -1128,7 +1109,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve the master Branch of a Record', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/master`;
         });
         it('unless an error occurs', function() {
             service.getRecordMasterBranch(recordId, catalogId)
@@ -1149,7 +1130,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a Record Branch', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`;
         });
         it('unless an error occurs', function() {
             service.getRecordBranch(branchId, recordId, catalogId)
@@ -1174,7 +1155,7 @@ describe('Catalog Manager service', function() {
                 title: 'Title',
                 description: 'Description'
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches`;
         });
         it('unless an error occurs', function() {
             service.createRecordBranch(recordId, catalogId, this.branchConfig, commitId)
@@ -1193,7 +1174,7 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTruthy();
             expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
-            expect((request.request.body as FormData).get('type').toString()).toEqual(CATALOG + 'Branch');
+            expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}Branch`);
             expect((request.request.body as FormData).get('commitId').toString()).toEqual(commitId);
             expect((request.request.body as FormData).get('description').toString()).toEqual(this.branchConfig.description);
             request.flush(branchId);
@@ -1207,7 +1188,7 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTruthy();
             expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
-            expect((request.request.body as FormData).get('type').toString()).toEqual(CATALOG + 'Branch');
+            expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}Branch`);
             expect((request.request.body as FormData).get('commitId').toString()).toEqual(commitId);
             expect((request.request.body as FormData).get('description')).toBeNull();
             request.flush(branchId);
@@ -1219,7 +1200,7 @@ describe('Catalog Manager service', function() {
                 title: 'Title',
                 description: 'Description'
             };
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches`;
             spyOn<any>(service, '_getRecordBranch').and.callFake(() => of(emptyObj));
             spyOn(service, 'updateRecordBranch').and.callFake(() => of(branchId));
         });
@@ -1250,8 +1231,8 @@ describe('Catalog Manager service', function() {
         });
         it('with a description', function() {
             const expectedBranch = Object.assign({}, emptyObj);
-            expectedBranch[CATALOG + 'head'] = [{'@id': commitId}];
-            expectedBranch[CATALOG + 'createdFrom'] = [{'@id': branchId}];
+            expectedBranch[`${CATALOG}head`] = [{'@id': commitId}];
+            expectedBranch[`${CATALOG}createdFrom`] = [{'@id': branchId}];
             service.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId)
                 .subscribe(response => {
                     expect(response).toEqual(branchId);
@@ -1261,7 +1242,7 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTruthy();
             expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
-            expect((request.request.body as FormData).get('type').toString()).toEqual(CATALOG + 'UserBranch');
+            expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}UserBranch`);
             expect((request.request.body as FormData).get('commitId')).toEqual(commitId);
             expect((request.request.body as FormData).get('description')).toEqual(this.branchConfig.description);
             request.flush(branchId);
@@ -1269,8 +1250,8 @@ describe('Catalog Manager service', function() {
         it('without a description', function() {
             delete this.branchConfig.description;
             const expectedBranch = Object.assign({}, emptyObj);
-            expectedBranch[CATALOG + 'head'] = [{'@id': commitId}];
-            expectedBranch[CATALOG + 'createdFrom'] = [{'@id': branchId}];
+            expectedBranch[`${CATALOG}head`] = [{'@id': commitId}];
+            expectedBranch[`${CATALOG}createdFrom`] = [{'@id': branchId}];
             service.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId)
                 .subscribe(response => {
                     expect(response).toEqual(branchId);
@@ -1280,7 +1261,7 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTruthy();
             expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
-            expect((request.request.body as FormData).get('type').toString()).toEqual(CATALOG + 'UserBranch');
+            expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}UserBranch`);
             expect((request.request.body as FormData).get('commitId')).toEqual(commitId);
             expect((request.request.body as FormData).get('description')).toBeNull();
             request.flush(branchId);
@@ -1288,7 +1269,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record Branch', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`;
         });
         it('unless an error occurs', function() {
             service.updateRecordBranch(branchId, recordId, catalogId, emptyObj)
@@ -1311,7 +1292,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should delete a Record Branch', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`;
         });
         it('unless an error occurs', function() {
             service.deleteRecordBranch(recordId, branchId, catalogId)
@@ -1332,7 +1313,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve Branch Commits', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits`;
         });
         it('unless an error occurs', function() {
             service.getBranchCommits(branchId, recordId, catalogId)
@@ -1362,7 +1343,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve Commit history', function() {
         beforeEach(function() {
-            this.url = service.commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
+            this.url = `${service.commitsPrefix}/${encodeURIComponent(commitId)}/history`;
         });
         describe('unless an error occurs', function() {
             it('with no targetId or entityId set', function() {
@@ -1471,7 +1452,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should create a new commit on a Branch', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits`;
         });
         it('unless an error occurs', function() {
             service.createBranchCommit(branchId, recordId, catalogId, 'test')
@@ -1494,7 +1475,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve the head Commit of a Branch', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/head`;
         });
         it('unless an error occurs', function() {
             service.getBranchHeadCommit(branchId, recordId, catalogId, 'jsonld')
@@ -1526,7 +1507,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a Commit', function() {
         beforeEach(function () {
-            this.url = service.commitsPrefix + '/' + encodeURIComponent(commitId);
+            this.url = `${service.commitsPrefix}/${encodeURIComponent(commitId)}`;
         });
         it('unless an error occurs', function() {
             service.getCommit(commitId, 'jsonld')
@@ -1558,7 +1539,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a Branch Commit', function() {
         beforeEach(function () {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId);
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/` + encodeURIComponent(commitId);
         });
         it('unless an error occurs', function() {
             service.getBranchCommit(commitId, branchId, recordId, catalogId, 'jsonld')
@@ -1590,7 +1571,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should get the difference between two commits', function() {
         beforeEach(function() {
-            this.url = service.commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference';
+            this.url = `${service.commitsPrefix}/${encodeURIComponent(commitId)}/difference`;
         });
         it('unless an error occurs', function() {
             service.getDifference(commitId, commitId, null, null, 'jsonld')
@@ -1655,7 +1636,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should get the difference for a specific entity on a commit', function() {
         beforeEach(function() {
-            this.url = service.commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference/' + encodeURI(entityId);
+            this.url = `${service.commitsPrefix}/${encodeURIComponent(commitId)}/difference/${encodeURI(entityId)}`;
         });
         it('unless an error occurs', function() {
             service.getDifferenceForSubject(entityId, commitId, 'jsonld')
@@ -1687,7 +1668,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should get the difference between two Branches', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/difference';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/difference`;
         });
         it('unless an error occurs', function() {
             service.getBranchDifference(branchId, branchId, recordId, catalogId, 'jsonld')
@@ -1722,7 +1703,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should get the conflicts between two Branches', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/conflicts`;
         });
         it('unless an error occurs', function() {
             service.getBranchConflicts(branchId, branchId, recordId, catalogId, 'jsonld')
@@ -1757,7 +1738,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should merge two Branches', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/conflicts/resolution`;
         });
         it('unless an error occurs', function() {
             service.mergeBranches(branchId, branchId, recordId, catalogId, difference)
@@ -1799,7 +1780,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve the compiled resource from a Branch Commit', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource`;
         });
         it('unless an error occurs', function() {
             service.getResource(commitId, branchId, recordId, catalogId, true, 'jsonld')
@@ -1834,7 +1815,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should download the compiled resource from a Branch Commit', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource`;
             spyOn(window, 'open');
         });
         it('with a optional params', function() {
@@ -1846,7 +1827,7 @@ describe('Catalog Manager service', function() {
                 }
             });
             service.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle', 'test');
-            expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
+            expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
         });
         it('without a optional params', function() {
             const params = new HttpParams({
@@ -1857,12 +1838,12 @@ describe('Catalog Manager service', function() {
                 }
             });
             service.downloadResource(commitId, branchId, recordId, catalogId);
-            expect(window.open).toHaveBeenCalledWith(this.url + '?' + params.toString());
+            expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
         });
     });
     describe('should create a new InProgressCommit for the logged-in User', function() {
         beforeEach(function () {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`;
         });
         it('unless an error occurs', function() {
             service.createInProgressCommit(recordId, catalogId)
@@ -1883,7 +1864,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve an InProgressCommit for the logged-in User', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`;
         });
         it('unless an error occurs', function() {
             service.getInProgressCommit(recordId, catalogId)
@@ -1904,7 +1885,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update an InProgressCommit for the logged-in User', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`;
         });
         it('unless an error occurs', function() {
             service.updateInProgressCommit(recordId, catalogId, difference)
@@ -1927,7 +1908,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should remove an InProgressCommit for the logged-in User', function() {
         beforeEach(function() {
-            this.url = service.prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`;
         });
         it('unless an error occurs', function() {
             service.deleteInProgressCommit(recordId, catalogId)
@@ -1948,9 +1929,9 @@ describe('Catalog Manager service', function() {
     });
     describe('should get an entity name', function() {
         it('if it has a title', function() {
-            const title = 'Title';
-            utilStub.getDctermsValue.and.returnValue(title);
-            expect(service.getEntityName(emptyObj)).toEqual(title);
+            const objClone = cloneDeep(emptyObj);
+            objClone[`${DCTERMS}title`] = [{ '@value': 'Title' }];
+            expect(service.getEntityName(objClone)).toEqual('Title');
         });
         it('if it does not have a title', function() {
             expect(service.getEntityName(emptyObj)).toEqual('(Anonymous)');
@@ -1958,58 +1939,58 @@ describe('Catalog Manager service', function() {
     });
     it('should test whether an entity is a Record', function() {
         expect(service.isRecord(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'Record');
+        emptyObj['@type'].push(`${CATALOG}Record`);
         expect(service.isRecord(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isRecord(emptyObj)).toEqual(true);
     });
     it('should test whether an entity is a VersionedRDFRecord', function() {
         expect(service.isVersionedRDFRecord(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'VersionedRDFRecord');
+        emptyObj['@type'].push(`${CATALOG}VersionedRDFRecord`);
         expect(service.isVersionedRDFRecord(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isVersionedRDFRecord(emptyObj)).toEqual(true);
     });
     it('should test whether an entity is a Distribution', function() {
         expect(service.isDistribution(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'Distribution');
+        emptyObj['@type'].push(`${CATALOG}Distribution`);
         expect(service.isDistribution(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isDistribution(emptyObj)).toEqual(true);
     });
     it('should test whether an entity is a Branch', function() {
         expect(service.isBranch(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'Branch');
+        emptyObj['@type'].push(`${CATALOG}Branch`);
         expect(service.isBranch(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isBranch(emptyObj)).toEqual(true);
     });
     it('should test whether an entity is a UserBranch', function() {
         expect(service.isUserBranch(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'UserBranch');
+        emptyObj['@type'].push(`${CATALOG}UserBranch`);
         expect(service.isUserBranch(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isUserBranch(emptyObj)).toEqual(true);
     });
     it('should test whether an entity is a Version', function() {
         expect(service.isVersion(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'Version');
+        emptyObj['@type'].push(`${CATALOG}Version`);
         expect(service.isVersion(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isVersion(emptyObj)).toEqual(true);
     });
     it('should test whether an entity is a Tag', function() {
         expect(service.isTag(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'Tag');
+        emptyObj['@type'].push(`${CATALOG}Tag`);
         expect(service.isTag(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isTag(emptyObj)).toEqual(true);
     });
     it('should test whether an entity is a Commit', function() {
         expect(service.isCommit(emptyObj)).toEqual(false);
-        emptyObj['@type'].push(CATALOG + 'Commit');
+        emptyObj['@type'].push(`${CATALOG}Commit`);
         expect(service.isCommit(emptyObj)).toEqual(true);
-        emptyObj['@type'].push(CATALOG + 'Test');
+        emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isCommit(emptyObj)).toEqual(true);
     });
 });

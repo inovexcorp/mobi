@@ -33,7 +33,7 @@ import { MarkdownEditorComponent } from '../../../shared/components/markdownEdit
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ReplyCommentComponent } from './replyComment.component';
 
 describe('Reply Comment component', function() {
@@ -41,7 +41,7 @@ describe('Reply Comment component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ReplyCommentComponent>;
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const request: MergeRequest = {
         jsonld: {'@id': 'request', '@type': []},
@@ -62,7 +62,7 @@ describe('Reply Comment component', function() {
             ],
             providers: [
                 MockProvider(MergeRequestManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ],
         });
     });
@@ -72,7 +72,7 @@ describe('Reply Comment component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -81,7 +81,7 @@ describe('Reply Comment component', function() {
         element = null;
         fixture = null;
         mergeRequestManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('controller methods', function() {
@@ -108,7 +108,7 @@ describe('Reply Comment component', function() {
                     expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(request.jsonld['@id']);
                     expect(component.request.comments).toEqual(comments);
                     expect(component.requestChange.emit).toHaveBeenCalledWith(component.request);
-                    expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getComments rejects', fakeAsync(function() {
                     mergeRequestManagerStub.getComments.and.returnValue(throwError('Error message'));
@@ -119,7 +119,7 @@ describe('Reply Comment component', function() {
                     expect(component.replyComment).toEqual('');
                     expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(request.jsonld['@id']);
                     expect(component.request.comments).toBeUndefined();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
                 }));
             });
             it('unless createComment rejects', fakeAsync(function() {
@@ -131,7 +131,7 @@ describe('Reply Comment component', function() {
                 expect(component.replyComment).toEqual(replyComment);
                 expect(mergeRequestManagerStub.getComments).not.toHaveBeenCalled();
                 expect(component.request.comments).toBeUndefined();
-                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
         });
         it('should cancel the reply', function() {

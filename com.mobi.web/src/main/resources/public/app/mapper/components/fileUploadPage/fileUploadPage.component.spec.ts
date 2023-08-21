@@ -56,15 +56,15 @@ describe('File Upload Page component', function() {
     const classId2 = 'classId2';
     const classMapping1: JSONLDObject = {
         '@id': 'classMapping1',
-        [DELIM + 'mapsTo']: [{'@id': classId1}]
+        [`${DELIM}mapsTo`]: [{'@id': classId1}]
     };
     const classMapping2: JSONLDObject = {
         '@id': 'classMapping2',
-        [DELIM + 'mapsTo']: [{'@id': classId1}]
+        [`${DELIM}mapsTo`]: [{'@id': classId1}]
     };
     const classMapping3: JSONLDObject = {
         '@id': 'classMapping3',
-        [DELIM + 'mapsTo']: [{'@id': classId2}]
+        [`${DELIM}mapsTo`]: [{'@id': classId2}]
     };
     let mappingStub: jasmine.SpyObj<Mapping>;
 

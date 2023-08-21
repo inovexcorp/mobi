@@ -25,45 +25,56 @@ import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testin
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
-import { get, has, set } from 'lodash';
+import { MatButtonModule } from '@angular/material/button';
 import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
-import { SettingFormComponent } from '../settingForm/settingForm.component';
-import { SettingConstants } from '../../models/settingConstants.class';
 import { SimpleSetting } from '../../models/simpleSetting.class';
-import { SettingUtils } from '../../models/settingUtils.class';
-import { OWL, RDFS, SETTING, SHACL, XSD } from '../../../prefixes';
-import { UtilService } from '../../services/util.service';
+import { OWL, RDFS, SETTING, SHACL, SHACL_FORM, XSD } from '../../../prefixes';
+import { ToastService } from '../../services/toast.service';
 import { SettingManagerService } from '../../services/settingManager.service';
+import { SHACLFormComponent } from '../../../shacl-forms/components/shacl-form/shacl-form.component';
+import { Setting } from '../../models/setting.interface';
+import { LoginManagerService } from '../../services/loginManager.service';
 import { SettingGroupComponent } from './settingGroup.component';
+import { RESTError } from '../../models/RESTError.interface';
 
 describe('Setting Group component', function() {
     let component: SettingGroupComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SettingGroupComponent>;
     let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
+    let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
     let testUserSettings;
     let testSettingsDefinitions;
-    let utilStub: jasmine.SpyObj<UtilService>;
+
+    const error = 'Error Message';
+    const errorObj: RESTError = {
+        error: '',
+        errorMessage: error,
+        errorDetails: []
+    };
+    const userId = 'http://mobi.com/users/111111111111111111111111111';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                NoopAnimationsModule
+                NoopAnimationsModule,
+                MatButtonModule
             ],
             declarations: [
-                MockComponent(SettingFormComponent),
-                SettingGroupComponent,
-                ErrorDisplayComponent
+              SettingGroupComponent,
+              MockComponent(SHACLFormComponent),
+              MockComponent(ErrorDisplayComponent)
             ],
             providers: [
                 MockProvider(SettingManagerService),
-                MockProvider(UtilService),
-                { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
+                MockProvider(ToastService),
+                MockProvider(LoginManagerService)
             ]
         }).compileComponents();
 
@@ -71,141 +82,118 @@ describe('Setting Group component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        
-        spyOn(SettingUtils, 'isSimpleSetting').and.returnValue(true);
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+        loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
+        loginManagerStub.currentUserIRI = userId;
+
+        spyOn(SimpleSetting, 'isSimpleSetting').and.returnValue(true);
         
         component.settingType = { iri: 'http://mobitest.com/Preference', userText: 'Preferences'};
-        utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
-            return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
-        });
 
-        utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
-        });
-
-        utilStub.setPropertyValue.and.callFake((entity, propertyIRI, value) => {
-            if (has(entity, '[\'' + propertyIRI + '\']')) {
-                entity[propertyIRI].push({'@value': value});
-            } else {
-                set(entity, '[\'' + propertyIRI + '\'][0]', {'@value': value});
-            }
-        });
         testUserSettings = {
-            [SETTING + 'SomeSimpleBooleanPreference']: [
+            [`${SETTING}SomeSimpleBooleanPreference`]: [
                 {
                     '@id': 'http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6',
                     '@type': [
-                        OWL + 'Thing',
-                        SETTING + 'SomeSimpleBooleanPreference',
-                        SETTING + 'Preference',
-                        SETTING + 'Setting'
+                        `${OWL}Thing`,
+                        `${SETTING}SomeSimpleBooleanPreference`,
+                        `${SETTING}Preference`,
+                        `${SETTING}Setting`
                     ],
-                    [SETTING + 'forUser']: [
-                        {
-                            '@id': 'http://mobi.com/users/111111111111111111111111111'
-                        }
-                    ],
-                    [SETTING + 'hasDataValue']: [
-                        {
-                            '@value': 'true'
-                        }
-                    ]
+                    [`${SETTING}forUser`]: [{ '@id': userId }],
+                    [`${SETTING}hasDataValue`]: [{
+                        '@value': 'true',
+                        '@type': `${XSD}boolean`
+                    }]
                 }
             ],
-            [SETTING + 'SomeSimpleTextPreference']: [
+            [`${SETTING}SomeSimpleTextPreference`]: [
                 {
                     '@id': 'http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e',
                     '@type': [
-                        OWL + 'Thing',
-                        SETTING + 'SomeSimpleTextPreference',
-                        SETTING + 'Preference',
-                        SETTING + 'Setting'
+                        `${OWL}Thing`,
+                        `${SETTING}SomeSimpleTextPreference`,
+                        `${SETTING}Preference`,
+                        `${SETTING}Setting`
                     ],
-                    [SETTING + 'forUser']: [
-                        {
-                            '@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997'
-                        }
-                    ],
-                    [SETTING + 'hasDataValue']: [
-                        {
-                            '@value': 'aaa'
-                        }
-                    ]
+                    [`${SETTING}forUser`]: [{ '@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997' }],
+                    [`${SETTING}hasDataValue`]: [{
+                        '@value': 'aaa'
+                    }]
                 }
             ]
         };
 
         testSettingsDefinitions = [ {
-            '@id': SETTING + 'SomeSimpleBooleanPreference',
-            '@type': [ OWL + 'Class', SHACL + 'NodeShape' ],
-            [SETTING + 'inGroup']: [ {
-              '@id': SETTING + 'TestPrefGroupA'
+            '@id': `${SETTING}SomeSimpleBooleanPreference`,
+            '@type': [ `${OWL}Class`, `${SHACL}NodeShape` ],
+            [`${SETTING}inGroup`]: [ {
+              '@id': `${SETTING}TestPrefGroupA`
             } ],
-            [RDFS + 'subClassOf']: [ {
-              '@id': SETTING + 'Preference'
+            [`${RDFS}subClassOf`]: [ {
+              '@id': `${SETTING}Preference`
             } ],
-            [SHACL + 'description']: [ {
+            [`${SHACL}description`]: [ {
               '@value': 'What is your value for the simple boolean preference?'
             } ],
-            [SHACL + 'property']: [ {
-              '@id': SETTING + 'SomeSimpleBooleanPreferencePropertyShape'
+            [`${SHACL}property`]: [ {
+              '@id': `${SETTING}SomeSimpleBooleanPreferencePropertyShape`
             } ]
           }, {
-            '@id': SETTING + 'SomeSimpleBooleanPreferencePropertyShape',
-            '@type': [ SHACL + 'PropertyShape' ],
-            [SETTING + 'usesFormField']: [ {
-              '@id': SETTING + 'ToggleInput'
+            '@id': `${SETTING}SomeSimpleBooleanPreferencePropertyShape`,
+            '@type': [ `${SHACL}PropertyShape` ],
+            [`${SHACL_FORM}usesFormField`]: [ {
+              '@id': `${SHACL_FORM}ToggleInput`
             } ],
-            [SHACL + 'datatype']: [ {
-              '@id': XSD + 'boolean'
+            [`${SHACL}datatype`]: [ {
+              '@id': `${XSD}boolean`
             } ],
-            [SHACL + 'maxCount']: [ {
-              '@type': XSD + 'integer',
+            [`${SHACL}maxCount`]: [ {
+              '@type': `${XSD}integer`,
               '@value': '1'
             } ],
-            [SHACL + 'minCount']: [ {
-              '@type': XSD + 'integer',
+            [`${SHACL}minCount`]: [ {
+              '@type': `${XSD}integer`,
               '@value': '1'
             } ],
-            [SHACL + 'path']: [ {
-              '@id': SETTING + 'hasDataValue'
+            [`${SHACL}path`]: [ {
+              '@id': `${SETTING}hasDataValue`
             } ]
           }, {
-            '@id': SETTING + 'SomeSimpleTextPreference',
-            '@type': [ OWL + 'Class', SHACL + 'NodeShape' ],
-            [SETTING + 'inGroup']: [ {
-              '@id': SETTING + 'TestPrefGroupA'
+            '@id': `${SETTING}SomeSimpleTextPreference`,
+            '@type': [ `${OWL}Class`, `${SHACL}NodeShape` ],
+            [`${SETTING}inGroup`]: [ {
+              '@id': `${SETTING}TestPrefGroupA`
             } ],
-            [RDFS + 'subClassOf']: [ {
-              '@id': SETTING + 'Preference'
+            [`${RDFS}subClassOf`]: [ {
+              '@id': `${SETTING}Preference`
             } ],
-            [SHACL + 'description']: [ {
+            [`${SHACL}description`]: [ {
               '@language': 'en',
               '@value': 'Enter a value for this simple text preference'
             } ],
-            [SHACL + 'property']: [ {
-              '@id': SETTING + 'SomeSimpleTextPreferencePropertyShape'
+            [`${SHACL}property`]: [ {
+              '@id': `${SETTING}SomeSimpleTextPreferencePropertyShape`
             } ]
           }, {
-            '@id': SETTING + 'SomeSimpleTextPreferencePropertyShape',
-            '@type': [ SHACL + 'PropertyShape' ],
-            [SETTING + 'usesFormField']: [ {
-              '@id': SETTING + 'TextInput'
+            '@id': `${SETTING}SomeSimpleTextPreferencePropertyShape`,
+            '@type': [ `${SHACL}PropertyShape` ],
+            [`${SHACL_FORM}usesFormField`]: [ {
+              '@id': `${SHACL_FORM}TextInput`
             } ],
-            [SHACL + 'datatype']: [ {
-              '@id': XSD + 'string'
+            [`${SHACL}datatype`]: [ {
+              '@id': `${XSD}string`
             } ],
-            [SHACL + 'maxCount']: [ {
-              '@type': XSD + 'integer',
+            [`${SHACL}maxCount`]: [ {
+              '@type': `${XSD}integer`,
               '@value': '2'
             } ],
-            [SHACL + 'minCount']: [ {
-              '@type': XSD + 'integer',
+            [`${SHACL}minCount`]: [ {
+              '@type': `${XSD}integer`,
               '@value': '1'
             } ],
-            [SHACL + 'path']: [ {
-              '@id': SETTING + 'hasDataValue'
+            [`${SHACL}path`]: [ {
+              '@id': `${SETTING}hasDataValue`
             } ]
           } ];
         settingManagerStub.getDefaultNamespace.and.returnValue(of('http://test.com'));
@@ -219,6 +207,7 @@ describe('Setting Group component', function() {
         element = null;
         fixture = null;
         settingManagerStub = null;
+        loginManagerStub = null;
     });
 
     describe('controller methods', function() {
@@ -228,43 +217,117 @@ describe('Setting Group component', function() {
                     component.retrieveSettings();
                     tick();
                     expect(Object.keys(component.settings).length).toEqual(2);
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('true');
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstance.length).toEqual(1);
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual('http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].asJsonLD()).toEqual(testUserSettings[SETTING + 'SomeSimpleBooleanPreference']);
-                    expect(component.settings[SETTING + 'SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserSettings[SETTING + 'SomeSimpleTextPreference']);
+                    expect(Object.keys(component.settingSaveable).length).toEqual(2);
+                    expect(component.settings[`${SETTING}SomeSimpleBooleanPreference`]).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings[`${SETTING}SomeSimpleBooleanPreference`].topLevelSettingNodeshapeInstanceId).toEqual('http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
+                    expect(component.settings[`${SETTING}SomeSimpleBooleanPreference`].values).toEqual(testUserSettings[`${SETTING}SomeSimpleBooleanPreference`]);
+                    expect(component.settings[`${SETTING}SomeSimpleTextPreference`]).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings[`${SETTING}SomeSimpleTextPreference`].topLevelSettingNodeshapeInstanceId).toEqual('http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e');
+                    expect(component.settings[`${SETTING}SomeSimpleTextPreference`].values).toEqual(testUserSettings[`${SETTING}SomeSimpleTextPreference`]);
                 }));
                 it('when no user settings exist', fakeAsync(function() {
                     settingManagerStub.getSettings.and.returnValue(of({}));
                     component.retrieveSettings();
                     tick();
                     expect(Object.keys(component.settings).length).toEqual(2);
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
-                    expect(component.settings[SETTING + 'SomeSimpleTextPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual(undefined);
-                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings[`${SETTING}SomeSimpleBooleanPreference`]).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings[`${SETTING}SomeSimpleBooleanPreference`].topLevelSettingNodeshapeInstanceId).toEqual(undefined);
+                    expect(component.settings[`${SETTING}SomeSimpleBooleanPreference`].values.length).toEqual(0);
+                    expect(component.settings[`${SETTING}SomeSimpleTextPreference`]).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings[`${SETTING}SomeSimpleTextPreference`].topLevelSettingNodeshapeInstanceId).toEqual(undefined);
+                    expect(component.settings[`${SETTING}SomeSimpleTextPreference`].values.length).toEqual(0);
                 }));
             });
         });
-        it('should update a setting', fakeAsync(function() {
+        describe('should update a setting', function() {
+            beforeEach(fakeAsync(function() {
+                component.retrieveSettings();
+                tick();
+                this.setting = component.settings[`${SETTING}SomeSimpleBooleanPreference`];
+                component.settingSaveable[this.setting.type] = true;
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                settingManagerStub.updateSetting.and.returnValue(throwError(errorObj));
+                component.updateSetting(this.setting);
+                tick();
+                expect(settingManagerStub.updateSetting).toHaveBeenCalledWith(component.settingType.iri, this.setting.topLevelSettingNodeshapeInstanceId, this.setting.type, this.setting.values);
+                expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
+                expect(component.settingSaveable[this.setting.type]).toBeTrue();
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(component.errorMessage).toEqual(error);
+            }));
+            it('successfully', fakeAsync(function() {
+                settingManagerStub.updateSetting.and.returnValue(of(null));
+                component.updateSetting(this.setting);
+                tick();
+                expect(settingManagerStub.updateSetting).toHaveBeenCalledWith(component.settingType.iri, this.setting.topLevelSettingNodeshapeInstanceId, this.setting.type, this.setting.values);
+                expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
+                expect(component.settingSaveable[this.setting.type]).toBeFalse();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Successfully updated the setting');
+                expect(component.errorMessage).toEqual('');
+            }));
+        });
+        describe('should create a setting', function() {
+            beforeEach(fakeAsync(function() {
+                settingManagerStub.getSettings.and.returnValue(of({}));
+                component.retrieveSettings();
+                tick();
+                this.setting = component.settings[`${SETTING}SomeSimpleBooleanPreference`];
+                component.settingSaveable[this.setting.type] = true;
+                this.setting.updateWithFormValues({[`${SETTING}hasDataValue`]: 'true'});
+            }));
+            it('unless an error occurs', fakeAsync(function() {
+                expect(this.setting.exists()).toBeFalse();
+                settingManagerStub.createSetting.and.returnValue(throwError(errorObj));
+                component.updateSetting(this.setting);
+                tick();
+                expect(settingManagerStub.updateSetting).not.toHaveBeenCalled();
+                expect(settingManagerStub.createSetting).toHaveBeenCalledWith(component.settingType.iri, this.setting.type, this.setting.values);
+                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(component.settingSaveable[this.setting.type]).toBeTrue();
+                this.setting.values.forEach(val => {
+                  expect(val[`${SETTING}forUser`]).toBeUndefined();
+                });
+                expect(this.setting.exists()).toBeFalse();
+                expect(component.errorMessage).toEqual(error);
+            }));
+            it('successfully', fakeAsync(function() {
+                expect(this.setting.exists()).toBeFalse();
+                settingManagerStub.createSetting.and.returnValue(of(null));
+                component.updateSetting(this.setting);
+                tick();
+                expect(settingManagerStub.updateSetting).not.toHaveBeenCalled();
+                expect(settingManagerStub.createSetting).toHaveBeenCalledWith(component.settingType.iri, this.setting.type, this.setting.values);
+                expect(component.settingSaveable[this.setting.type]).toBeFalse();
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Successfully created the setting');
+                this.setting.values.forEach(val => {
+                  expect(val[`${SETTING}forUser`]).toEqual([{ '@id': userId }]);
+                });
+                expect(this.setting.exists()).toBeTrue();
+                expect(component.errorMessage).toEqual('');
+            }));
+        });
+        it('should determine whether a NodeShape is a top level node shape', function() {
+            expect(component.isTopLevelNodeShape({'@id': 'test', [`${SETTING}inGroup`]: [{'@id': 'group'}]})).toBeTrue();
+            expect(component.isTopLevelNodeShape({'@id': 'test'})).toBeFalse();
+        });
+        it('should update a setting with the latest values from the SHACL form', fakeAsync(function() {
             component.retrieveSettings();
             tick();
-            const simpleSetting: SimpleSetting = component.settings[SETTING + 'SomeSimpleBooleanPreference'];
-            settingManagerStub.updateSetting.and.returnValue(of(null));
-            component.updateSetting(simpleSetting);
-            expect(settingManagerStub.updateSetting).toHaveBeenCalled();
-            expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
+            const setting: Setting = component.settings[`${SETTING}SomeSimpleBooleanPreference`];
+            spyOn(setting, 'updateWithFormValues');
+            component.updateSettingWithValues({[`${SETTING}hasDataValue`]: 'true'}, setting);
+            expect(setting.updateWithFormValues).toHaveBeenCalledWith({[`${SETTING}hasDataValue`]: 'true'});
+            expect(component.settingSaveable[`${SETTING}SomeSimpleBooleanPreference`]).toBeTrue();
         }));
-        it('should create a setting', fakeAsync(function() {
+        it('should update the saveable status of a setting', fakeAsync(function() {
             component.retrieveSettings();
             tick();
-            const simpleSetting: SimpleSetting = component.settings[SETTING + 'SomeSimpleBooleanPreference'];
-            simpleSetting.topLevelSettingNodeshapeInstanceId = '';
-            settingManagerStub.createSetting.and.returnValue(of(null));
-            component.updateSetting(simpleSetting);
-            expect(settingManagerStub.updateSetting).not.toHaveBeenCalled();
-            expect(settingManagerStub.createSetting).toHaveBeenCalled();
+            const setting: Setting = component.settings[`${SETTING}SomeSimpleBooleanPreference`];
+            component.updateSaveableStatus('VALID', setting);
+            expect(component.settingSaveable[`${SETTING}SomeSimpleBooleanPreference`]).toBeTrue();
+            component.updateSaveableStatus('INVALID', setting);
+            expect(component.settingSaveable[`${SETTING}SomeSimpleBooleanPreference`]).toBeFalse();
         }));
     });
     describe('contains the correct html', function() {
@@ -272,16 +335,19 @@ describe('Setting Group component', function() {
             component.retrieveSettings();
             tick();
             fixture.detectChanges();
-            expect(element.queryAll(By.css('div')).length).toEqual(2);
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+            expect(element.queryAll(By.css('div')).length).toEqual(2);
+            expect(element.queryAll(By.css('app-shacl-form')).length).toEqual(2);
+            expect(element.queryAll(By.css('h4')).length).toEqual(2);
+            expect(element.queryAll(By.css('button')).length).toEqual(2);
         }));
         it('when settings are can not be retrieved', fakeAsync(function() {
             settingManagerStub.getSettings.and.returnValue(throwError('Error message'));
             component.retrieveSettings();
             tick();
             fixture.detectChanges();
-            expect(element.queryAll(By.css('div')).length).toEqual(0);
             expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('div')).length).toEqual(0);
         }));
     });
 });

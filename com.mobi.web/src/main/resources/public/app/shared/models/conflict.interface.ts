@@ -27,6 +27,7 @@ import { Difference } from './difference.class';
  */
 export interface Conflict {
     iri: string,
+    display?: string,
     left: Difference,
     right: Difference,
     resolved?: boolean|string

@@ -26,8 +26,9 @@ import { find } from 'lodash';
 import { ONTOLOGYSTATE } from '../../../prefixes';
 import { Commit } from '../../../shared/models/commit.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.CommitsTabComponent
@@ -46,18 +47,18 @@ export class CommitsTabComponent {
     commits: Commit[] = [];
     @Input() branches: JSONLDObject[] = []; 
 
-    constructor(public os: OntologyStateService, public util: UtilService) {}
+    constructor(public os: OntologyStateService, private toast: ToastService) {}
     
     getHeadTitle(): string {
         if (this.os.listItem.versionedRdfRecord.branchId) {
             const branch = find(this.os.listItem.branches, { '@id': this.os.listItem.versionedRdfRecord.branchId });
-            return this.util.getDctermsValue(branch, 'title');
+            return getDctermsValue(branch, 'title');
         } else {
             const currentState = this.os.getCurrentStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);
             if (this.os.isStateTag(currentState)) {
-                const tagId = this.util.getPropertyId(currentState, ONTOLOGYSTATE + 'tag');
+                const tagId = getPropertyId(currentState, `${ONTOLOGYSTATE}tag`);
                 const tag = find(this.os.listItem.tags, {'@id': tagId});
-                return this.util.getDctermsValue(tag, 'title');
+                return getDctermsValue(tag, 'title');
             } else {
                 return '';
             }
@@ -65,7 +66,7 @@ export class CommitsTabComponent {
     }
     openOntologyAtCommit(commit: Commit): void {
         if (this.os.isCommittable(this.os.listItem)) {
-            this.util.createWarningToast(this.warningMessageCheckout);
+            this.toast.createWarningToast(this.warningMessageCheckout);
             return;
         }
         this.os.updateOntologyWithCommit(this.os.listItem.versionedRdfRecord.recordId, commit.id).subscribe();

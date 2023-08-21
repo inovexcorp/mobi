@@ -29,11 +29,11 @@
     <div class="records" #mrRecords>
         <mat-grid-list cols="2" rowHeight="200">
             <mat-grid-tile *ngFor="let record of records">
-                <mat-card class="m-1 remove-min-width" (click)="selectRecord(record)" [ngClass]="{'selected': record['@id'] === state.requestConfig.recordId}">
-                    <mat-card-title class="text-truncate">{{util.getDctermsValue(record, 'title')}}</mat-card-title>
-                    <mat-card-subtitle class="text-truncate"><small>{{util.getPropertyId(record, ontologyEditorPrefix + 'ontologyIRI')}}</small></mat-card-subtitle>
+                <mat-card class="m-1 remove-min-width" (click)="selectRecord(record.record)" [ngClass]="{'selected': record.record['@id'] === state.requestConfig.recordId}">
+                    <mat-card-title class="text-truncate">{{record.title}}</mat-card-title>
+                    <mat-card-subtitle class="text-truncate"><small>{{record.ontologyIRI}}</small></mat-card-subtitle>
                     <mat-card-content>
-                        <p class="overview">{{util.getDctermsValue(record, 'description') || 'No description'}}</p>
+                        <p class="overview">{{record.description || 'No description'}}</p>
                     </mat-card-content>
                 </mat-card>
             </mat-grid-tile>

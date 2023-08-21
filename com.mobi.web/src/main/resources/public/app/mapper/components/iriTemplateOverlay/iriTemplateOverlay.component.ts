@@ -29,7 +29,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getPropertyValue } from '../../../shared/utility';
 
 /**
  * @class mapper.IriTemplateOverlayComponent
@@ -56,30 +56,29 @@ export class IriTemplateOverlayComponent implements OnInit {
     })
 
     constructor(private dialogRef: MatDialogRef<IriTemplateOverlayComponent>, private fb: UntypedFormBuilder, 
-        public state: MapperStateService, public mm: MappingManagerService, public dm: DelimitedManagerService, 
-        private util: UtilService) {}
+        public state: MapperStateService, public mm: MappingManagerService, public dm: DelimitedManagerService) {}
 
     ngOnInit(): void {
         this.classMapping = this.state.selected.mapping.getClassMapping(this.state.selectedClassMappingId);
-        const prefix = this.util.getPropertyValue(this.classMapping, DELIM + 'hasPrefix');
+        const prefix = getPropertyValue(this.classMapping, `${DELIM}hasPrefix`);
         this.iriTemplateForm.controls.beginsWith.setValue(prefix.slice(0, -1));
         this.iriTemplateForm.controls.then.setValue(prefix[prefix.length - 1]);
         for (let idx = 0; idx < this.dm.dataRows[0].length; idx++) {
             this.localNameOptions.push({text: this.dm.getHeader(idx), value: '${' + idx + '}'});
         }
-        const setLocalName = this.util.getPropertyValue(this.classMapping, DELIM + 'localName');
+        const setLocalName = getPropertyValue(this.classMapping, `${DELIM}localName`);
         const selectedEnds = this.localNameOptions.find(option => option.value === setLocalName) || this.uuidOption;
         this.iriTemplateForm.controls.endsWith.setValue(selectedEnds.value);
     }
     set(): void {
-        const originalPrefix = this.util.getPropertyValue(this.classMapping, DELIM + 'hasPrefix');
-        const originalLocalName = this.util.getPropertyValue(this.classMapping, DELIM + 'localName');
+        const originalPrefix = getPropertyValue(this.classMapping, `${DELIM}hasPrefix`);
+        const originalLocalName = getPropertyValue(this.classMapping, `${DELIM}localName`);
         const beginsWith = this.iriTemplateForm.controls.beginsWith.value;
         const then = this.iriTemplateForm.controls.then.value;
         const endsWith = this.iriTemplateForm.controls.endsWith.value;
         this.mm.editIriTemplate(this.state.selected.mapping, this.state.selectedClassMappingId, beginsWith + then, endsWith);
-        this.state.changeProp(this.state.selectedClassMappingId, DELIM + 'hasPrefix', beginsWith + then, originalPrefix);
-        this.state.changeProp(this.state.selectedClassMappingId, DELIM + 'localName', endsWith, originalLocalName);
+        this.state.changeProp(this.state.selectedClassMappingId, `${DELIM}hasPrefix`, beginsWith + then, originalPrefix);
+        this.state.changeProp(this.state.selectedClassMappingId, `${DELIM}localName`, endsWith, originalLocalName);
         this.dialogRef.close();
     }
 }

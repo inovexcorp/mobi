@@ -30,8 +30,8 @@ import { get, sortBy, includes, groupBy } from 'lodash';
 import { Observable } from 'rxjs';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 
-import { SplitIRIPipe } from '../../pipes/splitIRI.pipe';
-import { UtilService } from '../../services/util.service';
+import { splitIRI } from '../../pipes/splitIRI.pipe';
+import { getBeautifulIRI } from '../../utility';
 
 interface IriGrouping {
     namespace: string,
@@ -84,7 +84,7 @@ export class IriSelectComponent implements OnInit, OnChanges {
 
     @ViewChild('multiInput') multiInput: ElementRef;
 
-    constructor(private util: UtilService, private splitIRI: SplitIRIPipe) {}
+    constructor() {}
     
     ngOnInit(): void {
         this.singleSelect = !(this.singleSelect === false);
@@ -151,7 +151,7 @@ export class IriSelectComponent implements OnInit, OnChanges {
         const mapped: IriOption[] = Object.keys(this.selectList).map(item => {
             return {
                 item,
-                name: this.util.getBeautifulIRI(item)
+                name: getBeautifulIRI(item)
             };
         });
         mapped.forEach(item => {
@@ -168,14 +168,14 @@ export class IriSelectComponent implements OnInit, OnChanges {
         })), group => group.namespace.toUpperCase());
     }
     getOntologyIri(iri: string): string {
-        return get(this.selectList, `['${iri}']`, this.splitIRI.transform(iri).begin);
+        return get(this.selectList, `['${iri}']`, splitIRI(iri).begin);
     }
     add(event: MatChipInputEvent): void {
         const input = event.input;
         const value = event.value;
     
         if (value) {
-            this.selectedOptions.push({ item: value, name: this.util.getBeautifulIRI(value) });
+            this.selectedOptions.push({ item: value, name: getBeautifulIRI(value) });
             this.selected.push(value);
             this.selectedChange.emit(this.selected);
         }

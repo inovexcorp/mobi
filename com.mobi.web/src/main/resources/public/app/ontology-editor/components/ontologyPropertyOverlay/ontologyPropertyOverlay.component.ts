@@ -33,8 +33,9 @@ import { OWL, RDF, XSD } from '../../../prefixes';
 import { PropertyOverlayDataOptions } from '../../../shared/models/propertyOverlayDataOptions.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
-import { datatype } from "../../../shared/validators/datatype.validator";
+import { ToastService } from '../../../shared/services/toast.service';
+import { datatype } from '../../../shared/validators/datatype.validator';
+import { createJson, getIRINamespace } from '../../../shared/utility';
 
 interface PropertyGroup {
     namespace: string,
@@ -70,12 +71,12 @@ interface PropertyOption {
     templateUrl: './ontologyPropertyOverlay.component.html'
 })
 export class OntologyPropertyOverlayComponent implements OnInit {
-    deprecatedIri = OWL + 'deprecated';
+    deprecatedIri = `${OWL}deprecated`;
     iriPattern = REGEX.IRI;
     annotations = [];
     properties = [];
     isOntologyProperty = false;
-    type: string = XSD + 'string';
+    type = `${XSD}string`;
 
     propertyForm = this.fb.group({
         property: ['', [Validators.required]],
@@ -88,7 +89,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
 
     constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<OntologyPropertyOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
-        public os: OntologyStateService, public pm: PropertyManagerService, public util: UtilService) {}
+        public os: OntologyStateService, public pm: PropertyManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
         this.annotations = union(this.pm.defaultAnnotations, this.pm.owlAnnotations, Object.keys(this.os.listItem.annotations.iris));
@@ -113,7 +114,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
     }
     filter(val: string): PropertyGroup[] {
         const filtered = this.properties.filter(prop => prop.toLowerCase().includes(val.toLowerCase()));
-        const grouped: {[key: string]: string[]} = groupBy(filtered, prop => this.util.getIRINamespace(prop));
+        const grouped: {[key: string]: string[]} = groupBy(filtered, prop => getIRINamespace(prop));
         const rtn: PropertyGroup[] = Object.keys(grouped).map(namespace => ({
             namespace,
             options: grouped[namespace].map(property => ({
@@ -137,17 +138,17 @@ export class OntologyPropertyOverlayComponent implements OnInit {
         const selectedProperty: string = event.option.value;
         this.isOntologyProperty = !!selectedProperty && some(this.pm.ontologyProperties, property => selectedProperty === property);
         if (this.isOntologyProperty) {
-            this.type = XSD + 'anyURI';
+            this.type = `${XSD}anyURI`;
             this.propertyForm.controls.type.setValue(this.type);
             this.propertyForm.controls.value.setValidators([Validators.required, Validators.pattern(this.iriPattern), datatype(() => this.type)]);
         } else {
             this.propertyForm.controls.value.setValidators([Validators.required, datatype(() => this.type)]);
-            this.propertyForm.controls.type.setValue(XSD + 'string');
+            this.propertyForm.controls.type.setValue(`${XSD}string`);
             this.propertyForm.controls.language.setValue('');
         }
         this.propertyForm.controls.value.setValue('');
-        if (selectedProperty === OWL + 'deprecated') {
-            this.propertyForm.controls.type.setValue(XSD + 'boolean');
+        if (selectedProperty === `${OWL}deprecated`) {
+            this.propertyForm.controls.type.setValue(`${XSD}boolean`);
             this.propertyForm.controls.language.setValue('');
         }
     }
@@ -167,7 +168,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
         } else {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         this.dialogRef.close(added);
     }
@@ -189,7 +190,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId,this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
         } else {
-            this.util.createWarningToast('Duplicate property values not allowed');
+            this.toast.createWarningToast('Duplicate property values not allowed');
         }
         this.dialogRef.close(edited);
     }
@@ -205,11 +206,11 @@ export class OntologyPropertyOverlayComponent implements OnInit {
     }
 
     isLangString(): boolean {
-        return RDF + 'langString' === (this.propertyForm.controls.type.value ? this.propertyForm.controls.type.value: '');
+        return `${RDF}langString` === (this.propertyForm.controls.type.value ? this.propertyForm.controls.type.value: '');
     }
 
     private _createJson(value, type, language) {
         const valueObj = this.isOntologyProperty ? {'@id': value} : this.pm.createValueObj(value, type, language);
-        return this.util.createJson(this.os.listItem.selected['@id'], this.propertyForm.controls.property.value, valueObj);
+        return createJson(this.os.listItem.selected['@id'], this.propertyForm.controls.property.value, valueObj);
     }
 }

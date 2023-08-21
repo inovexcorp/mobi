@@ -25,7 +25,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { get } from 'lodash';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -43,7 +42,7 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CATALOG } from '../../../prefixes';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { CommitModalComponent } from './commitModal.component';
 
 describe('Commit Modal component', function() {
@@ -53,7 +52,7 @@ describe('Commit Modal component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CommitModalComponent>>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -76,7 +75,7 @@ describe('Commit Modal component', function() {
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 MockProvider(CatalogManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 MockProvider(ShapesGraphStateService)
             ]
         });
@@ -93,7 +92,7 @@ describe('Commit Modal component', function() {
             commitId: 'commit1',
             title: 'title'
         };
-        shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
+        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(of(null));
         component.catalogId = 'catalog';
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.localCatalog = {'@id': 'catalog', '@type': []};
@@ -101,10 +100,9 @@ describe('Commit Modal component', function() {
             {
                 '@id': 'id',
                 '@type': [],
-                [CATALOG + 'head']: [{'@id': 'commit1'}]
+                [`${CATALOG}head`]: [{'@id': 'commit1'}]
             } as JSONLDObject));
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
-        utilStub.getPropertyId.and.callFake((obj, prop) => get(obj, '[\'' + prop + '\'][0][\'@id\']'));
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     });
 
     afterEach(function() {
@@ -115,7 +113,7 @@ describe('Commit Modal component', function() {
         matDialogRef = null;
         shapesGraphStateStub = null;
         catalogManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     describe('controller methods', function() {
@@ -163,7 +161,7 @@ describe('Commit Modal component', function() {
                             {
                                 '@id': 'id',
                                 '@type': [],
-                                [CATALOG + 'head']: [{'@id': 'commit2'}]
+                                [`${CATALOG}head`]: [{'@id': 'commit2'}]
                             } as JSONLDObject));
                         spyOn(component, 'createCommit');
                         component.commit();
@@ -177,7 +175,7 @@ describe('Commit Modal component', function() {
                     catalogManagerStub.getRecordBranch.and.returnValue(throwError('Error'));
                     component.commit();
                     tick();
-                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
                     expect(component.createCommit).not.toHaveBeenCalled();
                     expect(component.errorMessage).toEqual('');
                 }));

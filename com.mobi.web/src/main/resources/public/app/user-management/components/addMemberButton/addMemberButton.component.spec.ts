@@ -97,8 +97,8 @@ describe('Add Member Button Component', function() {
             spyOn(component.trigger, 'closeMenu');
             component.emitAddMember(testUser);
             expect(component.addMember.emit).toHaveBeenCalledWith(testUser);
-            expect(component.clearAddMember).toHaveBeenCalled();
-            expect(component.trigger.closeMenu).toHaveBeenCalled();
+            expect(component.clearAddMember).toHaveBeenCalledWith();
+            expect(component.trigger.closeMenu).toHaveBeenCalledWith();
         });
         it('should set available members to choose from', function() {
             spyOn(component, 'setFilteredUsers');
@@ -114,7 +114,7 @@ describe('Add Member Button Component', function() {
             component.existingMembers = [testUser.username];
             component.setAvailableUsers();
             expect(component.availableUsers).toEqual([batman]);
-            expect(component.setFilteredUsers).toHaveBeenCalled();
+            expect(component.setFilteredUsers).toHaveBeenCalledWith();
         });
         describe('should set the filtered list of users', function() {
             beforeEach(function() {
@@ -147,8 +147,8 @@ describe('Add Member Button Component', function() {
             spyOn(component, 'clearAddMember');
             spyOn(component.trigger, 'closeMenu');
             component.cancelAdd();
-            expect(component.clearAddMember).toHaveBeenCalled();
-            expect(component.trigger.closeMenu).toHaveBeenCalled();
+            expect(component.clearAddMember).toHaveBeenCalledWith();
+            expect(component.trigger.closeMenu).toHaveBeenCalledWith();
         });
         it('should clear the add member form', function() {
             component.selectedMember = testUser;
@@ -184,7 +184,7 @@ describe('Add Member Button Component', function() {
             const button = element.query(By.css('button.add-member-button'));
             button.triggerEventHandler('click', null);
             fixture.detectChanges();
-            expect(component.setAvailableUsers).toHaveBeenCalled();
+            expect(component.setAvailableUsers).toHaveBeenCalledWith();
             expect(element.queryAll(By.css('.mat-menu-panel')).length).toEqual(1);
         });
     });

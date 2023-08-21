@@ -25,7 +25,7 @@ import { switchMap } from 'rxjs/operators';
 
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class merge-requests.MergeRequestDiscussionComponent
@@ -59,7 +59,7 @@ export class MergeRequestDiscussionComponent {
 
     @Output() requestChange = new EventEmitter<MergeRequest>();
 
-    constructor(public mm: MergeRequestManagerService, public util: UtilService) {}
+    constructor(public mm: MergeRequestManagerService, public toast: ToastService) {}
 
     saveComment(): void {
         this.mm.createComment(this.request.jsonld['@id'], this.newComment)
@@ -72,7 +72,7 @@ export class MergeRequestDiscussionComponent {
             .subscribe(comments => {
                 this.request.comments = comments;
                 this.requestChange.emit(this.request);
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
     deleteComment(commentId: string): void {
         this.mm.deleteComment(this.request.jsonld['@id'], commentId)
@@ -84,6 +84,6 @@ export class MergeRequestDiscussionComponent {
             .subscribe(comments => {
                 this.request.comments = comments;
                 this.requestChange.emit(this.request);
-            }, error => this.util.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error));
     }
 }

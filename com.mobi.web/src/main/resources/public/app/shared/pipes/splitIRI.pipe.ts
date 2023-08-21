@@ -29,23 +29,27 @@ import { SplitIRI } from '../models/splitIRI.interface';
 })
 export class SplitIRIPipe implements PipeTransform {
     public transform(iri: string): SplitIRI {
-        if (iri && typeof iri !== 'object') {
-            const hash = iri.indexOf('#');
-            const slash = iri.lastIndexOf('/');
-            const colon = iri.lastIndexOf(':');
-            const index = Math.max(hash, slash, colon);
+        return splitIRI(iri);
+    }
+}
 
-            return {
-                begin: iri.substring(0, index),
-                then: iri[index],
-                end: iri.substring(index + 1)
-            } as SplitIRI;
-        } else {
-            return {
-                begin: '',
-                then: '',
-                end: ''
-            } as SplitIRI;
-        }
+export function splitIRI(iri: string): SplitIRI {
+    if (iri && typeof iri !== 'object') {
+        const hash = iri.indexOf('#');
+        const slash = iri.lastIndexOf('/');
+        const colon = iri.lastIndexOf(':');
+        const index = Math.max(hash, slash, colon);
+
+        return {
+            begin: iri.substring(0, index),
+            then: iri[index],
+            end: iri.substring(index + 1)
+        } as SplitIRI;
+    } else {
+        return {
+            begin: '',
+            then: '',
+            end: ''
+        } as SplitIRI;
     }
 }

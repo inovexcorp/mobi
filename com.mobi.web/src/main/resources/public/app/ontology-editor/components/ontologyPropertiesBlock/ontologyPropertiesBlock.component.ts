@@ -86,7 +86,7 @@ export class OntologyPropertiesBlockComponent implements OnChanges {
             editing: true,
             property: input.property,
             value: propertyObj['@value'] || propertyObj['@id'],
-            type: propertyType ? propertyType : (propertyLanguage ? RDF + 'langString' : ''),
+            type: propertyType ? propertyType : (propertyLanguage ? `${RDF}langString` : ''),
             index: input.index,
             language: propertyLanguage,
             isIRIProperty: !propertyObj['@value'] && propertyObj['@id'] ? true : false

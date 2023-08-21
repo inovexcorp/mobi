@@ -26,7 +26,7 @@ import { UntypedFormBuilder, Validators, UntypedFormGroup } from '@angular/forms
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
 /**
@@ -34,7 +34,7 @@ import { LoginManagerService } from '../../../shared/services/loginManager.servi
  *
  * `passwordTab` is a component that creates a Bootstrap `row` with a form allowing the current user to change their
  * password. The user must enter their current password in order to make a change. The new password is entered in an
- * {@link shared.component:unmaskPassword Unmask Password Component}.
+ * {@link shared.UnmaskPasswordComponent}.
  */
 @Component({
     selector: 'password-tab',
@@ -50,7 +50,7 @@ export class PasswordTabComponent implements OnInit {
     currentPasswordErrorMessage: string;
    
     constructor(private um: UserManagerService, private lm: LoginManagerService,
-        private util: UtilService, private fb: UntypedFormBuilder) {}
+        private toast: ToastService, private fb: UntypedFormBuilder) {}
 
     ngOnInit(): void {
         this.currentUser = find(this.um.users, { username: this.lm.currentUser });
@@ -68,7 +68,7 @@ export class PasswordTabComponent implements OnInit {
             .subscribe(() => {
                 this.errorMessage = '';
                 this.currentPasswordErrorMessage = '';
-                this.util.createSuccessToast('Password successfully saved');
+                this.toast.createSuccessToast('Password successfully saved');
                 this.reset();
             }, errorObj => {
                 this.errorMessage = '';

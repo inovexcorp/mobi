@@ -31,10 +31,10 @@ import { MOSListener } from '../../vendor/antlr4/dist/MOSListener';
 import BlankNodesListener from '../../vendor/antlr4/BlankNodesListener';
 import BlankNodesErrorListener from '../../vendor/antlr4/BlankNodesErrorListener';
 import { OntologyManagerService } from './ontologyManager.service';
-import { UtilService } from './util.service';
 import { OWL, RDF, RDFS, XSD } from '../../prefixes';
-import { SplitIRIPipe } from '../pipes/splitIRI.pipe';
+import { splitIRI } from '../pipes/splitIRI.pipe';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { getPropertyId, isBlankNodeId } from '../utility';
 
 /**
  * @class shared.ManchesterConverterService
@@ -47,30 +47,30 @@ export class ManchesterConverterService {
     restrictionClassName = 'manchester-rest';
     literalClassName = 'manchester-lit';
     expressionKeywords = {
-        [OWL + 'unionOf']: ' or ', // A or B
-        [OWL + 'intersectionOf']: ' and ', // A and B
-        [OWL + 'complementOf']: 'not ', // not A
-        [OWL + 'oneOf']: ', ' // {a1 a2 ... an}.
+        [`${OWL}unionOf`]: ' or ', // A or B
+        [`${OWL}intersectionOf`]: ' and ', // A and B
+        [`${OWL}complementOf`]: 'not ', // not A
+        [`${OWL}oneOf`]: ', ' // {a1 a2 ... an}.
     };
     // a - the object property on which the restriction applies.
     // b - the restriction on the property values.
     // n - the cardinality of the restriction.
     restrictionKeywords = {
-        [OWL + 'someValuesFrom']: ' some ', // a some b
-        [OWL + 'allValuesFrom']: ' only ', // a only b
-        [OWL + 'hasValue']: ' value ', // a value b
-        [OWL + 'minCardinality']: ' min ', // a min n
-        [OWL + 'maxCardinality']: ' max ', // a max n
-        [OWL + 'cardinality']: ' exactly ', // a exactly n
-        [OWL + 'minQualifiedCardinality']: ' min ', // a min n b
-        [OWL + 'maxQualifiedCardinality']: ' max ', // a max n b
-        [OWL + 'qualifiedCardinality']: ' exactly ' // a exactly n b
+        [`${OWL}someValuesFrom`]: ' some ', // a some b
+        [`${OWL}allValuesFrom`]: ' only ', // a only b
+        [`${OWL}hasValue`]: ' value ', // a value b
+        [`${OWL}minCardinality`]: ' min ', // a min n
+        [`${OWL}maxCardinality`]: ' max ', // a max n
+        [`${OWL}cardinality`]: ' exactly ', // a exactly n
+        [`${OWL}minQualifiedCardinality`]: ' min ', // a min n b
+        [`${OWL}maxQualifiedCardinality`]: ' max ', // a max n b
+        [`${OWL}qualifiedCardinality`]: ' exactly ' // a exactly n b
     };
     datatypeKeywords = {
-        [OWL + 'oneOf']: ', ' // {a1 a2 ... an}.
+        [`${OWL}oneOf`]: ', ' // {a1 a2 ... an}.
     };
 
-    constructor(private om: OntologyManagerService, private util: UtilService, private splitIRI: SplitIRIPipe) {}
+    constructor(private om: OntologyManagerService) {}
 
     /**
      * Returns the full list of supported Manchester Syntax keywords.
@@ -103,7 +103,7 @@ export class ManchesterConverterService {
         const parser = new MOSParser(tokens);
         parser.removeErrorListeners();
         parser.addErrorListener(new BlankNodesErrorListener(result));
-        const blankNodes: MOSListener = new BlankNodesListener(result.jsonld, localNameMap, this.util);
+        const blankNodes: MOSListener = new BlankNodesListener(result.jsonld, localNameMap);
         const start = usingDatatypeRange ? parser.dataRange() : parser.description();
         try {
             ParseTreeWalker.DEFAULT.walk(blankNodes, start);
@@ -134,7 +134,8 @@ export class ManchesterConverterService {
         return this._render(id, jsonld, index, html);
     }
 
-    private _render(id, jsonld, index, html, listKeyword = '') {
+    private _render(id, jsonld, index, html) {
+    // private _render(id, jsonld, index, html, listKeyword = '') {
         const entity = jsonld[index[id].position];
         let result = '';
         if (this.om.isClass(entity)) {
@@ -152,10 +153,10 @@ export class ManchesterConverterService {
         if (prop.length === 1) {
             const item = head(entity[prop[0]]);
             let keyword = this.expressionKeywords[prop[0]];
-            if (html && prop[0] !== OWL + 'oneOf') {
+            if (html && prop[0] !== `${OWL}oneOf`) {
                 keyword = this._surround(keyword, this.expressionClassName);
             }
-            if (includes([OWL + 'unionOf', OWL + 'intersectionOf', OWL + 'oneOf'], prop[0])) {
+            if (includes([`${OWL}unionOf`, `${OWL}intersectionOf`, `${OWL}oneOf`], prop[0])) {
                 if (has(item, '@list')) {
                     for (let i = 0; i < item['@list'].length; i++) {
                         i === 0 ? result += this._getValue(item['@list'][i], jsonld, index, html) : result += keyword + this._getValue(item['@list'][i], jsonld, index, html);
@@ -166,24 +167,24 @@ export class ManchesterConverterService {
             } else {
                 result += keyword + this._getValue(item, jsonld, index, html);
             }
-            if (prop[0] === OWL + 'oneOf') {
-                result = '{' + result + '}';
+            if (prop[0] === `${OWL}oneOf`) {
+                result = `{${result}}`;
             }
         }
         return result;
     }
     private _renderRestriction(entity, jsonld, index, html) {
         let result = '';
-        const onProperty = this.util.getPropertyId(entity, OWL + 'onProperty');
-        const onClass = this.util.getPropertyId(entity, OWL + 'onClass');
+        const onProperty = getPropertyId(entity, `${OWL}onProperty`);
+        const onClass = getPropertyId(entity, `${OWL}onClass`);
         if (onProperty) {
-            const propertyRestriction = this.splitIRI.transform(onProperty).end;
-            let classRestriction = onClass ? this.splitIRI.transform(onClass).end : undefined;
-            if (this.util.isBlankNodeId(onClass)) {
+            const propertyRestriction = splitIRI(onProperty).end;
+            let classRestriction = onClass ? splitIRI(onClass).end : undefined;
+            if (isBlankNodeId(onClass)) {
                 const bNodeEntity = find(jsonld, {'@id': onClass});
                 if (bNodeEntity) {
                     const bNodeClassStr = this._renderClass(bNodeEntity, jsonld, index, html);
-                    classRestriction = bNodeClassStr ? '(' + bNodeClassStr + ')': classRestriction;
+                    classRestriction = bNodeClassStr ? `(${bNodeClassStr})`: classRestriction;
                 }
             }
             const prop = intersection(Object.keys(entity), Object.keys(this.restrictionKeywords));
@@ -203,7 +204,7 @@ export class ManchesterConverterService {
     private _renderDatatype(entity, jsonld, index, html) {
         let result = '';
         const prop = intersection(Object.keys(entity), Object.keys(this.datatypeKeywords));
-        if (prop.length === 1 && prop[0] === OWL + 'oneOf') {
+        if (prop.length === 1 && prop[0] === `${OWL}oneOf`) {
             const item = head(entity[prop[0]]);
             const separator = this.datatypeKeywords[prop[0]];
             if (has(item, '@list')) {
@@ -211,7 +212,7 @@ export class ManchesterConverterService {
             } else {
                 result += this._renderList(item['@id'], jsonld, index, html, separator);
             }
-            result = '{' + result + '}';
+            result = `{${result}}`;
         }
         return result;
     }
@@ -219,46 +220,47 @@ export class ManchesterConverterService {
         if (has(item, '@value')) {
             let literal, lang = '';
             if (has(item, '@language')) {
-                literal = '"' + item['@value'] + '"';
-                lang = '@' + item['@language'];
+                literal = `"${item['@value']}"`;
+                lang = `@${item['@language']}`;
             } else {
-                switch (get(item, '@type', XSD + 'string')) {
-                    case XSD + 'decimal':
-                    case XSD + 'double':
-                    case XSD + 'float':
-                    case XSD + 'int':
-                    case XSD + 'integer':
-                    case XSD + 'long':
-                    case XSD + 'nonNegativeInteger':
+                switch (get(item, '@type', `${XSD}string`)) {
+                    case `${XSD}decimal`:
+                    case `${XSD}double`:
+                    case `${XSD}float`:
+                    case `${XSD}int`:
+                    case `${XSD}integer`:
+                    case `${XSD}long`:
+                    case `${XSD}nonNegativeInteger`:
                         literal = item['@value'];
                         break;
-                    case XSD + 'string':
-                        literal = '"' + item['@value'] + '"';
+                    case `${XSD}string`:
+                        literal = `"${item['@value']}"`;
                         break;
-                    case XSD + 'language':
-                    case XSD + 'anyURI':
-                    case XSD + 'dateTime':
-                    case RDFS + 'Literal':
-                    case XSD + 'boolean':
-                    case XSD + 'byte':
-                        literal = '"' + item['@value'] + '"^^xsd:' + get(item, '@type').replace(XSD, '');
+                    case `${XSD}language`:
+                    case `${XSD}anyURI`:
+                    case `${XSD}dateTime`:
+                    case `${RDFS}Literal`:
+                    case `${XSD}boolean`:
+                    case `${XSD}byte`:
+                        literal = `"${item['@value']}"^^xsd:${get(item, '@type').replace(XSD, '')}`;
                         break;
                     default:
-                        literal = '"' + item['@value'] + '"^^<' + get(item, '@type') + '>';
+                        literal = `"${item['@value']}"^^<${get(item, '@type')}>`;
                 }
             }
             return (html ? this._surround(literal, this.literalClassName) : literal) + lang;
         } else {
             const value = get(item, '@id');
-            if (!this.util.isBlankNodeId(value)) {
-                return this.splitIRI.transform(value).end;
+            if (!isBlankNodeId(value)) {
+                return splitIRI(value).end;
             }
-            return listKeyword ? this._render(value, jsonld, index, html, listKeyword) : '(' + this._render(value, jsonld, index, html) + ')';
+            return listKeyword ? this._render(value, jsonld, index, html) : `(${this._render(value, jsonld, index, html)})`;
+            // return listKeyword ? this._render(value, jsonld, index, html, listKeyword) : '(' + this._render(value, jsonld, index, html) + ')';
         }
     }
     private _surround(str, className): string {
         if (str.trim() !== '') {
-            return '<span class="' + className + '">' + str + '</span>';
+            return `<span class="${className}">${str}</span>`;
         }
         return str;
     }
@@ -268,8 +270,8 @@ export class ManchesterConverterService {
         let end = false;
         while (!end) {
             const entity = jsonld[index[id].position];
-            const first = head(entity[RDF + 'first']);
-            const rest = head(entity[RDF + 'rest']);
+            const first = head(entity[`${RDF}first`]);
+            const rest = head(entity[`${RDF}rest`]);
             result += this._getValue(first, jsonld, index, html);
             if (has(rest, '@list')) {
                 if (rest['@list'][0]) {
@@ -277,7 +279,7 @@ export class ManchesterConverterService {
                     result += this._getValue(rest['@list'][0], jsonld, index, html);
                 }
                 end = true;
-            } else if ( rest === undefined || rest['@id'] === RDF + 'nil') {
+            } else if ( rest === undefined || rest['@id'] === `${RDF}nil`) {
                 end = true;
             } else {
                 result += listKeyword;

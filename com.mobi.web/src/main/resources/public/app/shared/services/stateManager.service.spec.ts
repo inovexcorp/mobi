@@ -29,11 +29,11 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
 import { StateManagerService } from './stateManager.service';
-import { UtilService } from './util.service';
+import { ToastService } from './toast.service';
 
 describe('State Manager service', function() {
     let service: StateManagerService;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
     let httpMock: HttpTestingController;
 
     const state1JSONLDObject: JSONLDObject = {
@@ -56,37 +56,24 @@ describe('State Manager service', function() {
     const subjects = ['subject1', 'subject2'];
     const states: State[] = [state1, state2];
 
-    const error = 'Error Message';
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ HttpClientTestingModule ],
             providers: [
                 StateManagerService,
                 MockProvider(ProgressSpinnerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
             ]
         });
 
         service = TestBed.inject(StateManagerService);
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
-        
-        utilStub.createHttpParams.and.callThrough();
-        utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
-        utilStub.rejectError.and.callFake(() => Promise.reject(error));
-        utilStub.trackedRequest.and.callFake((ob) => ob);
-        utilStub.handleError.and.callFake(error => {
-            if (error.status === 0) {
-                return throwError('');
-            } else {
-                return throwError(error.statusText || 'Something went wrong. Please try again later.');
-            }
-        });
     });
 
     afterEach(() => {
         httpMock.verify();
+        toastStub = null;
     });
 
     describe('initialize calls the correct method and sets the correct value', function() {
@@ -100,7 +87,7 @@ describe('State Manager service', function() {
             spyOn(service, 'getStates').and.returnValue(throwError(''));
             service.initialize().subscribe();
             tick();
-            expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             expect(service.states).toEqual([]);
         }));
     });
@@ -110,57 +97,61 @@ describe('State Manager service', function() {
                 .subscribe((states: State[]) => {
                     expect(states).toEqual([]);
                 });
-            const request: TestRequest = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request: TestRequest = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            expect(request.request.params.has('applicationId')).toBeFalse();
+            expect(request.request.params.has('subjects')).toBeFalse();
             request.flush([]);
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith({applicationId: '', subjects: []});
         });
         it('with application and no subjects', function() {
             service.getStates('applicationId')
                 .subscribe((states: State[]) => {
                     expect(states).toEqual([]);
                 });
-            const request: TestRequest = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request: TestRequest = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            expect(request.request.params.get('applicationId')).toEqual('applicationId');
+            expect(request.request.params.has('subjects')).toBeFalse();
             request.flush([]);
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith({applicationId: 'applicationId', subjects: []});
         });
         it('with application and subjects', function() {
             service.getStates('applicationId', subjects)
                 .subscribe((states: State[]) => {
                     expect(states).toEqual([]);
                 });
-            const request: TestRequest = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request: TestRequest = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            expect(request.request.params.get('applicationId')).toEqual('applicationId');
+            expect(request.request.params.getAll('subjects')).toEqual(subjects);
             request.flush([]);
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith({applicationId: 'applicationId', subjects: subjects});
         });
         it('with no application and subjects', function() {
             service.getStates('', subjects)
                 .subscribe((states: State[]) => {
                     expect(states).toEqual([]);
                 });
-            const request: TestRequest = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request: TestRequest = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            expect(request.request.params.has('applicationId')).toBeFalse();
+            expect(request.request.params.getAll('subjects')).toEqual(subjects);
             request.flush([]);
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith({applicationId: '', subjects: subjects});
         });
     });
     describe('createState', function() {
         it('with no application', function() {
-            service.createState(state1.model).subscribe(() => {},() => fail('Observable should not fail'));
+            service.createState(state1.model).subscribe(() => {}, () => fail('Observable should not fail'));
             
-            const request: TestRequest = httpMock.expectOne({url: service.prefix, method: 'POST'});
+            const request: TestRequest = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+            expect(request.request.params.has('application')).toBeFalse();
             request.flush(state1.id);
 
             expect(service.states.length).toBe(1);
             expect(service.states[0]).toEqual({id: state1.id, model: state1.model});
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith({});
         });
         it('with application', function() {
-            service.createState(state1.model, application).subscribe(() => {},() => fail('Observable should not fail'));
-            const request: TestRequest = httpMock.expectOne({url: service.prefix, method: 'POST'});
+            service.createState(state1.model, application).subscribe(() => {}, () => fail('Observable should not fail'));
+            const request: TestRequest = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+            expect(request.request.params.get('application')).toEqual('app');
             request.flush(state1.id);
 
             expect(service.states.length).toBe(1);
             expect(service.states[0]).toEqual({id: state1.id, model: state1.model});
-            expect(utilStub.createHttpParams).toHaveBeenCalledWith({application: 'app'});
         });
     });
     it('getState hits the correct endpoint', function() {
@@ -168,14 +159,14 @@ describe('State Manager service', function() {
             .subscribe((state: State) => {
                 expect(state).toEqual(state1);
             });
-        const request: TestRequest = httpMock.expectOne({url: service.prefix + '/' + 'state1' , method: 'GET'});
+        const request: TestRequest = httpMock.expectOne({url: `${service.prefix}/state1` , method: 'GET'});
         request.flush(state1);
     });
     it('updateState hits the correct endpoint', function() {
         service.states = [{id: state1.id, model: state1.model}];
-        service.updateState(state1.id, state2.model).subscribe(() => {},() => fail('Observable should not fail'));
+        service.updateState(state1.id, state2.model).subscribe(() => {}, () => fail('Observable should not fail'));
 
-        const request: TestRequest = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(state1.id) , method: 'PUT'});
+        const request: TestRequest = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(state1.id)}` , method: 'PUT'});
         request.flush(state2);
 
         expect(service.states.length).toBe(1);
@@ -183,9 +174,9 @@ describe('State Manager service', function() {
     });
     it('deleteState hits the correct endpoint', function() {
         service.states = [{id: state1.id, model: state1.model}];
-        service.deleteState(state1.id).subscribe(() => {},() => fail('Observable should not fail'));
+        service.deleteState(state1.id).subscribe(() => {}, () => fail('Observable should not fail'));
 
-        const request: TestRequest = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(state1.id) , method: 'DELETE'});
+        const request: TestRequest = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(state1.id)}` , method: 'DELETE'});
         request.flush(state1);
         expect(service.states.length).toBe(0);
     });

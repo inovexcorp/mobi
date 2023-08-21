@@ -39,7 +39,6 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
 import { NewOntologyOverlayComponent } from './newOntologyOverlay.component';
@@ -51,7 +50,6 @@ describe('New Ontology Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<NewOntologyOverlayComponent>>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let splitIRIStub: jasmine.SpyObj<SplitIRIPipe>;
 
     const error: RESTError = {
         error: '',
@@ -81,7 +79,6 @@ describe('New Ontology Overlay component', function() {
             providers: [
                 MockProvider(OntologyStateService),
                 { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
-                { provide: SplitIRIPipe, useClass: MockPipe(SplitIRIPipe) },
                 { provide: MAT_DIALOG_DATA, useValue: { defaultNamespace: namespace } },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -95,8 +92,6 @@ describe('New Ontology Overlay component', function() {
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<NewOntologyOverlayComponent>>;
         camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
-        splitIRIStub = TestBed.inject(SplitIRIPipe) as jasmine.SpyObj<SplitIRIPipe>;
-        splitIRIStub.transform.and.returnValue({begin: 'http://test.com', then: '#', end: ''});
     });
 
     afterEach(function() {
@@ -107,7 +102,6 @@ describe('New Ontology Overlay component', function() {
         matDialogRef = null;
         ontologyStateStub = null;
         camelCaseStub = null;
-        splitIRIStub = null;
     });
 
     it('should initialize the form correctly', function() {
@@ -180,23 +174,21 @@ describe('New Ontology Overlay component', function() {
             });
             it('if the iri has not been manually changed', function() {
                 component.nameChanged('new');
-                expect(component.newOntologyForm.controls.iri.value).toEqual(namespace + 'new');
-                expect(splitIRIStub.transform).toHaveBeenCalledWith(namespace);
+                expect(component.newOntologyForm.controls.iri.value).toEqual(`${namespace}new`);
                 expect(camelCaseStub.transform).toHaveBeenCalledWith('new', 'class');
             });
             it('unless the iri has been manually changed', function() {
                 component.iriHasChanged = true;
                 component.nameChanged('new');
                 expect(component.newOntologyForm.controls.iri.value).toEqual(namespace);
-                expect(splitIRIStub.transform).not.toHaveBeenCalled();
                 expect(camelCaseStub.transform).not.toHaveBeenCalled();
             });
         });
         describe('should create an ontology', function() {
             const expectedOntology = {
                 '@id': namespace,
-                '@type': [OWL + 'Ontology'],
-                [DCTERMS + 'title']: [{'@value': 'title'}]
+                '@type': [`${OWL}Ontology`],
+                [`${DCTERMS}title`]: [{'@value': 'title'}]
             };
             beforeEach(function() {
                 component.newOntologyForm.controls.iri.setValue(namespace);
@@ -216,7 +208,7 @@ describe('New Ontology Overlay component', function() {
             describe('successfully', function() {
                 it('with a description', fakeAsync(function() {
                     const newExpectedOntology = Object.assign({}, expectedOntology);
-                    newExpectedOntology[DCTERMS + 'description'] = [{'@value': 'description'}];
+                    newExpectedOntology[`${DCTERMS}description`] = [{'@value': 'description'}];
                     component.newOntologyForm.controls.description.setValue('description');
                     component.newOntologyForm.controls.language.setValue('en');
                     component.create();

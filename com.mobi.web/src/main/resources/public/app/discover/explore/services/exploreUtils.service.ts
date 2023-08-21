@@ -47,7 +47,7 @@ import { SPARQLSelectResults } from '../../../shared/models/sparqlSelectResults.
 import { PropertyDetails } from '../../models/propertyDetails.interface';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { getInputType, getPattern, getPropertyId, getPropertyValue } from '../../../shared/utility';
 
 /**
  * @class explore.ExploreUtilsService
@@ -56,7 +56,7 @@ import { UtilService } from '../../../shared/services/util.service';
  */
 @Injectable()
 export class ExploreUtilsService {
-    constructor(private dm: DatasetManagerService, private sparql: SparqlManagerService, private util: UtilService, 
+    constructor(private dm: DatasetManagerService, private sparql: SparqlManagerService,
         private om: OntologyManagerService) {}
 
     /**
@@ -86,8 +86,8 @@ export class ExploreUtilsService {
                             'type': 'path',
                             'pathType': '|',
                             'items': [
-                                RDFS + 'label',
-                                DCTERMS + 'title'
+                                `${RDFS}label`,
+                                `${DCTERMS}title`
                             ]
                         },
                         'object': '?title'
@@ -111,7 +111,7 @@ export class ExploreUtilsService {
      * @returns {string} A string identifying the input type that should be used for the provided property.
      */
     getInputType(propertyIRI: string, properties: PropertyDetails[]): string {
-        return this.util.getInputType(this.getRange(propertyIRI, properties));
+        return getInputType(this.getRange(propertyIRI, properties));
     }
     /**
      * Gets the pattern type associated with the property in the properties list provided.
@@ -121,7 +121,7 @@ export class ExploreUtilsService {
      * @returns {RegExp} A Regular Expression identifying the acceptable values for the provided property.
      */
     getPattern(propertyIRI: string, properties: PropertyDetails[]): RegExp {
-        return this.util.getPattern(this.getRange(propertyIRI, properties));
+        return getPattern(this.getRange(propertyIRI, properties));
     }
     /**
      * Checks to see if the property provided is of the desired type according to the list of properties.
@@ -142,7 +142,7 @@ export class ExploreUtilsService {
      * @returns {boolean} True if the property has a boolean range; otherwise, false.
      */
     isBoolean(propertyIRI: string, properties: PropertyDetails[]): boolean {
-        return this.getRange(propertyIRI, properties) === XSD + 'boolean';
+        return this.getRange(propertyIRI, properties) === `${XSD}boolean`;
     }
     /**
      * Creates a JSON-LD object only containing the '@id' property.
@@ -200,9 +200,9 @@ export class ExploreUtilsService {
             return throwError('Dataset could not be found');
         }
         const ontologies = this.dm.getOntologyIdentifiers(datasetArr).map(identifier => ({
-            recordId: this.util.getPropertyId(identifier, DATASET + 'linksToRecord'),
-            branchId: this.util.getPropertyId(identifier, DATASET + 'linksToBranch'),
-            commitId: this.util.getPropertyId(identifier, DATASET + 'linksToCommit')
+            recordId: getPropertyId(identifier, `${DATASET}linksToRecord`),
+            branchId: getPropertyId(identifier, `${DATASET}linksToBranch`),
+            commitId: getPropertyId(identifier, `${DATASET}linksToCommit`)
         }));
         return forkJoin(ontologies.map(ontology => this.om.getOntologyClasses(ontology.recordId, ontology.branchId, ontology.commitId, false)))
             .pipe(
@@ -213,7 +213,7 @@ export class ExploreUtilsService {
                         return throwError('The Dataset classes could not be retrieved');
                     }
                     return of(allClasses.map(clazz => {
-                        const deprecated = includes(['true', true, '1', 1], this.util.getPropertyValue(clazz, OWL + 'deprecated'));
+                        const deprecated = includes(['true', true, '1', 1], getPropertyValue(clazz, `${OWL}deprecated`));
                         return {
                             id: clazz['@id'],
                             title: this.om.getEntityName(clazz),
@@ -276,7 +276,7 @@ export class ExploreUtilsService {
      */
     getReification(arr: JSONLDObject[], subIRI: string, propIRI: string, valueObj: JSONLDValue|JSONLDId): JSONLDObject {
         return find(arr, thing => {
-            return includes(get(thing, '@type', []), RDF + 'Statement')
+            return includes(get(thing, '@type', []), `${RDF}Statement`)
                 && isEqual(this._getRdfProperty(thing, 'subject'), [{'@id': subIRI}])
                 && isEqual(this._getRdfProperty(thing, 'predicate'), [{'@id': propIRI}])
                 && isEqual(this._getRdfProperty(thing, 'object'), [valueObj]);

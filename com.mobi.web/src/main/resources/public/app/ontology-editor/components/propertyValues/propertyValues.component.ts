@@ -25,15 +25,8 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
-import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
-import { UtilService } from '../../../shared/services/util.service';
+import { isBlankNodeId } from '../../../shared/utility';
 
-interface ValueDisplay {
-    jsonld: JSONLDId|JSONLDValue,
-    isLinkable: boolean,
-    isBlankNodeId: boolean,
-}
 /**
  * @class ontology-editor.PropertyValuesComponent
  *
@@ -67,11 +60,12 @@ export class PropertyValuesComponent implements OnInit, OnChanges {
     @Output() edit = new EventEmitter<{property: string, index: number}>();
     @Output() remove = new EventEmitter<{iri: string, index: number}>();
 
+    isBlankNodeId = isBlankNodeId;
     isHighlightedProp = false;
     isEditSet = false;
     isRemoveSet = false;
 
-    constructor(public os: OntologyStateService, public om: OntologyManagerService, public util: UtilService) {}
+    constructor(public os: OntologyStateService, public om: OntologyManagerService) {}
     
     ngOnInit(): void {
         this.isEditSet = this.edit.observers.length > 0;

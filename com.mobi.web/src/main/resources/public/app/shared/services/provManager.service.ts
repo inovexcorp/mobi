@@ -27,10 +27,11 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { REST_PREFIX } from '../../constants';
-import { UtilService } from './util.service';
 import { ActivityPaginatedConfig } from '../models/activity-paginated-config';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { ActivityAction } from '../models/activityAction.interface';
+import { handleError, paginatedConfigToHttpParams } from '../utility';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 
 /**
  * @class shared.ProvManagerService
@@ -40,9 +41,9 @@ import { ActivityAction } from '../models/activityAction.interface';
  */
 @Injectable()
 export class ProvManagerService {
-    prefix = REST_PREFIX + 'provenance-data';
+    prefix = `${REST_PREFIX}provenance-data`;
 
-    constructor(private http: HttpClient, private util: UtilService) {}
+    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * `activityTypes` is an array of objects that represent the different subclasses of `prov:Activity`
@@ -75,20 +76,23 @@ export class ProvManagerService {
      * @return {Observable} An observable that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    getActivities(paginatedConfig: ActivityPaginatedConfig, isTracked = false): Observable<HttpResponse<{activities: JSONLDObject[], entities: JSONLDObject[]}>> {
-        const params = this.util.paginatedConfigToParams(paginatedConfig);
+    getActivities(paginatedConfig: ActivityPaginatedConfig, isTracked = false): 
+      Observable<HttpResponse<{activities: JSONLDObject[], entities: JSONLDObject[]}>> {
+        let params = paginatedConfigToHttpParams(paginatedConfig);
         if (paginatedConfig.entity) {
-            params.entity = paginatedConfig.entity;
+            params = params.set('entity', paginatedConfig.entity);
         }
         if (paginatedConfig.agent) {
-            params.agent = paginatedConfig.agent;
+            params = params.set('agent', paginatedConfig.agent);
         }
-        return this.util.trackedRequest(this.http.get(this.prefix, {params: this.util.createHttpParams(params), observe: 'response'}), isTracked)
-            .pipe(catchError(this.util.handleError));
+        const request = this.http.get<{activities: JSONLDObject[], entities: JSONLDObject[]}>(this.prefix, 
+            {params, observe: 'response'});
+        return this.spinnerSvc.trackedRequest(request, isTracked)
+            .pipe(catchError(handleError));
     }
 
     getActionWords(isTracked = false): Observable<ActivityAction[]> {
-        return this.util.trackedRequest(this.http.get(this.prefix + '/actions'), isTracked)
-            .pipe(catchError(this.util.handleError));
+        return this.spinnerSvc.trackedRequest(this.http.get<ActivityAction[]>(`${this.prefix}/actions`), isTracked)
+            .pipe(catchError(handleError));
     }
 }

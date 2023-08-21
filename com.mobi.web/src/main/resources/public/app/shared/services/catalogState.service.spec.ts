@@ -58,9 +58,9 @@ describe('Catalog State service', function() {
         expect(service.initializeRecordSortOption).toHaveBeenCalledWith();
     });
     it('should initialize the recordSortOption', function() {
-        catalogManagerStub.sortOptions = [{field: DCTERMS + 'modified', asc: false, label: ''}, {field: DCTERMS + 'modified', asc: true, label: ''}];
+        catalogManagerStub.sortOptions = [{field: `${DCTERMS}modified`, asc: false, label: ''}, {field: `${DCTERMS}modified`, asc: true, label: ''}];
         service.initializeRecordSortOption();
-        expect(service.recordSortOption).toEqual({field: DCTERMS + 'modified', asc: false, label: ''});
+        expect(service.recordSortOption).toEqual({field: `${DCTERMS}modified`, asc: false, label: ''});
     });
     it('should reset the important state variables', function() {
         spyOn(service, 'initializeRecordSortOption');
@@ -87,27 +87,27 @@ describe('Catalog State service', function() {
     });
     describe('should retrieve record type for a record', function() {
         it('if the record is an OntologyRecord', function() {
-            expect(service.getRecordType({'@id': '', '@type': [ONTOLOGYEDITOR + 'OntologyRecord']})).toEqual(ONTOLOGYEDITOR + 'OntologyRecord');
+            expect(service.getRecordType({'@id': '', '@type': [`${ONTOLOGYEDITOR}OntologyRecord`]})).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
         });
         it('if the record is a MappingRecord', function() {
-            expect(service.getRecordType({'@id': '', '@type': [DELIM + 'MappingRecord']})).toEqual(DELIM + 'MappingRecord');
+            expect(service.getRecordType({'@id': '', '@type': [`${DELIM}MappingRecord`]})).toEqual(`${DELIM}MappingRecord`);
         });
         it('if the record is a DatasetRecord', function() {
-            expect(service.getRecordType({'@id': '', '@type': [DATASET + 'DatasetRecord']})).toEqual(DATASET + 'DatasetRecord');
+            expect(service.getRecordType({'@id': '', '@type': [`${DATASET}DatasetRecord`]})).toEqual(`${DATASET}DatasetRecord`);
         });
         it('if the record is not a specified type', function() {
-            expect(service.getRecordType({'@id': ''})).toEqual(CATALOG + 'Record');
+            expect(service.getRecordType({'@id': ''})).toEqual(`${CATALOG}Record`);
         });
     });
     describe('should retrieve the icon class for a record', function() {
         it('if the record is an OntologyRecord', function() {
-            expect(service.getRecordIcon({'@id': '', '@type': [ONTOLOGYEDITOR + 'OntologyRecord']})).toEqual('fa-sitemap');
+            expect(service.getRecordIcon({'@id': '', '@type': [`${ONTOLOGYEDITOR}OntologyRecord`]})).toEqual('fa-sitemap');
         });
         it('if the record is a MappingRecord', function() {
-            expect(service.getRecordIcon({'@id': '', '@type': [DELIM + 'MappingRecord']})).toEqual('fa-map');
+            expect(service.getRecordIcon({'@id': '', '@type': [`${DELIM}MappingRecord`]})).toEqual('fa-map');
         });
         it('if the record is a DatasetRecord', function() {
-            expect(service.getRecordIcon({'@id': '', '@type': [DATASET + 'DatasetRecord']})).toEqual('fa-database');
+            expect(service.getRecordIcon({'@id': '', '@type': [`${DATASET}DatasetRecord`]})).toEqual('fa-database');
         });
         it('if the record is not a specified type', function() {
             expect(service.getRecordIcon({'@id': ''})).toEqual('fa-book');

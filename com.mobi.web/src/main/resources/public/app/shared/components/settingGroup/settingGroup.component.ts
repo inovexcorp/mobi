@@ -23,17 +23,28 @@
 import { Input, Component, OnChanges, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { forEach, has } from 'lodash';
 
-import { SettingUtils } from '../../models/settingUtils.class';
 import { Setting } from '../../models/setting.interface';
 import { SimpleSetting } from '../../models/simpleSetting.class';
 import { SETTING } from '../../../prefixes';
-import { UtilService } from '../../services/util.service';
+import { ToastService } from '../../services/toast.service';
 import { SettingManagerService } from '../../services/settingManager.service';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { FormValues } from '../../../shacl-forms/components/shacl-form/shacl-form.component';
+import { getPropertyId, setPropertyId } from '../../utility';
+import { LoginManagerService } from '../../services/loginManager.service';
+import { RESTError } from '../../models/RESTError.interface';
 
 /**
  * @class shared.SettingGroupComponent
  *
- * A component that consisting of a series of {@link shared.SettingFormComponent settingForm}.
+ * A component that creates a collection of {@link shared.SHACLFormComponent} instances for all Settings within a
+ * particular Setting group. Handles the rendering of a label for the form and a save button for creating/updating a
+ * particular Setting. NOTE: Only supports "Simple Settings" for now, not ones where the PropertyShapes refer to nested
+ * NodeShapes.
+ * 
+ * @param {{iri: string, userText: string}} settingType An object that represents the type of Setting that the
+ * groups are for
+ * @param {string} group The IRI of the specific Setting group to display individual Settings for
  */
 @Component({
     selector: 'setting-group',
@@ -41,14 +52,16 @@ import { SettingManagerService } from '../../services/settingManager.service';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingGroupComponent implements OnChanges {
-    @Input() settingType;
-    @Input() group;
+    @Input() settingType: {iri: string, userText: string};
+    @Input() group: string;
 
     errorMessage = '';
-    settings = {};
-    settingIRIs = [];
+    settings: { [key: string]: Setting } = {};
+    settingSaveable: { [key: string]: boolean } = {};
+    settingIRIs: string[] = [];
 
-    constructor(private sm: SettingManagerService, private util: UtilService, private ref: ChangeDetectorRef) {}
+    constructor(private sm: SettingManagerService, private toast: ToastService, private lm: LoginManagerService, 
+        private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
         this.retrieveSettings();
@@ -62,22 +75,23 @@ export class SettingGroupComponent implements OnChanges {
                 this.sm.getSettingDefinitions(this.group, this.settingType.iri)
                     .subscribe(response => {
                         this.settings = {};
-                        const shapeDefinitions = {};
-                        const settingObject = {};
+                        const shapeDefinitions: {[key: string]: JSONLDObject} = {};
+                        const settingObject: {[key: string]: JSONLDObject} = {};
                         response.forEach(shape => {
                             shapeDefinitions[shape['@id']] = shape;
                             if (this.isTopLevelNodeShape(shape)) {
                                 settingObject[shape['@id']] = shape;
                             }
                         });
-                        forEach(settingObject, (settingJson:any, settingType: string) => {
+                        forEach(settingObject, (settingJson: JSONLDObject, settingType: string) => {
                             let setting: Setting;
-                            if (SettingUtils.isSimpleSetting(settingJson, shapeDefinitions)) {
-                                setting = new SimpleSetting(settingJson, shapeDefinitions, this.util);
-                                setting.populate(settingResponse[settingType]);
+                            if (SimpleSetting.isSimpleSetting(settingJson, shapeDefinitions)) {
+                                setting = new SimpleSetting(settingJson, shapeDefinitions);
+                                setting.populate(settingResponse[settingType] || []);
                                 this.settings[settingType] = setting;
+                                this.settingSaveable[settingType] = false;
                             } else {
-                                this.util.createErrorToast('Complex Settings are not yet supported.');
+                                this.toast.createErrorToast('Complex Settings are not yet supported.');
                             }
                         });
                         this.settingIRIs = Object.keys(this.settings);
@@ -88,23 +102,46 @@ export class SettingGroupComponent implements OnChanges {
 
     updateSetting(setting: Setting): void {
         if (setting.exists()) {
-            this.sm.updateSetting(this.settingType.iri, setting.topLevelSettingNodeshapeInstanceId, setting.type, setting.asJsonLD())
+            this.sm.updateSetting(this.settingType.iri, setting.topLevelSettingNodeshapeInstanceId, setting.type, setting.values)
                 .subscribe(() => {
                     this.errorMessage = '';
-                    this.retrieveSettings();
-                    this.util.createSuccessToast('Successfully updated the setting');
-                }, error => this.errorMessage = error);
+                    this.settingSaveable[setting.type] = false;
+                    this.ref.markForCheck();
+                    this.toast.createSuccessToast('Successfully updated the setting');
+                }, error => {
+                    this.errorMessage = error.errorMessage;
+                    this.ref.markForCheck();
+                });
         } else {
-            this.sm.createSetting(this.settingType.iri, setting.type, setting.asJsonLD())
+            this.sm.createSetting(this.settingType.iri, setting.type, setting.values)
                 .subscribe(() => {
                     this.errorMessage = '';
-                    this.retrieveSettings();
-                    this.util.createSuccessToast('Successfully created the setting');
-                }, error => this.errorMessage = error);
+                    this.settingSaveable[setting.type] = false;
+                    setting.values.forEach(val => {
+                        if (!getPropertyId(val, `${SETTING}forUser`)) {
+                            setPropertyId(val, `${SETTING}forUser`, this.lm.currentUserIRI);
+                        }
+                    });
+                    setting.populate(setting.values); // Will update the existing value
+                    this.ref.markForCheck();
+                    this.toast.createSuccessToast('Successfully created the setting');
+                }, (error: RESTError) => {
+                    this.errorMessage = error.errorMessage;
+                    this.ref.markForCheck();
+                });
         }
     }
 
-    isTopLevelNodeShape(shape): boolean {
-        return has(shape, SETTING + 'inGroup');
+    isTopLevelNodeShape(shape: JSONLDObject): boolean {
+        return has(shape, `${SETTING}inGroup`);
+    }
+
+    updateSettingWithValues(values: FormValues, setting: Setting): void {
+        setting.updateWithFormValues(values);
+        this.settingSaveable[setting.type] = true;
+    }
+
+    updateSaveableStatus(status: string, setting: Setting): void {
+        this.settingSaveable[setting.type] = status === 'VALID';
     }
 }

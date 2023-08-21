@@ -62,7 +62,7 @@ export class ConceptSchemesTabComponent implements OnInit, OnDestroy {
     showDeleteConfirmation(): void {
         this.dialog.open(ConfirmModalComponent,{
             data: {
-                content: '<p>Are you sure that you want to delete <strong>' + this.os.listItem.selected['@id'] + '</strong>?</p>'
+                content: `<p>Are you sure that you want to delete <strong>${this.os.listItem.selected['@id']}</strong>?</p>`
             }
         }).afterClosed().subscribe(result => {
             if (result) {

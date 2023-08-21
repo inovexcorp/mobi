@@ -21,7 +21,7 @@
  * #L%
  */
 import { MatDialog } from '@angular/material/dialog';
-import { filter, some, forEach, concat, includes, uniq, map, join, find, get, flatten, remove } from 'lodash';
+import { filter, some, forEach, concat, includes, uniq, map, join, get, flatten, remove } from 'lodash';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { MatChipInputEvent } from '@angular/material/chips';
@@ -34,11 +34,12 @@ import { ExploreUtilsService } from '../../services/exploreUtils.service';
 import { DCTERMS, OWL, RDFS } from '../../../../prefixes';
 import { ConfirmModalComponent } from '../../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../../shared/models/JSONLDObject.interface';
-import { SplitIRIPipe } from '../../../../shared/pipes/splitIRI.pipe';
+import { splitIRI } from '../../../../shared/pipes/splitIRI.pipe';
 import { SplitIRI } from '../../../../shared/models/splitIRI.interface';
 import { PropertyDetails } from '../../../models/propertyDetails.interface';
-import { UtilService } from '../../../../shared/services/util.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { OnEditEventI } from '../../../../shared/models/onEditEvent.interface';
+import { getBeautifulIRI } from '../../../../shared/utility';
 
 /**
  * @class explore.InstanceFormComponent
@@ -65,42 +66,51 @@ export class InstanceFormComponent implements OnInit {
     isInstancePropertyDisabled: boolean;
 
     constructor(private es: ExploreService, public eu: ExploreUtilsService, private ds: DiscoverStateService,
-                private dialog: MatDialog, private util: UtilService, private splitIRI: SplitIRIPipe) {
+                private dialog: MatDialog, private toast: ToastService) {
     }
 
-    properties: PropertyDetails[] = [{
-        propertyIRI: DCTERMS + 'description',
-        type: 'Data',
-        range: [],
-        restrictions: [{
-            cardinality: 0,
-            cardinalityType: ''
-        }]
-    }, {
-        propertyIRI: DCTERMS + 'title',
-        type: 'Data',
-        range: [],
-        restrictions: [{
-            cardinality: 0,
-            cardinalityType: ''
-        }]
-    }, {
-        propertyIRI: RDFS + 'comment',
-        type: 'Data',
-        range: [],
-        restrictions: [{
-            cardinality: 0,
-            cardinalityType: ''
-        }]
-    }, {
-        propertyIRI: RDFS + 'label',
-        type: 'Data',
-        range: [],
-        restrictions: [{
-            cardinality: 0,
-            cardinalityType: ''
-        }]
-    }];
+    propertyDetailsMap: {[key: string]: PropertyDetails} = {
+        [`${DCTERMS}description`]: {
+            propertyIRI: `${DCTERMS}description`,
+            display: 'Description',
+            type: 'Data',
+            range: [],
+            restrictions: [{
+                cardinality: 0,
+                cardinalityType: ''
+            }]
+        },
+        [`${DCTERMS}title`]: {
+            propertyIRI: `${DCTERMS}title`,
+            display: 'Title',
+            type: 'Data',
+            range: [],
+            restrictions: [{
+                cardinality: 0,
+                cardinalityType: ''
+            }]
+        },
+        [`${RDFS}comment`]: {
+            propertyIRI: `${RDFS}comment`,
+            display: 'Comment',
+            type: 'Data',
+            range: [],
+            restrictions: [{
+                cardinality: 0,
+                cardinalityType: ''
+            }]
+        },
+        [`${RDFS}label`]: {
+            propertyIRI: `${RDFS}label`,
+            display: 'Label',
+            type: 'Data',
+            range: [],
+            restrictions: [{
+                cardinality: 0,
+                cardinalityType: ''
+            }]
+        }
+    };
     searchText = {};
     showOverlay = false;
     showPropertyValueOverlay = false;
@@ -113,13 +123,17 @@ export class InstanceFormComponent implements OnInit {
         this.instance = this.ds.getInstance();
         this.getProperties();
         this.getOptions(this.instance['@id']);
-        const newProperties = this.eu.getNewProperties(this.properties, this.instance, '');
+        const newProperties = this.eu.getNewProperties(Object.values(this.propertyDetailsMap), this.instance, '');
         this.isInstancePropertyDisabled = newProperties ? !newProperties.length : false ;
+    }
+    getPropertyDisplay(propertyIRI: string): string {
+        const details = this.propertyDetailsMap[propertyIRI];
+        return details ? details.display : getBeautifulIRI(propertyIRI);
     }
     newInstanceProperty(): void {
         this.dialog.open(NewInstancePropertyOverlayComponent, {
             data: {
-                properties: this.properties,
+                properties: Object.values(this.propertyDetailsMap),
                 instance: this.instance
             }
         }).afterClosed().subscribe((result: {propertyIRI: string, range: [], restrictions: [], type: string}) => {
@@ -140,7 +154,7 @@ export class InstanceFormComponent implements OnInit {
         });
     }
     showIriOverlay(): void {
-        const split: SplitIRI = this.splitIRI.transform(this.instance['@id']);
+        const split: SplitIRI = splitIRI(this.instance['@id']);
         this.dialog.open(EditIriOverlayComponent, {
             data: { iriBegin: split.begin, iriThen: split.then, iriEnd: split.end }
         }).afterClosed().subscribe((result) => {
@@ -150,7 +164,7 @@ export class InstanceFormComponent implements OnInit {
         });
     }
     getOptions(propertyIRI: string): void {
-        const range = this.eu.getRange(propertyIRI, this.properties);
+        const range = this.eu.getRange(propertyIRI, Object.values(this.propertyDetailsMap));
         if (range) {
             this.es.getClassInstanceDetails(this.ds.explore.recordId, range, {offset: 0, infer: true}, true)
                 .subscribe(response => {
@@ -160,7 +174,7 @@ export class InstanceFormComponent implements OnInit {
                     }
                     this.options = options;
                 }, errorMessage => {
-                    this.util.createErrorToast(errorMessage);
+                    this.toast.createErrorToast(errorMessage);
                     this.options = [];
                 });
         }
@@ -178,15 +192,15 @@ export class InstanceFormComponent implements OnInit {
     }
     getMissingProperties(): string[] {
         const missing = [];
-        forEach(this.properties, property => {
+        forEach(Object.values(this.propertyDetailsMap), property => {
             forEach(get(property, 'restrictions', []), restriction => {
                 const length = get(this.instance, property.propertyIRI, []).length;
-                if (restriction.cardinalityType === OWL + 'cardinality' && length !== restriction.cardinality) {
-                    missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + this.util.getBeautifulIRI(property.propertyIRI));
-                } else if (restriction.cardinalityType === OWL + 'minCardinality' && length < restriction.cardinality) {
-                    missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + this.util.getBeautifulIRI(property.propertyIRI));
-                } else if (restriction.cardinalityType === OWL + 'maxCardinality' && length > restriction.cardinality) {
-                    missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + this.util.getBeautifulIRI(property.propertyIRI));
+                if (restriction.cardinalityType === `${OWL}cardinality` && length !== restriction.cardinality) {
+                    missing.push(`Must have exactly ${restriction.cardinality} value(s) for ${getBeautifulIRI(property.propertyIRI)}`);
+                } else if (restriction.cardinalityType === `${OWL}minCardinality` && length < restriction.cardinality) {
+                    missing.push(`Must have at least ${restriction.cardinality} value(s) for ${getBeautifulIRI(property.propertyIRI)}`);
+                } else if (restriction.cardinalityType === `${OWL}maxCardinality` && length > restriction.cardinality) {
+                    missing.push(`Must have at most ${restriction.cardinality} value(s) for ${getBeautifulIRI(property.propertyIRI)}`);
                 }
             });
         });
@@ -195,30 +209,32 @@ export class InstanceFormComponent implements OnInit {
         return missing;
     }
     getRestrictionText(propertyIRI: string): string {
-        const details: PropertyDetails = find(this.properties, {propertyIRI});
+        const details: PropertyDetails = this.propertyDetailsMap[propertyIRI];
         const results = [];
         forEach(get(details, 'restrictions', []), restriction => {
-            if (restriction.cardinalityType === OWL + 'cardinality') {
-                results.push('exactly ' + restriction.cardinality);
-            } else if (restriction.cardinalityType === OWL + 'minCardinality') {
-                results.push('at least ' + restriction.cardinality);
-            } else if (restriction.cardinalityType === OWL + 'maxCardinality') {
-                results.push('at most ' + restriction.cardinality);
+            if (restriction.cardinalityType === `${OWL}cardinality`) {
+                results.push(`exactly ${restriction.cardinality}`);
+            } else if (restriction.cardinalityType === `${OWL}minCardinality`) {
+                results.push(`at least ${restriction.cardinality}`);
+            } else if (restriction.cardinalityType === `${OWL}maxCardinality`) {
+                results.push(`at most ${restriction.cardinality}`);
             }
         });
-        return results.length ? ('[' + join(results, ', ') + ']') : '';
+        return results.length ? (`[${join(results, ', ')}]`) : '';
     }
     private getProperties() {
         forkJoin(map(this.instance['@type'], type => this.es.getClassPropertyDetails(this.ds.explore.recordId, type)))
             .subscribe(responses => {
-                this.properties = concat(this.properties, uniq(flatten(responses)));
+                uniq(flatten(responses)).forEach(details => {
+                    this.propertyDetailsMap[details.propertyIRI] = details;
+                });
                 this.missingProperties = this.getMissingProperties();
-            }, () => this.util.createErrorToast('An error occurred retrieving the instance properties.'));
+            }, () => this.toast.createErrorToast('An error occurred retrieving the instance properties.'));
     }
 
     private addDataProperty(event: MatChipInputEvent, propertyIRI: string) {
         if (event.value) {
-            this.instance[propertyIRI].push(this.eu.createValueObj(event.value, propertyIRI, this.properties));
+            this.instance[propertyIRI].push(this.eu.createValueObj(event.value, propertyIRI, Object.values(this.propertyDetailsMap)));
             event.input.value = '';
         }
     }
@@ -238,9 +254,9 @@ export class InstanceFormComponent implements OnInit {
     }
     private handleCheckBoxClick(checked: boolean, propertyIRI: string) {
         if (checked) {
-             this.instance[propertyIRI][0] = (this.eu.createValueObj('true', propertyIRI, this.properties));
+             this.instance[propertyIRI][0] = (this.eu.createValueObj('true', propertyIRI, Object.values(this.propertyDetailsMap)));
         } else {
-             this.instance[propertyIRI][0] = (this.eu.createValueObj('false', propertyIRI, this.properties));
+             this.instance[propertyIRI][0] = (this.eu.createValueObj('false', propertyIRI, Object.values(this.propertyDetailsMap)));
         }
     }
     private checkValue(value: string) {

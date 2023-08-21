@@ -27,28 +27,27 @@ import { By } from '@angular/platform-browser';
 import { GitgraphUserApi } from '@gitgraph/core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+import { GitgraphCommitOptions } from '@gitgraph/core';
+import { Branch as GitGraphBranch } from '@gitgraph/js';
+
 import { CommitInfoOverlayComponent } from '../../../shared/components/commitInfoOverlay/commitInfoOverlay.component';
 import { Commit } from '../../../shared/models/commit.interface';
-import { UtilService } from '../../../shared/services/util.service';
 import { GraphHelperService } from '../../services/graph-helper.service';
 import { SVGElementHelperService } from '../../services/svgelement-helper.service';
-import { CommitHistoryGraphComponent } from './commit-history-graph.component';
-import { Branch as GitGraphBranch } from '@gitgraph/js';
 import { GitAction } from '../../models/git-action.interface';
-import { GitgraphCommitOptions } from '@gitgraph/core';
 import { BranchNames } from '../../models/branch-names.interface';
 import { Tag } from '../../../shared/models/tag.interface';
 import { ONTOLOGYEDITOR } from '../../../prefixes';
+import { CommitHistoryGraphComponent } from './commit-history-graph.component';
 
 describe('CommitHistoryGraphComponent', () => {
   let component: CommitHistoryGraphComponent;
   let fixture: ComponentFixture<CommitHistoryGraphComponent>;
   let element: DebugElement;
   let matDialogMock: jasmine.SpyObj<MatDialog>;
-  let utilServiceMock: jasmine.SpyObj<UtilService>;
   let graphHelperServiceMock: jasmine.SpyObj<GraphHelperService>;
   let svgElementHelperServiceMock: jasmine.SpyObj<SVGElementHelperService>;
-  let commitId: string;
+  const commitId = 'http://test.com#1234567890';
   let recordId: string;
   let type: string;
   let commit: Commit;
@@ -66,26 +65,21 @@ describe('CommitHistoryGraphComponent', () => {
       providers: [
         SVGElementHelperService,
         MockProvider(GraphHelperService),
-        MockProvider(UtilService),
         { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
             open: { afterClosed: () => of(true)}
           })
         }
       ]
-    })
-    .compileComponents();
-  }));
-  beforeEach(() => {
+    }).compileComponents();
+
     fixture = TestBed.createComponent(CommitHistoryGraphComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;
     matDialogMock = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-    utilServiceMock = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
     graphHelperServiceMock = TestBed.inject(GraphHelperService) as jasmine.SpyObj<GraphHelperService>;
     svgElementHelperServiceMock = TestBed.inject(SVGElementHelperService) as jasmine.SpyObj<SVGElementHelperService>;
 
-    commitId = 'commitId';
-    type = ONTOLOGYEDITOR + 'OntologyRecord';
+    type = `${ONTOLOGYEDITOR}OntologyRecord`;
     branchNames = [
         {
           'name': 'MASTER'
@@ -141,18 +135,17 @@ describe('CommitHistoryGraphComponent', () => {
     component.tags = [tag1, tag2];
     component.type = type;
     fixture.detectChanges();
-  });
+  }));
   it('should create', () => {
     expect(component).toBeTruthy();
     expect(matDialogMock).toBeTruthy();
-    expect(utilServiceMock).toBeTruthy();
     expect(graphHelperServiceMock).toBeTruthy();
     expect(svgElementHelperServiceMock).toBeTruthy();
   });
   it('commitDotOnClick should emit', () => {
     component.commitDotOnClick.subscribe({next: (commit: Commit) => {
       expect(commit.id).toEqual(commitId);
-    }, error: (error) => {
+    }, error: () => {
       fail('commitDotOnClick should not fail');
     }});
     component.commitDotOnClick.emit(commit);
@@ -326,19 +319,17 @@ describe('CommitHistoryGraphComponent', () => {
     });
     describe('createCommitOptions', function() {
       it('successfully', async function() {
-        utilServiceMock.condenseCommitId.and.returnValue('hash');
         const gitgraphCommitOptions: GitgraphCommitOptions<SVGElement> = component.createCommitOptions(gitActions[1]);
         expect(gitgraphCommitOptions).toEqual({
           subject: 'message',
-          hash: 'hash',
+          hash: '1234567890',
           author: 'user',
-          tag: tag1.title + ' | ' + tag2.title,
+          tag: `${tag1.title} | ${tag2.title}`,
           renderDot: jasmine.any(Function),
           renderMessage: jasmine.any(Function),
           onMessageClick: jasmine.any(Function),
           onClick: jasmine.any(Function),
         });
-        expect(utilServiceMock.condenseCommitId).toHaveBeenCalled();
       });
       it('with exception', async function() {
         const gitAction: GitAction = {
@@ -365,7 +356,7 @@ describe('CommitHistoryGraphComponent', () => {
       component.gitGraph = mockGitGraph;
       component.gitGraphBranches = [mockGitBranch];
       component.reset();
-      expect(component.gitGraph.clear).toHaveBeenCalled();
+      expect(component.gitGraph.clear).toHaveBeenCalledWith();
       expect(component.gitGraphBranches).toEqual([]);
     });
   });

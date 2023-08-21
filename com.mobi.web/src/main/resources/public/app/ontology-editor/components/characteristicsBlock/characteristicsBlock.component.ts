@@ -53,37 +53,37 @@ export class CharacteristicsBlockComponent implements OnChanges {
     characteristics: Characteristic[] = [
         {
             checked: false,
-            typeIRI: OWL + 'FunctionalProperty',
+            typeIRI: `${OWL}FunctionalProperty`,
             displayText: 'Functional Property',
             objectOnly: false
         },
         {
             checked: false,
-            typeIRI: OWL + 'AsymmetricProperty',
+            typeIRI: `${OWL}AsymmetricProperty`,
             displayText: 'Asymmetric Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: OWL + 'SymmetricProperty',
+            typeIRI: `${OWL}SymmetricProperty`,
             displayText: 'Symmetric Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: OWL + 'TransitiveProperty',
+            typeIRI: `${OWL}TransitiveProperty`,
             displayText: 'Transitive Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: OWL + 'ReflexiveProperty',
+            typeIRI: `${OWL}ReflexiveProperty`,
             displayText: 'Reflexive Property',
             objectOnly: true
         },
         {
             checked: false,
-            typeIRI: OWL + 'IrreflexiveProperty',
+            typeIRI: `${OWL}IrreflexiveProperty`,
             displayText: 'Irreflexive Property',
             objectOnly: true
         }

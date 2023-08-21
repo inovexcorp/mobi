@@ -51,7 +51,7 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { UtilService } from '../../../shared/services/util.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ImportsOverlayComponent } from './importsOverlay.component';
 
 describe('Imports Overlay component', function() {
@@ -64,16 +64,18 @@ describe('Imports Overlay component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let httpMock: HttpTestingController;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
-    let utilStub: jasmine.SpyObj<UtilService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
 
     const url = 'http://test.com';
     const error = 'Error Message';
     const catalogId = 'catalog';
     const recordId = 'recordId';
     const ontologyIRI = 'ontologyIRI';
-    const sortOption = {field: DCTERMS + 'title', label: '', asc: true};
+    const sortOption = {field: `${DCTERMS}title`, label: '', asc: true};
     const ontologyRecord: JSONLDObject = {
-        '@id': recordId
+        '@id': recordId,
+        [`${DCTERMS}title`]: [{ '@value': 'title' }],
+        [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': ontologyIRI }]
     };
     const ontologyDetails: OntologyDetails = {
         recordId,
@@ -110,7 +112,7 @@ describe('Imports Overlay component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyStateService),
                 MockProvider(PropertyManagerService),
-                MockProvider(UtilService),
+                MockProvider(ToastService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -125,7 +127,7 @@ describe('Imports Overlay component', function() {
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<ImportsOverlayComponent>>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
-        utilStub = TestBed.inject(UtilService) as jasmine.SpyObj<UtilService>;
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
@@ -144,7 +146,7 @@ describe('Imports Overlay component', function() {
         catalogManagerStub = null;
         progressSpinnerStub = null;
         propertyManagerStub = null;
-        utilStub = null;
+        toastStub = null;
     });
 
     it('initializes correctly', function() {
@@ -261,9 +263,11 @@ describe('Imports Overlay component', function() {
             }));
             it('successfully', fakeAsync(function() {
                 spyOn(component, 'getOntologyIRI').and.returnValue(ontologyIRI);
-                utilStub.getDctermsValue.and.returnValue('title');
                 const ontology2 = {'@id': 'ontology2'};
-                const ontology3 = {'@id': 'ontology3'};
+                const ontology3 = {
+                  '@id': 'ontology3',
+                  [`${DCTERMS}title`]: [{ '@value': 'ontology3' }]
+                };
                 component.selectedOntologies = [{
                     recordId: ontology3['@id'],
                     title: '',
@@ -280,7 +284,7 @@ describe('Imports Overlay component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, component.getOntologyConfig, true);
                 expect(component.ontologies).toEqual([
                     ontologyDetails,
-                    {recordId: ontology3['@id'], ontologyIRI, title: 'title', selected: true, jsonld: ontology3}]);
+                    {recordId: ontology3['@id'], ontologyIRI, title: 'ontology3', selected: true, jsonld: ontology3}]);
                 expect(component.serverError).toEqual('');
             }));
         });
@@ -305,9 +309,7 @@ describe('Imports Overlay component', function() {
             });
         });
         it('should get the ontology IRI of an OntologyRecord', function() {
-            utilStub.getPropertyId.and.returnValue('ontology');
-            expect(component.getOntologyIRI(ontologyRecord)).toEqual('ontology');
-            expect(utilStub.getPropertyId).toHaveBeenCalledWith(ontologyRecord, ONTOLOGYEDITOR + 'ontologyIRI');
+            expect(component.getOntologyIRI(ontologyRecord)).toEqual(ontologyIRI);
         });
         describe('should update the appropriate variables if clicking the', function() {
             beforeEach(function() {
@@ -386,8 +388,8 @@ describe('Imports Overlay component', function() {
             it('if there are duplicate values', function() {
                 propertyManagerStub.addId.and.returnValue(false);
                 component.confirmed([url], 0);
-                expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, OWL + 'imports', url);
-                expect(utilStub.createWarningToast).toHaveBeenCalledWith('Duplicate property values not allowed');
+                expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith('Duplicate property values not allowed');
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
@@ -398,7 +400,7 @@ describe('Imports Overlay component', function() {
                     propertyManagerStub.addId.and.returnValue(true);
                     this.additionsObj = {
                         '@id': ontologyStateStub.listItem.selected['@id'],
-                        [OWL + 'imports']: [{'@id': url}]
+                        [`${OWL}imports`]: [{'@id': url}]
                     };
                 });
                 describe('when save current changes resolves', function() {
@@ -410,7 +412,7 @@ describe('Imports Overlay component', function() {
                         ontologyStateStub.updateOntology.and.returnValue(of(null));
                         component.confirmed([url], 0);
                         tick();
-                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, OWL + 'imports', url);
+                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
                         expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
                         expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                         expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, ontologyStateStub.listItem.upToDate, ontologyStateStub.listItem.inProgressCommit);
@@ -420,7 +422,7 @@ describe('Imports Overlay component', function() {
                         ontologyStateStub.updateOntology.and.returnValue(throwError(error));
                         component.confirmed([url], 0);
                         tick();
-                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, OWL + 'imports', url);
+                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
                         expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
                         expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                         expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, ontologyStateStub.listItem.upToDate, ontologyStateStub.listItem.inProgressCommit);
@@ -432,7 +434,7 @@ describe('Imports Overlay component', function() {
                     ontologyStateStub.saveCurrentChanges.and.returnValue(throwError(error));
                     component.confirmed([url], 0);
                     tick();
-                    expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, OWL + 'imports', url);
+                    expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
