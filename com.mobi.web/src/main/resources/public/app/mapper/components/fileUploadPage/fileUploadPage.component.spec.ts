@@ -36,7 +36,6 @@ import { DelimitedManagerService } from '../../../shared/services/delimitedManag
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { FileUploadFormComponent } from '../fileUploadForm/fileUploadForm.component';
-import { MappingConfigOverlayComponent } from '../mappingConfigOverlay/mappingConfigOverlay.component';
 import { MappingPreviewComponent } from '../mappingPreview/mappingPreview.component';
 import { PreviewDataGridComponent } from '../previewDataGrid/previewDataGrid.component';
 import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/runMappingDatasetOverlay.component';
@@ -81,7 +80,6 @@ describe('File Upload Page component', function() {
                 MockComponent(RunMappingDownloadOverlayComponent),
                 MockComponent(RunMappingDatasetOverlayComponent),
                 MockComponent(RunMappingOntologyOverlayComponent),
-                MockComponent(MappingConfigOverlayComponent),
             ],
             providers: [
                 MockProvider(MapperStateService),
@@ -143,25 +141,24 @@ describe('File Upload Page component', function() {
             expect(matDialog.open).toHaveBeenCalledWith(RunMappingOntologyOverlayComponent);
         });
         describe('should set the correct state for continuing to edit a mapping', function() {
+            beforeEach(function() {
+                mapperStateStub.startWithConfigModal = false;
+            });
             it('if a new mapping is being created', function() {
                 mapperStateStub.newMapping = true;
                 component.edit();
                 expect(mappingStub.getAllClassMappings).toHaveBeenCalledWith();
                 expect(mapperStateStub.selectedClassMappingId).toEqual(classMapping1['@id']);
-                expect(mapperStateStub.setProps).toHaveBeenCalledWith(classId1);
-                expect(mapperStateStub.setProps).toHaveBeenCalledWith(classId2);
                 expect(mapperStateStub.step).toEqual(mapperStateStub.editMappingStep);
-                expect(matDialog.open).toHaveBeenCalledWith(MappingConfigOverlayComponent);
+                expect(mapperStateStub.startWithConfigModal).toBeTrue();
             });
             it('if a saved mapping is being edited', function() {
                 mapperStateStub.newMapping = false;
                 component.edit();
                 expect(mappingStub.getAllClassMappings).toHaveBeenCalledWith();
                 expect(mapperStateStub.selectedClassMappingId).toEqual(classMapping1['@id']);
-                expect(mapperStateStub.setProps).toHaveBeenCalledWith(classId1);
-                expect(mapperStateStub.setProps).toHaveBeenCalledWith(classId2);
                 expect(mapperStateStub.step).toEqual(mapperStateStub.editMappingStep);
-                expect(matDialog.open).not.toHaveBeenCalled();
+                expect(mapperStateStub.startWithConfigModal).toBeFalse();
             });
         });
         it('should set the correct state for canceling', function() {

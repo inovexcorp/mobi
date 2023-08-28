@@ -24,9 +24,9 @@
 @import "../../../css/variables";
 
 .class-select {
-    md-progress-circular {
-      display: inline !important;
-      float: left;
-      margin-right: 0.5rem !important;
+    .spinner-prefix {
+        display: block;
+        width: 15px;
+        height: 15px;
     }
 }

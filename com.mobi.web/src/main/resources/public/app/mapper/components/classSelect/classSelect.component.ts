@@ -20,18 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { includes, groupBy } from 'lodash';
-import { Observable } from 'rxjs';
-import { debounceTime, map, startWith } from 'rxjs/operators';
+import { groupBy } from 'lodash';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, finalize, map, startWith, switchMap } from 'rxjs/operators';
 
+import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 
 interface ClassGroup {
     ontologyId: string,
-    classes: MappingClass[]
+    classes:MappingClass[]
 }
 
 /**
@@ -46,43 +48,60 @@ interface ClassGroup {
  */
 @Component({
     selector: 'class-select',
-    templateUrl: './classSelect.component.html'
+    templateUrl: './classSelect.component.html',
+    styleUrls: ['./classSelect.component.scss']
 })
 export class ClassSelectComponent implements OnInit {
+    error = '';
+    noResults = false;
     @Input() parentForm: UntypedFormGroup;
-    @Input() classes: MappingClass[];
     @Input() selectedClass: MappingClass;
 
     @Output() selectedClassChange = new EventEmitter<MappingClass>();
     
+    @ViewChild('classSelectSpinner', { static: true }) classSelectSpinner: ElementRef;
+    
     filteredClasses: Observable<ClassGroup[]>;
 
-    constructor() {}
+    constructor(private _state: MapperStateService, private _spinner: ProgressSpinnerService) {}
 
     ngOnInit(): void {
         this.filteredClasses = this.parentForm.controls.class.valueChanges
             .pipe(
                 debounceTime(500),
                 startWith<string | MappingClass>(''),
-                map(val => this.filter(val)),
+                switchMap(val => this.filter(val)),
             );
     }
-    filter(val: string | MappingClass): ClassGroup[] {
+    filter(val: string | MappingClass): Observable<ClassGroup[]> {
         const searchText = typeof val === 'string' ?
             val :
             val ?
                 val.name :
                 '';
-        if (!this.classes) {
-            return [];
-        }
-        const filtered = this.classes.filter(mappingClass => includes(mappingClass.name.toLowerCase(), searchText.toLowerCase()));
-        filtered.sort((mappingClass1, mappingClass2) => mappingClass1.name.localeCompare(mappingClass2.name));
-        const grouped = groupBy(filtered, 'ontologyId');
-        return Object.keys(grouped).map(ontologyId => ({
-            ontologyId,
-            classes: grouped[ontologyId]
-        }));
+        this._spinner.startLoadingForComponent(this.classSelectSpinner, 15);
+        return this._state.retrieveClasses(this._state.selected.mapping.getSourceOntologyInfo(), searchText, 100, true)
+            .pipe(
+                catchError(error => {
+                    this.error = error;
+                    return of([]);
+                }),
+                map(results => {
+                    if (!results.length) {
+                        this.noResults = true;
+                        return [];
+                    }
+                    this.noResults = false;
+                    const grouped = groupBy(results, result => this._state.iriMap.classes[result.iri]);
+                    return Object.keys(grouped).map(ontologyId => ({
+                        ontologyId,
+                        classes: grouped[ontologyId].sort((a, b) => a.name.localeCompare(b.name))
+                    })).sort((a, b) => a.ontologyId.localeCompare(b.ontologyId));
+                }),
+                finalize(() => {
+                    this._spinner.finishLoadingForComponent(this.classSelectSpinner);
+                })
+            );
     }
     getDisplayText(value: MappingClass): string {
         return value ? value.name : '';

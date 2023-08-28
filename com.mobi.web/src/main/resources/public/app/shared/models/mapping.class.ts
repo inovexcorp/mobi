@@ -26,6 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DELIM } from '../../prefixes';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { MappingOntologyInfo } from './mappingOntologyInfo.interface';
+import { getPropertyId } from '../utility';
 
 export class Mapping {
 
@@ -50,7 +51,7 @@ export class Mapping {
      * @returns {string} The id of the class mapped by the class mapping
      */
     static getClassIdByMapping(classMapping: JSONLDObject): string {
-        return get(classMapping, `['${DELIM}mapsTo'][0]['@id']`, '');
+        return getPropertyId(classMapping, `${DELIM}mapsTo`);
     }
     /**
      * Collects the id of the property being mapped by the passed property mapping.
@@ -59,7 +60,7 @@ export class Mapping {
      * @returns {string} The id of the property mapped by the property mapping
      */
     static getPropIdByMapping(propMapping: JSONLDObject): string {
-        return get(propMapping, `['${DELIM}hasProperty'][0]['@id']`, '');
+        return getPropertyId(propMapping, `${DELIM}hasProperty`);
     }
 
     /**
@@ -79,7 +80,7 @@ export class Mapping {
      *
      * @returns {JSONLDObject[]} An array of all the class mappings in the mapping array
      */
-     getAllClassMappings(): JSONLDObject[] {
+    getAllClassMappings(): JSONLDObject[] {
         return this._getEntitiesByType(this.jsonld, 'ClassMapping');
     }
     /**
@@ -136,10 +137,8 @@ export class Mapping {
      * @return {JSONLDObject[]} The property mappings that link to the specified class mapping
      */
     getPropsLinkingToClass(classMappingId: string): JSONLDObject[] {
-        return filter(
-            this.getAllObjectMappings(),
-            [`['${DELIM}classMapping'][0]['@id']`, classMappingId]
-        );
+        return this.getAllObjectMappings().filter(objectMapping => 
+            getPropertyId(objectMapping, `${DELIM}classMapping`) === classMappingId);
     }
     /**
      * Collects all class mappings in the mapping that map to the passed class IRI.
@@ -294,9 +293,9 @@ export class Mapping {
     getSourceOntologyInfo(): MappingOntologyInfo {
         const mappingEntity = this.getMappingEntity();
         return {
-            recordId: get(mappingEntity, `['${DELIM}sourceRecord'][0]['@id']`),
-            branchId: get(mappingEntity, `['${DELIM}sourceBranch'][0]['@id']`),
-            commitId: get(mappingEntity, `['${DELIM}sourceCommit'][0]['@id']`),
+            recordId: getPropertyId(mappingEntity, `${DELIM}sourceRecord`),
+            branchId: getPropertyId(mappingEntity, `${DELIM}sourceBranch`),
+            commitId: getPropertyId(mappingEntity, `${DELIM}sourceCommit`),
         };
     }
     /**

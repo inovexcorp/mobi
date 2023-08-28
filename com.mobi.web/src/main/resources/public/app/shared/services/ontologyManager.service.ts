@@ -692,10 +692,12 @@ export class OntologyManagerService {
      * @param {string} format The return format of the query results.
      * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
      * @param {boolean} [applyInProgressCommit=false] Whether to apply the in progress commit changes
-     * @return {Observable} An Observable containing the SPARQL query results
+     * @return {Observable} An Observable containing the SPARQL query results as either a JSON-LD array or a RDF
+     *    formatted string for CONSTRUCT queries or {@link SPARQLSelectResults} for SELECT queries
      */
     getQueryResults(recordId: string, branchId: string, commitId: string, query: string, format: string, 
-      includeImports = true, applyInProgressCommit = false): Observable<any> { // TODO JSONLDObject[] | SPARQLSelectResults | string
+      includeImports = true, applyInProgressCommit = false, isTracked = false): 
+      Observable<JSONLDObject[] | SPARQLSelectResults | string> {
         const params = {
             query,
             branchId,
@@ -705,16 +707,21 @@ export class OntologyManagerService {
         };
         let headers = new HttpHeaders();
         headers = headers.append('Accept', this._getMimeType(format));
-        return this.spinnerSrv.track(this.http.get(`${this.prefix}/${encodeURIComponent(recordId)}/query`, {
+        return this.spinnerSrv.trackedRequest(this.http.get(`${this.prefix}/${encodeURIComponent(recordId)}/query`, {
             responseType: 'text',
             observe: 'response',
             headers,
             params: createHttpParams(params)
-        })).pipe(
+        }), isTracked).pipe(
             catchError(handleError),
             map((response: HttpResponse<string>) => {
+                if (response.status === 204) {
+                    return undefined;
+                }
                 const contentType = response.headers.get('Content-Type');
                 if (contentType === 'application/json') {
+                    return (JSON.parse(response.body)) as SPARQLSelectResults;
+                } else if (contentType === 'application/ld+json') {
                     return (JSON.parse(response.body)) as JSONLDObject[];
                 } else {
                     return response.body;
@@ -735,7 +742,7 @@ export class OntologyManagerService {
      * @return {Observable} An Observable containing the SPARQL query results
      */
     postQueryResults(recordId: string, branchId: string, commitId: string, query: string, format: string, 
-      includeImports = true, applyInProgressCommit = false): Observable<any> { // TODO JSONLDObject[] | SPARQLSelectResults | string
+      includeImports = true, applyInProgressCommit = false): Observable<JSONLDObject[] | SPARQLSelectResults | string> {
         const params = {
             branchId,
             commitId,
@@ -753,9 +760,14 @@ export class OntologyManagerService {
         })).pipe(
             catchError(handleError),
             map((response: HttpResponse<string>) => {
+                if (response.status === 204) {
+                    return undefined;
+                }
                 const contentType = response.headers.get('Content-Type');
                 if (contentType === 'application/json') {
-                    return (JSON.parse(response.body)) as JSONLDObject[];
+                    return (JSON.parse(response.body)) as SPARQLSelectResults;
+                } else if (contentType === 'application/ld+json') {
+                  return (JSON.parse(response.body)) as JSONLDObject[];
                 } else {
                     return response.body;
                 }

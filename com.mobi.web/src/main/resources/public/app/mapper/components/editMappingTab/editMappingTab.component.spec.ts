@@ -98,10 +98,8 @@ describe('Edit Mapping Tab component', function() {
                     open: { afterClosed: () => of(classMapping)}
                 }) }
             ]
-        });
-    });
+        }).compileComponents();
 
-    beforeEach(function() {
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>; // Done first to avoid reading properties of undefined
         mappingStub = jasmine.createSpyObj('Mapping', [
             'getAllClassMappings'
@@ -118,7 +116,6 @@ describe('Edit Mapping Tab component', function() {
         mapperStateStub.editMappingStep = 2;
         mapperStateStub.step = mapperStateStub.editMappingStep;
         mapperStateStub.invalidProps = [];
-        mapperStateStub.availableClasses = [];
 
         fixture = TestBed.createComponent(EditMappingTabComponent);
         component = fixture.componentInstance;
@@ -138,12 +135,25 @@ describe('Edit Mapping Tab component', function() {
         mappingStub = null;
     });
 
-    it('should initialize correctly', function() {
-        spyOn(component, 'setOntologyTitle');
-        spyOn(component, 'setClassMappings');
-        component.ngOnInit();
-        expect(component.setOntologyTitle).toHaveBeenCalledWith();
-        expect(component.setClassMappings).toHaveBeenCalledWith();
+    describe('should initialize correctly', function() {
+        beforeEach(function() {
+            spyOn(component, 'setOntologyTitle');
+            spyOn(component, 'setClassMappings');
+            spyOn(component, 'openMappingConfig');
+        });
+        it('if it should be started with the config modal', function() {
+            mapperStateStub.startWithConfigModal = true;
+            component.ngOnInit();
+            expect(component.setOntologyTitle).toHaveBeenCalledWith();
+            expect(component.setClassMappings).toHaveBeenCalledWith();
+            expect(component.openMappingConfig).toHaveBeenCalledWith();
+        });
+        it('if it should not be started with the config modal', function() {
+            component.ngOnInit();
+            expect(component.setOntologyTitle).toHaveBeenCalledWith();
+            expect(component.setClassMappings).toHaveBeenCalledWith();
+            expect(component.openMappingConfig).not.toHaveBeenCalled();
+        });
     });
     it('should handle being destroyed', function() {
         component.ngOnDestroy();
@@ -160,13 +170,14 @@ describe('Edit Mapping Tab component', function() {
             expect(mapperStateStub.selectedClassMappingId).toEqual(classMapping['@id']);
         }));
         it('should open the mappingConfigOverlay', fakeAsync(function() {
-          spyOn(component, 'setOntologyTitle');
-          spyOn(component, 'setClassMappings');
+            spyOn(component, 'setOntologyTitle');
+            spyOn(component, 'setClassMappings');
             component.openMappingConfig();
             tick();
             expect(matDialog.open).toHaveBeenCalledWith(MappingConfigOverlayComponent);
             expect(component.setOntologyTitle).toHaveBeenCalledWith();
             expect(component.setClassMappings).toHaveBeenCalledWith();
+            expect(mapperStateStub.startWithConfigModal).toBeFalse();
         }));
         describe('should delete a class mapping from the mapping', function() {
             beforeEach(function() {
@@ -191,8 +202,8 @@ describe('Edit Mapping Tab component', function() {
         });
         it('should set the title of the selected ontology', function() {
             mapperStateStub.selected.ontology = {
-              '@id': 'ontology',
-              [`${DCTERMS}title`]: [{ '@value': 'title' }]
+                '@id': 'ontology',
+                [`${DCTERMS}title`]: [{ '@value': 'title' }]
             };
             component.setOntologyTitle();
             expect(component.ontologyTitle).toEqual('title');
@@ -310,29 +321,25 @@ describe('Edit Mapping Tab component', function() {
             '.button-container button.cancel-mapping',
             '.button-container mat-button-toggle-group'
         ].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
-        });
-        it('depending on whether there are available classes', function() {
-            fixture.detectChanges();
-            const button = element.queryAll(By.css('.class-mappings button.add-class-mapping-button'))[0];
-            expect(button.properties['disabled']).toBeTruthy();
-
-            mapperStateStub.availableClasses = [{
-                name: '',
-                classObj: {'@id': 'classId'},
-                isDeprecated: false,
-                ontologyId: ''
-            }];
-            fixture.detectChanges();
-            expect(button.properties['disabled']).toBeFalsy();
         });
         it('depending on whether there is an error', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
             component.errorMessage = 'Error message';
             fixture.detectChanges();
             expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+        });
+        it('depending on whether an ontology is selected', function() {
+            fixture.detectChanges();
+            const button = element.queryAll(By.css('.add-class-mapping-button'))[0];
+            expect(button).toBeTruthy();
+            expect(button.properties['disabled']).toBeTruthy();
+
+            mapperStateStub.selected.ontology = { '@id': 'ont' };
+            fixture.detectChanges();
+            expect(button.properties['disabled']).toBeFalsy();
         });
         it('depending on whether the mapping is saveable', function() {
             spyOn(component, 'isSaveable').and.returnValue(false);

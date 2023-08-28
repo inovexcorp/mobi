@@ -73,7 +73,7 @@ export class MappingPreviewComponent implements OnChanges {
     constructor(private mm: MappingManagerService) {}
 
     ngOnChanges(): void {
-        this.udateInvalidList();
+        this.updateInvalidList();
     }
 
     getIriTemplate(classMapping: JSONLDObject): string {
@@ -98,14 +98,14 @@ export class MappingPreviewComponent implements OnChanges {
             title: getDctermsValue(originalClassMapping, 'title'),
             iriTemplate: this.getIriTemplate(originalClassMapping),
             propMappings: this.mapping.getPropMappingsByClass(originalClassMapping['@id']).map(originalPropMapping => ({
-                    id: originalPropMapping['@id'],
-                    title: getDctermsValue(originalPropMapping, 'title'),
-                    isInvalid: this.isInvalid(originalPropMapping['@id']),
-                    value: this.getPropValue(originalPropMapping)
+                id: originalPropMapping['@id'],
+                title: getDctermsValue(originalPropMapping, 'title'),
+                isInvalid: this.isInvalid(originalPropMapping['@id']),
+                value: this.getPropValue(originalPropMapping)
             })).sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title))
         })).sort((classMapping1, classMapping2) => classMapping1.title.localeCompare(classMapping2.title));
     }
-    private udateInvalidList() {
+    private updateInvalidList() {
         this.setClassMappings();
     }
 }

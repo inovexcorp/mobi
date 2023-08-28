@@ -57,6 +57,8 @@ import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOv
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
 import { UploadSnackbarComponent } from '../uploadSnackbar/uploadSnackbar.component';
 import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontology-download-modal.component';
+import { Mapping } from '../../../shared/models/mapping.class';
+import { Difference } from '../../../shared/models/difference.class';
 import { OpenOntologyTabComponent } from './openOntologyTab.component';
 
 describe('Open Ontology Tab component', function() {
@@ -272,11 +274,11 @@ describe('Open Ontology Tab component', function() {
                 expect(component.deleteOntology).toHaveBeenCalledWith(recordId);
             }));
             it('and should warn the user if the ontology is open in the mapping tool', fakeAsync(function() {
-                mapperStateStub.sourceOntologies = [{
-                    recordId,
-                    id: '',
-                    entities: []
-                }];
+                mapperStateStub.selected = {
+                  mapping: new Mapping('iri'),
+                  difference: new Difference(),
+                  ontology: {'@id': recordId}
+                };
                 component.showDeleteConfirmationOverlay(displayItem);
                 tick();
                 expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {

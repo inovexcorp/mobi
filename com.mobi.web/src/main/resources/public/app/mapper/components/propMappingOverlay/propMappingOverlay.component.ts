@@ -26,24 +26,24 @@ import { UntypedFormBuilder, ValidationErrors, Validators } from '@angular/forms
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef } from '@angular/material/dialog';
 import { get, remove, find, has, invertBy, pick } from 'lodash';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
-import { DELIM, RDF, RDFS } from '../../../prefixes';
+import { DELIM, OWL, RDF, XSD } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
-import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { datatypeValidator } from './datatypeValidator.function';
-import { getBeautifulIRI, getDctermsValue, getPropertyId, getPropertyValue, removePropertyId, removePropertyValue } from '../../../shared/utility';
+import { getBeautifulIRI, getDctermsValue, getPropertyId, getPropertyValue, removePropertyId, removePropertyValue, updatePropertyId, updatePropertyValue } from '../../../shared/utility';
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
 
 interface RangeClassOption {
     classMapping: JSONLDObject,
     title: string,
+    mappingClass: MappingClass,
     new: boolean
 }
 interface DatatypeGroup {
@@ -71,15 +71,17 @@ interface DatatypeOption {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PropMappingOverlayComponent implements OnInit {
+    error = '';
+    parentClassId = '';
     selectedPropMapping: JSONLDObject = undefined;
     selectedProp: MappingProperty = undefined;
-    availableProps: MappingProperty[] = [];
+    showRangeClass = false;
     rangeClassOptions: RangeClassOption[] = [];
-    rangeClass: MappingClass = undefined;
+    rangeClasses: MappingClass[] = undefined;
     showDatatypeSelect = false;
     datatypeMap: {[key: string]: string} = {};
     langString = false;
-    emptyRangeValidator = (): ValidationErrors | null => !this.rangeClass ? {empty: true} : null; 
+    emptyRangeValidator = (): ValidationErrors | null => !this.selectedProp?.ranges.length ? {empty: true} : null; 
 
     propMappingForm = this.fb.group({
         prop: [{ value: '', disabled: false},  Validators.required],
@@ -93,59 +95,73 @@ export class PropMappingOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<PropMappingOverlayComponent>, private fb: UntypedFormBuilder,
         public state: MapperStateService, private mm: MappingManagerService,
-        public om: OntologyManagerService, private pm: PropertyManagerService) {}
+        private pm: PropertyManagerService) {}
 
     ngOnInit(): void {
         this.datatypeMap = this.pm.getDatatypeMap();
-        this.availableProps = this.state.getPropsByClassMappingId(this.state.selectedClassMappingId);
+        this.parentClassId = this.state.selected.mapping.getClassIdByMappingId(this.state.selectedClassMappingId);
         this.filteredDatatypes = this.propMappingForm.controls.datatype.valueChanges
-                .pipe(
-                    startWith(''),
-                    map(val => {
-                        let filtered = Object.keys(this.datatypeMap);
-                        if (val) {
-                            filtered = filtered.filter(datatype => datatype.toLowerCase().includes(val.toLowerCase()));
-                        }
-                        return this._getDatatypeGroups(filtered);
-                    })
-                );
+            .pipe(
+                startWith(''),
+                map(val => {
+                    let filtered = Object.keys(this.datatypeMap);
+                    if (val) {
+                        filtered = filtered.filter(datatype => datatype.toLowerCase().includes(val.toLowerCase()));
+                    }
+                    return this._getDatatypeGroups(filtered);
+                })
+            );
         if (!this.state.newProp && this.state.selectedPropMappingId) {
             this.setupEditProperty();
         }
     }
     setRangeClass(): void {
-        const rangeClassId = getPropertyId(this.selectedProp.propObj, `${RDFS}range`);
-        if (rangeClassId) { // If property has range set
-            this.rangeClass = find(this.state.availableClasses, {classObj: {'@id': rangeClassId}});
-            if (this.rangeClass.isDeprecated) {
-                this.propMappingForm.controls.rangeClass.disable();
-            } else {
-                this.propMappingForm.controls.rangeClass.enable();
-            }
-            const newOption = {
-                new: true,
-                title: `[New ${this.om.getEntityName(this.rangeClass.classObj).trim()}]`,
-                classMapping: undefined
-            };
-            this.rangeClassOptions = [newOption].concat(
-                this.state.selected.mapping.getClassMappingsByClassId(rangeClassId).map(classMapping => ({
-                    new: false,
-                    title: getDctermsValue(classMapping, 'title'),
-                    classMapping
-                }))
-            );
-            const classMappingId = getPropertyId(this.selectedPropMapping, `${DELIM}classMapping`);
-            if (classMappingId) {
-                this.propMappingForm.controls.rangeClass.setValue(this.rangeClassOptions.find(option => get(option.classMapping, '@id') === classMappingId));
-            } else {
-                this.propMappingForm.controls.rangeClass.setValue('');
-            }
-        } else { // If property does not have a range set
-            this.rangeClass = undefined;
-            this.rangeClassOptions = [];
-            this.propMappingForm.controls.rangeClass.setValue('');
-            this.propMappingForm.controls.rangeClass.disable();
+        let ob: Observable<MappingClass[]>;
+        if (this.selectedProp.ranges.length) {
+            ob = this.state.retrieveSpecificClasses(this.state.selected.mapping.getSourceOntologyInfo(), 
+                this.selectedProp.ranges);
+        } else {
+            ob = of(undefined);
         }
+        ob.subscribe((result: MappingClass[] | undefined) => {
+            if (result && result.length) { // Found range classes in imports closure
+                this.rangeClasses = result;
+                this.rangeClassOptions = [];
+                result.forEach(mappingClass => { // For each possible range class
+                    // Prepend a "New" option
+                    this.rangeClassOptions = [{
+                        new: true,
+                        title: `[New ${mappingClass.name.trim()}]`,
+                        classMapping: undefined,
+                        mappingClass
+                    }].concat(this.rangeClassOptions);
+                    // Append all existing class mappings
+                    this.rangeClassOptions = this.rangeClassOptions.concat(
+                        this.state.selected.mapping.getClassMappingsByClassId(mappingClass.iri).map(classMapping => ({
+                            new: false,
+                            title: getDctermsValue(classMapping, 'title'),
+                            classMapping,
+                            mappingClass
+                        }))
+                    );
+                });
+                // Set the range class select value to any existing range class mapping
+                const classMappingId = getPropertyId(this.selectedPropMapping, `${DELIM}classMapping`);
+                if (classMappingId) {
+                    this.propMappingForm.controls.rangeClass.setValue(this.rangeClassOptions
+                        .find(option => get(option.classMapping, '@id') === classMappingId));
+                } else {
+                    this.propMappingForm.controls.rangeClass.setValue('');
+                }
+                this.propMappingForm.controls.rangeClass.enable();
+            } else { // No range classes set or they couldn't be found in imports closure
+                this.rangeClasses = undefined;
+                this.rangeClassOptions = [];
+                this.propMappingForm.controls.rangeClass.setValue('');
+                this.propMappingForm.controls.rangeClass.disable();
+            }
+            this.showRangeClass = true;
+        });
     }
     selectProp(property: MappingProperty): void {
         this.selectedProp = property;
@@ -153,7 +169,7 @@ export class PropMappingOverlayComponent implements OnInit {
     }
     updateRange(): void {
         this.propMappingForm.controls.column.setValue('');
-        if (this.selectedProp.isObjectProperty) {
+        if (this.selectedProp.type === `${OWL}ObjectProperty`) {
             this.propMappingForm.controls.rangeClass.setValidators([this.emptyRangeValidator, Validators.required]);
             this.propMappingForm.controls.column.clearValidators();
             this.setRangeClass();
@@ -162,10 +178,14 @@ export class PropMappingOverlayComponent implements OnInit {
             this.propMappingForm.controls.column.setValidators([Validators.required]);
             this.rangeClassOptions = [];
             this.propMappingForm.controls.rangeClass.setValue(undefined);
-            this.rangeClass = undefined;
-            this.propMappingForm.controls.datatype.setValue('');
+            this.rangeClasses = undefined;
+            this.showRangeClass = false;
+            this.propMappingForm.controls.datatype.setValue(this.selectedProp.ranges[0] || `${XSD}string`);
             this.propMappingForm.controls.language.setValue('');
             this.showDatatypeSelect = false;
+            if (this.selectedProp.ranges.length > 1 || this.state.supportedAnnotations.includes(this.selectedProp)) {
+                this.showDatatype();
+            }
         }
     }
     getDatatypeText(iri: string): string {
@@ -193,7 +213,7 @@ export class PropMappingOverlayComponent implements OnInit {
         this.langString = false;
         this.propMappingForm.controls.datatype.clearValidators();
         this.propMappingForm.controls.language.clearValidators();
-        this.propMappingForm.controls.datatype.setValue('');
+        this.propMappingForm.controls.datatype.setValue(this.selectedProp.ranges[0] || `${XSD}string`);
         this.propMappingForm.controls.language.setValue('');
         this.propMappingForm.updateValueAndValidity();
     }
@@ -202,9 +222,13 @@ export class PropMappingOverlayComponent implements OnInit {
             const additionsObj = find(this.state.selected.difference.additions as JSONLDObject[], {'@id': this.state.selectedClassMappingId});
             let propMap;
             let prop;
-            if (this.selectedProp.isObjectProperty) {
+            if (this.selectedProp.type === `${OWL}ObjectProperty`) {
                 // Add range ClassMapping first
                 const classMappingId = this._getRangeClassMappingId();
+                if (!classMappingId) {
+                    this.error = 'Error creating range class mapping';
+                    return;
+                }
 
                 // Add ObjectMapping pointing to new range class mapping
                 propMap = this.state.addObjectMapping(this.selectedProp, this.state.selectedClassMappingId, classMappingId);
@@ -212,7 +236,7 @@ export class PropMappingOverlayComponent implements OnInit {
             } else {
                 // Add the DataMapping pointing to the selectedColumn
                 const selectedColumn = this.propMappingForm.controls.column.value;
-                const datatype = this.propMappingForm.controls.datatype.value;
+                const datatype = this.propMappingForm.controls.datatype.value || this.selectedProp.ranges[0] || `${XSD}string`;
                 const language = this.propMappingForm.controls.language.value;
                 propMap = this.state.addDataMapping(this.selectedProp, this.state.selectedClassMappingId, selectedColumn, datatype, language);
                 prop = `${DELIM}dataProperty`;
@@ -234,13 +258,13 @@ export class PropMappingOverlayComponent implements OnInit {
                 // Update the selected column
                 const originalIndex = getPropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`);
                 const selectedColumn = this.propMappingForm.controls.column.value;
-                this.selectedPropMapping[`${DELIM}columnIndex`][0]['@value'] = `${selectedColumn}`;
+                updatePropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`, `${selectedColumn}`);
                 this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}columnIndex`, `${selectedColumn}`, originalIndex);
 
                 const originalDatatype = getPropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`);
                 if (this.propMappingForm.controls.datatype.value) { // Set the datatype override if present
                     const datatype = this.propMappingForm.controls.datatype.value;
-                    this.selectedPropMapping[`${DELIM}datatypeSpec`] = [{'@id': datatype}];
+                    updatePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, datatype);
                     this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}datatypeSpec`, datatype, originalDatatype);
                 } else { // Clear the datatype override if the input is cleared
                     removePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, originalDatatype);
@@ -260,7 +284,7 @@ export class PropMappingOverlayComponent implements OnInit {
                 // Update range class mapping for object property mapping
                 const classMappingId = this._getRangeClassMappingId();
                 const originalClassMappingId = getPropertyId(this.selectedPropMapping, `${DELIM}classMapping`);
-                this.selectedPropMapping[`${DELIM}classMapping`][0]['@id'] = classMappingId;
+                updatePropertyId(this.selectedPropMapping, `${DELIM}classMapping`, classMappingId);
                 this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}classMapping`, classMappingId, originalClassMappingId);
             }
         }
@@ -274,22 +298,39 @@ export class PropMappingOverlayComponent implements OnInit {
         this.propMappingForm.controls.prop.disable();
         this.selectedPropMapping = this.state.selected.mapping.getPropMapping(this.state.selectedPropMappingId);
         const propId = Mapping.getPropIdByMapping(this.selectedPropMapping);
-        this.selectedProp = this.availableProps.find(mappingProperty => mappingProperty.propObj['@id'] === propId);
-        this.propMappingForm.controls.prop.setValue(this.selectedProp);
-        if (this.selectedProp.isObjectProperty) {
-            this.setRangeClass();
+        const annotationProp = this.state.supportedAnnotations.find(prop => prop.iri === propId);
+        let ob: Observable<MappingProperty>;
+        if (annotationProp) {
+            ob = of(annotationProp);
         } else {
-            this.propMappingForm.controls.column.setValue(parseInt(getPropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`), 10));
-            const datatype = getPropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`);
-            this.propMappingForm.controls.datatype.setValue(datatype);
-            if (datatype) {
-                this.showDatatypeSelect = true;
-                this.langString = `${RDF}langString` === datatype;
-                if (this.langString) {
-                    this.propMappingForm.controls.language.setValue(getPropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`));
-                }
-            }
+            const iriObjs = this.mm.isObjectMapping(this.selectedPropMapping) ? [{ iri: propId, type: `${OWL}ObjectProperty` }] 
+                : [{ iri: propId, type: `${OWL}DatatypeProperty` }, { iri: propId, type: `${OWL}AnnotationProperty` }];
+            ob = this.state.retrieveSpecificProps(this.state.selected.mapping.getSourceOntologyInfo(), iriObjs)
+                .pipe(map(results => results[0]));
         }
+        ob.subscribe(result => {
+            this.error = '';
+            this.selectedProp = result;
+            this.propMappingForm.controls.prop.setValue(this.selectedProp);
+            if (this.selectedProp) {
+                if (this.selectedProp.type === `${OWL}ObjectProperty`) {
+                    this.setRangeClass();
+                } else {
+                    this.propMappingForm.controls.column.setValue(parseInt(getPropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`), 10));
+                    const datatype = getPropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`) || this.selectedProp.ranges[0];
+                    this.propMappingForm.controls.datatype.setValue(datatype);
+                    if (!this.selectedProp.ranges.includes(datatype) || this.selectedProp.ranges.length > 1) {
+                        this.showDatatype();
+                    }
+                    this.langString = `${RDF}langString` === datatype;
+                    if (this.langString) {
+                        this.propMappingForm.controls.language.setValue(getPropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`));
+                    }
+                }
+            } else {
+                this.error = 'Could not find property';
+            }
+        }, error => this.error = error);
     }
     cancel(): void {
         this.state.newProp = false;
@@ -298,11 +339,8 @@ export class PropMappingOverlayComponent implements OnInit {
 
     private _getRangeClassMappingId() {
         if (this.propMappingForm.controls.rangeClass.value.new) {
-            const classMappingId = this.state.addClassMapping(this.rangeClass)['@id'];
-            if (!this.state.hasPropsSet(this.rangeClass.classObj['@id'])) {
-                this.state.setProps(this.rangeClass.classObj['@id']);
-            }
-            return classMappingId;
+            const classMapping = this.state.addClassMapping(this.propMappingForm.controls.rangeClass.value.mappingClass);
+            return classMapping ? classMapping['@id'] : '';
         } else {
             return this.propMappingForm.controls.rangeClass.value.classMapping['@id'];
         }

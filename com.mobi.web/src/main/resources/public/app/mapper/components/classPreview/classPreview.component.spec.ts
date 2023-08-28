@@ -21,14 +21,19 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OWL } from '../../../prefixes';
+import { Mapping } from '../../../shared/models/mapping.class';
+import { MappingOntologyInfo } from '../../../shared/models/mappingOntologyInfo.interface';
+import { Difference } from '../../../shared/models/difference.class';
 import { ClassPreviewComponent } from './classPreview.component';
 
 describe('Class Preview component', function() {
@@ -36,7 +41,13 @@ describe('Class Preview component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ClassPreviewComponent>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+
+    const ontInfo: MappingOntologyInfo = {
+        recordId: 'recordId',
+        branchId: 'branchId',
+        commitId: 'commitId'
+    };
+    let mappingStub: jasmine.SpyObj<Mapping>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -47,15 +58,20 @@ describe('Class Preview component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(OntologyManagerService),
             ]
-        });
-    });
+        }).compileComponents();
 
-    beforeEach(function() {
         fixture = TestBed.createComponent(ClassPreviewComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
+        mappingStub = jasmine.createSpyObj('Mapping', [
+            'getSourceOntologyInfo',
+        ]);
+        mappingStub.getSourceOntologyInfo.and.returnValue(ontInfo);
+        mapperStateStub.selected = {
+            mapping: mappingStub,
+            difference: new Difference()
+        };
     });
 
     afterEach(function() {
@@ -64,28 +80,36 @@ describe('Class Preview component', function() {
         element = null;
         fixture = null;
         mapperStateStub = null;
-        ontologyManagerStub = null;
+        mappingStub = null;
     });
 
-    it('should set the correct variables when the classObj changes', function() {
-        const props: MappingProperty[] = [...Array(11).keys()].map(idx => ({
-            propObj: {'@id': '' + idx},
-            name: '' + idx,
-            isDeprecated: false,
-            isObjectProperty: false,
-            ontologyId: ''
+    describe('should set the correct variables when the classObj changes', function() {
+        it('successfully', fakeAsync(function() {
+          const props: MappingProperty[] = [...Array(11).keys()].map(idx => ({
+              iri: `${idx}`,
+              name: `${idx}`,
+              type: `${OWL}DatatypeProperty`,
+              deprecated: false,
+              description: '',
+              ranges: []
+          }));
+          mapperStateStub.retrieveProps.and.returnValue(of(props));
+          component.classDetails = { iri: 'class', name: 'Name', description: 'Description', deprecated: false };
+          tick();
+          expect(component.name).toEqual('Name');
+          expect(component.description).toEqual('Description');
+          expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, component.classDetails.iri, '', 10);
+          expect(component.props).toEqual(props);
         }));
-        mapperStateStub.getClassProps.and.returnValue(props);
-        ontologyManagerStub.getEntityName.and.returnValue('Name');
-        ontologyManagerStub.getEntityDescription.and.returnValue('Description');
-        component.classObj = {'@id': 'class'};
-        expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(component.classObj);
-        expect(ontologyManagerStub.getEntityDescription).toHaveBeenCalledWith(component.classObj);
-        expect(component.name).toEqual('Name');
-        expect(component.description).toEqual('Description');
-        expect(mapperStateStub.getClassProps).toHaveBeenCalledWith(component.ontologies, component.classObj['@id']);
-        expect(component.total).toEqual(props.length);
-        expect(component.props.length).toEqual(10);
+        it('even if the properties could not be retrieved', fakeAsync(function() {
+            mapperStateStub.retrieveProps.and.returnValue(throwError('Error'));
+            component.classDetails = { iri: 'class', name: 'Name', description: 'Description', deprecated: false };
+            tick();
+            expect(component.name).toEqual('Name');
+            expect(component.description).toEqual('Description');
+            expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, component.classDetails.iri, '', 10);
+            expect(component.props).toEqual([]);
+        }));
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -97,42 +121,25 @@ describe('Class Preview component', function() {
             expect(propList.nativeElement.innerHTML).toContain('None');
 
             component.props = [{
-                propObj: {'@id': 'id'},
+                iri: 'id',
+                type: `${OWL}DatatypeProperty`,
                 name: 'name',
-                isDeprecated: false,
-                isObjectProperty: false,
-                ontologyId: ''
+                deprecated: false,
+                description: '',
+                ranges: []
             }];
             fixture.detectChanges();
             expect(propList.nativeElement.innerHTML).not.toContain('None');
             expect(element.queryAll(By.css('li')).length).toBeGreaterThan(0);
         });
-        it('depending on whether classObj has more than 10 properties', function() {
-            component.props = [{
-                propObj: {'@id': 'id'},
-                name: 'name',
-                isDeprecated: false,
-                isObjectProperty: false,
-                ontologyId: ''
-            }];
-            component.total = 9;
-            fixture.detectChanges();
-            const item = element.queryAll(By.css('ul li'))[0];
-            expect(item.classes['last']).toBeTruthy();
-            expect(item.classes['limited']).toBeFalsy();
-
-            component.total = 11;
-            fixture.detectChanges();
-            expect(item.classes['last']).toBeTruthy();
-            expect(item.classes['limited']).toBeTruthy();
-        });
         it('depending on whether a property is deprecated', function() {
             component.props = [{
-                propObj: {'@id': 'id'},
+                iri: 'id',
+                type: `${OWL}DatatypeProperty`,
                 name: 'name',
-                isDeprecated: true,
-                isObjectProperty: false,
-                ontologyId: ''
+                deprecated: true,
+                description: '',
+                ranges: []
             }];
             fixture.detectChanges();
             expect(element.queryAll(By.css('ul li span.deprecated')).length).toEqual(1);

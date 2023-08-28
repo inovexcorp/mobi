@@ -21,25 +21,28 @@
  * #L%
  */
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { has, merge } from 'lodash';
+import { cloneDeep, has, merge } from 'lodash';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
-import { DCTERMS, DELIM } from '../../prefixes';
+import { DATA, DCTERMS, DELIM, ONTOLOGYEDITOR, OWL, XSD } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { Mapping } from '../models/mapping.class';
 import { MappingClass } from '../models/mappingClass.interface';
-import { MappingOntology } from '../models/mappingOntology.interface';
 import { MappingProperty } from '../models/mappingProperty.interface';
 import { MappingRecord } from '../models/mappingRecord.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { MappingManagerService } from './mappingManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
+import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
+import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { IriList } from '../models/iriList.interface';
+import { getDctermsValue } from '../utility';
 import { MapperStateService } from './mapperState.service';
 
 describe('Mapper State service', function() {
@@ -54,6 +57,8 @@ describe('Mapper State service', function() {
     const catalogId = 'catalogId';
     const ontologyId = 'ontologyId';
     const recordId = 'recordId';
+    const propId = 'propId';
+    const classId = 'classId';
     const record: MappingRecord = {
         id: recordId,
         title: '',
@@ -63,21 +68,23 @@ describe('Mapper State service', function() {
         keywords: []
     };
     const mappingProperty: MappingProperty = {
-        name: 'mappingProperty',
-        isDeprecated: false,
-        isObjectProperty: false,
-        ontologyId,
-        propObj: {'@id': 'propObj'}
+        iri: propId,
+        type: `${OWL}DatatypeProperty`,
+        name: 'Mapping Property',
+        description: '',
+        deprecated: false,
+        ranges: []
     };
     const mappingClass: MappingClass = {
-        ontologyId,
-        classObj: {'@id': 'class'},
-        name: 'mappingClass',
-        isDeprecated: false
+        iri: classId,
+        name: 'Mapping Class',
+        deprecated: false,
+        description: ''
     };
-    const mappingOntology: MappingOntology = {
-        id: ontologyId,
-        entities: []
+    const ontInfo: MappingOntologyInfo = {
+        recordId: 'ontRecordId',
+        branchId: 'ontBranchId',
+        commitId: 'ontCommitId'
     };
 
     beforeEach(async () => {
@@ -100,16 +107,25 @@ describe('Mapper State service', function() {
         catalogManagerStub.localCatalog = {'@id': catalogId};
         mappingStub = jasmine.createSpyObj('Mapping', [
             'getJsonld',
+            'getAllClassMappings',
             'getAllDataMappings',
+            'getAllObjectMappings',
             'getClassIdByMappingId',
             'getClassMappingsByClassId',
             'getPropMappingsByClass',
             'getPropsLinkingToClass',
+            'getSourceOntologyInfo',
             'findClassWithObjectMapping',
             'findClassWithDataMapping',
+            'addClassMapping',
+            'getClassMapping',
             'removeClassMapping',
+            'hasClassMapping',
+            'addDataPropMapping',
+            'addObjectPropMapping',
             'removePropMapping',
         ]);
+        mappingStub.getSourceOntologyInfo.and.returnValue(ontInfo);
         service.selected = {
             difference: new Difference(),
             mapping: mappingStub
@@ -133,10 +149,8 @@ describe('Mapper State service', function() {
         expect(service.step).toBe(0);
         expect(service.editTabIndex).toEqual(0);
         expect(service.invalidProps).toEqual([]);
-        expect(service.propsByClass).toEqual({});
-        expect(service.availableClasses).toEqual([]);
+        expect(service.iriMap).toBeUndefined();
         expect(service.selected).toBeUndefined();
-        expect(service.sourceOntologies).toEqual([]);
     });
     it('should reset edit related variables', function() {
         service.resetEdit();
@@ -156,9 +170,7 @@ describe('Mapper State service', function() {
         service.startCreateMapping();
         expect(service.editMapping).toBe(true);
         expect(service.newMapping).toBe(true);
-        expect(service.sourceOntologies).toEqual([]);
         expect(service.resetEdit).toHaveBeenCalledWith();
-        expect(service.propsByClass).toEqual({});
     });
     describe('should retrieve a MappingState for the provided record', function() {
         const mappingEntity: JSONLDObject = {
@@ -319,6 +331,197 @@ describe('Mapper State service', function() {
             tick();
         }));
     });
+    describe('should find incompatible mappings within a Mapping', function() {
+        const objPropId = 'objPropId';
+        const classMapping: JSONLDObject = {
+            '@id': 'classMapping',
+            '@type': [`${DELIM}ClassMapping`],
+            [`${DELIM}mapsTo`]: [{'@id': classId}]
+        };
+        const dataPropMapping: JSONLDObject = {
+            '@id': 'dataPropMapping',
+            '@type': [`${DELIM}PropertyMapping`, `${DELIM}DataMapping`],
+            [`${DELIM}hasProperty`]: [{ '@id': propId }],
+            [`${DELIM}columnIndex`]: [{ '@value': '0' }]
+        };
+        const objPropMapping: JSONLDObject = {
+            '@id': 'objPropMapping',
+            '@type': [`${DELIM}PropertyMapping`, `${DELIM}ObjectMapping`],
+            [`${DELIM}hasProperty`]: [{ '@id': objPropId }],
+            [`${DELIM}classMapping`]: [{ '@id': classMapping['@id'] }]
+        };
+        const objProp: MappingProperty = cloneDeep(mappingProperty);
+        objProp.iri = objPropId;
+        objProp.type = `${OWL}ObjectProperty`;
+        objProp.ranges = [classId];
+        beforeEach(function() {
+            mappingStub.getAllClassMappings.and.returnValue([]);
+            mappingStub.getAllDataMappings.and.returnValue([]);
+            mappingStub.getAllObjectMappings.and.returnValue([]);
+        });
+        it('unless retrieveSpecificClasses fails', async function() {
+            spyOn(service, 'retrieveSpecificClasses').and.returnValue(throwError(error));
+            spyOn(service, 'retrieveSpecificProps').and.returnValue(of([]));
+            mappingStub.getAllClassMappings.and.returnValue([classMapping]);
+            mappingStub.getAllDataMappings.and.returnValue([dataPropMapping]);
+            mappingStub.getAllObjectMappings.and.returnValue([objPropMapping]);
+            await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+                expect(result).toEqual([]);
+            }, () => fail('Observable should have succeeded'));
+            expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId]);
+            expect(service.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                { iri: objPropId, type: `${OWL}ObjectProperty` },
+                { iri: propId, type: `${OWL}DatatypeProperty` },
+                { iri: propId, type: `${OWL}AnnotationProperty` },
+            ]);
+        });
+        it('unless retrieveSpecificProps fails', async function() {
+            spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([]));
+            spyOn(service, 'retrieveSpecificProps').and.returnValue(throwError(error));
+            mappingStub.getAllClassMappings.and.returnValue([classMapping]);
+            mappingStub.getAllDataMappings.and.returnValue([dataPropMapping]);
+            mappingStub.getAllObjectMappings.and.returnValue([objPropMapping]);
+            await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+                expect(result).toEqual([]);
+            }, () => fail('Observable should have succeeded'));
+            expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId]);
+            expect(service.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                { iri: objPropId, type: `${OWL}ObjectProperty` },
+                { iri: propId, type: `${OWL}DatatypeProperty` },
+                { iri: propId, type: `${OWL}AnnotationProperty` },
+            ]);
+        });
+        it('unless there are no class or property mappings', async function() {
+            spyOn(service, 'retrieveSpecificClasses');
+            spyOn(service, 'retrieveSpecificProps');
+            await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+                expect(result).toEqual([]);
+            }, () => fail('Observable should have succeeded'));
+            expect(service.retrieveSpecificClasses).not.toHaveBeenCalled();
+            expect(service.retrieveSpecificProps).not.toHaveBeenCalled();
+        });
+        it('if there are incompatible classes', async function() {
+            const deprecatedClass: MappingClass = cloneDeep(mappingClass);
+            deprecatedClass.iri = 'deprecatedClassId';
+            deprecatedClass.deprecated = true;
+            const deprecatedClassMapping: JSONLDObject = cloneDeep(classMapping);
+            deprecatedClassMapping[`${DELIM}mapsTo`] = [{ '@id': deprecatedClass.iri }];
+            
+            const missingClassMapping: JSONLDObject = cloneDeep(classMapping);
+            missingClassMapping[`${DELIM}mapsTo`] = [{ '@id': 'error' }];
+
+            spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([mappingClass, deprecatedClass]));
+            spyOn(service, 'retrieveSpecificProps');
+            mappingStub.getAllClassMappings.and.returnValue([classMapping, deprecatedClassMapping, missingClassMapping]);
+            await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+                expect(result).toEqual([deprecatedClassMapping, missingClassMapping]);
+            }, () => fail('Observable should have succeeded'));
+            expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId, deprecatedClass.iri, 'error']);
+            expect(service.retrieveSpecificProps).not.toHaveBeenCalled();
+        });
+        it('if there are incompatible data properties', async function() {
+            const supportedAnnMapping: JSONLDObject = cloneDeep(dataPropMapping);
+            supportedAnnMapping[`${DELIM}hasProperty`] = [{ '@id': service.supportedAnnotations[0].iri }];
+            
+            const switchedDataPropMapping: JSONLDObject = cloneDeep(dataPropMapping);
+            switchedDataPropMapping[`${DELIM}hasProperty`] = [{ '@id': objPropId }];
+            
+            const deprecatedProperty: MappingProperty = cloneDeep(mappingProperty);
+            deprecatedProperty.iri = 'deprecatedProperty';
+            deprecatedProperty.deprecated = true;
+            const deprecatedPropMapping: JSONLDObject = cloneDeep(dataPropMapping);
+            deprecatedPropMapping[`${DELIM}hasProperty`] = [{ '@id': deprecatedProperty.iri }];
+            
+            const missingPropMapping: JSONLDObject = cloneDeep(dataPropMapping);
+            missingPropMapping[`${DELIM}hasProperty`] = [{ '@id': 'error' }];
+
+            mappingStub.getAllDataMappings.and.returnValue([dataPropMapping, supportedAnnMapping, switchedDataPropMapping, deprecatedPropMapping, missingPropMapping]);
+            spyOn(service, 'retrieveSpecificClasses');
+            spyOn(service, 'retrieveSpecificProps').and.returnValue(of([mappingProperty, deprecatedProperty, objProp]));
+            await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+                expect(result).toEqual([switchedDataPropMapping, deprecatedPropMapping, missingPropMapping]);
+            }, () => fail('Observable should have succeeded'));
+            expect(service.retrieveSpecificClasses).not.toHaveBeenCalled();
+            expect(service.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                { iri: propId, type: `${OWL}DatatypeProperty` }, 
+                { iri: objPropId, type: `${OWL}DatatypeProperty` }, 
+                { iri: deprecatedProperty.iri, type: `${OWL}DatatypeProperty` }, 
+                { iri: 'error', type: `${OWL}DatatypeProperty` }, 
+                { iri: propId, type: `${OWL}AnnotationProperty` }, 
+                { iri: objPropId, type: `${OWL}AnnotationProperty` }, 
+                { iri: deprecatedProperty.iri, type: `${OWL}AnnotationProperty` }, 
+                { iri: 'error', type: `${OWL}AnnotationProperty` },
+            ]);
+        });
+        it('if there are incompatible object properties', async function() {
+            const switchedObjPropMapping: JSONLDObject = cloneDeep(objPropMapping);
+            switchedObjPropMapping[`${DELIM}hasProperty`] = [{ '@id': propId }];
+            
+            const deprecatedProperty: MappingProperty = cloneDeep(objProp);
+            deprecatedProperty.iri = 'deprecatedProperty';
+            deprecatedProperty.deprecated = true;
+            const deprecatedPropMapping: JSONLDObject = cloneDeep(objPropMapping);
+            deprecatedPropMapping[`${DELIM}hasProperty`] = [{ '@id': deprecatedProperty.iri }];
+            
+            const missingPropMapping: JSONLDObject = cloneDeep(objPropMapping);
+            missingPropMapping[`${DELIM}hasProperty`] = [{ '@id': 'error' }];
+
+            const removedRangeClass: MappingClass = cloneDeep(mappingClass);
+            removedRangeClass.iri = 'missingRange';
+            const removedRangeClassMapping: JSONLDObject = cloneDeep(classMapping);
+            removedRangeClassMapping['@id'] = 'removedRangeClassMapping';
+            removedRangeClassMapping[`${DELIM}mapsTo`] = [{ '@id': removedRangeClass.iri }];
+            const removedRangeProperty: MappingProperty = cloneDeep(objProp);
+            removedRangeProperty.iri = 'missingRangeProperty';
+            removedRangeProperty.ranges = [];
+            const removedRangePropMapping: JSONLDObject = cloneDeep(objPropMapping);
+            removedRangePropMapping['@id'] = 'removedRangePropMapping';
+            removedRangePropMapping[`${DELIM}hasProperty`] = [{ '@id': removedRangeProperty.iri }];
+            removedRangePropMapping[`${DELIM}classMapping`] = [{ '@id': removedRangeClassMapping['@id'] }];
+
+            const incomClass: MappingClass = cloneDeep(mappingClass);
+            incomClass.iri = 'incomClassId';
+            incomClass.deprecated = true;
+            const incomClassMapping: JSONLDObject = cloneDeep(classMapping);
+            incomClassMapping['@id'] = 'incomClassMapping';
+            incomClassMapping[`${DELIM}mapsTo`] = [{ '@id': incomClass.iri }];
+            const incomRangeProperty: MappingProperty = cloneDeep(objProp);
+            incomRangeProperty.iri = 'incomRangeProperty';
+            incomRangeProperty.ranges = [incomClass.iri];
+            const incomRangePropMapping: JSONLDObject = cloneDeep(objPropMapping);
+            incomRangePropMapping['@id'] = 'incomRangePropMapping';
+            incomRangePropMapping[`${DELIM}hasProperty`] = [{ '@id': incomRangeProperty.iri }];
+            incomRangePropMapping[`${DELIM}classMapping`] = [{ '@id': incomClassMapping['@id'] }];
+
+            mappingStub.getClassIdByMappingId.and.callFake(id => {
+                if (id === classMapping['@id']) {
+                    return classId;
+                } else if (id === removedRangeClassMapping['@id']) {
+                    return removedRangeClass.iri;
+                } else if (id === incomClassMapping['@id']) {
+                    return incomClass.iri;
+                } else {
+                    return '';
+                }
+            });
+            mappingStub.getAllClassMappings.and.returnValue([classMapping, removedRangeClassMapping, incomClassMapping]);
+            mappingStub.getAllObjectMappings.and.returnValue([objPropMapping, switchedObjPropMapping, deprecatedPropMapping, missingPropMapping, removedRangePropMapping, incomRangePropMapping]);
+            spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([mappingClass, removedRangeClass, incomClass]));
+            spyOn(service, 'retrieveSpecificProps').and.returnValue(of([mappingProperty, deprecatedProperty, objProp, removedRangeProperty, incomRangeProperty]));
+            await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+                expect(result).toEqual([incomClassMapping, switchedObjPropMapping, deprecatedPropMapping, missingPropMapping, removedRangePropMapping, incomRangePropMapping]);
+            }, () => fail('Observable should have succeeded'));
+            expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId, removedRangeClass.iri, incomClass.iri]);
+            expect(service.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                { iri: objPropId, type: `${OWL}ObjectProperty` }, 
+                { iri: propId, type: `${OWL}ObjectProperty` }, 
+                { iri: deprecatedProperty.iri, type: `${OWL}ObjectProperty` }, 
+                { iri: 'error', type: `${OWL}ObjectProperty` }, 
+                { iri: removedRangeProperty.iri, type: `${OWL}ObjectProperty` },
+                { iri: incomRangeProperty.iri, type: `${OWL}ObjectProperty` },
+            ]);
+        });
+    });
     it('should set the list of invalid property mappings', function() {
         delimitedManagerStub.dataRows = [['']];
         const invalidProp: JSONLDObject = {
@@ -357,185 +560,8 @@ describe('Mapper State service', function() {
             expect(result).toBe('0');
         });
     });
-    it('should check whether a class has properties', function() {
-        service.propsByClass = {'class': [mappingProperty]};
-        expect(service.hasProps('class')).toBeTrue();
-        expect(service.hasProps('class1')).toBeFalse();
-    });
-    it('should check whether a class mapping has properties', function() {
-        spyOn(service, 'hasProps').and.returnValue(true);
-        mappingStub.getClassIdByMappingId.and.returnValue('class');
-        expect(service.hasPropsByClassMappingId('classMapping')).toEqual(true);
-        expect(mappingStub.getClassIdByMappingId).toHaveBeenCalledWith('classMapping');
-        expect(service.hasProps).toHaveBeenCalledWith('class');
-    });
-    it('should check whether a class\'s properties have been set', function() {
-        service.propsByClass = {'class': []};
-        expect(service.hasPropsSet('class')).toBeTrue();
-        expect(service.hasPropsSet('class1')).toBeFalse();
-    });
-    it('should check whether a class mapping\'s properties have been set', function() {
-        spyOn(service, 'hasPropsSet').and.returnValue(true);
-        mappingStub.getClassIdByMappingId.and.returnValue('class');
-        expect(service.hasPropsSetByClassMappingId('classMapping')).toEqual(true);
-        expect(mappingStub.getClassIdByMappingId).toHaveBeenCalledWith('classMapping');
-        expect(service.hasPropsSet).toHaveBeenCalledWith('class');
-    });
-    it('should remove the list of properties for a class', function() {
-        service.propsByClass = {'clazz': []};
-        service.removeProps('clazz');
-        expect(service.propsByClass.clazz).toBeUndefined();
-    });
-    it('should remove the list of properties for a class mapping', function() {
-        spyOn(service, 'removeProps');
-        mappingStub.getClassIdByMappingId.and.returnValue('class');
-        service.removePropsByClassMappingId('classMapping');
-        expect(mappingStub.getClassIdByMappingId).toHaveBeenCalledWith('classMapping');
-        expect(service.removeProps).toHaveBeenCalledWith('class');
-    });
-    it('should set the list of properties for a class', function() {
-        service.sourceOntologies = [];
-        const classId = 'class';
-        const classProps: MappingProperty[] = [{
-            name: 'Prop 1',
-            isDeprecated: false,
-            isObjectProperty: false,
-            ontologyId,
-            propObj: {'@id': 'prop1'}
-        }];
-        const noDomainProps: MappingProperty[] = [{
-            name: 'Prop 2',
-            isDeprecated: false,
-            isObjectProperty: false,
-            ontologyId,
-            propObj: {'@id': 'prop2'}
-        }];
-        const annotationProps: MappingProperty[] = [{
-            name: 'Prop 3',
-            isDeprecated: false,
-            isObjectProperty: false,
-            ontologyId,
-            propObj: {'@id': 'prop3'}
-        }];
-        mappingManagerStub.annotationProperties = ['http://test.com/test'];
-        spyOn(service, 'getClassProps').and.returnValue(classProps.concat(noDomainProps, annotationProps));
-
-        service.setProps(classId);
-        expect(service.getClassProps).toHaveBeenCalledWith([], classId);
-        expect(service.propsByClass[classId]).toContain(classProps[0]);
-        expect(service.propsByClass[classId]).toContain(noDomainProps[0]);
-        expect(service.propsByClass[classId]).toContain(annotationProps[0]);
-        expect(service.propsByClass[classId]).toContain({
-            ontologyId: 'http://test.com',
-            propObj: {'@id': 'http://test.com/test'},
-            name: 'Test',
-            isDeprecated: false,
-            isObjectProperty: false
-        });
-    });
-    it('should set the list of properties for a class mapping', function() {
-        spyOn(service, 'setProps');
-        mappingStub.getClassIdByMappingId.and.returnValue('class');
-        service.setPropsByClassMappingId('classMapping');
-        expect(mappingStub.getClassIdByMappingId).toHaveBeenCalledWith('classMapping');
-        expect(service.setProps).toHaveBeenCalledWith('class');
-    });
-    it('should get the list of properties for a class', function() {
-        const props = [mappingProperty];
-        service.propsByClass = {'class': props};
-        expect(service.getProps('class')).toEqual(props);
-        expect(service.getProps('class1')).toEqual([]);
-    });
-    it('should get the list of properties for a class mapping', function() {
-        spyOn(service, 'getProps').and.returnValue([mappingProperty]);
-        mappingStub.getClassIdByMappingId.and.returnValue('class');
-        expect(service.getPropsByClassMappingId('classMapping')).toEqual([mappingProperty]);
-        expect(mappingStub.getClassIdByMappingId).toHaveBeenCalledWith('classMapping');
-        expect(service.getProps).toHaveBeenCalledWith('class');
-    });
-    it('should get the list of properties usable with a class', function() {
-        const ontologies: MappingOntology[] = [
-            {id: 'ontology1', entities: [{'@id': 'ontology1'}]},
-            {id: 'ontology2', entities: [{'@id': 'ontology2'}]}
-        ];
-        const classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];
-        const noDomainProps = [{'@id': 'prop3'}, {'@id': 'prop4'}];
-        const annotationProps = [{'@id': 'prop5'}, {'@id': 'prop6'}];
-        ontologyManagerStub.getClassProperties.and.callFake(entities => entities[0][0]['@id'] === 'ontology1' ? [classProps[0]] : [classProps[1]]);
-        ontologyManagerStub.getNoDomainProperties.and.callFake(entities => entities[0][0]['@id'] === 'ontology1' ? noDomainProps : []);
-        ontologyManagerStub.getAnnotations.and.callFake(entities => entities[0][0]['@id'] === 'ontology1' ? annotationProps : []);
-        ontologyManagerStub.getEntityName.and.returnValue('name');
-        ontologyManagerStub.isDeprecated.and.callFake(obj => obj['@id'] === 'prop2');
-        ontologyManagerStub.isObjectProperty.and.callFake(obj => obj['@id'] === 'prop1' || obj['@id'] === 'prop4');
-        ontologyManagerStub.isDataTypeProperty.and.callFake(obj => obj['@id'] === 'prop4');
-        const result = service.getClassProps(ontologies, 'class');
-        expect(ontologyManagerStub.getClassProperties.calls.count()).toBe(ontologies.length);
-        expect(ontologyManagerStub.getNoDomainProperties.calls.count()).toBe(ontologies.length);
-        expect(ontologyManagerStub.getAnnotations.calls.count()).toBe(ontologies.length);
-        expect(result).toContain({
-            ontologyId: ontologies[0].id,
-            propObj: classProps[0],
-            name: 'name',
-            isDeprecated: false,
-            isObjectProperty: true
-        });
-        expect(result).toContain({
-            ontologyId: ontologies[1].id,
-            propObj: classProps[1],
-            name: 'name',
-            isDeprecated: true,
-            isObjectProperty: false
-        });
-        expect(result).toContain({
-            ontologyId: ontologies[0].id,
-            propObj: noDomainProps[0],
-            name: 'name',
-            isDeprecated: false,
-            isObjectProperty: false
-        });
-        expect(result).not.toContain(jasmine.objectContaining({ propObj: noDomainProps[1] }));
-        expect(result).toContain({
-            ontologyId: ontologies[0].id,
-            propObj: annotationProps[0],
-            name: 'name',
-            isDeprecated: false,
-            isObjectProperty: false
-        });
-        expect(result).toContain({
-            ontologyId: ontologies[0].id,
-            propObj: annotationProps[1],
-            name: 'name',
-            isDeprecated: false,
-            isObjectProperty: false
-        });
-    });
-    it('should get the list of classes from a list of ontologies', function() {
-        const ontologies: MappingOntology[] = [
-            {id: 'ontology1', entities: [{'@id': 'ontology1'}]},
-            {id: 'ontology2', entities: [{'@id': 'ontology2'}]}
-        ];
-        const classes1 = [{'@id': 'class1'}];
-        const classes2 = [{'@id': 'class2'}];
-        ontologyManagerStub.getClasses.and.callFake(entities => entities[0][0]['@id'] === 'ontology1' ? classes1 : classes2);
-        ontologyManagerStub.getEntityName.and.returnValue('name');
-        ontologyManagerStub.isDeprecated.and.callFake(obj => obj['@id'] === 'class2');
-        const result = service.getClasses(ontologies);
-        expect(result).toContain({
-            ontologyId: ontologies[0].id,
-            classObj: classes1[0],
-            name: 'name',
-            isDeprecated: false
-        });
-        expect(result).toContain({
-            ontologyId: ontologies[1].id,
-            classObj: classes2[0],
-            name: 'name',
-            isDeprecated: true
-        });
-    });
     describe('should reflect the change of a property value in the difference', function() {
         const entityId = 'entity';
-        const propId = 'prop';
         const newValue = 'new';
         const originalValue = 'original';
         const otherValue = 'other';
@@ -720,81 +746,179 @@ describe('Mapper State service', function() {
         });
     });
     describe('should add a class mapping with the correct title if', function() {
-        const entityName = 'EntityName';
         const newClassMapping: JSONLDObject = {'@id': 'new'};
         beforeEach(function() {
-            service.sourceOntologies = [mappingOntology];
-            mappingManagerStub.addClass.and.returnValue(newClassMapping);
-            ontologyManagerStub.getEntityName.and.returnValue(entityName);
+            mappingStub.addClassMapping.and.returnValue(newClassMapping);
             spyOn(service, 'changeProp');
+            service.iriMap = {
+                classes: { [mappingClass.iri]: ontologyId },
+                dataProperties: {},
+                objectProperties: {},
+                annotationProperties: {},
+            };
         });
         it('it is the first of the class', function() {
             mappingStub.getClassMappingsByClassId.and.returnValue([]);
             expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
-            expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
+            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+            expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
             expect(service.changeProp).not.toHaveBeenCalled();
             expect(service.selected.difference.additions).toContain(newClassMapping);
         });
         describe('the class has already been mapped', function() {
             it('and it does not have an index', function() {
                 const originalClassMapping = {'@id': 'original'};
-                originalClassMapping[`${DCTERMS}title`] = [{'@value': entityName}];
+                originalClassMapping[`${DCTERMS}title`] = [{'@value': mappingClass.name}];
                 mappingStub.getClassMappingsByClassId.and.returnValue([originalClassMapping]);
                 expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-                expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
-                expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
-                expect(originalClassMapping[`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (1)`);
-                expect(service.changeProp).toHaveBeenCalledWith(originalClassMapping['@id'], `${DCTERMS}title`, `${entityName} (1)`, entityName);
+                expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+                expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
+                expect(originalClassMapping[`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
+                expect(service.changeProp).toHaveBeenCalledWith(originalClassMapping['@id'], `${DCTERMS}title`, `${mappingClass.name} (1)`, mappingClass.name);
                 expect(service.selected.difference.additions).toContain(newClassMapping);
             });
             it('with a missing number', function() {
                 const originalMappings = [{'@id': 'original1'}, {'@id': 'original2'}];
-                originalMappings[0][`${DCTERMS}title`] = [{'@value': `${entityName} (1)`}];
-                originalMappings[1][`${DCTERMS}title`] = [{'@value': `${entityName} (3)`}];
+                originalMappings[0][`${DCTERMS}title`] = [{'@value': `${mappingClass.name} (1)`}];
+                originalMappings[1][`${DCTERMS}title`] = [{'@value': `${mappingClass.name} (3)`}];
                 mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
                 expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-                expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
-                expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
-                expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (1)`);
-                expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (3)`);
+                expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+                expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
+                expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
+                expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (3)`);
                 expect(service.changeProp).not.toHaveBeenCalled();
                 expect(service.selected.difference.additions).toContain(newClassMapping);
             });
             it('with no missing numbers', function() {
                 const originalMappings = [{'@id': 'original1'}, {'@id': 'original2'}];
-                originalMappings[0][`${DCTERMS}title`] = [{'@value': `${entityName} (1)`}];
-                originalMappings[1][`${DCTERMS}title`] = [{'@value': `${entityName} (2)`}];
+                originalMappings[0][`${DCTERMS}title`] = [{'@value': `${mappingClass.name} (1)`}];
+                originalMappings[1][`${DCTERMS}title`] = [{'@value': `${mappingClass.name} (2)`}];
                 mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
                 expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-                expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.classObj['@id']);
-                expect(mappingManagerStub.addClass).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, mappingClass.classObj['@id']);
-                expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (1)`);
-                expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${entityName} (2)`);
+                expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+                expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
+                expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
+                expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (2)`);
                 expect(service.changeProp).not.toHaveBeenCalled();
                 expect(service.selected.difference.additions).toContain(newClassMapping);
             });
         });
     });
-    it('should add a data property mapping', function() {
-        service.sourceOntologies = [mappingOntology];
-        const newPropMapping: JSONLDObject = {'@id': 'new'};
-        mappingManagerStub.addDataProp.and.returnValue(newPropMapping);
-        ontologyManagerStub.getEntityName.and.returnValue('Prop');
-        expect(service.addDataMapping(mappingProperty, 'classMappingId', 0)).toEqual(newPropMapping);
-        expect(mappingManagerStub.addDataProp).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, 'classMappingId', mappingProperty.propObj['@id'], 0, undefined, undefined);
-        expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(mappingProperty.propObj);
-        expect(service.selected.difference.additions).toContain(newPropMapping);
+    describe('should add a data property mapping', function() {
+        const classMappingId = 'classMappingId';
+        const mappingAnnotation: MappingProperty = cloneDeep(mappingProperty);
+        mappingAnnotation.iri = 'annotation';
+        mappingAnnotation.name = 'Annotation';
+        beforeEach(function() {
+            service.iriMap = {
+                classes: {},
+                dataProperties: { [mappingProperty.iri]: ontologyId },
+                objectProperties: {},
+                annotationProperties: { [mappingAnnotation.iri]: ontologyId },
+            };
+            this.newPropMapping = {'@id': 'new'};
+            mappingStub.addDataPropMapping.and.returnValue(this.newPropMapping);
+            mappingStub.hasClassMapping.and.callFake(id => id === classMappingId);
+        });
+        it('unless the parent class mapping does not exist', function() {
+            expect(service.addDataMapping(mappingProperty, 'error', 0)).toBeUndefined();
+            expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('unless the property does not exist in the imports closure, is not a Datatype or Annotation Property, and is not a supported annotation', function() {
+            const mappingPropertyClone = cloneDeep(mappingProperty);
+            mappingPropertyClone.iri = 'error';
+            expect(service.addDataMapping(mappingPropertyClone, classMappingId, 0)).toBeUndefined();
+            expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('unless the property is in the imports closure but is not a Datatype or Annotation Property', function() {
+            const mappingPropertyClone = cloneDeep(mappingProperty);
+            mappingPropertyClone.type = `${OWL}ObjectProperty`;
+            expect(service.addDataMapping(mappingPropertyClone, classMappingId, 0)).toBeUndefined();
+            expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('if the property is a supported annotation', function() {
+            expect(service.addDataMapping(service.supportedAnnotations[0], classMappingId, 0)).toEqual(this.newPropMapping);
+            expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(service.supportedAnnotations[0].iri, 0, classMappingId, undefined, undefined);
+            expect(service.selected.difference.additions).toContain(this.newPropMapping);
+            expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(service.supportedAnnotations[0].name);
+        });
+        it('if the property is an existing DatatypeProperty', function() {
+            expect(service.addDataMapping(mappingProperty, classMappingId, 0)).toEqual(this.newPropMapping);
+            expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(mappingProperty.iri, 0, classMappingId, undefined, undefined);
+            expect(service.selected.difference.additions).toContain(this.newPropMapping);
+            expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(mappingProperty.name);
+        });
+        it('if the property is an existing AnnotationProperty', function() {
+            expect(service.addDataMapping(mappingAnnotation, classMappingId, 0)).toEqual(this.newPropMapping);
+            expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(mappingAnnotation.iri, 0, classMappingId, undefined, undefined);
+            expect(service.selected.difference.additions).toContain(this.newPropMapping);
+            expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(mappingAnnotation.name);
+        });
     });
-    it('should add an object property mapping', function() {
-        service.sourceOntologies = [mappingOntology];
-        const newPropMapping = {'@id': 'new'};
-        mappingManagerStub.addObjectProp.and.returnValue(newPropMapping);
-        ontologyManagerStub.getEntityName.and.returnValue('Prop');
-        expect(service.addObjectMapping(mappingProperty, 'classMappingId', 'rangeClassMappingId')).toEqual(newPropMapping);
-        expect(mappingManagerStub.addObjectProp).toHaveBeenCalledWith(mappingStub, mappingOntology.entities, 'classMappingId', mappingProperty.propObj['@id'], 'rangeClassMappingId');
-        expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(mappingProperty.propObj);
-        expect(service.selected.difference.additions).toContain(newPropMapping);
+    describe('should add an object property mapping', function() {
+        const classMappingId = 'classMappingId';
+        const rangeClassId = 'rangeClassId';
+        const rangeMappingId = 'rangeClassMappingId';
+        const rangeClassMapping: JSONLDObject = {
+          '@id': rangeMappingId,
+          [`${DELIM}mapsTo`]: [{ '@id': rangeClassId }]
+        };
+        const mappingObjProperty: MappingProperty = cloneDeep(mappingProperty);
+        mappingObjProperty.type = `${OWL}ObjectProperty`;
+        mappingObjProperty.ranges = [rangeClassId];
+        beforeEach(function() {
+            service.iriMap = {
+                classes: {},
+                dataProperties: {},
+                objectProperties: { [mappingObjProperty.iri]: ontologyId },
+                annotationProperties: {},
+            };
+            mappingStub.hasClassMapping.and.callFake(id => id === classMappingId);
+            mappingStub.getClassMapping.and.callFake(id => id === rangeMappingId ? rangeClassMapping : undefined);
+            this.newPropMapping = {'@id': 'new'};
+            mappingStub.addObjectPropMapping.and.returnValue(this.newPropMapping);
+        });
+        it('unless the parent class mapping does not exist', function() {
+            expect(service.addObjectMapping(mappingObjProperty, 'error', rangeMappingId)).toBeUndefined();
+            expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('unless the range class mapping does not exist', function() {
+            expect(service.addObjectMapping(mappingObjProperty, classMappingId, 'error')).toBeUndefined();
+            expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('unless the property does not exist in the imports closure', function() {
+            const mappingObjPropertyClone = cloneDeep(mappingObjProperty);
+            mappingObjPropertyClone.iri = 'error';
+            expect(service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId)).toBeUndefined();
+            expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('unless the property is in the imports closure but is not an ObjectProperty', function() {
+            const mappingObjPropertyClone = cloneDeep(mappingObjProperty);
+            mappingObjPropertyClone.type = `${OWL}AnnotationProperty`;
+            expect(service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId)).toBeUndefined();
+            expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('unless the property ranges do not include the class for the range ClassMapping', function() {
+            const mappingObjPropertyClone = cloneDeep(mappingObjProperty);
+            mappingObjPropertyClone.ranges = [];
+            expect(service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId)).toBeUndefined();
+            expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+            expect(service.selected.difference.additions).toEqual([]);
+        });
+        it('successfully', function() {
+            expect(service.addObjectMapping(mappingObjProperty, classMappingId, rangeMappingId)).toEqual(this.newPropMapping);
+            expect(mappingStub.addObjectPropMapping).toHaveBeenCalledWith(mappingObjProperty.iri, classMappingId, rangeMappingId);
+            expect(service.selected.difference.additions).toContain(this.newPropMapping);
+            expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(mappingObjProperty.name);
+        });
     });
     describe('should reflect the deletion of entity in the difference', function() {
         const entity = {'@id': 'entity', test: [false]};
@@ -823,7 +947,7 @@ describe('Mapper State service', function() {
     describe('should delete a class mapping and update the difference', function() {
         const classMapping: JSONLDObject = {
           '@id': 'classMapping',
-          [`${DELIM}mapsTo`]: [{'@id': 'classId'}]
+          [`${DELIM}mapsTo`]: [{'@id': classId}]
         };
         const propMapping: JSONLDObject = {'@id': 'propMapping'};
         beforeEach(function() {
@@ -832,7 +956,6 @@ describe('Mapper State service', function() {
             mappingStub.getPropMappingsByClass.and.returnValue([propMapping]);
             mappingStub.removeClassMapping.and.returnValue(classMapping);
             spyOn(service, 'deleteEntity');
-            spyOn(service, 'removeProps');
             spyOn(service, 'changeProp');
         });
         it('if it is the second to last of the specific class', function() {
@@ -847,9 +970,8 @@ describe('Mapper State service', function() {
             expect(mappingStub.removeClassMapping).toHaveBeenCalledWith(classMapping['@id']);
             expect(service.deleteEntity).toHaveBeenCalledWith(classMapping);
             expect(service.deleteEntity).toHaveBeenCalledWith(propMapping);
-            expect(service.removeProps).not.toHaveBeenCalled();
             expect(service.invalidProps.length).toEqual(0);
-            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith('classId');
+            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(classId);
             expect(service.changeProp).toHaveBeenCalledWith(lastClassMapping['@id'], `${DCTERMS}title`, 'original', 'original (1)');
         });
         it('if it is not the second to last of the specific class', function() {
@@ -860,9 +982,8 @@ describe('Mapper State service', function() {
             expect(mappingStub.removeClassMapping).toHaveBeenCalledWith(classMapping['@id']);
             expect(service.deleteEntity).toHaveBeenCalledWith(classMapping);
             expect(service.deleteEntity).toHaveBeenCalledWith(propMapping);
-            expect(service.removeProps).not.toHaveBeenCalled();
             expect(service.invalidProps.length).toEqual(0);
-            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith('classId');
+            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(classId);
             expect(service.changeProp).not.toHaveBeenCalled();
         });
         it('if it is the last of the specific class', function() {
@@ -873,9 +994,8 @@ describe('Mapper State service', function() {
             expect(mappingStub.removeClassMapping).toHaveBeenCalledWith(classMapping['@id']);
             expect(service.deleteEntity).toHaveBeenCalledWith(classMapping);
             expect(service.deleteEntity).toHaveBeenCalledWith(propMapping);
-            expect(service.removeProps).toHaveBeenCalledWith('classId');
             expect(service.invalidProps.length).toEqual(0);
-            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith('classId');
+            expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(classId);
             expect(service.changeProp).not.toHaveBeenCalled();
         });
     });
@@ -919,6 +1039,355 @@ describe('Mapper State service', function() {
                 expect(deletionObj[`${DELIM}dataProperty`]).toEqual([{'@id': propMapping['@id']}]);
                 expect(service.invalidProps.length).toEqual(0);
             });
+        });
+    });
+    describe('should set the IRI map of the current mapping', function() {
+        const iris: IriList = {
+            annotationProperties: ['annPropA', 'annPropB'],
+            deprecatedIris: [],
+            classes: ['classA', 'classB'],
+            datatypes: [],
+            objectProperties: ['objPropA', 'objPropB'],
+            dataProperties: ['dataPropA', 'dataPropB'],
+            namedIndividuals: [],
+            concepts: [],
+            conceptSchemes: [],
+            derivedConcepts: [],
+            derivedConceptSchemes: [],
+            derivedSemanticRelations: []
+        };
+        const importedIRIs: IriList = {
+            id: 'importedOntologyA',
+            annotationProperties: ['importedAnnPropA'],
+            deprecatedIris: [],
+            classes: ['importedClassA'],
+            datatypes: [],
+            objectProperties: ['importedObjPropA'],
+            dataProperties: ['importedDataPropA'],
+            namedIndividuals: [],
+            concepts: [],
+            conceptSchemes: [],
+            derivedConcepts: [],
+            derivedConceptSchemes: [],
+            derivedSemanticRelations: []
+        };
+        beforeEach(function() {
+            service.selected.ontology = {
+                '@id': ontInfo.recordId,
+                [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': ontologyId }]
+            };
+            ontologyManagerStub.getIris.and.returnValue(of(iris));
+        });
+        it('unless an error occurs with getIris', async function() {
+            ontologyManagerStub.getIris.and.returnValue(throwError(error));
+            ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
+            await service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
+                expect(result).toEqual(error);
+            });
+            expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
+            expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+            expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+        });
+        it('unless an error occurs with getImportedIris', async function() {
+            ontologyManagerStub.getImportedIris.and.returnValue(throwError(error));
+            await service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
+                expect(result).toEqual(error);
+            });
+            expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
+            expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+            expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+        });
+        describe('successfully', function() {
+            it('with imported IRIs', async function() {
+                ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
+                await service.setIriMap().subscribe(() => {
+                    expect(service.iriMap).toEqual({
+                        classes: {
+                            classA: ontologyId,
+                            classB: ontologyId,
+                            importedClassA: 'importedOntologyA'
+                        },
+                        dataProperties: {
+                            dataPropA: ontologyId,
+                            dataPropB: ontologyId,
+                            importedDataPropA: 'importedOntologyA'
+                        },
+                        objectProperties: {
+                            objPropA: ontologyId,
+                            objPropB: ontologyId,
+                            importedObjPropA: 'importedOntologyA'
+                        },
+                        annotationProperties: {
+                            annPropA: ontologyId,
+                            annPropB: ontologyId,
+                            importedAnnPropA: 'importedOntologyA'
+                        }
+                    });
+                }, () => fail('Observable should have succeeded'));
+                expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
+                expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+                expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+            });
+            it('without imported IRIs', async function() {
+                ontologyManagerStub.getImportedIris.and.returnValue(of(null));
+                await service.setIriMap().subscribe(() => {
+                  expect(service.iriMap).toEqual({
+                      classes: {
+                          classA: ontologyId,
+                          classB: ontologyId,
+                      },
+                      dataProperties: {
+                          dataPropA: ontologyId,
+                          dataPropB: ontologyId,
+                      },
+                      objectProperties: {
+                          objPropA: ontologyId,
+                          objPropB: ontologyId,
+                      },
+                      annotationProperties: {
+                          annPropA: ontologyId,
+                          annPropB: ontologyId,
+                      }
+                  });
+                }, () => fail('Observable should have succeeded'));
+                expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
+                expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+                expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+            });
+        });
+    });
+    describe('should get the list of classes from the imports closure of a source ontology', function() {
+        it('unless an error occurs', async function() {
+            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            await service.retrieveClasses(ontInfo, 'custom search')
+                .subscribe(() => fail('Observable should have failed'), response => {
+                    expect(response).toEqual(error);
+                });
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+        });
+        it('successfully', async function() {
+            const results: SPARQLSelectResults = {
+                head: { vars: [], link: [] },
+                results: { bindings: [
+                    { 
+                        iri: { value: 'class1', type: 'uri' },
+                        name: { value: 'Class 1', type: 'string' },
+                        description: { value: 'Class 1 Description', type: 'string' },
+                        deprecated: { value: 'false', type: 'boolean' }
+                    }, { 
+                      iri: { value: 'class2', type: 'uri' },
+                      name: { value: 'Class 2', type: 'string' },
+                      deprecated: { value: 'true', type: 'boolean' }
+                  },
+                ] }
+            };
+            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            await service.retrieveClasses(ontInfo, 'custom search').subscribe(result => {
+                expect(result.length).toEqual(2);
+                expect(result).toContain({
+                    iri: 'class1',
+                    name: 'Class 1',
+                    description: 'Class 1 Description',
+                    deprecated: false
+                });
+                expect(result).toContain({
+                    iri: 'class2',
+                    name: 'Class 2',
+                    description: '',
+                    deprecated: true
+                });
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+        });
+    });
+    describe('should retrieve specific classes from the imports closure of the selected Mapping', function() {
+        it('unless an error occurs', async function() {
+            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(() => fail('Observable should have failed'), result => {
+                expect(result).toEqual(error);
+            });
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(mappingClass.iri), 'application/json');
+        });
+        it('unless no classes are found', async function() {
+            ontologyManagerStub.getQueryResults.and.returnValue(of(null));
+            await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
+                expect(result).toEqual([]);
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(mappingClass.iri), 'application/json');
+        });
+        it('successfully with one IRI', async function() {
+            const results: SPARQLSelectResults = {
+              head: { vars: [], link: [] },
+              results: { bindings: [ {
+                  iri: { value: mappingClass.iri, type: 'uri' },
+                  name: { value: mappingClass.name, type: 'string' },
+                  description: { value: mappingClass.description, type: 'string' },
+              } ] }
+            };
+            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
+                expect(result).toEqual([mappingClass]);
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(mappingClass.iri), 'application/json');
+        });
+        it('successfully with multiple IRIs', async function() {
+            const otherMappingClass: MappingClass = {
+                iri: 'otherClass',
+                name: 'Other Class',
+                description: 'Other Description',
+                deprecated: true
+            };
+            const results: SPARQLSelectResults = {
+              head: { vars: [], link: [] },
+              results: { bindings: [ 
+                  {
+                    iri: { value: mappingClass.iri, type: 'uri' },
+                    name: { value: mappingClass.name, type: 'string' },
+                    description: { value: mappingClass.description, type: 'string' },
+                  },
+                  {
+                    iri: { value: otherMappingClass.iri, type: 'uri' },
+                    name: { value: otherMappingClass.name, type: 'string' },
+                    description: { value: otherMappingClass.description, type: 'string' },
+                    deprecated: { value: 'true', type: 'boolean' },
+                  },
+              ] }
+            };
+            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri, otherMappingClass.iri]).subscribe(result => {
+                expect(result).toEqual([mappingClass, otherMappingClass]);
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(`<${mappingClass.iri}> <${otherMappingClass.iri}>`), 'application/json');
+        });
+    });
+    describe('should get the list of properties for a class from the imports closure of a source ontology', function() {
+        it('unless an error occurs', async function() {
+            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            await service.retrieveProps(ontInfo, classId, 'custom search')
+                .subscribe(() => fail('Observable should have failed'), response => {
+                    expect(response).toEqual(error);
+                });
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+        });
+        it('successfully', async function() {
+            const results: SPARQLSelectResults = {
+                head: { vars: [], link: [] },
+                results: { bindings: [
+                    { 
+                        iri: { value: 'prop1', type: 'uri' },
+                        type: { value: `${OWL}ObjectProperty`, type: 'uri' },
+                        name: { value: 'Prop 1', type: 'string' },
+                        description: { value: 'Prop 1 Description', type: 'string' },
+                        deprecated: { value: 'false', type: 'boolean' },
+                        ranges: { value: '', type: 'string' }
+                    }, { 
+                      iri: { value: 'prop2', type: 'uri' },
+                      type: { value: `${OWL}DatatypeProperty`, type: 'uri' },
+                      name: { value: 'Prop 2', type: 'string' },
+                      deprecated: { value: 'true', type: 'boolean' },
+                      ranges: { value: `${XSD}string�${XSD}boolean`, type: 'string' }
+                    },
+                ] }
+            };
+            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            await service.retrieveProps(ontInfo, classId, 'custom search').subscribe(result => {
+                expect(result.length).toEqual(2);
+                expect(result).toContain({
+                    iri: 'prop1',
+                    type: `${OWL}ObjectProperty`,
+                    name: 'Prop 1',
+                    description: 'Prop 1 Description',
+                    deprecated: false,
+                    ranges: []
+                });
+                expect(result).toContain({
+                    iri: 'prop2',
+                    type: `${OWL}DatatypeProperty`,
+                    name: 'Prop 2',
+                    description: '',
+                    deprecated: true,
+                    ranges: [`${XSD}string`, `${XSD}boolean`]
+                });
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+        });
+    });
+    describe('should retrieve specific properties from the imports closure of the selected Mapping', function() {
+        it('unless an error occurs', async function() {
+            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(() => fail('Observable should have failed'), result => {
+                expect(result).toEqual(error);
+            });
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(mappingProperty.iri), 'application/json');
+        });
+        it('unless no properties are found', async function() {
+            ontologyManagerStub.getQueryResults.and.returnValue(of(null));
+            await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
+                expect(result).toEqual([]);
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(mappingProperty.iri), 'application/json');
+        });
+        it('successfully with one IRI', async function() {
+            const results: SPARQLSelectResults = {
+              head: { vars: [], link: [] },
+              results: { bindings: [ {
+                  iri: { value: mappingProperty.iri, type: 'uri' },
+                  type: { value: mappingProperty.type, type: 'uri' },
+                  name: { value: mappingProperty.name, type: 'string' },
+                  ranges: { value: '', type: 'string' },
+              } ] }
+            };
+            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
+                expect(result).toEqual([mappingProperty]);
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(mappingProperty.iri), 'application/json');
+        });
+        it('successfully with multiple IRIs', async function() {
+            const otherMappingProperty: MappingProperty = {
+                iri: 'otherProp',
+                type: `${OWL}ObjectProperty`,
+                name: 'Other Property',
+                description: 'Other Description',
+                deprecated: true,
+                ranges: [classId]
+            };
+            const results: SPARQLSelectResults = {
+              head: { vars: [], link: [] },
+              results: { bindings: [ 
+                  {
+                      iri: { value: mappingProperty.iri, type: 'uri' },
+                      type: { value: mappingProperty.type, type: 'uri' },
+                      name: { value: mappingProperty.name, type: 'string' },
+                      ranges: { value: '', type: 'string' },
+                  },
+                  {
+                    iri: { value: otherMappingProperty.iri, type: 'uri' },
+                    type: { value: otherMappingProperty.type, type: 'uri' },
+                    name: { value: otherMappingProperty.name, type: 'string' },
+                    description: { value: otherMappingProperty.description, type: 'string' },
+                    deprecated: { value: 'true', type: 'boolean' },
+                    ranges: { value: classId, type: 'string' },
+                  },
+              ] }
+            };
+            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }, { iri: otherMappingProperty.iri, type: otherMappingProperty.type}]).subscribe(result => {
+                expect(result).toEqual([mappingProperty, otherMappingProperty]);
+            }, () => fail('Observable should have succeeded'));
+            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+                jasmine.stringContaining(`(<${mappingProperty.iri}> <${mappingProperty.type}>) (<${otherMappingProperty.iri}> <${otherMappingProperty.type}>)`), 'application/json');
         });
     });
 });

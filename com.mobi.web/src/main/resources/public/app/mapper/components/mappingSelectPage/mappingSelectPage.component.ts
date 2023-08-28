@@ -24,7 +24,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
-import { get, map } from 'lodash';
+import { get } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
@@ -33,7 +33,6 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
 import { MappingRecord } from '../../../shared/models/mappingRecord.interface';
 import { MappingState } from '../../../shared/models/mappingState.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -87,7 +86,7 @@ export class MappingSelectPageComponent implements OnInit {
     setResults(): void {
         const catalogId = get(this.cm.localCatalog, '@id', '');
         this.spinnerSvc.startLoadingForComponent(this.mappingList);
-        this.cm.getRecords(catalogId, this.state.paginationConfig)
+        this.cm.getRecords(catalogId, this.state.paginationConfig, true)
             .pipe(finalize(() => {
                 this.spinnerSvc.finishLoadingForComponent(this.mappingList);
             }))
@@ -95,8 +94,8 @@ export class MappingSelectPageComponent implements OnInit {
                 this.results = response.body.map(record => ({
                     id: record['@id'],
                     title: getDctermsValue(record, 'title'),
-                    description: getDctermsValue(record, 'description') || '(No Description)',
-                    keywords: map(get(record, `['${CATALOG}keyword']`, []), '@value'),
+                    description: getDctermsValue(record, 'description'),
+                    keywords: get(record, `['${CATALOG}keyword']`, []).map(val => val['@value']),
                     modified: getDate(getDctermsValue(record, 'modified'), 'short'),
                     branch: getPropertyId(record, `${CATALOG}masterBranch`)
                 }));
@@ -115,10 +114,8 @@ export class MappingSelectPageComponent implements OnInit {
     }
     run(mappingRecord: MappingRecord): void {
         this.setStateIfCompatible(mappingRecord)
-            .subscribe((ontologies: MappingOntology[]) => {
+            .subscribe(() => {
                 this.state.highlightIndexes = this.state.getMappedColumns();
-                this.state.sourceOntologies = ontologies;
-                this.state.availableClasses = this.state.getClasses(ontologies);
                 this.state.step = this.state.fileUploadStep;
             }, error => error ? this.toast.createErrorToast(error) : undefined);
     }
@@ -135,10 +132,8 @@ export class MappingSelectPageComponent implements OnInit {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.setStateIfCompatible(mappingRecord)
-                        .subscribe((ontologies: MappingOntology[]) => {
+                        .pipe(switchMap(() => this.state.setIriMap())).subscribe(() => {
                             this.state.editMapping = true;
-                            this.state.sourceOntologies = ontologies;
-                            this.state.availableClasses = this.state.getClasses(ontologies);
                             this.state.step = this.state.fileUploadStep;
                         }, error => error ? this.toast.createErrorToast(error) : undefined);
                 } else {
@@ -218,7 +213,7 @@ export class MappingSelectPageComponent implements OnInit {
                 const hasPermission = response !== this.pep.deny;
                 if (hasPermission) {
                     this.setStateIfCompatible(mappingRecord)
-                        .subscribe(() => {
+                        .pipe(switchMap(() => this.state.setIriMap())).subscribe(() => {
                             this.state.startCreateMapping();
                             this.dialog.open(CreateMappingOverlayComponent);
                         }, error => error ? this.toast.createErrorToast(error) : undefined);
@@ -236,19 +231,23 @@ export class MappingSelectPageComponent implements OnInit {
                 this.setResults();
             }, error => this.toast.createErrorToast(error));
     }
-    setStateIfCompatible(mappingRecord: MappingRecord): Observable<MappingOntology[]> {
-        return this.state.getMappingState(mappingRecord)
-            .pipe(switchMap((mappingState: MappingState) => {
-                return this.mm.getSourceOntologies(mappingState.mapping.getSourceOntologyInfo())
-                    .pipe(switchMap(ontologies => {
-                        if (this.mm.areCompatible(mappingState.mapping, ontologies)) {
-                            this.state.selected = mappingState;
-                            return of(ontologies);
-                        } else {
-                            this.toast.createErrorToast('The source ontology for the mapping and/or its imported ontologies have been changed and are no longer compatible. Unable to open the mapping', {timeOut: 8000});
+    setStateIfCompatible(mappingRecord: MappingRecord): Observable<null> {
+        return this.state.getMappingState(mappingRecord).pipe(
+            switchMap((mappingState: MappingState) => {
+                return this.state.findIncompatibleMappings(mappingState.mapping).pipe(
+                    switchMap(incomMappings => {
+                        if (incomMappings.length) {
+                            this.toast.createErrorToast('The source ontology for the mapping and/or its imported '
+                              + 'ontologies have been changed and are no longer compatible. Unable to open the mapping', 
+                              {timeOut: 8000});
                             return throwError(null);
+                        } else {
+                            this.state.selected = mappingState;
+                            return of(null);
                         }
-                    }));
-            }));
+                    })
+                );
+            })
+        );
     }
 }

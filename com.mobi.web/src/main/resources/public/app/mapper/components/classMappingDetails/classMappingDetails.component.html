@@ -28,7 +28,7 @@
     <div class="class-mapping-props">
         <div class="properties-field-name">
             <span class="field-label">Properties</span>
-            <button mat-button color="primary" class="float-right add-prop-mapping-button" [disabled]="!hasPropsToMap" (click)="addProp()"><i class="fa fa-plus"></i> Add Property</button>
+            <button mat-button color="primary" class="float-right add-prop-mapping-button" (click)="addProp()" [disabled]="!state.selected?.ontology || !classMappingId"><i class="fa fa-plus"></i> Add Property</button>
         </div>
         <mat-list class="prop-list">
             <mat-list-item *ngFor="let propMapping of propMappings; last as last"

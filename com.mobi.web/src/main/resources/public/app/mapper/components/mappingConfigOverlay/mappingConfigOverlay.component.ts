@@ -24,23 +24,22 @@ import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { MatSelectionListChange } from '@angular/material/list';
 import { MatDialogRef } from '@angular/material/dialog';
-import { get, find, isEqual, has, uniq, map, set } from 'lodash';
-import { finalize, switchMap } from 'rxjs/operators';
+import { get, find, isEqual, has, set } from 'lodash';
+import { Observable } from 'rxjs';
+import { finalize, map, switchMap } from 'rxjs/operators';
 
 import { CATALOG, DCTERMS, DELIM, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { Mapping } from '../../../shared/models/mapping.class';
-import { MappingClass } from '../../../shared/models/mappingClass.interface';
-import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
-import { OntologyDocument } from '../../../shared/models/ontologyDocument.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { getDate, getDctermsValue, getPropertyId } from '../../../shared/utility';
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
+import { MappingOntologyInfo } from '../../../shared/models/mappingOntologyInfo.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 
-interface SelectedOntology {
+export interface SelectedOntology {
     jsonld: JSONLDObject,
     recordId: string,
     ontologyIRI: string,
@@ -50,17 +49,16 @@ interface SelectedOntology {
     selected: boolean
 }
 
-interface StateObject {
+export interface StateObject {
     recordId: string,
     branchId?: string,
     latest?: VersionObject,
     saved?: VersionObject
 }
 
-interface VersionObject {
+export interface VersionObject {
     commitId?: string,
     classes?: MappingClass[],
-    ontologies?: MappingOntology[]
 }
 
 /**
@@ -100,7 +98,7 @@ export class MappingConfigOverlayComponent implements OnInit {
 
     constructor(private dialog: MatDialogRef<MappingConfigOverlayComponent>, private spinnerSvc: ProgressSpinnerService,
         public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService, 
-        private om: OntologyManagerService) {}
+        private toast: ToastService) {}
 
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
@@ -119,18 +117,22 @@ export class MappingConfigOverlayComponent implements OnInit {
                 recordId: this.selectedOntology.recordId
             };
             const versionObj: VersionObject = {};
-            this.cm.getRecordMasterBranch(this.selectedOntology.recordId, this.catalogId).subscribe(branch => {
+            this.cm.getRecordMasterBranch(this.selectedOntology.recordId, this.catalogId).pipe(switchMap(branch => {
                 stateObj.branchId = branch['@id'];
-                versionObj.ontologies = this.state.sourceOntologies;
-                this._setClasses(versionObj);
                 const latestCommitId = getPropertyId(branch, `${CATALOG}head`);
                 const savedCommitId = get(this.state.selected.mapping.getSourceOntologyInfo(), 'commitId');
                 if (savedCommitId === latestCommitId) {
-                    stateObj.latest = set(versionObj, 'commitId', latestCommitId);
+                  stateObj.latest = set(versionObj, 'commitId', latestCommitId);
                 } else {
-                    stateObj.saved = set(versionObj, 'commitId', savedCommitId);
-                    this.selectedVersion = 'saved';
+                  stateObj.saved = set(versionObj, 'commitId', savedCommitId);
+                  this.selectedVersion = 'saved';
                 }
+                return this._setClasses({ 
+                  recordId: stateObj.recordId, 
+                  branchId: stateObj.branchId, 
+                  commitId: versionObj.commitId
+                }, versionObj);
+            })).subscribe(() => {
                 this.ontologyStates.push(stateObj);
                 this.selectedOntologyState = stateObj;
             }, () => this._onError());
@@ -190,15 +192,9 @@ export class MappingConfigOverlayComponent implements OnInit {
                             branchId: ontologyState.branchId,
                             commitId: versionObj.commitId
                         };
-                        return this.mm.getOntology(ontologyInfo);
-                    }),
-                    switchMap(ontology => {
-                        versionObj.ontologies = [ontology];
-                        return this.om.getImportedOntologies(ontologyState.recordId, ontologyState.branchId, versionObj.commitId);
+                        return this._setClasses(ontologyInfo, versionObj);
                     })
-                ).subscribe((imported: OntologyDocument[]) => {
-                    this._setVersionOntologies(versionObj, imported);
-                    this._setClasses(versionObj);
+                ).subscribe(() => {
                     ontologyState.latest = versionObj;
                     this.selectedVersion = 'latest';
                     this.ontologyStates.push(ontologyState);
@@ -224,33 +220,19 @@ export class MappingConfigOverlayComponent implements OnInit {
                                     branchId: this.selectedOntologyState.branchId,
                                     commitId: versionObj.commitId
                                 };
-                                return this.mm.getOntology(ontologyInfo);
-                            }),
-                            switchMap(ontology => {
-                                versionObj.ontologies = [ontology];
-                                return this.om.getImportedOntologies(this.selectedOntologyState.recordId, this.selectedOntologyState.branchId, versionObj.commitId);
+                                return this._setClasses(ontologyInfo, versionObj);
                             })
-                        ).subscribe((imported: OntologyDocument[]) => {
-                            this._setVersionOntologies(versionObj, imported);
-                            this._setClasses(versionObj);
+                        ).subscribe(() => {
                             this.selectedOntologyState.latest = versionObj;
                             this.errorMessage = '';
                         }, () => this._onError());
                 } else {
                     const ontologyInfo = this.state.selected.mapping.getSourceOntologyInfo();
                     versionObj.commitId = ontologyInfo.commitId;
-                    this.mm.getOntology(ontologyInfo)
-                        .pipe(
-                            switchMap(ontology => {
-                                versionObj.ontologies = [ontology];
-                                return this.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
-                            })
-                        ).subscribe((imported: OntologyDocument[]) => {
-                            this._setVersionOntologies(versionObj, imported);
-                            this._setClasses(versionObj);
-                            this.selectedOntologyState.saved = versionObj;
-                            this.errorMessage = '';
-                        }, () => this._onError());
+                    this._setClasses(ontologyInfo, versionObj).subscribe(() => {
+                        this.selectedOntologyState.saved = versionObj;
+                        this.errorMessage = '';
+                    }, () => this._onError());
                 }
             }
         }
@@ -263,39 +245,42 @@ export class MappingConfigOverlayComponent implements OnInit {
         };
         const originalOntologyInfo = this.state.selected.mapping.getSourceOntologyInfo();
         if (!isEqual(originalOntologyInfo, selectedOntologyInfo)) {
-            this.state.sourceOntologies = this.selectedOntologyState[this.selectedVersion].ontologies;
-            const incompatibleEntities = this.mm.findIncompatibleMappings(this.state.selected.mapping, this.state.sourceOntologies);
-            const jsonld = this.state.selected.mapping.getJsonld();
-            incompatibleEntities.forEach(entity => {
-                if (find(jsonld, {'@id': entity['@id']})) {
-                    if (this.mm.isPropertyMapping(entity)) {
-                        const parentClassMapping = this.mm.isDataMapping(entity) ? 
-                            this.state.selected.mapping.findClassWithDataMapping(entity['@id']) :
-                            this.state.selected.mapping.findClassWithObjectMapping(entity['@id']);
-                        this.state.deleteProp(entity['@id'], parentClassMapping['@id']);
-                    } else if (this.mm.isClassMapping(entity)) {
-                        this.state.deleteClass(entity['@id']);
-                    }
-                }
-            });
             this.state.selected.mapping.setSourceOntologyInfo(selectedOntologyInfo);
-            const mappingId = this.state.selected.mapping.getMappingEntity()['@id'];
-            this.state.changeProp(mappingId, `${DELIM}sourceRecord`, selectedOntologyInfo.recordId, originalOntologyInfo.recordId, true);
-            this.state.changeProp(mappingId, `${DELIM}sourceBranch`, selectedOntologyInfo.branchId, originalOntologyInfo.branchId, true);
-            this.state.changeProp(mappingId, `${DELIM}sourceCommit`, selectedOntologyInfo.commitId, originalOntologyInfo.commitId, true);
-            this.state.selected.ontology = this.selectedOntology.jsonld;
-            this.state.resetEdit();
-            const classMappings = this.state.selected.mapping.getAllClassMappings();
-            uniq(classMappings.map(classMapping => Mapping.getClassIdByMapping(classMapping))).forEach(id => {
-                this.state.setProps(id);
+            this.state.findIncompatibleMappings(this.state.selected.mapping).subscribe(incomMappings => {
+                const jsonld = this.state.selected.mapping.getJsonld();
+                incomMappings.forEach(entity => {
+                    if (find(jsonld, {'@id': entity['@id']})) {
+                        const title = getDctermsValue(entity, 'title');
+                        if (this.mm.isPropertyMapping(entity)) {
+                            const parentClassMapping = this.mm.isDataMapping(entity) ? 
+                                this.state.selected.mapping.findClassWithDataMapping(entity['@id']) :
+                                this.state.selected.mapping.findClassWithObjectMapping(entity['@id']);
+                            if (parentClassMapping) {
+                                this.toast.createWarningToast(`Removing incompatible Property Mapping ${title}`, 
+                                    { timeOut: 8000 });
+                                this.state.deleteProp(entity['@id'], parentClassMapping['@id']);
+                            }
+                        } else if (this.mm.isClassMapping(entity)) {
+                            this.toast.createWarningToast(`Removing incompatible Class Mapping ${title}`, 
+                                { timeOut: 8000 });
+                            this.state.deleteClass(entity['@id']);
+                        }
+                    }
+                });
+                const mappingId = this.state.selected.mapping.getMappingEntity()['@id'];
+                this.state.changeProp(mappingId, `${DELIM}sourceRecord`, selectedOntologyInfo.recordId, originalOntologyInfo.recordId, true);
+                this.state.changeProp(mappingId, `${DELIM}sourceBranch`, selectedOntologyInfo.branchId, originalOntologyInfo.branchId, true);
+                this.state.changeProp(mappingId, `${DELIM}sourceCommit`, selectedOntologyInfo.commitId, originalOntologyInfo.commitId, true);
+                this.state.selected.ontology = this.selectedOntology.jsonld;
+                this.state.resetEdit();
+                this.state.setIriMap().subscribe();
             });
-            this.state.availableClasses = this.classes;
         }
         this.dialog.close();
     }
 
     private _parseRecordResults(response: HttpResponse<JSONLDObject[]>) {
-        this.ontologies = map(response.body, record => ({
+        this.ontologies = response.body.map(record => ({
             recordId: record['@id'],
             ontologyIRI: this.getOntologyIRI(record),
             title: getDctermsValue(record, 'title'),
@@ -316,14 +301,10 @@ export class MappingConfigOverlayComponent implements OnInit {
     private _onRecordsError() {
         this.recordsErrorMessage = 'Error retrieving ontologies';
     }
-    private _setClasses(versionObj: VersionObject): void {
-        versionObj.classes = this.state.getClasses(versionObj.ontologies);
-        this.classes = versionObj.classes;
-    }
-    private _setVersionOntologies(versionObject: VersionObject, imported: OntologyDocument[]) {
-        imported.forEach(obj => {
-            const ontology = {id: obj.id, entities: obj.ontology as JSONLDObject[]};
-            versionObject.ontologies.push(ontology);
-        });
+    private _setClasses(ontInfo: MappingOntologyInfo, versionObj: VersionObject): Observable<void> {
+      return this.state.retrieveClasses(ontInfo, '', 10).pipe(map(results => {
+            versionObj.classes = results;
+            this.classes = results;
+        }));
     }
 }

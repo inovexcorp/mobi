@@ -55,8 +55,6 @@ import { MappingState } from '../../../shared/models/mappingState.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { Difference } from '../../../shared/models/difference.class';
 import { MappingRecord } from '../../../shared/models/mappingRecord.interface';
-import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
-import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
@@ -99,16 +97,6 @@ describe('Mapping Select Page component', function() {
     const mappingState: MappingState = {
         mapping: new Mapping(mappingId),
         difference: new Difference()
-    };
-    const mappingOntology: MappingOntology = {
-        id: 'ontology',
-        entities: []
-    };
-    const mappingClass: MappingClass = {
-        name: '',
-        classObj: {'@id': 'class'},
-        isDeprecated: false,
-        ontologyId: ''
     };
     const totalSize = 10;
     const headers = {'x-total-count': '' + totalSize};
@@ -175,7 +163,7 @@ describe('Mapping Select Page component', function() {
                 asc: true
             }
         };
-        mapperStateStub.getClasses.and.returnValue([mappingClass]);
+        mapperStateStub.setIriMap.and.returnValue(of(null));
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
@@ -246,7 +234,7 @@ describe('Mapping Select Page component', function() {
             it('successfully', fakeAsync(function() {
                 component.setResults();
                 tick();
-                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, mapperStateStub.paginationConfig);
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, mapperStateStub.paginationConfig, true);
                 expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.mappingList);
                 expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.mappingList);
                 expect(component.results).toEqual([{
@@ -264,7 +252,7 @@ describe('Mapping Select Page component', function() {
                 catalogManagerStub.getRecords.and.returnValue(throwError(error));
                 component.setResults();
                 tick();
-                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, mapperStateStub.paginationConfig);
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, mapperStateStub.paginationConfig, true);
                 expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.mappingList);
                 expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.mappingList);
                 expect(component.results).toEqual([]);
@@ -281,20 +269,15 @@ describe('Mapping Select Page component', function() {
         describe('should set the correct state for running a mapping', function() {
             beforeEach(function() {
                 mapperStateStub.highlightIndexes = [];
-                mapperStateStub.sourceOntologies = [];
-                mapperStateStub.availableClasses = [];
             });
             it('successfully', fakeAsync(function() {
                 const mappedColumns = ['A'];
                 mapperStateStub.getMappedColumns.and.returnValue(mappedColumns);
-                spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(of(null));
                 component.run(mappingRecord);
                 tick();
                 expect(mapperStateStub.getMappedColumns).toHaveBeenCalledWith();
                 expect(mapperStateStub.highlightIndexes).toEqual(mappedColumns);
-                expect(mapperStateStub.sourceOntologies).toEqual([mappingOntology]);
-                expect(mapperStateStub.getClasses).toHaveBeenCalledWith([mappingOntology]);
-                expect(mapperStateStub.availableClasses).toEqual([mappingClass]);
                 expect(mapperStateStub.step).toEqual(mapperStateStub.fileUploadStep);
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
@@ -305,9 +288,6 @@ describe('Mapping Select Page component', function() {
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
                 expect(mapperStateStub.getMappedColumns).not.toHaveBeenCalled();
                 expect(mapperStateStub.highlightIndexes).toEqual([]);
-                expect(mapperStateStub.sourceOntologies).toEqual([]);
-                expect(mapperStateStub.getClasses).not.toHaveBeenCalled();
-                expect(mapperStateStub.availableClasses).toEqual([]);
                 expect(mapperStateStub.step).toBeUndefined();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
@@ -315,33 +295,27 @@ describe('Mapping Select Page component', function() {
         describe('should set the correct state for editing a mapping', function() {
             beforeEach(function() {
                 mapperStateStub.editMapping = false;
-                mapperStateStub.sourceOntologies = [];
-                mapperStateStub.availableClasses = [];
             });
             it('if the user has permission', fakeAsync(function() {
-                spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(of(null));
                 component.edit(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${CATALOG}Modify`, actionAttrs: { [`${CATALOG}branch`]: branchId}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
                 expect(mapperStateStub.editMapping).toEqual(true);
-                expect(mapperStateStub.sourceOntologies).toEqual([mappingOntology]);
-                expect(mapperStateStub.getClasses).toHaveBeenCalledWith([mappingOntology]);
-                expect(mapperStateStub.availableClasses).toEqual([mappingClass]);
+                expect(mapperStateStub.setIriMap).toHaveBeenCalledWith();
                 expect(mapperStateStub.step).toEqual(mapperStateStub.fileUploadStep);
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
-                spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(of(null));
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.edit(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${CATALOG}Modify`, actionAttrs: { [`${CATALOG}branch`]: branchId}});
                 expect(component.setStateIfCompatible).not.toHaveBeenCalled();
                 expect(mapperStateStub.editMapping).toEqual(false);
-                expect(mapperStateStub.sourceOntologies).toEqual([]);
-                expect(mapperStateStub.getClasses).not.toHaveBeenCalled();
-                expect(mapperStateStub.availableClasses).toEqual([]);
+                expect(mapperStateStub.setIriMap).not.toHaveBeenCalled();
                 expect(mapperStateStub.step).toBeUndefined();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
@@ -352,9 +326,7 @@ describe('Mapping Select Page component', function() {
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${CATALOG}Modify`, actionAttrs: { [`${CATALOG}branch`]: branchId}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
                 expect(mapperStateStub.editMapping).toEqual(false);
-                expect(mapperStateStub.sourceOntologies).toEqual([]);
-                expect(mapperStateStub.getClasses).not.toHaveBeenCalled();
-                expect(mapperStateStub.availableClasses).toEqual([]);
+                expect(mapperStateStub.setIriMap).not.toHaveBeenCalled();
                 expect(mapperStateStub.step).toBeUndefined();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
@@ -408,22 +380,24 @@ describe('Mapping Select Page component', function() {
         });
         describe('should set the correct state for duplicating a mapping', function() {
             it('if the user has permission', fakeAsync(function() {
-                spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(of(null));
                 component.duplicate(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
+                expect(mapperStateStub.setIriMap).toHaveBeenCalledWith();
                 expect(mapperStateStub.startCreateMapping).toHaveBeenCalledWith();
                 expect(matDialog.open).toHaveBeenCalledWith(CreateMappingOverlayComponent);
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the user does not have permission', fakeAsync(function() {
-                spyOn(component, 'setStateIfCompatible').and.returnValue(of([mappingOntology]));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(of(null));
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
                 component.duplicate(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(component.setStateIfCompatible).not.toHaveBeenCalled();
+                expect(mapperStateStub.setIriMap).not.toHaveBeenCalled();
                 expect(mapperStateStub.startCreateMapping).not.toHaveBeenCalled();
                 expect(matDialog.open).not.toHaveBeenCalled();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
@@ -434,6 +408,7 @@ describe('Mapping Select Page component', function() {
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
+                expect(mapperStateStub.setIriMap).not.toHaveBeenCalled();
                 expect(mapperStateStub.startCreateMapping).not.toHaveBeenCalled();
                 expect(matDialog.open).not.toHaveBeenCalled();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
@@ -471,46 +446,40 @@ describe('Mapping Select Page component', function() {
                         expect(response).toEqual(error);
                     });
                 tick();
-                expect(mappingManagerStub.getSourceOntologies).not.toHaveBeenCalled();
-                expect(mappingManagerStub.areCompatible).not.toHaveBeenCalled();
+                expect(mapperStateStub.findIncompatibleMappings).not.toHaveBeenCalled();
                 expect(mapperStateStub.selected).toBeUndefined();
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
-            it('unless getting the source ontologies throws an error', fakeAsync(function() {
-                mappingManagerStub.getSourceOntologies.and.returnValue(throwError(error));
+            it('unless getting incompatible mappings throws an error', fakeAsync(function() {
+                mapperStateStub.findIncompatibleMappings.and.returnValue(throwError(error));
                 component.setStateIfCompatible(mappingRecord)
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(error);
                     });
                 tick();
-                expect(mappingManagerStub.getSourceOntologies).toHaveBeenCalledWith(mappingState.mapping.getSourceOntologyInfo());
-                expect(mappingManagerStub.areCompatible).not.toHaveBeenCalled();
+                expect(mapperStateStub.findIncompatibleMappings).toHaveBeenCalledWith(mappingState.mapping);
                 expect(mapperStateStub.selected).toBeUndefined();
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless the mapping is not compatible with the source ontologies', fakeAsync(function() {
-                mappingManagerStub.getSourceOntologies.and.returnValue(of([mappingOntology]));
-                mappingManagerStub.areCompatible.and.returnValue(false);
+                mapperStateStub.findIncompatibleMappings.and.returnValue(of([{'@id': 'incomMapping'}]));
                 component.setStateIfCompatible(mappingRecord)
                     .subscribe(() => fail('Observable should have rejected'), response => {
                         expect(response).toEqual(null);
                     });
                 tick();
-                expect(mappingManagerStub.getSourceOntologies).toHaveBeenCalledWith(mappingState.mapping.getSourceOntologyInfo());
-                expect(mappingManagerStub.areCompatible).toHaveBeenCalledWith(mappingState.mapping, [mappingOntology]);
+                expect(mapperStateStub.findIncompatibleMappings).toHaveBeenCalledWith(mappingState.mapping);
                 expect(mapperStateStub.selected).toBeUndefined();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: jasmine.any(Number)});
             }));
             it('successfully', fakeAsync(function() {
-                mappingManagerStub.getSourceOntologies.and.returnValue(of([mappingOntology]));
-                mappingManagerStub.areCompatible.and.returnValue(true);
+                mapperStateStub.findIncompatibleMappings.and.returnValue(of([]));
                 component.setStateIfCompatible(mappingRecord)
-                    .subscribe(response => {
-                        expect(response).toEqual([mappingOntology]);
+                    .subscribe(() => {
+                        expect(true).toBeTrue();
                     }, () => fail('Observable should have resolved'));
                 tick();
-                expect(mappingManagerStub.getSourceOntologies).toHaveBeenCalledWith(mappingState.mapping.getSourceOntologyInfo());
-                expect(mappingManagerStub.areCompatible).toHaveBeenCalledWith(mappingState.mapping, [mappingOntology]);
+                expect(mapperStateStub.findIncompatibleMappings).toHaveBeenCalledWith(mappingState.mapping);
                 expect(mapperStateStub.selected).toEqual(mappingState);
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));

@@ -42,7 +42,6 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
     templateUrl: './createMappingOverlay.component.html'
 })
 export class CreateMappingOverlayComponent implements OnInit {
-    errorMessage = '';
     createMappingForm = this.fb.group({
         title: ['', [ Validators.required]],
         description: [''],
@@ -63,8 +62,7 @@ export class CreateMappingOverlayComponent implements OnInit {
         this.state.editMapping = false;
         this.state.newMapping = false;
         this.state.selected = undefined;
-        this.state.sourceOntologies = [];
-        this.state.availableClasses = [];
+        this.state.iriMap = undefined;
         this.dialogRef.close();
     }
     continue(): void {
@@ -74,30 +72,14 @@ export class CreateMappingOverlayComponent implements OnInit {
             keywords: uniq(map(this.createMappingForm.controls.keywords.value, trim))
         };
         const newId = this.mm.getMappingId(this.createMappingForm.controls.title.value);
-        if (this.state.selected.mapping) {
-            this.state.selected.mapping = this.state.selected.mapping.copy(newId);
-            const sourceOntologyInfo = this.state.selected.mapping.getSourceOntologyInfo();
-            this.mm.getSourceOntologies(sourceOntologyInfo)
-                .subscribe(ontologies => {
-                    this.state.sourceOntologies = ontologies;
-                    this.state.availableClasses = this.state.getClasses(ontologies);
-                    this._nextStep();
-                }, () => this._onError('Error retrieving mapping'));
-        } else {
-            this.state.selected.mapping = new Mapping(newId);
-            this.state.sourceOntologies = [];
-            this.state.availableClasses = [];
-            this._nextStep();
-        }
+        this.state.selected.mapping = this.state.selected.mapping ? this.state.selected.mapping.copy(newId) 
+            : new Mapping(newId);
+        this._nextStep();
     }
 
     private _nextStep() {
-        this.errorMessage = '';
         this.state.selected.difference.additions = Object.assign([], this.state.selected.mapping.getJsonld());
         this.state.step = this.state.fileUploadStep;
         this.dialogRef.close();
-    }
-    private _onError(message) {
-        this.errorMessage = message;
     }
 }

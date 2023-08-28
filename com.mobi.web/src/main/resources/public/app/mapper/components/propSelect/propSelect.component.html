@@ -21,7 +21,9 @@
   #L%
   -->
 <div class="prop-select" [formGroup]="parentForm">
+    <error-display *ngIf="error">{{error}}</error-display>
     <mat-form-field class="w-100">
+        <span class="spinner-prefix" matPrefix #propSelectSpinner></span>
         <mat-label>Property</mat-label>
         <input type="text" matInput
                placeholder="Select a property..."
@@ -31,8 +33,8 @@
                [readonly]="isReadOnly">
         <mat-autocomplete #propAuto="matAutocomplete" (optionSelected)="selectProp($event)" [displayWith]="getDisplayText.bind(this)">
             <mat-optgroup *ngFor="let group of filteredProperties | async" [label]="group.ontologyId">
-                <mat-option *ngFor="let mappingProperty of group.properties" [value]="mappingProperty" [title]="mappingProperty.propObj['@id']" [disabled]="mappingProperty.isDeprecated">
-                    {{mappingProperty.name}} <span class="text-muted" *ngIf="mappingProperty.isDeprecated">(Deprecated)</span>
+                <mat-option *ngFor="let mappingProperty of group.properties" [value]="mappingProperty" [title]="mappingProperty.iri" [disabled]="mappingProperty.deprecated">
+                    {{mappingProperty.name}} <span class="text-muted" *ngIf="mappingProperty.deprecated">(Deprecated)</span>
                 </mat-option>
             </mat-optgroup>
         </mat-autocomplete>

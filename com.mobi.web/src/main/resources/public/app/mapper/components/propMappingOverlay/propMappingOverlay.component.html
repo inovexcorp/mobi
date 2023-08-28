@@ -22,43 +22,49 @@
   -->
 <h1 mat-dialog-title>{{state.newProp ? 'Add' : 'Edit'}} Property</h1>
 <form mat-dialog-content [formGroup]="propMappingForm">
+    <error-display *ngIf="error">{{error}}</error-display>
     <prop-select [parentForm]="propMappingForm"
                  [selectedProp]="selectedProp"
                  (selectedPropChange)="selectProp($event)"
-                 [properties]="availableProps"
+                 [parentClass]="parentClassId"
                  [isReadOnly]="!state.newProp"></prop-select>
-    <prop-preview *ngIf="selectedProp" [propObj]="selectedProp.propObj"></prop-preview>
-    <mat-form-field class="range-class-select-container w-100" *ngIf="selectedProp && selectedProp.isObjectProperty">
-        <mat-label>Link To</mat-label>
-        <mat-select placeholder="Link To" formControlName="rangeClass">
-            <mat-option *ngFor="let option of rangeClassOptions" [value]="option">
-                {{option.title}}
-            </mat-option>
-        </mat-select>
-        <mat-error *ngIf="!rangeClass">Range could not be found</mat-error>
-    </mat-form-field>
-    <div *ngIf="selectedProp && !selectedProp.isObjectProperty" class="data-property-container w-100">
-        <column-select [parentForm]="propMappingForm"></column-select>
-        <div class="datatype-select-container">
-            <button mat-button color="primary" (click)="showDatatype()"><i class="fa fa-fw" [ngClass]="showDatatypeSelect ? 'fa-times' : 'fa-plus'"></i>{{showDatatypeSelect ? 'Remove Datatype Override' : 'Override Datatype'}}</button>
-            <mat-form-field *ngIf="showDatatypeSelect" class="datatype-select w-100">
-                <mat-label>Override Datatype</mat-label>
-                <input type="text" matInput
-                    placeholder="Select Datatype..."
-                    aria-label="Override Datatype"
-                    formControlName="datatype"
-                    [matAutocomplete]="datatypeAuto">
-                <mat-error *ngIf="propMappingForm.controls.datatype.errors?.invalidDatatype">Datatype must be valid XSD Type or Lang String</mat-error>
-                <mat-autocomplete #datatypeAuto="matAutocomplete" (optionSelected)="selectDatatype($event)" [displayWith]="getDatatypeText.bind(this)">
-                    <mat-optgroup *ngFor="let group of filteredDatatypes | async" [label]="group.ontologyId">
-                        <mat-option *ngFor="let datatypeOption of group.options" [value]="datatypeOption.iri" [title]="datatypeOption.iri">
-                            {{datatypeOption.display}}
-                        </mat-option>
-                    </mat-optgroup>
-                </mat-autocomplete>
-            </mat-form-field>
-            <language-select *ngIf="langString && showDatatypeSelect" [parentForm]="propMappingForm" [disableClear]="true"></language-select>
-        </div>
+    <div *ngIf="selectedProp" class="selected-prop-details">
+        <prop-preview [propDetails]="selectedProp" [rangeClassDetails]="rangeClasses"></prop-preview>
+        <mat-form-field class="range-class-select-container w-100" *ngIf="showRangeClass; else showDataPropFields">
+            <mat-label>Link To</mat-label>
+            <mat-select placeholder="Link To" formControlName="rangeClass">
+                <mat-option *ngFor="let option of rangeClassOptions" [value]="option">
+                    {{option.title}}
+                </mat-option>
+            </mat-select>
+            <mat-error *ngIf="!rangeClass">Range could not be found</mat-error>
+        </mat-form-field>
+        <ng-template #showDataPropFields>
+            <div class="data-property-container w-100">
+                <column-select [parentForm]="propMappingForm"></column-select>
+                <div class="mt-2 datatype-select-container">
+                    <warning-message *ngIf="selectedProp.ranges.length > 1">More than one range detected. Please select from the dropdown</warning-message>
+                    <button *ngIf="selectedProp.ranges.length === 1" mat-button color="primary" (click)="showDatatype()"><i class="fa fa-fw" [ngClass]="showDatatypeSelect ? 'fa-times' : 'fa-plus'"></i>{{showDatatypeSelect ? 'Remove Datatype Override' : 'Override Datatype'}}</button>
+                    <mat-form-field *ngIf="showDatatypeSelect" class="datatype-select w-100">
+                        <mat-label>Datatype</mat-label>
+                        <input type="text" matInput
+                            placeholder="Select Datatype..."
+                            aria-label="Override Datatype"
+                            formControlName="datatype"
+                            [matAutocomplete]="datatypeAuto">
+                        <mat-error *ngIf="propMappingForm.controls.datatype.errors?.invalidDatatype">Datatype must be valid XSD Type or Lang String</mat-error>
+                        <mat-autocomplete #datatypeAuto="matAutocomplete" (optionSelected)="selectDatatype($event)" [displayWith]="getDatatypeText.bind(this)">
+                            <mat-optgroup *ngFor="let group of filteredDatatypes | async" [label]="group.ontologyId">
+                                <mat-option *ngFor="let datatypeOption of group.options" [value]="datatypeOption.iri" [title]="datatypeOption.iri">
+                                    {{datatypeOption.display}}
+                                </mat-option>
+                            </mat-optgroup>
+                        </mat-autocomplete>
+                    </mat-form-field>
+                </div>
+                <language-select *ngIf="langString" [parentForm]="propMappingForm" [disableClear]="true"></language-select>
+            </div>
+        </ng-template>
     </div>
 </form>
 <div mat-dialog-actions>

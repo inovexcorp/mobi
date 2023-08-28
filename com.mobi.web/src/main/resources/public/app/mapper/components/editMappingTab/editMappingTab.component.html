@@ -36,7 +36,7 @@
                     </div>
                     <div class="class-mappings d-flex w-100">
                         <class-mapping-select class="flex-1" [(classMappingId)]="state.selectedClassMappingId" [classMappings]="classMappings" (deleteClassMapping)="deleteClass($event)"></class-mapping-select>
-                        <button mat-button color="primary" class="add-class-mapping-button" (click)="openClassMappingOverlay()" [disabled]="state.availableClasses.length === 0"><i class="fa fa-plus"></i> Add Class</button>
+                        <button mat-button color="primary" class="add-class-mapping-button" (click)="openClassMappingOverlay()" [disabled]="!state.selected?.ontology"><i class="fa fa-plus"></i> Add Class</button>
                     </div>
                     <class-mapping-details [(classMappingId)]="state.selectedClassMappingId" (updateClassMappings)="setClassMappings()"></class-mapping-details>
                 </div>
