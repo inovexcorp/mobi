@@ -22,10 +22,10 @@
   -->
 <h1 mat-dialog-title>Add Class Mapping</h1>
 <form mat-dialog-content [formGroup]="classMappingForm">
-    <class-select [classes]="state.availableClasses" [(selectedClass)]="selectedClass" [parentForm]="classMappingForm"></class-select>
-    <class-preview *ngIf="selectedClass" [classObj]="selectedClass.classObj" [ontologies]="state.sourceOntologies"></class-preview>
+    <class-select [(selectedClass)]="selectedClassDetails" [parentForm]="classMappingForm"></class-select>
+    <class-preview *ngIf="selectedClassDetails" [classDetails]="selectedClassDetails"></class-preview>
 </form>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-    <button mat-raised-button color="primary" (click)="addClass()" [disabled]="!selectedClass">Submit</button>
+    <button mat-raised-button color="primary" (click)="addClass()" [disabled]="!selectedClassDetails">Submit</button>
 </div>

@@ -37,13 +37,12 @@ import { cloneDeep } from 'lodash';
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { DCTERMS, DELIM, RDFS } from '../../../prefixes';
+import { DCTERMS, DELIM } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
 import { MappingInvalidProp } from '../../../shared/models/mappingInvalidProp.interface';
-import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { MappingManagerService } from '../../../shared/services/mappingManager.service';
@@ -64,6 +63,7 @@ describe('Class Mapping Details component', function() {
 
     const classMappingId = 'classMappingId';
     const propMappingId = 'propMappingId';
+    const propId = 'propIRI';
     const className = 'class';
     const classMapping: JSONLDObject = {
       '@id': classMappingId,
@@ -71,7 +71,10 @@ describe('Class Mapping Details component', function() {
       [`${DELIM}hasPrefix`]: [{ '@value': 'prefix:' }],
       [`${DELIM}localName`]: [{ '@value': 'localName' }],
     };
-    const propMapping: JSONLDObject = {'@id': propMappingId};
+    const propMapping: JSONLDObject = {
+        '@id': propMappingId,
+        [`${DELIM}hasProperty`]: [{ '@id': propId }]
+    };
     const invalidProp: MappingInvalidProp = {
         id: propMapping['@id'],
         index: 0
@@ -108,10 +111,8 @@ describe('Class Mapping Details component', function() {
                     open: { afterClosed: () => of(true)}
                 }) }
             ]
-        });
-    });
+        }).compileComponents();
 
-    beforeEach(function() {
         fixture = TestBed.createComponent(ClassMappingDetailsComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -147,10 +148,7 @@ describe('Class Mapping Details component', function() {
     it('should handle a classMappingId change', function() {
         spyOn(component, 'setPropMappings');
         spyOn(component, 'setIriTemplate');
-        mapperStateStub.hasPropsByClassMappingId.and.returnValue(true);
         component.classMappingId = classMappingId;
-        expect(mapperStateStub.hasPropsByClassMappingId).toHaveBeenCalledWith(classMappingId);
-        expect(component.hasPropsToMap).toEqual(true);
         expect(component.setPropMappings).toHaveBeenCalledWith();
         expect(component.setIriTemplate).toHaveBeenCalledWith();
     });
@@ -237,28 +235,12 @@ describe('Class Mapping Details component', function() {
         });
         describe('should get a preview of the datatype of a property mapping', function() {
             it('if the datatype is not set', function() {
-                const propIRI = 'propIRI';
-                const mappingProperty: MappingProperty = {
-                    propObj: {'@id': propIRI, [`${RDFS}range`]: [{ '@id': 'range' }]},
-                    isDeprecated: false,
-                    isObjectProperty: false,
-                    name: '',
-                    ontologyId: ''
-                };
-                const propMappingClone = cloneDeep(propMapping);
-                propMappingClone[`${DELIM}hasProperty`] = [{ '@id': propIRI }];
-                mapperStateStub.getPropsByClassMappingId.and.returnValue([mappingProperty]);
-                expect(component.getDatatypePreview(propMappingClone)).toEqual('Range');
+                expect(component.getDatatypePreview(propMapping)).toEqual('String');
             });
             it('if the datatype is set', function() {
                 const propMappingClone = cloneDeep(propMapping);
                 propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': 'datatypeSpec' }];
-                mapperStateStub.getPropsByClassMappingId.and.returnValue([]);
                 expect(component.getDatatypePreview(propMappingClone)).toEqual('Datatype Spec');
-            });
-            it('if the property has no range', function() {
-                mapperStateStub.getPropsByClassMappingId.and.returnValue([]);
-                expect(component.getDatatypePreview(propMapping)).toEqual('String');
             });
         });
         it('should get a preview of the language of a property mapping', function() {
@@ -354,23 +336,31 @@ describe('Class Mapping Details component', function() {
             expect(element.queryAll(By.css('.class-mapping-props')).length).toEqual(1);
             expect(element.queryAll(By.css('.properties-field-name')).length).toEqual(1);
         });
-        it('depending on whether a class mapping is selected', function() {
-            fixture.detectChanges();
-            const button = element.queryAll(By.css('.iri-template button'))[0];
-            expect(button.properties['disabled']).toBeTruthy();
-            
+        it('depending on whether an ontology is set', function() {
             component.classMappingId = classMappingId;
+            fixture.detectChanges();
+            const button = element.queryAll(By.css('.add-prop-mapping-button'))[0];
+            expect(button).toBeTruthy();
+            expect(button.properties['disabled']).toBeTruthy();
+
+            mapperStateStub.selected.ontology = { '@id': 'ont' };
             fixture.detectChanges();
             expect(button.properties['disabled']).toBeFalsy();
         });
-        it('depending on whether the selected class mapping has properties to map', function() {
+        it('depending on whether a class mapping is selected', function() {
+            mapperStateStub.selected.ontology = { '@id': 'ont' };
             fixture.detectChanges();
-            const button = element.queryAll(By.css('.class-mapping-props button.add-prop-mapping-button'))[0];
-            expect(button.properties['disabled']).toBeTruthy();
+            const iriButton = element.queryAll(By.css('.iri-template button'))[0];
+            const propButton = element.queryAll(By.css('.add-prop-mapping-button'))[0];
+            expect(propButton).toBeTruthy();
+            expect(propButton.properties['disabled']).toBeTruthy();
+            expect(iriButton).toBeTruthy();
+            expect(iriButton.properties['disabled']).toBeTruthy();
             
-            component.hasPropsToMap = true;
+            component.classMappingId = classMappingId;
             fixture.detectChanges();
-            expect(button.properties['disabled']).toBeFalsy();
+            expect(iriButton.properties['disabled']).toBeFalsy();
+            expect(propButton.properties['disabled']).toBeFalsy();
         });
         it('depending on the number of mapped properties', function() {
             component.propMappings = [propertyPreview];

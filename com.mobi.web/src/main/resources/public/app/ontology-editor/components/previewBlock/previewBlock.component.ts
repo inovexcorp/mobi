@@ -69,9 +69,15 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
     }
     setPreview(): void {
         this._setMode(this.activePage.serialization);
-        this.om.postQueryResults(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.previewQuery, this.activePage.serialization, false, true)
+        this.om.postQueryResults(this.os.listItem.versionedRdfRecord.recordId, 
+          this.os.listItem.versionedRdfRecord.branchId, 
+          this.os.listItem.versionedRdfRecord.commitId, 
+          this.previewQuery, 
+          this.activePage.serialization, 
+          false, 
+          true)
             .subscribe(ontology => {
-                this.activePage.preview = ontology;
+                this.activePage.preview = typeof ontology === 'string' ? ontology : JSON.stringify(ontology, null, 2);
                 this.activePageChange.emit(this.activePage);
             }, response => {
                 this.activePage.preview = response;
@@ -79,8 +85,12 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
             });
     }
     download(): void {
-        const fileName = this.os.listItem.versionedRdfRecord.title.replace(/[ &\/\\#,+()$~%.'":*?<>{}]/g, '');
-        this.om.downloadOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.activePage.serialization, fileName);
+        const fileName = this.os.listItem.versionedRdfRecord.title.replace(/[ &/\\#,+()$~%.'":*?<>{}]/g, '');
+        this.om.downloadOntology(this.os.listItem.versionedRdfRecord.recordId, 
+            this.os.listItem.versionedRdfRecord.branchId, 
+            this.os.listItem.versionedRdfRecord.commitId, 
+            this.activePage.serialization, 
+            fileName);
     }
 
     private _setMode(serialization) {

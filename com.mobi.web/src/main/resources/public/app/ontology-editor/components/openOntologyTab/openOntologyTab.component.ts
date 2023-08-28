@@ -140,7 +140,7 @@ export class OpenOntologyTabComponent implements OnInit {
         const recordId = get(record.jsonld, '@id', '');
 
         let msg = '';
-        if (find(this.ms.sourceOntologies, {recordId: recordId})) {
+        if (this.ms.selected && this.ms.selected.ontology && this.ms.selected.ontology['@id'] === recordId) {
             msg += '<error-display>Warning: The ontology you\'re about to delete is currently open in the mapping tool.</error-display>';
         }
         this.dialog.open(ConfirmModalComponent, {

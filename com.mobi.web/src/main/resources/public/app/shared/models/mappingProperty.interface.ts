@@ -20,12 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { JSONLDObject } from './JSONLDObject.interface';
-
 export interface MappingProperty {
+    iri: string,
+    type: string,
     name: string,
-    isDeprecated: boolean,
-    ontologyId: string,
-    propObj: JSONLDObject,
-    isObjectProperty: boolean
+    description: string,
+    deprecated: boolean,
+    ranges: string[]
 }

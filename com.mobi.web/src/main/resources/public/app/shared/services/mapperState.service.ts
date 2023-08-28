@@ -25,29 +25,25 @@ import {
     startsWith,
     get,
     find,
-    set,
     join,
     union,
     uniq,
     has,
-    unset,
-    concat,
     isEqual,
     remove,
     merge,
     nth,
     last
 } from 'lodash';
-import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { DCTERMS, DELIM, MAPPINGS } from '../../prefixes';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { DATA, DCTERMS, DELIM, ONTOLOGYEDITOR, OWL, RDFS } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { Mapping } from '../models/mapping.class';
 import { MappingClass } from '../models/mappingClass.interface';
 import { MappingInvalidProp } from '../models/mappingInvalidProp.interface';
-import { MappingOntology } from '../models/mappingOntology.interface';
 import { MappingProperty } from '../models/mappingProperty.interface';
 import { MappingRecord } from '../models/mappingRecord.interface';
 import { MappingState } from '../models/mappingState.interface';
@@ -57,7 +53,19 @@ import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { MappingManagerService } from './mappingManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
-import { getBeautifulIRI, getDctermsValue, getPropertyId, getPropertyValue, hasPropertyId, removePropertyId, setDctermsValue } from '../utility';
+import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
+import { 
+    getBeautifulIRI, 
+    getDctermsValue, 
+    getPropertyId, 
+    getPropertyValue, 
+    hasPropertyId, 
+    removePropertyId, 
+    setDctermsValue, 
+    updateDctermsValue
+} from '../utility';
+import { beautify } from '../pipes/beautify.pipe';
 
 /**
  * @class shared.MapperStateService
@@ -75,6 +83,289 @@ export class MapperStateService {
     fileUploadStep = 1;
     editMappingStep = 2;
 
+    // Queries
+    protected CLASSES_QUERY = `
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX dc: <http://purl.org/dc/elements/1.1/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    
+    SELECT DISTINCT 
+      ?iri
+      ?name
+      (SAMPLE(?descriptions) as ?description) 
+      (SAMPLE(?deprecateds) as ?deprecated)
+    WHERE {
+      BIND("%SEARCH%" as ?search)
+      {
+        SELECT ?iri (GROUP_CONCAT(?nameOption;separator="�") as ?names)
+        WHERE {
+          {
+            SELECT ?iri ?nameOption
+            WHERE {
+              {
+                ?iri a owl:Class .
+                FILTER(ISIRI(?iri))
+                BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                ?iri a owl:Class ;
+                  ?property ?nameOption .
+                FILTER(ISIRI(?iri))
+                OPTIONAL {
+                  ?iri ?property ?nameOption .
+                  FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                  BIND(?propertyOrder - 1 as ?propertyOrder)
+                }
+              } UNION {
+                ?iri a owl:Class ;
+                  (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(13 as ?propertyOrder)
+              } UNION {
+                ?iri a owl:Class ;
+                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(14 as ?propertyOrder)
+              }
+            } ORDER BY ?propertyOrder
+          }
+        } GROUP BY ?iri
+      }
+      OPTIONAL {
+        ?iri rdfs:comment | dct:description | dc:description ?descriptions .
+      }
+      OPTIONAL {
+        ?iri owl:deprecated ?deprecateds .
+      }
+      BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
+      FILTER(CONTAINS(LCASE(?name), LCASE(?search)))
+    } GROUP BY ?iri ?name ORDER BY ?name LIMIT %LIMIT%
+    `;
+
+    protected CLASS_QUERY = `
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX dc: <http://purl.org/dc/elements/1.1/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+    SELECT DISTINCT 
+      ?iri
+      ?name
+      (SAMPLE(?descriptions) as ?description) 
+      (SAMPLE(?deprecateds) as ?deprecated)
+    WHERE {
+      {
+        SELECT ?iri (GROUP_CONCAT(?nameOption;separator="�") as ?names)
+        WHERE {
+          {
+            SELECT ?iri ?nameOption
+            WHERE {
+              VALUES ?iri { %IRI% }
+              {
+                ?iri a owl:Class .
+                FILTER(ISIRI(?iri))
+                BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                ?iri a owl:Class ;
+                  ?property ?nameOption .
+                FILTER(ISIRI(?iri))
+                OPTIONAL {
+                  ?iri ?property ?nameOption .
+                  FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                  BIND(?propertyOrder - 1 as ?propertyOrder)
+                }
+              } UNION {
+                ?iri a owl:Class ;
+                      (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(13 as ?propertyOrder)
+              } UNION {
+                ?iri a owl:Class ;
+                        (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(14 as ?propertyOrder)
+              }
+            } ORDER BY ?propertyOrder
+          }
+        } GROUP BY ?iri
+      }
+      OPTIONAL {
+        ?iri rdfs:comment | dct:description | dc:description ?descriptions .
+      }
+      OPTIONAL {
+        ?iri owl:deprecated ?deprecateds .
+      }
+      BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
+    } GROUP BY ?iri ?name
+    `;
+
+    protected PROPS_QUERY = `
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX dc: <http://purl.org/dc/elements/1.1/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    
+    SELECT DISTINCT 
+      ?iri
+      ?type
+      ?name
+      (SAMPLE(?descriptions) as ?description) 
+      (SAMPLE(?deprecateds) as ?deprecated)
+      (GROUP_CONCAT(DISTINCT ?range;separator="�") as ?ranges)
+    WHERE {
+      BIND("%SEARCH%" as ?search)
+      {
+        SELECT ?iri ?type (GROUP_CONCAT(?nameOption;separator="�") as ?names)
+        WHERE {
+          {
+            SELECT ?iri ?type ?nameOption
+            WHERE {
+              {
+                SELECT DISTINCT ?iri ?type
+                WHERE {
+	              VALUES ?type { owl:DatatypeProperty owl:ObjectProperty owl:AnnotationProperty }
+              	  {
+                    ?iri a ?type .
+                    FILTER NOT EXISTS {
+                  	  ?iri rdfs:domain ?domain .
+                    }
+                  } UNION {
+	                  <%CLASS%> rdfs:subClassOf* ?domain .
+                    ?iri a ?type ;
+                      rdfs:domain ?domain .
+                  }
+                  FILTER(ISIRI(?iri))
+                }
+              }
+
+              {
+            	  ?iri a ?type .
+                BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                ?iri ?property ?nameOption .
+                OPTIONAL {
+                  ?iri ?property ?nameOption .
+                  FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                  BIND(?propertyOrder - 1 as ?propertyOrder)
+                }
+              } UNION {
+                ?iri (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                BIND(13 as ?propertyOrder)
+              } UNION {
+                ?iri (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                BIND(14 as ?propertyOrder)
+              }
+            } ORDER BY ?propertyOrder
+          }
+        } GROUP BY ?iri ?type
+      }
+      OPTIONAL {
+        ?iri rdfs:comment | dct:description | dc:description ?descriptions .
+      }
+      OPTIONAL {
+        ?iri owl:deprecated ?deprecateds .
+      }
+      OPTIONAL {
+        ?iri rdfs:range ?startingRange .
+        ?startingRange ^rdfs:subClassOf* ?range .
+        FILTER(isIRI(?range))
+      }
+      BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
+      FILTER(CONTAINS(LCASE(?name), LCASE(?search)))
+    } GROUP BY ?iri ?type ?name ORDER BY ?name LIMIT %LIMIT%
+    `;
+
+    protected PROP_QUERY = `
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX dc: <http://purl.org/dc/elements/1.1/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    
+    SELECT DISTINCT 
+      ?iri
+      ?type
+      ?name
+      (SAMPLE(?descriptions) as ?description) 
+      (SAMPLE(?deprecateds) as ?deprecated)
+      (GROUP_CONCAT(DISTINCT ?range;separator="�") as ?ranges)
+    WHERE {
+      {
+        SELECT ?iri ?type (GROUP_CONCAT(?nameOption;separator="�") as ?names)
+        WHERE {
+          {
+            SELECT ?iri ?type ?nameOption
+            WHERE {
+              VALUES (?iri ?type) { %IRI% }
+              {
+            	  ?iri a ?type .
+                BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                ?iri a ?type ;
+                  ?property ?nameOption .
+                OPTIONAL {
+                  ?iri ?property ?nameOption .
+                  FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                  BIND(?propertyOrder - 1 as ?propertyOrder)
+                }
+              } UNION {
+                ?iri a ?type ;
+                  (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                BIND(13 as ?propertyOrder)
+              } UNION {
+                ?iri a ?type ;
+                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                BIND(14 as ?propertyOrder)
+              }
+            } ORDER BY ?propertyOrder
+          }
+        } GROUP BY ?iri ?type
+      }
+      OPTIONAL {
+        ?iri rdfs:comment | dct:description | dc:description ?descriptions .
+      }
+      OPTIONAL {
+        ?iri owl:deprecated ?deprecateds .
+      }
+      OPTIONAL {
+        ?iri rdfs:range ?startingRange .
+        ?startingRange ^rdfs:subClassOf* ?range .
+        FILTER(isIRI(?range))
+      }
+      BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
+    } GROUP BY ?iri ?type ?name
+    `;
+
+    // Constants
+    supportedAnnotations: MappingProperty[] = [
+        { iri: `${RDFS}label`, name: 'Label', description: '', type: `${OWL}AnnotationProperty`, deprecated: false, ranges: [] },
+        { iri: `${RDFS}comment`, name: 'Comment', description: '', type: `${OWL}AnnotationProperty`, deprecated: false, ranges: [] },
+        { iri: `${DCTERMS}title`, name: 'Title', description: '', type: `${OWL}AnnotationProperty`, deprecated: false, ranges: [] },
+        { iri: `${DCTERMS}description`, name: 'Description', description: '', type: `${OWL}AnnotationProperty`, deprecated: false, ranges: [] },
+    ];
+
+    // State variables
+    /**
+     * Controls whether the {@link mapper.EditMappingTabComponent} initializes with the
+     * {@link mapper.MappingConfigOverlayComponent} already open.
+     * @type {boolean}
+     */
+    startWithConfigModal = false;
     /**
      * The configuration to be used when retrieving the results of a Mapping Records query. These configurations are the
      * limit, page index, search text, and sort option. The limit and sortOption are not to be changed for now.
@@ -101,12 +392,6 @@ export class MapperStateService {
      * @type {MappingState}
      */
     selected: MappingState = undefined;
-    /**
-     * An array of all the ontologies used for the currently selected mapping. This includes the source ontology as
-     * specified by the mapping array and the imports closure of that ontology.
-     * @type {MappingOntology[]}
-     */
-    sourceOntologies: MappingOntology[] = [];
     /**
      * A boolean indicating whether or not the mapping page is editing a mapping
      * @type {boolean}
@@ -135,18 +420,6 @@ export class MapperStateService {
      */
     invalidProps: MappingInvalidProp[] = [];
     /**
-     * `availableClasses` holds an array of objects representing the classes from all source ontologies.
-     * @type {MappingClass[]}
-     */
-    availableClasses: MappingClass[] = [];
-    /**
-     * An object with keys for classes in the imports closure of the currently selected
-     * {@link shared.MapperStateService#selected} and values of all properties that can be set for the class.
-     */
-    propsByClass: {
-        [key: string]: MappingProperty[]
-    } = {};
-    /**
      * A string with the IRI of the currently selected class mapping.
      * @type {string}
      */
@@ -168,10 +441,20 @@ export class MapperStateService {
      */
     highlightIndexes = [];
     /**
-     * A string that will be used to filter the {@link mappingList.directive:mappingList mapping list}.
+     * A string that will be used to filter the list of mappings.
      * @type {string}
      */
     mappingSearchString = '';
+    /**
+     * A map of the IRIs from the selected mapping's source ontology imports closure to their respective parent ontology 
+     * IRI grouped by entity type.
+     */
+    iriMap: {
+        classes: {[key: string]: string},
+        annotationProperties: {[key: string]: string},
+        objectProperties: {[key: string]: string},
+        dataProperties: {[key: string]: string}
+    };
 
     /**
      * A string that that represents the Mapping Record type.
@@ -189,10 +472,8 @@ export class MapperStateService {
         this.step = 0;
         this.editTabIndex = 0;
         this.invalidProps = [];
-        this.propsByClass = {};
-        this.availableClasses = [];
         this.selected = undefined;
-        this.sourceOntologies = [];
+        this.iriMap = undefined;
     }
     /**
      * Sets the edit related state variables back to their default values.
@@ -218,14 +499,15 @@ export class MapperStateService {
     startCreateMapping(): void {
         this.editMapping = true;
         this.newMapping = true;
-        this.sourceOntologies = [];
         this.resetEdit();
-        this.propsByClass = {};
     }
     /**
-     * Retrieves and selects a mapping to the provided record.
+     * Retrieves a mapping based off the provided MappingRecord and returns a {@link MappingState}. Has a
+     * {@link Mapping}, {@link MappingRecord}, and an empty {@link Difference} set.
      *
      * @param {MappingRecord} record the mapping record to select
+     * @returns {Observable<MappingState>} An Observable with the retrieved {@link MappingState} if successful; 
+     *    fails with an error message otherwise 
      */
     getMappingState(record: MappingRecord): Observable<MappingState> {
         return this.mm.getMapping(record.id)
@@ -248,13 +530,17 @@ export class MapperStateService {
     /**
      * Tests whether changes have been made to the opened mapping.
      *
-     * @return {boolean} True if the mapping has been changed; false otherwise
+     * @returns {boolean} True if the mapping has been changed; false otherwise
      */
     isMappingChanged(): boolean {
-        return get(this.selected, 'difference.additions', []).length > 0 || get(this.selected, 'difference.deletions', []).length > 0;
+        return get(this.selected, 'difference.additions', []).length > 0 
+            || get(this.selected, 'difference.deletions', []).length > 0;
     }
     /**
      * Saves the current mapping appropriately depending on whether it is a new mapping or an existing mapping.
+     * 
+     * @returns {Observable<string>} An Observable with the IRI of the MappingRecord if successful; fails with an error
+     *    message otherwise
      */
     saveMapping(): Observable<string> {
         const catalogId = get(this.cm.localCatalog, '@id', '');
@@ -264,10 +550,13 @@ export class MapperStateService {
             return this.cm.updateInProgressCommit(this.selected.record.id, catalogId, this.selected.difference)
                 .pipe(
                     switchMap(() => {
-                        const addedNames = (this.selected.difference.additions as JSONLDObject[]).map(diff => this._getChangedEntityName(diff));
-                        const deletedNames = (this.selected.difference.deletions as JSONLDObject[]).map(diff => this._getChangedEntityName(diff));
+                        const addedNames = (this.selected.difference.additions as JSONLDObject[])
+                            .map(diff => this._getChangedEntityName(diff));
+                        const deletedNames = (this.selected.difference.deletions as JSONLDObject[])
+                            .map(diff => this._getChangedEntityName(diff));
                         const commitMessage = `Changed ${join(union(addedNames, deletedNames), ', ')}`;
-                        return this.cm.createBranchCommit(this.selected.record.branch, this.selected.record.id, catalogId, commitMessage);
+                        return this.cm.createBranchCommit(this.selected.record.branch, this.selected.record.id, 
+                            catalogId, commitMessage);
                     }),
                     map(() => this.selected.record.id)
                 );
@@ -275,7 +564,9 @@ export class MapperStateService {
     }
     /**
      * Retrieves and saves the master branch of the current mapping for use on the
-     * {@link mapper.MappingCommitsPageComponent mappingCommitsPage}.
+     * {@link mapper.MappingCommitsPageComponent}.
+     * 
+     * @returns {Observable<null>} An Observable indicating the success of the operation.
      */
     setMasterBranch(): Observable<null> {
         const catalogId = get(this.cm.localCatalog, '@id', '');
@@ -284,6 +575,109 @@ export class MapperStateService {
                 this.selected.branch = branch;
                 return of(null);
             }));
+    }
+    /**
+     * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer compatible
+     * with the imports closure of the associated OntologyRecord. A Class, Data, or Object is incompatible if its IRI
+     * doesn't exist in the ontologies, is not longer the correct type, or if it has been deprecated. An ObjectMapping
+     * is also incompatible if its range has changed or its range class is incompatible. If a DataMapping uses a
+     * supported annotation property, it will not be incompatible. Returns the final list as an Observable.
+     * 
+     * @param {Mapping} mapping The Mapping to validate
+     * @returns {Observable<JSONLDObject[]>} An Observable with the list of incompatible mappings if successful; returns
+     *    with an empty array if an error occurs
+     */
+    findIncompatibleMappings(mapping: Mapping): Observable<JSONLDObject[]> {
+        // Collect the unique list of class IRIs and their associated ClassMappings
+        const classIRIsToMappings: { [key: string]: JSONLDObject[] } = {};
+        mapping.getAllClassMappings().forEach(classMapping => {
+            const classId = Mapping.getClassIdByMapping(classMapping);
+            if (!classIRIsToMappings[classId]) {
+                classIRIsToMappings[classId] = [];
+            }
+            classIRIsToMappings[classId].push(classMapping);
+        });
+        // Collect the unique list of data/annotation property IRIs and their associated DataMappings
+        const propIRIsToDataMappings: { [key: string]: JSONLDObject[] } = {};
+        mapping.getAllDataMappings().forEach(propMapping => {
+            const propId = Mapping.getPropIdByMapping(propMapping);
+            // Filter out any supported annotations since they _shouldn't_ be found in the imports closure
+            if (!this.supportedAnnotations.find(ann => ann.iri === propId)) {
+                if (!propIRIsToDataMappings[propId]) {
+                  propIRIsToDataMappings[propId] = [];
+                }
+                propIRIsToDataMappings[propId].push(propMapping);
+            }
+        });
+        // Collect the unique list of object property IRIs and their associated ObjectMappings
+        const propIRIsToObjectMappings: { [key: string]: JSONLDObject[] } = {};
+        mapping.getAllObjectMappings().forEach(propMapping => {
+            const propId = Mapping.getPropIdByMapping(propMapping);
+            if (!propIRIsToObjectMappings[propId]) {
+              propIRIsToObjectMappings[propId] = [];
+            }
+            propIRIsToObjectMappings[propId].push(propMapping);
+        });
+        const ontInfo = mapping.getSourceOntologyInfo();
+        const classIRIs = Object.keys(classIRIsToMappings);
+        const dataPropIRIs = Object.keys(propIRIsToDataMappings);
+        const objPropIRIs = Object.keys(propIRIsToObjectMappings);
+        // Fetch metadata about the specific classes and properties within the mapping
+        const obs = [classIRIs.length > 0 ? this.retrieveSpecificClasses(ontInfo, classIRIs) : of([])].concat(
+            objPropIRIs.length > 0 || dataPropIRIs.length > 0 ? this.retrieveSpecificProps(ontInfo, 
+                objPropIRIs.map(iri => ({ iri, type: `${OWL}ObjectProperty` }))
+                    .concat(dataPropIRIs.map(iri => ({ iri, type: `${OWL}DatatypeProperty` })))
+                    .concat(dataPropIRIs.map(iri => ({ iri, type: `${OWL}AnnotationProperty` })))) : of([])
+        );
+        return forkJoin(obs).pipe(
+            map(responses => {
+                let incompatibleMappings = [];
+                classIRIs.forEach(classIRI => {
+                    const mappingClass = responses[0].find(mappingClass => mappingClass.iri === classIRI);
+                    // All mappings incompatible if class could not be found or is deprecated
+                    if (!mappingClass || mappingClass.deprecated) {
+                        incompatibleMappings = incompatibleMappings.concat(classIRIsToMappings[classIRI]);
+                    }
+                });
+                dataPropIRIs.forEach(propIRI => {
+                    const mappingProperty = responses[1].find(mappingProperty => mappingProperty.iri === propIRI);
+                    // All mappings incompatible if object property could not be found, switched types, or is deprecated
+                    if (!mappingProperty || mappingProperty.deprecated 
+                      || ![`${OWL}DatatypeProperty`, `${OWL}AnnotationProperty`].includes(mappingProperty.type)) {
+                        incompatibleMappings = incompatibleMappings.concat(propIRIsToDataMappings[propIRI]);
+                    }
+                });
+                objPropIRIs.forEach(propIRI => {
+                    const mappingProperty = responses[1].find(mappingProperty => mappingProperty.iri === propIRI);
+                    // All mappings incompatible if object property could not be found, switched types, or is deprecated
+                    if (!mappingProperty || mappingProperty.deprecated 
+                      || mappingProperty.type !== `${OWL}ObjectProperty`) {
+                        incompatibleMappings = incompatibleMappings.concat(propIRIsToObjectMappings[propIRI]);
+                        return;
+                    }
+                    // For each specific mapping
+                    propIRIsToObjectMappings[propIRI].forEach(propMapping => {
+                        const rangeClassId = mapping.getClassIdByMappingId(getPropertyId(propMapping, 
+                            `${DELIM}classMapping`));
+                        // Incompatible if class of range class mapping is not in object property range options
+                        if (!mappingProperty.ranges.includes(rangeClassId)) {
+                            incompatibleMappings.push(propMapping);
+                            return;
+                        }
+                        // Incompatible if range class mapping of property mapping is incompatible
+                        if (incompatibleMappings.find(incomMapping => 
+                          Mapping.getClassIdByMapping(incomMapping) === rangeClassId)) {
+                            incompatibleMappings.push(propMapping);
+                        }
+                    });
+                });
+                return incompatibleMappings;
+            }),
+            catchError(error => {
+                console.error(error);
+                return of([]);
+            })
+        );
     }
     /**
      * Validates the current {@link shared.MapperStateService#selected} against the currently loaded
@@ -298,7 +692,8 @@ export class MapperStateService {
                 return {
                     id: dataMapping['@id'],
                     index: parseInt(getPropertyValue(dataMapping, `${DELIM}columnIndex`), 10),
-                    dataPropName: this.mm.getPropMappingTitle(getDctermsValue(classMapping, 'title'), getDctermsValue(dataMapping, 'title'))
+                    dataPropName: this.mm.getPropMappingTitle(getDctermsValue(classMapping, 'title'),
+                        getDctermsValue(dataMapping, 'title'))
                 } as MappingInvalidProp;
             })
             .filter(propObj => propObj.index > this.dm.dataRows[0].length - 1)
@@ -308,156 +703,11 @@ export class MapperStateService {
      * Finds all of the column indexes that have been mapped to data mappings in the currently selected
      * {@link shared.MapperStateService#selected}.
      *
-     * @return {string[]} an array of strings of column indexes that have been mapped
+     * @returns {string[]} an array of strings of column indexes that have been mapped
      */
     getMappedColumns(): string[] {
-        return uniq(this.selected.mapping.getAllDataMappings().map(dataMapping => getPropertyValue(dataMapping, `${DELIM}columnIndex`)));
-    }
-    /**
-     * Returns the boolean indicating whether a class has properties to map.
-     *
-     * @param {string} classId The id of the class to check
-     * @return {boolean} True if there are properties to map for the class; false otherwise.
-     */
-    hasProps(classId: string): boolean {
-        return get(this.propsByClass, encodeURIComponent(classId), []).length > 0;
-    }
-    /**
-     * Returns the boolean indicating whether the class of a class mapping has properties to map.
-     *
-     * @param {string} classMappingId The id of the class mapping to check
-     * @return {boolean} True if there are properties to map for the class mapping's class; false otherwise.
-     */
-    hasPropsByClassMappingId(classMappingId: string): boolean {
-        return this.hasProps(this.selected.mapping.getClassIdByMappingId(classMappingId));
-    }
-    /**
-     * Returns the boolean indicating whether the properties for a class have been retrieved.
-     *
-     * @param {string} classId The id of the class to check
-     * @return {boolean} True if properties have been retrieved for the class; false otherwise.
-     */
-    hasPropsSet(classId: string): boolean {
-        return has(this.propsByClass, encodeURIComponent(classId));
-    }
-    /**
-     * Returns the boolean indicating whether the properties for a class mapping's class have been retrieved.
-     *
-     * @param {string} classMappingId The id of the class mapping to check
-     * @return {boolean} True if properties have been retrieved for the class of a class mapping; false
-     * otherwise.
-     */
-    hasPropsSetByClassMappingId(classMappingId: string): boolean {
-        return this.hasPropsSet(this.selected.mapping.getClassIdByMappingId(classMappingId));
-    }
-    /**
-     * Removes a key-value pair from `propsByClass` using the passed class id.
-     *
-     * @param {string} classId The id of a class to remove from the props list.
-     */
-    removeProps(classId: string): void {
-        unset(this.propsByClass, encodeURIComponent(classId));
-    }
-    /**
-     * Removes a key-value pair from `propsByClass` using the passed class mapping id.
-     *
-     * @param {string} classId The id of a class mapping whose class will be removed from the props list.
-     */
-    removePropsByClassMappingId(classMappingId: string): void {
-        this.removeProps(this.selected.mapping.getClassIdByMappingId(classMappingId));
-    }
-    /**
-     * Sets the value for a class in `propsByClass` to an array of objects representing properties that can be
-     * set for that class.
-     *
-     * @param {string} classId The id of the class to set the array of property objects for
-     */
-    setProps(classId: string): void {
-        const annotations = this.mm.annotationProperties.map(id => ({
-            ontologyId: splitIRI(id).begin,
-            propObj: {'@id': id},
-            name: getBeautifulIRI(id),
-            isDeprecated: false,
-            isObjectProperty: false
-        }));
-        const props = concat(this.getClassProps(this.sourceOntologies, classId), annotations);
-        set(this.propsByClass, encodeURIComponent(classId), props);
-    }
-    /**
-     * Sets the value for the class of a class mapping in `propsByClass` to an array of objects representing
-     * properties that can be set for that class.
-     *
-     * @param {string} classMappingId The id of the class mapping to set the array of property objects for
-     */
-    setPropsByClassMappingId(classMappingId: string): void {
-        this.setProps(this.selected.mapping.getClassIdByMappingId(classMappingId));
-    }
-    /**
-     * Retrieves an array of property objects representing the properties that can be set for the class with
-     * the passed id.
-     *
-     * @param {string} classId The id of the class to retrieve available properties of
-     * @return {MappingProperty[]} An array of property objects that can be set on the class
-     */
-    getProps(classId: string): MappingProperty[] {
-        return get(this.propsByClass, encodeURIComponent(classId), []);
-    }
-    /**
-     * Retrieves an array of property objects representing the properties that can be set for the class mapping
-     * with the passed id.
-     *
-     * @param {string} classMappingId The id of the class mapping to retrieve available properties of
-     * @return {MappingProperty[]} An array of property objects that can be set on the class
-     */
-    getPropsByClassMappingId(classMappingId: string): MappingProperty[] {
-        return this.getProps(this.selected.mapping.getClassIdByMappingId(classMappingId));
-    }
-    /**
-     * Collects a list of objects representing the properties that can be mapped for a class from
-     * a list of ontologies created by the {@link shared.MappingManagerService}.
-     *
-     * @param {MappingOntology[]} ontologies A list of ontology objects to collect properties from
-     * @param {string} classId The id of the class to collect properties for
-     * @return {MappingProperty[]} An array of objects with a property object and parent ontology id of properties
-     * that can be mapped for the specified class.
-     */
-    getClassProps(ontologies: MappingOntology[], classId: string): MappingProperty[] {
-        let props: MappingProperty[] = [];
-        ontologies.forEach(ontology => {
-            const merged = [
-                ...this.om.getClassProperties([ontology.entities], classId),
-                ...this.om.getNoDomainProperties([ontology.entities]),
-                ...this.om.getAnnotations([ontology.entities])
-            ];
-            const classProps = [...new Set(merged)].filter(prop => !(this.om.isObjectProperty(prop) && this.om.isDataTypeProperty(prop)));
-            props = union(props, classProps.map(prop => ({
-                ontologyId: ontology.id,
-                propObj: prop,
-                name: this.om.getEntityName(prop),
-                isDeprecated: this.om.isDeprecated(prop),
-                isObjectProperty: this.om.isObjectProperty(prop)
-            })));
-        });
-        return props;
-    }
-    /**
-     * Collects a list of objects representing all the classes from a list of ontologies created by the
-     * {@link shared.MappingManagerService}
-     *
-     * @param {MappingOntology[]} ontologies A list of ontology objects to collect properties from
-     * @return {MappingClass[]} An array of objects with the class object and parent ontology id of classes
-     */
-    getClasses(ontologies: MappingOntology[]): MappingClass[] {
-        let classes = [];
-        ontologies.forEach(ontology => {
-            classes = concat(classes, this.om.getClasses([ontology.entities]).map(classObj => ({
-                ontologyId: ontology.id,
-                classObj,
-                name: this.om.getEntityName(classObj),
-                isDeprecated: this.om.isDeprecated(classObj)
-            })));
-        });
-        return classes;
+        return uniq(this.selected.mapping.getAllDataMappings()
+            .map(dataMapping => getPropertyValue(dataMapping, `${DELIM}columnIndex`)));
     }
     /**
      * Updates the additions and deletions of the current mapping appropriately when a single property
@@ -475,7 +725,8 @@ export class MapperStateService {
             let additionsObj = find(this.selected.difference.additions as JSONLDObject[], {'@id': entityId});
             let deletionsObj = find(this.selected.difference.deletions as JSONLDObject[], {'@id': entityId});
             if (additionsObj) {
-                const deletionsValue = isId ? getPropertyId(deletionsObj, propId) : getPropertyValue(deletionsObj, propId);
+                const deletionsValue = isId ? getPropertyId(deletionsObj, propId) 
+                    : getPropertyValue(deletionsObj, propId);
                 if (deletionsValue === newValue) {
                     delete additionsObj[propId];
                     if (isEqual(additionsObj, {'@id': entityId})) {
@@ -507,25 +758,30 @@ export class MapperStateService {
      * and ClassMapping titles appropriately.
      *
      * @param {MappingClass} classIdObj An ID object for a class in an ontology
-     * @return {JSONLDObject} The ClassMapping JSON-LD that was added
+     * @returns {JSONLDObject} The ClassMapping JSON-LD that was added
      */
-    addClassMapping(classIdObj: MappingClass): JSONLDObject {
-        const ontology = find(this.sourceOntologies, {id: classIdObj.ontologyId});
-        const originalClassMappings = this.selected.mapping.getClassMappingsByClassId(classIdObj.classObj['@id']);
-        const classMapping = this.mm.addClass(this.selected.mapping, ontology.entities, classIdObj.classObj['@id']);
-        const className = this.om.getEntityName(classIdObj.classObj);
+    addClassMapping(classDetails: MappingClass): JSONLDObject {
+        const ontologyId = this.iriMap?.classes[classDetails.iri];
+        if (!ontologyId) {
+            return;
+        }
+        const splitIri = splitIRI(classDetails.iri);
+        const ontologyDataName = splitIRI(ontologyId).end;
+        const originalClassMappings = this.selected.mapping.getClassMappingsByClassId(classDetails.iri);
+        const classMapping = this.selected.mapping.addClassMapping(classDetails.iri, 
+            `${DATA}${ontologyDataName}/${splitIri.end.toLowerCase()}/`);
         if (!originalClassMappings.length) {
-            setDctermsValue(classMapping, 'title', className);
+              setDctermsValue(classMapping, 'title', classDetails.name);
         } else {
             originalClassMappings.forEach(classMapping => {
-                if (getDctermsValue(classMapping, 'title') === className) {
-                    // TODO: Should make a replaceDctermsValue function
-                    classMapping[`${DCTERMS}title`][0]['@value'] = `${className} (1)`;
-                    this.changeProp(classMapping['@id'], `${DCTERMS}title`, `${className} (1)`, className);
+                if (getDctermsValue(classMapping, 'title') === classDetails.name) {
+                    updateDctermsValue(classMapping, 'title', `${classDetails.name} (1)`);
+                    this.changeProp(classMapping['@id'], `${DCTERMS}title`, `${classDetails.name} (1)`, 
+                        classDetails.name);
                     return false;
                 }
             });
-            this._setNewTitle(classMapping, className, originalClassMappings);
+            this._setNewTitle(classMapping, classDetails.name, originalClassMappings);
         }
         (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, classMapping));
         return classMapping;
@@ -539,15 +795,22 @@ export class MapperStateService {
      * @param {string} columnIndex The column index the DataMapping should point to
      * @param {string} datatypeSpec The default datatype the DataMapping should use
      * @param {string} languageSpec The default language tag the DataMapping should use
-     * @return {JSONLDObject} The DataMapping JSON-LD that was added
+     * @returns {JSONLDObject} The DataMapping JSON-LD that was added
      */
-    addDataMapping(propIdObj: MappingProperty, classMappingId: string, columnIndex: number, datatypeSpec?: string,
-        languageSpec?: string): JSONLDObject {
-        const ontology = find(this.sourceOntologies, {id: propIdObj.ontologyId});
-        const propMapping = this.mm.addDataProp(this.selected.mapping, get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], columnIndex, datatypeSpec, languageSpec);
-        setDctermsValue(propMapping, 'title', this.om.getEntityName(propIdObj.propObj));
-        (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
-        return propMapping;
+    addDataMapping(propDetails: MappingProperty, classMappingId: string, columnIndex: number, datatypeSpec?: string,
+      languageSpec?: string): JSONLDObject {
+        const ontologyId = this.iriMap?.dataProperties[propDetails.iri] 
+            || this.iriMap?.annotationProperties[propDetails.iri];
+        if (this.selected.mapping.hasClassMapping(classMappingId) 
+          && ((ontologyId && [`${OWL}DatatypeProperty`, `${OWL}AnnotationProperty`].includes(propDetails.type)) 
+          || this.supportedAnnotations.includes(propDetails))) {
+            const propMapping = this.selected.mapping.addDataPropMapping(propDetails.iri, columnIndex, classMappingId, 
+                datatypeSpec, languageSpec);
+            setDctermsValue(propMapping, 'title', propDetails.name);
+            (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
+            return propMapping;
+        }
+        return;
     }
     /**
      * Adds a ObjectMapping for the data property identified by the passed property ID object and updates the
@@ -556,19 +819,26 @@ export class MapperStateService {
      * @param {MappingProperty} propIdObj An ID object for a property in an ontology
      * @param {string} classMappingId The ID of the ClassMapping the ObjectMapping should be added to
      * @param {string} rangeClassMappingId The ID of the ClassMapping the ObjectMapping should point to
-     * @return {JSONLDObject} The ObjectMapping JSON-LD that was added
+     * @returns {JSONLDObject} The ObjectMapping JSON-LD that was added
      */
-    addObjectMapping(propIdObj: MappingProperty, classMappingId: string, rangeClassMappingId: string): JSONLDObject {
-        const ontology = find(this.sourceOntologies, {id: propIdObj.ontologyId});
-        const propMapping = this.mm.addObjectProp(this.selected.mapping, get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], rangeClassMappingId);
-        setDctermsValue(propMapping, 'title', this.om.getEntityName(propIdObj.propObj));
-        (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
-        return propMapping;
+    addObjectMapping(propDetails: MappingProperty, classMappingId: string, rangeClassMappingId: string): JSONLDObject {
+        const ontologyId = this.iriMap?.objectProperties[propDetails.iri];
+        const rangeClassMapping = this.selected.mapping.getClassMapping(rangeClassMappingId);
+        if (this.selected.mapping.hasClassMapping(classMappingId) && rangeClassMapping && ontologyId 
+            && propDetails.type === `${OWL}ObjectProperty`
+            && propDetails.ranges.includes(getPropertyId(rangeClassMapping, `${DELIM}mapsTo`))) {
+            const propMapping = this.selected.mapping.addObjectPropMapping(propDetails.iri, classMappingId, rangeClassMappingId);
+            setDctermsValue(propMapping, 'title', propDetails.name);
+            (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
+            return propMapping;
+        }
+
+        return;
     }
     /**
      * Updates the additions and deletions of the current mapping appropriately when an entity is deleted.
      *
-     * @param {Object} entity The JSON-LD object of the entity to delete
+     * @param {JSONLDObject} entity The JSON-LD object of the entity to delete
      */
     deleteEntity(entity: JSONLDObject): void {
         const additionsObj = find((this.selected.difference.additions as JSONLDObject[]), {'@id': entity['@id']});
@@ -605,14 +875,11 @@ export class MapperStateService {
         propsLinkingToClass.forEach(obj => this._cleanUpDeletedProp(obj.propMapping, obj.classMappingId));
         const classId = Mapping.getClassIdByMapping(deletedClass);
         const classMappings = this.selected.mapping.getClassMappingsByClassId(classId);
-        if (classMappings.length === 0) {
-            this.removeProps(classId);
-        } else if (classMappings.length === 1) {
+        if (classMappings.length === 1) {
             const lastClassMapping = classMappings[0];
             const originalTitle = getDctermsValue(lastClassMapping, 'title');
             const newTitle = originalTitle.replace(/ \((\d+)\)$/, '');
-            // TODO: Should make a replaceDctermsValue function
-            lastClassMapping[`${DCTERMS}title`][0]['@value'] = newTitle;
+            updateDctermsValue(lastClassMapping, 'title', newTitle);
             this.changeProp(lastClassMapping['@id'], `${DCTERMS}title`, newTitle, originalTitle);
         }
     }
@@ -626,6 +893,158 @@ export class MapperStateService {
     deleteProp(propMappingId: string, parentClassMappingId: string): void {
         const deletedProp = this.selected.mapping.removePropMapping(parentClassMappingId, propMappingId);
         this._cleanUpDeletedProp(deletedProp, parentClassMappingId);
+    }
+    /**
+     * Sets the map of entity IRIs to ontology IRIs from the imports closure of source ontology of the currently
+     * selected {@link Mapping}. Returns an Observable indicating the success of the request.
+     * 
+     * @returns {Observable<null>} An Observable indicating the success of the operation.
+     */
+    setIriMap(): Observable<null> {
+        const ontInfo = this.selected.mapping.getSourceOntologyInfo();
+        const ontIri = getPropertyId(this.selected.ontology, `${ONTOLOGYEDITOR}ontologyIRI`);
+        return forkJoin([
+            this.om.getIris(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId),
+            this.om.getImportedIris(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId)
+        ]).pipe(map(response => {
+            this.iriMap = {
+                classes: {},
+                annotationProperties: {},
+                objectProperties: {},
+                dataProperties: {}
+            };
+            ['classes', 'dataProperties', 'objectProperties', 'annotationProperties'].forEach(key => {
+                response[0][key].forEach(iri => {
+                    this.iriMap[key][iri] = ontIri;
+                });
+                if (response[1]) {
+                    response[1].forEach(iriList => {
+                        iriList[key].forEach(iri => {
+                            this.iriMap[key][iri] = iriList.id;
+                        });
+                    });
+                }
+            });
+            return null;
+        }));
+    }
+    /**
+     * Retrieves the list of classes within the imports closure of the OntologyRecord represented by the provided
+     * {@link MappingOntologyInfo} in the form of an array of {@link MappingClass} objects with important metadata.
+     * Accomplished through the use of a SPARQL query with a specified limit to the results and supports optional search
+     * text.
+     * 
+     * @param {MappingOntologyInfo} ontInfo The metadata about which OntologyRecord to search within
+     * @param {string} searchText Optional text to filter the list of classes by. Searches over the calculated names of
+     *    the classes. Can be an empty string.
+     * @param {number} [limit=100] An optional limit to apply to the list of results. Defaults to 100.
+     * @returns {Observable<MappingClass[]>} An Observable with an unsorted array of {@link MappingClass} collected from
+     *    the entire imports closure of the ontology if successful; fails with an error message otherwise
+     */
+    retrieveClasses(ontInfo: MappingOntologyInfo, searchText: string, limit = 100, isTracked = false): Observable<MappingClass[]> {
+        const query = this.CLASSES_QUERY.replace('%SEARCH%', searchText).replace('%LIMIT%', `${limit}`);
+        return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
+          true, false, isTracked)
+            .pipe(map(response => {
+                if (!response) {
+                  return [];
+                }
+                return (response as SPARQLSelectResults).results.bindings.map(binding => ({
+                    iri: binding['iri'].value,
+                    name: beautify(binding['name'].value),
+                    description: binding['description']?.value || '',
+                    deprecated: ['true', '1', 'TRUE'].includes(binding['deprecated']?.value) || false
+                }));
+            }));
+    }
+    /**
+     * Retrieves details about specific classes based off their IRIs within the imports closure of the OntologyRecord
+     * associated with the currently selected {@link Mapping} in the form of a {@link MappingClass} array. Accomplished
+     * through the  use of a SPARQL query. If the classes are not found, Observable contains an empty array.
+     * 
+     * @param {string[]} iris The IRI strings of the specific classes to retrieve
+     * @returns {Observable<MappingClass>} An Observable with the array of {@link MappingClass} about the identified OWL
+     *    classes or an empty array if successful; fails with an error message otherwise. 
+     */
+    retrieveSpecificClasses(ontInfo: MappingOntologyInfo, iris: string[]): Observable<MappingClass[]> {
+      const query = this.CLASS_QUERY.replace('%IRI%', iris.map(iri => `<${iri}>`).join(' '));
+      return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
+          .pipe(map(response => {
+              if (!response) {
+                return [];
+              }
+              return (response as SPARQLSelectResults).results.bindings.map(binding => ({
+                iri: binding['iri'].value,
+                name: beautify(binding['name'].value),
+                description: binding['description']?.value || '',
+                deprecated: ['true', '1', 'TRUE'].includes(binding['deprecated']?.value) || false
+              }));
+          }));
+    }
+    /**
+     * Retrieves the list of properties for a specific class IRI within the imports closure of the OntologyRecord
+     * associated with the currently selected {@link Mapping} in the form of an array of {@link MappingProperty} objects
+     * with important metadata. Accomplished through the use of a SPARQL query with a specified limit to the results and
+     * supports optional search text.
+     * 
+     * @param {string} classIri The IRI of the Class to find properties for.
+     * @param {string} searchText Optional text to filter the list of classes by. Searches over the calculated names of
+     *    the classes. Can be an empty string.
+     * @param {number} [limit=100] An optional limit to apply to the list of results. Defaults to 100.
+     * @returns {Observable<MappingProperty[]>} An Observable with a sorted array of {@link MappingProperty} collected
+     *    from the entire imports closure of the ontology if successful; fails with an error message otherwise
+     */
+    retrieveProps(ontInfo: MappingOntologyInfo, classIri: string, searchText: string, limit = 100, isTracked = false): 
+      Observable<MappingProperty[]> {
+        const query = this.PROPS_QUERY
+            .replace('%CLASS%', classIri)
+            .replace('%SEARCH%', searchText)
+            .replace('%LIMIT%', `${limit}`);
+        return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
+          true, false, isTracked)
+            .pipe(map(response => {
+                if (!response) {
+                    return [];
+                }
+                return (response as SPARQLSelectResults).results.bindings.map(binding => ({
+                    iri: binding['iri'].value,
+                    type: binding['type'].value,
+                    name: binding['name'].value,
+                    description: binding['description']?.value || '',
+                    deprecated: ['true', '1', 'TRUE'].includes(binding['deprecated']?.value) || false,
+                    ranges: binding['ranges']?.value ? binding['ranges']?.value.split('�') : []
+                }));
+            }));
+    }
+
+    /**
+     * Retrieves details about specific properties based off their IRIs and property types within the imports closure of
+     * the OntologyRecord associated with the currently selected {@link Mapping} in the form of a
+     * {@link MappingProperty} array. Accomplished through the  use of a SPARQL query. If the properties are not found, 
+     * Observable contains an empty array.
+     * 
+     * @param {{iri: string, type: string}[]} iris An array of IRIs and associated property types (owl:ObjectProperty, 
+     *    owl:DatatypeProperty, owl:AnnotationProperty)
+     * @returns {Observable<MappingProperty[]>} An Observable with the array of {@link MappingProperty} about the
+     *    identified OWL properties or an empty array if successful; fails with an error message otherwise. 
+     */
+    retrieveSpecificProps(ontInfo: MappingOntologyInfo, iris: {iri: string, type: string}[]): 
+      Observable<MappingProperty[]> {
+        const query = this.PROP_QUERY.replace('%IRI%', iris.map(iri => `(<${iri.iri}> <${iri.type}>)`).join(' '));
+        return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
+            .pipe(map(response => {
+                if (!response) {
+                    return [];
+                }
+                return (response as SPARQLSelectResults).results.bindings.map(binding => ({
+                    iri: binding['iri'].value,
+                    type: binding['type'].value,
+                    name: beautify(binding['name'].value),
+                    description: binding['description']?.value || '',
+                    deprecated: ['true', '1', 'TRUE'].includes(binding['deprecated']?.value) || false,
+                    ranges: binding['ranges']?.value ? binding['ranges']?.value.split('�') : []
+                }));
+            }));
     }
 
     private _cleanUpDeletedProp(propMapping, parentClassMappingId) {

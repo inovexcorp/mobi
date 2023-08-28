@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { JSONLDObject } from './JSONLDObject.interface';
+/* Core variables */
+@import "../../../css/variables";
 
-/**
- * Details about an ontology attached to a Mapping
- */
-export interface MappingOntology {
-    id: string,
-    recordId?: string,
-    entities: JSONLDObject[]
+.prop-select {
+    .spinner-prefix {
+        display: block;
+        width: 15px;
+        height: 15px;
+    }
 }

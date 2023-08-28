@@ -23,59 +23,56 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockProvider } from 'ng-mocks';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
-import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { RDFS } from '../../../prefixes';
+import { OWL, XSD } from '../../../prefixes';
+import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { PropPreviewComponent } from './propPreview.component';
 
 describe('Prop Preview component', function() {
     let component: PropPreviewComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<PropPreviewComponent>;
-    let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     
     const classId = 'classId';
     const propId = 'propId';
-    const propObj = {
-        '@id': propId,
-        [`${RDFS}range`]: [{ '@id': classId }]
+    const objProperty: MappingProperty = {
+        iri: propId,
+        type: `${OWL}ObjectProperty`,
+        name: 'Object Property',
+        deprecated: false,
+        description: 'Description Object',
+        ranges: [classId]
+    };
+    const dataProperty: MappingProperty = {
+        iri: propId,
+        type: `${OWL}DatatypeProperty`,
+        name: 'Datatype Property',
+        deprecated: false,
+        description: 'Description Data',
+        ranges: [`${XSD}string`]
     };
     const mappingClass: MappingClass = {
-        classObj: {'@id': classId},
-        name: 'Name',
-        isDeprecated: true,
-        ontologyId: ''
+        iri: classId,
+        name: 'Class Name',
+        description: '',
+        deprecated: true
     };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [
                 PropPreviewComponent,
-            ],
-            providers: [
-                MockProvider(MapperStateService),
-                MockProvider(OntologyManagerService),
             ]
-        });
-    });
+        }).compileComponents();
 
-    beforeEach(function() {
         fixture = TestBed.createComponent(PropPreviewComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-
-        mapperStateStub.availableClasses = [mappingClass];
-        ontologyManagerStub.getEntityName.and.returnValue('Name');
-        ontologyManagerStub.getEntityDescription.and.returnValue('Description');
     });
 
     afterEach(function() {
@@ -83,46 +80,37 @@ describe('Prop Preview component', function() {
         component = null;
         element = null;
         fixture = null;
-        mapperStateStub = null;
-        ontologyManagerStub = null;
     });
 
-    describe('should set the correct variables when the propObj changes', function() {
+    it('should set the correct variables when propDetails changes', function() {
+        component.propDetails = dataProperty;
+        expect(component.name).toEqual(dataProperty.name);
+        expect(component.description).toEqual(dataProperty.description);
+    });
+    describe('should set the correct variables when the rangeClassDetails changes', function() {
+        it('if the property does not have ranges', function() {
+            const dataPropertyClone = cloneDeep(dataProperty);
+            dataPropertyClone.ranges = [];
+            component.propDetails = dataPropertyClone;
+            component.rangeClassDetails = undefined;
+            expect(component.ranges).toEqual([]);
+        });
         it('if it is a data property', function() {
-            ontologyManagerStub.isObjectProperty.and.returnValue(false);
-            component.propObj = propObj;
-            expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(propObj);
-            expect(ontologyManagerStub.getEntityDescription).toHaveBeenCalledWith(propObj);
-            expect(component.name).toEqual('Name');
-            expect(component.description).toEqual('Description');
-            expect(component.rangeName).toEqual(classId);
-            expect(component.rangeIsDeprecated).toBeFalse();
-            expect(component.rangeId).toEqual(classId);
+            component.propDetails = dataProperty;
+            component.rangeClassDetails = undefined;
+            expect(component.ranges).toEqual([{ iri: `${XSD}string`, name: 'String', deprecated: false }]);
         });
         describe('if it is an object property', function() {
             beforeEach(function() {
-                ontologyManagerStub.isObjectProperty.and.returnValue(true);
+                component.propDetails = objProperty;
             });
-            it('and the range exists', function() {
-                component.propObj = propObj;
-                expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(propObj);
-                expect(ontologyManagerStub.getEntityDescription).toHaveBeenCalledWith(propObj);
-                expect(component.name).toEqual('Name');
-                expect(component.description).toEqual('Description');
-                expect(component.rangeName).toEqual(mappingClass.name);
-                expect(component.rangeIsDeprecated).toBeTrue();
-                expect(component.rangeId).toEqual(classId);
+            it('and the range class was passed', function() {
+                component.rangeClassDetails = [mappingClass];
+                expect(component.ranges).toEqual([{ iri: mappingClass.iri, name: mappingClass.name, deprecated: mappingClass.deprecated }]);
             });
-            it('and the range does not exist', function() {
-                mapperStateStub.availableClasses = [];
-                component.propObj = propObj;
-                expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(propObj);
-                expect(ontologyManagerStub.getEntityDescription).toHaveBeenCalledWith(propObj);
-                expect(component.name).toEqual('Name');
-                expect(component.description).toEqual('Description');
-                expect(component.rangeName).toEqual('(No range)');
-                expect(component.rangeIsDeprecated).toBeFalse();
-                expect(component.rangeId).toEqual(classId);
+            it('and the range class was not passed', function() {
+                component.rangeClassDetails = undefined;
+                expect(component.ranges).toEqual([]);
             });
         });
     });
@@ -130,10 +118,25 @@ describe('Prop Preview component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.prop-preview')).length).toEqual(1);
         });
+        it('depending on how many ranges there are', function() {
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('.has-ranges')).length).toEqual(0);
+            expect(element.queryAll(By.css('.no-range')).length).toEqual(1);
+            expect(element.queryAll(By.css('.range-item')).length).toEqual(0);
+
+            component.ranges = [
+                { iri: 'A', name: 'A', deprecated: false },
+                { iri: 'B', name: 'B', deprecated: false },
+            ];
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('.has-ranges')).length).toEqual(1);
+            expect(element.queryAll(By.css('.no-range')).length).toEqual(0);
+            expect(element.queryAll(By.css('.range-item')).length).toEqual(2);
+        });
         it('depending on whether the range class is deprecated', function() {
             expect(element.queryAll(By.css('.deprecated')).length).toEqual(0);
 
-            component.rangeIsDeprecated = true;
+            component.ranges = [{ iri: 'A', name: 'A', deprecated: true }];
             fixture.detectChanges();
             expect(element.queryAll(By.css('.deprecated')).length).toEqual(1);
         });

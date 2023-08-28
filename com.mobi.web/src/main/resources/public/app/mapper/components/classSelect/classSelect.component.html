@@ -21,7 +21,10 @@
   #L%
   -->
 <div class="class-select" [formGroup]="parentForm">
+    <error-display *ngIf="error">{{error}}</error-display>
+    <info-message *ngIf="noResults">No classes found</info-message>
     <mat-form-field class="w-100">
+        <span class="spinner-prefix" matPrefix #classSelectSpinner></span>
         <mat-label>Class</mat-label>
         <input type="text" matInput
             placeholder="Select a class..."
@@ -30,8 +33,8 @@
             [matAutocomplete]="classAuto">
         <mat-autocomplete #classAuto="matAutocomplete" (optionSelected)="selectClass($event)" [displayWith]="getDisplayText.bind(this)">
             <mat-optgroup *ngFor="let group of filteredClasses | async" [label]="group.ontologyId">
-                <mat-option *ngFor="let mappingClass of group.classes" [value]="mappingClass" [title]="mappingClass.classObj['@id']" [disabled]="mappingClass.isDeprecated">
-                    {{mappingClass.name}} <span class="text-muted" *ngIf="mappingClass.isDeprecated">(Deprecated)</span>
+                <mat-option *ngFor="let mappingClass of group.classes" [value]="mappingClass" [title]="mappingClass.iri" [disabled]="mappingClass.deprecated">
+                    {{mappingClass.name}} <span class="text-muted" *ngIf="mappingClass.deprecated">(Deprecated)</span>
                 </mat-option>
             </mat-optgroup>
         </mat-autocomplete>

@@ -46,10 +46,10 @@ describe('Class Mapping Overlay component', function() {
 
     const classMapping: JSONLDObject = {'@id': 'classMapping'};
     const mappingClass: MappingClass = {
-        ontologyId: '',
-        classObj: {'@id': 'classId'},
+        iri: 'classId',
         name: '',
-        isDeprecated: false
+        description: '',
+        deprecated: false
     };
 
     beforeEach(async () => {
@@ -75,7 +75,6 @@ describe('Class Mapping Overlay component', function() {
 
     beforeEach(function() {
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
-        mapperStateStub.availableClasses = [];
         fixture = TestBed.createComponent(ClassMappingOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -91,31 +90,14 @@ describe('Class Mapping Overlay component', function() {
         mapperStateStub = null;
     });
 
-    it('should initialize the form correctly', function() {
-        expect(component.classMappingForm.controls.class.disabled).toBeTrue();
-    });
     describe('controller methods', function() {
-        describe('should add a class mapping', function() {
-            beforeEach(function() {
-                component.selectedClass = mappingClass;
-                mapperStateStub.addClassMapping.and.returnValue(classMapping);
-            });
-            it('if there are properties set already', function() {
-                mapperStateStub.hasPropsSet.and.returnValue(true);
-                component.addClass();
-                expect(mapperStateStub.addClassMapping).toHaveBeenCalledWith(component.selectedClass);
-                expect(mapperStateStub.setProps).not.toHaveBeenCalled();
-                expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
-                expect(matDialogRef.close).toHaveBeenCalledWith(classMapping);
-            });
-            it('if no properties have been set yet', function() {
-                mapperStateStub.hasPropsSet.and.returnValue(false);
-                component.addClass();
-                expect(mapperStateStub.addClassMapping).toHaveBeenCalledWith(component.selectedClass);
-                expect(mapperStateStub.setProps).toHaveBeenCalledWith('classId');
-                expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
-                expect(matDialogRef.close).toHaveBeenCalledWith(classMapping);
-            });
+        it('should add a class mapping', function() {
+            component.selectedClassDetails = mappingClass;
+            mapperStateStub.addClassMapping.and.returnValue(classMapping);
+            component.addClass();
+            expect(mapperStateStub.addClassMapping).toHaveBeenCalledWith(component.selectedClassDetails);
+            expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
+            expect(matDialogRef.close).toHaveBeenCalledWith(classMapping);
         });
     });
     describe('contains the correct html', function() {
@@ -133,7 +115,7 @@ describe('Class Mapping Overlay component', function() {
             expect(button.properties['disabled']).toBeTruthy();
             expect(element.queryAll(By.css('class-preview')).length).toEqual(0);
 
-            component.selectedClass = mappingClass;
+            component.selectedClassDetails = mappingClass;
             fixture.detectChanges();
             expect(button.properties['disabled']).toBeFalsy();
             expect(element.queryAll(By.css('class-preview')).length).toEqual(1);
@@ -152,7 +134,7 @@ describe('Class Mapping Overlay component', function() {
         expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
     });
     it('should call addClass when the button is clicked', function() {
-        component.selectedClass = mappingClass;
+        component.selectedClassDetails = mappingClass;
         fixture.detectChanges();
         spyOn(component, 'addClass');
         const submitButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];

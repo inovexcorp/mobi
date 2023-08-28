@@ -20,14 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { uniq, get, head } from 'lodash';
+import { get, head } from 'lodash';
 
-import { Mapping } from '../../../shared/models/mapping.class';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { MappingConfigOverlayComponent } from '../mappingConfigOverlay/mappingConfigOverlay.component';
 import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/runMappingDatasetOverlay.component';
 import { RunMappingDownloadOverlayComponent } from '../runMappingDownloadOverlay/runMappingDownloadOverlay.component';
 import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay/runMappingOntologyOverlay.component';
@@ -47,7 +45,9 @@ import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay
 })
 export class FileUploadPageComponent implements OnInit{
     shouldDisplayPreview = false;
+
     constructor(public state: MapperStateService, public dm: DelimitedManagerService, private dialog: MatDialog) {}
+    
     ngOnInit(): void {
        this.shouldDisplayPreview = (!this.state.editMapping) ||
            (!this.state.editMapping && !this.state.newMapping && this.state.invalidProps.length > 0);
@@ -69,11 +69,9 @@ export class FileUploadPageComponent implements OnInit{
     edit(): void {
         const classMappings = this.state.selected.mapping.getAllClassMappings();
         this.state.selectedClassMappingId = get(head(classMappings), '@id', '');
-        uniq(classMappings.map(classMapping => Mapping.getClassIdByMapping(classMapping)))
-            .forEach(classMapping => this.state.setProps(classMapping));
         this.state.step = this.state.editMappingStep;
         if (this.state.newMapping) {
-            this.dialog.open(MappingConfigOverlayComponent);
+            this.state.startWithConfigModal = true;
         }
     }
 }

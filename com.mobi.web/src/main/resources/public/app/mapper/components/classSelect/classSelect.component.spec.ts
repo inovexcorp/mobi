@@ -28,23 +28,52 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { of, throwError } from 'rxjs';
+import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { Difference } from '../../../shared/models/difference.class';
+import { Mapping } from '../../../shared/models/mapping.class';
+import { MappingOntologyInfo } from '../../../shared/models/mappingOntologyInfo.interface';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { ClassSelectComponent } from './classSelect.component';
 
 describe('Class Select component', function() {
     let component: ClassSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ClassSelectComponent>;
+    let mapperStateStub: jasmine.SpyObj<MapperStateService>;
+    let spinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
+    let mappingStub: jasmine.SpyObj<Mapping>;
+    const ontInfo: MappingOntologyInfo = {
+        recordId: 'recordId',
+        branchId: 'branchId',
+        commitId: 'commitId'
+    };
     const mappingClass: MappingClass = {
-        classObj: {'@id': 'classId'},
-        isDeprecated: false,
-        name: 'Class',
-        ontologyId: 'ontologyA'
+        iri: 'mappingClass',
+        name: 'Name',
+        description: '',
+        deprecated: false,
+    };
+    const mappingClassA: MappingClass = {
+        iri: 'A',
+        name: 'A',
+        description: '',
+        deprecated: false,
+    };
+    const mappingClassB: MappingClass = {
+        iri: 'B',
+        name: 'B',
+        description: '',
+        deprecated: false,
     };
 
     beforeEach(async () => {
@@ -59,14 +88,38 @@ describe('Class Select component', function() {
             ],
             declarations: [
                 ClassSelectComponent,
+                MockComponent(ErrorDisplayComponent),
+                MockComponent(InfoMessageComponent),
             ],
-        });
-    });
+            providers: [
+                MockProvider(MapperStateService),
+                MockProvider(ProgressSpinnerService)
+            ]
+        }).compileComponents();
 
-    beforeEach(function() {
         fixture = TestBed.createComponent(ClassSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        spinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
+        mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
+        mapperStateStub.iriMap = {
+            classes: {
+                [mappingClass.iri]: 'ontologyA',
+                [mappingClassA.iri]: 'ontologyA',
+                [mappingClassB.iri]: 'ontologyB'
+            },
+            dataProperties: {},
+            objectProperties: {},
+            annotationProperties: {}
+        };
+        mappingStub = jasmine.createSpyObj('Mapping', [
+            'getSourceOntologyInfo',
+        ]);
+        mappingStub.getSourceOntologyInfo.and.returnValue(ontInfo);
+        mapperStateStub.selected = {
+            mapping: mappingStub,
+            difference: new Difference()
+        };
 
         component.parentForm = new UntypedFormGroup({
             class: new UntypedFormControl('')
@@ -79,6 +132,8 @@ describe('Class Select component', function() {
         component = null;
         element = null;
         fixture = null;
+        spinnerStub = null;
+        mapperStateStub = null;
     });
 
     describe('controller methods', function() {
@@ -96,47 +151,66 @@ describe('Class Select component', function() {
             expect(component.selectedClass).toEqual(mappingClass);
             expect(component.selectedClassChange.emit).toHaveBeenCalledWith(mappingClass);
         });
-        describe('should correctly filter the classes list based on the input', function() {
-            it('if there are no classes', function() {
-                expect(component.filter('')).toEqual([]);
+        describe('should correctly filter the classes list', function() {
+            it('unless an error occurs', async function() {
+                mapperStateStub.retrieveClasses.and.returnValue(throwError('Error'));
+                await component.filter('').subscribe(results => {
+                    expect(results).toEqual([]);
+                    expect(component.error).toEqual('Error');
+                    expect(component.noResults).toBeTrue();
+                }, () => fail('Observable should have succeeded'));
+                expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, '', 100, true);
+                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner, 15);
+                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner);
             });
-            describe('if there are classes', function() {
-                beforeEach(function() {
-                    this.classA = {
-                        classObj: {'@id': 'A'},
-                        name: 'A',
-                        isDeprecated: false,
-                        ontologyId: 'ontologyA'
-                    };
-                    this.classB = {
-                        classObj: {'@id': 'B'},
-                        name: 'B',
-                        isDeprecated: false,
-                        ontologyId: 'ontologyB'
-                    };
-                    component.classes = [mappingClass, this.classA, this.classB];
-                });
-                it('and no value', function() {
-                    expect(component.filter('')).toEqual([
-                        {ontologyId: 'ontologyA', classes: [this.classA, mappingClass]},
-                        {ontologyId: 'ontologyB', classes: [this.classB]}
+            it('with no value', async function() {
+                mapperStateStub.retrieveClasses.and.returnValue(of([mappingClass, mappingClassA, mappingClassB]));
+                await component.filter('').subscribe(results => {
+                    expect(results).toEqual([
+                        { ontologyId: 'ontologyA', classes: [mappingClassA, mappingClass] },
+                        { ontologyId: 'ontologyB', classes: [mappingClassB] }
                     ]);
-                });
-                it('and a text value with one result', function() {
-                    expect(component.filter(mappingClass.name)).toEqual([
-                        {ontologyId: 'ontologyA', classes: [mappingClass]},
+                    expect(component.noResults).toBeFalse();
+                }, () => fail('Observable should have succeeded'));
+                expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, '', 100, true);
+                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner, 15);
+                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner);
+            });
+            it('with a text value with one result', async function() {
+                mapperStateStub.retrieveClasses.and.returnValue(of([mappingClass]));
+                await component.filter(mappingClass.name).subscribe(results => {
+                    expect(results).toEqual([
+                        { ontologyId: 'ontologyA', classes: [mappingClass] },
                     ]);
-                });
-                it('and a text value with multiple results', function() {
-                    expect(component.filter('a')).toEqual([
-                        {ontologyId: 'ontologyA', classes: [this.classA, mappingClass]},
+                    expect(component.noResults).toBeFalse();
+                }, () => fail('Observable should have succeeded'));
+                expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, mappingClass.name, 100, true);
+                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner, 15);
+                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner);
+            });
+            it('with a text value with multiple results', async function() {
+                mapperStateStub.retrieveClasses.and.returnValue(of([mappingClass, mappingClassA]));
+                await component.filter('a').subscribe(results => {
+                    expect(results).toEqual([
+                        { ontologyId: 'ontologyA', classes: [mappingClassA, mappingClass] },
                     ]);
-                });
-                it('and an object value', function() {
-                    expect(component.filter(mappingClass)).toEqual([
-                        {ontologyId: 'ontologyA', classes: [mappingClass]},
+                    expect(component.noResults).toBeFalse();
+                }, () => fail('Observable should have succeeded'));
+                expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, 'a', 100, true);
+                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner, 15);
+                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner);
+            });
+            it('with an object value', async function() {
+                mapperStateStub.retrieveClasses.and.returnValue(of([mappingClass]));
+                await component.filter(mappingClass).subscribe(results => {
+                    expect(results).toEqual([
+                        { ontologyId: 'ontologyA', classes: [mappingClass] },
                     ]);
-                });
+                    expect(component.noResults).toBeFalse();
+                }, () => fail('Observable should have succeeded'));
+                expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, mappingClass.name, 100, true);
+                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner, 15);
+                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner);
             });
         });
     });
@@ -145,7 +219,7 @@ describe('Class Select component', function() {
             expect(element.queryAll(By.css('.class-select')).length).toEqual(1);
         });
         ['mat-form-field', 'input[aria-label="Class"]', 'mat-autocomplete'].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });

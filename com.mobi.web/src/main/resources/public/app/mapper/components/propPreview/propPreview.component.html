@@ -22,13 +22,16 @@
   -->
 <div class="prop-preview">
     <h3 class="break-word">{{name}}</h3>
-    <p class="text-muted break-word"><small>{{propObj ? propObj['@id'] : ''}}</small></p>
+    <p class="text-muted break-word"><small>{{propDetails ? propDetails.iri : ''}}</small></p>
     <div class="description">
         <span class="field-label">Description</span>
         <p>{{description}}</p>
     </div>
     <div class="range">
         <span class="field-label">Range</span> 
-        <p>{{rangeName}} <span class="deprecated text-muted" *ngIf="rangeIsDeprecated">(Deprecated)</span></p>
+        <p *ngIf="ranges.length; else elseBlock" class="has-ranges">
+            <span class="range-item" *ngFor="let range of ranges; last as last" [title]="range.iri">{{range.name}} <span class="deprecated text-muted" *ngIf="range.deprecated">(Deprecated)</span><span *ngIf="!last">, </span></span>
+        </p>
+        <ng-template #elseBlock><p class="no-range">(No Range)</p></ng-template>
     </div>
 </div>

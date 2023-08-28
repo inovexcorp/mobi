@@ -24,7 +24,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { find, get } from 'lodash';
 
-import { DELIM, RDFS, XSD } from '../../../prefixes';
+import { DELIM, XSD } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
@@ -74,14 +74,12 @@ export interface PropMappingPreview {
 export class ClassMappingDetailsComponent {
     propMappings: PropMappingPreview[] = [];
     iriTemplate = '';
-    hasPropsToMap = false;
     singleClick = false;
 
     private _classMappingId: string;
 
     @Input() set classMappingId(value: string) {
         this._classMappingId = value;
-        this.hasPropsToMap = this.state.hasPropsByClassMappingId(value);
         this.setPropMappings();
         this.setIriTemplate();
     }
@@ -143,11 +141,8 @@ export class ClassMappingDetailsComponent {
         return get(this.dm.dataRows, `[${firstRowIndex}][${this.getLinkedColumnIndex(propMapping)}]`, '(None)');
     }
     getDatatypePreview(propMapping: JSONLDObject): string {
-        const props = this.state.getPropsByClassMappingId(this.classMappingId);
-        const mapProp = getPropertyId(propMapping, `${DELIM}hasProperty`);
-        const prop = find(props, {propObj: {'@id': mapProp}});
-        const propIRI = getPropertyId(propMapping, `${DELIM}datatypeSpec`) || getPropertyId(prop?.propObj, `${RDFS}range`) || `${XSD}string`;
-        return getBeautifulIRI(propIRI);
+        const datatypeIRI = getPropertyId(propMapping, `${DELIM}datatypeSpec`) || `${XSD}string`;
+        return getBeautifulIRI(datatypeIRI);
     }
     getLanguagePreview(propMapping: JSONLDObject): string {
         const languageObj = find(this.pm.languageList, {value: this.getLanguageTag(propMapping)});

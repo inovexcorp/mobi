@@ -145,16 +145,15 @@ describe('Preview Block component', function() {
                 expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
             }));
             describe('successfully', function() {
-                beforeEach(function() {
-                    ontologyManagerStub.postQueryResults.and.returnValue(of('Test'));
-                });
                 it('if the format is JSON-LD', fakeAsync(function() {
+                    const jsonld = [{'@id': 'id'}];
+                    ontologyManagerStub.postQueryResults.and.returnValue(of(jsonld));
                     component.activePage = {serialization: 'jsonld'};
                     component.setPreview();
                     tick();
                     expect(component.activePage.mode).toEqual('application/ld+json');
                     expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'jsonld', false, true);
-                    expect(component.activePage.preview).toEqual('Test');
+                    expect(component.activePage.preview).toEqual(JSON.stringify(jsonld, null, 2));
                     expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
                 }));
                 it('if the format is not JSON-LD', fakeAsync(function() {
@@ -168,6 +167,7 @@ describe('Preview Block component', function() {
                             mode: 'application/xml'
                         }
                     ].forEach(test => {
+                        ontologyManagerStub.postQueryResults.and.returnValue(of('Test'));
                         component.activePage = {serialization: test.serialization};
                         component.setPreview();
                         tick();

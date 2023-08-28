@@ -22,7 +22,7 @@
  */
 
 import { DebugElement, ChangeDetectionStrategy } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,9 +34,10 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { cloneDeep } from 'lodash';
+import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { DCTERMS, DELIM, RDF, RDFS, XSD } from '../../../prefixes';
+import { DCTERMS, DELIM, OWL, RDF, XSD } from '../../../prefixes';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
@@ -46,9 +47,11 @@ import { MappingManagerService } from '../../../shared/services/mappingManager.s
 import { ColumnSelectComponent } from '../columnSelect/columnSelect.component';
 import { PropPreviewComponent } from '../propPreview/propPreview.component';
 import { PropSelectComponent } from '../propSelect/propSelect.component';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
+import { Mapping } from '../../../shared/models/mapping.class';
+import { WarningMessageComponent } from '../../../shared/components/warningMessage/warningMessage.component';
+import { MappingOntologyInfo } from '../../../shared/models/mappingOntologyInfo.interface';
 import { PropMappingOverlayComponent } from './propMappingOverlay.component';
 
 describe('Prop Mapping Overlay component', function() {
@@ -58,9 +61,9 @@ describe('Prop Mapping Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<PropMappingOverlayComponent>>;
     let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
 
+    let mappingStub: jasmine.SpyObj<Mapping>;
     const datatypeMap = {
         'boolean': XSD
     };
@@ -78,20 +81,23 @@ describe('Prop Mapping Overlay component', function() {
         [`${DELIM}classMapping`]: [{ '@id': classMappingId }]
     };
     const mappingClass: MappingClass = {
-        classObj: {'@id': classId},
-        name: '',
-        isDeprecated: false,
-        ontologyId: ''
+        iri: classId,
+        name: 'Name',
+        description: '',
+        deprecated: false
     };
     const mappingProperty: MappingProperty = {
-        propObj: {
-          '@id': propId,
-          [`${RDFS}range`]: [{ '@id': classId }]
-        },
+        iri: propId,
+        type: `${OWL}DatatypeProperty`,
         name: '',
-        isDeprecated: false,
-        isObjectProperty: false,
-        ontologyId: ''
+        description: '',
+        deprecated: false,
+        ranges: [classId, 'otherClassId']
+    };
+    const ontInfo: MappingOntologyInfo = {
+        recordId: 'recordId',
+        branchId: 'branchId',
+        commitId: 'commitId'
     };
 
     beforeEach(async () => {
@@ -109,6 +115,7 @@ describe('Prop Mapping Overlay component', function() {
             ],
             declarations: [
                 PropMappingOverlayComponent,
+                MockComponent(WarningMessageComponent),
                 MockComponent(PropSelectComponent),
                 MockComponent(PropPreviewComponent),
                 MockComponent(ColumnSelectComponent),
@@ -117,7 +124,6 @@ describe('Prop Mapping Overlay component', function() {
             providers: [
                 MockProvider(MappingManagerService),
                 MockProvider(MapperStateService),
-                MockProvider(OntologyManagerService),
                 MockProvider(PropertyManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -132,9 +138,23 @@ describe('Prop Mapping Overlay component', function() {
         element = fixture.debugElement;
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
         mappingManagerStub = TestBed.inject(MappingManagerService) as jasmine.SpyObj<MappingManagerService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<PropMappingOverlayComponent>>;
+
+        mapperStateStub.selectedClassMappingId = classMappingId;
+        mappingStub = jasmine.createSpyObj('Mapping', [
+            'getSourceOntologyInfo',
+            'getClassIdByMappingId',
+            'getClassMappingsByClassId',
+            'getPropMapping'
+        ]);
+        mappingStub.getSourceOntologyInfo.and.returnValue(ontInfo);
+        mappingStub.getClassIdByMappingId.and.returnValue(classId);
+        mapperStateStub.selected = {
+            mapping: mappingStub,
+            difference: new Difference()
+        };
+        mapperStateStub.supportedAnnotations = [];
 
         propertyManagerStub.getDatatypeMap.and.returnValue(datatypeMap);
     });
@@ -147,20 +167,18 @@ describe('Prop Mapping Overlay component', function() {
         matDialogRef = null;
         mapperStateStub = null;
         mappingManagerStub = null;
-        ontologyManagerStub = null;
         propertyManagerStub = null;
     });
 
     describe('should initialize with the correct values', function() {
         beforeEach(() => {
             spyOn(component, 'setupEditProperty');
-            mapperStateStub.getPropsByClassMappingId.and.returnValue([]);
         });
         it('if a new property mapping is being created', function() {
             mapperStateStub.newProp = true;
             component.ngOnInit();
             expect(component.datatypeMap).toEqual(datatypeMap);
-            expect(component.availableProps).toEqual([]);
+            expect(component.parentClassId).toEqual(classId);
             expect(component.setupEditProperty).not.toHaveBeenCalled();
         });
         it('if a property mapping is being edited', function() {
@@ -168,59 +186,60 @@ describe('Prop Mapping Overlay component', function() {
             mapperStateStub.selectedPropMappingId = propMappingId;
             component.ngOnInit();
             expect(component.datatypeMap).toEqual(datatypeMap);
-            expect(component.availableProps).toEqual([]);
+            expect(component.parentClassId).toEqual(classId);
             expect(component.setupEditProperty).toHaveBeenCalledWith();
         });
     });
     describe('controller methods', function() {
-        describe('should set the range class mapping of the selected property', function() {
+        describe('should set the range class options for the selected property', function() {
             beforeEach(function() {
                 component.selectedPropMapping = propMapping;
+                component.propMappingForm.controls.rangeClass.disable();
             });
-            it('unless the range is not set', function() {
+            it('unless property has no ranges', fakeAsync(function() {
                 const mappingPropertyClone = cloneDeep(mappingProperty);
-                delete mappingPropertyClone.propObj[`${RDFS}range`];
+                mappingPropertyClone.ranges = [];
                 component.selectedProp = mappingPropertyClone;
                 component.setRangeClass();
-                expect(component.rangeClass).toBeUndefined();
+                tick();
+                expect(mapperStateStub.retrieveSpecificClasses).not.toHaveBeenCalled();
+                expect(component.rangeClasses).toBeUndefined();
                 expect(component.rangeClassOptions).toEqual([]);
                 expect(component.propMappingForm.controls.rangeClass.value).toEqual('');
                 expect(component.propMappingForm.controls.rangeClass.disabled).toBeTrue();
-            });
-            describe('if the range is set', function() {
+            }));
+            describe('if the property has ranges set', function() {
                 beforeEach(function() {
                     component.selectedProp = mappingProperty;
-                    this.mappingStub = jasmine.createSpyObj('Mapping', ['getClassMappingsByClassId']);
-                    this.mappingStub.getClassMappingsByClassId.and.returnValue([classMapping]);
-                    mapperStateStub.selected = {
-                        mapping: this.mappingStub,
-                        difference: new Difference()
-                    };
-                    mapperStateStub.availableClasses = [mappingClass];
-                    ontologyManagerStub.getEntityName.and.returnValue('Name');
+                    mappingStub.getClassMappingsByClassId.and.returnValue([classMapping]);
+                    mapperStateStub.retrieveSpecificClasses.and.returnValue(of([mappingClass]));
                 });
-                it('and the property mapping already has a range class mapping set', function() {
+                it('and the property mapping already has a range class mapping set', fakeAsync(function() {
                     component.setRangeClass();
-                    expect(component.rangeClass).toEqual(mappingClass);
+                    tick();
+                    expect(mapperStateStub.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, mappingProperty.ranges);
+                    expect(component.rangeClasses).toEqual([mappingClass]);
                     expect(component.rangeClassOptions).toEqual([
-                        { new: true, title: '[New Name]', classMapping: undefined },
-                        { new: false, title: 'title', classMapping }
+                        { new: true, title: `[New ${mappingClass.name}]`, mappingClass, classMapping: undefined },
+                        { new: false, title: 'title', mappingClass, classMapping }
                     ]);
-                    expect(component.propMappingForm.controls.rangeClass.value).toEqual({ new: false, title: 'title', classMapping });
+                    expect(component.propMappingForm.controls.rangeClass.value).toEqual({ new: false, title: 'title', mappingClass, classMapping });
                     expect(component.propMappingForm.controls.rangeClass.disabled).toBeFalse();
-                });
-                it('and the property mapping does not have a range class mapping set', function() {
+                }));
+                it('and the property mapping does not have a range class mapping set', fakeAsync(function() {
                     component.selectedPropMapping = cloneDeep(propMapping);
                     delete component.selectedPropMapping[`${DELIM}classMapping`];
                     component.setRangeClass();
-                    expect(component.rangeClass).toEqual(mappingClass);
+                    tick();
+                    expect(mapperStateStub.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, mappingProperty.ranges);
+                    expect(component.rangeClasses).toEqual([mappingClass]);
                     expect(component.rangeClassOptions).toEqual([
-                        { new: true, title: '[New Name]', classMapping: undefined },
-                        { new: false, title: 'title', classMapping }
-                    ]);
+                      { new: true, title: `[New ${mappingClass.name}]`, mappingClass, classMapping: undefined },
+                      { new: false, title: 'title', mappingClass, classMapping }
+                  ]);
                     expect(component.propMappingForm.controls.rangeClass.value).toEqual('');
                     expect(component.propMappingForm.controls.rangeClass.disabled).toBeFalse();
-                });
+                }));
             });
         });
         it('should handle setting the property', function() {
@@ -232,26 +251,75 @@ describe('Prop Mapping Overlay component', function() {
         describe('should update the range of the selected property', function() {
             beforeEach(function() {
                 spyOn(component, 'setRangeClass');
+                spyOn(component, 'showDatatype');
                 component.selectedProp = cloneDeep(mappingProperty);
             });
             it('if it is a object property', function() {
-                component.selectedProp.isObjectProperty = true;
+                component.selectedProp.type = `${OWL}ObjectProperty`;
                 component.updateRange();
+                expect(component.propMappingForm.controls.column.value).toBe('');
                 expect(component.propMappingForm.controls.rangeClass.validator).toBeDefined();
                 expect(component.propMappingForm.controls.column.validator).toBeNull();
                 expect(component.setRangeClass).toHaveBeenCalledWith();
             });
-            it('if it is a data property', function() {
+            describe('if it is a data property', function() {
+                it('with more than one range', function() {
+                    component.selectedProp.ranges = [`${XSD}boolean`, `${XSD}string`];
+                    component.updateRange();
+                    expect(component.propMappingForm.controls.column.value).toBe('');
+                    expect(component.propMappingForm.controls.rangeClass.validator).toBeNull();
+                    expect(component.propMappingForm.controls.column.validator).toBeDefined();
+                    expect(component.propMappingForm.controls.rangeClass.value).toBeUndefined();
+                    expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}boolean`);
+                    expect(component.propMappingForm.controls.language.value).toEqual('');
+                    expect(component.setRangeClass).not.toHaveBeenCalled();
+                    expect(component.rangeClassOptions).toEqual([]);
+                    expect(component.rangeClasses).toBeUndefined();
+                    expect(component.showDatatype).toHaveBeenCalledWith();
+                });
+                it('with one range', function() {
+                    component.selectedProp.ranges = [`${XSD}boolean`];
+                    component.updateRange();
+                    expect(component.propMappingForm.controls.column.value).toBe('');
+                    expect(component.propMappingForm.controls.rangeClass.validator).toBeNull();
+                    expect(component.propMappingForm.controls.column.validator).toBeDefined();
+                    expect(component.propMappingForm.controls.rangeClass.value).toBeUndefined();
+                    expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}boolean`);
+                    expect(component.propMappingForm.controls.language.value).toEqual('');
+                    expect(component.setRangeClass).not.toHaveBeenCalled();
+                    expect(component.rangeClassOptions).toEqual([]);
+                    expect(component.rangeClasses).toBeUndefined();
+                    expect(component.showDatatype).not.toHaveBeenCalled();
+                });
+                it('with no range', function() {
+                    component.selectedProp.ranges = [];
+                    component.updateRange();
+                    expect(component.propMappingForm.controls.rangeClass.validator).toBeNull();
+                    expect(component.propMappingForm.controls.column.validator).toBeDefined();
+                    expect(component.propMappingForm.controls.rangeClass.value).toBeUndefined();
+                    expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
+                    expect(component.propMappingForm.controls.language.value).toEqual('');
+                    expect(component.setRangeClass).not.toHaveBeenCalled();
+                    expect(component.rangeClassOptions).toEqual([]);
+                    expect(component.rangeClasses).toBeUndefined();
+                    expect(component.showDatatype).not.toHaveBeenCalled();
+                });
+            });
+            it('if is is a supported annotation', function() {
+                component.selectedProp.type = `${OWL}AnnotationProperty`;
+                component.selectedProp.ranges = [];
+                mapperStateStub.supportedAnnotations = [component.selectedProp];
                 component.updateRange();
+                expect(component.propMappingForm.controls.column.value).toBe('');
                 expect(component.propMappingForm.controls.rangeClass.validator).toBeNull();
                 expect(component.propMappingForm.controls.column.validator).toBeDefined();
                 expect(component.propMappingForm.controls.rangeClass.value).toBeUndefined();
-                expect(component.propMappingForm.controls.datatype.value).toEqual('');
+                expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
                 expect(component.propMappingForm.controls.language.value).toEqual('');
                 expect(component.setRangeClass).not.toHaveBeenCalled();
                 expect(component.rangeClassOptions).toEqual([]);
-                expect(component.rangeClass).toBeUndefined();
-                expect(component.showDatatypeSelect).toBeFalse();
+                expect(component.rangeClasses).toBeUndefined();
+                expect(component.showDatatype).toHaveBeenCalledWith();
             });
         });
         it('should get text for a datatype', function() {
@@ -295,11 +363,13 @@ describe('Prop Mapping Overlay component', function() {
             });
         });
         it('should clear the datatype', function() {
+            component.selectedProp = cloneDeep(mappingProperty);
+            component.selectedProp.ranges = [];
             component.showDatatypeSelect = true;
             component.clearDatatype();
             expect(component.showDatatypeSelect).toBeFalse();
             expect(component.langString).toBeFalse();
-            expect(component.propMappingForm.controls.datatype.value).toEqual('');
+            expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
             expect(component.propMappingForm.controls.language.value).toEqual('');
             expect(component.propMappingForm.controls.datatype.validator).toBeNull();
             expect(component.propMappingForm.controls.language.validator).toBeNull();
@@ -320,22 +390,21 @@ describe('Prop Mapping Overlay component', function() {
                 });
                 describe('for an object property', function() {
                     beforeEach(function() {
-                        this.objectMappingProperty = cloneDeep(mappingProperty);
-                        this.objectMappingProperty.isObjectProperty = true;
-                        component.selectedProp = this.objectMappingProperty;
+                        component.selectedProp = cloneDeep(mappingProperty);
+                        component.selectedProp.type = `${OWL}ObjectProperty`;
                         mapperStateStub.addClassMapping.and.returnValue(classMapping);
                         mapperStateStub.addObjectMapping.and.returnValue(propMapping);
                     });
                     it('and a class mapping was selected and the parent class mapping does not exist in the additions', function() {
                         component.propMappingForm.controls.rangeClass.setValue({
                             classMapping,
+                            mappingClass,
                             title: '',
                             new: false
                         });
                         component.addProp();
                         expect(mapperStateStub.addClassMapping).not.toHaveBeenCalled();
-                        expect(mapperStateStub.setProps).not.toHaveBeenCalled();
-                        expect(mapperStateStub.addObjectMapping).toHaveBeenCalledWith(this.objectMappingProperty, classMappingId, classMappingId);
+                        expect(mapperStateStub.addObjectMapping).toHaveBeenCalledWith(component.selectedProp, classMappingId, classMappingId);
                         expect(mapperStateStub.addDataMapping).not.toHaveBeenCalled();
                         expect((mapperStateStub.selected.difference.additions as JSONLDObject[])).toContain({'@id': classMappingId, [`${DELIM}objectProperty`]: [{'@id': propMappingId}]});
                         expect(mapperStateStub.newProp).toBe(false);
@@ -348,14 +417,14 @@ describe('Prop Mapping Overlay component', function() {
                         mapperStateStub.selected.difference.additions = [additionsObj];
                         component.propMappingForm.controls.rangeClass.setValue({
                             classMapping,
+                            mappingClass,
                             title: '',
                             new: true
                         });
-                        component.rangeClass = mappingClass;
+                        component.rangeClasses = [mappingClass];
                         component.addProp();
                         expect(mapperStateStub.addClassMapping).toHaveBeenCalledWith(mappingClass);
-                        expect(mapperStateStub.setProps).toHaveBeenCalledWith(mappingClass.classObj['@id']);
-                        expect(mapperStateStub.addObjectMapping).toHaveBeenCalledWith(this.objectMappingProperty, classMappingId, classMappingId);
+                        expect(mapperStateStub.addObjectMapping).toHaveBeenCalledWith(component.selectedProp, classMappingId, classMappingId);
                         expect(mapperStateStub.addDataMapping).not.toHaveBeenCalled();
                         expect(additionsObj[`${DELIM}objectProperty`]).toEqual([{'@id': propMappingId}]);
                         expect((mapperStateStub.selected.difference.additions as JSONLDObject[])).toContain(additionsObj);
@@ -408,12 +477,12 @@ describe('Prop Mapping Overlay component', function() {
                     beforeEach(function() {
                         mapperStateStub.addClassMapping.and.returnValue(classMapping);
                         mappingManagerStub.isDataMapping.and.returnValue(false);
-                        // toastStub.getPropertyId.and.returnValue(originalClassMappingId);
                         component.selectedPropMapping[`${DELIM}classMapping`] = [{'@id': originalClassMappingId}];
                     });
                     it('and a class mapping was selected', function() {
                         component.propMappingForm.controls.rangeClass.setValue({
                             classMapping,
+                            mappingClass,
                             title: '',
                             new: false
                         });
@@ -428,10 +497,11 @@ describe('Prop Mapping Overlay component', function() {
                     it('and a new class mapping should be created', function() {
                         component.propMappingForm.controls.rangeClass.setValue({
                             classMapping,
+                            mappingClass,
                             title: '',
                             new: true
                         });
-                        component.rangeClass = mappingClass;
+                        component.rangeClasses = [mappingClass];
                         component.addProp();
                         expect(mapperStateStub.addClassMapping).toHaveBeenCalledWith(mappingClass);
                         expect(component.selectedPropMapping[`${DELIM}classMapping`]).toEqual([{'@id': classMappingId}]);
@@ -493,84 +563,279 @@ describe('Prop Mapping Overlay component', function() {
         });
         describe('should setup a property mapping being edited', function() {
             beforeEach(function() {
-                this.mappingStub = jasmine.createSpyObj('Mapping', [
-                    'getPropMapping'
-                ]);
                 this.propMappingClone = cloneDeep(propMapping);
-                this.mappingStub.getPropMapping.and.returnValue(this.propMappingClone);
-                mapperStateStub.selected = {
-                    mapping: this.mappingStub,
-                    difference: new Difference()
-                };
+                mappingStub.getPropMapping.and.returnValue(this.propMappingClone);
                 mapperStateStub.selectedPropMappingId = propMappingId;
-                component.availableProps = [mappingProperty];
                 spyOn(component, 'setRangeClass');
+                spyOn(component, 'showDatatype');
             });
-            describe('and it is a data property', function() {
+            describe('and it is a supported annotation', function() {
                 beforeEach(function() {
+                    this.annotationProperty = {
+                        iri: propId,
+                        type: `${OWL}AnnotationProperty`,
+                        name: 'Title',
+                        deprecated: false,
+                        description: '',
+                        ranges: []
+                    };
+                    mapperStateStub.supportedAnnotations = [this.annotationProperty];
                     this.propMappingClone[`${DELIM}columnIndex`] = [{ '@value': '0' }];
                     this.propMappingClone[`${DELIM}languageSpec`] = [{ '@value': 'language' }];
                 });
                 describe('and a datatype is set', function() {
-                    it('and it is lang string', function() {
+                    it('and it is rdf:langString', fakeAsync(function() {
                         this.propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': `${RDF}langString` }];
                         component.setupEditProperty();
-                        expect(this.mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                        tick();
+                        expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
                         expect(component.selectedPropMapping).toEqual(this.propMappingClone);
-                        expect(component.selectedProp).toEqual(mappingProperty);
-                        expect(component.propMappingForm.controls.prop.value).toEqual(mappingProperty);
+                        expect(mapperStateStub.retrieveSpecificProps).not.toHaveBeenCalled();
+                        expect(component.selectedProp).toEqual(this.annotationProperty);
+                        expect(component.propMappingForm.controls.prop.value).toEqual(this.annotationProperty);
                         expect(component.setRangeClass).not.toHaveBeenCalled();
                         expect(component.propMappingForm.controls.column.value).toEqual(0);
                         expect(component.propMappingForm.controls.datatype.value).toEqual(`${RDF}langString`);
-                        expect(component.showDatatypeSelect).toBeTrue();
+                        expect(component.showDatatype).toHaveBeenCalledWith();
                         expect(component.langString).toBeTrue();
                         expect(component.propMappingForm.controls.language.value).toEqual('language');
-                    });
-                    it('and it is not lang string', function() {
+                    }));
+                    it('and it is not rdf:langString', fakeAsync(function() {
                         this.propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': `${XSD}string` }];
                         component.setupEditProperty();
-                        expect(this.mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                        tick();
+                        expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
                         expect(component.selectedPropMapping).toEqual(this.propMappingClone);
-                        expect(component.selectedProp).toEqual(mappingProperty);
-                        expect(component.propMappingForm.controls.prop.value).toEqual(mappingProperty);
+                        expect(mapperStateStub.retrieveSpecificProps).not.toHaveBeenCalled();
+                        expect(component.selectedProp).toEqual(this.annotationProperty);
+                        expect(component.propMappingForm.controls.prop.value).toEqual(this.annotationProperty);
                         expect(component.setRangeClass).not.toHaveBeenCalled();
                         expect(component.propMappingForm.controls.column.value).toEqual(0);
                         expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
-                        expect(component.showDatatypeSelect).toBeTrue();
+                        expect(component.showDatatype).toHaveBeenCalledWith();
                         expect(component.langString).toBeFalse();
                         expect(component.propMappingForm.controls.language.value).toEqual('');
-                    });
+                    }));
                 });
-                it('and it does not have a datatype set', function() {
+                it('and a datatype is not set', fakeAsync(function() {
                     component.setupEditProperty();
-                    expect(this.mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                    tick();
+                    expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
                     expect(component.selectedPropMapping).toEqual(this.propMappingClone);
-                    expect(component.selectedProp).toEqual(mappingProperty);
-                    expect(component.propMappingForm.controls.prop.value).toEqual(mappingProperty);
+                    expect(mapperStateStub.retrieveSpecificProps).not.toHaveBeenCalled();
+                    expect(component.selectedProp).toEqual(this.annotationProperty);
+                    expect(component.propMappingForm.controls.prop.value).toEqual(this.annotationProperty);
                     expect(component.setRangeClass).not.toHaveBeenCalled();
                     expect(component.propMappingForm.controls.column.value).toEqual(0);
-                    expect(component.propMappingForm.controls.datatype.value).toEqual('');
-                    expect(component.showDatatypeSelect).toBeFalse();
+                    expect(component.propMappingForm.controls.datatype.value).toBeUndefined();
+                    expect(component.showDatatype).toHaveBeenCalledWith();
                     expect(component.langString).toBeFalse();
-                    expect(component.propMappingForm.controls.datatype.value).toEqual('');
                     expect(component.propMappingForm.controls.language.value).toEqual('');
+                }));
+            });
+            describe('and it is a data or annotation property', function() {
+                beforeEach(function() {
+                    mappingManagerStub.isObjectMapping.and.returnValue(false);
+                    this.propMappingClone[`${DELIM}columnIndex`] = [{ '@value': '0' }];
+                    this.propMappingClone[`${DELIM}languageSpec`] = [{ '@value': 'language' }];
+                    this.mappingPropertyClone = cloneDeep(mappingProperty);
+                    mapperStateStub.retrieveSpecificProps.and.returnValue(of([this.mappingPropertyClone]));
+                });
+                it('unless the property cannot be found', fakeAsync(function() {
+                    mapperStateStub.retrieveSpecificProps.and.returnValue(throwError('Error'));
+                    component.setupEditProperty();
+                    tick();
+                    expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                    expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                    expect(mapperStateStub.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                        { iri: propId, type: `${OWL}DatatypeProperty` },
+                        { iri: propId, type: `${OWL}AnnotationProperty` },
+                    ]);
+                    expect(component.selectedProp).toBeUndefined();
+                    expect(component.error).toEqual('Error');
+                }));
+                describe('and a datatype is set', function() {
+                    describe('not to a range of the property', function() {
+                        it('and it is lang string', fakeAsync(function() {
+                            this.propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': `${RDF}langString` }];
+                            component.setupEditProperty();
+                            tick();
+                            expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                            expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                            expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                            expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                            expect(component.setRangeClass).not.toHaveBeenCalled();
+                            expect(component.propMappingForm.controls.column.value).toEqual(0);
+                            expect(component.propMappingForm.controls.datatype.value).toEqual(`${RDF}langString`);
+                            expect(component.showDatatype).toHaveBeenCalledWith();
+                            expect(component.langString).toBeTrue();
+                            expect(component.propMappingForm.controls.language.value).toEqual('language');
+                        }));
+                        it('and it is not lang string', fakeAsync(function() {
+                            this.propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': `${XSD}string` }];
+                            component.setupEditProperty();
+                            tick();
+                            expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                            expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                            expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                            expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                            expect(component.setRangeClass).not.toHaveBeenCalled();
+                            expect(component.propMappingForm.controls.column.value).toEqual(0);
+                            expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
+                            expect(component.showDatatype).toHaveBeenCalledWith();
+                            expect(component.langString).toBeFalse();
+                            expect(component.propMappingForm.controls.language.value).toEqual('');
+                        }));
+                    });
+                    describe('to a range of the property', function() {
+                        it('and it is lang string', fakeAsync(function() {
+                            this.mappingPropertyClone.ranges = [`${RDF}langString`];
+                            this.propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': `${RDF}langString` }];
+                            component.setupEditProperty();
+                            tick();
+                            expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                            expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                            expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                            expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                            expect(component.setRangeClass).not.toHaveBeenCalled();
+                            expect(component.propMappingForm.controls.column.value).toEqual(0);
+                            expect(component.propMappingForm.controls.datatype.value).toEqual(`${RDF}langString`);
+                            expect(component.showDatatype).not.toHaveBeenCalled();
+                            expect(component.langString).toBeTrue();
+                            expect(component.propMappingForm.controls.language.value).toEqual('language');
+                        }));
+                        it('and it is not lang string', fakeAsync(function() {
+                            this.mappingPropertyClone.ranges = [`${XSD}string`];
+                            this.propMappingClone[`${DELIM}datatypeSpec`] = [{ '@id': `${XSD}string` }];
+                            component.setupEditProperty();
+                            tick();
+                            expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                            expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                            expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                            expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                            expect(component.setRangeClass).not.toHaveBeenCalled();
+                            expect(component.propMappingForm.controls.column.value).toEqual(0);
+                            expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
+                            expect(component.showDatatype).not.toHaveBeenCalled();
+                            expect(component.langString).toBeFalse();
+                            expect(component.propMappingForm.controls.language.value).toEqual('');
+                        }));
+                    });
+                });
+                describe('and it does not have a datatype set', function() {
+                    it('and the property does not have any ranges', fakeAsync(function() {
+                        this.mappingPropertyClone.ranges = [];
+                        component.setupEditProperty();
+                        tick();
+                        expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                        expect(mapperStateStub.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                            { iri: propId, type: `${OWL}DatatypeProperty` },
+                            { iri: propId, type: `${OWL}AnnotationProperty` },
+                        ]);
+                        expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                        expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                        expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                        expect(component.setRangeClass).not.toHaveBeenCalled();
+                        expect(component.propMappingForm.controls.column.value).toEqual(0);
+                        expect(component.propMappingForm.controls.datatype.value).toEqual(undefined);
+                        expect(component.showDatatype).toHaveBeenCalledWith();
+                        expect(component.langString).toBeFalse();
+                        expect(component.propMappingForm.controls.language.value).toEqual('');
+                    }));
+                    it('and the property has more than one range', fakeAsync(function() {
+                        this.mappingPropertyClone.ranges = [`${XSD}string`, `${XSD}boolean`];
+                        component.setupEditProperty();
+                        tick();
+                        expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                        expect(mapperStateStub.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                            { iri: propId, type: `${OWL}DatatypeProperty` },
+                            { iri: propId, type: `${OWL}AnnotationProperty` },
+                        ]);
+                        expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                        expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                        expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                        expect(component.setRangeClass).not.toHaveBeenCalled();
+                        expect(component.propMappingForm.controls.column.value).toEqual(0);
+                        expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
+                        expect(component.showDatatype).toHaveBeenCalledWith();
+                        expect(component.langString).toBeFalse();
+                        expect(component.propMappingForm.controls.language.value).toEqual('');
+                    }));
+                    it('and the property has only one range', fakeAsync(function() {
+                        this.mappingPropertyClone.ranges = [`${XSD}string`];
+                        component.setupEditProperty();
+                        tick();
+                        expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                        expect(mapperStateStub.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                            { iri: propId, type: `${OWL}DatatypeProperty` },
+                            { iri: propId, type: `${OWL}AnnotationProperty` },
+                        ]);
+                        expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                        expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                        expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                        expect(component.setRangeClass).not.toHaveBeenCalled();
+                        expect(component.propMappingForm.controls.column.value).toEqual(0);
+                        expect(component.propMappingForm.controls.datatype.value).toEqual(`${XSD}string`);
+                        expect(component.showDatatype).not.toHaveBeenCalled();
+                        expect(component.langString).toBeFalse();
+                        expect(component.propMappingForm.controls.language.value).toEqual('');
+                    }));
+                    it('and the property has a range of rdf:langString', fakeAsync(function() {
+                        this.mappingPropertyClone.ranges = [`${RDF}langString`];
+                        component.setupEditProperty();
+                        tick();
+                        expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                        expect(mapperStateStub.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                            { iri: propId, type: `${OWL}DatatypeProperty` },
+                            { iri: propId, type: `${OWL}AnnotationProperty` },
+                        ]);
+                        expect(component.selectedPropMapping).toEqual(this.propMappingClone);
+                        expect(component.selectedProp).toEqual(this.mappingPropertyClone);
+                        expect(component.propMappingForm.controls.prop.value).toEqual(this.mappingPropertyClone);
+                        expect(component.setRangeClass).not.toHaveBeenCalled();
+                        expect(component.propMappingForm.controls.column.value).toEqual(0);
+                        expect(component.propMappingForm.controls.datatype.value).toEqual(`${RDF}langString`);
+                        expect(component.showDatatype).not.toHaveBeenCalled();
+                        expect(component.langString).toBeTrue();
+                        expect(component.propMappingForm.controls.language.value).toEqual('language');
+                  }));
                 });
             });
-            it('and it is a object property', function() {
-                const objectMappingProperty: MappingProperty = cloneDeep(mappingProperty);
-                objectMappingProperty.isObjectProperty = true;
-                component.availableProps = [objectMappingProperty];
-                component.setupEditProperty();
-                expect(this.mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
-                expect(component.selectedPropMapping).toEqual(propMapping);
-                expect(component.selectedProp).toEqual(objectMappingProperty);
-                expect(component.propMappingForm.controls.prop.value).toEqual(objectMappingProperty);
-                expect(component.setRangeClass).toHaveBeenCalledWith();
-                expect(component.propMappingForm.controls.column.value).toEqual('');
-                expect(component.propMappingForm.controls.datatype.value).toEqual('');
-                expect(component.showDatatypeSelect).toBeFalse();
-                expect(component.langString).toBeFalse();
-                expect(component.propMappingForm.controls.language.value).toEqual('');
+            describe('and it is a object property', function() {
+                beforeEach(function() {
+                    mappingManagerStub.isObjectMapping.and.returnValue(true);
+                });
+                it('unless the property cannot be found', fakeAsync(function() {
+                    mapperStateStub.retrieveSpecificProps.and.returnValue(throwError('Error'));
+                    component.setupEditProperty();
+                    tick();
+                    expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                    expect(component.selectedPropMapping).toEqual(propMapping);
+                    expect(mapperStateStub.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                        { iri: propId, type: `${OWL}ObjectProperty` },
+                    ]);
+                    expect(component.selectedProp).toBeUndefined();
+                    expect(component.error).toEqual('Error');
+                }));
+                it('successfully', fakeAsync(function() {
+                    const objectMappingProperty: MappingProperty = cloneDeep(mappingProperty);
+                    objectMappingProperty.type = `${OWL}ObjectProperty`;
+                    mapperStateStub.retrieveSpecificProps.and.returnValue(of([objectMappingProperty]));
+                    component.setupEditProperty();
+                    expect(mappingStub.getPropMapping).toHaveBeenCalledWith(propMappingId);
+                    expect(component.selectedPropMapping).toEqual(propMapping);
+                    expect(mapperStateStub.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
+                        { iri: propId, type: `${OWL}ObjectProperty` },
+                    ]);
+                    expect(component.selectedProp).toEqual(objectMappingProperty);
+                    expect(component.propMappingForm.controls.prop.value).toEqual(objectMappingProperty);
+                    expect(component.setRangeClass).toHaveBeenCalledWith();
+                    expect(component.propMappingForm.controls.column.value).toEqual('');
+                    expect(component.propMappingForm.controls.datatype.value).toEqual('');
+                    expect(component.showDatatype).not.toHaveBeenCalled();
+                    expect(component.langString).toBeFalse();
+                    expect(component.propMappingForm.controls.language.value).toEqual('');
+                }));
             });
         });
         it('should set the correct state for canceling', function() {
@@ -603,45 +868,79 @@ describe('Prop Mapping Overlay component', function() {
                 beforeEach(function() {
                     component.selectedProp = mappingProperty;
                 });
-                it('not expanded', function() {
+                it('with a datatype select', function() {
                     component.showDatatypeSelect = false;
                     fixture.detectChanges();
                     expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
                     expect(element.queryAll(By.css('column-select')).length).toBe(1);
                     expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(0);
+                });
+                it('without a datatype select', function() {
+                    component.showDatatypeSelect = true;
+                    fixture.detectChanges();
+                    expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('column-select')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(1);
+                });
+                it('with multiple ranges', function() {
+                    fixture.detectChanges();
+                    expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('column-select')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('warning-message')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(0);
+                    expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(0);
+                });
+                it('with a single range', function() {
+                    component.selectedProp = cloneDeep(mappingProperty);
+                    component.selectedProp.ranges = [`${XSD}string`];
+                    fixture.detectChanges();
+                    expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('column-select')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('warning-message')).length).toBe(0);
                     expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(1);
                     expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(0);
                 });
-                describe('expanded', function() {
-                    beforeEach(function() {
-                        component.showDatatypeSelect = true;
-                    });
-                    it('and is not a lang string', function () {
-                        fixture.detectChanges();
-                        expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
-                        expect(element.queryAll(By.css('column-select')).length).toBe(1);
-                        expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
-                        expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(1);
-                        expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(1);
-                        expect(element.queryAll(By.css('language-select')).length).toBe(0);
-                    });
-                    it('and is a lang string', function () {
-                        component.langString = true;
-                        fixture.detectChanges();
-                        expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
-                        expect(element.queryAll(By.css('column-select')).length).toBe(1);
-                        expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
-                        expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(1);
-                        expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(1);
-                        expect(element.queryAll(By.css('language-select')).length).toBe(1);
-                    });
+                it('with no ranges', function() {
+                    component.selectedProp = cloneDeep(mappingProperty);
+                    component.selectedProp.ranges = [];
+                    component.showDatatypeSelect = true;
+                    fixture.detectChanges();
+                    expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('column-select')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('warning-message')).length).toBe(0);
+                    expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(0);
+                    expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(1);
+                });
+                it('and is not a lang string', function () {
+                    fixture.detectChanges();
+                    expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('column-select')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(0);
+                    expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(0);
+                    expect(element.queryAll(By.css('language-select')).length).toBe(0);
+                });
+                it('and is a lang string', function () {
+                    component.langString = true;
+                    fixture.detectChanges();
+                    expect(element.queryAll(By.css('.data-property-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('column-select')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container')).length).toBe(1);
+                    expect(element.queryAll(By.css('.datatype-select-container button')).length).toBe(0);
+                    expect(element.queryAll(By.css('.data-property-container .datatype-select')).length).toBe(0);
+                    expect(element.queryAll(By.css('language-select')).length).toBe(1);
                 });
             });
             it('an object property', function() {
                 const newProp = cloneDeep(mappingProperty);
-                newProp.isObjectProperty = true;
+                newProp.type = `${OWL}ObjectProperty`;
                 component.selectedProp = newProp;
-                mapperStateStub.newProp = true;
+                component.showRangeClass = true;
                 fixture.detectChanges();
                 expect(element.queryAll(By.css('.range-class-select-container')).length).toBe(1);
             });

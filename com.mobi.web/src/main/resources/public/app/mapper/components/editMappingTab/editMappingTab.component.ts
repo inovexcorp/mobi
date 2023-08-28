@@ -59,6 +59,9 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.setOntologyTitle();
         this.setClassMappings();
+        if (this.state.startWithConfigModal) {
+          this.openMappingConfig();
+        }
     }
     ngOnDestroy(): void {
         this.state.selectedPropMappingId = '';
@@ -77,6 +80,7 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
         this.dialog.open(MappingConfigOverlayComponent).afterClosed().subscribe(() => {
             this.setOntologyTitle();
             this.setClassMappings();
+            this.state.startWithConfigModal = false;
         });
     }
     deleteClass(classMapping: JSONLDObject): void {

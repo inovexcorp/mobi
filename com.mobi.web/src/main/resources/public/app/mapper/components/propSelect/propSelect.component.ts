@@ -20,14 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { includes, groupBy } from 'lodash';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { groupBy } from 'lodash';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, finalize, map, startWith, switchMap } from 'rxjs/operators';
 
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 interface PropertyGroup {
     ontologyId: string,
@@ -47,51 +50,87 @@ interface PropertyGroup {
  */
 @Component({
     selector: 'prop-select',
-    templateUrl: './propSelect.component.html'
+    templateUrl: './propSelect.component.html',
+    styleUrls: ['./propSelect.component.scss']
 })
 export class PropSelectComponent implements OnInit {
-    private _selectedProp:MappingProperty;
+    private _selectedProp: MappingProperty;
     @Input() isReadOnly: boolean;
     @Input() parentForm: UntypedFormGroup;
-    @Input() properties: MappingProperty[];
+    @Input() parentClass: string;
     @Input() set selectedProp (value: MappingProperty) {
         this._selectedProp = value;
-       if (this.parentForm.get('prop').disabled) {
+        if (this.parentForm.get('prop').disabled) {
            this.parentForm.controls.prop.disable();
-       } else {
-        this.parentForm.controls.prop.enable();
-       }
+        } else {
+            this.parentForm.controls.prop.enable();
+        }
     }
-
+        
+    public getSelectedProp(): MappingProperty{
+        return this._selectedProp;
+    }
     @Output() selectedPropChange = new EventEmitter<MappingProperty>();
 
+    @ViewChild('propSelectSpinner', { static: true }) propSelectSpinner: ElementRef;
+    
+    error = '';
     filteredProperties: Observable<PropertyGroup[]>;
 
-    constructor() {}
+    constructor(private _state: MapperStateService, private _spinner: ProgressSpinnerService) {}
 
     ngOnInit(): void {
         this.filteredProperties = this.parentForm.controls.prop.valueChanges
             .pipe(
+                debounceTime(500),
                 startWith<string | MappingProperty>(''),
-                map(val => this.filter(val))
+                switchMap(val => this.filter(val))
             );
     }
-    filter(val: string | MappingProperty): PropertyGroup[] {
+    filter(val: string | MappingProperty): Observable<PropertyGroup[]> {
         const searchText = typeof val === 'string' ?
         val :
         val ?
             val.name :
             '';
-        if (!this.properties) {
-            return [];
-        }
-        const filtered = this.properties.filter(mappingProperty => includes(mappingProperty.name.toLowerCase(), searchText.toLowerCase()));
-        filtered.sort((mappingProperty1, mappingProperty2) => mappingProperty1.name.localeCompare(mappingProperty2.name));
-        const grouped = groupBy(filtered, 'ontologyId');
-        return Object.keys(grouped).map(ontologyId => ({
-            ontologyId,
-            properties: grouped[ontologyId]
-        }));
+        this._spinner.startLoadingForComponent(this.propSelectSpinner, 15);
+        // Find supported annotations matching search text
+        const filteredAnnotations = this._state.supportedAnnotations.filter(propDisplay => 
+            propDisplay.name.toLowerCase().includes(searchText.toLowerCase()));
+        return this._state.retrieveProps(this._state.selected.mapping.getSourceOntologyInfo(), this.parentClass, 
+          searchText, 100, true)
+            .pipe(
+                map(results => {
+                    this.error = '';
+                    const filtered = results
+                        // Handle supported annotations redefined in the imports closure
+                        .filter(result => !filteredAnnotations.find(ann => ann.iri === result.iri))
+                        // Add in supported annotations matching search text
+                        .concat(filteredAnnotations)
+                        // Sort results again
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        // Only keep 100 results still
+                        .slice(0, 100);
+                    // Group by ontology IRI found across data properties, object properties, and annotation properties
+                    // Account for redefined supported annotations and make sure to group by namespace in those cases
+                    const grouped = groupBy(filtered, result => this._state.iriMap.dataProperties[result.iri]
+                        || this._state.iriMap.objectProperties[result.iri] 
+                        || (this._state.supportedAnnotations.includes(result) ? 
+                            splitIRI(result.iri).begin 
+                            : this._state.iriMap.annotationProperties[result.iri]));
+                    return Object.keys(grouped).map(ontologyId => ({
+                        ontologyId,
+                        properties: grouped[ontologyId].sort((a, b) => a.name.localeCompare(b.name))
+                    })).sort((a, b) => a.ontologyId.localeCompare(b.ontologyId));
+                }),
+                catchError(error => {
+                    this.error = error;
+                    return of([]);
+                }),
+                finalize(() => {
+                    this._spinner.finishLoadingForComponent(this.propSelectSpinner);
+                })
+            );
     }
     getDisplayText(mappingProperty?: MappingProperty): string {
         return mappingProperty ? mappingProperty.name : '';
@@ -99,8 +138,5 @@ export class PropSelectComponent implements OnInit {
     selectProp(event: MatAutocompleteSelectedEvent): void {
         this._selectedProp = event.option.value;
         this.selectedPropChange.emit(this._selectedProp);
-    }
-    public getSelectedProp () : MappingProperty{
-        return this._selectedProp;
     }
 }

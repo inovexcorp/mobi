@@ -23,11 +23,9 @@
 import { Component, Input } from '@angular/core';
 import { isEqual } from 'lodash';
 
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
 import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
 
 /**
  * @class mapper.ClassPreviewComponent
@@ -35,8 +33,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
  * A component that creates a div with a brief description of the passed class and its properties. It displays the name
  * of the class, its IRI, its description, and the list of its properties.
  *
- * @param {Object} classObj the class object from an ontology to preview
- * @param {Object[]} ontologies A list of ontologies containing the class and to pull properties
+ * @param {MappingClass} classDetails The metadata object about the OWL class to preview
  * from.
  */
 @Component({
@@ -48,26 +45,27 @@ export class ClassPreviewComponent {
     name = '';
     description = '';
     props: MappingProperty[] = [];
-    total = 0;
 
-    private _classObj: JSONLDObject;
+    private _classDetails: MappingClass;
 
-    @Input() ontologies: MappingOntology[] = [];
-    @Input() set classObj(value: JSONLDObject) {
-        const previousValue = this._classObj;
-        this._classObj = value;
-        this.name = this.om.getEntityName(value);
-        this.description = this.om.getEntityDescription(value) || '(None Specified)';
+    @Input() set classDetails(value: MappingClass) {
+        const previousValue = this._classDetails;
+        this._classDetails = value;
+        this.name = this._classDetails.name;
+        this.description = value.description || '(None Specified)';
         if (!isEqual(value, previousValue)) {
-            const props = this.state.getClassProps(this.ontologies, value['@id']);
-            this.total = props.length;
-            this.props = props.slice(0, 10);
+            this.state.retrieveProps(this.state.selected.mapping.getSourceOntologyInfo(), value.iri, '', 10)
+                .subscribe(results => {
+                    this.props = results;
+                }, () => {
+                    this.props = [];
+                });
         }
     }
 
-    get classObj(): JSONLDObject {
-        return this._classObj;
+    get classDetails(): MappingClass {
+        return this._classDetails;
     }
 
-    constructor(public state: MapperStateService, public om: OntologyManagerService) {}
+    constructor(private state: MapperStateService) {}
 }

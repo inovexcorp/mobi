@@ -22,7 +22,7 @@
   -->
 <div class="class-preview">
     <h3 class="break-word">{{name}}</h3>
-    <p class="text-muted break-word"><small>{{classObj ? classObj['@id'] : ''}}</small></p>
+    <p class="text-muted break-word"><small>{{classDetails ? classDetails.iri : ''}}</small></p>
     <div>
         <span class="field-label">Description</span>
         <p>{{description}}</p>
@@ -31,7 +31,11 @@
         <span class="field-label">Properties</span>
         <ul class="props">
             <li *ngIf="props.length === 0" class="last">None</li>
-            <li *ngFor="let mappingProp of props; last as last" [ngClass]="{'last': last, 'limited': last && total > 10}" title="{{mappingProp.propObj['@id']}}">{{mappingProp.name}}<span class="text-muted deprecated" *ngIf="mappingProp.isDeprecated"> (Deprecated)</span></li>
+            <li *ngFor="let mappingProp of props; last as last" 
+                [ngClass]="{'last': last}" 
+                [title]="mappingProp.iri">
+                  {{mappingProp.name}}<span class="text-muted deprecated" *ngIf="mappingProp.deprecated"> (Deprecated)</span>
+            </li>
         </ul>
     </div>
 </div>

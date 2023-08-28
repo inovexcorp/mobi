@@ -141,6 +141,19 @@ export function replacePropertyValue(entity: JSONLDObject, propertyIRI: string, 
 }
 
 /**
+* Removes the first value of the specified property and appends the provided value to the specified property of the 
+* passed entity.
+*
+* @param {JSONLDObject} entity The entity to update the property value of
+* @param {string} property The IRI of a property
+* @param {string} value The new value for the property
+*/
+export function updatePropertyValue(entity: JSONLDObject, propertyIRI: string, value: string): void {
+  const valueToRemove = getPropertyValue(entity, propertyIRI);
+  replacePropertyValue(entity, propertyIRI, valueToRemove, value);
+}
+
+/**
 * Gets the first id value of the specified property from the passed entity. Returns an empty
 * string if not found.
 *
@@ -199,6 +212,19 @@ export function removePropertyId(entity: JSONLDObject, propertyIRI: string, id: 
 export function replacePropertyId(entity: JSONLDObject, propertyIRI: string, idToRemove: string, idToAdd: string): void {
   removePropertyId(entity, propertyIRI, idToRemove);
   setPropertyId(entity, propertyIRI, idToAdd);
+}
+
+/**
+* Removes the first id value of the specified property and appends the provided id value to the specified property of
+* the passed entity.
+*
+* @param {JSONLDObject} entity The entity to update the property value of
+* @param {string} property The IRI of a property
+* @param {string} value The new id value for the property
+*/
+export function updatePropertyId(entity: JSONLDObject, propertyIRI: string, id: string): void {
+  const idValueToRemove = getPropertyId(entity, propertyIRI);
+  replacePropertyId(entity, propertyIRI, idValueToRemove, id);
 }
 
 /**

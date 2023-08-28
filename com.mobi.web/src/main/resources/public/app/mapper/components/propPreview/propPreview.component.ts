@@ -21,14 +21,17 @@
  * #L%
  */
 import { Component, Input } from '@angular/core';
-import { find } from 'lodash';
 
-import { RDFS } from '../../../prefixes';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
-import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { getPropertyId } from '../../../shared/utility';
+import { OWL } from '../../../prefixes';
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
+import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
+import { getBeautifulIRI } from '../../../shared/utility';
+
+interface RangeDisplay {
+    iri: string,
+    name: string,
+    deprecated: boolean
+}
 
 /**
  * @class mapper.PropPreviewComponent
@@ -45,37 +48,47 @@ import { getPropertyId } from '../../../shared/utility';
 export class PropPreviewComponent {
     name = '';
     description = '';
-    rangeId = '';
-    rangeName = '';
-    rangeIsDeprecated = false;
+    ranges: RangeDisplay[] = [];
 
-    private _propObj: JSONLDObject;
+    private _propDetails: MappingProperty;
+    private _rangeClassDetails: MappingClass[];
 
-    @Input() set propObj(value: JSONLDObject) {
-        this._propObj = value;
-        this.name = this.om.getEntityName(value);
-        this.description = this.om.getEntityDescription(value) || '(None Specified)';
-        const newRangeId = getPropertyId(value, `${RDFS}range`);
-        if (this.om.isObjectProperty(value)) {
-            if (newRangeId !== this.rangeId) {
-                const availableClass = find(this.state.availableClasses, {classObj: {'@id': newRangeId}});
-                if (availableClass) {
-                    this.rangeName = availableClass.name;
-                    this.rangeIsDeprecated = availableClass.isDeprecated;
-                } else {
-                    this.rangeName = '(No range)';
-                    this.rangeIsDeprecated = false;
+    @Input() set propDetails(value: MappingProperty) {
+        this._propDetails = value;
+        this.name = value.name;
+        this.description = value.description || '(None Specified)';
+    }
+    get propDetails(): MappingProperty {
+        return this._propDetails;
+    }
+
+    @Input() set rangeClassDetails(value: MappingClass[]) {
+        this._rangeClassDetails = value;
+        if (this.propDetails.ranges.length) {
+            if (this.propDetails.type === `${OWL}ObjectProperty`) {
+                if (value && value.length) {
+                    this.ranges = value.map(rangeClass => ({
+                        iri: rangeClass.iri,
+                        name: rangeClass.name,
+                        deprecated: rangeClass.deprecated
+                    }));
+                } else { // Property has ranges set, but they could not be found in the imports closure
+                    this.ranges = [];
                 }
+            } else {
+                this.ranges = this.propDetails.ranges.map(range => ({
+                    iri: range,
+                    name: getBeautifulIRI(range) || 'String',
+                    deprecated: false
+                }));
             }
-        } else {
-            this.rangeName = splitIRI(newRangeId).end || 'string';
-            this.rangeIsDeprecated = false;
+        } else { // Property has no ranges set
+            this.ranges = [];
         }
-        this.rangeId = newRangeId;
     }
-    get propObj(): JSONLDObject {
-        return this._propObj;
+    get rangeClassDetails(): MappingClass[] {
+        return this._rangeClassDetails;
     }
 
-    constructor(private state: MapperStateService, private om: OntologyManagerService) {}
+    constructor() {}
 }

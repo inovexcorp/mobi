@@ -57,9 +57,9 @@
                     <div class="classes-list mt-2">
                         <span class="field-label">Classes</span>
                         <ul>
-                            <li *ngFor="let class of classes | slice:0:10" title="{{class.classObj['@id']}}">
+                            <li *ngFor="let class of classes | slice:0:10" title="{{class.iri}}">
                                 {{class.name}}
-                                <span class="text-muted" *ngIf="class.isDeprecated">(Deprecated)</span>
+                                <span class="text-muted" *ngIf="class.deprecated">(Deprecated)</span>
                             </li>
                         </ul>
                     </div>

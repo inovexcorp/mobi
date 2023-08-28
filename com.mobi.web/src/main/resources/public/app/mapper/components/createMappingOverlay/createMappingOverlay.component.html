@@ -22,7 +22,6 @@
   -->
 <h1 mat-dialog-title>Create Mapping</h1>
 <form mat-dialog-content [formGroup]="createMappingForm">
-    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
     <mat-form-field class="w-100">
         <mat-label>Title</mat-label>
         <input matInput type="text" name="title" formControlName="title" required focus/>

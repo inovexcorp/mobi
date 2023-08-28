@@ -25,8 +25,8 @@ import { Component } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
-import { MappingClass } from '../../../shared/models/mappingClass.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
 
 /**
  * @class mapper.ClassMappingOverlayComponent
@@ -41,19 +41,16 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
     styleUrls: ['./classMappingOverlay.component.scss']
 })
 export class ClassMappingOverlayComponent {
-    selectedClass: MappingClass;
+    selectedClassDetails: MappingClass;
     classMappingForm = this.fb.group({
-        class: [{value: '', disabled: !this.state.availableClasses.length}]
+        class: ['']
     });
     
     constructor(private dialogRef: MatDialogRef<ClassMappingOverlayComponent>, private fb: UntypedFormBuilder,
-        public state: MapperStateService) {}
+        private state: MapperStateService) {}
 
     addClass(): void {
-        const classMapping = this.state.addClassMapping(this.selectedClass);
-        if (!this.state.hasPropsSet(this.selectedClass.classObj['@id'])) {
-            this.state.setProps(this.selectedClass.classObj['@id']);
-        }
+        const classMapping = this.state.addClassMapping(this.selectedClassDetails);
         this.state.resetEdit();
         this.dialogRef.close(classMapping);
     }
