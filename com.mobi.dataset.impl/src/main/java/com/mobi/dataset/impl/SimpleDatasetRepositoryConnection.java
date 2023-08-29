@@ -317,12 +317,14 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public boolean containsContext(Resource context) throws RepositoryException {
-        for (Resource existingContext : getContextIDs()) {
-            if (context.equals(existingContext)) {
-                return true;
+        try (RepositoryResult<Resource> result = getContextIDs()) {
+            for (Resource existingContext : result) {
+                if (context.equals(existingContext)) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
     }
 
     @Override

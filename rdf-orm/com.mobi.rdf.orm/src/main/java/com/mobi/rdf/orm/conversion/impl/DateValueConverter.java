@@ -39,7 +39,12 @@ import java.time.format.DateTimeParseException;
  *
  * @author bdgould
  */
-@Component(service = ValueConverter.class)
+@Component(
+        service = ValueConverter.class,
+        property = {
+                "converterType=Date"
+        }
+)
 public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
 
     /**

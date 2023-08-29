@@ -12,12 +12,12 @@ package com.mobi.catalog.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -35,13 +35,13 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Activity;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
@@ -61,11 +61,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
-public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
+public class FullCatalogServicesTest extends OrmEnabledTestCase{
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
-    private SimpleCatalogManager manager;
-    private SimpleCatalogUtilsService utilsService;
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -77,8 +75,16 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
     private final IRI USER_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#user");
     private final IRI PROV_AT_TIME = VALUE_FACTORY.createIRI("http://www.w3.org/ns/prov#atTime");
-
     private static final String COMMITS = "http://mobi.com/test/commits#";
+
+    private final SimpleThingManager thingManager = new SimpleThingManager();
+    private final SimpleRecordManager recordManager = new SimpleRecordManager();
+    private final SimpleBranchManager branchManager = new SimpleBranchManager();
+    private final SimpleCommitManager commitManager = new SimpleCommitManager();
+    private final SimpleCompiledResourceManager compiledResourceManager = new SimpleCompiledResourceManager();
+    private final SimpleRevisionManager revisionManager = new SimpleRevisionManager();
+    private final SimpleVersionManager versionManager = new SimpleVersionManager();
+
 
     @Mock
     private CatalogConfigProvider configProvider;
@@ -92,13 +98,12 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
         when(configProvider.getRepository()).thenReturn(repo);
 
-        manager = new SimpleCatalogManager();
-        injectOrmFactoryReferencesIntoService(manager);
-        manager.configProvider = configProvider;
-        manager.utils = utilsService;
-
-        utilsService = new SimpleCatalogUtilsService();
-        injectOrmFactoryReferencesIntoService(utilsService);
+        injectOrmFactoryReferencesIntoService(commitManager);
+        commitManager.recordManager = recordManager;
+        commitManager.revisionManager = revisionManager;
+        commitManager.branchManager = branchManager;
+        commitManager.thingManager = thingManager;
+        commitManager.versionManager = versionManager;
 
         InputStream testData = getClass().getResourceAsStream("/testCommitChainData.trig");
 
@@ -106,7 +111,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
         }
 
-        manager.start();
+        recordManager.start();
 
         initialComment = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
@@ -145,16 +150,16 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit targetHead = commitFactory.getExisting(commitCIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
-            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+            Commit mergeCommit = commitManager.createCommit(commitManager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
             Model deletions = MODEL_FACTORY.createEmptyModel();
             deletions.add(commentB);
-            utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
+            commitManager.addCommit(rightBranch, mergeCommit, conn);
+            commitManager.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
-            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = compiledResourceManager.getCompiledResource(commitsFromMerge, conn);
 
             assertFalse(branchCompiled.contains(initialComment));
             assertTrue(branchCompiled.contains(commentA));
@@ -183,16 +188,16 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit targetHead = commitFactory.getExisting(commitEIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
-            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+            Commit mergeCommit = commitManager.createCommit(commitManager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
             Model deletions = MODEL_FACTORY.createEmptyModel();
             deletions.add(commentB);
-            utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
+            commitManager.addCommit(rightBranch, mergeCommit, conn);
+            commitManager.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
-            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = compiledResourceManager.getCompiledResource(commitsFromMerge, conn);
 
             assertFalse(branchCompiled.contains(initialComment));
             assertTrue(branchCompiled.contains(commentA));
@@ -221,16 +226,16 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit targetHead = commitFactory.getExisting(commitFIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
-            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+            Commit mergeCommit = commitManager.createCommit(commitManager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
             Model deletions = MODEL_FACTORY.createEmptyModel();
             deletions.add(commentB);
-            utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
+            commitManager.addCommit(rightBranch, mergeCommit, conn);
+            commitManager.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
-            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = compiledResourceManager.getCompiledResource(commitsFromMerge, conn);
 
             assertFalse(branchCompiled.contains(initialComment));
             assertTrue(branchCompiled.contains(commentA));
@@ -259,13 +264,13 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit targetHead = commitFactory.getExisting(commitIIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
-            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+            Commit mergeCommit = commitManager.createCommit(commitManager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
-            utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
+            commitManager.addCommit(rightBranch, mergeCommit, conn);
+            commitManager.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
-            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = compiledResourceManager.getCompiledResource(commitsFromMerge, conn);
 
             assertTrue(branchCompiled.contains(commentA));
             assertTrue(branchCompiled.contains(commentB));
@@ -293,13 +298,13 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit targetHead = commitFactory.getExisting(commitKIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
-            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+            Commit mergeCommit = commitManager.createCommit(commitManager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
-            utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
+            commitManager.addCommit(rightBranch, mergeCommit, conn);
+            commitManager.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
-            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = compiledResourceManager.getCompiledResource(commitsFromMerge, conn);
 
             assertTrue(branchCompiled.contains(commentA));
             assertTrue(branchCompiled.contains(commentB));
@@ -327,13 +332,13 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit targetHead = commitFactory.getExisting(commitLIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
-            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+            Commit mergeCommit = commitManager.createCommit(commitManager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
-            utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
+            commitManager.addCommit(rightBranch, mergeCommit, conn);
+            commitManager.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
-            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = compiledResourceManager.getCompiledResource(commitsFromMerge, conn);
 
             assertTrue(branchCompiled.contains(commentA));
             assertTrue(branchCompiled.contains(commentB));
@@ -352,7 +357,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
             // Build out large commit chain
             Branch branch = branchFactory.createNew(VALUE_FACTORY.createIRI("urn:testBranch"));
-            utilsService.addObject(branch, conn);
+            thingManager.addObject(branch, conn);
             Commit previousCommit = null;
             Model statementsToDelete = getModelFactory().createEmptyModel();
             int numberOfCommits = 1000;
@@ -395,16 +400,16 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 conn.add(additions);
                 conn.add(currentDeletions);
 
-                utilsService.addCommit(branch, commit, conn);
+                commitManager.addCommit(branch, commit, conn);
                 previousCommit = commit;
                 timeMillis = timeMillis + dayInMs;
                 calendar.setTimeInMillis(timeMillis);
             }
 
-            List<Resource> commitChain = utilsService.getCommitChain(previousCommit.getResource(), true, conn);
+            List<Resource> commitChain = commitManager.getCommitChain(previousCommit.getResource(), true, conn);
 
             long start = System.nanoTime();
-            Model branchCompiled = utilsService.getCompiledResource(commitChain, conn);
+            Model branchCompiled = compiledResourceManager.getCompiledResource(commitChain, conn);
             long end = System.nanoTime();
             long opTime = (end - start) / 1000000;
             System.out.println("CatalogUtilsService getCompiledResource operation time (ms): " + opTime);

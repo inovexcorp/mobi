@@ -32,7 +32,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
@@ -77,7 +78,10 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
-    private CatalogUtilsService utilsService;
+    private ThingManager thingManager;
+
+    @Mock
+    private VersionManager versionManager;
 
     @Mock
     private RepositoryConnection connection;
@@ -103,12 +107,13 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setVersion(versions);
 
         closeable = MockitoAnnotations.openMocks(this);
-        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
+        when(thingManager.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.utilsService = utilsService;
+        recordService.thingManager = thingManager;
         recordService.provUtils = provUtils;
+        recordService.versionManager = versionManager;
         recordService.start();
     }
 
@@ -121,13 +126,13 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void deleteTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
+        when(thingManager.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
 
         VersionedRecord deletedRecord = recordService.delete(testIRI, user, connection);
 
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
-        verify(utilsService, times(2)).removeVersion(any(Resource.class), any(Resource.class), eq(connection));
-        verify(utilsService).removeObject(eq(testRecord), eq(connection));
+        verify(thingManager).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        verify(versionManager, times(2)).removeVersion(any(Resource.class), any(Resource.class), eq(connection));
+        verify(thingManager).removeObject(eq(testRecord), eq(connection));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
         assertEquals(testRecord, deletedRecord);
@@ -135,16 +140,16 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
+        when(thingManager.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
 
         recordService.delete(testIRI, user, connection);
 
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        verify(thingManager).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 
     @Test
     public void deleteRecordRemoveFails() throws Exception {
-        doThrow(RepositoryException.class).when(utilsService).removeObject(any(VersionedRecord.class), any(RepositoryConnection.class));
+        doThrow(RepositoryException.class).when(thingManager).removeObject(any(VersionedRecord.class), any(RepositoryConnection.class));
         thrown.expect(RepositoryException.class);
 
         recordService.delete(testIRI, user, connection);

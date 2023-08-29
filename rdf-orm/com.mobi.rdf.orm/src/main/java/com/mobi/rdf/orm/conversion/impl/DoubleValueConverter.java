@@ -35,7 +35,12 @@ import org.osgi.service.component.annotations.Component;
  *
  * @author bdgould
  */
-@Component(service = ValueConverter.class)
+@Component(
+        service = ValueConverter.class,
+        property = {
+                "converterType=Double"
+        }
+)
 public class DoubleValueConverter extends AbstractValueConverter<Double> {
 
     /**

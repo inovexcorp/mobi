@@ -25,7 +25,10 @@ package com.mobi.catalog.impl.mergerequest;
 
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
@@ -33,6 +36,7 @@ import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequestFactory;
@@ -87,14 +91,12 @@ import java.util.stream.StreamSupport;
 
 @Component(name = SimpleMergeRequestManager.COMPONENT_NAME)
 public class SimpleMergeRequestManager implements MergeRequestManager {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleMergeRequestManager.class);
-
     static final String MERGE_REQUEST_NAMESPACE = "https://mobi.com/merge-requests#";
     static final String COMMENT_NAMESPACE = "https://mobi.com/comments#";
     static final String COMPONENT_NAME = "com.mobi.catalog.api.mergerequest.MergeRequestManager";
-
-    private static final String GET_COMMENT_CHAINS;
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleMergeRequestManager.class);
     private static final int MAX_COMMENT_STRING_LENGTH = 1000000;
+    private static final String GET_COMMENT_CHAINS;
     private static final String GET_MERGE_REQUESTS_QUERY;
     private static final String FILTERS = "%FILTERS%";
     private static final String REQUEST_ID_BINDING = "requestId";
@@ -110,7 +112,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     static {
         try {
             GET_COMMENT_CHAINS = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
-                            .getResourceAsStream("/get-comment-chains.rq")), StandardCharsets.UTF_8
+                    .getResourceAsStream("/get-comment-chains.rq")), StandardCharsets.UTF_8
             );
             GET_MERGE_REQUESTS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
                     .getResourceAsStream("/get-merge-requests.rq")), StandardCharsets.UTF_8
@@ -126,10 +128,19 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     CatalogConfigProvider configProvider;
 
     @Reference
-    CatalogUtilsService catalogUtils;
+    ThingManager thingManager;
+
+    @Reference
+    RecordManager recordManager;
+
+    @Reference
+    DifferenceManager differenceManager;
 
     @Reference
     VersioningManager versioningManager;
+
+    @Reference
+    CommitManager commitManager;
 
     @Reference
     MergeRequestFactory mergeRequestFactory;
@@ -153,174 +164,6 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     PDP pdp;
 
     @Override
-    public List<MergeRequest> getMergeRequests(MergeRequestFilterParams params) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return getMergeRequests(params, conn);
-        }
-    }
-
-    @Override
-    public List<MergeRequest> getMergeRequests(MergeRequestFilterParams params, RepositoryConnection conn) {
-        LOG.trace("Fetching list of Merge Requests");
-        // Create filters used for query from params
-        StringBuilder filters = new StringBuilder("FILTER ");
-        if (!params.getAccepted()) {
-            filters.append("NOT ");
-        }
-        filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
-        Resource sortBy = params.getSortBy().orElseGet(() -> vf.createIRI(_Thing.issued_IRI));
-        filters.append("?").append(REQUEST_ID_BINDING).append(" <").append(sortBy).append("> ?")
-                .append(SORT_PRED_BINDING).append(". ");
-
-        if (params.hasFilters()) {
-            filters.append("FILTER (");
-            params.getAssignee().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(" = <")
-                    .append(assignee).append("> && "));
-            params.getOnRecord().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(" = <")
-                    .append(onRecord).append("> && "));
-            params.getSourceBranch().ifPresent(sourceBranch -> filters.append("?").append(SOURCE_BRANCH_BINDING)
-                    .append(" = <").append(sourceBranch).append("> && "));
-            params.getTargetBranch().ifPresent(targetBranch -> filters.append("?").append(TARGET_BRANCH_BINDING)
-                    .append(" = <").append(targetBranch).append("> && "));
-            params.getSourceCommit().ifPresent(sourceCommit -> filters.append("?").append(SOURCE_COMMIT_BINDING)
-                    .append(" = <").append(sourceCommit).append("> && "));
-            params.getTargetCommit().ifPresent(targetCommit -> filters.append("?").append(TARGET_COMMIT_BINDING)
-                    .append(" = <").append(targetCommit).append("> && "));
-            params.getRemoveSource().ifPresent(removeSource -> filters.append("?").append(REMOVE_SOURCE_BINDING)
-                    .append(" = ").append(removeSource).append(" && "));
-            filters.delete(filters.lastIndexOf(" && "), filters.length());
-            filters.append(")");
-        }
-
-        StringBuilder queryBuilder = new StringBuilder(GET_MERGE_REQUESTS_QUERY.replace(FILTERS, filters.toString()));
-        queryBuilder.append(" ORDER BY ");
-        if (params.sortAscending()) {
-            queryBuilder.append("?").append(SORT_PRED_BINDING);
-        } else {
-            queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
-        }
-
-        TupleQuery query = conn.prepareTupleQuery(queryBuilder.toString());
-        try (TupleQueryResult result = query.evaluate()) {
-            List<MergeRequest> mrs = StreamSupport.stream(result.spliterator(), false)
-                    .map(bindings -> Bindings.requiredResource(bindings, REQUEST_ID_BINDING))
-                    .map(resource -> catalogUtils.getExpectedObject(resource, mergeRequestFactory, conn))
-                    .collect(Collectors.toList());
-            // If a requesting user has been passed, filter the list based on record permissions
-            if (params.getRequestingUser().isPresent() && !mrs.isEmpty()) {
-                LOG.trace("Filtering list of Merge Requests based on requesting user");
-                IRI subjectId = (IRI) params.getRequestingUser().get().getResource();
-                // Initialize map used for record access filtering
-                Map<Resource, List<MergeRequest>> recordToMRMap = new HashMap<>();
-                mrs.forEach(mr -> {
-                    Resource recordIri = mr.getOnRecord_resource().orElseThrow(() ->
-                            new IllegalStateException("A MergeRequest must have a Record set"));
-                    recordToMRMap.putIfAbsent(recordIri, new ArrayList<>());
-                    recordToMRMap.get(recordIri).add(mr);
-                });
-                IRI actionId = vf.createIRI(Read.TYPE);
-                Map<String, Literal> subjectAttrs = Collections.singletonMap(XACML.SUBJECT_ID,
-                        vf.createLiteral(subjectId.stringValue()));
-                Map<String, Literal> actionAttrs = Collections.singletonMap(XACML.ACTION_ID,
-                        vf.createLiteral(actionId.stringValue()));
-                List<IRI> resourceIds = recordToMRMap.keySet().stream().map(iri -> (IRI) iri).toList();
-                Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
-                        List.of(actionId), actionAttrs);
-                Set<String> viewableRecords = pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
-                // Identify records that aren't in viewable list and remove the MergeRequests associated with them from
-                // the return list
-                resourceIds.stream()
-                        .filter(iri -> !viewableRecords.contains(iri.stringValue()))
-                        .forEach(recordToRemove -> recordToMRMap.get(recordToRemove).forEach(mrs::remove));
-            }
-            return mrs;
-        }
-    }
-
-    @Override
-    public MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return createMergeRequest(config, localCatalog, conn);
-        }
-    }
-
-    @Override
-    public MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog,
-                                           RepositoryConnection conn) {
-        catalogUtils.validateBranch(localCatalog, config.getRecordId(), config.getSourceBranchId(), conn);
-        catalogUtils.validateBranch(localCatalog, config.getRecordId(), config.getTargetBranchId(), conn);
-
-        OffsetDateTime now = OffsetDateTime.now();
-        MergeRequest request = mergeRequestFactory.createNew(vf.createIRI(MERGE_REQUEST_NAMESPACE + UUID.randomUUID()));
-        request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
-        request.setOnRecord(recordFactory.createNew(config.getRecordId()));
-        request.setSourceBranch(branchFactory.createNew(config.getSourceBranchId()));
-        request.setTargetBranch(branchFactory.createNew(config.getTargetBranchId()));
-        request.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(_Thing.title_IRI));
-        request.setRemoveSource(config.getRemoveSource());
-        config.getDescription().ifPresent(description ->
-                request.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI)));
-        request.setProperty(config.getCreator().getResource(), vf.createIRI(_Thing.creator_IRI));
-        config.getAssignees().forEach(request::addAssignee);
-        return request;
-    }
-
-    @Override
-    public void addMergeRequest(MergeRequest request) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            addMergeRequest(request, conn);
-        }
-    }
-
-    @Override
-    public void addMergeRequest(MergeRequest request, RepositoryConnection conn) {
-        if (ConnectionUtils.containsContext(conn, request.getResource())) {
-            throw catalogUtils.throwAlreadyExists(request.getResource(), recordFactory);
-        }
-        conn.add(request.getModel(), request.getResource());
-    }
-
-    @Override
-    public Optional<MergeRequest> getMergeRequest(Resource requestId) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return getMergeRequest(requestId, conn);
-        }
-    }
-
-    @Override
-    public Optional<MergeRequest> getMergeRequest(Resource requestId, RepositoryConnection conn) {
-        return catalogUtils.optObject(requestId, mergeRequestFactory, conn);
-    }
-
-    @Override
-    public void updateMergeRequest(Resource requestId, MergeRequest request) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            updateMergeRequest(requestId, request, conn);
-        }
-    }
-
-    @Override
-    public void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn) {
-        catalogUtils.validateResource(requestId, mergeRequestFactory.getTypeIRI(), conn);
-        catalogUtils.updateObject(request, conn);
-    }
-
-    @Override
-    public void deleteMergeRequest(Resource requestId) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            deleteMergeRequest(requestId, conn);
-        }
-    }
-
-    @Override
-    public void deleteMergeRequest(Resource requestId, RepositoryConnection conn) {
-        catalogUtils.validateResource(requestId, mergeRequestFactory.getTypeIRI(), conn);
-        deleteCommentsWithRequestId(requestId);
-        catalogUtils.remove(requestId, conn);
-    }
-
-    @Override
     public void acceptMergeRequest(Resource requestId, User user) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             acceptMergeRequest(requestId, user, conn);
@@ -330,7 +173,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public void acceptMergeRequest(Resource requestId, User user,  RepositoryConnection conn) {
         // Validate MergeRequest
-        MergeRequest request = catalogUtils.getExpectedObject(requestId, mergeRequestFactory, conn);
+        MergeRequest request = thingManager.getExpectedObject(requestId, mergeRequestFactory, conn);
         if (request.getModel().contains(requestId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
                 vf.createIRI(AcceptedMergeRequest.TYPE))) {
             throw new IllegalArgumentException("Request " + requestId + " has already been accepted");
@@ -341,15 +184,15 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                 new IllegalStateException("Request " + requestId + " does not have a VersionedRDFRecord"));
         Resource targetId = request.getTargetBranch_resource().orElseThrow(() ->
                 new IllegalArgumentException("Request " + requestId + " does not have a target Branch"));
-        Branch target = catalogUtils.getExpectedObject(targetId, branchFactory, conn);
+        Branch target = thingManager.getExpectedObject(targetId, branchFactory, conn);
         Resource sourceId = request.getSourceBranch_resource().orElseThrow(() ->
                 new IllegalStateException("Request " + requestId + " does not have a source Branch"));
-        Branch source = catalogUtils.getExpectedObject(sourceId, branchFactory, conn);
-        Resource sourceCommitId = getBranchHead(source);
-        Resource targetCommitId = getBranchHead(target);
+        Branch source = thingManager.getExpectedObject(sourceId, branchFactory, conn);
+        Resource sourceCommitId = commitManager.getHeadCommitIRI(source);
+        Resource targetCommitId = commitManager.getHeadCommitIRI(target);
 
         // Check conflicts and perform merge
-        Set<Conflict> conflicts = catalogUtils.getConflicts(sourceCommitId, targetCommitId, conn);
+        Set<Conflict> conflicts = differenceManager.getConflicts(sourceCommitId, targetCommitId, conn);
         if (conflicts.size() > 0) {
             throw new IllegalArgumentException("Branch " + sourceId + " and " + targetId
                     + " have conflicts and cannot be merged");
@@ -370,27 +213,22 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         acceptedRequest.setSourceBranchTitle(sourceTitle);
         acceptedRequest.setTargetCommit(commitFactory.createNew(targetCommitId));
         acceptedRequest.setSourceCommit(commitFactory.createNew(sourceCommitId));
-        catalogUtils.updateObject(acceptedRequest, conn);
+        thingManager.updateObject(acceptedRequest, conn);
     }
 
     @Override
-    public void deleteMergeRequestsWithRecordId(Resource recordId) {
+    public void addMergeRequest(MergeRequest request) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            deleteMergeRequestsWithRecordId(recordId, conn);
+            addMergeRequest(request, conn);
         }
     }
 
     @Override
-    public void deleteMergeRequestsWithRecordId(Resource recordId, RepositoryConnection conn) {
-        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-        builder.setOnRecord(recordId);
-
-        List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
-        mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
-
-        builder.setAccepted(true);
-        mergeRequests = getMergeRequests(builder.build(), conn);
-        mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
+    public void addMergeRequest(MergeRequest request, RepositoryConnection conn) {
+        if (ConnectionUtils.containsContext(conn, request.getResource())) {
+            throw thingManager.throwAlreadyExists(request.getResource(), recordFactory);
+        }
+        conn.add(request.getModel(), request.getResource());
     }
 
     @Override
@@ -459,28 +297,115 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
-    public List<List<Comment>> getComments(Resource requestId) {
-        getMergeRequest(requestId).orElseThrow(() ->
-                new IllegalArgumentException("MergeRequest " + requestId + " does not exist"));
-
-        List<List<Comment>> commentChains = new ArrayList<>();
+    public MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(GET_COMMENT_CHAINS);
-            query.setBinding("mergeRequest", requestId);
-            try (TupleQueryResult result = query.evaluate()) {
-                result.forEach(bindings -> Optional.ofNullable(bindings.getValue("parent")).ifPresent(parent -> {
-                    List<String> chain = new ArrayList<>(Arrays.asList(
-                            Bindings.requiredLiteral(bindings, "chain").stringValue().split(" ")));
-                    chain.add(0, parent.stringValue());
-                    chain.remove("");
-                    commentChains.add(chain.stream().map(vf::createIRI)
-                            .map(iri -> getComment(iri).orElseThrow(() -> new IllegalStateException("Comment " + iri
-                                    + " does not exist.")))
-                            .collect(Collectors.toList()));
-                }));
+            return createMergeRequest(config, localCatalog, conn);
+        }
+    }
+
+    @Override
+    public MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog,
+                                           RepositoryConnection conn) {
+        validateBranch(localCatalog, config.getRecordId(), config.getSourceBranchId(), conn);
+        validateBranch(localCatalog, config.getRecordId(), config.getTargetBranchId(), conn);
+
+        OffsetDateTime now = OffsetDateTime.now();
+        MergeRequest request = mergeRequestFactory.createNew(vf.createIRI(MERGE_REQUEST_NAMESPACE + UUID.randomUUID()));
+        request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
+        request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        request.setOnRecord(recordFactory.createNew(config.getRecordId()));
+        request.setSourceBranch(branchFactory.createNew(config.getSourceBranchId()));
+        request.setTargetBranch(branchFactory.createNew(config.getTargetBranchId()));
+        request.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(_Thing.title_IRI));
+        request.setRemoveSource(config.getRemoveSource());
+        config.getDescription().ifPresent(description ->
+                request.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI)));
+        request.setProperty(config.getCreator().getResource(), vf.createIRI(_Thing.creator_IRI));
+        config.getAssignees().forEach(request::addAssignee);
+        return request;
+    }
+
+    @Override
+    public void deleteComment(Resource commentId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            deleteComment(commentId, conn);
+        }
+    }
+
+    @Override
+    public void deleteComment(Resource commentId, RepositoryConnection conn) {
+        // Adjust comment chain pointers if they exist
+        Comment comment = getComment(commentId, conn).orElseThrow(
+                () -> new IllegalArgumentException("Comment " + commentId + " does not exist"));
+        RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(
+                Comment.replyComment_IRI), commentId);
+        if (statements.hasNext()) {
+            Resource parentCommentIRI = statements.next().getSubject();
+            Optional<Comment> parentCommentOpt = getComment(parentCommentIRI, conn);
+            Optional<Resource> childCommentResourceOpt = comment.getReplyComment_resource();
+            if (childCommentResourceOpt.isPresent() && parentCommentOpt.isPresent()) {
+                Comment childComment = getComment(childCommentResourceOpt.get(), conn).orElseThrow(
+                        () -> new IllegalArgumentException("Child comment " + childCommentResourceOpt.get()
+                                + " does not exist"));
+                Comment parentComment = parentCommentOpt.get();
+                parentComment.setReplyComment(childComment);
+                updateComment(parentComment.getResource(), parentComment, conn);
+            } else if (childCommentResourceOpt.isEmpty() && parentCommentOpt.isPresent()) {
+                Comment parentComment = parentCommentOpt.get();
+                parentComment.removeProperty(commentId, vf.createIRI(Comment.replyComment_IRI));
+                updateComment(parentComment.getResource(), parentComment, conn);
             }
         }
-        return commentChains;
+        statements.close();
+        thingManager.validateResource(commentId, commentFactory.getTypeIRI(), conn);
+        thingManager.remove(commentId, conn);
+    }
+
+    @Override
+    public void deleteCommentsWithRequestId(Resource requestId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            deleteCommentsWithRequestId(requestId, conn);
+        }
+    }
+
+    @Override
+    public void deleteCommentsWithRequestId(Resource requestId, RepositoryConnection conn) {
+        getComments(requestId, conn).forEach(commentChain -> commentChain.forEach(
+                comment -> deleteComment(comment.getResource(), conn)));
+    }
+
+    @Override
+    public void deleteMergeRequest(Resource requestId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            deleteMergeRequest(requestId, conn);
+        }
+    }
+
+    @Override
+    public void deleteMergeRequest(Resource requestId, RepositoryConnection conn) {
+        thingManager.validateResource(requestId, mergeRequestFactory.getTypeIRI(), conn);
+        deleteCommentsWithRequestId(requestId, conn);
+        thingManager.remove(requestId, conn);
+    }
+
+    @Override
+    public void deleteMergeRequestsWithRecordId(Resource recordId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            deleteMergeRequestsWithRecordId(recordId, conn);
+        }
+    }
+
+    @Override
+    public void deleteMergeRequestsWithRecordId(Resource recordId, RepositoryConnection conn) {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
+        builder.setOnRecord(recordId);
+
+        List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
+        mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
+
+        builder.setAccepted(true);
+        mergeRequests = getMergeRequests(builder.build(), conn);
+        mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
     }
 
     @Override
@@ -492,62 +417,170 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
     @Override
     public Optional<Comment> getComment(Resource commentId, RepositoryConnection conn) {
-        return catalogUtils.optObject(commentId, commentFactory, conn);
+        return thingManager.optObject(commentId, commentFactory, conn);
+    }
+
+    @Override
+    public List<List<Comment>> getComments(Resource requestId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getComments(requestId, conn);
+        }
+    }
+
+    @Override
+    public List<List<Comment>> getComments(Resource requestId, RepositoryConnection conn) {
+        getMergeRequest(requestId, conn).orElseThrow(() ->
+                new IllegalArgumentException("MergeRequest " + requestId + " does not exist"));
+
+        List<List<Comment>> commentChains = new ArrayList<>();
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMENT_CHAINS);
+        query.setBinding("mergeRequest", requestId);
+        try (TupleQueryResult result = query.evaluate()) {
+            result.forEach(bindings -> Optional.ofNullable(bindings.getValue("parent")).ifPresent(parent -> {
+                List<String> chain = new ArrayList<>(Arrays.asList(
+                        Bindings.requiredLiteral(bindings, "chain").stringValue().split(" ")));
+                chain.add(0, parent.stringValue());
+                chain.remove("");
+                commentChains.add(chain.stream().map(vf::createIRI)
+                        .map(iri -> getComment(iri, conn).orElseThrow(() -> new IllegalStateException("Comment " + iri
+                                + " does not exist.")))
+                        .collect(Collectors.toList()));
+            }));
+        }
+        return commentChains;
+    }
+
+    @Override
+    public Optional<MergeRequest> getMergeRequest(Resource requestId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getMergeRequest(requestId, conn);
+        }
+    }
+
+    @Override
+    public Optional<MergeRequest> getMergeRequest(Resource requestId, RepositoryConnection conn) {
+        return thingManager.optObject(requestId, mergeRequestFactory, conn);
+    }
+
+    @Override
+    public List<MergeRequest> getMergeRequests(MergeRequestFilterParams params) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getMergeRequests(params, conn);
+        }
+    }
+
+    @Override
+    public List<MergeRequest> getMergeRequests(MergeRequestFilterParams params, RepositoryConnection conn) {
+        LOG.trace("Fetching list of Merge Requests");
+        // Create filters used for query from params
+        StringBuilder filters = new StringBuilder("FILTER ");
+        if (!params.getAccepted()) {
+            filters.append("NOT ");
+        }
+        filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
+        Resource sortBy = params.getSortBy().orElseGet(() -> vf.createIRI(_Thing.issued_IRI));
+        filters.append("?").append(REQUEST_ID_BINDING).append(" <").append(sortBy).append("> ?")
+                .append(SORT_PRED_BINDING).append(". ");
+
+        if (params.hasFilters()) {
+            filters.append("FILTER (");
+            params.getAssignee().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(" = <")
+                    .append(assignee).append("> && "));
+            params.getOnRecord().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(" = <")
+                    .append(onRecord).append("> && "));
+            params.getSourceBranch().ifPresent(sourceBranch -> filters.append("?").append(SOURCE_BRANCH_BINDING)
+                    .append(" = <").append(sourceBranch).append("> && "));
+            params.getTargetBranch().ifPresent(targetBranch -> filters.append("?").append(TARGET_BRANCH_BINDING)
+                    .append(" = <").append(targetBranch).append("> && "));
+            params.getSourceCommit().ifPresent(sourceCommit -> filters.append("?").append(SOURCE_COMMIT_BINDING)
+                    .append(" = <").append(sourceCommit).append("> && "));
+            params.getTargetCommit().ifPresent(targetCommit -> filters.append("?").append(TARGET_COMMIT_BINDING)
+                    .append(" = <").append(targetCommit).append("> && "));
+            params.getRemoveSource().ifPresent(removeSource -> filters.append("?").append(REMOVE_SOURCE_BINDING)
+                    .append(" = ").append(removeSource).append(" && "));
+            filters.delete(filters.lastIndexOf(" && "), filters.length());
+            filters.append(")");
+        }
+
+        StringBuilder queryBuilder = new StringBuilder(GET_MERGE_REQUESTS_QUERY.replace(FILTERS, filters.toString()));
+        queryBuilder.append(" ORDER BY ");
+        if (params.sortAscending()) {
+            queryBuilder.append("?").append(SORT_PRED_BINDING);
+        } else {
+            queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
+        }
+
+        TupleQuery query = conn.prepareTupleQuery(queryBuilder.toString());
+        try (TupleQueryResult result = query.evaluate()) {
+            List<MergeRequest> mrs = StreamSupport.stream(result.spliterator(), false)
+                    .map(bindings -> Bindings.requiredResource(bindings, REQUEST_ID_BINDING))
+                    .map(resource -> thingManager.getExpectedObject(resource, mergeRequestFactory, conn))
+                    .collect(Collectors.toList());
+            // If a requesting user has been passed, filter the list based on record permissions
+            if (params.getRequestingUser().isPresent() && !mrs.isEmpty()) {
+                LOG.trace("Filtering list of Merge Requests based on requesting user");
+                IRI subjectId = (IRI) params.getRequestingUser().get().getResource();
+                // Initialize map used for record access filtering
+                Map<Resource, List<MergeRequest>> recordToMRMap = new HashMap<>();
+                mrs.forEach(mr -> {
+                    Resource recordIri = mr.getOnRecord_resource().orElseThrow(() ->
+                            new IllegalStateException("A MergeRequest must have a Record set"));
+                    recordToMRMap.putIfAbsent(recordIri, new ArrayList<>());
+                    recordToMRMap.get(recordIri).add(mr);
+                });
+                IRI actionId = vf.createIRI(Read.TYPE);
+                Map<String, Literal> subjectAttrs = Collections.singletonMap(XACML.SUBJECT_ID,
+                        vf.createLiteral(subjectId.stringValue()));
+                Map<String, Literal> actionAttrs = Collections.singletonMap(XACML.ACTION_ID,
+                        vf.createLiteral(actionId.stringValue()));
+                List<IRI> resourceIds = recordToMRMap.keySet().stream().map(iri -> (IRI) iri).toList();
+                Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
+                        List.of(actionId), actionAttrs);
+                Set<String> viewableRecords = pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
+                // Identify records that aren't in viewable list and remove the MergeRequests associated with them from
+                // the return list
+                resourceIds.stream()
+                        .filter(iri -> !viewableRecords.contains(iri.stringValue()))
+                        .forEach(recordToRemove -> recordToMRMap.get(recordToRemove).forEach(mrs::remove));
+            }
+            return mrs;
+        }
     }
 
     @Override
     public void updateComment(Resource commentId, Comment comment) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Optional<Value> description = comment.getProperty(vf.createIRI(_Thing.description_IRI));
-            if (description.isPresent() && description.get().stringValue().length() > MAX_COMMENT_STRING_LENGTH) {
-                throw new IllegalArgumentException("Comment string length must be less than "
-                        + MAX_COMMENT_STRING_LENGTH);
-            }
-            if (description.isEmpty() || StringUtils.isBlank(description.get().stringValue())) {
-                throw new IllegalArgumentException("Comment string is required");
-            }
-            OffsetDateTime now = OffsetDateTime.now();
-            comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
-            catalogUtils.validateResource(commentId, commentFactory.getTypeIRI(), conn);
-            catalogUtils.updateObject(comment, conn);
+            updateComment(commentId, comment, conn);
         }
     }
 
     @Override
-    public void deleteComment(Resource commentId) {
+    public void updateComment(Resource commentId, Comment comment, RepositoryConnection conn) {
+        Optional<Value> description = comment.getProperty(vf.createIRI(_Thing.description_IRI));
+        if (description.isPresent() && description.get().stringValue().length() > MAX_COMMENT_STRING_LENGTH) {
+            throw new IllegalArgumentException("Comment string length must be less than "
+                    + MAX_COMMENT_STRING_LENGTH);
+        }
+        if (description.isEmpty() || StringUtils.isBlank(description.get().stringValue())) {
+            throw new IllegalArgumentException("Comment string is required");
+        }
+        OffsetDateTime now = OffsetDateTime.now();
+        comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        thingManager.validateResource(commentId, commentFactory.getTypeIRI(), conn);
+        thingManager.updateObject(comment, conn);
+    }
+
+    @Override
+    public void updateMergeRequest(Resource requestId, MergeRequest request) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            // Adjust comment chain pointers if they exist
-            Comment comment = getComment(commentId, conn).orElseThrow(
-                    () -> new IllegalArgumentException("Comment " + commentId + " does not exist"));
-            RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(
-                    Comment.replyComment_IRI), commentId);
-            if (statements.hasNext()) {
-                Resource parentCommentIRI = statements.next().getSubject();
-                Optional<Comment> parentCommentOpt = getComment(parentCommentIRI, conn);
-                Optional<Resource> childCommentResourceOpt = comment.getReplyComment_resource();
-                if (childCommentResourceOpt.isPresent() && parentCommentOpt.isPresent()) {
-                    Comment childComment = getComment(childCommentResourceOpt.get(), conn).orElseThrow(
-                            () -> new IllegalArgumentException("Child comment " + childCommentResourceOpt.get()
-                                    + " does not exist"));
-                    Comment parentComment = parentCommentOpt.get();
-                    parentComment.setReplyComment(childComment);
-                    updateComment(parentComment.getResource(), parentComment);
-                } else if (childCommentResourceOpt.isEmpty() && parentCommentOpt.isPresent()) {
-                    Comment parentComment = parentCommentOpt.get();
-                    parentComment.removeProperty(commentId, vf.createIRI(Comment.replyComment_IRI));
-                    updateComment(parentComment.getResource(), parentComment);
-                }
-            }
-            statements.close();
-            catalogUtils.validateResource(commentId, commentFactory.getTypeIRI(), conn);
-            catalogUtils.remove(commentId, conn);
+            updateMergeRequest(requestId, request, conn);
         }
     }
 
     @Override
-    public void deleteCommentsWithRequestId(Resource requestId) {
-        getComments(requestId).forEach(commentChain -> commentChain.forEach(
-                comment -> deleteComment(comment.getResource())));
+    public void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn) {
+        thingManager.validateResource(requestId, mergeRequestFactory.getTypeIRI(), conn);
+        thingManager.updateObject(request, conn);
     }
 
     private String getBranchTitle(Branch branch) {
@@ -555,8 +588,11 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                 new IllegalStateException("Branch " + branch.getResource() + " does not have a title")).stringValue();
     }
 
-    private Resource getBranchHead(Branch branch) {
-        return branch.getHead_resource().orElseThrow(() ->
-                new IllegalStateException("Branch " + branch.getResource() + " does not have a head Commit"));
+    private void validateBranch(Resource catalogId, Resource recordId, Resource branchId, RepositoryConnection conn) {
+        VersionedRDFRecord record = recordManager.getRecord(catalogId, recordId, recordFactory, conn);
+        Set<Resource> branchIRIs = record.getBranch_resource();
+        if (!branchIRIs.contains(branchId)) {
+            throw thingManager.throwDoesNotBelong(branchId, branchFactory, record.getResource(), recordFactory);
+        }
     }
 }

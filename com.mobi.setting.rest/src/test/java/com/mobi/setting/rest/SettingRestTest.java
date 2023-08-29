@@ -192,7 +192,6 @@ public class SettingRestTest extends MobiRestTestCXF {
         assertEquals(0, result.size());
     }
 
-
     // GET /settings
     // type = ApplicationSetting.TYPE
 

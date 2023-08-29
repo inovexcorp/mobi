@@ -42,16 +42,21 @@ import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.DistributionManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.KeywordCount;
-import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -59,7 +64,6 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
@@ -73,7 +77,6 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
@@ -87,7 +90,6 @@ import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -166,7 +168,25 @@ public class CatalogRest {
     protected CatalogManager catalogManager;
 
     @Reference
-    protected CatalogUtilsService catalogUtilsService;
+    protected RecordManager recordManager;
+
+    @Reference
+    protected BranchManager branchManager;
+
+    @Reference
+    protected CommitManager commitManager;
+
+    @Reference
+    protected DistributionManager distributionManager;
+
+    @Reference
+    protected VersionManager versionManager;
+
+    @Reference
+    protected DifferenceManager differenceManager;
+
+    @Reference
+    protected CompiledResourceManager compiledResourceManager;
 
     @Reference
     protected VersioningManager versioningManager;
@@ -176,6 +196,7 @@ public class CatalogRest {
 
     @Reference
     protected CatalogProvUtils provUtils;
+
     @Reference
     protected EngineManager engineManager;
 
@@ -185,8 +206,6 @@ public class CatalogRest {
     @Reference
     protected CommitFactory commitFactory;
 
-    @Reference
-    protected InProgressCommitFactory inProgressCommitFactory;
 
     static {
         Set<String> sortResources = new HashSet<>();
@@ -212,7 +231,7 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository",
                             content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. Could not retrieve catalogs"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -220,10 +239,10 @@ public class CatalogRest {
     public Response getCatalogs(
             @Parameter(description = "Optional Type of Catalog you want back (local or distributed)", required = false)
             @QueryParam("type") String catalogType) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Set<Catalog> catalogs = new HashSet<>();
-            Catalog localCatalog = catalogManager.getLocalCatalog();
-            Catalog distributedCatalog = catalogManager.getDistributedCatalog();
+            Catalog localCatalog = catalogManager.getLocalCatalog(conn);
+            Catalog distributedCatalog = catalogManager.getDistributedCatalog(conn);
             if (catalogType == null) {
                 catalogs.add(localCatalog);
                 catalogs.add(distributedCatalog);
@@ -268,13 +287,13 @@ public class CatalogRest {
     public Response getCatalog(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIri = vf.createIRI(catalogId);
             if (catalogIri.equals(configProvider.getLocalCatalogIRI())) {
-                return Response.ok(thingToSkolemizedObjectNode(catalogManager.getLocalCatalog(),
+                return Response.ok(thingToSkolemizedObjectNode(catalogManager.getLocalCatalog(conn),
                         Catalog.TYPE, bNodeService).toString()).build();
             } else if (catalogIri.equals(configProvider.getDistributedCatalogIRI())) {
-                return Response.ok(thingToSkolemizedObjectNode(catalogManager.getDistributedCatalog(),
+                return Response.ok(thingToSkolemizedObjectNode(catalogManager.getDistributedCatalog(conn),
                         Catalog.TYPE, bNodeService).toString()).build();
             } else {
                 throw ErrorUtils.sendError("Catalog " + catalogId + " does not exist", Response.Status.NOT_FOUND);
@@ -308,7 +327,8 @@ public class CatalogRest {
             summary = "Retrieves the Records in the Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId could not"
+                            + " be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -348,7 +368,7 @@ public class CatalogRest {
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
             @Parameter(description = "String used to filter out Records", required = true)
             @QueryParam("searchText") String searchText) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
 
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset).ascending(asc);
@@ -371,116 +391,14 @@ public class CatalogRest {
             if (creators != null && creators.size() > 0) {
                 builder.creators(creators.stream().map(vf::createIRI).collect(Collectors.toList()));
             }
-            PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
-                    builder.build(), getActiveUser(servletRequest, engineManager));
+            PaginatedSearchResults<Record> records = recordManager.findRecord(vf.createIRI(catalogId),
+                    builder.build(), getActiveUser(servletRequest, engineManager), conn);
             return createPaginatedResponseJackson(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
                     Record.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
-     * based on the `type` field. Requires the `title` and `identifier` fields to be set.
-     *
-     * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param typeIRI The required IRI of the type for the new Record. Must be a valid IRI for a Record or one of its
-     *                subclasses.
-     * @param title The required title for the new Record.
-     * @param identifier Required identifier for the new Record. Must be a valid IRI.
-     * @param description Optional description for the new Record.
-     * @param markdown Optional markdown abstract for the new Record.
-     * @param keywords Optional list of keywords strings for the new Record.
-     * @return Response with the IRI string of the created Record.
-     */
-    @POST
-    @Path("{catalogId}/records")
-    @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Creates a new Record in the Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Record",
-                            content = @Content(schema = @Schema(implementation = String.class))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    @ActionAttributes(
-            @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", value = "type",
-                    type = ValueType.BODY))
-    @ResourceId(value = "catalogId", type = ValueType.PATH)
-    public Response createRecord(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(schema = @Schema(description = "String representing the Catalog ID", required = true,
-                implementation = String.class))
-            @PathParam("catalogId") String catalogId,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Required IRI of the type for the new Record"
-                    + "Must be a valid IRI for a Record or one of its subclasses", required = true))
-            @FormParam("type") String typeIRI,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Required title for the new Record", required = true))
-            @FormParam("title") String title,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Required identifier for the new Record. Must be a valid IRI", required = true))
-            @FormParam("identifier") String identifier,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional description for the new Record"))
-            @FormParam("description") String description,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional markdown abstract for the new Record"))
-            @FormParam("markdown") String markdown,
-            @Parameter(array = @ArraySchema(
-                    arraySchema = @Schema(description =
-                            "Optional list of keywords strings for the new Record"),
-                    schema = @Schema(implementation = String.class, description = "keyword")))
-            @FormParam("keywords") List<String> keywords) {
-        checkStringParam(title, "Record title is required");
-        Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
-        if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
-            throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
-        }
-        User activeUser = getActiveUser(servletRequest, engineManager);
-        CreateActivity createActivity = null;
-        try {
-            createActivity = provUtils.startCreateActivity(activeUser);
-            RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(activeUser));
-            if (StringUtils.isNotEmpty(identifier)) {
-                builder.identifier(identifier);
-            }
-            if (StringUtils.isNotEmpty(description)) {
-                builder.description(description);
-            }
-            if (StringUtils.isNotEmpty(markdown)) {
-                builder.markdown(markdown);
-            }
-            if (keywords != null && keywords.size() > 0) {
-                builder.keywords(new HashSet<>(keywords));
-            }
-
-            Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(typeIRI));
-            catalogManager.addRecord(vf.createIRI(catalogId), newRecord);
-            provUtils.endCreateActivity(createActivity, newRecord.getResource());
-            return Response.status(201).entity(newRecord.getResource().stringValue()).build();
-        } catch (IllegalArgumentException ex) {
-            provUtils.removeActivity(createActivity);
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException ex) {
-            provUtils.removeActivity(createActivity);
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (Exception ex) {
-            provUtils.removeActivity(createActivity);
-            throw ex;
         }
     }
 
@@ -503,7 +421,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Array with the contents of the "
                             + "Record’s named graph, including the Record object"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Record could not be found"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -515,9 +434,9 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the Record ID", required = true)
             @PathParam("recordId") String recordId) {
-        try {
-            Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Record record = recordManager.getRecordOpt(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    factoryRegistry.getFactoryOfType(Record.class).get(), conn).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
             return Response.ok(modelToSkolemizedJsonld(removeContext(record.getModel()),
                     bNodeService)).build();
@@ -548,7 +467,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether or not the Record was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -562,8 +482,8 @@ public class CatalogRest {
             @PathParam("recordId") String recordId) {
         User activeUser = getActiveUser(servletRequest, engineManager);
         IRI recordIri = vf.createIRI(recordId);
-        try {
-            catalogManager.removeRecord(vf.createIRI(catalogId), recordIri, activeUser, Record.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.removeRecord(vf.createIRI(catalogId), recordIri, activeUser, Record.class, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -595,7 +515,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Returns the updated model represented as Json"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -609,10 +530,10 @@ public class CatalogRest {
             @Parameter(description = "JSON-LD of the new Record which will replace the existing Record",
                     required = true)
                     String newRecordJson) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get());
-            catalogManager.updateRecord(vf.createIRI(catalogId), newRecord);
+            recordManager.updateRecord(vf.createIRI(catalogId), newRecord, conn);
             return Response.ok(modelToSkolemizedJsonld(removeContext(newRecord.getModel()),
                     bNodeService)).build();
         } catch (IllegalArgumentException ex) {
@@ -657,7 +578,7 @@ public class CatalogRest {
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Keywords to return in one page", required = true)
             @QueryParam("limit") int limit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             LinksUtils.validateParams(limit, offset);
 
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset);
@@ -669,8 +590,8 @@ public class CatalogRest {
                 builder.searchText(searchText);
             }
 
-            PaginatedSearchResults<KeywordCount> keywordCounts = catalogManager.getKeywords(vf.createIRI(catalogId),
-                    builder.build());
+            PaginatedSearchResults<KeywordCount> keywordCounts = recordManager.getKeywords(vf.createIRI(catalogId),
+                    builder.build(), conn);
 
             ArrayNode keywordsArrayNode = serializeKeywordCount(keywordCounts);
 
@@ -721,7 +642,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with a list of all the Distributions of the"
                                     + " requested UnversionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -743,10 +665,10 @@ public class CatalogRest {
             @DefaultValue("100") @QueryParam("limit") int limit,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
-            Set<Distribution> distributions = catalogManager.getUnversionedDistributions(vf.createIRI(catalogId),
-                    vf.createIRI(recordId));
+            Set<Distribution> distributions = distributionManager.getUnversionedDistributions(vf.createIRI(catalogId),
+                    vf.createIRI(recordId), conn);
             return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, bNodeService);
@@ -784,7 +706,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Distribution"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -810,10 +733,11 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional download URL for the new Distribution"))
             @FormParam("downloadURL") String downloadURL) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
                     servletRequest);
-            catalogManager.addUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId), newDistribution);
+            distributionManager.addUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    newDistribution, conn);
             return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -843,9 +767,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Distribution that was identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or distributionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     public Response getUnversionedDistribution(
@@ -855,11 +780,9 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
-        try {
-            Distribution distribution = catalogManager.getUnversionedDistribution(vf.createIRI(catalogId),
-                    vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
-                    ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
-                            Response.Status.NOT_FOUND));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Distribution distribution = distributionManager.getUnversionedDistribution(vf.createIRI(catalogId),
+                    vf.createIRI(recordId), vf.createIRI(distributionId), conn);
             return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
@@ -890,9 +813,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating if the Distribution was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or distributionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     public Response deleteUnversionedDistribution(
@@ -902,9 +826,9 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
-        try {
-            catalogManager.removeUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(distributionId));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            distributionManager.removeUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(distributionId), conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -937,9 +861,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating if the Distribution was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or distributionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     public Response updateUnversionedDistribution(
@@ -951,11 +876,11 @@ public class CatalogRest {
             @PathParam("distributionId") String distributionId,
             @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution",
                     required = true) String newDistributionJson) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
-            catalogManager.updateUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    newDistribution);
+            distributionManager.updateUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    newDistribution, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -988,7 +913,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "List of all the Versions associated with a VersionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1008,9 +934,9 @@ public class CatalogRest {
             @DefaultValue("100") @QueryParam("limit") int limit,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
-            Set<Version> versions = catalogManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId));
+            Set<Version> versions = versionManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId), conn);
             return createPaginatedThingResponseJackson(uriInfo, versions, vf.createIRI(sort), offset, limit,
                     asc, null, Version.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -1048,7 +974,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1071,17 +998,17 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Version", required = false))
             @FormParam("description") String description) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Version title is required");
             Map<String, OrmFactory<? extends Version>> versionFactories = getVersionFactories();
             if (typeIRI == null || !versionFactories.containsKey(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Version type", Response.Status.BAD_REQUEST);
             }
 
-            Version newVersion = catalogManager.createVersion(title, description, versionFactories.get(typeIRI));
+            Version newVersion = versionManager.createVersion(title, description, versionFactories.get(typeIRI));
             newVersion.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
-            catalogManager.addVersion(vf.createIRI(catalogId), vf.createIRI(recordId), newVersion);
+            versionManager.addVersion(vf.createIRI(catalogId), vf.createIRI(recordId), newVersion, conn);
             return Response.status(201).entity(newVersion.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1153,7 +1080,7 @@ public class CatalogRest {
             IRI recordIri = vf.createIRI(recordId);
             IRI commitIri = vf.createIRI(commitId);
             IRI tagIri = vf.createIRI(iri);
-            if (!catalogUtilsService.commitInRecord(recordIri, commitIri, conn)) {
+            if (!commitManager.commitInRecord(recordIri, commitIri, conn)) {
                 throw ErrorUtils.sendError("Commit " + commitId + " is not in record " + recordId,
                         Response.Status.BAD_REQUEST);
             }
@@ -1171,7 +1098,7 @@ public class CatalogRest {
             tag.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
             tag.setCommit(commitFactory.createNew(commitIri));
-            catalogManager.addVersion(vf.createIRI(catalogId), recordIri, tag);
+            versionManager.addVersion(vf.createIRI(catalogId), recordIri, tag, conn);
             return Response.status(201).entity(tag.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1199,7 +1126,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Latest Version for the identified VersionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1209,9 +1137,9 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId) {
-        try {
-            Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Version version = versionManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    factoryRegistry.getFactoryOfType(Version.class).get(), conn).orElseThrow(() ->
                     ErrorUtils.sendError("Latest Version could not be found", Response.Status.NOT_FOUND));
             return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, bNodeService)
                     .toString()).build();
@@ -1242,9 +1170,10 @@ public class CatalogRest {
             summary = "Gets a specific Version for the identified VersionedRecord",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Requested Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or versionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1255,15 +1184,15 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("versionId") String versionId) {
-        try {
-            Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
-                    ErrorUtils.sendError("Version " + versionId + " could not be found", Response.Status.NOT_FOUND));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Version version = versionManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class)
+                            .orElseThrow(() -> new IllegalArgumentException("Version factory not found")), conn);
             return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException ex) {
+        } catch (MobiException | IllegalStateException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -1287,14 +1216,14 @@ public class CatalogRest {
     @Operation(
             tags = "catalogs",
             summary = "Removes a specific Version from a VersionedRecord. If that Version happens to be "
-                    + "the latest Version,"
-                    + " the latest Version will be updated to be the previous Version",
+                    + "the latest Version, the latest Version will be updated to be the previous Version",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether the Version was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or versionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1306,8 +1235,9 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("versionId") String versionId) {
-        try {
-            catalogManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            versionManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId),
+                    conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1340,9 +1270,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether the Version was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or versionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1357,10 +1288,10 @@ public class CatalogRest {
             @Parameter(description = "JSON-LD of the new Version which will replace the existing Version",
                     required = true)
                     String newVersionJson) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
                     factoryRegistry.getFactoryOfType(Version.class).get());
-            catalogManager.updateVersion(vf.createIRI(catalogId), vf.createIRI(recordId), newVersion);
+            versionManager.updateVersion(vf.createIRI(catalogId), vf.createIRI(recordId), newVersion, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1396,7 +1327,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "List of Distributions for the identified Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or versionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1417,10 +1349,10 @@ public class CatalogRest {
             @DefaultValue("100") @QueryParam("limit") int limit,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
-            Set<Distribution> distributions = catalogManager.getVersionedDistributions(vf.createIRI(catalogId),
-                    vf.createIRI(recordId), vf.createIRI(versionId));
+            Set<Distribution> distributions = distributionManager.getVersionedDistributions(vf.createIRI(catalogId),
+                    vf.createIRI(recordId), vf.createIRI(versionId), conn);
             return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, bNodeService);
@@ -1459,7 +1391,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Distribution"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or versionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1488,11 +1421,11 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional download URL for the new Distribution"))
             @FormParam("downloadURL") String downloadURL) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
                     servletRequest);
-            catalogManager.addVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(versionId), newDistribution);
+            distributionManager.addVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(versionId), newDistribution, conn);
             return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1524,9 +1457,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Distribution for the Version identified by the IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "versionId, or distributionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     public Response getVersionedDistribution(
@@ -1538,11 +1472,9 @@ public class CatalogRest {
             @PathParam("versionId") String versionId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
-        try {
-            Distribution distribution = catalogManager.getVersionedDistribution(vf.createIRI(catalogId),
-                    vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
-                    ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
-                            Response.Status.NOT_FOUND));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Distribution distribution = distributionManager.getVersionedDistribution(vf.createIRI(catalogId),
+                    vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId), conn);
             return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
@@ -1575,9 +1507,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response identifying whether the Distribution was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "versionId, or distributionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     public Response deleteVersionedDistribution(
@@ -1589,9 +1522,9 @@ public class CatalogRest {
             @PathParam("versionId") String versionId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
-        try {
-            catalogManager.removeVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(versionId), vf.createIRI(distributionId));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            distributionManager.removeVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(versionId), vf.createIRI(distributionId), conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1626,9 +1559,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response identifying whether the Distribution was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "versionId, or distributionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     public Response updateVersionedDistribution(
@@ -1642,11 +1576,11 @@ public class CatalogRest {
             @PathParam("distributionId") String distributionId,
             @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution", required = true)
                     String newDistributionJson) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
-            catalogManager.updateVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(versionId), newDistribution);
+            distributionManager.updateVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(versionId), newDistribution, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1675,7 +1609,8 @@ public class CatalogRest {
             summary = "Gets the Commit associated with the identified Version using the provided IDs",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Commit associated with the identified Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or versionId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1690,11 +1625,11 @@ public class CatalogRest {
             @Parameter(description = "Optional format string")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
-        try {
-            Commit commit = catalogManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(versionId));
-            return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format,
-                    bNodeService);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Commit commit = commitManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(versionId), conn);
+            return createCommitResponse(commit, differenceManager.getCommitDifference(commit.getResource(), conn),
+                    format, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -1731,7 +1666,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "List of Branches for the identified VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
+                            + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1755,9 +1691,9 @@ public class CatalogRest {
             @Parameter(description = "Whether or not the list should be filtered to Branches associated "
                     + "with the user making the request")
             @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
-            Set<Branch> branches = catalogManager.getBranches(vf.createIRI(catalogId), vf.createIRI(recordId));
+            Set<Branch> branches = branchManager.getBranches(vf.createIRI(catalogId), vf.createIRI(recordId), conn);
             Function<Branch, Boolean> filterFunction = null;
             if (applyUserFilter) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
@@ -1807,7 +1743,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Branch"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
+                            + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1832,12 +1769,12 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String representing the Commit ID", required = true))
             @FormParam("commitId") String commitId) {
-        try ( RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Branch title is required");
             checkStringParam(commitId, "Commit ID is required");
             IRI recordIri = vf.createIRI(recordId);
             IRI commitIri = vf.createIRI(commitId);
-            if (!catalogUtilsService.commitInRecord(recordIri, commitIri, conn)) {
+            if (!commitManager.commitInRecord(recordIri, commitIri, conn)) {
                 throw ErrorUtils.sendError("Commit not in Record", Response.Status.BAD_REQUEST);
             }
             Map<String, OrmFactory<? extends Branch>> branchFactories = getBranchFactories();
@@ -1845,13 +1782,14 @@ public class CatalogRest {
                 throw ErrorUtils.sendError("Invalid Branch type", Response.Status.BAD_REQUEST);
             }
 
-            Branch newBranch = catalogManager.createBranch(title, description, branchFactories.get(typeIRI));
+            Branch newBranch = branchManager.createBranch(title, description, branchFactories.get(typeIRI));
             newBranch.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
-            Commit newCommit = catalogManager.getCommit(commitIri).orElseThrow(() -> ErrorUtils.sendError("Commit "
-                    + commitId + " could not be found", Response.Status.BAD_REQUEST));
+            Commit newCommit = commitManager.getCommit(commitIri, conn)
+                    .orElseThrow(() -> ErrorUtils.sendError("Commit " + commitId + " could not be found",
+                            Response.Status.BAD_REQUEST));
             newBranch.setHead(newCommit);
-            catalogManager.addBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch);
+            branchManager.addBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch, conn);
             return Response.status(201).entity(newBranch.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1879,7 +1817,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Master Branch for the identified VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
+                            + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1890,8 +1829,8 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
-        try {
-            Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Branch masterBranch = branchManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId), conn);
             return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
@@ -1922,7 +1861,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Identified Branch for the specific VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId does not exist"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1935,10 +1875,9 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId) {
-        try {
-            Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get()).orElseThrow(() ->
-                    ErrorUtils.sendError("Branch " + branchId + " could not be found", Response.Status.NOT_FOUND));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Branch branch = branchManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get(), conn);
             return Response.ok(thingToSkolemizedObjectNode(branch, Branch.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
@@ -1969,7 +1908,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response identifying whether the Branch was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
+                            + "or branchId does not exist"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1986,8 +1926,8 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId) {
-        try {
-            catalogManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            branchManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId), conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2020,7 +1960,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was "
                             + "successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId does not exist"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2036,10 +1977,10 @@ public class CatalogRest {
             @PathParam("branchId") String branchId,
             @Parameter(description = "String representing the Branch ID", required = true)
                     String newBranchJson) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
                     factoryRegistry.getFactoryOfType(Branch.class).get());
-            catalogManager.updateBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch);
+            branchManager.updateBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2080,7 +2021,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "List of Commits for the identified Branch which represents"
                                     + " the Commit chain"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2102,16 +2044,16 @@ public class CatalogRest {
             @QueryParam("limit") int limit) {
         LinksUtils.validateParams(limit, offset);
 
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode commitChain = mapper.createArrayNode();
 
             final List<Commit> commits;
             if (StringUtils.isBlank(targetId)) {
-                commits = catalogManager.getCommitChain(vf.createIRI(catalogId), vf.createIRI(recordId),
-                        vf.createIRI(branchId));
+                commits = commitManager.getCommitChain(vf.createIRI(catalogId), vf.createIRI(recordId),
+                        vf.createIRI(branchId), conn);
             } else {
-                commits = catalogManager.getCommitChain(vf.createIRI(catalogId), vf.createIRI(recordId),
-                        vf.createIRI(branchId), vf.createIRI(targetId));
+                commits = commitManager.getDifferenceChain(vf.createIRI(catalogId), vf.createIRI(recordId),
+                        vf.createIRI(branchId), vf.createIRI(targetId), conn);
             }
             Stream<Commit> result = commits.stream();
             if (limit > 0) {
@@ -2152,7 +2094,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI of the new Commit added to the Branch"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2210,7 +2153,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the Commit which is the HEAD of the "
                                    + "identified Branch"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2226,11 +2170,11 @@ public class CatalogRest {
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
-        try {
-            Commit headCommit = catalogManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId));
-            return createCommitResponse(headCommit, catalogManager.getCommitDifference(headCommit.getResource()),
-                    format, bNodeService);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Commit headCommit = commitManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(branchId), conn);
+            return createCommitResponse(headCommit,
+                    differenceManager.getCommitDifference(headCommit.getResource(), conn), format, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -2264,7 +2208,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the Commit identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " branchId, or commitId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Commit could not be found"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -2283,12 +2228,12 @@ public class CatalogRest {
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
-        try {
-            Commit commit = catalogManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId), vf.createIRI(commitId)).orElseThrow(() ->
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Commit commit = commitManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(branchId), vf.createIRI(commitId), conn).orElseThrow(() ->
                     ErrorUtils.sendError("Commit " + commitId + " could not be found", Response.Status.NOT_FOUND));
-            return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format,
-                    bNodeService);
+            return createCommitResponse(commit, differenceManager.getCommitDifference(commit.getResource(), conn),
+                    format, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -2327,7 +2272,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the Difference between the identified"
                                     + " Branches' HEAD Commits as a JSON object"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2344,13 +2290,13 @@ public class CatalogRest {
             @QueryParam("targetId") String targetBranchId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(targetBranchId, "Target branch is required");
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
-            Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));
-            Commit targetHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId));
-            Difference diff = catalogManager.getDifference(sourceHead.getResource(), targetHead.getResource());
+            Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId), conn);
+            Commit targetHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId), conn);
+            Difference diff = differenceManager.getDifference(sourceHead.getResource(), targetHead.getResource(), conn);
             return Response.ok(getDifferenceJsonString(diff, rdfFormat, bNodeService),
                     MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
@@ -2390,7 +2336,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the list of Conflicts between the "
                                     + "identified Branches' HEAD Commits"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2408,13 +2355,13 @@ public class CatalogRest {
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(targetBranchId, "Target branch is required");
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
-            Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));
-            Commit targetHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId));
-            Set<Conflict> conflicts = catalogManager.getConflicts(sourceHead.getResource(), targetHead.getResource());
+            Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId), conn);
+            Commit targetHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId), conn);
+            Set<Conflict> conflicts = differenceManager.getConflicts(sourceHead.getResource(), targetHead.getResource(), conn);
             ArrayNode array = mapper.createArrayNode();
             conflicts.stream()
                     .map(conflict -> conflictToJson(conflict, rdfFormat))
@@ -2461,7 +2408,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Commits were successfully merged"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2532,7 +2480,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response the compiled Resource for the entity at the specific Commit"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " branchId, or commitId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2553,18 +2502,19 @@ public class CatalogRest {
             @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
                     + "identified Record should be  applied to the result")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
             Resource commitIRI = vf.createIRI(commitId);
-            catalogManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI);
-            Model resource = catalogManager.getCompiledResource(commitIRI);
+            commitManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI, conn);
+            Model resource = compiledResourceManager.getCompiledResource(commitIRI, conn);
             if (apply) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
-                Optional<InProgressCommit> inProgressCommit = catalogManager.getInProgressCommit(catalogIRI, recordIRI,
-                        activeUser);
+                Optional<InProgressCommit> inProgressCommit = commitManager.getInProgressCommitOpt(catalogIRI, recordIRI,
+                        activeUser, conn);
                 if (inProgressCommit.isPresent()) {
-                    resource = catalogManager.applyInProgressCommit(inProgressCommit.get().getResource(), resource);
+                    resource = differenceManager.applyInProgressCommit(inProgressCommit.get().getResource(), resource,
+                            conn);
                 }
             }
             return Response.ok(modelToSkolemizedString(resource, rdfFormat, bNodeService)).build();
@@ -2605,7 +2555,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the compiled Resource for the entity"
                                     + " at the specific Commit to download"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
+                            + " branchId, or commitId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2629,19 +2580,20 @@ public class CatalogRest {
             @Parameter(description = "Desired name of the generated file. "
                     + "NOTE: Optional param - defaults to \"resource\"")
             @DefaultValue("resource") @QueryParam("fileName") String fileName) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
             Resource commitIRI = vf.createIRI(commitId);
-            catalogManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI);
+            commitManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI, conn);
             Model resource;
-            Model temp = catalogManager.getCompiledResource(vf.createIRI(commitId));
+            Model temp = compiledResourceManager.getCompiledResource(vf.createIRI(commitId), conn);
             if (apply) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
-                Optional<InProgressCommit> inProgressCommit = catalogManager.getInProgressCommit(catalogIRI, recordIRI,
-                        activeUser);
+                Optional<InProgressCommit> inProgressCommit = commitManager.getInProgressCommitOpt(catalogIRI, recordIRI,
+                        activeUser, conn);
                 resource = inProgressCommit.map(inProgressCommit1 ->
-                        catalogManager.applyInProgressCommit(inProgressCommit1.getResource(), temp)).orElse(temp);
+                        differenceManager.applyInProgressCommit(inProgressCommit1.getResource(), temp, conn))
+                        .orElse(temp);
             } else {
                 resource = temp;
             }
@@ -2682,7 +2634,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether the InProgressCommit"
                                    +  " was created successfully"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
+                            + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2693,10 +2646,10 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
-            InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser);
-            catalogManager.addInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), inProgressCommit);
+            InProgressCommit inProgressCommit = commitManager.createInProgressCommit(activeUser);
+            commitManager.addInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), inProgressCommit, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2727,7 +2680,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the changes from the specific InProgressCommit"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
+                            + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2740,12 +2694,12 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
-            InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(vf.createIRI(catalogId),
-                    vf.createIRI(recordId), activeUser).orElseThrow(() ->
+            InProgressCommit inProgressCommit = commitManager.getInProgressCommitOpt(vf.createIRI(catalogId),
+                    vf.createIRI(recordId), activeUser, conn).orElseThrow(() ->
                     ErrorUtils.sendError("InProgressCommit could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(getCommitDifferenceObject(inProgressCommit.getResource(), format).toString(),
+            return Response.ok(getCommitDifferenceObject(inProgressCommit.getResource(), format, conn).toString(),
                     MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2775,9 +2729,10 @@ public class CatalogRest {
                     + "specific VersionedRDFRecord",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "RResponse indicating whether the InProgressCommit "
+                            description = "Response indicating whether the InProgressCommit "
                                     + "was deleted successfully"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
+                            + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2788,9 +2743,9 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
-            catalogManager.removeInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser);
+            commitManager.removeInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2824,7 +2779,8 @@ public class CatalogRest {
                     + " created with the provided data.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "InProgressCommit was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
+                            + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2845,12 +2801,12 @@ public class CatalogRest {
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were deleted in the entity", required = true))
             @FormParam("deletions") String deletionsJson) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
             Model deletions = StringUtils.isEmpty(deletionsJson) ? null : convertJsonld(deletionsJson);
-            catalogManager.updateInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser,
-                    additions, deletions);
+            commitManager.updateInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser,
+                    additions, deletions, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2922,14 +2878,14 @@ public class CatalogRest {
      *
      * @param commitId The value of the Commit to retrieve the Difference of.
      * @param format   String representing the RDF format to return the statements in.
-     *
+     * @param conn     A RepositoryConnection to use for lookup.
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
-     *         statements.
+     * statements.
      */
-    private ObjectNode getCommitDifferenceObject(Resource commitId, String format) {
+    private ObjectNode getCommitDifferenceObject(Resource commitId, String format, RepositoryConnection conn) {
         long start = System.currentTimeMillis();
         try {
-            return getDifferenceJson(catalogManager.getCommitDifference(commitId), format);
+            return getDifferenceJson(differenceManager.getCommitDifference(commitId, conn), format);
         } finally {
             LOG.trace("getCommitDifferenceObject took {}ms", System.currentTimeMillis() - start);
         }
@@ -2996,7 +2952,7 @@ public class CatalogRest {
         if (downloadURL != null) {
             builder.downloadURL(vf.createIRI(downloadURL));
         }
-        Distribution distribution = catalogManager.createDistribution(builder.build());
+        Distribution distribution = distributionManager.createDistribution(builder.build());
         distribution.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                 vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         return distribution;

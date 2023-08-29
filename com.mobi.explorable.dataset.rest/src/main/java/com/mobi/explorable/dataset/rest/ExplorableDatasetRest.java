@@ -28,7 +28,8 @@ import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -79,6 +80,7 @@ import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -126,12 +128,26 @@ public class ExplorableDatasetRest {
     private final ValueFactory factory = new ValidatingValueFactory();
     private final ModelFactory modelFactory = new DynamicModelFactory();
 
-    private DatasetManager datasetManager;
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private OntologyManager ontologyManager;
-    private OntologyRecordFactory ontologyRecordFactory;
-    private BNodeService bNodeService;
+    @Reference
+    protected DatasetManager datasetManager;
+
+    @Reference
+    protected CatalogConfigProvider configProvider;
+
+    @Reference
+    protected RecordManager recordManager;
+
+    @Reference
+    protected CompiledResourceManager compiledResourceManager;
+
+    @Reference
+    protected OntologyManager ontologyManager;
+
+    @Reference
+    protected OntologyRecordFactory ontologyRecordFactory;
+
+    @Reference
+    protected BNodeService bNodeService;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
@@ -184,36 +200,6 @@ public class ExplorableDatasetRest {
         }
     }
 
-    @Reference
-    public void setDatasetManager(DatasetManager datasetManager) {
-        this.datasetManager = datasetManager;
-    }
-
-    @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
-
-    @Reference
-    public void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    public void setOntologyManager(OntologyManager ontologyManager) {
-        this.ontologyManager = ontologyManager;
-    }
-
-    @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    public void setBNodeService(BNodeService bNodeService) {
-        this.bNodeService = bNodeService;
-    }
-
     /**
      * Retrieves all the class details associated with ontologies linked to a {@link Dataset} in the local
      * {@link Catalog} in a JSON array.
@@ -241,14 +227,14 @@ public class ExplorableDatasetRest {
             @PathParam("recordIRI") String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             DatasetRecord record = datasetManager.getDatasetRecord(datasetRecordRsr).orElseThrow(() ->
                     ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
             List<ClassDetails> classes = new ArrayList<>();
             Consumer<TupleQueryResult> tupleQueryResultConsumer = results ->
                     getClassDetailsFromQueryResults(results, datasetRecordRsr, classes);
             getQueryResults(datasetRecordRsr, GET_CLASSES_TYPES, "", null, tupleQueryResultConsumer);
-            List<ClassDetails> finalClasses = addOntologyDetailsToClasses(classes, record.getOntology(), record.getModel());
+            List<ClassDetails> finalClasses = addOntologyDetailsToClasses(classes, record.getOntology(), record.getModel(), conn);
             return Response.ok(finalClasses).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -809,10 +795,11 @@ public class ExplorableDatasetRest {
      * @param classes     list of all class details to add data to
      * @param ontologies  ontologies attached to the dataset record
      * @param recordModel dataset record model
+     * @param conn        A RepositoryConnection for lookup.
      * @return list of class details with ontology record title, class title, and class description added.
      */
     private List<ClassDetails> addOntologyDetailsToClasses(List<ClassDetails> classes, Set<Value> ontologies,
-                                                           Model recordModel) {
+                                                           Model recordModel, RepositoryConnection conn) {
         List<ClassDetails> result = new ArrayList<>();
         List<ClassDetails> copy = new ArrayList<>(classes);
         Iterator<Value> iterator = ontologies.iterator();
@@ -823,15 +810,15 @@ public class ExplorableDatasetRest {
             Optional<Model> compiledResourceOpt = Optional.empty();
             try {
                 compiledResourceOpt = getObjectOf(recordModel, value, DatasetRecord.linksToCommit_IRI)
-                        .flatMap(object -> Optional.of(catalogManager.getCompiledResource(object)));
+                        .flatMap(object -> Optional.of(compiledResourceManager.getCompiledResource(object, conn)));
             } catch (IllegalArgumentException ex) {
                 log.warn(ex.getMessage());
             }
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
-                Optional<OntologyRecord> ontologyRecordOpt = catalogManager.getRecord(
-                        configProvider.getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory);
+                Optional<OntologyRecord> ontologyRecordOpt = recordManager.getRecordOpt(
+                        configProvider.getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory, conn);
                 if (!ontologyRecordOpt.isPresent()) {
                     log.warn("OntologyRecord " + ontologyRecordIRI + " could not be found");
                 }

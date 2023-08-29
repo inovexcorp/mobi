@@ -90,7 +90,6 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
 
         rest = new RecordPermissionsRest();
         rest.policyManager = policyManager;
-        rest.repo = repo;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -124,6 +123,7 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
         }
 
         reset(policyManager);
+        when(policyManager.getRepository()).thenReturn(repo);
         when(policyManager.getPolicy(recordPolicyIRI)).thenReturn(Optional.of(recordPolicy));
         when(policyManager.getPolicy(policyPolicyIRI)).thenReturn(Optional.of(policyPolicy));
     }

@@ -1037,7 +1037,6 @@ public class SparqlRestTest extends MobiRestTestCXF {
         }
     }
 
-
     @Test
     public void limitedResultsTest() {
         assertEquals("Verify Mimes Types", 6, limitedFileTypesMimes.size());
@@ -1093,8 +1092,6 @@ public class SparqlRestTest extends MobiRestTestCXF {
         }
         assertEquals("Verify minNumberOfInvocations", 12, minNumberOfInvocations);
     }
-
-
 
     @Test
     public void selectQueryRepositoryUnavailableLimitedTest() {

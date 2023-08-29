@@ -23,7 +23,8 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -120,7 +121,8 @@ public class SimpleOntology implements Ontology {
     private final OsgiRepository repository;
     private final DatasetUtilsService dsUtilsService;
     private final OntologyManager ontologyManager;
-    private final CatalogUtilsService utilsService;
+    private final ThingManager thingManager;
+    private final CompiledResourceManager compiledResourceManager;
     private final CatalogConfigProvider configProvider;
     private final ImportsResolver importsResolver;
     private final BNodeService bNodeService;
@@ -279,7 +281,8 @@ public class SimpleOntology implements Ontology {
      * @param ontologyFile    The {@link File} of RDF to load into cache
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param utilsService    The {@link CatalogUtilsService} used to retrieve Record information
+     * @param thingManager    The {@link ThingManager} used to retrieve Record information
+     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
@@ -288,7 +291,8 @@ public class SimpleOntology implements Ontology {
      * @param mf              The {@link ModelFactory} used to create Models
      */
     public SimpleOntology(String recordCommitKey, File ontologyFile, OsgiRepository cacheRepo,
-                          OntologyManager ontologyManager, CatalogUtilsService utilsService,
+                          OntologyManager ontologyManager, ThingManager thingManager,
+                          CompiledResourceManager compiledResourceManager,
                           CatalogConfigProvider configProvider, DatasetUtilsService dsUtilsService,
                           ImportsResolver importsResolver, BNodeService bNodeService,
                           ValueFactory vf, ModelFactory mf) {
@@ -298,7 +302,8 @@ public class SimpleOntology implements Ontology {
         this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey, vf);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.utilsService = utilsService;
+        this.thingManager = thingManager;
+        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
@@ -316,7 +321,8 @@ public class SimpleOntology implements Ontology {
      * @param recordCommitKey The key used to retrieve the Ontology from the cache
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param utilsService    The {@link CatalogUtilsService} used to retrieve Record information
+     * @param thingManager    The {@link ThingManager} used to retrieve Record information
+     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
@@ -325,7 +331,8 @@ public class SimpleOntology implements Ontology {
      * @param mf              The {@link ModelFactory} used to create Models
      */
     public SimpleOntology(String recordCommitKey, OsgiRepository cacheRepo, OntologyManager ontologyManager,
-                          CatalogUtilsService utilsService, CatalogConfigProvider configProvider,
+                          ThingManager thingManager, CompiledResourceManager compiledResourceManager,
+                          CatalogConfigProvider configProvider,
                           DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
                           BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         long startTime = getStartTime();
@@ -334,7 +341,8 @@ public class SimpleOntology implements Ontology {
         this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey, vf);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.utilsService = utilsService;
+        this.thingManager = thingManager;
+        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
@@ -379,7 +387,8 @@ public class SimpleOntology implements Ontology {
      * @param datasetIRI      The {@link IRI} of the datasetIRI of the imported Ontology
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param utilsService    The {@link CatalogUtilsService} used to retrieve Record information
+     * @param thingManager    The {@link ThingManager} used to retrieve Record information
+     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
@@ -388,7 +397,8 @@ public class SimpleOntology implements Ontology {
      * @param mf              The {@link ModelFactory} used to create Models
      */
     protected SimpleOntology(IRI datasetIRI, OsgiRepository cacheRepo, OntologyManager ontologyManager,
-                             CatalogUtilsService utilsService, CatalogConfigProvider configProvider,
+                             ThingManager thingManager, CompiledResourceManager compiledResourceManager,
+                             CatalogConfigProvider configProvider,
                              DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
                              BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         long startTime = getStartTime();
@@ -397,7 +407,8 @@ public class SimpleOntology implements Ontology {
         this.datasetIRI = datasetIRI;
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.utilsService = utilsService;
+        this.thingManager = thingManager;
+        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
@@ -451,7 +462,8 @@ public class SimpleOntology implements Ontology {
      * @param ontologyFile    The {@link File} of RDF to load into cache
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param utilsService    The {@link CatalogUtilsService} used to retrieve Record information
+     * @param thingManager    The {@link ThingManager} used to retrieve Record information
+     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
@@ -460,7 +472,8 @@ public class SimpleOntology implements Ontology {
      * @param mf              The {@link ModelFactory} used to create Models
      */
     protected SimpleOntology(IRI datasetIRI, File ontologyFile, OsgiRepository cacheRepo, OntologyManager ontologyManager,
-                             CatalogUtilsService utilsService, CatalogConfigProvider configProvider,
+                             ThingManager thingManager, CompiledResourceManager compiledResourceManager,
+                             CatalogConfigProvider configProvider,
                              DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
                              BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         long startTime = getStartTime();
@@ -469,7 +482,8 @@ public class SimpleOntology implements Ontology {
         this.datasetIRI = datasetIRI;
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.utilsService = utilsService;
+        this.thingManager = thingManager;
+        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
@@ -648,7 +662,8 @@ public class SimpleOntology implements Ontology {
                     IRI ontIRI = OntologyDatasets.getDatasetIriFromSystemDefaultNamedGraph(ng, vf);
                     IRI ontDatasetIRI = getDatasetIRI(ontIRI);
                     closure.add(new SimpleOntology(ontDatasetIRI, repository, ontologyManager,
-                            utilsService, configProvider, dsUtilsService, importsResolver, bNodeService, vf, mf));
+                            thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
+                            bNodeService, vf, mf));
                 }
             });
             undoApplyDifferenceIfPresent(conn);
@@ -1627,7 +1642,7 @@ public class SimpleOntology implements Ontology {
             directImports.forEach(importIri -> {
                 IRI importDatasetIRI = getDatasetIRI(importIri);
                 SimpleOntology importedOnt = new SimpleOntology(importDatasetIRI, repository, ontologyManager,
-                        utilsService, configProvider, dsUtilsService, importsResolver,
+                        thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
                         bNodeService, vf, mf);
                 Set<Ontology> ontClosure = importedOnt.getImportsClosure();
 
@@ -1682,7 +1697,7 @@ public class SimpleOntology implements Ontology {
                     + importedDatasetIRI.stringValue());
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, ontologyFile, repository,
-                ontologyManager, utilsService, configProvider, dsUtilsService, importsResolver,
+                ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
                 bNodeService, vf, mf);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
@@ -1710,7 +1725,7 @@ public class SimpleOntology implements Ontology {
                 new IllegalStateException("Commit must exist in catalog"));
         String recordCommitKey = OntologyDatasets.createRecordKey(recordIRI, masterHead);
         Ontology importedOntology = new SimpleOntology(recordCommitKey, ontologyFile, repository,
-                ontologyManager, utilsService, configProvider, dsUtilsService, importsResolver,
+                ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
                 bNodeService, vf, mf);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
@@ -1730,7 +1745,7 @@ public class SimpleOntology implements Ontology {
                     + importedDatasetIRI.stringValue());
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, repository,
-                ontologyManager, utilsService, configProvider, dsUtilsService, importsResolver,
+                ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
                 bNodeService, vf, mf);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
@@ -1863,8 +1878,8 @@ public class SimpleOntology implements Ontology {
 
     private File getCompiledResourceFile(Resource commitIRI) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            utilsService.validateResource(commitIRI, vf.createIRI(Commit.TYPE), conn);
-            return utilsService.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
+            thingManager.validateResource(commitIRI, vf.createIRI(Commit.TYPE), conn);
+            return compiledResourceManager.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
         }
     }
 

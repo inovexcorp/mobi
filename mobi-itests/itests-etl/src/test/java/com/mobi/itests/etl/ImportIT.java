@@ -25,7 +25,7 @@ package com.mobi.itests.etl;
 
 import static org.junit.Assert.assertTrue;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -41,6 +41,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.Before;
@@ -113,7 +114,7 @@ public class ImportIT extends KarafTestSupport {
         data = Rio.parse(new FileInputStream(dataFile), "", RDFFormat.TRIG);
 
         datasetManager = getOsgiService(DatasetManager.class);
-        CatalogManager manager = getOsgiService(CatalogManager.class);
+        RecordManager manager = getOsgiService(RecordManager.class);
         CatalogConfigProvider configProvider = getOsgiService(CatalogConfigProvider.class);
         UserFactory userFactory = getOsgiService(UserFactory.class);
         ValueFactory vf = new ValidatingValueFactory();
@@ -125,11 +126,13 @@ public class ImportIT extends KarafTestSupport {
         config.set(DatasetRecordCreateSettings.REPOSITORY_ID, "system");
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, Collections.singleton(adminUser));
 
-        record = manager.createRecord(adminUser, config, DatasetRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            record = manager.createRecord(adminUser, config, DatasetRecord.class, conn);
 
-        executeCommand(String.format("mobi:import -d=%s %s", record.getResource().stringValue(), dataFile));
+            executeCommand(String.format("mobi:import -d=%s %s", record.getResource().stringValue(), dataFile));
 
-        setupComplete = true;
+            setupComplete = true;
+        }
     }
 
     @Test

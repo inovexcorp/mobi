@@ -1,7 +1,7 @@
 (&(objectClass=com.mobi.catalog.config.CatalogConfigProvider))
 (&(objectClass=com.mobi.email.api.EmailService))
 (&(service.pid=com.mobi.jaas.engines.RdfEngine))
-(&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=ontologyCache))
+(&(objectClass=com.mobi.ontology.utils.cache.OntologyCache))
 (&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=policyCache))
 (&(objectClass=com.mobi.platform.config.api.state.StateManager))
 (&(objectClass=com.mobi.server.api.Mobi)(component.name=com.mobi.platform.server))

@@ -36,7 +36,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class DocumentTranslationCLITest extends OrmEnabledTestCase {
 
     private DocumentTranslationCLI cli;
@@ -101,8 +100,6 @@ public class DocumentTranslationCLITest extends OrmEnabledTestCase {
         getField(clazz, "outputDirectory").set(cli, new File(outputDirectory));
         getField(clazz, "ontologyIriString").set(cli, ontologyIriString);
         getField(clazz, "type").set(cli, type);
-
-
     }
 
     private static Field getField(Class<?> clazz, String name) throws Exception {

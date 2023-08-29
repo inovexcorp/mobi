@@ -23,8 +23,12 @@ package com.mobi.ontology.impl.core;
  * #L%
  */
 
+import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -37,12 +41,9 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactor
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
@@ -59,20 +60,36 @@ import javax.annotation.Nonnull;
 public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
     protected final ValueFactory valueFactory = new ValidatingValueFactory();
-    protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference
     public OntologyRecordFactory ontologyRecordFactory;
+
     @Reference
     public BranchFactory branchFactory;
+
     @Reference
     public OntologyCache ontologyCache;
+
     @Reference
     public CatalogConfigProvider configProvider;
+
     @Reference
     public CatalogManager catalogManager;
+
     @Reference
-    public CatalogUtilsService utilsService;
+    public RecordManager recordManager;
+
+    @Reference
+    public BranchManager branchManager;
+
+    @Reference
+    public CommitManager commitManager;
+
+    @Reference
+    public DifferenceManager differenceManager;
+
+    @Reference
+    public CompiledResourceManager compiledResourceManager;
 
     protected static final String FIND_ONTOLOGY;
     protected static final String ONTOLOGY_IRI = "ontologyIRI";
@@ -91,22 +108,6 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
     }
 
     @Override
-    public Ontology applyChanges(Ontology ontology, Resource inProgressCommitId) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Resource ontologyIRI = ontology.getOntologyId().getOntologyIRI()
-                    .orElse((IRI) ontology.getOntologyId().getOntologyIdentifier());
-            Resource recordId = getOntologyRecordResource(ontologyIRI).orElseThrow(
-                    () -> new IllegalStateException("OntologyIRI " + ontologyIRI
-                            + " is not associated with an OntologyRecord"));
-            InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(
-                    configProvider.getLocalCatalogIRI(), recordId, inProgressCommitId).orElseThrow(
-                        () -> new IllegalStateException("InProgressCommit for " + inProgressCommitId
-                                + " could not be found"));
-            return applyInProgressCommitChanges(ontology, inProgressCommit, conn);
-        }
-    }
-
-    @Override
     public Ontology applyChanges(Ontology ontology, InProgressCommit inProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return applyInProgressCommitChanges(ontology, inProgressCommit, conn);
@@ -115,7 +116,7 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
 
     private Ontology applyInProgressCommitChanges(Ontology ontology, InProgressCommit inProgressCommit,
                                                   RepositoryConnection conn) {
-        Difference difference = utilsService.getCommitDifference(inProgressCommit.getResource(), conn);
+        Difference difference = differenceManager.getCommitDifference(inProgressCommit.getResource(), conn);
         return applyChanges(ontology, difference);
     }
 
@@ -167,11 +168,13 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        long start = getStartTime();
-        Optional<Ontology> result = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId,
-                branchFactory).flatMap(branch -> getOntology(recordId, getHeadOfBranch(branch)));
-        logTrace("retrieveOntology(recordId, branchId)", start);
-        return result;
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            long start = getStartTime();
+            Optional<Ontology> result = branchManager.getBranchOpt(configProvider.getLocalCatalogIRI(), recordId, branchId,
+                    branchFactory, conn).flatMap(branch -> getOntology(recordId, getHeadOfBranch(branch)));
+            logTrace("retrieveOntology(recordId, branchId)", start);
+            return result;
+        }
     }
 
     @Override
@@ -179,19 +182,21 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
                                                @Nonnull Resource commitId) {
         long start = getStartTime();
 
-        Optional<Ontology> result = catalogManager.getCommit(configProvider.getLocalCatalogIRI(), recordId, branchId,
-                commitId).flatMap(commit -> getOntology(recordId, commitId));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Optional<Ontology> result = commitManager.getCommit(configProvider.getLocalCatalogIRI(), recordId, branchId,
+                    commitId, conn).flatMap(commit -> getOntology(recordId, commitId));
 
-        logTrace("retrieveOntology(recordId, branchId, commitId)", start);
-        return result;
+            logTrace("retrieveOntology(recordId, branchId, commitId)", start);
+            return result;
+        }
     }
 
     @Override
     public Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            utilsService.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
                     ontologyRecordFactory.getTypeIRI(), conn);
-            if (utilsService.commitInRecord(recordId, commitId, conn)) {
+            if (commitManager.commitInRecord(recordId, commitId, conn)) {
                 return getOntology(recordId, commitId);
             }
             return Optional.empty();
@@ -199,15 +204,12 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
     }
 
     @Override
-    public Model getOntologyModel(Resource recordId) {
-        return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
-    }
-
-    @Override
     public Model getOntologyModel(Resource recordId, Resource branchId) {
-        Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory)
-                .orElseThrow(() -> new IllegalArgumentException("Branch does not belong to OntologyRecord"));
-        return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Branch branch = branchManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId,
+                    branchFactory, conn);
+            return compiledResourceManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch), conn);
+        }
     }
 
     protected abstract Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource commitId);
@@ -219,12 +221,10 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
 
 
     private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {
-        Branch masterBranch = getMasterBranch(recordId);
-        return getOntology(recordId, getHeadOfBranch(masterBranch));
-    }
-
-    private Branch getMasterBranch(Resource recordId) {
-        return catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn);
+            return getOntology(recordId, getHeadOfBranch(masterBranch));
+        }
     }
 
     private long getStartTime() {

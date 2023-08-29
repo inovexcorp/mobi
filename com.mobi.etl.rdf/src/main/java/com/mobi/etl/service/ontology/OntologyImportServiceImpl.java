@@ -23,7 +23,9 @@ package com.mobi.etl.service.ontology;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -42,7 +44,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,38 +55,34 @@ public class OntologyImportServiceImpl implements OntologyImportService {
 
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
-    private VersioningManager versioningManager;
-    private CatalogManager catalogManager;
-    private OntologyManager ontologyManager;
-    private CatalogConfigProvider configProvider;
 
     @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
+    protected VersioningManager versioningManager;
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    void setOntologyManager(OntologyManager ontologyManager) {
-        this.ontologyManager = ontologyManager;
-    }
+    protected BranchManager branchManager;
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider catalogConfigProvider) {
-        this.configProvider = catalogConfigProvider;
-    }
+    protected DifferenceManager differenceManager;
+
+    @Reference
+    protected CommitManager commitManager;
+
+    @Reference
+    protected OntologyManager ontologyManager;
+
+    @Reference
+    protected CatalogConfigProvider configProvider;
 
 
     @Override
     public Difference importOntology(Resource ontologyRecord, boolean update, Model ontologyData, User user,
                                      String commitMsg) {
-        Resource masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), ontologyRecord)
-                .getResource();
-        return importOntology(ontologyRecord, masterBranch, update, ontologyData, user, commitMsg);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Resource masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), ontologyRecord,
+                            conn).getResource();
+            return importOntology(ontologyRecord, masterBranch, update, ontologyData, user, commitMsg);
+        }
     }
 
     @Override
@@ -101,10 +98,10 @@ public class OntologyImportServiceImpl implements OntologyImportService {
                     .subjects()
                     .forEach(resource -> newData.addAll(existingData.filter(resource, null, null)));
 
-            Difference diff = catalogManager.getDiff(existingData, newData);
+            Difference diff = differenceManager.getDiff(existingData, newData);
             if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
                 try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-                    catalogManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
+                    commitManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
                             createTempFileFromModel(diff.getAdditions()), createTempFileFromModel(diff.getAdditions()), conn);
                     versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user,
                             commitMsg, conn);
@@ -116,7 +113,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
 
             if (!newData.isEmpty()) {
                 try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-                    catalogManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
+                    commitManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
                             createTempFileFromModel(newData), null, conn);
                     versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user,
                             commitMsg, conn);

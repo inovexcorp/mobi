@@ -22,11 +22,13 @@
  */
 package com.mobi.etl.service.delimited
 
-
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
 
-import com.mobi.catalog.api.CatalogManager
+import com.mobi.catalog.api.BranchManager
+import com.mobi.catalog.api.CommitManager
+import com.mobi.catalog.api.CompiledResourceManager
+import com.mobi.catalog.api.RecordManager
 import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.etl.api.delimited.MappingId
 import com.mobi.etl.api.delimited.MappingWrapper
@@ -45,7 +47,10 @@ class SimpleMappingManagerSpec extends Specification {
     def vf = getValueFactory()
 
     def configProvider = Mock(CatalogConfigProvider)
-    def catalogManager = Mock(CatalogManager)
+    def recordManager = Mock(RecordManager)
+    def branchManager = Mock(BranchManager)
+    def commitManager = Mock(CommitManager)
+    def compiledResourceManager = Mock(CompiledResourceManager)
     def model = Mock(Model)
     def mappingWrapper = Mock(MappingWrapper)
     def mappingId = Mock(MappingId)
@@ -56,7 +61,10 @@ class SimpleMappingManagerSpec extends Specification {
     def setup() {
         injectOrmFactoryReferencesIntoService(service)
         service.configProvider = configProvider
-        service.catalogManager = catalogManager
+        service.recordManager = recordManager
+        service.branchManager = branchManager
+        service.commitManager = commitManager
+        service.compiledResourceManager = compiledResourceManager
 
         mappingWrapper.getId() >> mappingId
         mappingWrapper.getMapping() >> mapping

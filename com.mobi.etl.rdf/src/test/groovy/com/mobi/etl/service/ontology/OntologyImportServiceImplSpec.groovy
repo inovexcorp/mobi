@@ -22,7 +22,9 @@
  */
 package com.mobi.etl.service.ontology
 
-import com.mobi.catalog.api.CatalogManager
+import com.mobi.catalog.api.BranchManager
+import com.mobi.catalog.api.CommitManager
+import com.mobi.catalog.api.DifferenceManager
 import com.mobi.catalog.api.builder.Difference
 import com.mobi.catalog.api.ontologies.mcat.Branch
 import com.mobi.catalog.api.versioning.VersioningManager
@@ -45,7 +47,9 @@ class OntologyImportServiceImplSpec extends Specification {
     def vf = new ValidatingValueFactory()
     def mf = new DynamicModelFactory()
     def versioningManager = Mock(VersioningManager)
-    def catalogManager = Mock(CatalogManager)
+    def branchManager = Mock(BranchManager)
+    def commitManager = Mock(CommitManager)
+    def differenceManager = Mock(DifferenceManager)
     def ontologyManager = Mock(OntologyManager)
     def configProvider = Mock(CatalogConfigProvider)
     def connMock = Mock(RepositoryConnection)
@@ -68,10 +72,12 @@ class OntologyImportServiceImplSpec extends Specification {
             vf.createIRI(Ontology.TYPE))
 
     def setup() {
-        service.setVersioningManager(versioningManager)
-        service.setCatalogManager(catalogManager)
-        service.setOntologyManager(ontologyManager)
-        service.setConfigProvider(configProvider)
+        service.versioningManager = versioningManager
+        service.branchManager = branchManager
+        service.commitManager = commitManager;
+        service.differenceManager = differenceManager
+        service.ontologyManager = ontologyManager
+        service.configProvider = configProvider
 
         configProvider.getRepository() >> repositoryMock
         repositoryMock.getConnection() >> connMock
@@ -120,7 +126,7 @@ class OntologyImportServiceImplSpec extends Specification {
         mappedData.addAll([stmt1, stmt2])
         def expectedCommit = mf.createEmptyModel()
         expectedCommit.addAll([stmt2])
-        catalogManager.getMasterBranch(_, ontologyIRI) >> branch
+        branchManager.getMasterBranch(_, ontologyIRI, connMock) >> branch
         branch.getResource() >> branchIRI
         def returnModel = mf.createEmptyModel()
         returnModel.addAll([stmt1])
@@ -145,7 +151,7 @@ class OntologyImportServiceImplSpec extends Specification {
         additions.addAll([stmt2])
         def deletions = mf.createEmptyModel()
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
-        catalogManager.getDiff(existingData, mappedData) >> new Difference.Builder()
+        differenceManager.getDiff(existingData, mappedData) >> new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
                 .build()
@@ -168,7 +174,7 @@ class OntologyImportServiceImplSpec extends Specification {
         def additions = mf.createEmptyModel()
         def deletions = mf.createEmptyModel()
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
-        catalogManager.getDiff(existingData, mappedData) >> new Difference.Builder()
+        differenceManager.getDiff(existingData, mappedData) >> new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
                 .build()
@@ -194,7 +200,7 @@ class OntologyImportServiceImplSpec extends Specification {
         def testModel = mf.createEmptyModel()
         testModel.addAll([stmt1, stmt2, ontStmt1])
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
-        catalogManager.getDiff(existingData, testModel) >> new Difference.Builder()
+        differenceManager.getDiff(existingData, testModel) >> new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
                 .build()
@@ -221,7 +227,7 @@ class OntologyImportServiceImplSpec extends Specification {
         def testModel = mf.createEmptyModel()
         testModel.addAll([stmt1, stmt2, ontStmt1, ontStmt2])
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
-        catalogManager.getDiff(existingData, testModel) >> new Difference.Builder()
+        differenceManager.getDiff(existingData, testModel) >> new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
                 .build()

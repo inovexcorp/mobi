@@ -42,8 +42,9 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
@@ -54,6 +55,7 @@ import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
@@ -65,6 +67,7 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -114,8 +117,9 @@ public class UserRestTest extends MobiRestTestCXF {
     private static EngineManager engineManager;
     private static RdfEngine rdfEngine;
     private static UserFactory userFactoryMock;
-    private static CatalogManager catalogManager;
+    private static CommitManager commitManager;
     private static StateManager stateManager;
+    private static CatalogConfigProvider configProvider;
 
     @Mock
     private User adminUserMock;
@@ -125,6 +129,12 @@ public class UserRestTest extends MobiRestTestCXF {
 
     @Mock
     private InProgressCommit inProgressCommit2;
+
+    @Mock
+    private OsgiRepository repo;
+
+    @Mock
+    private RepositoryConnection conn;
 
     @BeforeClass
     public static void startServer() {
@@ -136,15 +146,17 @@ public class UserRestTest extends MobiRestTestCXF {
         userFactoryMock = Mockito.mock(UserFactory.class);
         engineManager = Mockito.mock(EngineManager.class);
         
-        catalogManager = Mockito.mock(CatalogManager.class);
+        commitManager = Mockito.mock(CommitManager.class);
         stateManager = Mockito.mock(StateManager.class);
+        configProvider = Mockito.mock(CatalogConfigProvider.class);
 
         rest = new UserRest();
         rest.engineManager = engineManager;
         rest.rdfEngine = rdfEngine;
         rest.userFactory = userFactoryMock;
-        rest.catalogManager = catalogManager;
+        rest.commitManager = commitManager;
         rest.stateManager = stateManager;
+        rest.configProvider = configProvider;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -152,7 +164,7 @@ public class UserRestTest extends MobiRestTestCXF {
     @Before
     public void setupMocks() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
-        reset(engineManager, catalogManager, stateManager);
+        reset(engineManager, commitManager, stateManager);
 
         groupFactory = getRequiredOrmFactory(Group.class);
         userFactory = getRequiredOrmFactory(User.class);
@@ -213,11 +225,14 @@ public class UserRestTest extends MobiRestTestCXF {
 
         when(inProgressCommit1.getResource()).thenReturn(inProgressCommitIRI1);
         when(inProgressCommit2.getResource()).thenReturn(inProgressCommitIRI2);
-        when(catalogManager.getInProgressCommits(eq(user))).thenReturn(Arrays.asList(inProgressCommit1, inProgressCommit2));
+        when(commitManager.getInProgressCommits(eq(user), any(RepositoryConnection.class))).thenReturn(Arrays.asList(inProgressCommit1, inProgressCommit2));
 
         Map<Resource, Model> states = new HashMap<>();
         states.put(stateIRI, mf.createEmptyModel());
         when(stateManager.getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class))).thenReturn(states);
+
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(repo.getConnection()).thenReturn(conn);
     }
 
     @After
@@ -473,22 +488,22 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
         assertEquals(response.getStatus(), 200);
         verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
-        verify(catalogManager).getInProgressCommits(eq(user));
-        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI1));
-        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI2));
+        verify(commitManager).getInProgressCommits(eq(user), any(RepositoryConnection.class));
+        verify(commitManager).removeInProgressCommit(eq(inProgressCommitIRI1), any(RepositoryConnection.class));
+        verify(commitManager).removeInProgressCommit(eq(inProgressCommitIRI2), any(RepositoryConnection.class));
         verify(stateManager).getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class));
         verify(stateManager).deleteState(eq(stateIRI));
     }
 
     @Test
     public void deleteUserNoInProgressCommitsTest() {
-        when(catalogManager.getInProgressCommits(eq(user))).thenReturn(new ArrayList<>());
+        when(commitManager.getInProgressCommits(eq(user), any(RepositoryConnection.class))).thenReturn(new ArrayList<>());
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
         assertEquals(response.getStatus(), 200);
         verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
-        verify(catalogManager).getInProgressCommits(eq(user));
-        verify(catalogManager, never()).removeInProgressCommit(any(Resource.class));
+        verify(commitManager).getInProgressCommits(eq(user), any(RepositoryConnection.class));
+        verify(commitManager, never()).removeInProgressCommit(any(Resource.class), any(RepositoryConnection.class));
         verify(stateManager).getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class));
         verify(stateManager).deleteState(eq(stateIRI));
     }
@@ -500,9 +515,9 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
         assertEquals(response.getStatus(), 200);
         verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
-        verify(catalogManager).getInProgressCommits(eq(user));
-        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI1));
-        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI2));
+        verify(commitManager).getInProgressCommits(eq(user), any(RepositoryConnection.class));
+        verify(commitManager).removeInProgressCommit(eq(inProgressCommitIRI1), any(RepositoryConnection.class));
+        verify(commitManager).removeInProgressCommit(eq(inProgressCommitIRI2), any(RepositoryConnection.class));
         verify(stateManager).getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class));
         verify(stateManager, never()).deleteState(eq(stateIRI));
     }

@@ -35,24 +35,29 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -64,6 +69,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -111,9 +117,12 @@ public class CommitRestTest extends MobiRestTestCXF {
     private IRI typeIRI;
 
     // Mock services used in server
-    private static CatalogManager catalogManager;
+    private static DifferenceManager differenceManager;
+    private static CommitManager commitManager;
+    private static CompiledResourceManager compiledResourceManager;
     private static EngineManager engineManager;
     private static BNodeService bNodeService;
+    private static CatalogConfigProvider configProvider;
 
     @Mock
     private PaginatedSearchResults<Record> results;
@@ -124,21 +133,32 @@ public class CommitRestTest extends MobiRestTestCXF {
     @Mock
     private Difference difference;
 
+    @Mock
+    private OsgiRepository repo;
+
+    @Mock
+    private RepositoryConnection conn;
+
     @BeforeClass
     public static void startServer() {
         vf = getValueFactory();
         mf = getModelFactory();
-
-        catalogManager = Mockito.mock(CatalogManager.class);
-        engineManager = Mockito.mock(EngineManager.class);
         
+        differenceManager = Mockito.mock(DifferenceManager.class);
+        commitManager = Mockito.mock(CommitManager.class);
+        compiledResourceManager = Mockito.mock(CompiledResourceManager.class);
+        engineManager = Mockito.mock(EngineManager.class);
         bNodeService = Mockito.mock(BNodeService.class);
+        configProvider = Mockito.mock(CatalogConfigProvider.class);
 
         rest = new CommitRest();
         injectOrmFactoryReferencesIntoService(rest);
-        rest.setEngineManager(engineManager);
-        rest.setCatalogManager(catalogManager);
-        rest.setbNodeService(bNodeService);
+        rest.engineManager = engineManager;
+        rest.bNodeService = bNodeService;
+        rest.differenceManager = differenceManager;
+        rest.commitManager = commitManager;
+        rest.compiledResourceManager = compiledResourceManager;
+        rest.configProvider = configProvider;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -172,27 +192,30 @@ public class CommitRestTest extends MobiRestTestCXF {
         when(results.getPageSize()).thenReturn(10);
         when(results.getTotalSize()).thenReturn(50);
 
-        when(catalogManager.getCommit(vf.createIRI(COMMIT_IRIS[0]))).thenReturn(Optional.of(testCommits.get(0)));
-        when(catalogManager.getCommit(vf.createIRI(COMMIT_IRIS[1]))).thenReturn(Optional.of(testCommits.get(1)));
-        when(catalogManager.getCommit(vf.createIRI(COMMIT_IRIS[2]))).thenReturn(Optional.of(testCommits.get(2)));
-        when(catalogManager.getCommitChain(any(Resource.class))).thenReturn(testCommits);
-        when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
-        when(catalogManager.getCommitDifferenceForSubject(any(IRI.class), any(Resource.class))).thenReturn(difference);
-        when(catalogManager.getCommitDifferencePaged(any(Resource.class), anyInt(), anyInt())).thenReturn(new PagedDifference(difference, false));
-        when(catalogManager.getDifference(any(Resource.class), any(Resource.class))).thenReturn(difference);
-        when(catalogManager.getDifferencePaged(any(Resource.class), any(Resource.class), anyInt(), anyInt())).thenReturn(new PagedDifference(difference, false));
+        when(commitManager.getCommit(eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class))).thenReturn(Optional.of(testCommits.get(0)));
+        when(commitManager.getCommit(eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class))).thenReturn(Optional.of(testCommits.get(1)));
+        when(commitManager.getCommit(eq(vf.createIRI(COMMIT_IRIS[2])), any(RepositoryConnection.class))).thenReturn(Optional.of(testCommits.get(2)));
+        when(commitManager.getCommitChain(any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits);
+        when(differenceManager.getCommitDifference(any(Resource.class), any(RepositoryConnection.class))).thenReturn(difference);
+        when(differenceManager.getCommitDifferenceForSubject(any(IRI.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(difference);
+        when(differenceManager.getCommitDifferencePaged(any(Resource.class), anyInt(), anyInt(), any(RepositoryConnection.class))).thenReturn(new PagedDifference(difference, false));
+        when(differenceManager.getDifference(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(difference);
+        when(differenceManager.getCommitDifferencePaged(any(Resource.class), any(Resource.class), anyInt(), anyInt(), any(RepositoryConnection.class))).thenReturn(new PagedDifference(difference, false));
 
         when(difference.getAdditions()).thenReturn(mf.createEmptyModel());
         when(difference.getDeletions()).thenReturn(mf.createEmptyModel());
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
+
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(repo.getConnection()).thenReturn(conn);
     }
 
     @After
     public void resetMocks() throws Exception {
         closeable.close();
-        reset(catalogManager, engineManager, conflict, difference, results, bNodeService);
+        reset(commitManager, compiledResourceManager, commitManager, differenceManager, engineManager, conflict, difference, results, bNodeService, configProvider);
     }
 
     // GET commits/{commitId}
@@ -201,7 +224,7 @@ public class CommitRestTest extends MobiRestTestCXF {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertFalse(result.containsKey("commit"));
@@ -217,7 +240,7 @@ public class CommitRestTest extends MobiRestTestCXF {
     @Test
     public void getCommitWithNoResults() {
         // Setup:
-        when(catalogManager.getCommit(any())).thenReturn(Optional.empty());
+        when(commitManager.getCommit(any(), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         // When:
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
@@ -225,13 +248,13 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         // Then:
         assertEquals(response.getStatus(), 404);
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
     }
 
     @Test
     public void getCommitWithErrorTest() {
         // Setup:
-        when(catalogManager.getCommit(vf.createIRI(ERROR_IRI))).thenThrow(new IllegalArgumentException());
+        when(commitManager.getCommit(vf.createIRI(ERROR_IRI), conn)).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("commits/" + encode(ERROR_IRI))
                 .request().get();
@@ -244,7 +267,7 @@ public class CommitRestTest extends MobiRestTestCXF {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         assertEquals(response.getLinks().size(), 0);
@@ -268,7 +291,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("limit", 10)
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         assertEquals(response.getLinks().size(), 0);
@@ -292,7 +315,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("limit", 1)
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         Set<Link> links = response.getLinks();
@@ -315,7 +338,7 @@ public class CommitRestTest extends MobiRestTestCXF {
     @Test
     public void getCommitHistoryWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCommitChain(vf.createIRI(ERROR_IRI));
+        doThrow(new IllegalArgumentException()).when(commitManager).getCommitChain(vf.createIRI(ERROR_IRI), conn);
 
         Response response = target().path("commits/" + encode(ERROR_IRI) + "/history")
                 .request().get();
@@ -325,13 +348,13 @@ public class CommitRestTest extends MobiRestTestCXF {
     @Test
     public void getCommitHistoryWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        doThrow(new MobiException()).when(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
 
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        doThrow(new IllegalStateException()).when(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -344,11 +367,11 @@ public class CommitRestTest extends MobiRestTestCXF {
         expected.add(vf.createIRI(COMMIT_IRIS[0]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         expected.add(vf.createIRI(COMMIT_IRIS[1]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         expected.add(vf.createIRI(COMMIT_IRIS[2]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
-        when(catalogManager.getCompiledResource(any(List.class))).thenReturn(expected);
+        when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class))).thenReturn(expected);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             JSONObject commitObj = result.getJSONObject(0);
@@ -364,12 +387,12 @@ public class CommitRestTest extends MobiRestTestCXF {
     public void getCompiledResourceWithEntityTest() {
         Model expected = mf.createEmptyModel();
         expected.add(vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), typeIRI, vf.createIRI(COMMIT_IRIS[1]));
-        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
-        when(catalogManager.getCompiledResource(any(List.class), any(Resource.class))).thenReturn(expected);
+        when(commitManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(entityCommits);
+        when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class), any(Resource.class))).thenReturn(expected);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://www.w3.org/2002/07/owl#Ontology")).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), conn);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             JSONObject commitObj = result.getJSONObject(0);
@@ -384,12 +407,12 @@ public class CommitRestTest extends MobiRestTestCXF {
     public void getCompiledResourceEmptyModelTest() {
         List<Commit> emptyList = new ArrayList<>();
         Model expected = mf.createEmptyModel();
-        when(catalogManager.getCompiledResource(any(List.class), any(Resource.class))).thenReturn(expected);
-        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(emptyList);
+        when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class), any(Resource.class))).thenReturn(expected);
+        when(commitManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(emptyList);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://mobi.com/test/empty")).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/empty"));
+        verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/empty"), conn);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertTrue(result.size() == 0);
@@ -404,7 +427,7 @@ public class CommitRestTest extends MobiRestTestCXF {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        verify(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("additions"));
@@ -423,7 +446,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         // Then
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getDifferencePaged(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), 100, 0);
+        verify(differenceManager).getCommitDifferencePaged(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), eq(100), eq(0), any(RepositoryConnection.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("additions"));
@@ -441,7 +464,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         // Then
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("commit"));
@@ -458,7 +481,7 @@ public class CommitRestTest extends MobiRestTestCXF {
     @Test
     public void getDifferenceWithMissingSourceNoTarget() {
         // Setup:
-        when(catalogManager.getCommit(any())).thenReturn(Optional.empty());
+        when(commitManager.getCommit(any(), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         // When:
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
@@ -466,23 +489,23 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         // Then:
         assertEquals(response.getStatus(), 404);
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
     }
 
     @Test
     public void getDifferenceWithErrorTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).getDifference(vf.createIRI(ERROR_IRI), vf.createIRI(COMMIT_IRIS[0]));
+        doThrow(new IllegalArgumentException()).when(differenceManager).getDifference(eq(vf.createIRI(ERROR_IRI)), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         Response response = target().path("commits/" + encode(ERROR_IRI) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 400);
 
-        doThrow(new MobiException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        doThrow(new MobiException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        doThrow(new IllegalStateException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 500);
@@ -496,7 +519,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         // Then
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("commit"));
@@ -517,8 +540,8 @@ public class CommitRestTest extends MobiRestTestCXF {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
-        verify(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
+        verify(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("additions"));
@@ -531,29 +554,29 @@ public class CommitRestTest extends MobiRestTestCXF {
     @Test
     public void getDifferenceForSubjectWithErrorTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
+        doThrow(new IllegalArgumentException()).when(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         assertEquals(response.getStatus(), 400);
 
-        doThrow(new MobiException()).when(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
+        doThrow(new MobiException()).when(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
-        verify(catalogManager, times(2)).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager, times(2)).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
+        doThrow(new IllegalStateException()).when(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
-        verify(catalogManager, times(3)).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager, times(3)).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         assertEquals(response.getStatus(), 500);
     }
 
     @Test
     public void getDifferenceForSubjectWithMissingSourceTest() {
         // Setup:
-        when(catalogManager.getCommit(any())).thenReturn(Optional.empty());
+        when(commitManager.getCommit(any(), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         // When:
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
@@ -561,20 +584,20 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         // Then:
         assertEquals(response.getStatus(), 404);
-        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
     }
 
     // GET commits/{commitId}/history?entityId
     @Test
     public void getCommitHistoryWithEntityNoTargetTest() {
-        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
+        when(commitManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(entityCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .queryParam("entityId", encode(vf.createIRI("http://mobi.com/test/class5")))
                 .queryParam("offset", 0)
                 .queryParam("limit", 1)
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/class5"));
+        verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/class5"), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
         assertEquals(response.getLinks().size(), 0);
@@ -597,13 +620,13 @@ public class CommitRestTest extends MobiRestTestCXF {
 
     @Test
     public void getCommitHistoryWithEntityAndTargetTest() {
-        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
+        when(commitManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(entityCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .queryParam("targetId", encode(COMMIT_IRIS[0]))
                 .queryParam("entityId", encode(vf.createIRI("http://mobi.com/test/class5")))
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), vf.createIRI("http://mobi.com/test/class5"));
+        verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), vf.createIRI("http://mobi.com/test/class5"), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
         Set<Link> links = response.getLinks();

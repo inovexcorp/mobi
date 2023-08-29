@@ -23,8 +23,13 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.RevisionManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -34,7 +39,9 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -59,12 +66,15 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -83,12 +93,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 /**
@@ -108,15 +121,23 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     private static final String MASTER_BRANCH_IRI_BINDING = "%MASTER%";
     private static final String RECORD_NO_POLICY_QUERY;
     private static final String GET_GRAPHS_TO_DELETE;
+    private static final String GET_COMMIT_PATHS;
 
     static {
         try {
             RECORD_NO_POLICY_QUERY = IOUtils.toString(
-                    AbstractVersionedRDFRecordService.class.getResourceAsStream("/record-no-policy.rq"),
+                    Objects.requireNonNull(AbstractVersionedRDFRecordService.class
+                            .getResourceAsStream("/record-no-policy.rq")),
                     StandardCharsets.UTF_8
             );
             GET_GRAPHS_TO_DELETE = IOUtils.toString(
-                    AbstractVersionedRDFRecordService.class.getResourceAsStream("/get-graphs-to-delete.rq"),
+                    Objects.requireNonNull(AbstractVersionedRDFRecordService.class
+                            .getResourceAsStream("/get-graphs-to-delete.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_COMMIT_PATHS = IOUtils.toString(
+                    Objects.requireNonNull(AbstractVersionedRDFRecordService.class
+                            .getResourceAsStream("/get-commit-paths.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -143,12 +164,28 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     public EngineManager engineManager;
 
     @Reference
-    public CatalogManager catalogManager;
+    public CommitManager commitManager;
+
+    @Reference
+    public VersionManager versionManager;
+
+    @Reference
+    public BranchManager branchManager;
+
+    @Reference
+    public RecordManager recordManager;
+
+    @Reference
+    public DifferenceManager differenceManager;
+
+    @Reference
+    public RevisionManager revisionManager;
 
     @Reference
     public RevisionFactory revisionFactory;
 
     final ValueFactory vf = new ValidatingValueFactory();
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -172,7 +209,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 new IllegalStateException("VersionedRDFRecord must have a master Branch"));
 
         File versionedRdf = createDataFile(config);
-        catalogManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
+        commitManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
                 versionedRdf, null, conn);
         versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
                 "The initial commit.", conn);
@@ -312,8 +349,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param conn         A RepositoryConnection to use for lookup
      */
     protected void addRecord(T record, Branch masterBranch, RepositoryConnection conn) {
-        utilsService.addObject(record, conn);
-        utilsService.addObject(masterBranch, conn);
+        thingManager.addObject(record, conn);
+        thingManager.addObject(masterBranch, conn);
     }
 
     /**
@@ -363,17 +400,16 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Override
     public Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                        RepositoryConnection conn) {
-        T record = utilsService.getRecord(catalogId, versionedRDFRecordId, recordFactory,
-                conn);
-        Branch branch = utilsService.getBranch(record, branchId, branchFactory, conn);
+        T record = recordManager.getRecord(catalogId, versionedRDFRecordId, recordFactory, conn);
+        Branch branch = branchManager.getBranch(record, branchId, branchFactory, conn);
         IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
         if (ConnectionUtils.contains(conn, versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
             throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
         }
         conn.begin();
         record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
-        utilsService.updateObject(record, conn);
-        List<Resource> deletedCommits = utilsService.removeBranch(versionedRDFRecordId, branch, conn);
+        thingManager.updateObject(record, conn);
+        List<Resource> deletedCommits = removeBranch(versionedRDFRecordId, branch, conn);
         mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
         conn.commit();
         return Optional.of(deletedCommits);
@@ -387,7 +423,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      */
     protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
         mergeRequestManager.deleteMergeRequestsWithRecordId(record.getResource(), conn);
-        record.getVersion_resource().forEach(resource -> utilsService.removeVersion(record.getResource(),
+        record.getVersion_resource().forEach(resource -> versionManager.removeVersion(record.getResource(),
                 resource, conn));
 
         Resource recordIri = record.getResource();
@@ -401,9 +437,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         conn.getStatements(null, valueFactory.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), recordIri)
                 .forEach(result -> inProgressCommitIris.add(result.getSubject()));
         inProgressCommitIris.forEach(resource -> {
-            InProgressCommit commit = utilsService.getInProgressCommit(configProvider.getLocalCatalogIRI(), recordIri,
+            InProgressCommit commit = commitManager.getInProgressCommit(configProvider.getLocalCatalogIRI(), recordIri,
                     resource, conn);
-            utilsService.removeInProgressCommit(commit, conn);
+            commitManager.removeInProgressCommit(commit, conn);
         });
     }
 
@@ -423,12 +459,12 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         // Write Branches
         record.getBranch_resource().forEach(branchResource -> {
             if (branchesToWrite.isEmpty() || branchesToWrite.contains(branchResource)) {
-                Branch branch = utilsService.getBranch(record, branchResource, branchFactory, conn);
+                Branch branch = branchManager.getBranch(record, branchResource, branchFactory, conn);
                 branch.getModel().forEach(exporter::handleStatement);
-                Resource headIRI = utilsService.getHeadCommitIRI(branch);
+                Resource headIRI = commitManager.getHeadCommitIRI(branch);
 
                 // Write Commits
-                for (Resource commitId : utilsService.getCommitChain(headIRI, false, conn)) {
+                for (Resource commitId : commitManager.getCommitChain(headIRI, false, conn)) {
 
                     if (processedCommits.contains(commitId)) {
                         break;
@@ -437,11 +473,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                     }
 
                     // Write Commit/Revision Data
-                    Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
+                    Commit commit = thingManager.getExpectedObject(commitId, commitFactory, conn);
                     commit.getModel().forEach(exporter::handleStatement);
 
                     // Write Additions/Deletions Graphs
-                    Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
+                    Difference revisionChanges = differenceManager.getCommitDifference(commitId, conn);
                     revisionChanges.getAdditions().forEach(exporter::handleStatement);
                     revisionChanges.getDeletions().forEach(exporter::handleStatement);
                 }
@@ -473,7 +509,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     protected InProgressCommit loadInProgressCommit(User user, File additionsFile) {
-        InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user);
+        InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
         IRI additionsGraph = getRevisionGraph(inProgressCommit, true);
 
         try (RepositoryConnection fileConn = configProvider.getRepository().getConnection()) {
@@ -537,5 +573,86 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             conn.remove((IRI) null, null, null, getRevisionGraph(inProgressCommit, true));
         }
+    }
+
+    protected List<Resource> removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+        List<Resource> deletedCommits = new ArrayList<>();
+        thingManager.removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
+        Optional<Resource> headCommit = branch.getHead_resource();
+        if (headCommit.isPresent()) {
+            // Explicitly remove this so algorithm works for head commit
+            conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
+            IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+            Set<Resource> deltaIRIs = new HashSet<>();
+            getCommitPaths(headCommit.get(), conn).forEach(path -> {
+                for (Resource commitId : path) {
+                    if (!deletedCommits.contains(commitId)) {
+                        if (!commitIsReferenced(commitId, deletedCommits, conn)) {
+                            // Get Additions/Deletions Graphs
+                            Revision revision = revisionManager.getRevision(commitId, conn);
+                            revision.getAdditions().ifPresent(deltaIRIs::add);
+                            revision.getDeletions().ifPresent(deltaIRIs::add);
+                            revision.getGraphRevision().forEach(graphRevision -> {
+                                graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                                graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                            });
+
+                            // Remove Commit
+                            thingManager.remove(commitId, conn);
+
+                            // Remove Tags Referencing this Commit
+                            Set<Resource> tags = QueryResults.asModel(
+                                    conn.getStatements(null, commitIRI, commitId), mf).subjects();
+                            tags.forEach(tagId -> thingManager.removeObjectWithRelationship(tagId, recordId,
+                                    VersionedRecord.version_IRI, conn));
+                            deletedCommits.add(commitId);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            });
+            deltaIRIs.forEach(resource -> thingManager.remove(resource, conn));
+        }
+        return deletedCommits;
+    }
+
+    private List<List<Resource>> getCommitPaths(Resource commitId, RepositoryConnection conn) {
+        List<List<Resource>> rtn = new ArrayList<>();
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_PATHS);
+        query.setBinding("start", commitId);
+        try (TupleQueryResult result = query.evaluate()) {
+            result.forEach(bindings -> {
+                String[] path = StringUtils.split(Bindings.requiredLiteral(bindings, "path").stringValue(), " ");
+                assert path != null;
+                Optional<Binding> parent = Optional.ofNullable(bindings.getBinding("parent"));
+                if (parent.isEmpty()) {
+                    rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
+                } else {
+                    String[] connectPath = StringUtils.split(
+                            Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
+                    rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
+                            .collect(Collectors.toList()));
+                }
+            });
+        }
+        return rtn;
+    }
+
+    private boolean commitIsReferenced(Resource commitId, List<Resource> deletedCommits, RepositoryConnection conn) {
+        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
+        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
+
+        boolean isHeadCommit = ConnectionUtils.contains(conn, null, headCommitIRI, commitId);
+        boolean isParent = Stream.of(baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> {
+                    List<Resource> temp = new ArrayList<>();
+                    conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));
+                    temp.removeAll(deletedCommits);
+                    return !temp.isEmpty();
+                })
+                .reduce(false, (iri1, iri2) -> iri1 || iri2);
+        return isHeadCommit || isParent;
     }
 }

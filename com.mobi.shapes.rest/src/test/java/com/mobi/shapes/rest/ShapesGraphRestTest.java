@@ -42,7 +42,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -102,7 +106,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     private static ModelFactory mf;
     private static MemoryRepositoryWrapper repo;
     private static CatalogConfigProvider configProvider;
-    private static CatalogManager catalogManager;
+    private static DifferenceManager differenceManager;
+    private static CommitManager commitManager;
+    private static BranchManager branchManager;
+    private static RecordManager recordManager;
+    private static CompiledResourceManager compiledResourceManager;
     private static EngineManager engineManager;
     private static SimpleBNodeService bNodeService;
     private static ShapesGraphManager shapesGraphManager;
@@ -136,7 +144,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         engineManager = mock(EngineManager.class) ;
         configProvider = mock(CatalogConfigProvider.class);
-        catalogManager = mock(CatalogManager.class);
+        differenceManager = mock(DifferenceManager.class);
+        commitManager = mock(CommitManager.class);
+        branchManager = mock(BranchManager.class);
+        recordManager = mock(RecordManager.class);
+        compiledResourceManager = mock(CompiledResourceManager.class);
         shapesGraphManager = mock(ShapesGraphManager.class);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -183,7 +195,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         rest = new ShapesGraphRest();
         rest.configProvider = configProvider;
-        rest.catalogManager = catalogManager;
+        rest.differenceManager = differenceManager;
+        rest.commitManager = commitManager;
+        rest.branchManager = branchManager;
+        rest.recordManager = recordManager;
+        rest.compiledResourceManager = compiledResourceManager;
         rest.engineManager = engineManager;
         rest.shapesGraphManager = shapesGraphManager;
 
@@ -198,21 +214,22 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
         when(configProvider.getRepository()).thenReturn(repo);
-        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(ShapesGraphRecord.class))).thenReturn(record);
-        when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
-        when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(shaclModel);
-        when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
-        when(catalogManager.getMasterBranch(any(), any())).thenReturn(branch);
-        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
-        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), eq(user))).thenReturn(Optional.of(inProgressCommit));
-        when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenAnswer(i -> i.getArgument(1, Model.class));
+        when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(ShapesGraphRecord.class), any(RepositoryConnection.class))).thenReturn(record);
+        when(commitManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId), any(RepositoryConnection.class))).thenReturn(commit);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
+        when(branchManager.getMasterBranch(any(), any(), any(RepositoryConnection.class))).thenReturn(branch);
+        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
+        when(commitManager.getInProgressCommitOpt(any(Resource.class), any(Resource.class), eq(user), any(RepositoryConnection.class))).thenReturn(Optional.of(inProgressCommit));
+        when(differenceManager.applyInProgressCommit(any(Resource.class), any(Model.class), any(RepositoryConnection.class))).thenAnswer(i -> i.getArgument(1, Model.class));
 
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
     }
 
     @After
     public void resetMocks() {
-        reset(engineManager, configProvider, catalogManager,  shapesGraphManager, shapesGraphSpy);
+        reset(engineManager, configProvider, differenceManager, commitManager, branchManager, recordManager,
+                compiledResourceManager,  shapesGraphManager, shapesGraphSpy);
     }
 
     @Test
@@ -231,7 +248,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         String id = getResponse(response).optString("shapesGraphId");
         assertEquals(id, shapesGraphId.stringValue());
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
-        verify(catalogManager).createRecord(any(User.class), config.capture(), eq(ShapesGraphRecord.class));
+        verify(recordManager).createRecord(any(User.class), config.capture(), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
         assertEquals(catalogId.stringValue(), config.getValue().get(RecordCreateSettings.CATALOG_ID));
         assertEquals("title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
         assertEquals("description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
@@ -244,7 +261,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void uploadErrorMobiExceptionTest() {
-        Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+        Mockito.doThrow(new MobiException("I'm an exception!")).when(recordManager).createRecord(any(), any(), any(), any(RepositoryConnection.class));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
@@ -266,7 +283,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void uploadErrorRDFParseExceptionTest() {
-        Mockito.doThrow(new RDFParseException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+        Mockito.doThrow(new RDFParseException("I'm an exception!")).when(recordManager).createRecord(any(), any(), any(), any(RepositoryConnection.class));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
@@ -288,7 +305,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void uploadErrorIllegalArgumentExceptionTest() {
-        Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+        Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(recordManager).createRecord(any(), any(), any(), any(RepositoryConnection.class));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
@@ -332,8 +349,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
-        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
+        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -348,8 +365,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
-        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
+        verify(commitManager, never()).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
+        verify(differenceManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class) );
     }
 
     @Test
@@ -363,8 +380,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
-        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
+        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -378,8 +395,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
-        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
+        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -392,8 +409,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId));
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
-        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
+        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -410,37 +427,37 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .accept(MediaType.APPLICATION_JSON).delete();
 
         assertEquals(response.getStatus(), 204);
-        verify(catalogManager).removeRecord(catalogId, recordId, user, ShapesGraphRecord.class);
+        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
     }
 
     @Test
     public void deleteShapesGraphRecordIllegalArgumentExceptionTest() {
-        doThrow(IllegalArgumentException.class).when(catalogManager).removeRecord(any(), any(), any(), any());
+        doThrow(IllegalArgumentException.class).when(recordManager).removeRecord(any(), any(), any(), any(), any(RepositoryConnection.class));
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_JSON).delete();
 
         assertEquals(response.getStatus(), 400);
-        verify(catalogManager).removeRecord(catalogId, recordId, user, ShapesGraphRecord.class);
+        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
     }
 
     @Test
     public void deleteShapesGraphRecordIllegalStateExceptionTest() {
-        doThrow(IllegalStateException.class).when(catalogManager).removeRecord(any(), any(), any(), any());
+        doThrow(IllegalStateException.class).when(recordManager).removeRecord(any(), any(), any(), any(), any(RepositoryConnection.class));
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_JSON).delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(catalogManager).removeRecord(catalogId, recordId, user, ShapesGraphRecord.class);
+        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
     }
 
     @Test
     public void testUploadChangesToShapesGraph() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(shaclModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
@@ -453,10 +470,10 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager, times(2)).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
     }
 
     @Test
@@ -476,11 +493,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void testUploadChangesToShapesGraphWithoutBranchId() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(shaclModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
-        when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
         fd.field("commitId", commitId.stringValue());
@@ -494,11 +511,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void testUploadChangesToShapesGraphWithoutCommitId() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(shaclModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
-        when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(commitManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId), any(RepositoryConnection.class))).thenReturn(commit);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
         fd.field("branchId", branchId.stringValue());
@@ -509,15 +526,15 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager, times(2)).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
     }
 
     @Test
     public void testUploadChangesToShapesGraphWithExistingInProgressCommit() {
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.of(inProgressCommit));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "search-results.json", getClass().getResourceAsStream("/search-results.json"));
@@ -533,12 +550,12 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void testUploadChangesToShapesGraphNoDiff() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(shaclModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
         Difference difference = new Difference.Builder().additions(mf.createEmptyModel()).deletions(mf.createEmptyModel()).build();
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
@@ -551,20 +568,20 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager, never()).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager, never()).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
     }
 
     @Test
     public void testUploadChangesTrigToShapesGraphNoDiff() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(shaclModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
         Difference difference = new Difference.Builder().additions(mf.createEmptyModel()).deletions(mf.createEmptyModel()).build();
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "testShapesGraphData.trig", getClass().getResourceAsStream("/testShapesGraphData.trig"));
@@ -586,8 +603,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     public void testGetEntity() {
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/entities/"
                         + encode("urn:test"))
@@ -598,7 +615,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
         verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
@@ -607,8 +624,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     public void testGetEntityWithCommitId() {
         when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/entities/"
                         + encode("urn:test"))
@@ -617,8 +634,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
         verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
@@ -627,8 +644,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     public void testGetEntityWithoutBranchOrCommitId() {
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/entities/"
                         + encode("urn:test"))
@@ -636,8 +653,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId));
         verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
@@ -646,8 +663,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     public void testGetEntityWithoutCommitId() {
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/entities/"
                         + encode("urn:test"))
@@ -656,8 +673,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
         verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
@@ -676,10 +693,10 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
-                eq(shaclModel));
+        verify(differenceManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
+                eq(shaclModel), any(RepositoryConnection.class));
         verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
 
@@ -688,8 +705,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(shapesGraphSpy.getShapesGraphId()).thenReturn(Optional.of(getValueFactory().createIRI("urn:test")));
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/id")
                 .queryParam("branchId", branchId.stringValue())
@@ -699,7 +716,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
     }
 
@@ -708,8 +725,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(shapesGraphSpy.getShapesGraphId()).thenReturn(Optional.of(getValueFactory().createIRI("urn:test")));
         when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/id")
                 .queryParam("commitId", commitId.stringValue())
@@ -717,8 +734,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
     }
 
@@ -727,16 +744,16 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(shapesGraphSpy.getShapesGraphId()).thenReturn(Optional.of(getValueFactory().createIRI("urn:test")));
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/id")
                 .request()
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId));
     }
 
@@ -745,8 +762,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(shapesGraphSpy.getShapesGraphId()).thenReturn(Optional.of(getValueFactory().createIRI("urn:test")));
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/id")
                 .queryParam("branchId", branchId.stringValue())
@@ -754,8 +771,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
     }
 
@@ -773,10 +790,10 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
-                eq(shaclModel));
+        verify(differenceManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
+                eq(shaclModel), any(RepositoryConnection.class));
     }
 
     @Test
@@ -788,16 +805,16 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
             conn.add(shaclModel);
         }
-        when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(shaclModel);
-        when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
         ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/content")
                 .queryParam("branchId", branchId.stringValue())
@@ -807,7 +824,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
         verify(shapesGraphSpy).serializeShapesGraph("turtle");
     }
@@ -821,16 +838,16 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
             conn.add(shaclModel);
         }
-        when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(shaclModel);
-        when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
         ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/content")
                 .queryParam("commitId", commitId.stringValue())
@@ -838,8 +855,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
     }
 
@@ -852,24 +869,24 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
             conn.add(shaclModel);
         }
-        when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(shaclModel);
-        when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
         ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/content")
                 .request()
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId));
     }
 
@@ -882,16 +899,16 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
             conn.add(shaclModel);
         }
-        when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(shaclModel);
-        when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
         ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/content")
                 .queryParam("branchId", branchId.stringValue())
@@ -899,8 +916,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .get();
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
         verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"));
     }
@@ -914,8 +931,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
             conn.add(shaclModel);
         }
-        when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(shaclModel);
-        when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
         ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
@@ -930,10 +947,10 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
-                eq(shaclModel));
+        verify(differenceManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
+                eq(shaclModel), any(RepositoryConnection.class));
         verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"));
     }
 

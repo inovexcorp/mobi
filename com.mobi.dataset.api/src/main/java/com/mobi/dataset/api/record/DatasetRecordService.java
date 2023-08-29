@@ -102,7 +102,7 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
                 return true;
             });
             if (success) {
-                utilsService.addObject(datasetRecord, conn);
+                thingManager.addObject(datasetRecord, conn);
             }
             conn.commit();
 

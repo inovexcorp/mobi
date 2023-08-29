@@ -34,7 +34,12 @@ import org.osgi.service.component.annotations.Component;
 /**
  * {@link ValueConverter} implementation for converting {@link Boolean} values from statements.
  */
-@Component(service = ValueConverter.class)
+@Component(
+        service = ValueConverter.class,
+        property = {
+                "converterType=Boolean"
+        }
+)
 public class BooleanValueConverter extends AbstractValueConverter<Boolean> {
 
     /**

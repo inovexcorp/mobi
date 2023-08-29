@@ -26,11 +26,10 @@ package com.mobi.ontology.utils.cache;
 import com.mobi.ontology.core.api.Ontology;
 import org.eclipse.rdf4j.model.Resource;
 
-import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.cache.Cache;
 
-public interface OntologyCache {
+public interface OntologyCache extends Cache<String, Ontology> {
     /**
      * Creates a cache key using the provided Record and Commit IRI strings. Null values are accepted and used within
      * the key string.
@@ -40,13 +39,6 @@ public interface OntologyCache {
      * @return A string to use as a cache key that incorporates all three passed strings, even if they are null
      */
     String generateKey(String recordIri, String commitIri);
-
-    /**
-     * Retrieves the ontology cache if it is found.
-     *
-     * @return An Optional with the ontology cache if found; empty Optional otherwise
-     */
-    Optional<Cache<String, Ontology>> getOntologyCache();
 
     /**
      * Removes any cached ontologies that import the provided ontology IRI.

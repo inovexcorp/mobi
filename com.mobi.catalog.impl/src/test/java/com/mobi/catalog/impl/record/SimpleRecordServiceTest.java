@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.OperationConfig;
@@ -89,7 +89,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
-    private CatalogUtilsService utilsService;
+    private ThingManager thingManager;
 
     @Mock
     private RepositoryConnection connection;
@@ -112,14 +112,14 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
 
         closeable = MockitoAnnotations.openMocks(this);
-        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
-        when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
+        when(thingManager.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
+        when(thingManager.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 i.getArgument(1, OrmFactory.class).createNew(i.getArgument(0, Resource.class)));
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.utilsService = utilsService;
+        recordService.thingManager = thingManager;
         recordService.provUtils = provUtils;
         recordService.start();
     }
@@ -147,7 +147,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
         recordService.create(user, config, connection);
 
-        verify(utilsService).addObject(any(Record.class), any(RepositoryConnection.class));
+        verify(thingManager).addObject(any(Record.class), any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
@@ -210,12 +210,12 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void deleteTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
+        when(thingManager.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
 
         Record deletedRecord = recordService.delete(testIRI, user, connection);
 
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
-        verify(utilsService).removeObject(eq(testRecord), eq(connection));
+        verify(thingManager).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        verify(thingManager).removeObject(eq(testRecord), eq(connection));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
         assertEquals(testRecord, deletedRecord);
@@ -223,14 +223,14 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
+        when(thingManager.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
 
         recordService.delete(testIRI, user, connection);
     }
 
     @Test
     public void deleteRecordRemoveFails() throws Exception {
-        doThrow(RepositoryException.class).when(utilsService).removeObject(any(Record.class), any(RepositoryConnection.class));
+        doThrow(RepositoryException.class).when(thingManager).removeObject(any(Record.class), any(RepositoryConnection.class));
         thrown.expect(RepositoryException.class);
 
         recordService.delete(testIRI, user, connection);
@@ -257,7 +257,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         Model outputModel = Rio.parse(IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8), "", RDFFormat.JSONLD);
         assertEquals(testRecord.getModel(), outputModel);
 
-        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));
+        verify(thingManager).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));
     }
 
     @Test (expected = IllegalArgumentException.class)

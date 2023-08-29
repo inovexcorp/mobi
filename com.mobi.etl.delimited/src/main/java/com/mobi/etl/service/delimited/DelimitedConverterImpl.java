@@ -108,7 +108,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         this.classMappingFactory = classMappingFactory;
     }
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    @Reference
     public void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
     }

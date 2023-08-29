@@ -33,7 +33,12 @@ import org.osgi.service.component.annotations.Component;
 
 import javax.annotation.Nonnull;
 
-@Component(service = ValueConverter.class)
+@Component(
+        service = ValueConverter.class,
+        property = {
+                "converterType=Long"
+        }
+)
 public class LongValueConverter extends AbstractValueConverter<Long> {
 
     public LongValueConverter() {

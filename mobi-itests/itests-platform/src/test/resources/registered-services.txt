@@ -11,7 +11,7 @@
 (&(objectClass=com.mobi.catalog.api.CatalogProvUtils))
 (&(objectClass=com.mobi.prov.api.ProvenanceService))
 (&(service.pid=com.mobi.jaas.engines.RdfEngine))
-(&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=ontologyCache))
+(&(objectClass=com.mobi.ontology.utils.cache.OntologyCache))
 (&(objectClass=com.mobi.server.api.Mobi)(component.name=com.mobi.platform.server))
 (&(objectClass=com.mobi.prov.rest.ProvRest))
 (&(objectClass=com.mobi.catalog.rest.MergeRequestRest))

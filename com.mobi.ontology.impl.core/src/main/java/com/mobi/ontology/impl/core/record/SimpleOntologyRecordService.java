@@ -134,8 +134,8 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
                                                 RepositoryConnection conn) {
         long start = getStartTime();
         Optional<List<Resource>> deletedCommits = super.deleteBranch(catalogId, versionedRDFRecordId, branchId, conn);
-        deletedCommits.orElseThrow(() -> new IllegalArgumentException("")).forEach(resource ->
-                ontologyCache.removeFromCache(versionedRDFRecordId.stringValue(), resource.stringValue()));
+        deletedCommits.ifPresent(list -> list.forEach(resource ->
+                ontologyCache.removeFromCache(versionedRDFRecordId.stringValue(), resource.stringValue())));
         logTrace("deleteBranch(catalogId, versionedRDFRecordId, branchId, RepositoryConnection)", start);
         return deletedCommits;
     }

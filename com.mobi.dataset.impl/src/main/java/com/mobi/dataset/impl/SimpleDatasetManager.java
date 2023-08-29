@@ -23,8 +23,8 @@ package com.mobi.dataset.impl;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
@@ -81,7 +81,7 @@ public class SimpleDatasetManager implements DatasetManager {
     CatalogConfigProvider configProvider;
 
     @Reference
-    CatalogManager catalogManager;
+    RecordManager recordManager;
 
     @Reference
     DatasetRecordFactory dsRecFactory;
@@ -105,9 +105,11 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public PaginatedSearchResults<DatasetRecord> getDatasetRecords(DatasetPaginatedSearchParams searchParams) {
-        PaginatedSearchResults<Record> results = catalogManager.findRecord(configProvider.getLocalCatalogIRI(),
-                searchParams.build());
-        return new DatasetRecordSearchResults(results, dsRecFactory);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            PaginatedSearchResults<Record> results = recordManager.findRecord(configProvider.getLocalCatalogIRI(),
+                    searchParams.build(), conn);
+            return new DatasetRecordSearchResults(results, dsRecFactory);
+        }
     }
 
     @Override
@@ -117,7 +119,9 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public Optional<DatasetRecord> getDatasetRecord(Resource record) {
-        return catalogManager.getRecord(configProvider.getLocalCatalogIRI(), record, dsRecFactory);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return recordManager.getRecordOpt(configProvider.getLocalCatalogIRI(), record, dsRecFactory, conn);
+        }
     }
 
     @Override
@@ -128,14 +132,16 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord deleteDataset(Resource record, User user) {
-        DatasetRecord datasetRecord = catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), record, user,
-                DatasetRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            DatasetRecord datasetRecord = recordManager.removeRecord(configProvider.getLocalCatalogIRI(), record, user,
+                    DatasetRecord.class, conn);
 
-        Resource dataset = getDatasetId(datasetRecord);
-        String dsRepoID = getRepositoryId(datasetRecord);
+            Resource dataset = getDatasetId(datasetRecord);
+            String dsRepoID = getRepositoryId(datasetRecord);
 
-        dsUtilsService.deleteDataset(dataset, dsRepoID);
-        return datasetRecord;
+            dsUtilsService.deleteDataset(dataset, dsRepoID);
+            return datasetRecord;
+        }
     }
 
     @Override
@@ -146,14 +152,16 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord safeDeleteDataset(Resource record, User user) {
-        DatasetRecord datasetRecord = catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), record, user,
-                DatasetRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            DatasetRecord datasetRecord = recordManager.removeRecord(configProvider.getLocalCatalogIRI(), record, user,
+                    DatasetRecord.class, conn);
 
-        Resource dataset = getDatasetId(datasetRecord);
-        String dsRepoID = getRepositoryId(datasetRecord);
+            Resource dataset = getDatasetId(datasetRecord);
+            String dsRepoID = getRepositoryId(datasetRecord);
 
-        dsUtilsService.safeDeleteDataset(dataset, dsRepoID);
-        return datasetRecord;
+            dsUtilsService.safeDeleteDataset(dataset, dsRepoID);
+            return datasetRecord;
+        }
     }
 
     @Override

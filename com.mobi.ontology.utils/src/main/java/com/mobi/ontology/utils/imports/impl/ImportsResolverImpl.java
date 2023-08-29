@@ -23,7 +23,8 @@ package com.mobi.ontology.utils.imports.impl;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
@@ -73,6 +74,12 @@ public class ImportsResolverImpl implements ImportsResolver {
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
 
     @Reference
+    ThingManager thingManager;
+
+    @Reference
+    CompiledResourceManager compiledResourceManager;
+
+    @Reference
     BranchFactory branchFactory;
 
     @Reference
@@ -80,9 +87,6 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Reference
     CatalogConfigProvider catalogConfigProvider;
-
-    @Reference
-    CatalogUtilsService utilsService;
 
     @Activate
     protected void activate(final ImportsResolverConfig config) {
@@ -201,17 +205,17 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     private File getCompiledResourceFile(Resource commitIRI) {
         try (RepositoryConnection conn = catalogConfigProvider.getRepository().getConnection()) {
-            utilsService.validateResource(commitIRI, vf.createIRI(Commit.TYPE), conn);
-            return utilsService.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
+            thingManager.validateResource(commitIRI, vf.createIRI(Commit.TYPE), conn);
+            return compiledResourceManager.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
         }
     }
 
     private Optional<Resource> getMasterBranchHead(Resource recordIRI) {
         try (RepositoryConnection conn = catalogConfigProvider.getRepository().getConnection()) {
-            VersionedRDFRecord record = utilsService.getExpectedObject(recordIRI, versionedRDFRecordFactory, conn);
+            VersionedRDFRecord record = thingManager.getExpectedObject(recordIRI, versionedRDFRecordFactory, conn);
             Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("Record " + recordIRI + " does not have a master Branch set."));
-            return utilsService.getExpectedObject(branchId, branchFactory, conn).getHead_resource();
+            return thingManager.getExpectedObject(branchId, branchFactory, conn).getHead_resource();
         }
     }
 }

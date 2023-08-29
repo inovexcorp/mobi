@@ -23,15 +23,11 @@ package com.mobi.etl.service.delimited;
  * #L%
  */
 
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
@@ -48,8 +44,16 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecordFactory;
 import com.mobi.etl.api.pagination.MappingPaginatedSearchParams;
 import com.mobi.etl.api.pagination.MappingRecordSearchResults;
 import com.mobi.exception.MobiException;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -72,7 +76,16 @@ public class SimpleMappingManager implements MappingManager {
     CatalogConfigProvider configProvider;
 
     @Reference
-    CatalogManager catalogManager;
+    RecordManager recordManager;
+
+    @Reference
+    BranchManager branchManager;
+
+    @Reference
+    CommitManager commitManager;
+
+    @Reference
+    CompiledResourceManager compiledResourceManager;
 
     @Reference
     MappingRecordFactory mappingRecordFactory;
@@ -122,28 +135,40 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public PaginatedSearchResults<MappingRecord> getMappingRecords(MappingPaginatedSearchParams searchParams) {
-        PaginatedSearchResults<Record> results = catalogManager.findRecord(configProvider.getLocalCatalogIRI(),
-                searchParams.build());
-        return new MappingRecordSearchResults(results, mappingRecordFactory);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            PaginatedSearchResults<Record> results = recordManager.findRecord(configProvider.getLocalCatalogIRI(),
+                    searchParams.build(), conn);
+            return new MappingRecordSearchResults(results, mappingRecordFactory);
+        }
     }
 
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId) {
-        Branch masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
-        return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(getHeadOfBranch(masterBranch))));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn);
+            return Optional.of(
+                    getWrapperFromModel(compiledResourceManager.getCompiledResource(getHeadOfBranch(masterBranch),
+                            conn)));
+        }
     }
 
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        Commit commit = catalogManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId);
-        return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(commit.getResource())));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Commit commit = commitManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId, conn);
+            return Optional.of(getWrapperFromModel(compiledResourceManager.getCompiledResource(commit.getResource(),
+                    conn)));
+        }
     }
 
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId,
             @Nonnull Resource commitId) {
-
-        return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(recordId, branchId, commitId)));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return Optional.of(
+                    getWrapperFromModel(compiledResourceManager.getCompiledResource(recordId, branchId, commitId,
+                            conn)));
+        }
     }
 
     private Resource getHeadOfBranch(Branch branch) {

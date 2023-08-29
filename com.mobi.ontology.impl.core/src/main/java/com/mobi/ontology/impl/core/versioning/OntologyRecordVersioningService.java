@@ -23,13 +23,10 @@ package com.mobi.ontology.impl.core.versioning;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
@@ -73,9 +70,14 @@ import java.util.Optional;
         service = { VersioningService.class, OntologyRecordVersioningService.class }
 )
 public class OntologyRecordVersioningService extends BaseVersioningService<OntologyRecord> {
-    private OntologyRecordFactory ontologyRecordFactory;
-    private OntologyManager ontologyManager;
-    private OntologyCache ontologyCache;
+    @Reference
+    protected OntologyRecordFactory ontologyRecordFactory;
+
+    @Reference
+    protected OntologyManager ontologyManager;
+
+    @Reference
+    protected OntologyCache ontologyCache;
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
 
@@ -93,41 +95,6 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         } catch (IOException e) {
             throw new MobiException(e);
         }
-    }
-
-    @Reference
-    protected void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    protected void setOntologyManager(OntologyManager ontologyManager) {
-        this.ontologyManager = ontologyManager;
-    }
-
-    @Reference
-    protected void setOntologyCache(OntologyCache ontologyCache) {
-        this.ontologyCache = ontologyCache;
-    }
-
-    @Reference
-    protected void setCatalogUtils(CatalogUtilsService catalogUtils) {
-        this.catalogUtils = catalogUtils;
     }
 
     @Activate
@@ -149,7 +116,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
             commit.getBaseCommit_resource()
                     .ifPresent(baseCommit -> updateOntologyIRI(record.getResource(), commit, conn));
         }
-        catalogUtils.addCommit(branch, commit, conn);
+        commitManager.addCommit(branch, commit, conn);
         commit.getWasAssociatedWith_resource().stream().findFirst()
                 .ifPresent(userIri -> sendCommitEvent(record.getResource(), branch.getResource(), userIri,
                         commit.getResource()));
@@ -158,7 +125,8 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
     @Override
     public Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
                               Model deletions, Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
-        Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
+        InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
+        Commit newCommit = commitManager.createCommit(inProgressCommit, message, baseCommit, auxCommit);
         // Determine if branch is the master branch of a record
         if (isMasterBranch(record, branch)) {
             if (baseCommit != null) {
@@ -170,24 +138,24 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
                         .build();
                 if (auxCommit != null) {
                     // If this is a merge, collect all the additions from the aux branch and provided models
-                    List<Resource> sourceChain = catalogUtils.getCommitChain(auxCommit.getResource(), false, conn);
-                    sourceChain.removeAll(catalogUtils.getCommitChain(baseCommit.getResource(), false, conn));
-                    model = catalogUtils.applyDifference(catalogUtils.getCompiledResource(sourceChain, conn), diff);
+                    List<Resource> sourceChain = commitManager.getCommitChain(auxCommit.getResource(), false, conn);
+                    sourceChain.removeAll(commitManager.getCommitChain(baseCommit.getResource(), false, conn));
+                    model = differenceManager.applyDifference(compiledResourceManager.getCompiledResource(sourceChain, conn), diff);
                 } else {
                     // Else, this is a regular commit. Make sure we remove duplicated add/del statements
-                    model = catalogUtils.applyDifference(mf.createEmptyModel(), diff);
+                    model = differenceManager.applyDifference(mf.createEmptyModel(), diff);
                 }
                 updateOntologyIRI(record.getResource(), model, conn);
             }
         }
-        catalogUtils.addCommit(branch, newCommit, conn);
-        catalogUtils.updateCommit(newCommit, additions, deletions, conn);
+        commitManager.addCommit(branch, newCommit, conn);
+        commitManager.updateCommit(newCommit, additions, deletions, conn);
         sendCommitEvent(record.getResource(), branch.getResource(), user.getResource(), newCommit.getResource());
         return newCommit.getResource();
     }
 
     private void updateOntologyIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
-        OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
+        OntologyRecord record = thingManager.getObject(recordId, ontologyRecordFactory, conn);
         Optional<Resource> iri = record.getOntologyIRI();
         iri.ifPresent(resource -> ontologyCache.clearCacheImports(resource));
         IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
@@ -201,7 +169,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
                 if (iri.isEmpty() || !newIRI.equals(iri.get())) {
                     testOntologyIRIUniqueness(newIRI);
                     record.setOntologyIRI(newIRI);
-                    catalogUtils.updateObject(record, conn);
+                    thingManager.updateObject(record, conn);
                     ontologyCache.clearCacheImports(newIRI);
                 }
             }
@@ -209,7 +177,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
     }
 
     private void updateOntologyIRI(Resource recordId, Model additions, RepositoryConnection conn) {
-        OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
+        OntologyRecord record = thingManager.getObject(recordId, ontologyRecordFactory, conn);
         Optional<Resource> iri = record.getOntologyIRI();
         iri.ifPresent(resource -> ontologyCache.clearCacheImports(resource));
 
@@ -222,7 +190,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
             if (iri.isEmpty() || !newIRI.equals(iri.get())) {
                 testOntologyIRIUniqueness(newIRI);
                 record.setOntologyIRI(newIRI);
-                catalogUtils.updateObject(record, conn);
+                thingManager.updateObject(record, conn);
                 ontologyCache.clearCacheImports(newIRI);
             }
         }

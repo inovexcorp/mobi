@@ -50,27 +50,8 @@ public interface VersioningManager {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, the Branch could not be found, or the InProgress could not be found.
      */
-    Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
+   Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
                     RepositoryConnection conn);
-
-    /**
-     * Commits the provided addition and deletion {@link Model Models} for the provided {@link User} to
-     * the {@link Branch} identified by the provided Resource IDs with the
-     * provided message.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch which will get the new Commit.
-     * @param user The User which will be associated with the new Commit.
-     * @param message The String with the message text associated with the new Commit.
-     * @param additions The statements which were added to the named graph.
-     * @param deletions The statements which were added to the named graph.
-     * @return The Resource of the new Commit.
-     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, or the Branch could not be found.
-     */
-    Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
-                    Model additions, Model deletions);
 
     /**
      * Merges a {@link Branch} identified by the provided Resources into

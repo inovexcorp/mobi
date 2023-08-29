@@ -78,8 +78,9 @@ public interface RecordService<T extends Record> {
     void export(Resource iriRecord, RecordOperationConfig config, RepositoryConnection conn);
 
     /**
-     * Delete the record's branch if supported.  If operation is not supported on the record
-     * an IllegalArgumentException should be thrown.
+     * Delete the record's branch if supported.  If operation is not supported on the record an empty Optional will be
+     * returned.
+     *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
      * @param versionedRDFRecordId The Resource identifying the Record.
      * @param branchId The Resource identifying the Branch for Record.

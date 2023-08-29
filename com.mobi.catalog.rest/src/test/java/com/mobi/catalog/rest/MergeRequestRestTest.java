@@ -711,7 +711,6 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
     }
 
-
     @Test
     public void createReplyCommentEmptyCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
@@ -837,7 +836,6 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .put(Entity.text(updateCommentText));
         assertEquals(response.getStatus(), 400);
     }
-
 
     /* DELETE merge-requests/{requestId}/comments/{commentId} */
 

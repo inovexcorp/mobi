@@ -26,7 +26,6 @@ package com.mobi.catalog.api.versioning;
 
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Model;
@@ -36,57 +35,6 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import javax.annotation.Nullable;
 
 public interface VersioningService<T extends VersionedRDFRecord> {
-    /**
-     * Retrieves the IRI of the type of {@link VersionedRDFRecord} this service versions.
-     *
-     * @return A IRI string of a subclass of VersionedRDFRecord
-     */
-    String getTypeIRI();
-
-    /**
-     * Retrieves the target {@link Branch} for a commit or merge process identified by the provided Resource IDs.
-     *
-     * @param record The VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The target Branch for a commit or merge process
-     */
-    Branch getBranch(T record, Resource branchId, RepositoryConnection conn);
-
-    /**
-     * Retrieves the head {@link Commit} of the provided {@link Branch}. Returns null if the Branch has no head Commit.
-     *
-     * @param branch The Branch which has a head Commit.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The head Commit of the Branch; null if it does not have one set
-     */
-    Commit getBranchHeadCommit(Branch branch, RepositoryConnection conn);
-
-    /**
-     * Gets the {@link InProgressCommit} of the {@link User} and the {@link VersionedRDFRecord} identified by the
-     * provided Resource.
-     *
-     * @param recordId The Resource identifying the Record with the InProgressCommit.
-     * @param user The User with the InProgressCommit
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The InProgressCommit of the User for the VersionedRDFRecord
-     */
-    InProgressCommit getInProgressCommit(Resource recordId, User user, RepositoryConnection conn);
-
-    /**
-     * Creates a {@link Commit} using the provided {@link InProgressCommit} and message whose parents are the passed
-     * base and auxiliary {@link Commit Commits}.
-     *
-     * @param commit The InProgressCommit which is the basis for the created Commit.
-     * @param message The String with the message text associated with the Commit.
-     * @param baseCommit The base Commit for the created Commit. Used for associating the Revisions as well.
-     * @param auxCommit The auxiliary Commit for the created Commit. Used for associating the Revisions as well.
-     * @return Commit created based on the provided InProgressCommit with the message metadata.
-     * @throws IllegalArgumentException If a auxiliary commit is passed, but not a base commit
-     */
-    Commit createCommit(InProgressCommit commit, String message, @Nullable Commit baseCommit,
-                        @Nullable Commit auxCommit);
-
     /**
      * Adds the provided {@link Commit} to the provided {@link Branch}, updating the head Commit. NOTE: This method
      * is intended to be used for existing InProgressCommits and assumes the additions and deletions statements already
@@ -118,10 +66,9 @@ public interface VersioningService<T extends VersionedRDFRecord> {
                        RepositoryConnection conn);
 
     /**
-     * Removes the provided {@link InProgressCommit} from the Repository.
+     * Retrieves the IRI of the type of {@link VersionedRDFRecord} this service versions.
      *
-     * @param commit The InProgressCommit which will be removed.
-     * @param conn A RepositoryConnection to use for lookup.
+     * @return A IRI string of a subclass of VersionedRDFRecord
      */
-    void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn);
+    String getTypeIRI();
 }

@@ -30,7 +30,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -45,11 +49,13 @@ import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
 import com.mobi.persistence.utils.Models;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import com.mobi.repository.api.OsgiRepository;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -108,9 +114,20 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     @Mock
     private CatalogConfigProvider configProvider;
 
+    @Mock
+    private RecordManager recordManager;
 
     @Mock
-    private CatalogManager catalogManager;
+    private BranchManager branchManager;
+
+    @Mock
+    private CommitManager commitManager;
+
+    @Mock
+    private VersionManager versionManager;
+
+    @Mock
+    private DifferenceManager differenceManager;
 
     @Mock
     private BranchFactory branchFactory;
@@ -120,6 +137,12 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Mock
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
+
+    @Mock
+    private OsgiRepository repo;
+
+    @Mock
+    private RepositoryConnection mockConn;
 
     @Before
     public void setup() throws Exception {
@@ -141,7 +164,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
         // Setup unversionedRecord
         unversionedRecord = unversionedRecordFactoryOrm.createNew(unversionedRecordIRI);
-        when(catalogManager.getRecord(eq(catalogIRI), eq(unversionedRecordIRI), eq(recordFactory)))
+        when(recordManager.getRecordOpt(eq(catalogIRI), eq(unversionedRecordIRI), eq(recordFactory), any(RepositoryConnection.class)))
                 .thenReturn(Optional.of(unversionedRecord));
 
         // Setup versionedRDFRecord master branch
@@ -158,15 +181,15 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
                 .deletions(mf.createEmptyModel())
                 .build();
 
-        when(catalogManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(branchFactory)))
-                .thenReturn(Optional.of(masterBranch));
-        when(catalogManager.getCommitChain(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI)))
+        when(branchManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(branchFactory), any(RepositoryConnection.class)))
+                .thenReturn(masterBranch);
+        when(commitManager.getCommitChain(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), any(RepositoryConnection.class)))
                 .thenReturn(Stream.of(headCommit, baseCommit).collect(Collectors.toList()));
-        when(catalogManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(masterHeadCommitIRI)))
+        when(commitManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(masterHeadCommitIRI), any(RepositoryConnection.class)))
                 .thenReturn(Optional.of(headCommit));
-        when(catalogManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(baseCommitIRI)))
+        when(commitManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(baseCommitIRI), any(RepositoryConnection.class)))
                 .thenReturn(Optional.of(baseCommit));
-        when(catalogManager.getRevisionChanges(any(Resource.class))).thenReturn(difference);
+        when(differenceManager.getCommitDifference(any(Resource.class), any(RepositoryConnection.class))).thenReturn(difference);
 
         // Setup versionedRDFRecord second branch
         secondBranch = branchFactoryOrm.createNew(secondBranchIRI);
@@ -175,17 +198,17 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         secondCommit.setBaseCommit(baseCommit);
         secondBranch.setHead(secondCommit);
 
-        when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(recordFactory)))
+        when(recordManager.getRecordOpt(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(recordFactory), any(RepositoryConnection.class)))
                 .thenReturn(Optional.of(versionedRDFRecord));
-        when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(versionedRDFRecordFactory)))
+        when(recordManager.getRecordOpt(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class)))
                 .thenReturn(Optional.of(versionedRDFRecord));
-        when(catalogManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), eq(branchFactory)))
-                .thenReturn(Optional.of(secondBranch));
-        when(catalogManager.getCommitChain(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI)))
+        when(branchManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), eq(branchFactory), any(RepositoryConnection.class)))
+                .thenReturn(secondBranch);
+        when(commitManager.getCommitChain(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), any(RepositoryConnection.class)))
                 .thenReturn(Stream.of(secondCommit, baseCommit).collect(Collectors.toList()));
-        when(catalogManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), eq(secondHeadCommitIRI)))
+        when(commitManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), eq(secondHeadCommitIRI), any(RepositoryConnection.class)))
                 .thenReturn(Optional.of(secondCommit));
-        when(catalogManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), eq(baseCommitIRI)))
+        when(commitManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), eq(baseCommitIRI), any(RepositoryConnection.class)))
                 .thenReturn(Optional.of(baseCommit));
 
         // Setup Tags/Versions
@@ -193,12 +216,19 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         tag1.setCommit(baseCommit);
         tag2 = tagFactoryOrm.createNew(tag2IRI);
         tag2.setCommit(secondCommit);
-        when(catalogManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI))).thenReturn(Collections.emptySet());
+        when(versionManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI), any(RepositoryConnection.class))).thenReturn(Collections.emptySet());
 
         // General mock interactions
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(repo.getConnection()).thenReturn(mockConn);
 
-        service.catalogManager = catalogManager;
+        service.recordManager = recordManager;
+        service.branchManager = branchManager;
+        service.commitManager = commitManager;
+        service.versionManager = versionManager;
+        service.commitManager = commitManager;
+        service.differenceManager = differenceManager;
         service.configProvider = configProvider;
         service.branchFactory = branchFactory;
         service.recordFactory = recordFactory;
@@ -212,7 +242,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void noRecordsInCatalogTest() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.emptySet());
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.emptySet());
 
         Model model = callExportAndGetModel();
         assertEquals(0, model.size());
@@ -220,7 +250,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void unversionedRecordInCatalogTest() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(unversionedRecordIRI));
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(unversionedRecordIRI));
 
         Model model = callExportAndGetModel();
         assertTrue(model.containsAll(unversionedRecord.getModel()));
@@ -229,7 +259,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void unversionedRecordSpecifiedTest() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(unversionedRecordIRI));
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(unversionedRecordIRI));
 
         Model model = callExportAndGetModel(unversionedRecordIRI);
         assertTrue(model.containsAll(unversionedRecord.getModel()));
@@ -238,7 +268,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void versionedRDFRecordInCatalogOneBranchTest() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
 
         Model model = callExportAndGetModel();
         assertTrue(model.containsAll(baseCommit.getModel()));
@@ -252,7 +282,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void versionedRDFRecordInCatalogTwoBranchesTest() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
         versionedRDFRecord.addBranch(secondBranch);
 
         Model model = callExportAndGetModel();
@@ -297,8 +327,8 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void versionedRDFRecordOneBranchTagTest() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
-        when(catalogManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI))).thenReturn(Collections.singleton(tag1));
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(versionManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI), any(RepositoryConnection.class))).thenReturn(Collections.singleton(tag1));
 
         Model model = callExportAndGetModel();
         assertTrue(model.containsAll(baseCommit.getModel()));
@@ -312,8 +342,8 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void versionedRDFRecordTwoBranchesTagsTest() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
-        when(catalogManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI)))
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(versionManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI), any(RepositoryConnection.class)))
                 .thenReturn(Stream.of(tag1, tag2).collect(Collectors.toSet()));
 
         versionedRDFRecord.addBranch(secondBranch);
@@ -332,32 +362,32 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test(expected = IllegalStateException.class)
     public void recordDoesNotExist() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
-        when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(recordFactory))).thenReturn(Optional.empty());
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(recordManager.getRecordOpt(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         callExportAndGetModel();
     }
 
     @Test(expected = IllegalStateException.class)
     public void versionedRecordDoesNotExist() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
-        when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(versionedRDFRecordFactory))).thenReturn(Optional.empty());
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(recordManager.getRecordOpt(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class))).thenThrow(new IllegalStateException());
 
         callExportAndGetModel();
     }
 
     @Test(expected = IllegalStateException.class)
     public void branchDoesNotExist() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
-        when(catalogManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), any(Resource.class), eq(branchFactory))).thenReturn(Optional.empty());
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(branchManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenThrow(new IllegalStateException());
 
         callExportAndGetModel();
     }
 
     @Test(expected = IllegalStateException.class)
     public void commitDoesNotExist() throws Exception {
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
-        when(catalogManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), any(Resource.class), any(Resource.class))).thenReturn(Optional.empty());
+        when(recordManager.getRecordIds(any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
+        when(commitManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         callExportAndGetModel();
     }

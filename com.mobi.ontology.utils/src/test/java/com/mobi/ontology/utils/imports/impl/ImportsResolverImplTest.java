@@ -34,7 +34,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -100,7 +101,10 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     private CatalogConfigProvider configProvider;
 
     @Mock
-    private CatalogUtilsService utilsService;
+    private ThingManager thingManager;
+
+    @Mock
+    private CompiledResourceManager compiledResourceManager;
 
     @Mock
     private OntologyManager ontologyManager;
@@ -110,7 +114,6 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
     @Mock
     private Branch masterBranch;
-
 
     @BeforeClass
     public static void setupURLStreamHandlerFactory() {
@@ -147,17 +150,18 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(configProvider.getRepository()).thenReturn(repo);
-        when(utilsService.getExpectedObject(eq(recordIRI), eq(versionedRdfRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
-        when(utilsService.getExpectedObject(eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(masterBranch);
+        when(thingManager.getExpectedObject(eq(recordIRI), eq(versionedRdfRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
+        when(thingManager.getExpectedObject(eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyManager.getOntologyRecordResource(eq(ontologyIRI))).thenReturn(Optional.of(recordIRI));
         when(ontologyManager.getOntologyRecordResource(eq(vf.createIRI("urn:localOntology")))).thenReturn(Optional.of(recordIRI));
 
-        when(utilsService.getCompiledResourceFile(eq(headCommitIRI), eq(RDFFormat.TURTLE), any(RepositoryConnection.class))).thenReturn(Paths.get(getClass().getResource("/Ontology.ttl").getPath()).toFile());
+        when(compiledResourceManager.getCompiledResourceFile(eq(headCommitIRI), eq(RDFFormat.TURTLE), any(RepositoryConnection.class))).thenReturn(Paths.get(getClass().getResource("/Ontology.ttl").getPath()).toFile());
 
         injectOrmFactoryReferencesIntoService(resolver);
         resolver.catalogConfigProvider = configProvider;
-        resolver.utilsService = utilsService;
+        resolver.thingManager = thingManager;
+        resolver.compiledResourceManager = compiledResourceManager;
         when(importsResolverConfig.userAgent()).thenReturn("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0");
         resolver.activate(importsResolverConfig);
     }

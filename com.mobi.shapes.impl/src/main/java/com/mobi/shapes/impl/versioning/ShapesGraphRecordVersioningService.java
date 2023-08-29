@@ -23,13 +23,10 @@ package com.mobi.shapes.impl.versioning;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
@@ -96,26 +93,6 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
     @Reference
     ShapesGraphManager shapesGraphManager;
 
-    @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    protected void setCatalogUtils(CatalogUtilsService catalogUtils) {
-        this.catalogUtils = catalogUtils;
-    }
-
     @Activate
     void start(BundleContext context) {
         final ServiceReference<EventAdmin> ref = context.getServiceReference(EventAdmin.class);
@@ -135,7 +112,7 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
             commit.getBaseCommit_resource()
                     .ifPresent(baseCommit -> updateShapesGraphIRI(record.getResource(), commit, conn));
         }
-        catalogUtils.addCommit(branch, commit, conn);
+        commitManager.addCommit(branch, commit, conn);
         commit.getWasAssociatedWith_resource().stream().findFirst()
                 .ifPresent(userIri -> sendCommitEvent(record.getResource(), branch.getResource(), userIri,
                         commit.getResource()));
@@ -144,7 +121,8 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
     @Override
     public Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
                               Model deletions, Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
-        Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
+        InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
+        Commit newCommit = commitManager.createCommit(inProgressCommit, message, baseCommit, auxCommit);
         // Determine if branch is the master branch of a record
         if (isMasterBranch(record, branch)) {
             if (baseCommit != null) {
@@ -156,24 +134,24 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
                         .build();
                 if (auxCommit != null) {
                     // If this is a merge, collect all the additions from the aux branch and provided models
-                    List<Resource> sourceChain = catalogUtils.getCommitChain(auxCommit.getResource(), false, conn);
-                    sourceChain.removeAll(catalogUtils.getCommitChain(baseCommit.getResource(), false, conn));
-                    model = catalogUtils.applyDifference(catalogUtils.getCompiledResource(sourceChain, conn), diff);
+                    List<Resource> sourceChain = commitManager.getCommitChain(auxCommit.getResource(), false, conn);
+                    sourceChain.removeAll(commitManager.getCommitChain(baseCommit.getResource(), false, conn));
+                    model = differenceManager.applyDifference(compiledResourceManager.getCompiledResource(sourceChain, conn), diff);
                 } else {
                     // Else, this is a regular commit. Make sure we remove duplicated add/del statements
-                    model = catalogUtils.applyDifference(mf.createEmptyModel(), diff);
+                    model = differenceManager.applyDifference(mf.createEmptyModel(), diff);
                 }
                 updateShapesGraphIRI(record.getResource(), model, conn);
             }
         }
-        catalogUtils.addCommit(branch, newCommit, conn);
-        catalogUtils.updateCommit(newCommit, additions, deletions, conn);
+        commitManager.addCommit(branch, newCommit, conn);
+        commitManager.updateCommit(newCommit, additions, deletions, conn);
         sendCommitEvent(record.getResource(), branch.getResource(), user.getResource(), newCommit.getResource());
         return newCommit.getResource();
     }
 
     private void updateShapesGraphIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
-        ShapesGraphRecord record = catalogUtils.getObject(recordId, shapesGraphRecordFactory, conn);
+        ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
         Optional<Resource> iri = record.getShapesGraphIRI();
         IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
         Resource revisionIRI = (Resource) commit.getProperty(generatedIRI)
@@ -186,14 +164,14 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
                 if (iri.isEmpty() || !newIRI.equals(iri.get())) {
                     assertShapesGraphIRIUniqueness(newIRI);
                     record.setShapesGraphIRI(newIRI);
-                    catalogUtils.updateObject(record, conn);
+                    thingManager.updateObject(record, conn);
                 }
             }
         }
     }
 
     private void updateShapesGraphIRI(Resource recordId, Model additions, RepositoryConnection conn) {
-        ShapesGraphRecord record = catalogUtils.getObject(recordId, shapesGraphRecordFactory, conn);
+        ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
         Optional<Resource> iri = record.getShapesGraphIRI();
 
         Optional<Statement> ontStmt = additions
@@ -205,7 +183,7 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
             if (iri.isEmpty() || !newIRI.equals(iri.get())) {
                 assertShapesGraphIRIUniqueness(newIRI);
                 record.setShapesGraphIRI(newIRI);
-                catalogUtils.updateObject(record, conn);
+                thingManager.updateObject(record, conn);
             }
         }
     }

@@ -78,7 +78,7 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
 
             conn.begin();
             addRecord(record, masterBranch, conn);
-            catalogManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
+            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
 
             setShapesGraphToRecord(record, commit, conn);
 
@@ -118,7 +118,7 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
 
         validateShapesGraph(ontologyIRI);
         record.setShapesGraphIRI(ontologyIRI);
-        utilsService.updateObject(record, conn);
+        thingManager.updateObject(record, conn);
     }
 
     /**

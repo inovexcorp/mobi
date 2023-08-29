@@ -32,6 +32,10 @@ GRAPH catalogs:catalog-distributed {
     catalogs:catalog-distributed a mcat:Catalog .
 }
 
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a mcat:Catalog .
+}
+
 GRAPH <http://mobi.com/test/records#record-no-catalog> {
     records:record-no-catalog a mcat:Record ;
         dc:title "Record No Catalog" ;
@@ -43,17 +47,17 @@ GRAPH <http://mobi.com/test/records#record-no-catalog> {
 
 GRAPH records:record {
     records:record a mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Record" ;
         dc:description "Description" ;
         dc:issued "2016-01-02T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-01-03T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher <http://mobi.com/test#user> .
+        dc:publisher users:taken .
 }
 
 GRAPH records:unversioned-record {
     records:unversioned-record a mcat:UnversionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Unversioned Record" ;
         dc:description "Description" ;
         dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
@@ -73,7 +77,7 @@ GRAPH records:unversioned-record-no-catalog {
 
 GRAPH records:unversioned-record-missing-distribution {
     records:unversioned-record-missing-distribution a mcat:UnversionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Unversioned Record Missing Distribution" ;
         dc:description "Description" ;
         dc:issued "2016-05-01T00:00:00Z"^^xsd:dateTime ;
@@ -85,12 +89,12 @@ GRAPH records:unversioned-record-missing-distribution {
 
 GRAPH records:versioned-record {
     records:versioned-record a mcat:VersionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Versioned Record" ;
         dc:description "Description" ;
         dc:issued "2017-03-03T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher <http://mobi.com/test#user> ;
+        dc:publisher users:taken ;
         mcat:keyword "111" ;
         mcat:version versions:version ;
         mcat:version versions:latest-version ;
@@ -109,7 +113,7 @@ GRAPH records:versioned-record-no-catalog {
 
 GRAPH records:versioned-record-missing-version {
     records:versioned-record-missing-version a mcat:VersionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Versioned Record Missing Version" ;
         dc:description "Description" ;
         dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
@@ -122,7 +126,7 @@ GRAPH records:versioned-record-missing-version {
 
 GRAPH records:versioned-rdf-record {
     records:versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Versioned RDF Record" ;
         dc:description "Description" ;
         dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
@@ -141,7 +145,7 @@ GRAPH records:versioned-rdf-record {
 
 GRAPH records:simple-versioned-rdf-record {
     records:simple-versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record, ontedit:OntologyRecord;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Simple Versioned RDF Record" ;
         dc:description "Description" ;
         dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
@@ -149,6 +153,16 @@ GRAPH records:simple-versioned-rdf-record {
         mcat:branch branches:branch ;
         mcat:branch branches:master ;
         mcat:masterBranch branches:master .
+}
+
+GRAPH records:versioned-rdf-record-no-master {
+    records:versioned-rdf-record-no-master a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record, ontedit:OntologyRecord;
+        mcat:catalog catalogs:catalog-local ;
+        dc:title "Versioned RDF Record No Master" ;
+        dc:description "Description" ;
+        dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
+        mcat:branch branches:branch .
 }
 
 GRAPH records:versioned-rdf-record-no-catalog {
@@ -162,7 +176,7 @@ GRAPH records:versioned-rdf-record-no-catalog {
 
 GRAPH records:versioned-rdf-record-missing-branch {
     records:versioned-rdf-record-missing-branch a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Versioned RDF Record Missing Branch" ;
         dc:description "Description" ;
         dc:issued "2017-03-01T00:00:00Z"^^xsd:dateTime ;
@@ -618,7 +632,7 @@ GRAPH deletions:testBlank1 {
 
 GRAPH records:complex-record {
     records:complex-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Complex History Record" ;
         dc:description "Description" ;
         dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
@@ -1388,7 +1402,7 @@ GRAPH <http://mobi.com/test/diff/deletions> {
 
 GRAPH records:quad-versioned-rdf-record {
     records:quad-versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
+        mcat:catalog catalogs:catalog-local ;
         dc:title "Quad Versioned RDF Record" ;
         dc:description "Description" ;
         dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;

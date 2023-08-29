@@ -24,7 +24,6 @@ package com.mobi.shapes.impl.versioning;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -34,8 +33,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -104,13 +106,22 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
-    private CatalogManager catalogManager;
-
-    @Mock
     private ShapesGraphManager shapesGraphManager;
 
     @Mock
-    private CatalogUtilsService catalogUtils;
+    private ThingManager thingManager;
+
+    @Mock
+    private BranchManager branchManager;
+
+    @Mock
+    private CommitManager commitManager;
+
+    @Mock
+    private DifferenceManager differenceManager;
+
+    @Mock
+    private CompiledResourceManager compiledResourceManager;
 
     @Mock
     private EventAdmin eventAdmin;
@@ -151,26 +162,28 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
 
         closeable = MockitoAnnotations.openMocks(this);
 
-        when(catalogUtils.getBranch(any(ShapesGraphRecord.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
-        when(catalogUtils.getInProgressCommit(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        when(catalogUtils.getObject(any(Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
-        when(catalogUtils.getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), any(RepositoryConnection.class))).thenReturn(record);
-        when(catalogUtils.applyDifference(any(), any())).thenAnswer(i -> i.getArgument(1, Difference.class).getAdditions());
-        when(catalogUtils.getCompiledResource(anyList(), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
-        when(catalogUtils.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(branchManager.getBranch(any(ShapesGraphRecord.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
+        when(commitManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        when(thingManager.getObject(any(Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
+        when(thingManager.getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), any(RepositoryConnection.class))).thenReturn(record);
+        when(differenceManager.applyDifference(any(), any())).thenAnswer(i -> i.getArgument(1, Difference.class).getAdditions());
+        when(compiledResourceManager.getCompiledResource(anyList(), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
 
         when(shapesGraphManager.shapesGraphIriExists(usedIRI)).thenReturn(true);
 
-        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
-        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
+        when(commitManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
+        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
         when(context.getServiceReference(EventAdmin.class)).thenReturn(serviceReference);
         when(context.getService(serviceReference)).thenReturn(eventAdmin);
 
         service = new ShapesGraphRecordVersioningService();
         injectOrmFactoryReferencesIntoService(service);
-        service.setCatalogUtils(catalogUtils);
-        service.setCatalogManager(catalogManager);
+        service.commitManager = commitManager;
+        service.branchManager = branchManager;
+        service.compiledResourceManager = compiledResourceManager;
+        service.differenceManager = differenceManager;
+        service.thingManager = thingManager;
         service.shapesGraphManager = shapesGraphManager;
         service.start(context);
     }
@@ -185,61 +198,6 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
         assertEquals(ShapesGraphRecord.TYPE, service.getTypeIRI());
     }
 
-    @Test
-    public void getSourceBranchTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(branch, service.getBranch(record, branch.getResource(), conn));
-            verify(catalogUtils).getBranch(record, branch.getResource(), branchFactory, conn);
-        }
-    }
-
-    @Test
-    public void getTargetBranchTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(branch, service.getBranch(record, branch.getResource(), conn));
-            verify(catalogUtils).getBranch(record, branch.getResource(), branchFactory, conn);
-        }
-    }
-
-    @Test
-    public void getInProgressCommitTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(inProgressCommit, service.getInProgressCommit(record.getResource(), user, conn));
-            verify(catalogUtils).getInProgressCommit(record.getResource(), user.getResource(), conn);
-        }
-    }
-
-    @Test
-    public void getBranchHeadCommitTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(commit, service.getBranchHeadCommit(branch, conn));
-            verify(catalogUtils).getObject(commit.getResource(), commitFactory, conn);
-        }
-    }
-
-    @Test
-    public void getBranchHeadCommitNotSetTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new-branch"));
-            assertNull(service.getBranchHeadCommit(newBranch, conn));
-            verify(catalogUtils, times(0)).getObject(commit.getResource(), commitFactory, conn);
-        }
-    }
-
-    @Test
-    public void removeInProgressCommitTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            service.removeInProgressCommit(inProgressCommit, conn);
-            verify(catalogUtils).removeInProgressCommit(inProgressCommit, conn);
-        }
-    }
-
-    @Test
-    public void createCommitTest() throws Exception {
-        assertEquals(commit, service.createCommit(inProgressCommit, "Message", commit, null));
-        verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-    }
-
     /* addCommit(Branch, Commit, RepositoryConnection) */
 
     @Test
@@ -249,13 +207,13 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
 
             service.addCommit(record, newBranch, commit, conn);
-            verify(catalogUtils).addCommit(newBranch, commit, conn);
-            verify(catalogUtils, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
-            verify(catalogUtils, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).addCommit(newBranch, commit, conn);
+            verify(thingManager, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(thingManager, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager, times(0)).shapesGraphIriExists(newIRI);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(thingManager, times(0)).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -264,12 +222,12 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void addCommitToMasterWithCommitWithNoBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             service.addCommit(record, branch, commit, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
+            verify(thingManager, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager, times(0)).shapesGraphIriExists(newIRI);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(thingManager, times(0)).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -281,12 +239,12 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
 
             service.addCommit(record, branch, commit, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
+            verify(thingManager).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager).shapesGraphIriExists(newIRI);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(newIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils).updateObject(record, conn);
+            verify(thingManager).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -297,15 +255,15 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             // Setup:
             commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
             ShapesGraphRecord newRecord = shapesGraphRecordOrmFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
-            when(catalogUtils.getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn))).thenReturn(newRecord);
+            when(thingManager.getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn))).thenReturn(newRecord);
 
             service.addCommit(record, branch, commit, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn));
+            verify(commitManager).addCommit(branch, commit, conn);
+            verify(thingManager).getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn));
             verify(shapesGraphManager).shapesGraphIriExists(newIRI);
             assertTrue(newRecord.getShapesGraphIRI().isPresent());
             assertEquals(newIRI, newRecord.getShapesGraphIRI().get());
-            verify(catalogUtils).updateObject(newRecord, conn);
+            verify(thingManager).updateObject(newRecord, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -322,12 +280,12 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             service.addCommit(record, branch, commit, conn);
         } finally {
-            verify(catalogUtils).getObject(eq(record.getResource()), eq(shapesGraphRecordOrmFactory), any(RepositoryConnection.class));
-            verify(catalogUtils, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
+            verify(thingManager).getObject(eq(record.getResource()), eq(shapesGraphRecordOrmFactory), any(RepositoryConnection.class));
+            verify(commitManager, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
             verify(shapesGraphManager).shapesGraphIriExists(usedIRI);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
+            verify(thingManager, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
             verify(eventAdmin, times(0)).postEvent(any(Event.class));
         }
     }
@@ -341,12 +299,12 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             commit.setGenerated(Collections.singleton(revisionNoChange));
 
             service.addCommit(record, branch, commit, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
+            verify(thingManager).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager, times(0)).shapesGraphIriExists(any(IRI.class));
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(thingManager, times(0)).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -362,18 +320,18 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(record, newBranch, user, "Message", additions, deletions, commit, null, conn);
-            verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).createInProgressCommit(user);
+            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
+            verify(differenceManager, times(0)).applyDifference(any(Model.class), any(Difference.class));
+            verify(thingManager, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager, times(0)).shapesGraphIriExists(newIRI);
-            verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
-            verify(catalogUtils).addCommit(newBranch, commit, conn);
+            verify(commitManager).updateCommit(commit, additions, deletions, conn);
+            verify(commitManager).addCommit(newBranch, commit, conn);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(thingManager, times(0)).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -386,18 +344,18 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(record, branch, user, "Message", additions, deletions, null, null, conn);
-            verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", null, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).createInProgressCommit(user);
+            verify(commitManager).createCommit(inProgressCommit, "Message", null, null);
+            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
+            verify(differenceManager, times(0)).applyDifference(any(Model.class), any(Difference.class));
+            verify(thingManager, times(0)).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager, times(0)).shapesGraphIriExists(newIRI);
-            verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
+            verify(commitManager).updateCommit(commit, additions, deletions, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(thingManager, times(0)).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -411,18 +369,18 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).createInProgressCommit(user);
+            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
+            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
+            verify(thingManager).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager).shapesGraphIriExists(newIRI);
-            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
+            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(newIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils).updateObject(record, conn);
+            verify(thingManager).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -436,18 +394,18 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, commit, conn);
-            verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, commit);
-            verify(catalogUtils, times(2)).getCommitChain(commit.getResource(), false, conn);
-            verify(catalogUtils).getCompiledResource(anyList(), eq(conn));
-            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).createInProgressCommit(user);
+            verify(commitManager).createCommit(inProgressCommit, "Message", commit, commit);
+            verify(commitManager, times(2)).getCommitChain(commit.getResource(), false, conn);
+            verify(compiledResourceManager).getCompiledResource(anyList(), eq(conn));
+            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
+            verify(thingManager).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager).shapesGraphIriExists(newIRI);
-            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
+            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(newIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils).updateObject(record, conn);
+            verify(thingManager).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -457,24 +415,24 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             ShapesGraphRecord newRecord = shapesGraphRecordOrmFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
-            when(catalogUtils.getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn))).thenReturn(newRecord);
+            when(thingManager.getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn))).thenReturn(newRecord);
             Model additionsModel = MODEL_FACTORY.createEmptyModel();
             additionsModel.addAll(additions.collect(Collectors.toSet()));
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils).getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn));
+            verify(commitManager).createInProgressCommit(user);
+            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
+            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
+            verify(thingManager).getObject(any(Resource.class), eq(shapesGraphRecordOrmFactory), eq(conn));
             verify(shapesGraphManager).shapesGraphIriExists(newIRI);
-            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
+            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
             assertTrue(newRecord.getShapesGraphIRI().isPresent());
             assertEquals(newIRI, newRecord.getShapesGraphIRI().get());
-            verify(catalogUtils).updateObject(newRecord, conn);
+            verify(thingManager).updateObject(newRecord, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }
@@ -491,18 +449,18 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
         } finally {
-            verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), any(RepositoryConnection.class));
-            verify(catalogUtils, times(0)).getCompiledResource(anyList(), any(RepositoryConnection.class));
-            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils).getObject(eq(record.getResource()), eq(shapesGraphRecordOrmFactory), any(RepositoryConnection.class));
+            verify(commitManager).createInProgressCommit(user);
+            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), any(RepositoryConnection.class));
+            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), any(RepositoryConnection.class));
+            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
+            verify(thingManager).getObject(eq(record.getResource()), eq(shapesGraphRecordOrmFactory), any(RepositoryConnection.class));
             verify(shapesGraphManager).shapesGraphIriExists(usedIRI);
-            verify(catalogUtils, times(0)).updateCommit(eq(commit), eq(additionsModel), eq(deletions), any(RepositoryConnection.class));
-            verify(catalogUtils, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
+            verify(commitManager, times(0)).updateCommit(eq(commit), eq(additionsModel), eq(deletions), any(RepositoryConnection.class));
+            verify(commitManager, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
+            verify(thingManager, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
             verify(eventAdmin, times(0)).postEvent(any(Event.class));
         }
     }
@@ -516,19 +474,19 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
             Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
+            verify(commitManager).createInProgressCommit(user);
+            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
+            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
+            verify(thingManager).getObject(record.getResource(), shapesGraphRecordOrmFactory, conn);
             verify(shapesGraphManager, times(0)).shapesGraphIriExists(newIRI);
-            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
+            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
+            verify(commitManager).addCommit(branch, commit, conn);
             verify(shapesGraphManager, times(0)).shapesGraphIriExists(any(IRI.class));
             assertTrue(record.getShapesGraphIRI().isPresent());
             assertEquals(originalIRI, record.getShapesGraphIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(thingManager, times(0)).updateObject(record, conn);
             verify(eventAdmin).postEvent(any(Event.class));
         }
     }

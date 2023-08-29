@@ -32,13 +32,17 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,6 +54,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -80,26 +85,25 @@ public class CommitRest {
     private static final Logger logger = LoggerFactory.getLogger(CommitRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private BNodeService bNodeService;
-    private CatalogManager catalogManager;
-    private final ValueFactory vf = new ValidatingValueFactory();
+    @Reference
+    protected CatalogConfigProvider configProvider;
 
+    @Reference
+    protected BNodeService bNodeService;
+    
+    @Reference
+    protected CommitManager commitManager;
+
+    @Reference
+    protected DifferenceManager differenceManager;
+
+    @Reference
+    protected CompiledResourceManager compiledResourceManager;
+    
+    @Reference
     protected EngineManager engineManager;
 
-    @Reference
-    void setbNodeService(BNodeService bNodeService) {
-        this.bNodeService = bNodeService;
-    }
-
-    @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     /**
      * Gets the {@link Commit} identified by the provided ID.
@@ -133,8 +137,8 @@ public class CommitRest {
             @Parameter(description = "String representation of the desired RDFFormat", required = false)
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
-        try {
-            Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Optional<Commit> optCommit = commitManager.getCommit(vf.createIRI(commitId), conn);
 
             if (optCommit.isPresent()) {
                 return createCommitResponse(optCommit.get(), bNodeService);
@@ -197,41 +201,39 @@ public class CommitRest {
             @Parameter(description = "Optional limit for the results", required = false)
             @QueryParam("limit") int limit) {
         long start = System.currentTimeMillis();
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             LinksUtils.validateParams(limit, offset);
+            final List<Commit> commits;
 
-            try {
-                final List<Commit> commits;
-
-                if (StringUtils.isBlank(targetId) && StringUtils.isBlank(entityId)) {
-                    commits = catalogManager.getCommitChain(vf.createIRI(commitId));
-                } else if (StringUtils.isNotBlank(targetId) && StringUtils.isBlank(entityId)) {
-                    commits = catalogManager.getCommitChain(vf.createIRI(commitId), vf.createIRI(targetId));
-                } else if (StringUtils.isBlank(targetId) && StringUtils.isNotBlank(entityId)) {
-                    commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
-                } else {
-                    commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(targetId),
-                            vf.createIRI(entityId));
-                }
-
-                Stream<Commit> result = commits.stream();
-
-                if (limit > 0) {
-                    result = result.skip(offset)
-                            .limit(limit);
-                }
-
-                ArrayNode commitChain = mapper.createArrayNode();
-
-                result.map(r -> createCommitJson(r, vf, engineManager))
-                        .forEach(commitChain::add);
-
-                return createPaginatedResponseWithJsonNode(uriInfo, commitChain, commits.size(), limit, offset);
-            } catch (IllegalArgumentException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-            } catch (IllegalStateException | MobiException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            if (StringUtils.isBlank(targetId) && StringUtils.isBlank(entityId)) {
+                commits = commitManager.getCommitChain(vf.createIRI(commitId), conn);
+            } else if (StringUtils.isNotBlank(targetId) && StringUtils.isBlank(entityId)) {
+                commits = commitManager.getCommitChain(vf.createIRI(commitId), vf.createIRI(targetId), conn);
+            } else if (StringUtils.isBlank(targetId) && StringUtils.isNotBlank(entityId)) {
+                commits = commitManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId), conn);
+            } else {
+                commits = commitManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(targetId),
+                        vf.createIRI(entityId), conn);
             }
+
+            Stream<Commit> result = commits.stream();
+
+            if (limit > 0) {
+                result = result.skip(offset)
+                        .limit(limit);
+            }
+
+            ArrayNode commitChain = mapper.createArrayNode();
+
+            result.map(r -> createCommitJson(r, vf, engineManager))
+                    .forEach(commitChain::add);
+
+            return createPaginatedResponseWithJsonNode(uriInfo, commitChain, commits.size(), limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+
         } finally {
             logger.trace("getCommitHistory took {}ms", System.currentTimeMillis() - start);
         }
@@ -271,26 +273,25 @@ public class CommitRest {
                     required = false)
             @QueryParam("entityId") String entityId) {
         long start = System.currentTimeMillis();
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(commitId, "Commit ID is required");
             Model model;
-            try {
-                final List<Commit> commits;
-                if (StringUtils.isNotBlank(entityId)) {
-                    commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
-                    model = catalogManager.getCompiledResource(commits, vf.createIRI(entityId));
-                } else {
-                    commits = catalogManager.getCommitChain(vf.createIRI(commitId));
-                    model = catalogManager.getCompiledResource(commits);
-                }
-
-                return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, bNodeService))
-                        .build();
-            } catch (IllegalArgumentException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-            } catch (IllegalStateException | MobiException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            if (StringUtils.isNotBlank(entityId)) {
+                List<Commit> commits = commitManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId), conn);
+                List<Resource> commitIds = commits.stream().map(Thing::getResource).toList();
+                model = compiledResourceManager.getCompiledResource(commitIds, conn, vf.createIRI(entityId));
+            } else {
+                List<Commit> commits = commitManager.getCommitChain(vf.createIRI(commitId), conn);
+                List<Resource> commitIds = commits.stream().map(Thing::getResource).toList();
+                model = compiledResourceManager.getCompiledResource(commitIds, conn);
             }
+
+            return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, bNodeService))
+                    .build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             logger.trace("getCompiledResource took {}ms", System.currentTimeMillis() - start);
         }
@@ -354,19 +355,19 @@ public class CommitRest {
             @Parameter(description = "String representation of the desired RDFFormat", required = false)
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(sourceId, "Source commit is required");
 
             if (StringUtils.isBlank(targetId)) {
-                Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
+                Optional<Commit> optCommit = commitManager.getCommit(vf.createIRI(sourceId), conn);
                 if (optCommit.isPresent()) {
                     if (limit == -1) {
                         return createCommitResponse(optCommit.get(),
-                                catalogManager.getCommitDifference(optCommit.get().getResource()),
+                                differenceManager.getCommitDifference(optCommit.get().getResource(), conn),
                                 rdfFormat, bNodeService);
                     } else {
-                        PagedDifference pagedDifference = catalogManager.getCommitDifferencePaged(
-                                optCommit.get().getResource(), limit, offset);
+                        PagedDifference pagedDifference = differenceManager.getCommitDifferencePaged(
+                                optCommit.get().getResource(), limit, offset, conn);
                         return Response.fromResponse(createCommitResponse(optCommit.get(),
                                 pagedDifference.getDifference(),
                                 rdfFormat, bNodeService)).header("Has-More-Results",
@@ -377,12 +378,13 @@ public class CommitRest {
                 }
             } else {
                 if (limit == -1) {
-                    Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
+                    Difference diff = differenceManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId),
+                            conn);
                     return Response.ok(getDifferenceJsonString(diff, rdfFormat, bNodeService),
                             MediaType.APPLICATION_JSON).build();
                 } else {
-                    PagedDifference pagedDifference = catalogManager.getDifferencePaged(
-                            vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
+                    PagedDifference pagedDifference = differenceManager.getCommitDifferencePaged(
+                            vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset, conn);
                     return Response.ok(getDifferenceJsonString(pagedDifference.getDifference(),
                             rdfFormat, bNodeService),
                             MediaType.APPLICATION_JSON).header("Has-More-Results",
@@ -427,14 +429,13 @@ public class CommitRest {
             @Parameter(description = "String representation of the desired RDFFormat", required = true)
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(sourceId, "Source commit is required");
-            Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
+            Optional<Commit> optCommit = commitManager.getCommit(vf.createIRI(sourceId), conn);
             if (optCommit.isPresent()) {
-                return createCommitResponse(optCommit.get(),
-                        catalogManager.getCommitDifferenceForSubject(vf.createIRI(subjectId),
-                                optCommit.get().getResource()),
-                        rdfFormat, bNodeService);
+                Difference difference = differenceManager.getCommitDifferenceForSubject(vf.createIRI(subjectId),
+                        optCommit.get().getResource(), conn);
+                return createCommitResponse(optCommit.get(), difference, rdfFormat, bNodeService);
             } else {
                 throw ErrorUtils.sendError("Commit " + sourceId + " could not be found",
                         Response.Status.NOT_FOUND);
