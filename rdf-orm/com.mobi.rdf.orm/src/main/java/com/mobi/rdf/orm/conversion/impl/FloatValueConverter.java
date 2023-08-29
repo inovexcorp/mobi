@@ -35,7 +35,12 @@ import org.osgi.service.component.annotations.Component;
  *
  * @author bdgould
  */
-@Component(service = ValueConverter.class)
+@Component(
+        service = ValueConverter.class,
+        property = {
+                "converterType=Float"
+        }
+)
 public class FloatValueConverter extends AbstractValueConverter<Float> {
 
     /**

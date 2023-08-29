@@ -41,7 +41,12 @@ import javax.xml.datatype.DatatypeFactory;
  *
  * @author bdgould
  */
-@Component(service = ValueConverter.class)
+@Component(
+        service = ValueConverter.class,
+        property = {
+                "converterType=Calendar"
+        }
+)
 public class CalendarValueConverter extends AbstractValueConverter<Calendar> {
 
     /**

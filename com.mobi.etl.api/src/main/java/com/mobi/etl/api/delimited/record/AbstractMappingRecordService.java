@@ -82,7 +82,7 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
             Path tmpFile = Files.createTempFile(null, ".ttl");
             Rio.write(model, Files.newOutputStream(tmpFile), RDFFormat.TURTLE);
             File file = tmpFile.toFile();
-            catalogManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
+            commitManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
                     tmpFile.toFile(), null, conn);
             file.delete();
         } catch (IOException e) {

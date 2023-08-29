@@ -52,9 +52,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -161,7 +165,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.cache.Cache;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
@@ -233,7 +236,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     private static ValueFactory vf;
     private static OntologyManager ontologyManager;
     private static CatalogConfigProvider configProvider;
-    private static CatalogManager catalogManager;
+    private static DifferenceManager differenceManager;
+    private static CommitManager commitManager;
+    private static BranchManager branchManager;
+    private static RecordManager recordManager;
+    private static CompiledResourceManager compiledResourceManager;
     private static EngineManager engineManager;
     private static OntologyCache ontologyCache;
     private static SimpleBNodeService bNodeService;
@@ -255,9 +262,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     private PaginatedSearchResults<Record> results;
 
     @Mock
-    private Cache<String, Ontology> mockCache;
-
-    @Mock
     private Request request;
 
     @Mock
@@ -268,7 +272,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         vf = getValueFactory();
         mf = getModelFactory();
 
-        catalogManager = Mockito.mock(CatalogManager.class);
+        differenceManager = Mockito.mock(DifferenceManager.class);
+        commitManager = Mockito.mock(CommitManager.class);
+        branchManager = Mockito.mock(BranchManager.class);
+        recordManager = Mockito.mock(RecordManager.class);
+        compiledResourceManager = Mockito.mock(CompiledResourceManager.class);
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         ontologyManager = Mockito.mock(OntologyManager.class);
         engineManager = Mockito.mock(EngineManager.class);
@@ -279,7 +287,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         rest = new OntologyRest();
         rest.ontologyManager = ontologyManager;
         rest.configProvider = configProvider;
-        rest.catalogManager = catalogManager;
+        rest.differenceManager = differenceManager;
+        rest.commitManager = commitManager;
+        rest.branchManager = branchManager;
+        rest.recordManager = recordManager;
+        rest.compiledResourceManager = compiledResourceManager;
         rest.engineManager = engineManager;
         rest.ontologyCache = ontologyCache;
         rest.pdp = pdp;
@@ -466,16 +478,15 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         });
         when(importedOntology.getImportsClosure()).thenReturn(Collections.singleton(importedOntology));
 
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
-        when(catalogManager.getRecord(eq(catalogId), eq(recordId), any(OntologyRecordFactory.class))).thenReturn(Optional.of(record));
-        when(catalogManager.removeRecord(catalogId, recordId, user, OntologyRecord.class)).thenReturn(record);
-        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
-        when(catalogManager.getInProgressCommit(catalogId, recordId, user)).thenReturn(Optional.of(inProgressCommit));
-        when(catalogManager.getInProgressCommit(catalogId, recordId, inProgressCommitId)).thenReturn(Optional.of(inProgressCommit));
-        when(catalogManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
-        when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(mf.createEmptyModel());
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
-        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class))).thenReturn(record);
+        when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(RepositoryConnection.class))).thenReturn(results);
+        when(recordManager.getRecordOpt(eq(catalogId), eq(recordId), any(OntologyRecordFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(record));
+        when(recordManager.removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class), any(RepositoryConnection.class))).thenReturn(record);
+        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class))).thenReturn(Optional.of(inProgressCommit));
+        when(commitManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
+        when(differenceManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class))).thenReturn(mf.createEmptyModel());
+        when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class), any(RepositoryConnection.class))).thenReturn(record);
 
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
@@ -520,8 +531,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         entityUsagesConstruct = modelToJsonld(constructs);
 
-        when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
-
         when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
         when(pdp.evaluate(any(), any(IRI.class))).thenReturn(response);
 
@@ -545,7 +554,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @After
     public void resetMocks() throws Exception {
         reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology,
-                catalogManager, ontologyManager, results, mockCache, ontologyCache);
+                differenceManager, commitManager, branchManager, recordManager, compiledResourceManager,
+                ontologyManager, results, ontologyCache, ontologyCache);
         if (testQueryRepo != null) {
             testQueryRepo.shutDown();
         }
@@ -571,10 +581,10 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     private void assertGetInProgressCommitIRI(boolean hasInProgressCommit) {
         assertGetUserFromContext();
-        verify(catalogManager, atLeastOnce()).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
+        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class));
         if (!hasInProgressCommit) {
-            verify(catalogManager).createInProgressCommit(any(User.class));
-            verify(catalogManager).addInProgressCommit(any(Resource.class), any(Resource.class), any(InProgressCommit.class));
+            verify(commitManager).createInProgressCommit(any(User.class));
+            verify(commitManager).addInProgressCommit(any(Resource.class), any(Resource.class), any(InProgressCommit.class), any(RepositoryConnection.class));
         }
     }
 
@@ -584,7 +594,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     private void assertGetOntology(boolean hasInProgressCommit) {
         assertGetUserFromContext();
-        verify(catalogManager, atLeastOnce()).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
+        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class));
         if (hasInProgressCommit) {
             verify(ontologyManager).applyChanges(any(Ontology.class), any(InProgressCommit.class));
         }
@@ -727,12 +737,12 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     private void assertAdditionsToInProgressCommit(boolean hasInProgressCommit) {
         assertGetInProgressCommitIRI(hasInProgressCommit);
-        verify(catalogManager).updateInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(Model.class), eq(null));
+        verify(commitManager).updateInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(Model.class), eq(null), any(RepositoryConnection.class));
     }
 
     private void assertDeletionsToInProgressCommit(boolean hasInProgressCommit) {
         assertGetInProgressCommitIRI(hasInProgressCommit);
-        verify(catalogManager).updateInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), eq(null), any(Model.class));
+        verify(commitManager).updateInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), eq(null), any(Model.class), any(RepositoryConnection.class));
     }
 
     private void assertImportedOntologies(JSONArray responseArray, Consumer<JSONObject> assertConsumer) {
@@ -747,7 +757,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     }
 
     private void setNoInProgressCommit() {
-        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class)))
+        when(commitManager.getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class)))
                 .thenReturn(Optional.empty());
     }
 
@@ -919,7 +929,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 201);
         assertCreatedOntologyIRI(getResponse(response));
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
-        verify(catalogManager).createRecord(any(User.class), config.capture(), eq(OntologyRecord.class));
+        verify(recordManager).createRecord(any(User.class), config.capture(), eq(OntologyRecord.class), any(RepositoryConnection.class));
         assertEquals(catalogId.stringValue(), config.getValue().get(RecordCreateSettings.CATALOG_ID));
         assertEquals("title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
         assertEquals("description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
@@ -932,7 +942,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     @Test
     public void testUploadErrorMobiException() {
-        Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+        Mockito.doThrow(new MobiException("I'm an exception!")).when(recordManager).createRecord(any(), any(), any(), any(RepositoryConnection.class));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-local-imports-1e.ttl", getClass().getResourceAsStream("/test-local-imports-1e.ttl"));
@@ -954,7 +964,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     @Test
     public void testUploadErrorRDFParseException() {
-        Mockito.doThrow(new RDFParseException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+        Mockito.doThrow(new RDFParseException("I'm an exception!")).when(recordManager).createRecord(any(), any(), any(), any(RepositoryConnection.class));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-local-imports-1e.ttl", getClass().getResourceAsStream("/test-local-imports-1e.ttl"));
@@ -976,7 +986,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     @Test
     public void testUploadErrorIllegalArgumentException() {
-        Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+        Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(recordManager).createRecord(any(), any(), any(), any(RepositoryConnection.class));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-local-imports-1e.ttl", getClass().getResourceAsStream("/test-local-imports-1e.ttl"));
@@ -1026,7 +1036,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 201);
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
-        verify(catalogManager).createRecord(any(User.class), config.capture(), eq(OntologyRecord.class));
+        verify(recordManager).createRecord(any(User.class), config.capture(), eq(OntologyRecord.class), any(RepositoryConnection.class));
         assertEquals(catalogId.stringValue(), config.getValue().get(RecordCreateSettings.CATALOG_ID));
         assertEquals("title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
         assertEquals("description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
@@ -1142,7 +1152,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     @Test
     public void testGetOntologyClearCache() {
-        when(mockCache.containsKey(anyString())).thenReturn(false);
+        when(ontologyCache.containsKey(anyString())).thenReturn(false);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -1153,7 +1163,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(ontologyCache).removeFromCache(recordId.stringValue(), commitId.stringValue());
         // OntologyManger will handle caching the ontology
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
+        verify(ontologyCache, times(0)).put(anyString(), any(Ontology.class));
     }
 
     @Test
@@ -1179,8 +1189,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 200);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(engineManager, times(0)).retrieveUser(anyString());
-        verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
-        verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(commitManager, times(0)).getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class));
+        verify(differenceManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class), any(RepositoryConnection.class));
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
     }
 
@@ -1233,7 +1243,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1250,12 +1260,12 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertGetInProgressCommitIRI(false);
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
     public void testSaveChangesToOntologyWithNoDifference() {
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(new Difference.Builder()
+        when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(new Difference.Builder()
                 .build());
 
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
@@ -1268,7 +1278,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
-        verify(catalogManager).updateInProgressCommit(catalogId, recordId, inProgressCommitId, null, null);
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), eq(null), eq(null), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1283,7 +1293,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1298,7 +1308,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1312,7 +1322,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), eq(inProgressCommitId), any(Model.class), any(Model.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -2093,8 +2103,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertClasses(getResponseArray(response), classes);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(engineManager, times(0)).retrieveUser(anyString());
-        verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
-        verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(commitManager, times(0)).getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class));
+        verify(differenceManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class), any(RepositoryConnection.class));
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
     }
 
@@ -3070,7 +3080,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     @Test
     public void testAddNamedIndividualToOntologyWhenGetRecordIsEmpty() {
-        when(catalogManager.getRecord(catalogId, recordId, ontologyRecordFactory)).thenReturn(Optional.empty());
+        when(recordManager.getRecordOpt(eq(catalogId), eq(recordId), eq(ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         JSONObject entity = createJsonOfType(OWL.INDIVIDUAL.stringValue())
                 .element("@id", "http://mobi.com/new-named-individual");
@@ -3392,8 +3402,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(engineManager, times(0)).retrieveUser(anyString());
-        verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
-        verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(commitManager, times(0)).getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class));
+        verify(differenceManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class), any(RepositoryConnection.class));
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
         assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
     }
@@ -4814,17 +4824,17 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class));
+        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class), any(RepositoryConnection.class));
     }
 
     // Test upload changes
 
     @Test
     public void testUploadChangesToOntology() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(ontologyModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));
@@ -4837,19 +4847,19 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager, times(2)).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
     }
 
     @Test
     public void testUploadChangesToOntologyWithoutBranchId() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(ontologyModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
-        when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));
 
@@ -4859,20 +4869,20 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-        verify(catalogManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId));
-        verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        verify(branchManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class));
+        verify(compiledResourceManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager, times(0)).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
     }
 
     @Test
     public void testUploadChangesToOntologyWithoutCommitId() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(ontologyModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
-        when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(commitManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId), any(RepositoryConnection.class))).thenReturn(commit);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));
 
@@ -4883,16 +4893,16 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        verify(commitManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId), any(RepositoryConnection.class));
+        verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager, times(2)).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
     }
 
     @Test
     public void testUploadChangesToOntologyWithExistingInProgressCommit() {
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.of(inProgressCommit));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "search-results.json", getClass().getResourceAsStream("/search-results.json"));
@@ -4908,12 +4918,12 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     @Test
     public void testUploadChangesToOntologyNoDiff() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(ontologyModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
         Difference difference = new Difference.Builder().additions(mf.createEmptyModel()).deletions(mf.createEmptyModel()).build();
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));
@@ -4926,20 +4936,20 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
         assertGetUserFromContext();
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager, never()).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager, never()).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
     }
 
     @Test
     public void testUploadChangesTrigToOntologyNoDiff() {
-        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(ontologyModel);
-        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
-                any(User.class))).thenReturn(Optional.empty());
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
         Difference difference = new Difference.Builder().additions(mf.createEmptyModel()).deletions(mf.createEmptyModel()).build();
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "testOntologyData.trig", getClass().getResourceAsStream("/testOntologyData.trig"));

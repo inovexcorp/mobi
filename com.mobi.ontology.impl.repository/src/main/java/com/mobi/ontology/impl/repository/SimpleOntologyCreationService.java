@@ -23,7 +23,8 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetUtilsService;
@@ -56,14 +57,22 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
 
     @Reference
     protected DatasetUtilsService dsUtilsService;
+
     @Reference
     protected ImportsResolver importsResolver;
+
     @Reference
     protected BNodeService bNodeService;
+
     @Reference
     protected RepositoryManager repositoryManager;
+
     @Reference
-    protected CatalogUtilsService utilsService;
+    protected ThingManager thingManager;
+
+    @Reference
+    protected CompiledResourceManager compiledResourceManager;
+
     @Reference
     protected CatalogConfigProvider configProvider;
 
@@ -79,8 +88,9 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = String.format("%s&%s", recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, ontologyFile, repository, getOntologyManager(), utilsService, configProvider,
-                dsUtilsService, importsResolver, bNodeService, valueFactory, modelFactory);
+        return new SimpleOntology(key, ontologyFile, repository, getOntologyManager(), thingManager,
+                compiledResourceManager, configProvider, dsUtilsService, importsResolver, bNodeService, valueFactory,
+                modelFactory);
     }
 
     @Override
@@ -89,8 +99,8 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = String.format("%s&%s", recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, repository, getOntologyManager(), utilsService, configProvider, dsUtilsService,
-                importsResolver, bNodeService, valueFactory, modelFactory);
+        return new SimpleOntology(key, repository, getOntologyManager(), thingManager, compiledResourceManager,
+                configProvider, dsUtilsService, importsResolver, bNodeService, valueFactory, modelFactory);
     }
 
     private OntologyManager getOntologyManager() {
@@ -102,8 +112,8 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
 
     private File getCompiledResourceFile(Resource commitIRI) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            utilsService.validateResource(commitIRI, valueFactory.createIRI(Commit.TYPE), conn);
-            return utilsService.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
+            thingManager.validateResource(commitIRI, valueFactory.createIRI(Commit.TYPE), conn);
+            return compiledResourceManager.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
         }
     }
 }

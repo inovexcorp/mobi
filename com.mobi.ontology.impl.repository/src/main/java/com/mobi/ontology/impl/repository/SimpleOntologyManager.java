@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import javax.annotation.Nonnull;
-import javax.cache.Cache;
 
 @Component(
         service = { SimpleOntologyManager.class, OntologyManager.class },
@@ -121,10 +120,9 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     @Override
     protected Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource commitId) {
         Optional<Ontology> result;
-        Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
 
-        if (optCache.isPresent() && optCache.get().containsKey(key)) {
+        if (ontologyCache.containsKey(key)) {
             log.trace("cache hit");
             result = Optional.of(ontologyCreationService.createOntology(recordId, commitId));
         } else {

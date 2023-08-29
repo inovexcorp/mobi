@@ -94,7 +94,6 @@ public class CatalogConfigProviderImplTest extends OrmEnabledTestCase {
         injectOrmFactoryReferencesIntoService(provider);
         provider.repository = repo;
 
-
         when(catalogConfig.title()).thenReturn("Mobi Test Catalog");
         when(catalogConfig.description()).thenReturn("This is a test catalog");
         when(catalogConfig.iri()).thenReturn("http://mobi.com/test/catalogs#catalog");

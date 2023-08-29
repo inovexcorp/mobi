@@ -38,7 +38,12 @@ import java.math.BigInteger;
  *
  * @author bdgould
  */
-@Component(service = ValueConverter.class)
+@Component(
+        service = ValueConverter.class,
+        property = {
+                "converterType=BigInteger"
+        }
+)
 public class BigIntegerValueConverter extends AbstractValueConverter<BigInteger> {
 
     /**

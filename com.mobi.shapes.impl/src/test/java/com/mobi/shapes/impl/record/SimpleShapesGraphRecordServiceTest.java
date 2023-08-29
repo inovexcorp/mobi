@@ -37,9 +37,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -136,7 +140,19 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
 
     @Mock
-    private CatalogUtilsService utilsService;
+    private ThingManager thingManager;
+
+    @Mock
+    private BranchManager branchManager;
+
+    @Mock
+    private CommitManager commitManager;
+
+    @Mock
+    private VersionManager versionManager;
+
+    @Mock
+    private DifferenceManager differenceManager;
 
     @Mock
     private InProgressCommit inProgressCommit;
@@ -214,13 +230,13 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
 
         closeable = MockitoAnnotations.openMocks(this);
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(commitIRI);
-        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
-        when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
-        when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
+        when(thingManager.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
+        when(branchManager.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
+        when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
-                .when(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
-        when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
-        when(utilsService.getRevisionChanges(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(difference);
+                .when(commitManager).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
+        when(thingManager.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
+        when(differenceManager.getCommitDifference(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
@@ -229,10 +245,10 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
 
         // InProgressCommit deletion setup
-        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
+        when(commitManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        doNothing().when(commitManager).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
 
-        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
+        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         IRI revisionIRI = VALUE_FACTORY.createIRI("urn:revision");
         Revision revision = revisionFactory.createNew(revisionIRI);
         IRI additions = VALUE_FACTORY.createIRI("urn:additions");
@@ -241,7 +257,6 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         when(inProgressCommit.getModel()).thenReturn(revision.getModel());
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.utilsService = utilsService;
         recordService.provUtils = provUtils;
         recordService.versioningManager = versioningManager;
         recordService.mergeRequestManager = mergeRequestManager;
@@ -250,7 +265,12 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         recordService.configProvider = configProvider;
         recordService.recordFactory = recordService.shapesGraphRecordFactory;
         recordService.shapesGraphManager = shapesGraphManager;
-        recordService.catalogManager = catalogManager;
+        recordService.thingManager = thingManager;
+        recordService.branchManager = branchManager;
+        recordService.commitManager = commitManager;
+        recordService.commitManager = commitManager;
+        recordService.differenceManager = differenceManager;
+        recordService.versionManager = versionManager;
     }
 
     @After
@@ -336,7 +356,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optShapesGraphIri.isPresent());
         assertTrue(optShapesGraphIri.get().stringValue().startsWith(SimpleShapesGraphRecordService.DEFAULT_PREFIX));
         
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -386,7 +406,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optShapesGraphIri.isPresent());
         assertEquals("urn:testOntology", optShapesGraphIri.get().stringValue());
 
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -434,7 +454,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optShapesGraphIri.isPresent());
         assertTrue(optShapesGraphIri.get().stringValue().startsWith(SimpleShapesGraphRecordService.DEFAULT_PREFIX));
 
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
@@ -461,7 +481,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals("TriG data is not supported for upload.", e.getMessage());
             throw e;
         }
@@ -487,7 +507,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals("Could not retrieve RDFFormat for file name testData.txt", e.getMessage());
             throw e;
         }
@@ -513,7 +533,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals("Could not retrieve RDFFormat for file name testData.txt.zip", e.getMessage());
             throw e;
         }
@@ -539,7 +559,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail("Exception was thrown");
         }
     }
@@ -563,7 +583,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals("TriG data is not supported for upload.", e.getMessage());
             throw e;
         }
@@ -659,29 +679,29 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         }
 
         assertEquals(testRecord, deletedRecord);
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
+        verify(thingManager).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
-        verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(versionManager).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
-        verify(utilsService).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
-        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
+        verify(commitManager).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
+        verify(commitManager).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(thingManager.optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.delete(testIRI, user, connection);
         }
 
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
+        verify(thingManager).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
     }
 
     @Test(expected = RepositoryException.class)
     public void deleteRecordRemoveFails() throws Exception {
-        doThrow(RepositoryException.class).when(utilsService).removeObject(any(ShapesGraphRecord.class), any(RepositoryConnection.class));
+        doThrow(RepositoryException.class).when(thingManager).removeObject(any(ShapesGraphRecord.class), any(RepositoryConnection.class));
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.delete(testIRI, user, connection);
         }
@@ -747,7 +767,4 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(record02Ids.toString(), actual1);
         assertEquals(record03Ids.toString(), actual2);
     }
-
-
-
 }

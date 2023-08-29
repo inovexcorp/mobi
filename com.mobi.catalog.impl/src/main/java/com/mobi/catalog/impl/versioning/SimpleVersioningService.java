@@ -23,10 +23,6 @@ package com.mobi.catalog.impl.versioning;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
@@ -34,7 +30,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.event.EventAdmin;
 
 @Component(
@@ -42,26 +37,6 @@ import org.osgi.service.event.EventAdmin;
         service = { VersioningService.class, SimpleVersioningService.class }
 )
 public class SimpleVersioningService extends BaseVersioningService<VersionedRDFRecord> {
-    @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    protected void setCatalogUtils(CatalogUtilsService catalogUtils) {
-        this.catalogUtils = catalogUtils;
-    }
-
     @Activate
     void start(BundleContext context) {
         final ServiceReference<EventAdmin> ref = context.getServiceReference(EventAdmin.class);

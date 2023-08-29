@@ -1,9 +1,8 @@
-@Version("2.0.0.${build}")
-package com.mobi.cache.api.repository;
+package com.mobi.catalog.api;
 
 /*-
  * #%L
- * com.mobi.cache
+ * com.mobi.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,4 +23,18 @@ package com.mobi.cache.api.repository;
  * #L%
  */
 
-import org.osgi.annotation.versioning.Version;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+
+public interface RevisionManager {
+
+    /**
+     * Gets the Revision associated with the provided commit Resource.
+     *
+     * @param commitId The Resource identifying the commit
+     * @param conn     The connection to the repository
+     * @return The Revision associated with the provided commit Resource.
+     */
+    Revision getRevision(Resource commitId, RepositoryConnection conn);
+}

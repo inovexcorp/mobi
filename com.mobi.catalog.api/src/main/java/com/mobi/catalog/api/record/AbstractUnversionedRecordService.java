@@ -53,7 +53,7 @@ public abstract class AbstractUnversionedRecordService<T extends UnversionedReco
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(unversionedRecord -> {
                     unversionedRecord.getUnversionedDistribution_resource()
-                            .forEach(resource -> utilsService.remove(resource, conn));
+                            .forEach(resource -> thingManager.remove(resource, conn));
                     deleteRecordObject(record, conn);
                 });
     }

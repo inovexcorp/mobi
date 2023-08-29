@@ -24,8 +24,8 @@ package com.mobi.catalog.api.record;
  */
 
 import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -74,7 +74,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     public CatalogProvUtils provUtils;
 
     @Reference
-    public CatalogUtilsService utilsService;
+    public ThingManager thingManager;
 
     @Reference
     public CatalogFactory catalogFactory;
@@ -148,7 +148,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
                              RepositoryConnection conn) {
         T recordObject = createRecordObject(config, issued, modified);
         conn.begin();
-        utilsService.addObject(recordObject, conn);
+        thingManager.addObject(recordObject, conn);
         conn.commit();
         return recordObject;
     }
@@ -227,7 +227,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * @return A {@link Record} of the provided Resource
      */
     protected T getRecord(Resource recordId, RepositoryConnection conn) {
-        return utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
+        return thingManager.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
     }
 
@@ -249,7 +249,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * @param conn A {@link RepositoryConnection} to use for lookup
      */
     protected void deleteRecordObject(T record, RepositoryConnection conn) {
-        utilsService.removeObject(record, conn);
+        thingManager.removeObject(record, conn);
     }
 
     /**
@@ -284,7 +284,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     @Override
     public Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                                  RepositoryConnection conn){
-        throw new IllegalArgumentException("Record does not support Delete Branch operation");
+        return Optional.empty();
     }
 
     /**

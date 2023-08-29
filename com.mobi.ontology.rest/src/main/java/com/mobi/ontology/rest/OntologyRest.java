@@ -49,7 +49,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -197,14 +201,26 @@ public class OntologyRest {
     private final ModelFactory modelFactory = new DynamicModelFactory();
     private final ValueFactory valueFactory = new ValidatingValueFactory();
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    @Reference
     protected OntologyManager ontologyManager;
 
     @Reference
     protected CatalogConfigProvider configProvider;
 
     @Reference
-    protected CatalogManager catalogManager;
+    protected DifferenceManager differenceManager;
+
+    @Reference
+    protected CommitManager commitManager;
+
+    @Reference
+    protected BranchManager branchManager;
+
+    @Reference
+    protected RecordManager recordManager;
+
+    @Reference
+    protected CompiledResourceManager compiledResourceManager;
 
     @Reference
     protected EngineManager engineManager;
@@ -414,11 +430,12 @@ public class OntologyRest {
                     + "to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit, conn)
                     .orElseThrow(() ->
                             ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
@@ -458,9 +475,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr) {
-        try {
-            catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr),
-                    getActiveUser(servletRequest, engineManager), OntologyRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.removeRecord(configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr),
+                    getActiveUser(servletRequest, engineManager), OntologyRecord.class, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
@@ -523,8 +540,9 @@ public class OntologyRest {
             @Parameter(description = "")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit, conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             StreamingOutput stream = os -> {
@@ -589,17 +607,18 @@ public class OntologyRest {
             @Parameter(description = "String representing the edited entity id", required = true)
             @QueryParam("entityId") String entityIdStr,
             @Parameter(description = "String representing the edited Resource", required = true) String entityJson) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             Model entityModel = getModelForEntityInOntology(ontology, entityIdStr);
-            Difference diff = catalogManager.getDiff(entityModel, getModelFromJson(entityJson));
+            Difference diff = differenceManager.getDiff(entityModel, getModelFromJson(entityJson));
             Resource recordId = valueFactory.createIRI(recordIdStr);
             User user = getActiveUser(servletRequest, engineManager);
-            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
-            catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
-                    diff.getAdditions(), diff.getDeletions());
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+            commitManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+                    diff.getAdditions(), diff.getDeletions(), conn);
             return Response.ok().build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -655,12 +674,12 @@ public class OntologyRest {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
             User user = getActiveUser(servletRequest, engineManager);
-            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
+            Optional<InProgressCommit> commit = commitManager.getInProgressCommitOpt(catalogIRI, recordId, user,  conn);
 
             if (commit.isPresent()) {
                 throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
@@ -674,9 +693,9 @@ public class OntologyRest {
                 branchId = valueFactory.createIRI(branchIdStr);
             } else if (StringUtils.isNotBlank(branchIdStr)) {
                 branchId = valueFactory.createIRI(branchIdStr);
-                commitId = catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource();
+                commitId = commitManager.getHeadCommit(catalogIRI, recordId, branchId, conn).getResource();
             } else {
-                Branch branch = catalogManager.getMasterBranch(catalogIRI, recordId);
+                Branch branch = branchManager.getMasterBranch(catalogIRI, recordId, conn);
                 branchId = branch.getResource();
                 commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
                         + branchIdStr + " has no head Commit set"));
@@ -701,7 +720,7 @@ public class OntologyRest {
             Map<BNode, IRI> catalogBNodes = new HashMap<>();
             final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
                 long startTimeF = System.currentTimeMillis();
-                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes);
+                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn);
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
                 return temp;
             });
@@ -719,20 +738,20 @@ public class OntologyRest {
             log.trace("uploadChangesToOntology futures completion took {} ms", System.currentTimeMillis() - startTime);
 
             startTime = System.currentTimeMillis();
-            Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
+            Difference diff = differenceManager.getDiff(currentModel, uploadedModel);
             log.trace("uploadChangesToOntology getDiff took {} ms", System.currentTimeMillis() - startTime);
 
             if (diff.getAdditions().isEmpty() && diff.getDeletions().isEmpty()) {
                 return Response.noContent().build();
             }
 
-            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
             startTime = System.currentTimeMillis();
             Model additionsRestored = BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, catalogBNodes,
                     modelFactory);
             Model deletionsRestored = BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, modelFactory);
-            catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
-                    additionsRestored, deletionsRestored);
+            commitManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
+                    additionsRestored, deletionsRestored, conn);
             log.trace("uploadChangesToOntology getInProgressCommitIRI took {} ms",
                     System.currentTimeMillis() - startTime);
 
@@ -803,17 +822,18 @@ public class OntologyRest {
      * Gets a {@link Model} from the provided Record/Branch/Commit in the Catalog. Deterministically skolemizes any
      * BNode in the model.
      *
-     * @param recordId The {@link Resource} of the recordId.
-     * @param branchId The {@link Resource} of the branchId.
-     * @param commitId The {@link Resource} of the commitId.
+     * @param recordId  The {@link Resource} of the recordId.
+     * @param branchId  The {@link Resource} of the branchId.
+     * @param commitId  The {@link Resource} of the commitId.
      * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
      *                  method.
+     * @param conn      A RepositoryConnection for lookup.
      * @return A {@link Model} with deterministically skolemized BNodes.
      */
-    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap) {
+    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap, RepositoryConnection conn) {
         // Load existing ontology into a skolemized model
-        return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId),
-                bNodesMap);
+        return bNodeService.deterministicSkolemize(
+                compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn), bNodesMap);
     }
     
     /**
@@ -859,9 +879,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    true);
+                    true, conn);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getVocabularyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
@@ -999,12 +1019,12 @@ public class OntologyRest {
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
             Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit);
+                    applyInProgressCommit, conn);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
@@ -1200,10 +1220,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
-
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<Ontology> optionalOntology = getOntology(servletRequest,
-                    recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
+                    recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getPropertyToRangesStream(optionalOntology.get());
                 return Response.ok(output).build();
@@ -1270,9 +1289,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs,
-                    true);
+                    true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1318,9 +1337,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAnnotationIRIObject, true);
+                    this::getAnnotationIRIObject, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1363,8 +1382,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the new annotation in JSON-LD", required = true)
             String annotationJson) {
         verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
-        try {
-            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(annotationJson));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(annotationJson), conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1418,11 +1437,12 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(servletRequest, ontology, annotationIdStr, recordIdStr);
+            return deletionsToInProgressCommit(servletRequest, ontology, annotationIdStr, recordIdStr, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1472,9 +1492,9 @@ public class OntologyRest {
             @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
                     + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getClassArray, applyInProgressCommit);
+                    this::getClassArray, applyInProgressCommit, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1516,8 +1536,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the new class model", required = true)
             String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
-        try {
-            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(classJson));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(classJson), conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1567,11 +1587,12 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(servletRequest, ontology, classIdStr, recordIdStr);
+            return deletionsToInProgressCommit(servletRequest, ontology, classIdStr, recordIdStr, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1616,9 +1637,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDatatypeIRIObject, true);
+                    this::getDatatypeIRIObject, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1660,8 +1681,8 @@ public class OntologyRest {
             @Parameter(description = "JSON String representing the new datatype model", required = true)
             String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
-        try {
-            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(datatypeJson));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(datatypeJson), conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1711,11 +1732,12 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(servletRequest, ontology, datatypeIdStr, recordIdStr);
+            return deletionsToInProgressCommit(servletRequest, ontology, datatypeIdStr, recordIdStr, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1760,9 +1782,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getObjectPropertyArray, true);
+                    this::getObjectPropertyArray, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1804,8 +1826,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the new property model", required = true)
             String objectPropertyJson) {
         verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
-        try {
-            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(objectPropertyJson));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(objectPropertyJson), conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1855,11 +1877,12 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(servletRequest, ontology, objectPropertyIdStr, recordIdStr);
+            return deletionsToInProgressCommit(servletRequest, ontology, objectPropertyIdStr, recordIdStr, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1904,9 +1927,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDataPropertyArray, true);
+                    this::getDataPropertyArray, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1948,8 +1971,8 @@ public class OntologyRest {
             @Parameter(description = "JSON String representing the new property model", required = true)
             String dataPropertyJson) {
         verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
-        try {
-            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(dataPropertyJson));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(dataPropertyJson), conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1999,11 +2022,12 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(servletRequest, ontology, dataPropertyIdStr, recordIdStr);
+            return deletionsToInProgressCommit(servletRequest, ontology, dataPropertyIdStr, recordIdStr, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2048,9 +2072,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getNamedIndividualIRIObject, true);
+                    this::getNamedIndividualIRIObject, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2092,8 +2116,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the new individual model", required = true)
             String individualJson) {
         verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
-        try {
-            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(individualJson));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(individualJson), conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2143,11 +2167,12 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(servletRequest, ontology, individualIdStr, recordIdStr);
+            return deletionsToInProgressCommit(servletRequest, ontology, individualIdStr, recordIdStr, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2196,8 +2221,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
-            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, applyInProgressCommit);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs,
+                    applyInProgressCommit, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2243,11 +2269,11 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode arrayNode = mapper.createArrayNode();
             Set<String> importedOntologyIris = new HashSet<>();
             Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    false);
+                    false, conn);
             if(optionalOntology.isPresent()) {
                 Ontology ontology = optionalOntology.get();
                 ontology.getUnloadableImportIRIs().stream()
@@ -2315,9 +2341,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Set<Ontology> importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr,
-                    commitIdStr, applyInProgressCommit);
+                    commitIdStr, applyInProgressCommit, conn);
             ArrayNode arrayNode = mapper.createArrayNode();
             importedOntologies.stream()
                     .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
@@ -2371,9 +2397,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAnnotationIRIObject, applyInProgressCommit);
+                    this::getAnnotationIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2423,9 +2449,9 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getClassIRIArray, applyInProgressCommit);
+                    this::getClassIRIArray, applyInProgressCommit, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2474,9 +2500,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDatatypeIRIObject, applyInProgressCommit);
+                    this::getDatatypeIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2525,9 +2551,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getObjectPropertyIRIObject, applyInProgressCommit);
+                    this::getObjectPropertyIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2577,9 +2603,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDataPropertyIRIObject, applyInProgressCommit);
+                    this::getDataPropertyIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2629,9 +2655,9 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    this::getNamedIndividualIRIObject, applyInProgressCommit);
+                    this::getNamedIndividualIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2687,9 +2713,9 @@ public class OntologyRest {
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit).orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    applyInProgressCommit, conn).orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                     Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubClassesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
@@ -2744,8 +2770,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubObjectPropertiesOf();
@@ -2801,8 +2828,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubDatatypePropertiesOf();
@@ -2859,8 +2887,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubAnnotationPropertiesOf();
@@ -2915,8 +2944,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getConceptRelationships();
@@ -2973,8 +3003,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getConceptSchemeRelationships();
@@ -3026,8 +3057,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             ObjectNode objectNode = mapper.createObjectNode();
@@ -3088,8 +3120,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "String identifying whether you want to do a select or construct query")
             @DefaultValue("select") @QueryParam("queryType") String queryType) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             Resource entityIRI = valueFactory.createIRI(entityIRIStr);
@@ -3156,8 +3189,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             checkStringParam(searchText, "The searchText is missing.");
@@ -3224,8 +3258,9 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
-        try {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+                    conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
             return Response.ok(getUnloadableImportIRIs(ontology)).build();
@@ -3306,8 +3341,10 @@ public class OntologyRest {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
-        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
-                applyInProgressCommit, acceptString, queryString, null, "");
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
+                    applyInProgressCommit, acceptString, queryString, null, "", conn);
+        }
     }
 
     /**
@@ -3357,9 +3394,11 @@ public class OntologyRest {
         if (queryString == null) {
             throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
         }
-        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit,
-                acceptString, queryString, null, "");
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit,
+                    acceptString, queryString, null, "", conn);
+        }
     }
 
     /**
@@ -3410,8 +3449,10 @@ public class OntologyRest {
         if (queryString == null) {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
-        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
-                applyInProgressCommit, acceptString, queryString, "", "");
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
+                    applyInProgressCommit, acceptString, queryString, "", "", conn);
+        }
     }
 
     /**
@@ -3468,8 +3509,10 @@ public class OntologyRest {
         if (queryString == null) {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("SPARQL query must be provided in request body."));
         }
-        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
-                applyInProgressCommit, acceptString, queryString, fileType, fileName);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
+                    applyInProgressCommit, acceptString, queryString, fileType, fileName, conn);
+        }
     }
 
     /**
@@ -3593,27 +3636,32 @@ public class OntologyRest {
         if (queryString == null) {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
-        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
-                acceptString, queryString, fileType, fileName);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+                    acceptString, queryString, fileType, fileName, conn);
+        }
     }
 
     private Response handleSparqlQuery(HttpServletRequest context, String recordIdStr,
                                        String branchIdStr, String commitIdStr, boolean includeImports,
                                        boolean applyInProgressCommit, String acceptString,
-                                       String queryString, String fileExtension, String fileName) {
+                                       String queryString, String fileExtension, String fileName,
+                                       RepositoryConnection conn) {
         try {
             if (acceptString.equals(MediaType.APPLICATION_OCTET_STREAM) && StringUtils.isBlank(fileName)) {
                 throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Must provide both fileName " +
                         "when accept header is application/octet-stream"));
             }
 
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
-                    .orElseThrow(() -> RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The ontology could not be found.")));
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
+                    .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
+                            new IllegalArgumentException("The ontology could not be found.")));
 
             if (fileExtension != null && !fileExtension.isEmpty()) {
                 acceptString = convertFileExtensionToMimeType(fileExtension);
             }
-            return RestQueryUtils.handleQuery(queryString, null, acceptString, fileName, ontology, includeImports, null);
+            return RestQueryUtils.handleQuery(queryString, null, acceptString, fileName, ontology,
+                    includeImports, null);
         } catch (MalformedQueryException ex) {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE +
                     ";;;" + ex.getMessage()));
@@ -3689,9 +3737,9 @@ public class OntologyRest {
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit)
+                    applyInProgressCommit, conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
 
@@ -3822,9 +3870,9 @@ public class OntologyRest {
                     + "for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit).orElseThrow(() -> ErrorUtils.sendError(
+                    applyInProgressCommit, conn).orElseThrow(() -> ErrorUtils.sendError(
                             "The ontology could not be found.", Response.Status.BAD_REQUEST));
 
             IRI entity = valueFactory.createIRI(entityIdStr);
@@ -3886,7 +3934,7 @@ public class OntologyRest {
                     + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(description = "Filter JSON", required = true) String filterJson) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             StopWatch watch = new StopWatch();
             log.trace("Start entityNames");
             watch.start();
@@ -3908,7 +3956,7 @@ public class OntologyRest {
                 queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", resourcesString);
             }
             Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit);
+                    applyInProgressCommit, conn);
             if (optionalOntology.isPresent()) {
                 String finalQueryString = queryString;
                 StreamingOutput output = outputStream -> {
@@ -4161,16 +4209,17 @@ public class OntologyRest {
      *
      * @param user     the User with the InProgressCommit
      * @param recordId the Resource identifying the Record with the InProgressCommit
+     * @param conn     A repository connection for lookup.
      * @return a Resource which identifies the InProgressCommit associated with the User for the Record
      */
-    private Resource getInProgressCommitIRI(User user, Resource recordId) {
-        Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(configProvider.getLocalCatalogIRI(),
-                recordId, user);
+    private Resource getInProgressCommitIRI(User user, Resource recordId, RepositoryConnection conn) {
+        Optional<InProgressCommit> optional = commitManager.getInProgressCommitOpt(configProvider.getLocalCatalogIRI(),
+                recordId, user, conn);
         if (optional.isPresent()) {
             return optional.get().getResource();
         } else {
-            InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user);
-            catalogManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit);
+            InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
+            commitManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit, conn);
             return inProgressCommit.getResource();
         }
     }
@@ -4178,16 +4227,18 @@ public class OntologyRest {
     /**
      * Optionally gets the Ontology based on the provided IDs.
      *
-     * @param servletRequest The HttpServletRequest.
-     * @param recordIdStr the record ID String to process.
-     * @param branchIdStr the branch ID String to process.
-     * @param commitIdStr the commit ID String to process.
+     * @param servletRequest        The HttpServletRequest.
+     * @param recordIdStr           the record ID String to process.
+     * @param branchIdStr           the branch ID String to process.
+     * @param commitIdStr           the commit ID String to process.
      * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
      *                              applied to the return value
+     * @param conn
      * @return an Optional containing the Ontology if it was found.
      */
     private Optional<Ontology> getOntology(HttpServletRequest servletRequest, String recordIdStr, String branchIdStr,
-                                           String commitIdStr, boolean applyInProgressCommit) {
+                                           String commitIdStr, boolean applyInProgressCommit,
+                                           RepositoryConnection conn) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
         try {
@@ -4209,8 +4260,8 @@ public class OntologyRest {
 
             if (optionalOntology.isPresent() && applyInProgressCommit) {
                 User user = getActiveUser(servletRequest, engineManager);
-                Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
-                        configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr), user);
+                Optional<InProgressCommit> inProgressCommitOpt = commitManager.getInProgressCommitOpt(
+                        configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr), user, conn);
 
                 if (inProgressCommitOpt.isPresent()) {
                     optionalOntology = Optional.of(ontologyManager.applyChanges(optionalOntology.get(),
@@ -4229,22 +4280,23 @@ public class OntologyRest {
     /**
      * Gets the List of entity IRIs identified by a lambda function in an Ontology identified by the provided IDs.
      *
-     * @param servletRequest the HttpServletRequest.
-     * @param recordIdStr the record ID String to process.
-     * @param branchIdStr the branch ID String to process.
-     * @param commitIdStr the commit ID String to process.
-     * @param iriFunction the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
-     *                    component.
+     * @param servletRequest        the HttpServletRequest.
+     * @param recordIdStr           the record ID String to process.
+     * @param branchIdStr           the branch ID String to process.
+     * @param commitIdStr           the commit ID String to process.
+     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
+     *                              component.
      * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
      *                              applied to the return value
+     * @param conn
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
     private <T extends JsonNode> T doWithOntology(HttpServletRequest servletRequest, String recordIdStr,
                                                   String branchIdStr, String commitIdStr,
                                                   Function<Ontology, T> iriFunction,
-                                                  boolean applyInProgressCommit) {
+                                                  boolean applyInProgressCommit, RepositoryConnection conn) {
         Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                applyInProgressCommit);
+                applyInProgressCommit, conn);
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
         } else {
@@ -4256,23 +4308,25 @@ public class OntologyRest {
      * Gets the List of entity IRIs identified by a lambda function in imported Ontologies for the Ontology identified
      * by the provided IDs.
      *
-     * @param servletRequest the HttpServletRequest.
-     * @param recordIdStr the record ID String to process.
-     * @param branchIdStr the branch ID String to process.
-     * @param commitIdStr the commit ID String to process.
-     * @param iriFunction the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
-     *                    component.
+     * @param servletRequest        the HttpServletRequest.
+     * @param recordIdStr           the record ID String to process.
+     * @param branchIdStr           the branch ID String to process.
+     * @param commitIdStr           the commit ID String to process.
+     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
+     *                              component.
      * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
      *                              applied to the return value
+     * @param conn
      * @return the JSON list of imported IRI lists determined by the provided Function.
      */
     private Response doWithImportedOntologies(HttpServletRequest servletRequest, String recordIdStr,
                                               String branchIdStr, String commitIdStr,
                                               Function<Ontology, ObjectNode> iriFunction,
-                                              boolean applyInProgressCommit) {
+                                              boolean applyInProgressCommit, RepositoryConnection conn) {
         Set<Ontology> importedOntologies;
         try {
-            importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
+            importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit, conn);
         } catch (MobiOntologyException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -4302,17 +4356,19 @@ public class OntologyRest {
     /**
      * Gets the imported Ontologies for the Ontology identified by the provided IDs.
      *
-     * @param servletRequest the HttpServletRequest.
-     * @param recordIdStr the record ID String to process.
-     * @param branchIdStr the branch ID String to process.
-     * @param commitIdStr the commit ID String to process.
+     * @param servletRequest        the HttpServletRequest.
+     * @param recordIdStr           the record ID String to process.
+     * @param branchIdStr           the branch ID String to process.
+     * @param commitIdStr           the commit ID String to process.
      * @param applyInProgressCommit whether to apply uncommitted changes when grabbing the ontologies
+     * @param conn
      * @return the Set of imported Ontologies.
      */
     private Set<Ontology> getImportedOntologies(HttpServletRequest servletRequest, String recordIdStr,
-                                                String branchIdStr, String commitIdStr, boolean applyInProgressCommit) {
+                                                String branchIdStr, String commitIdStr, boolean applyInProgressCommit,
+                                                RepositoryConnection conn) {
         Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                applyInProgressCommit);
+                applyInProgressCommit, conn);
         if (optionalOntology.isPresent()) {
             Ontology baseOntology = optionalOntology.get();
             return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology);
@@ -4749,17 +4805,18 @@ public class OntologyRest {
      * Adds the provided Model to the requester's InProgressCommit additions.
      *
      * @param servletRequest the HttpServletRequest.
-     * @param recordIdStr the record ID String to process.
-     * @param entityModel the Model to add to the additions in the InProgressCommit.
+     * @param recordIdStr    the record ID String to process.
+     * @param entityModel    the Model to add to the additions in the InProgressCommit.
+     * @param conn
      * @return a Response indicating the success or failure of the addition.
      */
     private Response additionsToInProgressCommit(HttpServletRequest servletRequest, String recordIdStr,
-                                                 Model entityModel) {
+                                                 Model entityModel, RepositoryConnection conn) {
         User user = getActiveUser(servletRequest, engineManager);
         Resource recordId = valueFactory.createIRI(recordIdStr);
-        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
-        catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
-                entityModel, null);
+        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+        commitManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+                entityModel, null, conn);
         return Response.status(Response.Status.CREATED).build();
     }
 
@@ -4768,16 +4825,17 @@ public class OntologyRest {
      * deletions.
      *
      * @param servletRequest the HttpServletRequest.
-     * @param ontology    the ontology to process.
-     * @param entityIdStr the ID of the entity to be deleted.
-     * @param recordIdStr the ID of the record which contains the entity to be deleted.
+     * @param ontology       the ontology to process.
+     * @param entityIdStr    the ID of the entity to be deleted.
+     * @param recordIdStr    the ID of the record which contains the entity to be deleted.
+     * @param conn
      * @return a Response indicating the success or failure of the deletion.
      */
     private Response deletionsToInProgressCommit(HttpServletRequest servletRequest, Ontology ontology,
-                                                 String entityIdStr, String recordIdStr) {
+                                                 String entityIdStr, String recordIdStr, RepositoryConnection conn) {
         User user = getActiveUser(servletRequest, engineManager);
         Resource recordId = valueFactory.createIRI(recordIdStr);
-        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
+        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
         Model ontologyModel = ontology.asModel();
         Resource entityId = valueFactory.createIRI(entityIdStr);
         Model model = modelFactory.createEmptyModel();
@@ -4789,8 +4847,8 @@ public class OntologyRest {
             throw ErrorUtils.sendError(entityIdStr + " was not found within the ontology.",
                     Response.Status.BAD_REQUEST);
         }
-        catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
-                null, model);
+        commitManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+                null, model, conn);
         return Response.ok().build();
     }
 
@@ -4864,19 +4922,19 @@ public class OntologyRest {
         OntologyRecord record;
         Resource branchId;
         Resource commitId;
-        try {
-            record = catalogManager.createRecord(user, config, OntologyRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            record = recordManager.createRecord(user, config, OntologyRecord.class, conn);
             branchId = record.getMasterBranch_resource().get();
-            try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-                RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
-                        valueFactory.createIRI(Branch.head_IRI), null);
-                if (!commitStmt.hasNext()) {
-                    throw ErrorUtils.sendError("The requested instance could not be found.",
-                            Response.Status.BAD_REQUEST);
-                }
-                commitId = (Resource) commitStmt.next().getObject();
+
+            RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
+                    valueFactory.createIRI(Branch.head_IRI), null);
+            if (!commitStmt.hasNext()) {
                 commitStmt.close();
+                throw ErrorUtils.sendError("The requested instance could not be found.",
+                        Response.Status.BAD_REQUEST);
             }
+            commitId = (Resource) commitStmt.next().getObject();
+            commitStmt.close();
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {

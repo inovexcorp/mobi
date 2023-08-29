@@ -38,7 +38,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
@@ -51,6 +51,7 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
@@ -60,6 +61,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -99,11 +101,17 @@ public class MappingRestTest extends MobiRestTestCXF {
     private static ModelFactory mf;
     private static MappingManager manager;
     private static CatalogConfigProvider configProvider;
-    private static CatalogManager catalogManager;
+    private static RecordManager recordManager;
     private static EngineManager engineManager;
 
     @Mock
     private MappingWrapper mappingWrapper;
+
+    @Mock
+    private OsgiRepository repo;
+
+    @Mock
+    private RepositoryConnection conn;
 
     @Mock
     private MappingId mappingId;
@@ -116,13 +124,13 @@ public class MappingRestTest extends MobiRestTestCXF {
         manager = Mockito.mock(MappingManager.class);
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         engineManager = Mockito.mock(EngineManager.class);
-        catalogManager = Mockito.mock(CatalogManager.class);
+        recordManager = Mockito.mock(RecordManager.class);
 
         rest = new MappingRest();
         rest.manager = manager;
         rest.engineManager = engineManager;
         rest.configProvider = configProvider;
-        rest.catalogManager = catalogManager;
+        rest.recordManager = recordManager;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -143,10 +151,12 @@ public class MappingRestTest extends MobiRestTestCXF {
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(repo.getConnection()).thenReturn(conn);
         mappingJsonld = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/mapping.jsonld")), StandardCharsets.UTF_8);
 
-        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class))).thenReturn(record);
-        when(catalogManager.removeRecord(catalogId, recordId, user, MappingRecord.class)).thenReturn(record);
+        when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class), any(RepositoryConnection.class))).thenReturn(record);
+        when(recordManager.removeRecord(catalogId, recordId, user, MappingRecord.class, conn)).thenReturn(record);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
@@ -161,7 +171,7 @@ public class MappingRestTest extends MobiRestTestCXF {
 
     @After
     public void reset() throws Exception {
-        Mockito.reset(mappingId, mappingWrapper, manager, catalogManager);
+        Mockito.reset(mappingId, mappingWrapper, manager, recordManager);
         closeable.close();
     }
 
@@ -174,11 +184,11 @@ public class MappingRestTest extends MobiRestTestCXF {
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(catalogManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class));
+        verify(recordManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class), any(RepositoryConnection.class));
 
         response = target().path("mappings").request().post(Entity.entity(FormDataMultiPart.emptyBody(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(catalogManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class));
+        verify(recordManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -195,7 +205,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 201);
         assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
-        verify(catalogManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class));
+        verify(recordManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class), any(RepositoryConnection.class));
         assertEquals("Title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
         assertEquals("Description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
         assertEquals("#Markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
@@ -218,7 +228,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 201);
         assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
-        verify(catalogManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class));
+        verify(recordManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class), any(RepositoryConnection.class));
         assertEquals("Title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
         assertEquals("Description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
         assertEquals("#Markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
@@ -270,7 +280,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         Response response = target().path("mappings/" + encode(MAPPING_RECORD_IRI)).request().delete();
         assertEquals(response.getStatus(), 200);
 
-        verify(catalogManager).removeRecord(catalogId, recordId, user, MappingRecord.class);
+        verify(recordManager).removeRecord(catalogId, recordId, user, MappingRecord.class, conn);
         verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 }

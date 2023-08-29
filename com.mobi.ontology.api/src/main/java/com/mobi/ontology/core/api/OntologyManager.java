@@ -45,16 +45,6 @@ public interface OntologyManager {
     Ontology applyChanges(Ontology ontology, Difference difference);
 
     /**
-     * Applies the changes in the InProgressCommit associated with the Resource to the provided Ontology and returns a
-     * new Ontology object.
-     *
-     * @param ontology the Ontology to apply the Difference to
-     * @param inProgressCommitId the Resource for the InProgressCommit that has the changes made to the ontology
-     * @return An Ontology with the applied changes
-     */
-    Ontology applyChanges(Ontology ontology, Resource inProgressCommitId);
-
-    /**
      * Applies the changes in the InProgressCommit to the provided Ontology and returns a new Ontology object.
      *
      * @param ontology the Ontology to apply the Difference to
@@ -173,15 +163,6 @@ public interface OntologyManager {
      * @return an OntologyId using the ontologyIRI and/or versionIRI from the model to determine the proper identifier.
      */
     OntologyId createOntologyId(Model model);
-
-    /**
-     * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
-     * provided Resource.
-     *
-     * @param recordId the record id for the OntologyRecord you want to get the Model for.
-     * @return a Model containing the Ontology Statements.
-     */
-    Model getOntologyModel(Resource recordId);
 
     /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the

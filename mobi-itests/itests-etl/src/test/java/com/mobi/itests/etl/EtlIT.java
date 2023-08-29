@@ -25,11 +25,12 @@ package com.mobi.itests.etl;
 
 import static org.junit.Assert.assertTrue;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -37,6 +38,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Model;
 import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.util.Models;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.Before;
@@ -71,7 +73,9 @@ public class EtlIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
     private static File outputFile;
-    private static CatalogManager catalogManager;
+    private static CatalogConfigProvider configProvider;
+
+    private static RecordManager recordManager;
     private static EngineManager engineManager;
     private static Engine rdfEngine;
 
@@ -112,7 +116,8 @@ public class EtlIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
-        catalogManager = getOsgiService(CatalogManager.class);
+        configProvider = getOsgiService(CatalogConfigProvider.class);
+        recordManager = getOsgiService(RecordManager.class);
         engineManager = getOsgiService(EngineManager.class);
         rdfEngine = getOsgiService(Engine.class, "(engineName=RdfEngine)", 10000L);
 
@@ -124,19 +129,19 @@ public class EtlIT extends KarafTestSupport {
         Model mappingModel = Rio.parse(new FileInputStream(mappingFile), "", RDFFormat.TURTLE);
 
         RecordOperationConfig config = new OperationConfig()
-                .set(RecordCreateSettings.CATALOG_ID, catalogManager.getLocalCatalog().getResource().stringValue())
+                .set(RecordCreateSettings.CATALOG_ID, configProvider.getLocalCatalogIRI().stringValue())
                 .set(RecordCreateSettings.RECORD_TITLE, "Test Mapping")
                 .set(RecordCreateSettings.RECORD_PUBLISHERS, users)
                 .set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, mappingModel);
 
-        MappingRecord record = catalogManager.createRecord(user, config, MappingRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            MappingRecord record = recordManager.createRecord(user, config, MappingRecord.class, conn);
+            String outputFilename = "test.ttl";
+            executeCommand(String.format("mobi:transform -h -o=%s %s %s", outputFilename, delimitedFile, record.getResource().stringValue()));
 
-        String outputFilename = "test.ttl";
-        executeCommand(String.format("mobi:transform -h -o=%s %s %s", outputFilename, delimitedFile, record.getResource().stringValue()));
-
-        outputFile = new File(outputFilename);
-
-        setupComplete = true;
+            outputFile = new File(outputFilename);
+            setupComplete = true;
+        }
     }
 
     @Test

@@ -23,7 +23,9 @@ package com.mobi.shapes.impl;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -72,7 +74,13 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     CatalogConfigProvider configProvider;
 
     @Reference
-    CatalogManager catalogManager;
+    BranchManager branchManager;
+
+    @Reference
+    CommitManager commitManager;
+
+    @Reference
+    CompiledResourceManager compiledResourceManager;
 
     final ValueFactory vf = new ValidatingValueFactory();
     final ModelFactory mf = new DynamicModelFactory();
@@ -92,25 +100,38 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
 
     @Override
     public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId) {
-        Branch masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
-        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(getHeadOfBranch(masterBranch))));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn);
+            return Optional.of(
+                    getShapesGraphFromModel(compiledResourceManager.getCompiledResource(getHeadOfBranch(masterBranch),
+                            conn)));
+        }
     }
 
     @Override
     public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        Commit commit = catalogManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId);
-        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(commit.getResource())));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Commit commit = commitManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId, conn);
+            return Optional.of(getShapesGraphFromModel(compiledResourceManager.getCompiledResource(commit.getResource(),
+                    conn)));
+        }
     }
 
     @Override
     public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                      @Nonnull Resource commitId) {
-        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(recordId, branchId, commitId)));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return Optional.of(
+                    getShapesGraphFromModel(compiledResourceManager.getCompiledResource(recordId, branchId, commitId,
+                            conn)));
+        }
     }
 
     @Override
     public Optional<ShapesGraph> retrieveShapesGraphByCommit(@Nonnull Resource commitId) {
-        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(commitId)));
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return Optional.of(getShapesGraphFromModel(compiledResourceManager.getCompiledResource(commitId, conn)));
+        }
     }
 
     private Resource getHeadOfBranch(Branch branch) {

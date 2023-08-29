@@ -30,8 +30,9 @@ import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -56,6 +57,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
@@ -102,10 +104,13 @@ public class UserRest {
     Engine rdfEngine;
 
     @Reference
-    CatalogManager catalogManager;
+    CommitManager commitManager;
 
     @Reference
     StateManager stateManager;
+
+    @Reference
+    CatalogConfigProvider configProvider;
 
     /**
      * Retrieves a list of all the {@link User}s in Mobi.
@@ -446,7 +451,7 @@ public class UserRest {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         isAuthorizedUser(servletRequest, username);
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<User> user = engineManager.retrieveUser(username);
             if (!user.isPresent()) {
                 throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
@@ -456,9 +461,9 @@ public class UserRest {
                 throw ErrorUtils.sendError("The admin user cannot be deleted.",
                         Response.Status.METHOD_NOT_ALLOWED);
             }
-            List<InProgressCommit> inProgressCommits = catalogManager.getInProgressCommits(user.get());
+            List<InProgressCommit> inProgressCommits = commitManager.getInProgressCommits(user.get(), conn);
             inProgressCommits.forEach(inProgressCommit ->
-                    catalogManager.removeInProgressCommit(inProgressCommit.getResource()));
+                    commitManager.removeInProgressCommit(inProgressCommit.getResource(), conn));
             stateManager.getStates(username, null, new HashSet<>())
                     .forEach((resource, model) -> stateManager.deleteState(resource));
             engineManager.deleteUser(rdfEngine.getEngineName(), username);

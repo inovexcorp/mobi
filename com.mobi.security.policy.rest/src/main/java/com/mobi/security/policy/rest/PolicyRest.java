@@ -71,7 +71,7 @@ public class PolicyRest {
     private final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
-    protected XACMLPolicyManager policyManager;
+    XACMLPolicyManager policyManager;
 
     /**
      * Fetches all security policies that match the provided query parameters.

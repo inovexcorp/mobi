@@ -599,7 +599,6 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         filter.filter(context);
     }
 
-
     private static class MockResourceIdQueryParamClass {
         @ResourceId(type = ValueType.QUERY, value = QUERY_PARAM_KEY, defaultValue = @DefaultResourceId(DEFAULT_RESOURCE_ID_IRI))
         public void queryParamWithDefault() {}
@@ -632,7 +631,6 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         @ResourceId(type = ValueType.BODY, value = FORM_DATA_FIELD, defaultValue = @DefaultResourceId(type = ValueType.BODY, value = FORM_DATA_TWO_FIELD))
         public void formDataWithDefaultNotExists() {}
     }
-
 
     private static class MockResourceIdURLEncodedFormClass {
         @ResourceId(type = ValueType.BODY, value = URL_ENCODED_FORM_FIELD, defaultValue = @DefaultResourceId(DEFAULT_RESOURCE_ID_IRI))

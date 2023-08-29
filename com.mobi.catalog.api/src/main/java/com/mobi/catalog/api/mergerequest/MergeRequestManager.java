@@ -38,126 +38,6 @@ import java.util.Optional;
 public interface MergeRequestManager {
 
     /**
-     * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
-     *
-     * @param params The {@link MergeRequestFilterParams} to filter the MergeRequests by
-     * @return The {@link List} of all matching {@link MergeRequest}s
-     */
-    List<MergeRequest> getMergeRequests(MergeRequestFilterParams params);
-
-    /**
-     * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
-     *
-     * @param params The {@link MergeRequestFilterParams} to filter the MergeRequests by
-     * @param conn A RepositoryConnection to use for lookup
-     * @return The {@link List} of all matching {@link MergeRequest}s
-     */
-    List<MergeRequest> getMergeRequests(MergeRequestFilterParams params, RepositoryConnection conn);
-
-    /**
-     * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
-     * created and modified date. The title, {@link VersionedRDFRecord} ID, source {@link Branch} ID, target
-     * {@link Branch} ID, and creator {@link User} are required. Can optionally include a description and
-     * any assigned {@link User}s.
-     *
-     * @param config A {@link MergeRequestConfig} containing metadata about a {@link MergeRequest}
-     * @param localCatalog A {@link Resource} identifying the local catalog ID
-     * @return A {@link MergeRequest} created with the provided metadata
-     * @throws IllegalArgumentException {@link VersionedRDFRecord} could not be found, the {@link VersionedRDFRecord}
-     *      does not belong to the local {@link Catalog}, or the source or target {@link Branch}es do not belong to
-     *      the {@link VersionedRDFRecord}.
-     */
-    MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog);
-
-    /**
-     * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
-     * created and modified date. The title, {@link VersionedRDFRecord} ID, source {@link Branch} ID, target
-     * {@link Branch} ID, and creator {@link User} are required. Can optionally include a description and
-     * any assigned {@link User}s.
-     *
-     * @param config A {@link MergeRequestConfig} containing metadata about a {@link MergeRequest}
-     * @param localCatalog A {@link Resource} identifying the local catalog ID
-     * @param conn A RepositoryConnection to use for lookup
-     * @return A {@link MergeRequest} created with the provided metadata
-     * @throws IllegalArgumentException {@link VersionedRDFRecord} could not be found, the {@link VersionedRDFRecord}
-     *      does not belong to the local {@link Catalog}, or the source or target {@link Branch}es do not belong to
-     *      the {@link VersionedRDFRecord}.
-     */
-    MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog, RepositoryConnection conn);
-
-    /**
-     * Stores the provided {@link MergeRequest} in the repository as long as it does not already exist.
-     *
-     * @param request A {@link MergeRequest} to add to the repository
-     * @throws IllegalArgumentException If the provided {@link MergeRequest} already exists in the repository
-     */
-    void addMergeRequest(MergeRequest request);
-
-    /**
-     * Stores the provided {@link MergeRequest} in the repository as long as it does not already exist.
-     *
-     * @param request A {@link MergeRequest} to add to the repository
-     * @param conn A RepositoryConnection to use for lookup
-     * @throws IllegalArgumentException If the provided {@link MergeRequest} already exists in the repository
-     */
-    void addMergeRequest(MergeRequest request, RepositoryConnection conn);
-
-    /**
-     * Gets the {@link MergeRequest} identified by the provided {@link Resource}.
-     *
-     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
-     * @return The {@link MergeRequest} if it exists.
-     */
-    Optional<MergeRequest> getMergeRequest(Resource requestId);
-
-    /**
-     * Gets the {@link MergeRequest} identified by the provided {@link Resource}.
-     *
-     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
-     * @param conn A RepositoryConnection to use for lookup
-     * @return The {@link MergeRequest} if it exists.
-     */
-    Optional<MergeRequest> getMergeRequest(Resource requestId, RepositoryConnection conn);
-
-    /**
-     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest}
-     * {@code request}. Assumes that {@code request} is properly populated.
-     *
-     * @param requestId the {@link Resource} identifying a {@link MergeRequest}
-     * @param request the updated {@link MergeRequest} referenced by {@code requestId}
-     * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
-     */
-    void updateMergeRequest(Resource requestId, MergeRequest request);
-
-    /**
-     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest} {@code request}
-     * Assumes that {@code request} is properly populated.
-     *
-     * @param requestId the {@link Resource} identifying a {@link MergeRequest}
-     * @param request the updated {@link MergeRequest} referenced by {@code requestId}
-     * @param conn A RepositoryConnection to use for lookup
-     * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
-     */
-    void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn);
-
-    /**
-     * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
-     *
-     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
-     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
-     */
-    void deleteMergeRequest(Resource requestId);
-
-    /**
-     * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
-     *
-     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
-     * @param conn A RepositoryConnection to use for lookup
-     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
-     */
-    void deleteMergeRequest(Resource requestId, RepositoryConnection conn);
-
-    /**
      * Accepts a {@link MergeRequest} by performing a merge between the source and target {@link Branch branches},
      * changing the type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}, and
      * replacing the sourceBranch and targetBranch predicates with sourceBranchTitle, sourceCommit, targetBranchTitle,
@@ -191,21 +71,21 @@ public interface MergeRequestManager {
     void acceptMergeRequest(Resource requestId, User user, RepositoryConnection conn);
 
     /**
-     * Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided Resource.
+     * Stores the provided {@link MergeRequest} in the repository as long as it does not already exist.
      *
-     * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
-     *                 Resource.
+     * @param request A {@link MergeRequest} to add to the repository
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} already exists in the repository
      */
-    void deleteMergeRequestsWithRecordId(Resource recordId);
+    void addMergeRequest(MergeRequest request);
 
     /**
-     * Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided Resource.
+     * Stores the provided {@link MergeRequest} in the repository as long as it does not already exist.
      *
-     * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
-     *                 Resource.
+     * @param request A {@link MergeRequest} to add to the repository
      * @param conn A RepositoryConnection to use for lookup
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} already exists in the repository
      */
-    void deleteMergeRequestsWithRecordId(Resource recordId, RepositoryConnection conn);
+    void addMergeRequest(MergeRequest request, RepositoryConnection conn);
 
     /**
      * Updates any existing MergeRequest that references the provided branchId that is being removed. If a deleted
@@ -256,13 +136,103 @@ public interface MergeRequestManager {
     Comment createComment(Resource requestId, User user, String commentStr, Resource parentCommentId);
 
     /**
-     * Gets the {@link List} of all {@link Comment} chains in Mobi for the {@link MergeRequest} sorted by issued date of
-     * the head of the chain.
+     * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
+     * created and modified date. The title, {@link VersionedRDFRecord} ID, source {@link Branch} ID, target
+     * {@link Branch} ID, and creator {@link User} are required. Can optionally include a description and
+     * any assigned {@link User}s.
      *
-     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
-     * @return The sorted {@link List} of {@link Comment} chains for the provided {@link MergeRequest}
+     * @param config A {@link MergeRequestConfig} containing metadata about a {@link MergeRequest}
+     * @param localCatalog A {@link Resource} identifying the local catalog ID
+     * @return A {@link MergeRequest} created with the provided metadata
+     * @throws IllegalArgumentException {@link VersionedRDFRecord} could not be found, the {@link VersionedRDFRecord}
+     *      does not belong to the local {@link Catalog}, or the source or target {@link Branch}es do not belong to
+     *      the {@link VersionedRDFRecord}.
      */
-    List<List<Comment>> getComments(Resource requestId);
+    MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog);
+
+    /**
+     * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
+     * created and modified date. The title, {@link VersionedRDFRecord} ID, source {@link Branch} ID, target
+     * {@link Branch} ID, and creator {@link User} are required. Can optionally include a description and
+     * any assigned {@link User}s.
+     *
+     * @param config A {@link MergeRequestConfig} containing metadata about a {@link MergeRequest}
+     * @param localCatalog A {@link Resource} identifying the local catalog ID
+     * @param conn A RepositoryConnection to use for lookup
+     * @return A {@link MergeRequest} created with the provided metadata
+     * @throws IllegalArgumentException {@link VersionedRDFRecord} could not be found, the {@link VersionedRDFRecord}
+     *      does not belong to the local {@link Catalog}, or the source or target {@link Branch}es do not belong to
+     *      the {@link VersionedRDFRecord}.
+     */
+    MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog, RepositoryConnection conn);
+
+    /**
+     * Deletes an existing {@link Comment} identified by the provided the {@link Resource}.
+     *
+     * @param commentId The {@link Resource} representing the {@link Comment} ID to delete.
+     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     */
+    void deleteComment(Resource commentId);
+
+    /**
+     * Deletes an existing {@link Comment} identified by the provided the {@link Resource}.
+     *
+     * @param commentId The {@link Resource} representing the {@link Comment} ID to delete.
+     * @param conn A RepositoryConnection to use for lookup
+     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     */
+    void deleteComment(Resource commentId, RepositoryConnection conn);
+
+    /**
+     * Removes all Comments that are linked to the {@link MergeRequest} identified by the provided Resource.
+     *
+     * @param requestId Removes all Comments that are linked to the {@link MergeRequest} identified by the provided
+     *                  Resource.
+     */
+    void deleteCommentsWithRequestId(Resource requestId);
+
+    /**
+     * Removes all Comments that are linked to the {@link MergeRequest} identified by the provided Resource.
+     *
+     * @param requestId Removes all Comments that are linked to the {@link MergeRequest} identified by the provided
+     *                  Resource.
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    void deleteCommentsWithRequestId(Resource requestId, RepositoryConnection conn);
+
+    /**
+     * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     */
+    void deleteMergeRequest(Resource requestId);
+
+    /**
+     * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     * @param conn A RepositoryConnection to use for lookup
+     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     */
+    void deleteMergeRequest(Resource requestId, RepositoryConnection conn);
+
+    /**
+     * Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided Resource.
+     *
+     * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
+     *                 Resource.
+     */
+    void deleteMergeRequestsWithRecordId(Resource recordId);
+
+    /**
+     * Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided Resource.
+     *
+     * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
+     *                 Resource.
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    void deleteMergeRequestsWithRecordId(Resource recordId, RepositoryConnection conn);
 
     /**
      * Gets the {@link Comment} identified by the provided {@link Resource}.
@@ -283,6 +253,59 @@ public interface MergeRequestManager {
     Optional<Comment> getComment(Resource commentId, RepositoryConnection conn);
 
     /**
+     * Gets the {@link List} of all {@link Comment} chains in Mobi for the {@link MergeRequest} sorted by issued date of
+     * the head of the chain.
+     *
+     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
+     * @return The sorted {@link List} of {@link Comment} chains for the provided {@link MergeRequest}
+     */
+    List<List<Comment>> getComments(Resource requestId);
+
+    /**
+     * Gets the {@link List} of all {@link Comment} chains in Mobi for the {@link MergeRequest} sorted by issued date of
+     * the head of the chain.
+     *
+     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
+     * @param conn A RepositoryConnection to use for lookup
+     * @return The sorted {@link List} of {@link Comment} chains for the provided {@link MergeRequest}
+     */
+    List<List<Comment>> getComments(Resource requestId, RepositoryConnection conn);
+
+    /**
+     * Gets the {@link MergeRequest} identified by the provided {@link Resource}.
+     *
+     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
+     * @return The {@link MergeRequest} if it exists.
+     */
+    Optional<MergeRequest> getMergeRequest(Resource requestId);
+
+    /**
+     * Gets the {@link MergeRequest} identified by the provided {@link Resource}.
+     *
+     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
+     * @param conn A RepositoryConnection to use for lookup
+     * @return The {@link MergeRequest} if it exists.
+     */
+    Optional<MergeRequest> getMergeRequest(Resource requestId, RepositoryConnection conn);
+
+    /**
+     * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
+     *
+     * @param params The {@link MergeRequestFilterParams} to filter the MergeRequests by
+     * @return The {@link List} of all matching {@link MergeRequest}s
+     */
+    List<MergeRequest> getMergeRequests(MergeRequestFilterParams params);
+
+    /**
+     * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
+     *
+     * @param params The {@link MergeRequestFilterParams} to filter the MergeRequests by
+     * @param conn A RepositoryConnection to use for lookup
+     * @return The {@link List} of all matching {@link MergeRequest}s
+     */
+    List<MergeRequest> getMergeRequests(MergeRequestFilterParams params, RepositoryConnection conn);
+
+    /**
      * Replaces the stored {@link Comment} of {@code requestId} with the provided {@link Comment}
      * {@code request}. Assumes that {@code comment} is properly populated.
      *
@@ -293,18 +316,33 @@ public interface MergeRequestManager {
     void updateComment(Resource commentId, Comment comment);
 
     /**
-     * Deletes an existing {@link Comment} identified by the provided the {@link Resource}.
+     * Replaces the stored {@link Comment} of {@code requestId} with the provided {@link Comment}
+     * {@code request}. Assumes that {@code comment} is properly populated.
      *
-     * @param commentId The {@link Resource} representing the {@link Comment} ID to delete.
-     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     * @param commentId the {@link Resource} identifying a {@link Comment}
+     * @param comment the updated {@link Comment} referenced by {@code commentId}
+     * @throws IllegalArgumentException If the provided {@link Comment} does not exist in the repository
      */
-    void deleteComment(Resource commentId);
+    void updateComment(Resource commentId, Comment comment, RepositoryConnection conn);
 
     /**
-     * Removes all Comments that are linked to the {@link MergeRequest} identified by the provided Resource.
+     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest}
+     * {@code request}. Assumes that {@code request} is properly populated.
      *
-     * @param requestId Removes all Comments that are linked to the {@link MergeRequest} identified by the provided
-     *                  Resource.
+     * @param requestId the {@link Resource} identifying a {@link MergeRequest}
+     * @param request the updated {@link MergeRequest} referenced by {@code requestId}
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
      */
-    void deleteCommentsWithRequestId(Resource requestId);
+    void updateMergeRequest(Resource requestId, MergeRequest request);
+
+    /**
+     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest} {@code request}
+     * Assumes that {@code request} is properly populated.
+     *
+     * @param requestId the {@link Resource} identifying a {@link MergeRequest}
+     * @param request the updated {@link MergeRequest} referenced by {@code requestId}
+     * @param conn A RepositoryConnection to use for lookup
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
+     */
+    void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn);
 }

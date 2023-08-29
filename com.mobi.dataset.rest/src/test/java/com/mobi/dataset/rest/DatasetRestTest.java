@@ -24,7 +24,6 @@ package com.mobi.dataset.rest;
  */
 
 import static com.mobi.persistence.utils.ResourceUtils.encode;
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
@@ -41,9 +40,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
@@ -60,19 +61,18 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.junit.After;
 import org.junit.Before;
@@ -105,8 +105,6 @@ public class DatasetRestTest extends MobiRestTestCXF {
     private Commit commit;
     private Branch branch;
     private User user;
-    private CreateActivity createActivity;
-    private DeleteActivity deleteActivity;
 
     private IRI errorIRI;
     private IRI localIRI;
@@ -117,10 +115,11 @@ public class DatasetRestTest extends MobiRestTestCXF {
     // Mock services used in server
     private static DatasetRest rest;
     private static ValueFactory vf;
-    private static ModelFactory mf;
     private static DatasetManager datasetManager;
     private static EngineManager engineManager;
-    private static CatalogManager catalogManager;
+    private static RecordManager recordManager;
+    private static BranchManager branchManager;
+    private static CommitManager commitManager;
     private static CatalogConfigProvider configProvider;
     private static BNodeService service;
     private static RDFImportService importService;
@@ -131,14 +130,21 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Mock
     private PaginatedSearchResults<Record> recordResults;
 
+    @Mock
+    private OsgiRepository repo;
+
+    @Mock
+    private RepositoryConnection mockConn;
+
     @BeforeClass
     public static void startServer() {
         vf = getValueFactory();
-        mf = getModelFactory();
 
         datasetManager = Mockito.mock(DatasetManager.class);
         engineManager = Mockito.mock(EngineManager.class);
-        catalogManager = Mockito.mock(CatalogManager.class);
+        recordManager = Mockito.mock(RecordManager.class);
+        branchManager = Mockito.mock(BranchManager.class);
+        commitManager = Mockito.mock(CommitManager.class);
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         service = Mockito.mock(BNodeService.class);
         importService = Mockito.mock(RDFImportService.class);
@@ -147,7 +153,9 @@ public class DatasetRestTest extends MobiRestTestCXF {
         rest.manager = datasetManager;
         rest.engineManager = engineManager;
         rest.configProvider = configProvider;
-        rest.catalogManager = catalogManager;
+        rest.recordManager = recordManager;
+        rest.branchManager = branchManager;
+        rest.commitManager = commitManager;
         rest.bNodeService = service;
         rest.importService = importService;
 
@@ -166,8 +174,6 @@ public class DatasetRestTest extends MobiRestTestCXF {
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
         OrmFactory<DatasetRecord> datasetRecordFactory = getRequiredOrmFactory(DatasetRecord.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-        OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
-        OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
 
         record1 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record1"));
         record1.setProperty(vf.createLiteral("A"), vf.createIRI(DCTERMS.TITLE.stringValue()));
@@ -179,12 +185,12 @@ public class DatasetRestTest extends MobiRestTestCXF {
         commit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(commit);
-        createActivity = createActivityFactory.createNew(vf.createIRI("http://example.com/activity/create"));
-        deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://example.com/activity/delete"));
 
         closeable = MockitoAnnotations.openMocks(this);
         when(configProvider.getLocalCatalogIRI()).thenReturn(localIRI);
-        reset(datasetManager, catalogManager, results, service, importService);
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(repo.getConnection()).thenReturn(mockConn);
+        reset(datasetManager, recordManager, branchManager, results, service, importService);
 
         when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
 
@@ -199,9 +205,10 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(recordResults.getPageSize()).thenReturn(10);
         when(recordResults.getTotalSize()).thenReturn(3);
 
-        when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(branch);
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class))).thenReturn(recordResults);
-        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenReturn(record1);
+        when(branchManager.getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class))).thenReturn(recordResults);
+        when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), any(), any(RepositoryConnection.class))).thenReturn(record1);
+        when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
 
         when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
         when(results.getPageNumber()).thenReturn(1);
@@ -220,7 +227,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     public void getDatasetRecordsTest() {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class));
+        verify(recordManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class));
         verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
         try {
@@ -241,7 +248,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
 
-        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class));
+        verify(recordManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class));
         verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
 
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
@@ -274,7 +281,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getDatasetRecordsWithErrorTest() {
         // Setup:
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class))).thenThrow(new MobiException());
+        when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class))).thenThrow(new MobiException());
 
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 500);
@@ -297,7 +304,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
-        verify(catalogManager).createRecord(any(User.class), config.capture(), any());
+        verify(recordManager).createRecord(any(User.class), config.capture(), any(), any(RepositoryConnection.class));
         assertEquals("http://example.com/dataset", config.getValue().get(DatasetRecordCreateSettings.DATASET));
         assertEquals("title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
         assertEquals("description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
@@ -307,7 +314,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         assertEquals("http://example.com/dataset", config.getValue().get(DatasetRecordCreateSettings.DATASET));
         assertEquals("system", config.getValue().get(DatasetRecordCreateSettings.REPOSITORY_ID));
         assertEquals(1, config.getValue().get(DatasetRecordCreateSettings.ONTOLOGIES).size());
-        verify(catalogManager).getMasterBranch(localIRI, ontologyRecordIRI);
+        verify(branchManager).getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class));
         assertEquals(response.readEntity(String.class), record1.getResource().stringValue());
     }
 
@@ -334,7 +341,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "error");
-        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenThrow(new IllegalArgumentException());
+        when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), any(), any(RepositoryConnection.class))).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -343,7 +350,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void createDatasetRecordWithMissingOntologyRecordTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(localIRI, errorIRI);
+        doThrow(new IllegalArgumentException()).when(branchManager).getMasterBranch(eq(localIRI), eq(errorIRI), any(RepositoryConnection.class));
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
                 .field("ontologies", errorIRI.stringValue());
@@ -355,7 +362,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void createDatasetRecordWithMissingMasterBranchTest() {
         // Setup:
-        doThrow(new IllegalStateException()).when(catalogManager).getMasterBranch(localIRI, errorIRI);
+        doThrow(new IllegalStateException()).when(branchManager).getMasterBranch(eq(localIRI), eq(errorIRI), any(RepositoryConnection.class));
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
                 .field("ontologies", errorIRI.stringValue());
@@ -368,7 +375,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     public void createDatasetRecordWithNoHeadCommitTest() {
         // Setup:
         Branch newBranch = branchFactory.createNew(branchIRI);
-        when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(newBranch);
+        when(branchManager.getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class))).thenReturn(newBranch);
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
                 .field("ontologies", ontologyRecordIRI.stringValue());
@@ -382,7 +389,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system");
-        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenThrow(new MobiException());
+        when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), any(), any(RepositoryConnection.class))).thenThrow(new MobiException());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);

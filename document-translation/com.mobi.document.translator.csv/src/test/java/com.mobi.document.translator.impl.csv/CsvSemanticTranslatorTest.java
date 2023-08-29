@@ -54,7 +54,6 @@ public class CsvSemanticTranslatorTest extends OrmEnabledTestCase {
 
     private CsvSemanticTranslator csvTranslator;
 
-
     @Before
     public void initTranslator() {
         csvTranslator = new CsvSemanticTranslator();

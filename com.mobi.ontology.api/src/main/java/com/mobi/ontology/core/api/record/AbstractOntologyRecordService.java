@@ -76,7 +76,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
 
             conn.begin();
             addRecord(record, masterBranch, conn);
-            catalogManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
+            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
 
             setOntologyToRecord(record, commit, conn);
 
@@ -125,7 +125,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         }
         validateOntology(ontologyIRI);
         record.setOntologyIRI(ontologyIRI);
-        utilsService.updateObject(record, conn);
+        thingManager.updateObject(record, conn);
     }
 
     /**

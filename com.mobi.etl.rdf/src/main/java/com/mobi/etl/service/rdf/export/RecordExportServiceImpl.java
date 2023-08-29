@@ -23,13 +23,11 @@ package com.mobi.etl.service.rdf.export;
  * #L%
  */
 
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -42,8 +40,15 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
 import com.mobi.etl.api.rdf.export.RecordExportService;
 import com.mobi.persistence.utils.BatchExporter;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +68,19 @@ public class RecordExportServiceImpl implements RecordExportService {
     CatalogConfigProvider configProvider;
 
     @Reference
-    CatalogManager catalogManager;
+    RecordManager recordManager;
+
+    @Reference
+    BranchManager branchManager;
+
+    @Reference
+    CommitManager commitManager;
+
+    @Reference
+    VersionManager versionManager;
+
+    @Reference
+    DifferenceManager differenceManager;
 
     @Reference
     RecordFactory recordFactory;
@@ -83,48 +100,48 @@ public class RecordExportServiceImpl implements RecordExportService {
 
         Resource localCatalog = configProvider.getLocalCatalogIRI();
 
-        Set<Resource> records;
-        if (config.getRecords() == null) {
-            records = catalogManager.getRecordIds(localCatalog);
-        } else {
-            records = config.getRecords().stream()
-                    .map(recordString -> vf.createIRI(recordString))
-                    .collect(Collectors.toSet());
-        }
-
-        writer.startRDF();
-        records.forEach(resource -> {
-            // Write Record
-            Record record = catalogManager.getRecord(localCatalog, resource, recordFactory)
-                    .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource));
-            record.getModel().forEach(writer::handleStatement);
-
-            // Write Versioned Data
-            IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-            IRI versionedRDFRecordType = vf.createIRI(VersionedRDFRecord.TYPE);
-            if (record.getProperties(typeIRI).contains(versionedRDFRecordType)) {
-                exportVersionedRDFData(resource, writer);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Set<Resource> records;
+            if (config.getRecords() == null) {
+                records = recordManager.getRecordIds(localCatalog, conn);
+            } else {
+                records = config.getRecords().stream()
+                        .map(recordString -> vf.createIRI(recordString))
+                        .collect(Collectors.toSet());
             }
-        });
-        writer.endRDF();
+
+            writer.startRDF();
+            records.forEach(resource -> {
+                // Write Record
+                Record record = recordManager.getRecordOpt(localCatalog, resource, recordFactory, conn)
+                        .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource));
+                record.getModel().forEach(writer::handleStatement);
+
+                // Write Versioned Data
+                IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+                IRI versionedRDFRecordType = vf.createIRI(VersionedRDFRecord.TYPE);
+                if (record.getProperties(typeIRI).contains(versionedRDFRecordType)) {
+                    exportVersionedRDFData(resource, writer, conn);
+                }
+            });
+            writer.endRDF();
+        }
     }
 
-    private void exportVersionedRDFData(Resource resource, BatchExporter writer) {
+    private void exportVersionedRDFData(Resource resource, BatchExporter writer, RepositoryConnection conn) {
         Resource localCatalog = configProvider.getLocalCatalogIRI();
 
-        VersionedRDFRecord record = catalogManager.getRecord(localCatalog, resource, versionedRDFRecordFactory)
+        VersionedRDFRecord record = recordManager.getRecordOpt(localCatalog, resource, versionedRDFRecordFactory, conn)
                 .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource));
 
         Set<String> processedCommits = new HashSet<>();
         // Write Branches
         record.getBranch_resource().forEach(branchResource -> {
-            Branch branch = catalogManager.getBranch(localCatalog, resource, branchResource, branchFactory)
-                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected branch "
-                            + branchResource));
+            Branch branch = branchManager.getBranch(localCatalog, resource, branchResource, branchFactory, conn);
             branch.getModel().forEach(writer::handleStatement);
 
             // Write Commits
-            for (Commit commit : catalogManager.getCommitChain(localCatalog, resource, branch.getResource())) {
+            for (Commit commit : commitManager.getCommitChain(localCatalog, resource, branch.getResource(), conn)) {
                 Resource commitResource = commit.getResource();
 
                 if (processedCommits.contains(commitResource.stringValue())) {
@@ -134,20 +151,20 @@ public class RecordExportServiceImpl implements RecordExportService {
                 }
 
                 // Write Commit/Revision Data
-                commit = catalogManager.getCommit(localCatalog, resource, branchResource, commitResource)
+                commit = commitManager.getCommit(localCatalog, resource, branchResource, commitResource, conn)
                         .orElseThrow(() -> new IllegalStateException("Could not retrieve expected commit "
                                 + commitResource));
                 commit.getModel().forEach(writer::handleStatement);
 
                 // Write Additions/Deletions Graphs
-                Difference revisionChanges = catalogManager.getRevisionChanges(commitResource);
+                Difference revisionChanges = differenceManager.getCommitDifference(commitResource, conn);
                 revisionChanges.getAdditions().forEach(writer::handleStatement);
                 revisionChanges.getDeletions().forEach(writer::handleStatement);
             }
         });
 
         // Write Versions
-        catalogManager.getVersions(localCatalog, resource)
+        versionManager.getVersions(localCatalog, resource, conn)
                 .forEach(version -> version.getModel().forEach(writer::handleStatement));
     }
 }

@@ -24,16 +24,15 @@ package com.mobi.catalog.impl.versioning;
  */
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -71,10 +70,13 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
     private InProgressCommit inProgressCommit;
 
     @Mock
-    private CatalogManager catalogManager;
+    private ThingManager thingManager;
 
     @Mock
-    private CatalogUtilsService catalogUtils;
+    private BranchManager branchManager;
+
+    @Mock
+    private CommitManager commitManager;
 
     @Mock
     private RepositoryConnection conn;
@@ -105,19 +107,20 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
 
         closeable = MockitoAnnotations.openMocks(this);
 
-        when(catalogUtils.getBranch(any(VersionedRDFRecord.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
-        when(catalogUtils.getInProgressCommit(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        when(catalogUtils.getObject(any(Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
-        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
-        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
+        when(branchManager.getBranch(any(VersionedRDFRecord.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
+        when(commitManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        when(thingManager.getObject(any(Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
+        when(commitManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
+        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
         when(context.getServiceReference(EventAdmin.class)).thenReturn(serviceReference);
         when(context.getService(serviceReference)).thenReturn(eventAdmin);
 
         service = new SimpleVersioningService();
         injectOrmFactoryReferencesIntoService(service);
-        service.setCatalogManager(catalogManager);
-        service.setCatalogUtils(catalogUtils);
+        service.commitManager = commitManager;
+        service.thingManager = thingManager;
+        service.branchManager = branchManager;
         service.start(context);
     }
 
@@ -132,66 +135,23 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void getSourceBranchTest() throws Exception {
-        assertEquals(branch, service.getBranch(record, branch.getResource(), conn));
-        verify(catalogUtils).getBranch(record, branch.getResource(), branchFactory, conn);
-    }
-
-    @Test
-    public void getTargetBranchTest() throws Exception {
-        assertEquals(branch, service.getBranch(record, branch.getResource(), conn));
-        verify(catalogUtils).getBranch(record, branch.getResource(), branchFactory, conn);
-    }
-
-    @Test
-    public void getInProgressCommitTest() throws Exception {
-        assertEquals(inProgressCommit, service.getInProgressCommit(record.getResource(), user, conn));
-        verify(catalogUtils).getInProgressCommit(record.getResource(), user.getResource(), conn);
-    }
-
-    @Test
-    public void getBranchHeadCommitTest() throws Exception {
-        assertEquals(commit, service.getBranchHeadCommit(branch, conn));
-        verify(catalogUtils).getObject(commit.getResource(), commitFactory, conn);
-    }
-
-    @Test
-    public void getBranchHeadCommitNotSetTest() throws Exception {
-        Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/#new-branch"));
-        assertNull(service.getBranchHeadCommit(newBranch, conn));
-        verify(catalogUtils, times(0)).getObject(commit.getResource(), commitFactory, conn);
-    }
-
-    @Test
-    public void removeInProgressCommitTest() throws Exception {
-        service.removeInProgressCommit(inProgressCommit, conn);
-        verify(catalogUtils).removeInProgressCommit(inProgressCommit, conn);
-    }
-
-    @Test
-    public void createCommitTest() throws Exception {
-        assertEquals(commit, service.createCommit(inProgressCommit, "Message", commit, null));
-        verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-    }
-
-    @Test
     public void addCommitWithChangesTest() throws Exception {
         // Setup:
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
         assertEquals(commit.getResource(), service.addCommit(record, branch, user, "Message", additions, deletions, commit, null, conn));
-        verify(catalogManager).createInProgressCommit(user);
-        verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-        verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
-        verify(catalogUtils).addCommit(branch, commit, conn);
+        verify(commitManager).createInProgressCommit(user);
+        verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
+        verify(commitManager).updateCommit(commit, additions, deletions, conn);
+        verify(commitManager).addCommit(branch, commit, conn);
         verify(eventAdmin).postEvent(any(Event.class));
     }
 
     @Test
     public void addCommitWithCommitTest() throws Exception {
         service.addCommit(record, branch, commit, conn);
-        verify(catalogUtils).addCommit(branch, commit, conn);
+        verify(commitManager).addCommit(branch, commit, conn);
         verify(eventAdmin).postEvent(any(Event.class));
     }
 }

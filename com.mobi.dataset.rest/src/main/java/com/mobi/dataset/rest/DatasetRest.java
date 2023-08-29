@@ -28,8 +28,10 @@ import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
@@ -72,6 +74,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
@@ -121,7 +124,13 @@ public class DatasetRest {
     protected CatalogConfigProvider configProvider;
 
     @Reference
-    protected CatalogManager catalogManager;
+    protected RecordManager recordManager;
+
+    @Reference
+    protected BranchManager branchManager;
+
+    @Reference
+    protected CommitManager commitManager;
 
     @Reference
     protected BNodeService bNodeService;
@@ -167,7 +176,7 @@ public class DatasetRest {
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
             @Parameter(description = "Optional search text for the query")
             @QueryParam("searchText") String searchText) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             LinksUtils.validateParams(limit, offset);
             DatasetPaginatedSearchParams params = new DatasetPaginatedSearchParams(vf).setOffset(offset)
                     .setAscending(asc);
@@ -181,8 +190,8 @@ public class DatasetRest {
                 params.setSearchText(searchText);
             }
 
-            PaginatedSearchResults<Record> results = catalogManager.findRecord(configProvider.getLocalCatalogIRI(),
-                    params.build(), getActiveUser(servletRequest, engineManager));
+            PaginatedSearchResults<Record> results = recordManager.findRecord(configProvider.getLocalCatalogIRI(),
+                    params.build(), getActiveUser(servletRequest, engineManager), conn);
 
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
@@ -267,7 +276,7 @@ public class DatasetRest {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User user = getActiveUser(servletRequest, engineManager);
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             RecordOperationConfig config = new OperationConfig();
             config.set(RecordCreateSettings.CATALOG_ID, configProvider.getLocalCatalogIRI().stringValue());
             config.set(RecordCreateSettings.RECORD_TITLE, title);
@@ -281,10 +290,10 @@ public class DatasetRest {
             config.set(DatasetRecordCreateSettings.REPOSITORY_ID, repositoryId);
             if (ontologies != null) {
                 Set<OntologyIdentifier> ontologyIdentifiers = ontologies.stream().map(ontology ->
-                        getOntologyIdentifier(vf.createIRI(ontology))).collect(Collectors.toSet());
+                        getOntologyIdentifier(vf.createIRI(ontology), conn)).collect(Collectors.toSet());
                 config.set(DatasetRecordCreateSettings.ONTOLOGIES, ontologyIdentifiers);
             }
-            DatasetRecord record = catalogManager.createRecord(user, config, DatasetRecord.class);
+            DatasetRecord record = recordManager.createRecord(user, config, DatasetRecord.class, conn);
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -487,11 +496,9 @@ public class DatasetRest {
         public String file;
     }
 
-    private OntologyIdentifier getOntologyIdentifier(Resource recordId) {
-        Branch masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
-        Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
-                ErrorUtils.sendError("Branch " + masterBranch.getResource() + " has no head Commit set.",
-                        Response.Status.INTERNAL_SERVER_ERROR));
+    private OntologyIdentifier getOntologyIdentifier(Resource recordId, RepositoryConnection conn) {
+        Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn);
+        Resource commitId = commitManager.getHeadCommitIRI(masterBranch);
         return new OntologyIdentifier(recordId, masterBranch.getResource(), commitId, vf, mf);
     }
 

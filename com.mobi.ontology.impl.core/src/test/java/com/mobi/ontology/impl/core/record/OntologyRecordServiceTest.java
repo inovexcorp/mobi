@@ -39,12 +39,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.RevisionManager;
+import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
@@ -65,6 +71,7 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -142,7 +149,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private Model ontologyModel;
     private OutputStream ontologyJsonLd;
     private Model testStateModel;
-
+    private Revision revision;
     private IRI revisionIRI;
 
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
@@ -162,7 +169,25 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
-    private CatalogUtilsService utilsService;
+    private ThingManager thingManager;
+
+    @Mock
+    private BranchManager branchManager;
+
+    @Mock
+    private RecordManager recordManager;
+
+    @Mock
+    private CommitManager commitManager;
+
+    @Mock
+    private VersionManager versionManager;
+
+    @Mock
+    private DifferenceManager differenceManager;
+
+    @Mock
+    private RevisionManager revisionManager;
 
     @Mock
     private InProgressCommit inProgressCommit;
@@ -193,9 +218,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogConfigProvider configProvider;
-
-    @Mock
-    private CatalogManager catalogManager;
 
     @Mock
     private EngineManager engineManager;
@@ -264,13 +286,13 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(false);
         when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId1);
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(commitIRI);
-        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
-        when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
-        when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
+        when(thingManager.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
+        when(branchManager.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
+        when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
-                .when(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
-        when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
-        when(utilsService.getRevisionChanges(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(difference);
+                .when(commitManager).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
+        when(thingManager.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
+        when(differenceManager.getCommitDifference(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
@@ -281,20 +303,27 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
 
         // InProgressCommit deletion setup
-        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
+        when(commitManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        doNothing().when(commitManager).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
 
-        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
+        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         revisionIRI = VALUE_FACTORY.createIRI("urn:revision");
-        Revision revision = revisionFactory.createNew(revisionIRI);
-        IRI additions = VALUE_FACTORY.createIRI("urn:additions");
-        revision.setAdditions(additions);
+        revision = revisionFactory.createNew(revisionIRI);
+        IRI additionsIri = VALUE_FACTORY.createIRI("urn:additions");
+        IRI deletionsIri = VALUE_FACTORY.createIRI("urn:deletions");
+        revision.setAdditions(additionsIri);
+        revision.setDeletions(deletionsIri);
         when(inProgressCommit.getGenerated_resource()).thenReturn(Set.of(revisionIRI));
         when(inProgressCommit.getModel()).thenReturn(revision.getModel());
+        when(revisionManager.getRevision(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(revision);
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.ontologyManager = ontologyManager;
-        recordService.utilsService = utilsService;
+        recordService.thingManager = thingManager;
+        recordService.branchManager = branchManager;
+        recordService.commitManager = commitManager;
+        recordService.differenceManager = differenceManager;
+        recordService.versionManager = versionManager;
         recordService.provUtils = provUtils;
         recordService.ontologyCache = ontologyCache;
         recordService.versioningManager = versioningManager;
@@ -303,7 +332,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.engineManager = engineManager;
         recordService.configProvider = configProvider;
         recordService.recordFactory = recordService.ontologyRecordFactory;
-        recordService.catalogManager = catalogManager;
+        recordService.recordManager = recordManager;
+        recordService.revisionManager = revisionManager;
     }
 
     @After
@@ -389,12 +419,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(catalogManager).createInProgressCommit(eq(user));
+        verify(commitManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(ontologyId1, times(2)).getOntologyIRI();
         verify(ontologyId1).getOntologyIdentifier();
         verify(ontologyManager).createOntologyId(any(Model.class));
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -445,12 +475,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(catalogManager).createInProgressCommit(eq(user));
+        verify(commitManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(ontologyId2, times(2)).getOntologyIRI();
         verify(ontologyId2).getOntologyIdentifier();
         verify(ontologyManager).createOntologyId(any(Model.class));
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -490,12 +520,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(ontologyId, times(2)).getOntologyIRI();
         verify(ontologyId).getOntologyIdentifier();
         verify(ontologyManager).createOntologyId(any(Model.class));
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
 
-        verify(catalogManager).createInProgressCommit(eq(user));
+        verify(commitManager).createInProgressCommit(eq(user));
         try (RepositoryConnection connection = repository.getConnection()) {
             Model ontologySubjects = QueryResults.asModel(connection.getStatements(null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
                     VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue())));
@@ -540,12 +570,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(ontologyId, times(2)).getOntologyIRI();
         verify(ontologyId).getOntologyIdentifier();
         verify(ontologyManager).createOntologyId(any(Model.class));
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
 
-        verify(catalogManager).createInProgressCommit(eq(user));
+        verify(commitManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
 
         try (RepositoryConnection connection = repository.getConnection()) {
@@ -602,9 +632,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
         verify(ontologyId1).getOntologyIdentifier();
         verify(ontologyManager).createOntologyId(any(Model.class));
-        verify(utilsService, times(2)).addObject(any(),
+        verify(thingManager, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
-        verify(catalogManager).createInProgressCommit(eq(user));
+        verify(commitManager).createInProgressCommit(eq(user));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
@@ -656,7 +686,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals("Could not retrieve RDFFormat for file name testData.txt", e.getMessage());
             throw e;
         }
@@ -682,7 +712,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals("Could not retrieve RDFFormat for file name testData.txt.zip", e.getMessage());
             throw e;
         }
@@ -708,7 +738,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail("Exception was thrown");
         }
     }
@@ -732,7 +762,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         // When:
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals("TriG data is not supported for upload.", e.getMessage());
             throw e;
         }
@@ -828,30 +858,30 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         }
 
         assertEquals(testRecord, deletedRecord);
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
+        verify(thingManager).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
-        verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(versionManager).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
-        verify(utilsService).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
-        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
+        verify(commitManager).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
+        verify(commitManager).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
         verify(ontologyCache).clearCache(any(Resource.class));
         verify(ontologyCache).clearCacheImports(any(Resource.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(thingManager.optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.delete(testIRI, user, connection);
         }
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
+        verify(thingManager).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
     }
 
     @Test
     public void deleteRecordRemoveFails() throws Exception {
-        doThrow(RepositoryException.class).when(utilsService).removeObject(any(OntologyRecord.class), any(RepositoryConnection.class));
+        doThrow(RepositoryException.class).when(thingManager).removeObject(any(OntologyRecord.class), any(RepositoryConnection.class));
         thrown.expect(RepositoryException.class);
 
         try (RepositoryConnection connection = repository.getConnection()) {
@@ -927,15 +957,24 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection connection = repository.getConnection()) {
             VersionedRDFRecord record = versionedRDFRecordFactory.createNew(testIRI);
             Branch branch = branchFactory.createNew(branchIRI);
+            Commit commit = commitFactory.createNew(commitIRI);
+            branch.setHead(commit);
             record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
             String previousModifiedValue = getModifiedIriValue(record);
-            when(utilsService.getRecord(eq(catalogId), eq(testIRI), any(), any(RepositoryConnection.class))).thenReturn(record);
-            when(utilsService.getBranch(any(), any(), any(), any())).thenReturn(branch);
+            when(recordManager.getRecord(eq(catalogId), eq(testIRI), any(), any(RepositoryConnection.class))).thenReturn(record);
+            when(branchManager.getBranch(any(VersionedRDFRecord.class), any(), any(), any())).thenReturn(branch);
 
             recordService.deleteBranch(catalogId, testIRI, branchIRI, connection);
 
-            verify(utilsService).getBranch(eq(record), eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class));
-            verify(utilsService).removeBranch(eq(testIRI), any(Branch.class), any(RepositoryConnection.class));
+            verify(branchManager).getBranch(eq(record), eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class));
+            verify(recordManager).getRecord(eq(catalogId), eq(testIRI), any(OntologyRecordFactory.class), any(RepositoryConnection.class));
+            verify(branchManager).getBranch(eq(record), eq(branchIRI), any(BranchFactory.class), any(RepositoryConnection.class));
+            verify(thingManager).updateObject(eq(record), any(RepositoryConnection.class));
+            verify(thingManager).removeObjectWithRelationship(eq(branchIRI), eq(testIRI), eq(VersionedRDFRecord.branch_IRI), any(RepositoryConnection.class));
+            verify(thingManager).remove(eq(commitIRI), any(RepositoryConnection.class));
+            verify(thingManager).remove(eq(revision.getAdditions().get()), any(RepositoryConnection.class));
+            verify(thingManager).remove(eq(revision.getDeletions().get()), any(RepositoryConnection.class));
+            verify(ontologyCache).removeFromCache(testIRI.stringValue(), commitIRI.stringValue());
             verify(mergeRequestManager).cleanMergeRequests(eq(testIRI), eq(branchIRI), any(RepositoryConnection.class));
             assertNotSame(getModifiedIriValue(record), previousModifiedValue);
         }
@@ -944,5 +983,4 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private String getModifiedIriValue(Thing property) {
         return property.getProperty(vf.createIRI(_Thing.modified_IRI)).get().toString();
     }
-
 }

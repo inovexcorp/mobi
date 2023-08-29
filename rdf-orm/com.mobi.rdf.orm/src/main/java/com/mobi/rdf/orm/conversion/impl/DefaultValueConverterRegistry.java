@@ -28,6 +28,9 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -35,6 +38,8 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +56,76 @@ import java.util.stream.Collectors;
  */
 @Component(immediate = true)
 public class DefaultValueConverterRegistry implements ValueConverterRegistry {
+
+    @Reference(target = "(converterType=BigInteger)")
+    public void setBigIntegerValueConverter(ValueConverter<Literal> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Boolean)")
+    public void setBooleanValueConverter(ValueConverter<Boolean> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Calendar)")
+    public void setCalendarValueConverter(ValueConverter<Calendar> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Date)")
+    public void setDateValueConverter(ValueConverter<Date> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Double)")
+    public void setDoubleValueConverter(ValueConverter<Double> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Float)")
+    public void setFloatValueConverter(ValueConverter<Float> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Integer)")
+    public void setIntegerValueConverter(ValueConverter<Integer> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=IRI)")
+    public void setIRIValueConverter(ValueConverter<IRI> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Literal)")
+    public void setLiteralValueConverter(ValueConverter<Literal> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Long)")
+    public void setLongValueConverter(ValueConverter<Long> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Resource)")
+    public void setResourceValueConverter(ValueConverter<Resource> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Short)")
+    public void setShortValueConverter(ValueConverter<Short> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=String)")
+    public void setStringValueConverter(ValueConverter<String> converter) {
+        registerValueConverter(converter);
+    }
+
+    @Reference(target = "(converterType=Value)")
+    public void setValueValueConverter(ValueConverter<Value> converter) {
+        registerValueConverter(converter);
+    }
 
     /**
      * {@link ForkJoinPool} that we'll use for value conversion. We will use the

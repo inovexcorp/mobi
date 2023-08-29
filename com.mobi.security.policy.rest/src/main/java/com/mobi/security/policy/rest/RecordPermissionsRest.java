@@ -25,7 +25,6 @@ package com.mobi.security.policy.rest;
 
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
@@ -97,10 +96,7 @@ public class RecordPermissionsRest {
     private final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
-    protected XACMLPolicyManager policyManager;
-
-    @Reference(target = "(id=system)")
-    protected OsgiRepository repo;
+    XACMLPolicyManager policyManager;
 
     /**
      * Retrieves a specific record policy JSON identified for the recordId of which users can perform each rule. If
@@ -152,7 +148,7 @@ public class RecordPermissionsRest {
             @Parameter(description = "String representing a resource for which to retrieve a policy ID",
                     required = true)
             @PathParam("recordId") String recordId) {
-        try (RepositoryConnection conn = repo.getConnection()) {
+        try (RepositoryConnection conn = policyManager.getRepository().getConnection()) {
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
             String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
                     + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
@@ -206,7 +202,7 @@ public class RecordPermissionsRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "JSON representation of the new version of the record policy", required = true)
                     String policyJson) {
-        try (RepositoryConnection conn = repo.getConnection()) {
+        try (RepositoryConnection conn = policyManager.getRepository().getConnection()) {
             // Record Policy
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
             String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "

@@ -115,7 +115,6 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(State.TYPE));
         conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
 
-
         assertTrue(manager.stateExists(VALUE_FACTORY.createIRI("http://mobi.com/states/0")));
         assertFalse(manager.stateExists(VALUE_FACTORY.createIRI("http://mobi.com/states/1")));
         assertFalse(manager.stateExists(VALUE_FACTORY.createIRI("http://mobi.com/states/2")));

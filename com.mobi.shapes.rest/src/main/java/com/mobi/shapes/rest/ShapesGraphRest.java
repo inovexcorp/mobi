@@ -30,7 +30,11 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -134,7 +138,19 @@ public class ShapesGraphRest {
     CatalogConfigProvider configProvider;
 
     @Reference
-    CatalogManager catalogManager;
+    RecordManager recordManager;
+
+    @Reference
+    BranchManager branchManager;
+
+    @Reference
+    CommitManager commitManager;
+
+    @Reference
+    CompiledResourceManager compiledResourceManager;
+
+    @Reference
+    DifferenceManager differenceManager;
 
     @Reference
     EngineManager engineManager;
@@ -268,21 +284,19 @@ public class ShapesGraphRest {
         config.set(RecordCreateSettings.RECORD_MARKDOWN, markdown);
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywordSet);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
-        try {
-            ShapesGraphRecord record = catalogManager.createRecord(user, config, ShapesGraphRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            ShapesGraphRecord record = recordManager.createRecord(user, config, ShapesGraphRecord.class, conn);
             Resource branchId = record.getMasterBranch_resource()
                     .orElseThrow(() -> new IllegalStateException("Record master branch resource not found."));
-            Resource commitId;
-            try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-                RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
-                        vf.createIRI(Branch.head_IRI), null);
-                if (!commitStmt.hasNext()) {
-                    throw ErrorUtils.sendError("The requested instance could not be found.",
-                            Response.Status.BAD_REQUEST);
-                }
-                commitId = (Resource) commitStmt.next().getObject();
+            RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
+                    vf.createIRI(Branch.head_IRI), null);
+            if (!commitStmt.hasNext()) {
                 commitStmt.close();
+                throw ErrorUtils.sendError("The requested instance could not be found.",
+                        Response.Status.BAD_REQUEST);
             }
+            Resource commitId = (Resource) commitStmt.next().getObject();
+            commitStmt.close();
 
             ObjectNode objectNode = mapper.createObjectNode();
             objectNode.put("shapesGraphId", record.getShapesGraphIRI().get().toString());
@@ -354,9 +368,9 @@ public class ShapesGraphRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
-                    servletRequest);
+                    servletRequest, conn);
             StreamingOutput output = outputStream ->
                     writeShapesGraphToStream(shapesGraph.getModel(), RestUtils.getRDFFormat(rdfFormat), outputStream);
             return Response.ok(output).header("Content-Disposition", "attachment;filename=" + fileName
@@ -394,9 +408,9 @@ public class ShapesGraphRest {
             @Parameter(description = "String representing the Record Resource ID. "
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr) {
-        try {
-            catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr),
-                    getActiveUser(servletRequest, engineManager), ShapesGraphRecord.class);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.removeRecord(configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr),
+                    getActiveUser(servletRequest, engineManager), ShapesGraphRecord.class, conn);
             return Response.noContent().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -452,12 +466,12 @@ public class ShapesGraphRest {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
             Resource recordId = vf.createIRI(recordIdStr);
 
             User user = getActiveUser(servletRequest, engineManager);
-            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
+            Optional<InProgressCommit> commit = commitManager.getInProgressCommitOpt(catalogIRI, recordId, user, conn);
 
             if (commit.isPresent()) {
                 throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
@@ -471,12 +485,11 @@ public class ShapesGraphRest {
                 branchId = vf.createIRI(branchIdStr);
             } else if (StringUtils.isNotBlank(branchIdStr)) {
                 branchId = vf.createIRI(branchIdStr);
-                commitId = catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource();
+                commitId = commitManager.getHeadCommit(catalogIRI, recordId, branchId, conn).getResource();
             } else {
-                Branch branch = catalogManager.getMasterBranch(catalogIRI, recordId);
+                Branch branch = branchManager.getMasterBranch(catalogIRI, recordId, conn);
                 branchId = branch.getResource();
-                commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
-                        + branchIdStr + " has no head Commit set"));
+                commitId = commitManager.getHeadCommitIRI(branch);
             }
 
             // Uploaded BNode map used for restoring addition BNodes
@@ -493,7 +506,7 @@ public class ShapesGraphRest {
             // Catalog BNode map used for restoring deletion BNodes
             Map<BNode, IRI> catalogBNodes = new HashMap<>();
             final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
-                return getCurrentModel(recordId, branchId, commitId, catalogBNodes);
+                return getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn);
             });
 
             Model currentModel = currentModelFuture.get();
@@ -505,16 +518,16 @@ public class ShapesGraphRest {
                                 vf.createIRI(OWL.ONTOLOGY.stringValue())));
             }
 
-            Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
+            Difference diff = differenceManager.getDiff(currentModel, uploadedModel);
 
             if (diff.getAdditions().size() == 0 && diff.getDeletions().size() == 0) {
                 return Response.noContent().build();
             }
 
-            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
-            catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+            commitManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
                     BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, mf),
-                    BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, mf));
+                    BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, mf), conn);
 
             return Response.ok().build();
         } catch (IllegalArgumentException | RDFParseException ex) {
@@ -615,9 +628,9 @@ public class ShapesGraphRest {
                     + "for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
-                    servletRequest);
+                    servletRequest, conn);
             return Response.ok(RestUtils.modelToString(shapesGraph.getEntity(vf.createIRI(entityIdStr)), format))
                     .build();
         } catch (IllegalArgumentException ex) {
@@ -677,9 +690,9 @@ public class ShapesGraphRest {
                     + "for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
-                    servletRequest);
+                    servletRequest, conn);
             return Response.ok(shapesGraph.serializeShapesGraph(format)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -732,9 +745,9 @@ public class ShapesGraphRest {
                     + "for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit, servletRequest);
+                    applyInProgressCommit, servletRequest, conn);
 
             IRI shapesGraphId = shapesGraph.getShapesGraphId().orElseThrow(() ->
                     ErrorUtils.sendError("Shapes Graph ID could not be found.", Response.Status.INTERNAL_SERVER_ERROR));
@@ -754,22 +767,24 @@ public class ShapesGraphRest {
      *
      * @param user     the User with the InProgressCommit
      * @param recordId the Resource identifying the Record with the InProgressCommit
+     * @param conn     A RepositoryConnection to use for lookup
      * @return a Resource which identifies the InProgressCommit associated with the User for the Record
      */
-    private Resource getInProgressCommitIRI(User user, Resource recordId) {
-        Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(configProvider.getLocalCatalogIRI(),
-                recordId, user);
+    private Resource getInProgressCommitIRI(User user, Resource recordId, RepositoryConnection conn) {
+        Optional<InProgressCommit> optional = commitManager.getInProgressCommitOpt(configProvider.getLocalCatalogIRI(),
+                recordId, user, conn);
         if (optional.isPresent()) {
             return optional.get().getResource();
         } else {
-            InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user);
-            catalogManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit);
+            InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
+            commitManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit, conn);
             return inProgressCommit.getResource();
         }
     }
 
     private ShapesGraph getShapesGraph(String recordIdStr, String branchIdStr, String commitIdStr,
-                                       boolean applyInProgressCommit, HttpServletRequest servletRequest) {
+                                       boolean applyInProgressCommit, HttpServletRequest servletRequest,
+                                       RepositoryConnection conn) {
         Optional<ShapesGraph> shapesGraphOpt;
         if (StringUtils.isNotBlank(commitIdStr) && StringUtils.isNotBlank(branchIdStr)) {
             checkStringParam(branchIdStr, "The branchIdStr is missing.");
@@ -789,21 +804,22 @@ public class ShapesGraphRest {
 
         if (applyInProgressCommit) {
             User user = getActiveUser(servletRequest, engineManager);
-            Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
-                    configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user);
+            Optional<InProgressCommit> inProgressCommitOpt = commitManager.getInProgressCommitOpt(
+                    configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user, conn);
 
             inProgressCommitOpt.ifPresent(inProgressCommit -> shapesGraph.setModel(
-                    catalogManager.applyInProgressCommit(inProgressCommit.getResource(),
-                            shapesGraphOpt.get().getModel())));
+                    differenceManager.applyInProgressCommit(inProgressCommit.getResource(),
+                            shapesGraphOpt.get().getModel(), conn)));
         }
 
         return shapesGraph;
     }
 
-    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap) {
+    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap,
+                                  RepositoryConnection conn) {
         // Load existing ontology into a skolemized model
-        return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId),
-                bNodesMap);
+        return bNodeService.deterministicSkolemize(
+                compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn), bNodesMap);
     }
 
     /**

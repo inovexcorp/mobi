@@ -29,7 +29,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -61,6 +61,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
@@ -113,7 +114,7 @@ public class MappingRest {
     protected CatalogConfigProvider configProvider;
 
     @Reference
-    protected CatalogManager catalogManager;
+    protected RecordManager recordManager;
 
     @Reference
     protected EngineManager engineManager;
@@ -186,7 +187,7 @@ public class MappingRest {
             config.set(RecordCreateSettings.RECORD_KEYWORDS, new HashSet<>(keywords));
         }
         MappingRecord record;
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             if (inputStream != null) {
                 RDFFormat format = Rio.getParserFormatForFileName(filename).orElseThrow(() ->
                         new IllegalArgumentException("File is not in a valid RDF format"));
@@ -195,7 +196,7 @@ public class MappingRest {
             } else {
                 config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonldToModel(jsonld));
             }
-            record = catalogManager.createRecord(user, config, MappingRecord.class);
+            record = recordManager.createRecord(user, config, MappingRecord.class, conn);
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -344,10 +345,10 @@ public class MappingRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of an uploaded mapping", required = true)
             @PathParam("recordId") String recordId) {
-        try {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogId = configProvider.getLocalCatalogIRI();
-            catalogManager.removeRecord(catalogId, vf.createIRI(recordId), getActiveUser(servletRequest, engineManager),
-                    MappingRecord.class);
+            recordManager.removeRecord(catalogId, vf.createIRI(recordId), getActiveUser(servletRequest, engineManager),
+                    MappingRecord.class, conn);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {

@@ -33,13 +33,15 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
@@ -53,8 +55,14 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.TestQueryResult;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -62,11 +70,6 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rest.test.util.MobiRestTestCXF;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
@@ -130,13 +133,19 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     private static ModelFactory mf;
     private static DatasetManager datasetManager;
     private static CatalogConfigProvider configProvider;
-    private static CatalogManager catalogManager;
+    private static RecordManager recordManager;
+    private static CompiledResourceManager compiledResourceManager;
     private static OntologyManager ontologyManager;
     private static BNodeService bNodeService;
 
-
     @Mock
     private DatasetConnection datasetConnection;
+
+    @Mock
+    private RepositoryConnection connection;
+
+    @Mock
+    private OsgiRepository repo;
 
     @Mock
     private Ontology ontology;
@@ -153,7 +162,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         mf = getModelFactory();
 
         datasetManager = Mockito.mock(DatasetManager.class);
-        catalogManager = Mockito.mock(CatalogManager.class);
+        recordManager = Mockito.mock(RecordManager.class);
+        compiledResourceManager = Mockito.mock(CompiledResourceManager.class);
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         
         ontologyManager = Mockito.mock(OntologyManager.class);
@@ -161,11 +171,12 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         rest = new ExplorableDatasetRest();
         injectOrmFactoryReferencesIntoService(rest);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
-        rest.setDatasetManager(datasetManager);
-        rest.setOntologyManager(ontologyManager);
-        rest.setBNodeService(bNodeService);
+        rest.configProvider = configProvider;
+        rest.recordManager = recordManager;
+        rest.compiledResourceManager = compiledResourceManager;
+        rest.datasetManager = datasetManager;
+        rest.ontologyManager = ontologyManager;
+        rest.bNodeService = bNodeService;
 
         configureServer(rest);
     }
@@ -173,7 +184,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Before
     public void setupMocks() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
-        reset(datasetManager, catalogManager, datasetConnection, ontology, bNodeService);
+        reset(datasetManager, recordManager, compiledResourceManager, datasetConnection, ontology, bNodeService);
 
         OrmFactory<DatasetRecord> datasetRecordFactory = getRequiredOrmFactory(DatasetRecord.class);
         ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
@@ -208,6 +219,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         objectProperties.add(objectProperty);
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(repo.getConnection()).thenReturn(connection);
 
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
@@ -216,8 +229,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
 
-        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
-        when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
+        when(compiledResourceManager.getCompiledResource(eq(vf.createIRI(commitId)), any(RepositoryConnection.class))).thenReturn(compiledModel);
+        when(recordManager.getRecordOpt(catalogId, ontologyRecordId, ontologyRecordFactory, conn)).thenReturn(Optional.empty());
 
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgument(0, String.class)));
         when(datasetConnection.prepareGraphQuery(any(String.class))).thenAnswer(i -> conn.prepareGraphQuery(i.getArgument(0, String.class)));
@@ -257,7 +270,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getClassDetailsWhenClassesNotFound() {
         //Setup:
-        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(mf.createEmptyModel());
+        when(compiledResourceManager.getCompiledResource(eq(vf.createIRI(commitId)), any(RepositoryConnection.class))).thenReturn(mf.createEmptyModel());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
@@ -271,7 +284,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         //Setup:
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
         Model partialModel = Rio.parse(partialData, "", RDFFormat.TRIG);
-        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(partialModel);
+        when(compiledResourceManager.getCompiledResource(eq(vf.createIRI(commitId)), any(RepositoryConnection.class))).thenReturn(partialModel);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();

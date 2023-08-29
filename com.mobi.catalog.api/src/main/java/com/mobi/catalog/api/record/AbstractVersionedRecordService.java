@@ -23,18 +23,23 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Reference;
 
 public abstract class AbstractVersionedRecordService<T extends VersionedRecord>
         extends AbstractRecordService<T> implements RecordService<T> {
+
+    @Reference
+    public VersionManager versionManager;
 
     @Override
     protected void deleteRecord(T record, RepositoryConnection conn) {
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRecord -> {
                     versionedRecord.getVersion_resource()
-                            .forEach(resource -> utilsService.removeVersion(versionedRecord.getResource(), resource, conn));
+                            .forEach(resource -> versionManager.removeVersion(versionedRecord.getResource(), resource, conn));
                     deleteRecordObject(record, conn);
                 });
     }
