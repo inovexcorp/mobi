@@ -3291,7 +3291,7 @@ public class OntologyRest {
      */
     @GET
     @Path("{recordId}/query")
-    @Produces({JSON_MIME_TYPE, LDJSON_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, LDJSON_MIME_TYPE, TURTLE_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "ontologies",
@@ -3302,9 +3302,10 @@ public class OntologyRest {
                             description = "SPARQL 1.1 results in JSON format if the query is a SELECT "
                                     + "or the JSONLD serialization of the results if the query is a CONSTRUCT",
                             content = {
-                                    @Content(mediaType = "*/*"),
                                     @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
                                     @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
                             }),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
                             @Content(mediaType = MediaType.APPLICATION_JSON,
@@ -3507,7 +3508,8 @@ public class OntologyRest {
             @HeaderParam("accept") String acceptString,
             String queryString) {
         if (queryString == null) {
-            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("SPARQL query must be provided in request body."));
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("SPARQL query must be provided in request body."));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
@@ -3595,15 +3597,15 @@ public class OntologyRest {
                             + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
                             in = ParameterIn.QUERY),
                     @Parameter(name = "includeImports", description = "Optional boolean representing whether to "
-                            + "include imported ontologies when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                            + "include imported ontologies when executing the query when the `CONTENT-TYPE` is "
+                            + "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
                     @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
-                            + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
-                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
-                            "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
-                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
-                            "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
+                            + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is "
+                            + "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the "
+                            + "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the "
+                            + "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY,
                             schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
 
             }
@@ -3637,8 +3639,8 @@ public class OntologyRest {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
-                    acceptString, queryString, fileType, fileName, conn);
+            return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
+                    applyInProgressCommit, acceptString, queryString, fileType, fileName, conn);
         }
     }
 
@@ -3649,8 +3651,8 @@ public class OntologyRest {
                                        RepositoryConnection conn) {
         try {
             if (acceptString.equals(MediaType.APPLICATION_OCTET_STREAM) && StringUtils.isBlank(fileName)) {
-                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Must provide both fileName " +
-                        "when accept header is application/octet-stream"));
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Must provide both fileName "
+                        + "when accept header is application/octet-stream"));
             }
 
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
@@ -3660,11 +3662,11 @@ public class OntologyRest {
             if (fileExtension != null && !fileExtension.isEmpty()) {
                 acceptString = convertFileExtensionToMimeType(fileExtension);
             }
-            return RestQueryUtils.handleQuery(queryString, null, acceptString, fileName, ontology,
-                    includeImports, null);
+            return RestQueryUtils.handleQuery(queryString, null, acceptString, fileName, ontology, includeImports,
+                    null);
         } catch (MalformedQueryException ex) {
-            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE +
-                    ";;;" + ex.getMessage()));
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE
+                    + ";;;" + ex.getMessage()));
         } catch (MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
