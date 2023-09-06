@@ -23,6 +23,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
+import { cloneDeep } from 'lodash';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { RdfUpload } from '../models/rdfUpload.interface';
@@ -128,18 +129,37 @@ describe('Shapes Graph Manager service', function() {
                         errorDetails: []
                     });
                 });
-            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'PUT'});
+            const request = httpMock.expectOne(req => req.method === 'PUT' && req.url === `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`);
+            expect((request.request.params).get('branchId').toString()).toEqual(rdfUpdate.branchId);
+            expect((request.request.params).get('commitId').toString()).toEqual(rdfUpdate.commitId);
+            expect((request.request.params).get('replaceInProgressCommit').toString()).toEqual(`${rdfUpdate.replaceInProgressCommit}`);
             request.flush('', { status: 400, statusText: error });
         });
-
-        it('successfully', function() {
+        it('successfully with a file', function() {
             service.uploadChanges(rdfUpdate)
                 .subscribe(response => {
                     expect(response.status).toEqual(200);
                 }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'PUT'});
+            const request = httpMock.expectOne(req => req.method === 'PUT' && req.url === `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`);
+            expect((request.request.params).get('branchId').toString()).toEqual(rdfUpdate.branchId);
+            expect((request.request.params).get('commitId').toString()).toEqual(rdfUpdate.commitId);
+            expect((request.request.params).get('replaceInProgressCommit').toString()).toEqual(`${rdfUpdate.replaceInProgressCommit}`);
             request.flush([uploadResponse]);
         });
+        it('successfully with JSON-LD', function() {
+          const rdfUpdateClone = cloneDeep(rdfUpdate);
+          delete rdfUpdateClone.file;
+          rdfUpdateClone.jsonld = {'@id': 'jsonld'};
+          service.uploadChanges(rdfUpdateClone)
+              .subscribe(response => {
+                  expect(response.status).toEqual(200);
+              }, () => fail('Promise should have resolved'));
+          const request = httpMock.expectOne(req => req.method === 'PUT' && req.url === `${service.prefix}/${encodeURIComponent(rdfUpdateClone.recordId)}`);
+          expect((request.request.params).get('branchId').toString()).toEqual(rdfUpdateClone.branchId);
+          expect((request.request.params).get('commitId').toString()).toEqual(rdfUpdateClone.commitId);
+          expect((request.request.params).get('replaceInProgressCommit').toString()).toEqual(`${rdfUpdateClone.replaceInProgressCommit}`);
+          request.flush([uploadResponse]);
+      });
     });
 
     describe('should delete changes on a shapes graph record', function() {
