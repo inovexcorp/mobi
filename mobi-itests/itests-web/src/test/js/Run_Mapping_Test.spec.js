@@ -164,7 +164,7 @@ module.exports = {
 
     'Step 14: Add Property Mappings and verify addition' : function (browser) {
         browser.globals.wait_for_no_spinners(browser)
-        var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description"]
+        var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description", "No Domain", "Union Domain"]
 
         for (var i = 0 ; i < properties.length; i++)
         {
@@ -178,16 +178,22 @@ module.exports = {
                 browser.waitForElementVisible('div.mat-select-panel')
                 browser.waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
 
-                switch (properties[i]){
-                case "Chemical Formula":
-                    browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
-                    break;
-                case "Melting Point":
-                    browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Melting point (ÎçC)")]]')
-                    break;
-                default:
-                    browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "' + properties[i] + '")]]')
-                    break;
+                switch (properties[i]) {
+                    case "Chemical Formula":
+                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
+                        break;
+                    case "Melting Point":
+                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Melting point (ÎçC)")]]')
+                        break;
+                    case "No Domain":
+                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
+                        break;
+                    case "Union Domain":
+                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
+                        break;
+                    default:
+                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "' + properties[i] + '")]]')
+                        break;
                 }
                 browser.waitForElementNotPresent('#spinner-full');
                 browser.click('div.mat-dialog-actions button.mat-primary');

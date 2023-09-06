@@ -167,7 +167,8 @@ describe('Prop Select component', function() {
                 await component.filter('').subscribe(results => {
                     expect(results).toEqual([]);
                     expect(component.error).toEqual(error);
-                }, () => fail('Observable should have succeeded'));
+                    expect(component.noResults).toBeTrue();
+                  }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, classId, '', 100, true);
                 expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner, 15);
                 expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner);
@@ -182,8 +183,20 @@ describe('Prop Select component', function() {
                         { ontologyId: 'ontologyB', properties: [mappingPropertyB] },
                     ]);
                     expect(component.error).toEqual('');
+                    expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, classId, '', 100, true);
+                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner, 15);
+                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner);
+            });
+            it('if there are no results', async function() {
+                mapperStateStub.retrieveProps.and.returnValue(of([]));
+                await component.filter('THISWILLNOTRESTURNRESULTS').subscribe(results => {
+                    expect(results).toEqual([]);
+                    expect(component.error).toEqual('');
+                    expect(component.noResults).toBeTrue();
+                  }, () => fail('Observable should have succeeded'));
+                expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, classId, 'THISWILLNOTRESTURNRESULTS', 100, true);
                 expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner, 15);
                 expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner);
             });
@@ -195,7 +208,8 @@ describe('Prop Select component', function() {
                         { ontologyId: RDFS.slice(0, -1), properties: [jasmine.objectContaining({ iri: `${RDFS}comment` }), jasmine.objectContaining({ iri: `${RDFS}label` })] },
                     ]);
                     expect(component.error).toEqual('');
-                }, () => fail('Observable should have succeeded'));
+                    expect(component.noResults).toBeFalse();
+                  }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, classId, '', 100, true);
                 expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner, 15);
                 expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner);
@@ -207,6 +221,7 @@ describe('Prop Select component', function() {
                         { ontologyId: 'ontologyA', properties: [mappingProperty] },
                     ]);
                     expect(component.error).toEqual('');
+                    expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, classId, mappingProperty.name, 100, true);
                 expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner, 15);
@@ -220,22 +235,23 @@ describe('Prop Select component', function() {
                         { ontologyId: 'ontologyA', properties: [mappingPropertyA, mappingProperty] },
                     ]);
                     expect(component.error).toEqual('');
+                    expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, classId, 'a', 100, true);
                 expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner, 15);
                 expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner);
             });
             it('with an object value', async function() {
-                mapperStateStub.retrieveProps.and.returnValue(of([mappingProperty]));
                 await component.filter(mappingProperty).subscribe(results => {
                     expect(results).toEqual([
                         { ontologyId: 'ontologyA', properties: [mappingProperty] },
                     ]);
                     expect(component.error).toEqual('');
+                    expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
-                expect(mapperStateStub.retrieveProps).toHaveBeenCalledWith(ontInfo, classId, mappingProperty.name, 100, true);
-                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner, 15);
-                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.propSelectSpinner);
+                expect(mapperStateStub.retrieveProps).not.toHaveBeenCalled();
+                expect(spinnerStub.startLoadingForComponent).not.toHaveBeenCalled();
+                expect(spinnerStub.finishLoadingForComponent).not.toHaveBeenCalled();
             });
         });
     });

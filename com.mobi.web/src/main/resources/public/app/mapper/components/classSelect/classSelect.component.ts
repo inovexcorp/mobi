@@ -74,34 +74,36 @@ export class ClassSelectComponent implements OnInit {
             );
     }
     filter(val: string | MappingClass): Observable<ClassGroup[]> {
-        const searchText = typeof val === 'string' ?
-            val :
-            val ?
-                val.name :
-                '';
-        this._spinner.startLoadingForComponent(this.classSelectSpinner, 15);
-        return this._state.retrieveClasses(this._state.selected.mapping.getSourceOntologyInfo(), searchText, 100, true)
-            .pipe(
-                catchError(error => {
-                    this.error = error;
-                    return of([]);
-                }),
-                map(results => {
-                    if (!results.length) {
+        if (typeof val === 'string') {
+            this._spinner.startLoadingForComponent(this.classSelectSpinner, 15);
+            return this._state.retrieveClasses(this._state.selected.mapping.getSourceOntologyInfo(), val, 100, true)
+                .pipe(
+                    map(results => {
+                        if (!results.length) {
+                            this.noResults = true;
+                            return [];
+                        }
+                        this.noResults = false;
+                        const grouped = groupBy(results, result => this._state.iriMap.classes[result.iri]);
+                        return Object.keys(grouped).map(ontologyId => ({
+                            ontologyId,
+                            classes: grouped[ontologyId].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+                        })).sort((a, b) => a.ontologyId.toLowerCase().localeCompare(b.ontologyId.toLowerCase()));
+                    }),
+                    catchError(error => {
+                        this.error = error;
                         this.noResults = true;
-                        return [];
-                    }
-                    this.noResults = false;
-                    const grouped = groupBy(results, result => this._state.iriMap.classes[result.iri]);
-                    return Object.keys(grouped).map(ontologyId => ({
-                        ontologyId,
-                        classes: grouped[ontologyId].sort((a, b) => a.name.localeCompare(b.name))
-                    })).sort((a, b) => a.ontologyId.localeCompare(b.ontologyId));
-                }),
-                finalize(() => {
-                    this._spinner.finishLoadingForComponent(this.classSelectSpinner);
-                })
-            );
+                        return of([]);
+                    }),
+                    finalize(() => {
+                        this._spinner.finishLoadingForComponent(this.classSelectSpinner);
+                    })
+                );
+        } else {
+            this.noResults = false;
+            const mappingClass = val as MappingClass;
+            return of([{ ontologyId: this._state.iriMap.classes[mappingClass.iri], classes: [mappingClass] }]);
+        }
     }
     getDisplayText(value: MappingClass): string {
         return value ? value.name : '';
