@@ -24,22 +24,20 @@
 @import "../../../css/variables";
 
 .rdf-preview-tab {
-
     .codemirror-wrapper {
         position: relative;
 
-        .CodeMirror {
+        ::ng-deep .CodeMirror {
             position: absolute;
             left: 0;
             right: 0;
-            bottom: 0;
+            bottom: 10px;
             top: 0;
-            border: 1px solid #ccc;
             height: auto;
 
-			.CodeMirror-cursor {
-				display: none !important
-			}
+            .CodeMirror-cursor {
+                display: none !important
+            }
         }
     }
 }

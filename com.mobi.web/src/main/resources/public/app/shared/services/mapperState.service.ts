@@ -143,7 +143,7 @@ export class MapperStateService {
       }
       BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
       FILTER(CONTAINS(LCASE(?name), LCASE(?search)))
-    } GROUP BY ?iri ?name ORDER BY ?name LIMIT %LIMIT%
+    } GROUP BY ?iri ?name ORDER BY LCASE(?name) LIMIT %LIMIT%
     `;
 
     protected CLASS_QUERY = `
@@ -233,16 +233,21 @@ export class MapperStateService {
               {
                 SELECT DISTINCT ?iri ?type
                 WHERE {
-	              VALUES ?type { owl:DatatypeProperty owl:ObjectProperty owl:AnnotationProperty }
+                  BIND(<%CLASS%> as ?clazz)
+	                VALUES ?type { owl:DatatypeProperty owl:ObjectProperty owl:AnnotationProperty }
               	  {
                     ?iri a ?type .
                     FILTER NOT EXISTS {
                   	  ?iri rdfs:domain ?domain .
                     }
                   } UNION {
-	                  <%CLASS%> rdfs:subClassOf* ?domain .
+	                  ?clazz rdfs:subClassOf* ?domain .
                     ?iri a ?type ;
                       rdfs:domain ?domain .
+                  } UNION {
+                    ?iri a ?type ;
+                      rdfs:domain/owl:unionOf/(rdf:rest*) ?bnode .
+                    ?bnode rdf:first/^rdfs:subClassOf* ?clazz .
                   }
                   FILTER(ISIRI(?iri))
                 }
@@ -284,7 +289,7 @@ export class MapperStateService {
       }
       BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
       FILTER(CONTAINS(LCASE(?name), LCASE(?search)))
-    } GROUP BY ?iri ?type ?name ORDER BY ?name LIMIT %LIMIT%
+    } GROUP BY ?iri ?type ?name ORDER BY LCASE(?name) LIMIT %LIMIT%
     `;
 
     protected PROP_QUERY = `

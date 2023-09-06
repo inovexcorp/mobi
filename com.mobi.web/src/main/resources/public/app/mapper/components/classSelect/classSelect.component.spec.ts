@@ -170,6 +170,7 @@ describe('Class Select component', function() {
                         { ontologyId: 'ontologyA', classes: [mappingClassA, mappingClass] },
                         { ontologyId: 'ontologyB', classes: [mappingClassB] }
                     ]);
+                    expect(component.error).toEqual('');
                     expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, '', 100, true);
@@ -182,6 +183,7 @@ describe('Class Select component', function() {
                     expect(results).toEqual([
                         { ontologyId: 'ontologyA', classes: [mappingClass] },
                     ]);
+                    expect(component.error).toEqual('');
                     expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, mappingClass.name, 100, true);
@@ -194,6 +196,7 @@ describe('Class Select component', function() {
                     expect(results).toEqual([
                         { ontologyId: 'ontologyA', classes: [mappingClassA, mappingClass] },
                     ]);
+                    expect(component.error).toEqual('');
                     expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
                 expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, 'a', 100, true);
@@ -201,16 +204,16 @@ describe('Class Select component', function() {
                 expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner);
             });
             it('with an object value', async function() {
-                mapperStateStub.retrieveClasses.and.returnValue(of([mappingClass]));
                 await component.filter(mappingClass).subscribe(results => {
                     expect(results).toEqual([
                         { ontologyId: 'ontologyA', classes: [mappingClass] },
                     ]);
+                    expect(component.error).toEqual('');
                     expect(component.noResults).toBeFalse();
                 }, () => fail('Observable should have succeeded'));
-                expect(mapperStateStub.retrieveClasses).toHaveBeenCalledWith(ontInfo, mappingClass.name, 100, true);
-                expect(spinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner, 15);
-                expect(spinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.classSelectSpinner);
+                expect(mapperStateStub.retrieveClasses).not.toHaveBeenCalled();
+                expect(spinnerStub.startLoadingForComponent).not.toHaveBeenCalled();
+                expect(spinnerStub.finishLoadingForComponent).not.toHaveBeenCalled();
             });
         });
     });

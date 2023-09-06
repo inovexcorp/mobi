@@ -47,6 +47,22 @@
 #    Data properties
 #################################################################
 
+###  http://matonto.org/ontologies/uhtc#unionDomain
+:unionDomain rdf:type owl:DatatypeProperty ;
+                 rdfs:domain [
+                   a owl:Class ;
+                   owl:unionOf ( :Material :CrystalStructure )
+                 ] ;
+                 rdfs:range xsd:string ;
+                 <http://purl.org/dc/terms/description> "A test property with domain of a unionOf restriction."^^xsd:string ;
+                 <http://purl.org/dc/terms/title> "Union Domain"^^xsd:string .
+
+###  http://matonto.org/ontologies/uhtc#noDomain
+:noDomain rdf:type owl:DatatypeProperty ;
+                 rdfs:range xsd:string ;
+                 <http://purl.org/dc/terms/description> "A test property with no domain."^^xsd:string ;
+                 <http://purl.org/dc/terms/title> "No Domain"^^xsd:string .
+
 ###  http://matonto.org/ontologies/uhtc#chemicalFormula
 :chemicalFormula rdf:type owl:DatatypeProperty ;
                  rdfs:domain :Material ;

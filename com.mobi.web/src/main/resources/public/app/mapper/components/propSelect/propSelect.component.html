@@ -22,6 +22,7 @@
   -->
 <div class="prop-select" [formGroup]="parentForm">
     <error-display *ngIf="error">{{error}}</error-display>
+    <info-message *ngIf="noResults">No properties found</info-message>
     <mat-form-field class="w-100">
         <span class="spinner-prefix" matPrefix #propSelectSpinner></span>
         <mat-label>Property</mat-label>

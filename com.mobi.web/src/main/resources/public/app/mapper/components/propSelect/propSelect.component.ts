@@ -75,6 +75,7 @@ export class PropSelectComponent implements OnInit {
     @ViewChild('propSelectSpinner', { static: true }) propSelectSpinner: ElementRef;
     
     error = '';
+    noResults = false;
     filteredProperties: Observable<PropertyGroup[]>;
 
     constructor(private _state: MapperStateService, private _spinner: ProgressSpinnerService) {}
@@ -88,49 +89,60 @@ export class PropSelectComponent implements OnInit {
             );
     }
     filter(val: string | MappingProperty): Observable<PropertyGroup[]> {
-        const searchText = typeof val === 'string' ?
-        val :
-        val ?
-            val.name :
-            '';
-        this._spinner.startLoadingForComponent(this.propSelectSpinner, 15);
-        // Find supported annotations matching search text
-        const filteredAnnotations = this._state.supportedAnnotations.filter(propDisplay => 
-            propDisplay.name.toLowerCase().includes(searchText.toLowerCase()));
-        return this._state.retrieveProps(this._state.selected.mapping.getSourceOntologyInfo(), this.parentClass, 
-          searchText, 100, true)
-            .pipe(
-                map(results => {
-                    this.error = '';
-                    const filtered = results
-                        // Handle supported annotations redefined in the imports closure
-                        .filter(result => !filteredAnnotations.find(ann => ann.iri === result.iri))
-                        // Add in supported annotations matching search text
-                        .concat(filteredAnnotations)
-                        // Sort results again
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        // Only keep 100 results still
-                        .slice(0, 100);
-                    // Group by ontology IRI found across data properties, object properties, and annotation properties
-                    // Account for redefined supported annotations and make sure to group by namespace in those cases
-                    const grouped = groupBy(filtered, result => this._state.iriMap.dataProperties[result.iri]
-                        || this._state.iriMap.objectProperties[result.iri] 
-                        || (this._state.supportedAnnotations.includes(result) ? 
-                            splitIRI(result.iri).begin 
-                            : this._state.iriMap.annotationProperties[result.iri]));
-                    return Object.keys(grouped).map(ontologyId => ({
-                        ontologyId,
-                        properties: grouped[ontologyId].sort((a, b) => a.name.localeCompare(b.name))
-                    })).sort((a, b) => a.ontologyId.localeCompare(b.ontologyId));
-                }),
-                catchError(error => {
-                    this.error = error;
-                    return of([]);
-                }),
-                finalize(() => {
-                    this._spinner.finishLoadingForComponent(this.propSelectSpinner);
-                })
-            );
+        if (typeof val === 'string') {
+            this._spinner.startLoadingForComponent(this.propSelectSpinner, 15);
+            // Find supported annotations matching search text
+            const filteredAnnotations = this._state.supportedAnnotations.filter(propDisplay => 
+                propDisplay.name.toLowerCase().includes(val.toLowerCase()));
+            return this._state.retrieveProps(this._state.selected.mapping.getSourceOntologyInfo(), this.parentClass, 
+              val, 100, true)
+                .pipe(
+                    map(results => {
+                        this.error = '';
+                        const filtered = results
+                            // Handle supported annotations redefined in the imports closure
+                            .filter(result => !filteredAnnotations.find(ann => ann.iri === result.iri))
+                            // Add in supported annotations matching search text
+                            .concat(filteredAnnotations)
+                            // Sort results again
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            // Only keep 100 results still
+                            .slice(0, 100);
+                        if (!filtered.length) {
+                            this.noResults = true;
+                            return [];
+                        }
+                        this.noResults = false;
+                        // Group by ontology IRI found across data props, object props, and annotation props
+                        // Account for redefined supported annotations and ensure to group by namespace in those cases
+                        const grouped = groupBy(filtered, result => this.getOntologyId(result));
+                        return Object.keys(grouped).map(ontologyId => ({
+                            ontologyId,
+                            properties: grouped[ontologyId]
+                                .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+                        })).sort((a, b) => a.ontologyId.toLowerCase().localeCompare(b.ontologyId.toLowerCase()));
+                    }),
+                    catchError(error => {
+                        this.error = error;
+                        this.noResults = true;
+                        return of([]);
+                    }),
+                    finalize(() => {
+                        this._spinner.finishLoadingForComponent(this.propSelectSpinner);
+                    })
+                );
+        } else {
+            this.noResults = false;
+            const mappingProp = val as MappingProperty;
+            return of([{ ontologyId: this.getOntologyId(mappingProp), properties: [mappingProp] }]);
+        }
+    }
+    getOntologyId(mappingProp: MappingProperty): string {
+        return this._state.iriMap.dataProperties[mappingProp.iri]
+          || this._state.iriMap.objectProperties[mappingProp.iri] 
+          || (this._state.supportedAnnotations.includes(mappingProp) ? 
+              splitIRI(mappingProp.iri).begin 
+              : this._state.iriMap.annotationProperties[mappingProp.iri]);
     }
     getDisplayText(mappingProperty?: MappingProperty): string {
         return mappingProperty ? mappingProperty.name : '';
