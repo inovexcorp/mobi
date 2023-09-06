@@ -4857,9 +4857,11 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     public void testUploadChangesToOntologyWithoutBranchId() {
         when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(ontologyModel);
+
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
         when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
+        when(response.getDecision()).thenReturn(Decision.PERMIT);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));
 
@@ -4870,6 +4872,29 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         verify(branchManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class));
+        verify(compiledResourceManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
+        verify(differenceManager, times(0)).getDiff(any(Model.class), any(Model.class));
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(commitManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any(), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutBranchIdNoPermission() {
+        when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
+                .thenReturn(ontologyModel);
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
+        when(response.getDecision()).thenReturn(Decision.DENY);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .request()
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.UNAUTHORIZED.getStatusCode());
+        verify(branchManager).getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class));
         verify(compiledResourceManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
         verify(differenceManager, times(0)).getDiff(any(Model.class), any(Model.class));
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));

@@ -113,19 +113,16 @@ export class ShapesGraphManagerService {
         if (rdfUpdate.file) {
             fd.append('file', rdfUpdate.file);
         }
-        if (rdfUpdate.branchId) {
-            fd.append('branchId', rdfUpdate.branchId);
-        }
-        if (rdfUpdate.commitId) {
-            fd.append('commitId', rdfUpdate.commitId);
-        }
         if (rdfUpdate.jsonld) {
             fd.append('json', JSON.stringify(rdfUpdate.jsonld));
         }
-        if (rdfUpdate.replaceInProgressCommit) {
-            fd.append('replaceInProgressCommit', rdfUpdate.replaceInProgressCommit ? 'true' : 'false');
-        }
-        return this.spinnerSvc.track(this.http.put<null>(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, { observe: 'response'}))
+        const params = {
+            branchId: rdfUpdate.branchId,
+            commitId: rdfUpdate.commitId,
+            replaceInProgressCommit: rdfUpdate.replaceInProgressCommit
+        };
+        return this.spinnerSvc.track(this.http.put<null>(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, 
+          { observe: 'response', params: createHttpParams(params) }))
             .pipe(catchError(handleErrorObject));
     }
 

@@ -41,7 +41,6 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
-import static java.util.Arrays.asList;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -144,7 +143,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -347,7 +345,7 @@ public class OntologyRest {
     /**
      * Class used for OpenAPI documentation for file upload endpoint.
      */
-    private class OntologyFileUpload {
+    private static class OntologyFileUpload {
         @Schema(type = "string", format = "binary", description = "Ontology file to upload.")
         public String file;
 
@@ -645,6 +643,7 @@ public class OntologyRest {
                             description = "OK if successful or METHOD_NOT_ALLOWED if the changes "
                                     + "can not be applied to the commit specified"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "401", description = "User does not have permission"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             },
@@ -658,13 +657,17 @@ public class OntologyRest {
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", value = "branchId", type =
+                    ValueType.QUERY, required = false)
+    )
     public Response uploadChangesToOntology(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
         InputStream fileInputStream = (InputStream) formData.get("stream");
@@ -676,7 +679,7 @@ public class OntologyRest {
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
-            Resource recordId = valueFactory.createIRI(recordIdStr);
+            IRI recordId = valueFactory.createIRI(recordIdStr);
 
             User user = getActiveUser(servletRequest, engineManager);
             Optional<InProgressCommit> commit = commitManager.getInProgressCommitOpt(catalogIRI, recordId, user,  conn);
@@ -697,6 +700,11 @@ public class OntologyRest {
             } else {
                 Branch branch = branchManager.getMasterBranch(catalogIRI, recordId, conn);
                 branchId = branch.getResource();
+                Decision canModify = RestUtils.isBranchModifiable(user, (IRI) branchId, recordId, pdp);
+                if (canModify == Decision.DENY) {
+                    throw ErrorUtils.sendError("User does not have permission to modify the master branch.",
+                            Response.Status.UNAUTHORIZED);
+                }
                 commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
                         + branchIdStr + " has no head Commit set"));
             }
@@ -3787,8 +3795,7 @@ public class OntologyRest {
             if (parsedOperation instanceof ParsedTupleQuery) {
                 TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, false);
                 if (tupResults != null && tupResults.hasNext()) {
-                    Optional<ObjectNode> json = Optional.of(JSONQueryResults.getResponse(tupResults));
-                    return json;
+                    return Optional.of(JSONQueryResults.getResponse(tupResults));
                 } else {
                     return Optional.empty();
                 }
@@ -3801,7 +3808,7 @@ public class OntologyRest {
                     for (Object statement: graphQueryResults.toArray()) {
                         stringResults.add(statement.toString());
                     }
-                    constructResults.put("bindings", stringResults);
+                    constructResults.set("bindings", stringResults);
                     return Optional.of(constructResults);
                 } else {
                     return Optional.empty();
@@ -4020,7 +4027,7 @@ public class OntologyRest {
             IRI ontIRI = valueFactory.createIRI(ontologyIRI);
             Optional<Resource> ontologyRecord = this.ontologyManager.getOntologyRecordResource(ontIRI);
 
-            if (!ontologyRecord.isPresent()) {
+            if (ontologyRecord.isEmpty()) {
                 String fileExt = "." + RDFFiles.getFileExtension(ontologyIRI);
                 ontIRI = valueFactory.createIRI(ontologyIRI.replaceFirst(fileExt, ""));
                 ontologyRecord = this.ontologyManager.getOntologyRecordResource(ontIRI);
@@ -4032,8 +4039,8 @@ public class OntologyRest {
 
                 if (!(canRead == Decision.DENY)) {
                     String finalFormat = (format != null ? format :
-                            RDFFiles.getFormatForFileName(ontologyIRI).isPresent() ?
-                                    RDFFiles.getFormatForFileName(ontologyIRI).get().getName() : "turtle");
+                            RDFFiles.getFormatForFileName(ontologyIRI).isPresent()
+                                    ? RDFFiles.getFormatForFileName(ontologyIRI).get().getName() : "turtle");
 
                     Optional<Ontology> ontology = this.ontologyManager.retrieveOntologyByIRI(ontIRI);
 
@@ -4058,8 +4065,8 @@ public class OntologyRest {
         IRI subjectId = (IRI) user.getResource();
         IRI actionId = valueFactory.createIRI("http://mobi.com/ontologies/policy#Read");
         Map<String, Literal> attributes = new HashMap<>();
-        Request request = pdp.createRequest(asList(subjectId), attributes, asList(recordIRI), new HashMap<>(),
-                asList(actionId), attributes);
+        Request request = pdp.createRequest(Collections.singletonList(subjectId), attributes,
+                Collections.singletonList(recordIRI), new HashMap<>(), Collections.singletonList(actionId), attributes);
 
         com.mobi.security.policy.api.Response response = pdp.evaluate(request,
                 valueFactory.createIRI(POLICY_PERMIT_OVERRIDES));
@@ -4067,7 +4074,7 @@ public class OntologyRest {
         return response.getDecision();
     }
 
-    private RDFFormat getRdfFormat(String format){
+    private RDFFormat getRdfFormat(String format) {
         switch (format.toLowerCase()) {
             case "rdf/xml":
                 return RDFFormat.RDFXML;

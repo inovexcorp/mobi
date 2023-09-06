@@ -23,6 +23,8 @@ package com.mobi.rest.util;
  * #L%
  */
 
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -30,6 +32,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jsonldjava.core.JsonLdApi;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.utils.JsonUtils;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -38,6 +42,9 @@ import com.mobi.persistence.utils.SkolemizedStatementIterable;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.jaxb.Links;
+import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -50,6 +57,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -75,6 +83,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1107,7 +1116,7 @@ public class RestUtils {
     }
 
     /**
-     * Determines whether or not the User with the passed username is an admin.
+     * Determines whether the User with the passed username is an admin.
      *
      * @param username The username of a User
      * @return true if the identified User is an admin; false otherwise
@@ -1116,5 +1125,30 @@ public class RestUtils {
         return engineManager.getUserRoles(username).stream()
                 .map(Thing::getResource)
                 .anyMatch(resource -> resource.stringValue().contains("admin"));
+    }
+
+    /**
+     * Executes an XACML request to determine with the {@link com.mobi.catalog.api.ontologies.mcat.Branch} with the
+     * provided IRI from the {@link VersionedRDFRecord} with the provided IRI can be modified by the provided
+     * {@link User}.
+     *
+     * @param user The {@link User} attempting to execute the Modify action
+     * @param branchId The IRI string of the Branch in question
+     * @param recordIRI The IRI string of the parent VersionedRDFRecord for the Branch
+     * @param pdp The PDP service to use to execute the request
+     * @return The `{@link Decision} from the XACML request
+     */
+    public static Decision isBranchModifiable(User user, IRI branchId, IRI recordIRI, PDP pdp) {
+        IRI subjectId = (IRI) user.getResource();
+        IRI actionId = vf.createIRI(Modify.TYPE);
+        Map<String, Literal> attributes = new HashMap<>();
+        attributes.put(VersionedRDFRecord.branch_IRI, vf.createLiteral(branchId.stringValue()));
+        Request request = pdp.createRequest(Collections.singletonList(subjectId), new HashMap<>(),
+                Collections.singletonList(recordIRI), new HashMap<>(), Collections.singletonList(actionId), attributes);
+
+        com.mobi.security.policy.api.Response response = pdp.evaluate(request,
+                vf.createIRI(POLICY_PERMIT_OVERRIDES));
+
+        return response.getDecision();
     }
 }

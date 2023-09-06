@@ -38,6 +38,7 @@ import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -53,11 +54,14 @@ import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PDP;
 import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
@@ -93,9 +97,11 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -160,6 +166,9 @@ public class ShapesGraphRest {
 
     @Reference
     ShapesGraphManager shapesGraphManager;
+
+    @Reference
+    PDP pdp;
 
     /**
      * Ingests/uploads a SHACL Shapes Graph file or the JSON-LD of a SHACL Shapes Graph to a data store and creates and
@@ -299,7 +308,8 @@ public class ShapesGraphRest {
             commitStmt.close();
 
             ObjectNode objectNode = mapper.createObjectNode();
-            objectNode.put("shapesGraphId", record.getShapesGraphIRI().get().toString());
+            objectNode.put("shapesGraphId", record.getShapesGraphIRI().orElseThrow(() ->
+                    new IllegalStateException("ShapesGraphRecord must have a Shapes Graph IRI")).toString());
             objectNode.put("recordId", record.getResource().stringValue());
             objectNode.put("branchId", branchId.toString());
             objectNode.put("commitId", commitId.toString());
@@ -419,10 +429,22 @@ public class ShapesGraphRest {
         }
     }
 
+    /**
+     * Updates/Creates an InProgressCommit on the ShapesGraphRecord with the difference between the compiled resource
+     * at the specified Commit and the provided file contents. Can optionally replace an existing InProgressCommit.
+     * If no Branch or Commit IRIs are provided, works against the head of the MASTER Branch. If no Commit IRI is
+     * provided, works against the HEAD of the specified Branch.
+     *
+     * @param servletRequest The HTTP request with form data.
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @return A Response indicating whether the InProgress update/create was successful.
+     */
     @PUT
     @Path("{recordId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @Operation(
             tags = "shapes-graphs",
             summary = "Updates the specified shapes graph branch and commit with the data provided",
@@ -442,33 +464,46 @@ public class ShapesGraphRest {
                     }
             )
     )
-    public Response updateShapesGraph(@Context HttpServletRequest servletRequest,
-                                      @Parameter(description = "String representing the Record Resource ID. "
-                                              + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"",
-                                              required = true)
-                                      @PathParam("recordId") String recordIdStr) {
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", value = "branchId", type =
+                    ValueType.QUERY, required = false)
+    )
+    public Response updateShapesGraph(
+            @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an IRI "
+                    + "unless String begins with \"_:\"", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "Optional String representing the Branch Resource id. "
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
+                    + "Defaults to Master branch if missing")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "Optional String representing the Commit Resource id."
+                    + " NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
+                    + "Defaults to head commit if missing. The provided commitId must be on "
+                    + "the Branch identified by the provided branchId; otherwise, nothing "
+                    + "will be returned")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean representing whether the in progress commit should be overwritten")
+            @DefaultValue("false") @QueryParam("replaceInProgressCommit") boolean replaceInProgressCommit) {
         Map<String, List<Class>> fields = new HashMap<>();
-        fields.put("branchId", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("commitId", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("replaceInProgressCommit", Stream.of(Boolean.class).collect(Collectors.toList()));
+        fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
         InputStream fileInputStream = (InputStream) formData.get("stream");
         String filename = (String) formData.get("filename");
-        String branchIdStr = (String) formData.get("branchId");
-        String commitIdStr = (String) formData.get("commitId");
-        boolean replaceInProgressCommit = Optional.ofNullable((Boolean) formData.get("replaceInProgressCommit"))
-                .orElse(false);
+        String jsonld = (String) formData.get("json");
         if (replaceInProgressCommit) {
             throw ErrorUtils.sendError("This functionality has not yet been implemented.",
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
-        if (fileInputStream == null) {
-            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+        if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
+            throw ErrorUtils.sendError("Either a File or JSON-LD must be provided", Response.Status.BAD_REQUEST);
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
-            Resource recordId = vf.createIRI(recordIdStr);
+            IRI recordId = vf.createIRI(recordIdStr);
 
             User user = getActiveUser(servletRequest, engineManager);
             Optional<InProgressCommit> commit = commitManager.getInProgressCommitOpt(catalogIRI, recordId, user, conn);
@@ -489,6 +524,11 @@ public class ShapesGraphRest {
             } else {
                 Branch branch = branchManager.getMasterBranch(catalogIRI, recordId, conn);
                 branchId = branch.getResource();
+                Decision canModify = RestUtils.isBranchModifiable(user, (IRI) branchId, recordId, pdp);
+                if (canModify == Decision.DENY) {
+                    throw ErrorUtils.sendError("User does not have permission to modify the master branch.",
+                            Response.Status.UNAUTHORIZED);
+                }
                 commitId = commitManager.getHeadCommitIRI(branch);
             }
 
@@ -496,8 +536,10 @@ public class ShapesGraphRest {
             Map<BNode, IRI> uploadedBNodes = new HashMap<>();
             final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return getUploadedModel(fileInputStream,
-                            RDFFiles.getFileExtension(filename), uploadedBNodes);
+                    return fileInputStream != null
+                            ? getUploadedModel(fileInputStream, RDFFiles.getFileExtension(filename), uploadedBNodes)
+                            : getUploadedModel(new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8)),
+                                    "jsonld", uploadedBNodes);
                 } catch (IOException e) {
                     throw new CompletionException(e);
                 }
@@ -505,9 +547,8 @@ public class ShapesGraphRest {
 
             // Catalog BNode map used for restoring deletion BNodes
             Map<BNode, IRI> catalogBNodes = new HashMap<>();
-            final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
-                return getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn);
-            });
+            final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() ->
+                    getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn));
 
             Model currentModel = currentModelFuture.get();
             Model uploadedModel = uploadedModelFuture.get();
@@ -550,29 +591,12 @@ public class ShapesGraphRest {
      * Class used for OpenAPI documentation for upload changes endpoint.
      */
     private static class ShapesGraphFileUploadChanges {
-        @Schema(type = "string", format = "binary", description = "ShapesGraph file to upload.")
+        @Schema(type = "string", format = "binary", description = "ShapesGraph file to upload. Must be provided if "
+                + "JSON-lD is not")
         public String file;
 
-        @Schema(description = "String representing the Record Resource ID. "
-                + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"",
-                required = true)
-        public String recordId;
-
-        @Schema(description = "Optional String representing the Branch Resource id. "
-                + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
-                + "Defaults to Master branch if missing")
-        public String branchId;
-
-        @Schema(description = "Optional String representing the Commit Resource id."
-                + " NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
-                + "Defaults to head commit if missing. The provided commitId must be on "
-                + "the Branch identified by the provided branchId; otherwise, nothing "
-                + "will be returned")
-        public String commitId;
-
-        @Schema(description = "Boolean representing whether the in progress commit "
-                + "should be overwritten")
-        public boolean replaceInProgressCommit;
+        @Schema(description = "JSON-LD containing the ShapesGraph definition. Must be provided if a file is not")
+        public String json;
     }
 
     /**
@@ -592,7 +616,7 @@ public class ShapesGraphRest {
      *                       branchId; otherwise, nothing will be returned.
      * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
      *                       "rdf/xml", and "trig"
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The RDF triples for a specified entity including all of is transitively attached Blank Nodes.
      */
     @GET
@@ -655,7 +679,7 @@ public class ShapesGraphRest {
      *                       branchId; otherwise, nothing will be returned.
      * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
      *                       "rdf/xml", and "trig"
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The RDF triples for the Shapes Graph not including those directly attached to the Shapes Graph IRI
      *         subjectId.
      */
@@ -713,7 +737,7 @@ public class ShapesGraphRest {
      *                       String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                       head Commit. The provided commitId must be on the Branch identified by the provided
      *                       branchId; otherwise, nothing will be returned.
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The String representation of the IRI representing the Shapes Graph
      */
     @GET
