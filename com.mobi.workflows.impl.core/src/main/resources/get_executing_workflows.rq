@@ -1,0 +1,11 @@
+PREFIX w: <http://mobi.solutions/ontologies/workflows#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?workflow
+WHERE {
+    ?activity a prov:Activity, w:WorkflowExecutionActivity ;
+        prov:used ?workflow .
+    FILTER NOT EXISTS {
+        ?activity prov:endedAtTime ?time .
+    }
+}

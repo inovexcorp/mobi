@@ -56,7 +56,6 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.EventAdmin;
 
 import java.io.IOException;
@@ -200,10 +199,5 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         if (ontologyManager.ontologyIriExists(ontologyIRI)) {
             throw new IllegalArgumentException("Ontology already exists with IRI " + ontologyIRI);
         }
-    }
-
-    private boolean isMasterBranch(VersionedRDFRecord record, Branch branch) {
-        Optional<Resource> optMasterBranch = record.getMasterBranch_resource();
-        return optMasterBranch.isPresent() && optMasterBranch.get().equals(branch.getResource());
     }
 }

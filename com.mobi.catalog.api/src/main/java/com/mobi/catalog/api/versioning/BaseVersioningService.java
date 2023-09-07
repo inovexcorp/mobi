@@ -46,10 +46,10 @@ import org.osgi.service.event.EventAdmin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public abstract class BaseVersioningService<T extends VersionedRDFRecord> implements VersioningService<T> {
-
     @Reference
     public BranchFactory branchFactory;
 
@@ -103,5 +103,10 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
             Event event = new Event(CatalogTopics.TOPIC_NAME, eventProps);
             eventAdmin.postEvent(event);
         }
+    }
+
+    protected boolean isMasterBranch(VersionedRDFRecord record, Branch branch) {
+        Optional<Resource> optMasterBranch = record.getMasterBranch_resource();
+        return optMasterBranch.isPresent() && optMasterBranch.get().equals(branch.getResource());
     }
 }
