@@ -227,29 +227,27 @@
         <bundle>mvn:com.mobi/document.translator.json/${project.version}</bundle>
         <bundle>mvn:com.mobi/document.translator.xml/${project.version}</bundle>
         <bundle>mvn:com.mobi/document.translator.csv/${project.version}</bundle>
-        <bundle>mvn:com.mobi/document.translator.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.policy.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.policy.api.xacml/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.policy.impl.core/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.policy.impl.xacml/${project.version}</bundle>
-        <bundle>mvn:com.mobi/security.policy.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/rest.security/${project.version}</bundle>
         <bundle>mvn:com.mobi/email.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/email.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/setting.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/setting.impl/${project.version}</bundle>
-        <bundle>mvn:com.mobi/setting.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/notification.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/notification.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/namespace.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/namespace.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/shapes.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/shapes.impl/${project.version}</bundle>
-        <bundle>mvn:com.mobi/shapes.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/owlapi.utils/${project.version}</bundle>
         <bundle>mvn:com.mobi/shacl.form.api/${project.version}</bundle>
+        <bundle>mvn:com.mobi/workflows.api/${project.version}</bundle>
+        <bundle>mvn:com.mobi/workflows.impl.core/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">
         <bundle>mvn:com.mobi/etl.cli/${project.version}</bundle>
@@ -270,6 +268,11 @@
         <bundle>mvn:com.mobi/web.security/${project.version}</bundle>
         <bundle>mvn:com.mobi/explorable.dataset.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/prov.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/shapes.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/workflows.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/setting.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/document.translator.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/security.policy.rest/${project.version}</bundle>
     </feature>
     <feature name="mobi-web" description="Mobi Web Bundles" version="${project.version}">
         <feature>mobi-web-core</feature>

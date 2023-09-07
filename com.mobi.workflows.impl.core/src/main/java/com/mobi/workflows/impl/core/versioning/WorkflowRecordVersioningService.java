@@ -1,8 +1,8 @@
-package com.mobi.shapes.impl.versioning;
+package com.mobi.workflows.impl.core.versioning;
 
 /*-
  * #%L
- * com.mobi.shapes.impl
+ * com.mobi.workflows.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,6 +23,7 @@ package com.mobi.shapes.impl.versioning;
  * #L%
  */
 
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -30,14 +31,15 @@ import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.owl.Ontology;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.shapes.api.ShapesGraphManager;
-import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
-import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecordFactory;
+import com.mobi.workflows.api.WorkflowManager;
+import com.mobi.workflows.api.ontologies.workflows.Workflow;
+import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
+import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -62,22 +64,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Component(
         immediate = true,
-        service = { VersioningService.class, ShapesGraphRecordVersioningService.class }
+        service = { VersioningService.class, WorkflowRecordVersioningService.class }
 )
-public class ShapesGraphRecordVersioningService extends BaseVersioningService<ShapesGraphRecord> {
-
-    private static final String ADDITION_SHAPES_GRAPH_IRI_QUERY;
+public class WorkflowRecordVersioningService extends BaseVersioningService<WorkflowRecord> {
+    private static final String ADDITION_WORKFLOW_IRI_QUERY;
     private static final String REVISION_BINDING = "revision";
-    private static final String SHAPES_GRAPH_IRI_BINDING = "shapesGraphIRI";
+    private static final String WORKFLOW_IRI_BINDING = "workflowIRI";
 
     static {
         try {
-            ADDITION_SHAPES_GRAPH_IRI_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(ShapesGraphRecordVersioningService.class
-                            .getResourceAsStream("/get-shapes-graph-iri-addition.rq")), StandardCharsets.UTF_8
+            ADDITION_WORKFLOW_IRI_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(WorkflowRecordVersioningService.class
+                            .getResourceAsStream("/get-workflow-iri-addition.rq")), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -88,10 +90,16 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
     final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
-    ShapesGraphRecordFactory shapesGraphRecordFactory;
+    protected WorkflowRecordFactory workflowRecordFactory;
 
     @Reference
-    ShapesGraphManager shapesGraphManager;
+    protected WorkflowManager workflowManager;
+
+    @Reference
+    CatalogConfigProvider configProvider;
+
+    @Reference
+    RecordManager recordManager;
 
     @Activate
     void start(BundleContext context) {
@@ -103,26 +111,65 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
 
     @Override
     public String getTypeIRI() {
-        return ShapesGraphRecord.TYPE;
+        return WorkflowRecord.TYPE;
     }
 
     @Override
     public void addCommit(VersionedRDFRecord record, Branch branch, Commit commit, RepositoryConnection conn) {
+        boolean connectionActive = conn.isActive();
+        if (!connectionActive) {
+            conn.begin();
+        }
+
+        WorkflowRecord workflowRecord = recordManager.getRecord(configProvider.getLocalCatalogIRI(),
+                record.getResource(), workflowRecordFactory, conn);
+
+        Resource workflowIRI = workflowRecord.getWorkflowIRI().orElseThrow(() ->
+                new IllegalArgumentException("Workflow Records must have linked workflow"));
+
+        AtomicReference<Workflow> oldWorkflow = new AtomicReference<>();
+
         if (isMasterBranch(record, branch)) {
             commit.getBaseCommit_resource()
-                    .ifPresent(baseCommit -> updateShapesGraphIRI(record.getResource(), commit, conn));
+                    .ifPresent(baseCommit -> {
+                        updateWorkflowIRI(workflowRecord, workflowIRI, commit, conn);
+                        oldWorkflow.set(workflowManager.getWorkflow(workflowIRI).orElseThrow(() ->
+                                new IllegalArgumentException("Workflow " + workflowIRI + " does not exist")));
+                    });
         }
+
         commitManager.addCommit(branch, commit, conn);
+        workflowManager.validateWorkflow(compiledResourceManager.getCompiledResource(commit.getResource(), conn));
+
         commit.getWasAssociatedWith_resource().stream().findFirst()
                 .ifPresent(userIri -> sendCommitEvent(record.getResource(), branch.getResource(), userIri,
                         commit.getResource()));
+
+        conn.commit();
+
+        if (commit.getBaseCommit_resource().isPresent() && isMasterBranch(record, branch)) {
+            workflowManager.updateTriggerService(workflowRecord, oldWorkflow.get());
+        }
     }
 
     @Override
     public Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
                               Model deletions, Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
+
         InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
         Commit newCommit = commitManager.createCommit(inProgressCommit, message, baseCommit, auxCommit);
+
+        WorkflowRecord workflowRecord = recordManager.getRecord(configProvider.getLocalCatalogIRI(),
+                record.getResource(), workflowRecordFactory, conn);
+
+        Resource iri = workflowRecord.getWorkflowIRI().orElseThrow(() ->
+                new IllegalArgumentException("Workflow Records must have linked workflow"));
+
+        Workflow oldWorkflow;
+
+        oldWorkflow = workflowManager.getWorkflow(iri).orElseThrow(() ->
+                new IllegalArgumentException("Workflow " + iri + " does not exist"));
+
         // Determine if branch is the master branch of a record
         if (isMasterBranch(record, branch)) {
             if (baseCommit != null) {
@@ -141,56 +188,58 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
                     // Else, this is a regular commit. Make sure we remove duplicated add/del statements
                     model = differenceManager.applyDifference(mf.createEmptyModel(), diff);
                 }
-                updateShapesGraphIRI(record.getResource(), model, conn);
+                updateWorkflowIRI(workflowRecord, iri, model, conn);
             }
         }
         commitManager.addCommit(branch, newCommit, conn);
+        workflowManager.validateWorkflow(compiledResourceManager.getCompiledResource(newCommit.getResource(), conn));
+
+        if (oldWorkflow != null) {
+            workflowManager.updateTriggerService(workflowRecord, oldWorkflow);
+        }
+
         commitManager.updateCommit(newCommit, additions, deletions, conn);
         sendCommitEvent(record.getResource(), branch.getResource(), user.getResource(), newCommit.getResource());
         return newCommit.getResource();
     }
 
-    private void updateShapesGraphIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
-        ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
-        Optional<Resource> iri = record.getShapesGraphIRI();
+    private void updateWorkflowIRI(WorkflowRecord record, Resource iri, Commit commit, RepositoryConnection conn) {
         IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
         Resource revisionIRI = (Resource) commit.getProperty(generatedIRI)
                 .orElseThrow(() -> new IllegalStateException("Commit is missing revision."));
-        TupleQuery query = conn.prepareTupleQuery(ADDITION_SHAPES_GRAPH_IRI_QUERY);
+        TupleQuery query = conn.prepareTupleQuery(ADDITION_WORKFLOW_IRI_QUERY);
         query.setBinding(REVISION_BINDING, revisionIRI);
         try (TupleQueryResult result = query.evaluate()) {
             if (result.hasNext()) {
-                Resource newIRI = Bindings.requiredResource(result.next(), SHAPES_GRAPH_IRI_BINDING);
-                if (iri.isEmpty() || !newIRI.equals(iri.get())) {
-                    assertShapesGraphIRIUniqueness(newIRI);
-                    record.setShapesGraphIRI(newIRI);
-                    thingManager.updateObject(record, conn);
-                }
+                Resource newIRI = Bindings.requiredResource(result.next(), WORKFLOW_IRI_BINDING);
+                updateWorkflowIRI(conn, record, iri, newIRI);
             }
         }
     }
 
-    private void updateShapesGraphIRI(Resource recordId, Model additions, RepositoryConnection conn) {
-        ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
-        Optional<Resource> iri = record.getShapesGraphIRI();
-
+    private void updateWorkflowIRI(WorkflowRecord record, Resource iri, Model additions,
+                                   RepositoryConnection conn) {
         Optional<Statement> ontStmt = additions
-                .filter(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE))
+                .filter(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Workflow.TYPE))
                 .stream()
                 .findFirst();
         if (ontStmt.isPresent()) {
             Resource newIRI = ontStmt.get().getSubject();
-            if (iri.isEmpty() || !newIRI.equals(iri.get())) {
-                assertShapesGraphIRIUniqueness(newIRI);
-                record.setShapesGraphIRI(newIRI);
-                thingManager.updateObject(record, conn);
-            }
+            updateWorkflowIRI(conn, record, iri, newIRI);
         }
     }
 
-    private void assertShapesGraphIRIUniqueness(Resource shapesGraphIRI) {
-        if (shapesGraphManager.shapesGraphIriExists(shapesGraphIRI)) {
-            throw new IllegalArgumentException("Shapes Graph already exists with IRI " + shapesGraphIRI);
+    private void updateWorkflowIRI(RepositoryConnection conn, WorkflowRecord record, Resource iri,
+                                Resource newIRI) {
+            assertWorkflowUniqueness(newIRI);
+            record.setWorkflowIRI(newIRI);
+            thingManager.updateObject(record, conn);
+
+    }
+
+    private void assertWorkflowUniqueness(Resource workflowId) {
+        if (workflowManager.workflowRecordIriExists(workflowId)) {
+            throw new IllegalArgumentException("Workflow ID: " + workflowId + " already exists.");
         }
     }
 

@@ -1,0 +1,14 @@
+[
+    {
+        "@id": "http://example.com/workflows/A/action",
+        "@type": [
+            "http://mobi.solutions/ontologies/workflows#Action",
+            "http://mobi.solutions/ontologies/workflows#TestAction"
+        ],
+        "http://mobi.solutions/ontologies/workflows#testMessage": [
+            {
+                "@value": "This is a test message from Workflow A"
+            }
+        ]
+    }
+]

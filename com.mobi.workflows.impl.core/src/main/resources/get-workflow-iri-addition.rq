@@ -1,0 +1,12 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX wf: <http://mobi.solutions/ontologies/workflows#>
+
+SELECT ?workflowIRI WHERE {
+    ?revision mcat:additions ?additionsGraph .
+
+    GRAPH ?additionsGraph {
+        ?workflowIRI a wf:Workflow .
+    }
+}
