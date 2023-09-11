@@ -1111,11 +1111,19 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             );
     }
     /**
-     * Set Entity Usages 
-     * @param entityIRI 
+     * Fetches and sets the usages of the entity identified by the provided IRI onto the provided list item for the tab
+     * with the provided index. Defaults to the currently selected list item and defaults to the active tab. If the tab
+     * has a usages container element, will start and stop a targeted spinner. If the entity usages fetch fails, sets 
+     * the tab usages to an empty array.
+     * 
+     * @param {string} entityIRI The IRI of the entity to fetch usages of
+     * @param {OntologyListItem} [listItem=this.listItem] The optional specific list item to set the usages on.
+     * Defaults to the currently selected item
+     * @param {number} [tabIndex=undefined] The optional specific index of the tab to set the usages on. Defaults to the
+     * currently active tab
      */
-    setEntityUsages(entityIRI: string, listItem: OntologyListItem = this.listItem): void {
-        const page = this.getActivePage(listItem);
+    setEntityUsages(entityIRI: string, listItem: OntologyListItem = this.listItem, tabIndex: number = undefined): void {
+        const page = tabIndex !== undefined ? this.getActivePage(listItem, tabIndex) : this.getActivePage(listItem);
         if (page.usagesContainer) {
             this.spinnerSvc.startLoadingForComponent(page.usagesContainer);
         }
@@ -1126,9 +1134,8 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 }
             }))
             .subscribe(
-                bindings => this.listItem.editorTabStates[this.getActiveKey(listItem)].usages = bindings as SPARQLSelectBinding[],
-                // bindings => this.listItem.editorTabStates[this.getActiveKey(listItem)].usages = bindings,
-                () => this.listItem.editorTabStates[this.getActiveKey(listItem)].usages = []
+                bindings => listItem.editorTabStates[this.getActiveKey(listItem, tabIndex)].usages = bindings as SPARQLSelectBinding[],
+                () => listItem.editorTabStates[this.getActiveKey(listItem, tabIndex)].usages = []
             );
     }
     /**
@@ -1263,7 +1270,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         if (entityIRI && entityIRI !== get(page, 'entityIRI')) {
             set(page, 'entityIRI', entityIRI);
             if (getUsages) {
-                this.setEntityUsages(entityIRI);
+                this.setEntityUsages(entityIRI, this.listItem, tabIndex);
             }
         }
         return this.setSelected(entityIRI, false, this.listItem, page.element);
