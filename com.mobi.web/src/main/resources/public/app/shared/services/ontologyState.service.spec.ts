@@ -2399,25 +2399,56 @@ describe('Ontology State Service', function() {
             spyOn(service, 'getActivePage').and.returnValue(this.activePage);
             spyOn(service, 'getActiveKey').and.returnValue(key);
         });
-        it('when getEntityUsages resolves', fakeAsync(function() {
-            const response = [{'@id': id}];
-            ontologyManagerStub.getEntityUsages.and.returnValue(of(response));
-            service.setEntityUsages(id);
-            tick();
-            expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
-            expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
-            expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
-            expect(service.listItem.editorTabStates[key].usages).toEqual(response);
-        }));
-        it('when getEntityUsages rejects', fakeAsync(function() {
-            ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
-            service.setEntityUsages(id);
-            tick();
-            expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
-            expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
-            expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
-            expect(service.listItem.editorTabStates[key].usages).toEqual([]);
-        }));
+        describe('with a tab index', function() {
+            it('when getEntityUsages resolves', fakeAsync(function() {
+                const response = [{'@id': id}];
+                ontologyManagerStub.getEntityUsages.and.returnValue(of(response));
+                service.setEntityUsages(id, undefined, 3);
+                tick();
+                expect(service.getActivePage).toHaveBeenCalledWith(service.listItem, 3);
+                expect(service.getActiveKey).toHaveBeenCalledWith(service.listItem, 3);
+                expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
+                expect(service.listItem.editorTabStates[key].usages).toEqual(response);
+            }));
+            it('when getEntityUsages rejects', fakeAsync(function() {
+                ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
+                service.setEntityUsages(id, undefined, 3);
+                tick();
+                expect(service.getActivePage).toHaveBeenCalledWith(service.listItem, 3);
+                expect(service.getActiveKey).toHaveBeenCalledWith(service.listItem, 3);
+                expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
+                expect(service.listItem.editorTabStates[key].usages).toEqual([]);
+            }));
+        });
+        describe('without a tab index', function() {
+            it('when getEntityUsages resolves', fakeAsync(function() {
+                const response = [{'@id': id}];
+                ontologyManagerStub.getEntityUsages.and.returnValue(of(response));
+                service.setEntityUsages(id);
+                tick();
+                expect(service.getActivePage).toHaveBeenCalledWith(service.listItem);
+                expect(service.getActiveKey).toHaveBeenCalledWith(service.listItem, undefined);
+                expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
+                expect(service.listItem.editorTabStates[key].usages).toEqual(response);
+            }));
+            it('when getEntityUsages rejects', fakeAsync(function() {
+                ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
+                service.setEntityUsages(id);
+                tick();
+                expect(service.getActivePage).toHaveBeenCalledWith(service.listItem);
+                expect(service.getActiveKey).toHaveBeenCalledWith(service.listItem, undefined);
+                expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(el);
+                expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, id, 'select'/* , this.httpId */);
+                expect(service.listItem.editorTabStates[key].usages).toEqual([]);
+            }));
+        });
     });
     // TODO test for getBnodeIndex
     describe('resetStateTabs should set the correct variables', function() {
@@ -2525,7 +2556,16 @@ describe('Ontology State Service', function() {
                 tick();
                 expect(service.getActivePage).toHaveBeenCalledWith();
                 expect(service.listItem.editorTabStates.classes.entityIRI).toEqual(classId);
-                expect(service.setEntityUsages).toHaveBeenCalledWith(classId);
+                expect(service.setEntityUsages).toHaveBeenCalledWith(classId, service.listItem, undefined);
+                expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem, undefined);
+            }));
+            it('getUsages is true with a tab index', fakeAsync(function() {
+                service.selectItem(classId, true, 3)
+                    .subscribe(() => {}, () => fail('Observable should have resolved'));
+                tick();
+                expect(service.getActivePage).toHaveBeenCalledWith(service.listItem, 3);
+                expect(service.listItem.editorTabStates.classes.entityIRI).toEqual(classId);
+                expect(service.setEntityUsages).toHaveBeenCalledWith(classId, service.listItem, 3);
                 expect(service.setSelected).toHaveBeenCalledWith(classId, false, service.listItem, undefined);
             }));
             it('and getUsages is false', fakeAsync(function() {
