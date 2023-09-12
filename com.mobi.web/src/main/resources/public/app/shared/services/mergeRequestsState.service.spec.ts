@@ -91,6 +91,8 @@ describe('Merge Requests State service', function() {
         recordType: `${ONTOLOGYEDITOR}OntologyRecord`
     };
     const headers = {'has-more-results': 'false'};
+    const totalSize = 10;
+    const requestsHeaders = {'x-total-count': `${totalSize}`};
 
     let difference: CommitDifference;
 
@@ -163,8 +165,13 @@ describe('Merge Requests State service', function() {
             removeSource: false
         });
         expect(service.selectedRecord).toBeUndefined();
-        expect(service.sameBranch).toBeFalse();
         expect(service.clearDifference).toHaveBeenCalledWith();
+        expect(service.sameBranch).toBeFalse();
+        expect(service.acceptedFilter).toBeFalse();
+        expect(service.totalRequestSize).toEqual(0);
+        expect(service.currentRequestPage).toEqual(0);
+        expect(service.requestSortOption).toBeUndefined();
+        expect(service.requestSearchText).toEqual('');
     });
     it('should clear all difference related variables', function() {
         service.difference = new Difference();
@@ -189,7 +196,7 @@ describe('Merge Requests State service', function() {
         describe('provided and getRequests', function() {
             describe('resolves', function() {
                 beforeEach(function() {
-                    mergeRequestManagerStub.getRequests.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [request]})));
+                    mergeRequestManagerStub.getRequests.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [request], headers: new HttpHeaders(requestsHeaders)})));
                 });
                 describe('and getRecord ', function() {
                     it('resolves', fakeAsync(function() {
@@ -198,6 +205,7 @@ describe('Merge Requests State service', function() {
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
+                        expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
                         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -211,6 +219,7 @@ describe('Merge Requests State service', function() {
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
+                        expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
                         expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
@@ -232,7 +241,7 @@ describe('Merge Requests State service', function() {
         describe('not provided and getRequests', function() {
             describe('resolves', function() {
                 beforeEach(function() {
-                    mergeRequestManagerStub.getRequests.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [request]})));
+                    mergeRequestManagerStub.getRequests.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [request], headers: new HttpHeaders(requestsHeaders)})));
                 });
                 describe('and getRecord ', function() {
                     it('resolves', fakeAsync(function() {
@@ -241,6 +250,7 @@ describe('Merge Requests State service', function() {
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
+                        expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
                         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -254,6 +264,7 @@ describe('Merge Requests State service', function() {
                         tick();
                         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
+                        expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
                         expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);

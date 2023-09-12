@@ -21,6 +21,6 @@
  * #L%
  */
 export interface MergeRequestFilterEvent {
-    recordType?: string;
+    requestType?: string;
     requestStatus: boolean
 }

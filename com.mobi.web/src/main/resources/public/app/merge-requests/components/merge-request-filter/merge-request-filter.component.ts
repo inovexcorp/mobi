@@ -41,7 +41,6 @@ export class MergeRequestFilterComponent implements OnInit {
     { value: true, label: 'Accepted' }
   ];
   @Input() catalogId: string;
-  @Input() recordType: string;
   @Input() requestStatus: boolean;
   @Output() changeFilter = new EventEmitter<MergeRequestFilterEvent>();
   statusValue: any;

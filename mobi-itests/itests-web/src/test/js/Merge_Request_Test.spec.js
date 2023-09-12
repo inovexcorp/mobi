@@ -349,7 +349,7 @@ module.exports = {
             .useCss()
             .waitForElementPresent('ontology-editor-page ontology-tab');
     },
-    'Step 30: Create a merge request': function(browser) {
+    'Step 31: Create a merge request': function(browser) {
         browser
             .useXpath()
             .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
@@ -392,10 +392,37 @@ module.exports = {
             .useCss()
             .waitForElementVisible('div.toast-success')
             .waitForElementNotPresent('div.toast-success');
-
     },
 
-    'Step 31: Accept the merge request': function(browser) {
+    'Step 32: Search the merge request list': function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
+            .useCss()
+            .waitForElementVisible('.d-flex .search-container input')
+            .sendKeys('.d-flex .search-container input', ['NONE', browser.Keys.ENTER])
+            .waitForElementNotPresent('#spinner-full');
+        browser.getValue('.d-flex .search-container input', function(result) {
+            this.assert.equal(typeof result, 'object');
+            this.assert.equal(result.status, 0);
+            this.assert.equal(result.value, 'NONE');
+        });
+        browser.waitForElementVisible('div.merge-request-list info-message');
+        browser.expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
+
+        browser.waitForElementVisible('.d-flex .search-container input')
+            .clearValue('.d-flex .search-container input')
+            .sendKeys('.d-flex .search-container input', ['rem', browser.Keys.ENTER])
+            .waitForElementNotPresent('#spinner-full');
+        browser.getValue('.d-flex .search-container input', function(result) {
+            this.assert.equal(typeof result, 'object');
+            this.assert.equal(result.status, 0);
+            this.assert.equal(result.value, 'rem');
+        });
+        browser.assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
+    },
+
+    'Step 33: Accept the merge request': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")

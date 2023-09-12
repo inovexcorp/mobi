@@ -20,34 +20,55 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-request-list d-flex flex-1">
-    <div class="flex-1 remove-min-height">
-        <info-message *ngIf="!requests || requests.length === 0">No requests found</info-message>
-        <div class="request padding" *ngFor="let request of requests; last as lastRequest" (click)="state.selected = request">
-            <div class="request-contents d-flex w-100">
-                <div class="details flex-1 remove-min-width">
-                    <h3 class="text-truncate">{{request.title}}</h3>
-                    <p class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></p>
-                    <dl>
-                        <dt class="text-muted">Record</dt>
-                        <dd class="text-truncate" [title]="request.recordTitle">{{request.recordTitle}}</dd>
-                        <dt class="text-muted">Assignee(s)</dt>
-                        <dd><ul class="assignees">
-                            <li *ngIf="request.assignees.length === 0" class="last">(None specified)</li>
-                            <li *ngFor="let assignee of request.assignees; last as lastAssignee" [ngClass]="{'last': lastAssignee}">{{assignee}}</li>
-                        </ul></dd>
-                    </dl>
+<div class="merge-request-list row h-100">
+    <div class="col-3 h-100">
+        <merge-request-filter
+                [catalogId]="state.catalogId"
+                [requestStatus]="state.acceptedFilter"
+                (changeFilter)="changeFilter($event)">
+        </merge-request-filter>
+    </div>
+    <div class="col h-100 d-flex flex-column remove-min-width merge-request-content">
+        <div class="search-container d-flex justify-content-end align-items-center">
+            <search-bar class="flex-1 mr-2" [(bindModel)]="searchText" (submitEvent)="searchRequests()"></search-bar>
+            <mat-form-field>
+                <mat-select [(ngModel)]="state.requestSortOption" (ngModelChange)="loadRequests()">
+                    <mat-option *ngFor="let option of ms.sortOptions" [value]="option">{{option.label}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+            <button type="button" mat-raised-button color="primary" class="new-request-btn ml-2" (click)="state.startCreate()">New Request</button>
+        </div>
+        <div class="flex-1 remove-min-height overflow-auto">
+            <info-message *ngIf="!state.requests || state.requests.length === 0">No requests found</info-message>
+            <div class="request padding" *ngFor="let request of state.requests; last as lastRequest" (click)="state.selected = request">
+                <div class="request-contents d-flex w-100">
+                    <div class="details flex-1 remove-min-width">
+                        <h3 class="text-truncate">{{request.title}}</h3>
+                        <p class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></p>
+                        <dl>
+                            <dt class="text-muted">Record</dt>
+                            <dd class="text-truncate" [title]="request.recordTitle">{{request.recordTitle}}</dd>
+                            <dt class="text-muted">Assignee(s)</dt>
+                            <dd><ul class="assignees">
+                                <li *ngIf="request.assignees.length === 0" class="last">(None specified)</li>
+                                <li *ngFor="let assignee of request.assignees; last as lastAssignee" [ngClass]="{'last': lastAssignee}">{{assignee}}</li>
+                            </ul></dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Request Actions" (click)="$event.stopPropagation(); $event.preventDefault();">
+                            <mat-icon>more_vert</mat-icon>
+                        </button>
+                        <mat-menu #menu="matMenu">
+                            <button mat-menu-item (click)="showDeleteOverlay(request)"><i class="fa fa-fw fa-trash-o"></i> Delete</button>
+                        </mat-menu>
+                    </div>
                 </div>
-                <div>
-                    <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Request Actions" (click)="$event.stopPropagation();$event.preventDefault();">
-                        <mat-icon>more_vert</mat-icon>
-                    </button>
-                    <mat-menu #menu="matMenu">
-                        <button mat-menu-item (click)="showDeleteOverlay(request)"><i class="fa fa-fw fa-trash-o"></i> Delete</button>
-                    </mat-menu>
-                </div>
+                <mat-divider *ngIf="!lastRequest"></mat-divider>
             </div>
-            <mat-divider *ngIf="!lastRequest"></mat-divider>
+        </div>
+        <div class="merge-request-paginator">
+            <mat-paginator [pageIndex]="state.currentRequestPage" [length]="state.totalRequestSize" [pageSize]="state.requestLimit" (page)="changePage($event)"></mat-paginator>
         </div>
     </div>
 </div>
