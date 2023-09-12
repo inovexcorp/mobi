@@ -216,6 +216,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request2 = mergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#2"));
         request2.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 2, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
         request2.setProperty(VALUE_FACTORY.createLiteral("Request 2"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        request2.setProperty(VALUE_FACTORY.createLiteral("Description 1"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
         request2.setAssignee(userSet2);
         request2.setOnRecord(versionedRDFRecord2);
         request2.setSourceBranch(sourceBranch2);
@@ -565,6 +566,21 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request2.getResource(), result.get(0).getResource());
+            verify(thingManager).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+            verify(thingManager).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+        }
+    }
+
+    @Test
+    public void getOpenMergeRequestsSearchText() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
+            builder.setSearchText("1");
+            List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
+            assertEquals(2, result.size());
+            Iterator<MergeRequest> it = result.iterator();
+            assertEquals(request2.getResource(), it.next().getResource());
+            assertEquals(request1.getResource(), it.next().getResource());
             verify(thingManager).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
             verify(thingManager).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
         }

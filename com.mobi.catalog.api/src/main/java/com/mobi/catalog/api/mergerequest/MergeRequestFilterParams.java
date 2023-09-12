@@ -32,7 +32,8 @@ import java.util.Optional;
  * MergeRequestFilterParams class to help query getMergeRequests. Allows equality filtering on a particular Resource.
  * Equality filtering options include assignee, onRecord, sourceBranch, targetBranch, and removeSource.
  * AcceptedMergeRequests can additionally filter on sourceCommit and targetCommit. Also provides a way to sort
- * (ascending or descending) the getMergeRequest query results by a provided sortBy Resource.
+ * (ascending or descending) the getMergeRequest query results by a provided sortBy Resource. Also provides ability to
+ * filter based on search text.
  */
 public class MergeRequestFilterParams {
 
@@ -47,6 +48,7 @@ public class MergeRequestFilterParams {
     private final Optional<Boolean> removeSource;
     private final boolean ascending;
     private final boolean accepted;
+    private final String searchText;
     private final boolean filters;
 
     public MergeRequestFilterParams(Builder builder) {
@@ -61,6 +63,7 @@ public class MergeRequestFilterParams {
         this.sortBy = builder.sortBy;
         this.ascending = builder.ascending;
         this.accepted = builder.accepted;
+        this.searchText = builder.searchText;
         this.filters = builder.filters;
     }
 
@@ -107,6 +110,10 @@ public class MergeRequestFilterParams {
         return accepted;
     }
 
+    public Optional<String> getSearchText() {
+        return Optional.ofNullable(searchText);
+    }
+
     public boolean hasFilters() {
         return filters;
     }
@@ -123,6 +130,7 @@ public class MergeRequestFilterParams {
         private Optional<Boolean> removeSource = Optional.empty();
         private boolean ascending = false;
         private boolean accepted = false;
+        private String searchText = null;
         private boolean filters = false;
 
         public Builder() {}
@@ -252,6 +260,17 @@ public class MergeRequestFilterParams {
          */
         public Builder setAccepted(boolean accepted) {
             this.accepted = accepted;
+            return this;
+        }
+
+        /**
+         * Set the text to search across the titles and descriptions of the MergeRequests in the list.
+         * @param searchText Text to search for (case-insensitive)
+         * @return MergeRequestFilterParams.Builder
+         */
+        public Builder setSearchText(String searchText) {
+            this.searchText = searchText;
+            filters = true;
             return this;
         }
 

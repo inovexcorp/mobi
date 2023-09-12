@@ -93,6 +93,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @Component(service = MergeRequestRest.class, immediate = true)
 @JaxrsResource
@@ -140,7 +141,8 @@ public class MergeRequestRest {
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
      * @param asc Whether the results should be sorted ascending or descending. Default is false.
-     * @param accepted Whether the results should only be accepted or open requests
+     * @param accepted Whether the results should only be accepted or open requests.
+     * @param searchText An optional search text for the list.
      * @return The list of all {@link MergeRequest}s that match the criteria
      */
     @GET
@@ -160,6 +162,7 @@ public class MergeRequestRest {
     )
     public Response getMergeRequests(
             @Context HttpServletRequest servletRequest,
+            @Context UriInfo uriInfo,
             @Parameter(description = "The IRI of the predicate to sort by", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Whether the results should be sorted ascending or descending")
@@ -169,15 +172,21 @@ public class MergeRequestRest {
             @Parameter(description = "Optional offset for the results")
             @QueryParam("offset") int offset,
             @Parameter(description = "Optional limit for the results")
-            @QueryParam("limit") int limit) {
+            @QueryParam("limit") int limit,
+            @Parameter(description = "Optional search text to filter the list by")
+            @QueryParam("searchText") String searchText) {
         User activeUser = getActiveUser(servletRequest, engineManager);
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setRequestingUser(activeUser);
         if (!StringUtils.isEmpty(sort)) {
             builder.setSortBy(createIRI(sort, vf));
         }
+        if (!StringUtils.isEmpty(searchText)) {
+            builder.setSearchText(searchText);
+        }
         builder.setAscending(asc).setAccepted(accepted);
         try {
-            Stream<MergeRequest> stream = manager.getMergeRequests(builder.build()).stream();
+            List<MergeRequest> requests = manager.getMergeRequests(builder.build());
+            Stream<MergeRequest> stream = requests.stream();
             if (offset > 0) {
                 stream = stream.skip(offset);
             }
@@ -188,7 +197,7 @@ public class MergeRequestRest {
                     .map(request -> modelToJsonld(request.getModel()))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
-            return Response.ok(result).build();
+            return Response.ok(result).header("X-Total-Count", requests.size()).build();
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | SailException | MobiException ex) {

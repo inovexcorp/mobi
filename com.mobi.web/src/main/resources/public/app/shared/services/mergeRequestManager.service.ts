@@ -84,6 +84,9 @@ export class MergeRequestManagerService {
      */
     getRequests(config: MergeRequestPaginatedConfig): Observable<HttpResponse<JSONLDObject[]>> {
         let params = paginatedConfigToHttpParams(config);
+        if (get(config, 'searchText')) {
+            params = params.set('searchText', config.searchText);
+        }
         params = params.set('accepted', config.accepted);
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix, {params, observe: 'response'}))
             .pipe(catchError(handleError));
@@ -108,7 +111,7 @@ export class MergeRequestManagerService {
         }
         forEach(get(requestConfig, 'assignees', []), username => fd.append('assignees', username));
         if (has(requestConfig, 'removeSource')) {
-            fd.append('removeSource', '' + requestConfig.removeSource);
+            fd.append('removeSource', `${requestConfig.removeSource}`);
         }
         return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
             .pipe(catchError(handleError));

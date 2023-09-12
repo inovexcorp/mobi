@@ -93,6 +93,7 @@ describe('Merge Request Manager service', function() {
             expect(request.request.params.get('accepted').toString()).toEqual('' + this.config.accepted);
             expect(request.request.params.get('sort')).toBeNull();
             expect(request.request.params.get('ascending')).toBeNull();
+            expect(request.request.params.get('searchText')).toBeNull();
             request.flush([]);
         });
         it('with parameters', function() {
@@ -100,6 +101,7 @@ describe('Merge Request Manager service', function() {
                 field: 'sort',
                 asc: false
             };
+            this.config.searchText = 'test';
             service.getRequests(this.config)
                 .subscribe(response => {
                     expect(response.body).toEqual([]);
@@ -108,6 +110,7 @@ describe('Merge Request Manager service', function() {
             expect(request.request.params.get('accepted').toString()).toEqual('' + this.config.accepted);
             expect(request.request.params.get('sort').toString()).toEqual(this.config.sortOption.field);
             expect(request.request.params.get('ascending').toString()).toEqual('' + this.config.sortOption.asc);
+            expect(request.request.params.get('searchText').toString()).toEqual('test');
             request.flush([]);
         });
     });

@@ -61,35 +61,31 @@ import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConf
 export class MergeRequestsStateService {
     catalogId = '';
     /**
-     * `totalRecordSize` holds an integer for the total number of merge  request in the latest query on the
+     * An integer for the total number of merge requests in the latest search in the
+     * {@link merge-requests.MergeRequestListComponent}.
      * @type {number}
      */
-    totalRecordSize = 0;
+    totalRequestSize = 0;
     /**
-     * `currentRecordPage` holds an 0 based index indicating which page of merge request should be displayed
+     * A 0-based index indicating which page of merge request should be displayed
      * @type {number}
      */
-    currentRecordPage = 0;
+    currentRequestPage = 0;
     /**
-     * `recordLimit` holds an integer representing the maximum number of merge request to be shown in a page
+     * An integer representing the maximum number of merge request to be shown in a page
      * @type {number}
      */
-    recordLimit = 10;
+    requestLimit = 10;
     /**
-     * `recordSortOption` holds one of the options from the `sortOptions` in the
+     * One of the options from the `sortOptions` in the {@link shared.MergeRequestManagerService}.
      * @type {SortOption}
      */
-    recordSortOption: SortOption = undefined;
+    requestSortOption: SortOption = undefined;
     /**
-     * Indicates if the merge Request is accepted or open.
-     * @type {boolean}
+     * The search to filter the list of requests by.
+     * @type {string}
      */
-    requestStatus: boolean;
-    recordType: string;
-
-    constructor(private mm: MergeRequestManagerService, private cm: CatalogManagerService,
-        private um: UserManagerService, private om: OntologyManagerService, private toast: ToastService) {}
-
+    requestSearchText = '';
     /**
      * Contains an object representing the currently selected request.
      * @type {MergeRequest}
@@ -139,6 +135,7 @@ export class MergeRequestsStateService {
     /**
      * The map of entity IRIs to labels and names for the difference of the currently selected Merge Request, `selected`,
      * or the Merge Request being generated, `requestConfig`
+     * @type {EntityNames}
      */
     entityNames: EntityNames = {};
     /**
@@ -157,9 +154,12 @@ export class MergeRequestsStateService {
      * Whether the same branch has been selected as both the source and target when creating a Merge Request. It's
      * stored on the state to carry the validation from the {@link merge-requests.RequestBranchSelectComponent} to the
      * {@link merge-requests.CreateRequestComponent}.
-     * @type boolean
+     * @type {boolean}
      */
     sameBranch = false;
+
+    constructor(private mm: MergeRequestManagerService, private cm: CatalogManagerService,
+      private um: UserManagerService, private om: OntologyManagerService, private toast: ToastService) {}
 
     /**
      * Starts the Create Merge Request process by setting the appropriate state variables.
@@ -205,9 +205,10 @@ export class MergeRequestsStateService {
         this.clearDifference();
         this.sameBranch = false;
         this.acceptedFilter = false;
-        this.totalRecordSize = 0;
-        this.currentRecordPage = 1;
-        this.recordSortOption = undefined;
+        this.totalRequestSize = 0;
+        this.currentRequestPage = 0;
+        this.requestSortOption = undefined;
+        this.requestSearchText = '';
     }
     /**
      * Clears all variables associated with calculating the Difference of a MergeRequest
@@ -221,15 +222,15 @@ export class MergeRequestsStateService {
      * Sets `requests` using the {@link shared.MergeRequestManagerService} and retrieving any needed metadata about the
      * related VersionedRDFRecord and Branches.
      *
-     * @param {boolean} [accepted=false] Whether the list should be accepted Merge Requests or just open ones.
+     * @param {MergeRequestPaginatedConfig} paginatedConfig The parameters to be used for the paginated search
      */
-    setRequests( paginatedConfig: MergeRequestPaginatedConfig): void {
+    setRequests(paginatedConfig: MergeRequestPaginatedConfig): void {
         let recordsToRetrieve;
         this.mm.getRequests(paginatedConfig)
             .pipe(
                 switchMap((data: HttpResponse<JSONLDObject[]>) => {
                     this.requests = data.body.map(obj => this.getRequestObj(obj));
-                    this.totalRecordSize = this.requests.length;
+                    this.totalRequestSize = Number(data.headers.get('x-total-count')) || 0;
                     recordsToRetrieve = uniq(map(this.requests, 'recordIri'));
                     return forkJoin(recordsToRetrieve.map(iri => this.cm.getRecord(iri, this.catalogId)));
                 })
@@ -414,7 +415,7 @@ export class MergeRequestsStateService {
             getObjIrisFromDifference(difference.deletions as JSONLDObject[]));
 
         if (iris.length > 0) {
-            if (type === ONTOLOGYEDITOR + 'OntologyRecord') {
+            if (type === `${ONTOLOGYEDITOR}OntologyRecord`) {
                 return this.om.getOntologyEntityNames(recordId, sourceBranchId, commitId, false, false, iris)
                     .pipe(
                         switchMap(data => {

@@ -20,35 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-requests-page clearfitx h-100">
-    <div class="padding merge-reqqeuest-main-wrapper h-100 row">
-        <div class="merge-request-filters col-lg-10 d-flex offset-lg-1 h-100" *ngIf="!state.selected && !state.createRequest">
-            <div class="col-3 h-100">
-                <merge-request-filter
-                        [catalogId]="state.catalogId"
-                        [requestStatus]="state.acceptedFilter"
-                        (changeFilter)="changeFilter($event)">
-                </merge-request-filter>
-            </div>
-            <div class="col d-flex flex-column remove-min-width merge-request-content">
-                <div class="search-container d-flex justify-content-end align-items-center">
-                    <mat-form-field>
-                        <mat-select [(ngModel)]="state.recordSortOption" (ngModelChange)="changeSort()">
-                            <mat-option *ngFor="let option of ms.sortOptions" [value]="option">{{option.label}}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <button type="button" mat-raised-button color="primary" class="ml-2" (click)="state.startCreate()">New Request</button>
-                </div>
-                <merge-request-list [requests]="state.requests" class="h-100 overflow-auto"></merge-request-list>
-                <div class="merge-request-paginator">
-                    <mat-paginator [pageIndex]="state.currentRecordPage" [length]="state.totalRecordSize" [pageSize]="state.recordLimit" (page)="getRecordPage($event)"></mat-paginator>
-                </div>
-            </div>
+<div class="merge-requests-page clearfix container-fluid h-100">
+    <div class="merge-request-main-wrapper h-100 row">
+        <div class="h-100 offset-lg-1 col-lg-10 py-2">
+            <create-request *ngIf="state.createRequest" class="h-100" updateCommits="updateCommits(commits)"></create-request>
+            <merge-request-view *ngIf="state.selected" class="h-100"></merge-request-view>
+            <merge-request-list *ngIf="!state.selected && !state.createRequest" class="h-100"></merge-request-list>
         </div>
-        <div class="col-lg-10 d-flex offset-lg-1 h-100">
-            <create-request class="col-lg-12 h-100" *ngIf="state.createRequest" updateCommits="updateCommits(commits)"></create-request>
-            <merge-request-view *ngIf="state.selected" class="h-100 col-lg-12"></merge-request-view>
-        </div>
-
     </div>
 </div>

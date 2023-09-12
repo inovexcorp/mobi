@@ -60,10 +60,6 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontologies.dcterms._Thing;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
@@ -81,6 +77,10 @@ import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.After;
 import org.junit.Before;
@@ -279,6 +279,28 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void getMergeRequestsWithInvalidSortTest() {
         Response response = target().path("merge-requests").queryParam("sort", invalidIRIString).request().get();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getMergeRequestsWithSearch() {
+        Response response = target().path("merge-requests").queryParam("searchText", "test").request().get();
+        assertEquals(response.getStatus(), 200);
+        ArgumentCaptor<MergeRequestFilterParams> captor = ArgumentCaptor.forClass(MergeRequestFilterParams.class);
+        verify(requestManager).getMergeRequests(captor.capture());
+        MergeRequestFilterParams params = captor.getValue();
+        Optional<String> searchText = params.getSearchText();
+        assertTrue(searchText.isPresent());
+        assertEquals("test", searchText.get());
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject requestObj = result.getJSONObject(0);
+            assertFalse(requestObj.containsKey("@graph"));
+            assertTrue(requestObj.containsKey("@id"));
+            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 
     /* POST merge-requests */

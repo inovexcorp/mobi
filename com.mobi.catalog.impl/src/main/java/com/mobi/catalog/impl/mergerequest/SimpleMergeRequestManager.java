@@ -107,6 +107,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String SOURCE_COMMIT_BINDING = "sourceCommit";
     private static final String TARGET_COMMIT_BINDING = "targetCommit";
     private static final String REMOVE_SOURCE_BINDING = "removeSource";
+    private static final String SEARCH_TEXT_BINDING = "searchText";
+    private static final String SEARCHABLE_BINDING = "searchable";
     private static final String SORT_PRED_BINDING = "sortPred";
 
     static {
@@ -498,6 +500,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     .append(" = <").append(targetCommit).append("> && "));
             params.getRemoveSource().ifPresent(removeSource -> filters.append("?").append(REMOVE_SOURCE_BINDING)
                     .append(" = ").append(removeSource).append(" && "));
+            params.getSearchText().ifPresent(searchText -> {
+                filters.append("CONTAINS(LCASE(?").append(SEARCHABLE_BINDING).append("), ?")
+                        .append(SEARCH_TEXT_BINDING).append(") && ");
+            });
             filters.delete(filters.lastIndexOf(" && "), filters.length());
             filters.append(")");
         }
@@ -511,6 +517,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
 
         TupleQuery query = conn.prepareTupleQuery(queryBuilder.toString());
+        if (params.hasFilters()) {
+            params.getSearchText().ifPresent(searchText -> query.setBinding(SEARCH_TEXT_BINDING,
+                    vf.createLiteral(searchText.toLowerCase())));
+        }
         try (TupleQueryResult result = query.evaluate()) {
             List<MergeRequest> mrs = StreamSupport.stream(result.spliterator(), false)
                     .map(bindings -> Bindings.requiredResource(bindings, REQUEST_ID_BINDING))

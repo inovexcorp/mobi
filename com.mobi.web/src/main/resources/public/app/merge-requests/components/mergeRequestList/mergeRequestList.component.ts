@@ -20,19 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { PageEvent } from '@angular/material/paginator';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { MergeRequestFilterEvent } from '../../models/merge-request-filter-event';
+import { MergeRequestPaginatedConfig } from '../../../shared/models/mergeRequestPaginatedConfig.interface';
 
 /**
  * @class merge-requests.MergeRequestListComponent
  *
- * A component which creates a div containing a list of MergeRequests retrieved by the
- * {@link shared.MergeRequestsStateService}. The component houses the method for opening a modal for deleting merge
- * requests.
+ * A component which creates a div containing a list of MergeRequests from the {@link shared.MergeRequestsStateService}
+ * along with the {@link merge-requests.MergeRequestFilterComponent} and controls for search and sort the list. The
+ * component houses the method for opening a modal for deleting merge requests.
  */
 @Component({
     selector: 'merge-request-list',
@@ -40,16 +44,39 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
     styleUrls: ['./mergeRequestList.component.scss']
 })
 export class MergeRequestListComponent implements OnInit {
-    filterOptions = [
-        { value: false, label: 'Open' },
-        { value: true, label: 'Accepted' }
-    ];
-    @Input() requests: MergeRequest[];
+    searchText = '';
 
-    constructor(public state: MergeRequestsStateService, public dialog: MatDialog) {}
+    constructor(public state: MergeRequestsStateService, public ms: MergeRequestManagerService, 
+        private dialog: MatDialog) {}
 
     ngOnInit(): void {
-        this.state.setRequests({accepted: this.state.acceptedFilter});
+        this.state.requestSortOption = this.state.requestSortOption || this.ms.sortOptions[0];
+        this.searchText = this.state.requestSearchText;
+        this.loadRequests();
+    }
+    changeFilter(changeDetails: MergeRequestFilterEvent): void {
+        this.state.acceptedFilter = changeDetails.requestStatus;
+        this.state.currentRequestPage = 0;
+        this.loadRequests();
+    }
+    searchRequests(): void {
+        this.state.requestSearchText = this.searchText;
+        this.state.currentRequestPage = 0;
+        this.loadRequests();
+    }
+    changePage(event: PageEvent): void {
+      this.state.currentRequestPage = event.pageIndex;
+      this.loadRequests();
+    }
+    loadRequests(): void {
+        const paginatedConfig: MergeRequestPaginatedConfig = {
+            pageIndex: this.state.currentRequestPage,
+            limit: this.state.requestLimit,
+            sortOption: this.state.requestSortOption,
+            accepted: this.state.acceptedFilter,
+            searchText: this.state.requestSearchText
+        };
+        this.state.setRequests(paginatedConfig);
     }
     showDeleteOverlay(request: MergeRequest): void {
         this.dialog.open(ConfirmModalComponent, {
