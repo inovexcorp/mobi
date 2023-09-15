@@ -142,6 +142,10 @@ public class SimpleEncryptionService implements EncryptionService {
         }
     }
 
+    public StandardPBEStringEncryptor getEncryptor() {
+        return this.encryptor;
+    }
+
     @Override
     public boolean isEnabled() {
         return this.isEnabled;

@@ -24,6 +24,7 @@ package com.mobi.security.api;
  */
 
 import com.mobi.exception.MobiException;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.osgi.service.cm.Configuration;
 
 /**
@@ -52,6 +53,12 @@ public interface EncryptionService {
      * @return The decrypted version of the string that was provided.
      */
     String decrypt(String strToDecrypt, String configFieldToDecrypt, Configuration config) throws MobiException;
+
+    /**
+     *
+     * @return The encryptor used by the encryption service.
+     */
+    StandardPBEStringEncryptor getEncryptor();
 
     /**
      *
