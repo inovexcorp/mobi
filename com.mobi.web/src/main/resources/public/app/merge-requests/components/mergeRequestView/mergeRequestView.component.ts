@@ -128,7 +128,8 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
-                this.state.deleteRequest(this.state.selected);
+                this.state.deleteRequest(this.state.selected)
+                    .subscribe(() => {}, error => this.toast.createErrorToast(error));
             }
         });
     }

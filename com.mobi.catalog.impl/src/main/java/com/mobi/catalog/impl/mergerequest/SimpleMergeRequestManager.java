@@ -27,9 +27,12 @@ import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.builder.Conflict;
+import com.mobi.catalog.api.builder.UserCount;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -46,6 +49,8 @@ import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.catalog.impl.SimpleSearchResults;
+import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
@@ -88,6 +93,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 @Component(name = SimpleMergeRequestManager.COMPONENT_NAME)
 public class SimpleMergeRequestManager implements MergeRequestManager {
@@ -98,7 +104,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final int MAX_COMMENT_STRING_LENGTH = 1000000;
     private static final String GET_COMMENT_CHAINS;
     private static final String GET_MERGE_REQUESTS_QUERY;
+    private static final String GET_MERGE_REQUEST_CREATORS_QUERY;
+    private static final String GET_MERGE_REQUEST_RECORDS_QUERY;
     private static final String FILTERS = "%FILTERS%";
+    private static final String VALUES = "%VALUES%";
     private static final String REQUEST_ID_BINDING = "requestId";
     private static final String ASSIGNEE_BINDING = "assignee";
     private static final String ON_RECORD_BINDING = "onRecord";
@@ -109,7 +118,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String REMOVE_SOURCE_BINDING = "removeSource";
     private static final String SEARCH_TEXT_BINDING = "searchText";
     private static final String SEARCHABLE_BINDING = "searchable";
+    private static final String CREATOR_BINDING = "creator";
     private static final String SORT_PRED_BINDING = "sortPred";
+    private static final String NAME_BINDING = "name";
+    private static final String COUNT_BINDING = "count";
 
     static {
         try {
@@ -118,6 +130,12 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             );
             GET_MERGE_REQUESTS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
                     .getResourceAsStream("/get-merge-requests.rq")), StandardCharsets.UTF_8
+            );
+            GET_MERGE_REQUEST_CREATORS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
+                    .getResourceAsStream("/get-merge-request-creators.rq")), StandardCharsets.UTF_8
+            );
+            GET_MERGE_REQUEST_RECORDS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
+                    .getResourceAsStream("/get-merge-request-records.rq")), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -504,6 +522,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                 filters.append("CONTAINS(LCASE(?").append(SEARCHABLE_BINDING).append("), ?")
                         .append(SEARCH_TEXT_BINDING).append(") && ");
             });
+            params.getCreators().ifPresent(creator -> filters.append("?").append(CREATOR_BINDING).append(" IN (")
+                    .append(String.join(", ", creator.stream().map(iri -> "<" + iri + ">").toList())).append(") && "));
             filters.delete(filters.lastIndexOf(" && "), filters.length());
             filters.append(")");
         }
@@ -516,11 +536,14 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
         }
 
+        LOG.trace("Query String:\n" + queryBuilder);
         TupleQuery query = conn.prepareTupleQuery(queryBuilder.toString());
         if (params.hasFilters()) {
             params.getSearchText().ifPresent(searchText -> query.setBinding(SEARCH_TEXT_BINDING,
                     vf.createLiteral(searchText.toLowerCase())));
         }
+        LOG.trace("Query Plan:\n" + query);
+
         try (TupleQueryResult result = query.evaluate()) {
             List<MergeRequest> mrs = StreamSupport.stream(result.spliterator(), false)
                     .map(bindings -> Bindings.requiredResource(bindings, REQUEST_ID_BINDING))
@@ -538,15 +561,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     recordToMRMap.putIfAbsent(recordIri, new ArrayList<>());
                     recordToMRMap.get(recordIri).add(mr);
                 });
-                IRI actionId = vf.createIRI(Read.TYPE);
-                Map<String, Literal> subjectAttrs = Collections.singletonMap(XACML.SUBJECT_ID,
-                        vf.createLiteral(subjectId.stringValue()));
-                Map<String, Literal> actionAttrs = Collections.singletonMap(XACML.ACTION_ID,
-                        vf.createLiteral(actionId.stringValue()));
                 List<IRI> resourceIds = recordToMRMap.keySet().stream().map(iri -> (IRI) iri).toList();
-                Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
-                        List.of(actionId), actionAttrs);
-                Set<String> viewableRecords = pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
+                Set<String> viewableRecords = getViewableRecords(subjectId, resourceIds);
                 // Identify records that aren't in viewable list and remove the MergeRequests associated with them from
                 // the return list
                 resourceIds.stream()
@@ -555,6 +571,51 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             }
             return mrs;
         }
+    }
+
+    /**
+     * Given a specific User's IRI, identifies the list of Merge Request IRIs that they are actually allowed to view
+     * based on record view permissions.
+     *
+     * @param user The IRI of the User making a request
+     * @param conn A {@link RepositoryConnection} to use for look up
+     * @return A List of Merge Request IRI Resources that are viewable by the provided User
+     */
+    private List<Resource> getViewableMergeRequests(IRI user, RepositoryConnection conn) {
+        try (TupleQueryResult result = conn.prepareTupleQuery(GET_MERGE_REQUEST_RECORDS_QUERY).evaluate()) {
+            Map<Resource, List<Resource>> recordToMRMap = new HashMap<>();
+            result.forEach(bindings -> {
+                Resource requestIri = Bindings.requiredResource(bindings, REQUEST_ID_BINDING);
+                Resource recordIri = Bindings.requiredResource(bindings, ON_RECORD_BINDING);
+                recordToMRMap.putIfAbsent(recordIri, new ArrayList<>());
+                recordToMRMap.get(recordIri).add(requestIri);
+            });
+            List<IRI> recordIds = recordToMRMap.keySet().stream().map(iri -> (IRI) iri).toList();
+            Set<String> viewableRecords = getViewableRecords(user, recordIds);
+            recordIds.stream()
+                    .filter(iri -> !viewableRecords.contains(iri.stringValue()))
+                    .forEach(recordToMRMap::remove);
+            return recordToMRMap.values().stream().flatMap(List::stream).toList();
+        }
+    }
+
+    /**
+     * Using the XACML Subject IRI and the list of VersionedRDFRecord IRIs as resources, executed a XACMl request via
+     * the {@link PDP} and returns the list of record IRIs that are viewable by the subject.
+     *
+     * @param subjectId The IRI of the Subject of the XACML request
+     * @param recordIds The list of VersionedRDFRecord IRIs to be treated as XACML Resources in the request
+     * @return The list of Resources that had a PERMIT response from the {@link PDP}
+     */
+    private Set<String> getViewableRecords(IRI subjectId, List<IRI> recordIds) {
+        IRI actionId = vf.createIRI(Read.TYPE);
+        Map<String, Literal> subjectAttrs = Collections.singletonMap(XACML.SUBJECT_ID,
+                vf.createLiteral(subjectId.stringValue()));
+        Map<String, Literal> actionAttrs = Collections.singletonMap(XACML.ACTION_ID,
+                vf.createLiteral(actionId.stringValue()));
+        Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, recordIds, new HashMap<>(),
+                List.of(actionId), actionAttrs);
+        return pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
     }
 
     @Override
@@ -591,6 +652,67 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     public void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn) {
         thingManager.validateResource(requestId, mergeRequestFactory.getTypeIRI(), conn);
         thingManager.updateObject(request, conn);
+    }
+
+    @Override
+    public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getUserCounts(params, conn, null);
+        }
+    }
+
+    @Override
+    public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, Resource user) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getUserCounts(params, conn, user);
+        }
+    }
+
+    @Override
+    public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn) {
+        return getUserCounts(params, conn, null);
+    }
+
+    @Override
+    public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn,
+                                                         Resource user) {
+        return getUserCounts(params, conn, user);
+    }
+
+    private PaginatedSearchResults<UserCount> getUserCounts(PaginatedSearchParams params, RepositoryConnection conn,
+                                                            @Nullable Resource requestingUser) {
+        String query = GET_MERGE_REQUEST_CREATORS_QUERY;
+        if (requestingUser != null) {
+            List<Resource> viewableMRs = getViewableMergeRequests((IRI) requestingUser, conn);
+            query = query.replace(VALUES, "VALUES ?mr {"
+                    + String.join(" ", viewableMRs.stream().map(iri -> "<" + iri + ">").toList()) + "}");
+        } else {
+            query = query.replace(VALUES, "");
+        }
+        TupleQuery countQuery = conn.prepareTupleQuery(query);
+        params.getSearchText().ifPresent(searchText ->
+                countQuery.setBinding(SEARCH_TEXT_BINDING, vf.createLiteral(searchText)));
+        TupleQueryResult result = countQuery.evaluate();
+        if (!result.hasNext()) {
+            return SearchResults.emptyResults();
+        }
+        List<UserCount> counts = result.stream()
+                .map(bindings -> {
+                    Resource user = Bindings.requiredResource(bindings, CREATOR_BINDING);
+                    String name = Bindings.requiredLiteral(bindings, NAME_BINDING).stringValue();
+                    int count = Bindings.requiredLiteral(bindings, COUNT_BINDING).intValue();
+                    return new UserCount(user, name, count);
+                }).toList();
+        result.close();
+        int offset = params.getOffset();
+        int limit = params.getLimit().orElse(counts.size());
+        if (offset > counts.size()) {
+            throw new IllegalArgumentException("Offset exceeds total size");
+        }
+        int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
+
+        return new SimpleSearchResults<>(counts.stream().skip(offset).limit(limit).toList(), counts.size(), limit,
+                pageNumber);
     }
 
     private String getBranchTitle(Branch branch) {

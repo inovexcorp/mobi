@@ -85,6 +85,7 @@ import { IriSelectComponent } from './components/iriSelect/iriSelect.component';
 import { KeywordSelectComponent } from './components/keywordSelect/keywordSelect.component';
 import { LanguageSelectComponent } from './components/languageSelect/languageSelect.component';
 import { LimitDescriptionComponent } from './components/limitDescription/limitDescription.component';
+import { ListFiltersComponent } from './components/list-filters/list-filters.component';
 import { MarkdownEditorComponent } from './components/markdownEditor/markdownEditor.component';
 import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
@@ -201,6 +202,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
         BreadcrumbsComponent,
+        CircleButtonStackComponent,
         CommitCompiledResourceComponent,
         CommitHistoryTableComponent,
         CommitChangesDisplayComponent,
@@ -218,6 +220,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         KeywordSelectComponent,
         LanguageSelectComponent,
         LimitDescriptionComponent,
+        ListFiltersComponent,
         MarkdownEditorComponent,
         ResolveConflictsBlock,
         ResolveConflictsFormComponent,
@@ -240,8 +243,6 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         ShowPropertiesPipe,
         SplitIRIPipe,
         TrustedHtmlPipe,
-        CircleButtonStackComponent,
-        LanguageSelectComponent,
     ],
     exports: [
         BrowserAnimationsModule,
@@ -285,7 +286,9 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
         BreadcrumbsComponent,
+        CircleButtonStackComponent,
         CommitChangesDisplayComponent,
+        CommitCompiledResourceComponent,
         CommitDifferenceTabsetComponent,
         CommitHistoryTableComponent,
         CommitInfoOverlayComponent,
@@ -299,6 +302,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         KeywordSelectComponent,
         LanguageSelectComponent,
         LimitDescriptionComponent,
+        ListFiltersComponent,
         MarkdownEditorComponent,
         ResolveConflictsBlock,
         ResolveConflictsFormComponent,
@@ -320,8 +324,6 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         CopyClipboardDirective,
         DragFileDirective,
         FocusDirective,
-        CircleButtonStackComponent,
-        CommitCompiledResourceComponent
     ],
     providers: [
         CatalogManagerService,

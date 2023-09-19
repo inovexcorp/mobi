@@ -1,0 +1,52 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="list-filters w-100">
+  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let currentFilter of filters" [expanded]="!currentFilter.hide">
+      <mat-expansion-panel-header>
+          <mat-panel-title>
+              {{ currentFilter.title }}<span class="checkbox-count ml-1" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.numChecked > 0"> ({{currentFilter.numChecked}})</span>
+          </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="filter-options">
+          <search-bar *ngIf="currentFilter.searchable" class="w-100" [bindModel]="currentFilter.searchModel" (bindModelChange)="currentFilter.searchChanged($event)" (submitEvent)="currentFilter.searchSubmitted()"></search-bar>
+          <info-message *ngIf="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
+          <div [ngClass]="{pageable: currentFilter.pageable}">
+              <mat-radio-group *ngIf="currentFilter.type === FilterType.RADIO" class="filter-radio-items">
+                  <mat-radio-button *ngFor="let filterItem of currentFilter.filterItems"
+                                    [checked]="filterItem.checked"
+                                    [value]="filterItem.value"
+                                    (change)="filterItem.checked = true; currentFilter.filter(filterItem)">{{ currentFilter.getItemText(filterItem) }}
+                  </mat-radio-button>
+              </mat-radio-group>
+              <div *ngIf="currentFilter.type === FilterType.CHECKBOX" class="filter-checkbox-items">
+                  <div class="filter-option my-2" *ngFor="let filterItem of currentFilter.filterItems">
+                      <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
+                  </div>
+              </div>
+          </div>
+          <a class="paging-link" *ngIf="currentFilter.pageable && currentFilter.pagingData.hasNextPage" (click)="currentFilter.pagingData.pageIndex = currentFilter.pagingData.pageIndex + 1; currentFilter.nextPage()">
+              <i class="fa fa-fw fa-plus"></i><span>Load More</span>
+          </a>
+      </div>
+  </mat-expansion-panel>
+</div>

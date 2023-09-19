@@ -21,41 +21,59 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { forEach } from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Observable, Subscription } from 'rxjs';
 
-import { MergeRequestFilter } from '../../models/merge-request-filter';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { MergeRequestFilterEvent } from '../../models/merge-request-filter-event';
 import { getBeautifulIRI } from '../../../shared/utility';
+import { UserCount } from '../../../shared/models/user-count.interface';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { FilterType, ListFilter } from '../../../shared/models/list-filter.interface';
+import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 
+/**
+ * @class merge-requests.MergeRequestFilterComponent
+ * 
+ * Creates a div with a {@link shared.ListFiltersComponent} populated with filters specifically for the
+ * {@link merge-requests.MergeRequestListComponent}. Includes filters for the request status and the creators. Supports
+ * an Observable Input that will trigger a reset of the filters when a value is provided.
+ * 
+ * @param {Observable<void>} updateFilters An Observable that will trigger each of the filters' onInit function
+ * @param {Function} changeFilter A function to call whenever a value of a filter changes. Expects a
+ *  {@link MergeRequestFilterEvent} argument 
+ */
 @Component({
   selector: 'merge-request-filter',
   templateUrl: './merge-request-filter.component.html',
   styleUrls: ['./merge-request-filter.component.scss']
 })
 export class MergeRequestFilterComponent implements OnInit {
-  filters: MergeRequestFilter[];
+  updateFiltersSubscription: Subscription;
+  filters: ListFilter[];
   requestStatusOptions = [
     { value: false, label: 'Open' },
     { value: true, label: 'Accepted' }
   ];
-  @Input() catalogId: string;
-  @Input() requestStatus: boolean;
+  @Input() updateFilters: Observable<void>;
   @Output() changeFilter = new EventEmitter<MergeRequestFilterEvent>();
-  statusValue: any;
 
-  constructor(public state: MergeRequestsStateService) {}
+  constructor(private _state: MergeRequestsStateService, private _mm: MergeRequestManagerService, 
+    private _toast: ToastService) {}
 
   ngOnInit(): void {
     const componentContext = this;
     const statusOptionMap = {};
-    const statusTypeFilter: MergeRequestFilter = {
+    const statusTypeFilter: ListFilter = {
       title: 'Request Status',
+      type: FilterType.RADIO,
       hide: false,
       pageable: false,
       searchable: false,
       filterItems: [],
+      numChecked: 0,
       onInit: function() {
         this.setFilterItems();
       },
@@ -63,15 +81,11 @@ export class MergeRequestFilterComponent implements OnInit {
         return getBeautifulIRI(filterItem.value);
       },
       setFilterItems: function() {
-        this.filterItems = componentContext.requestStatusOptions.map( item => {
+        this.filterItems = componentContext.requestStatusOptions.map(item => {
           statusOptionMap[item.label] = item.value;
-          //select default value
-          if (componentContext.requestStatus === item.value) {
-            componentContext.statusValue = item.label;
-          }
           return {
             value: item.label,
-            checked: item.value === componentContext.requestStatus
+            checked: item.value === componentContext._state.acceptedFilter
           };
         });
       },
@@ -79,30 +93,100 @@ export class MergeRequestFilterComponent implements OnInit {
         const value = statusOptionMap[filterItem.value];
 
         if (filterItem.checked) {
-          forEach(this.filterItems, typeFilter => {
+          this.filterItems.forEach(typeFilter => {
             if (typeFilter.value !== filterItem.value) {
               typeFilter.checked = false;
             }
           });
           componentContext.changeFilter.emit({
-            requestStatus: value
+            requestStatus: value,
+            creators: componentContext._state.creators
           });
         }
       },
-      setFilter: function (value:string)  {
-        const obj = {
-          value: value ,
-          checked: true
+    };
+    const creatorFilter: SearchableListFilter = {
+      title: 'Creators',
+      type: FilterType.CHECKBOX,
+      hide: false,
+      pageable: true,
+      searchable: true,
+      filterItems: [],
+      numChecked: 0,
+      pagingData: {
+        limit: 10,
+        totalSize: 0,
+        pageIndex: 0,
+        hasNextPage: false
+      },
+      rawFilterItems: [],
+      searchModel: componentContext._state.creatorSearchText,
+      onInit: function(): void {
+        this.numChecked = componentContext._state.creators.length;
+        this.nextPage();
+      },
+      getItemText: function(filterItem: FilterItem): string {
+        const userCount = filterItem.value as UserCount;
+        return `${userCount.name} (${userCount.count})`;
+      },
+      setFilterItems: function(): void {
+        this.filterItems = this.rawFilterItems.map(userCount => ({
+          value: userCount,
+          checked: componentContext._state.creators.findIndex(iri => iri === (userCount as UserCount).user) >= 0
+        }));
+      },
+      filter: function(): void {
+        const hiddenCreators = componentContext._state.creators.filter(creator => 
+          this.filterItems.findIndex(item => (item.value as UserCount).user === creator) < 0);
+        const checkedCreatorItems = this.filterItems.filter(item => item.checked);
+        const creators = checkedCreatorItems
+          .map(currentFilterItem => (currentFilterItem.value as UserCount).user)
+          .concat(hiddenCreators);
+        this.numChecked = creators.length;
+        componentContext.changeFilter.emit({
+          requestStatus: componentContext._state.acceptedFilter,
+          creators
+        });
+      },
+      searchChanged: function(value: string): void {
+        componentContext._state.creatorSearchText = value;
+      },
+      searchSubmitted: function(): void {
+        this.pagingData.totalSize = 0;
+        this.pagingData.pageIndex = 0;
+        this.pagingData.hasNextPage = false;
+        this.nextPage();
+      },
+      nextPage: function(): void {
+        const filterInstance: SearchableListFilter = this;
+        const pagingData = filterInstance.pagingData;
+        const paginatedConfig = {
+            searchText: componentContext._state.creatorSearchText,
+            pageIndex: pagingData.pageIndex,
+            limit: pagingData.limit,
         };
-        this.filter(obj);
-      }
+        componentContext._mm.getCreators(paginatedConfig)
+          .subscribe((response: HttpResponse<UserCount[]>) => {
+            if (pagingData.pageIndex === 0) {
+              filterInstance.rawFilterItems = response.body;
+            } else {
+              filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
+            }
+            filterInstance.setFilterItems();
+            pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
+            pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
+          }, error => componentContext._toast.createErrorToast(error));
+      },
     };
 
-    this.filters = [statusTypeFilter];
-    forEach(this.filters, filter => {
-      if ('onInit' in filter) {
+    this.filters = [statusTypeFilter, creatorFilter];
+    this.filters.forEach(filter => {
+      filter.onInit();
+    });
+    this.updateFiltersSubscription = this.updateFilters.subscribe(() => {
+      this.filters.forEach(filter => {
         filter.onInit();
-      }
+      });
     });
   }
 }

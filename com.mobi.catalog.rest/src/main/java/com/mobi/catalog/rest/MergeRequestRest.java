@@ -25,13 +25,21 @@ package com.mobi.catalog.rest;
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createIRI;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
+import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.builder.UserCount;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -54,19 +62,20 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.sail.SailException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -76,7 +85,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -100,6 +108,7 @@ import javax.ws.rs.core.UriInfo;
 @Path("/merge-requests")
 public class MergeRequestRest {
     private final ValueFactory vf = new ValidatingValueFactory();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private MergeRequestManager manager;
     private CatalogConfigProvider configProvider;
@@ -174,7 +183,9 @@ public class MergeRequestRest {
             @Parameter(description = "Optional limit for the results")
             @QueryParam("limit") int limit,
             @Parameter(description = "Optional search text to filter the list by")
-            @QueryParam("searchText") String searchText) {
+            @QueryParam("searchText") String searchText,
+            @Parameter(description = "Optional creator user IRI to filter the list by")
+            @QueryParam("creators") List<String> creators) {
         User activeUser = getActiveUser(servletRequest, engineManager);
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setRequestingUser(activeUser);
         if (!StringUtils.isEmpty(sort)) {
@@ -182,6 +193,9 @@ public class MergeRequestRest {
         }
         if (!StringUtils.isEmpty(searchText)) {
             builder.setSearchText(searchText);
+        }
+        if (creators != null && creators.size() > 0) {
+            builder.setCreators(creators.stream().map(vf::createIRI).collect(Collectors.toList()));
         }
         builder.setAscending(asc).setAccepted(accepted);
         try {
@@ -193,10 +207,10 @@ public class MergeRequestRest {
             if (limit > 0) {
                 stream = stream.limit(limit);
             }
-            JSONArray result = JSONArray.fromObject(stream
-                    .map(request -> modelToJsonld(request.getModel()))
-                    .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toList()));
+            ArrayNode result = mapper.createArrayNode();
+            stream.map(request -> modelToJsonld(request.getModel()))
+                    .map(RestUtils::getObjectNodeFromJsonld)
+                    .forEach(result::add);
             return Response.ok(result).header("X-Total-Count", requests.size()).build();
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
@@ -278,13 +292,13 @@ public class MergeRequestRest {
         User activeUser = getActiveUser(servletRequest, engineManager);
         MergeRequestConfig.Builder builder = new MergeRequestConfig.Builder(title, createIRI(recordId, vf),
                 createIRI(sourceBranchId, vf), createIRI(targetBranchId, vf), activeUser, removeSource);
-        if (!StringUtils.isBlank(description)) {
+        if (StringUtils.isNotEmpty(StringUtils.stripToEmpty(description))) {
             builder.description(description);
         }
         if (assignees != null ) {
             assignees.forEach(username -> {
                 Optional<User> assignee = engineManager.retrieveUser(username);
-                if (!assignee.isPresent()) {
+                if (assignee.isEmpty()) {
                     throw ErrorUtils.sendError("User " + username + " does not exist", Response.Status.BAD_REQUEST);
                 }
                 builder.addAssignee(assignee.get());
@@ -301,6 +315,68 @@ public class MergeRequestRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Retrieves a list of all the Merge Request creators with counts of how many Merge Requests they've made and their
+     * display name. Parameters can be passed to control paging.
+     *
+     * @param uriInfo Information about the request URI.
+     * @param searchText Optional text to search the list with.
+     * @param offset Optional offset for the page of results.
+     * @param limit Optional limit for the page of results.
+     * @return List of User IRIs with their names and their Merge Request counts.
+     */
+    @GET
+    @Path("creators")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "merge-requests",
+            summary = "Retrieves the list of creators of the MergeRequests in the application with their counts",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with JSON containing the User count details",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(
+                                    uniqueItems = true, schema = @Schema(example = "{\"user\": "
+                                    + "\"http://test.com/some-uri\", \"name\": \"Joe\", \"count\": 5}")))),
+                    @ApiResponse(responseCode = "400",
+                            description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500",
+                            description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getCreators(@Context HttpServletRequest servletRequest, @Context UriInfo uriInfo,
+                                @Parameter(description = "String used to filter out creators")
+                                @QueryParam("searchText") String searchText,
+                                @Parameter(description = "Offset for the page")
+                                @QueryParam("offset") int offset,
+                                @Parameter(description = "Number of creators to return in one page")
+                                @QueryParam("limit") int limit) {
+        try {
+            LinksUtils.validateParams(limit, offset);
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
+            if (offset > 0) {
+                builder.offset(offset);
+            }
+            if (limit > 0) {
+                builder.limit(limit);
+            }
+            if (StringUtils.isNotEmpty(StringUtils.stripToEmpty(searchText))) {
+                builder.searchText(searchText);
+            }
+            User activeUser = getActiveUser(servletRequest, engineManager);
+            PaginatedSearchResults<UserCount> counts = manager.getCreators(builder.build(), activeUser.getResource());
+            ArrayNode arr = serializeUserCount(counts);
+            return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
+                    ? counts.getTotalSize() : limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | SailException | MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -370,7 +446,8 @@ public class MergeRequestRest {
     public Response updateMergeRequest(
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(description = "String representing the JSONLD representation of the updated MergeRequest", required = true)
+            @Parameter(description = "String representing the JSONLD representation of the updated MergeRequest",
+                    required = true)
                     String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
@@ -492,12 +569,17 @@ public class MergeRequestRest {
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
-            List<List<JSONObject>> commentsJson = manager.getComments(requestIdResource).stream().map(
-                    commentChain -> commentChain.stream()
-                            .map(comment -> getObjectFromJsonld(groupedModelToString(comment.getModel(),
-                                    getRDFFormat("jsonld"))))
-                            .collect(Collectors.toList())).collect(Collectors.toList());
-            return Response.ok(commentsJson).build();
+            ArrayNode result = mapper.createArrayNode();
+            manager.getComments(requestIdResource)
+                    .forEach(comments -> {
+                        ArrayNode commentArr = mapper.createArrayNode();
+                        comments.stream()
+                                .map(comment -> getObjectNodeFromJsonld(
+                                        groupedModelToString(comment.getModel(), RDFFormat.JSONLD)))
+                                .forEach(commentArr::add);
+                        result.add(commentArr);
+                    });
+            return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -729,5 +811,18 @@ public class MergeRequestRest {
         Model commentModel = jsonldToModel(jsonComment);
         return commentFactory.getExisting(commentId, commentModel).orElseThrow(() ->
                 ErrorUtils.sendError("Comment IDs must match", Response.Status.BAD_REQUEST));
+    }
+
+    private ArrayNode serializeUserCount(PaginatedSearchResults<UserCount> userCounts) {
+        ArrayNode userArrayNode = mapper.createArrayNode();
+
+        for (UserCount userCount: userCounts.getPage()) {
+            ObjectNode userObject = mapper.createObjectNode();
+            userObject.put("user", userCount.getUser().stringValue());
+            userObject.put("name", userCount.getName());
+            userObject.put("count", userCount.getCount());
+            userArrayNode.add(userObject);
+        }
+        return userArrayNode;
     }
 }

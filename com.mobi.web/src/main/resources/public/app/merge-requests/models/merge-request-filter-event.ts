@@ -20,7 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+/**
+ * Object representing a change in the filters for the {@link merge-requests.MergeRequestListComponent}.
+ */
 export interface MergeRequestFilterEvent {
-    requestType?: string;
-    requestStatus: boolean
+    requestStatus?: boolean,
+    creators?: string[]
 }

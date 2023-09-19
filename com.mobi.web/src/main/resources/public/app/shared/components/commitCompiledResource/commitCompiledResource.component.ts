@@ -63,7 +63,7 @@ export class CommitCompiledResourceComponent implements OnChanges {
     @Input() triples?: JSONLDObject;
     @Input() changes: Difference;
 
-    isBlankNodeId = isBlankNodeId;
+    readonly isBlankNodeId = isBlankNodeId;
     resource: {[key: string]: (JSONLDIdDisplay | JSONLDValueDisplay)[] } = undefined;
     types: {type: string, add?: boolean, del?: boolean}[] = [];
 

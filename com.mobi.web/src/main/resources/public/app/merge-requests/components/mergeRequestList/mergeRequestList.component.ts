@@ -23,6 +23,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
+import { Subject } from 'rxjs';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
@@ -30,13 +31,14 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestFilterEvent } from '../../models/merge-request-filter-event';
 import { MergeRequestPaginatedConfig } from '../../../shared/models/mergeRequestPaginatedConfig.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class merge-requests.MergeRequestListComponent
  *
  * A component which creates a div containing a list of MergeRequests from the {@link shared.MergeRequestsStateService}
- * along with the {@link merge-requests.MergeRequestFilterComponent} and controls for search and sort the list. The
- * component houses the method for opening a modal for deleting merge requests.
+ * along with the {@link merge-requests.MergeRequestFilterComponent} and controls for searching and sorting the list.
+ * The component houses a method for opening a modal for deleting merge requests.
  */
 @Component({
     selector: 'merge-request-list',
@@ -45,9 +47,10 @@ import { MergeRequestPaginatedConfig } from '../../../shared/models/mergeRequest
 })
 export class MergeRequestListComponent implements OnInit {
     searchText = '';
+    updateFiltersSubject: Subject<void> = new Subject<void>();
 
     constructor(public state: MergeRequestsStateService, public ms: MergeRequestManagerService, 
-        private dialog: MatDialog) {}
+        private dialog: MatDialog, private toast: ToastService) {}
 
     ngOnInit(): void {
         this.state.requestSortOption = this.state.requestSortOption || this.ms.sortOptions[0];
@@ -56,6 +59,7 @@ export class MergeRequestListComponent implements OnInit {
     }
     changeFilter(changeDetails: MergeRequestFilterEvent): void {
         this.state.acceptedFilter = changeDetails.requestStatus;
+        this.state.creators = changeDetails.creators;
         this.state.currentRequestPage = 0;
         this.loadRequests();
     }
@@ -74,6 +78,7 @@ export class MergeRequestListComponent implements OnInit {
             limit: this.state.requestLimit,
             sortOption: this.state.requestSortOption,
             accepted: this.state.acceptedFilter,
+            creators: this.state.creators,
             searchText: this.state.requestSearchText
         };
         this.state.setRequests(paginatedConfig);
@@ -85,7 +90,10 @@ export class MergeRequestListComponent implements OnInit {
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
-                this.state.deleteRequest(request);
+                this.state.deleteRequest(request).subscribe(() => {
+                    this.loadRequests();
+                    this.updateFiltersSubject.next();
+                }, error => this.toast.createErrorToast(error));
             }
         });
     }

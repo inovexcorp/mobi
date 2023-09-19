@@ -34,6 +34,8 @@ import { MergeRequestConfig } from '../models/mergeRequestConfig.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 import { SortOption } from '../models/sortOption.interface';
 import { createHttpParams, handleError, paginatedConfigToHttpParams } from '../utility';
+import { UserCount } from '../models/user-count.interface';
+import { PaginatedConfig } from '../models/paginatedConfig.interface';
 
 /**
  * @class shared.MergeRequestManagerService
@@ -84,10 +86,15 @@ export class MergeRequestManagerService {
      */
     getRequests(config: MergeRequestPaginatedConfig): Observable<HttpResponse<JSONLDObject[]>> {
         let params = paginatedConfigToHttpParams(config);
-        if (get(config, 'searchText')) {
+        if (config.searchText) {
             params = params.set('searchText', config.searchText);
         }
         params = params.set('accepted', config.accepted);
+        if (config.creators && config.creators.length) {
+            config.creators.forEach(creator => {
+                params = params.append('creators', creator);
+            });
+        }
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix, {params, observe: 'response'}))
             .pipe(catchError(handleError));
     }
@@ -226,6 +233,25 @@ export class MergeRequestManagerService {
         return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(requestId)}`, jsonld, 
           { responseType: 'text' }))
            .pipe(catchError(handleError));
+    }
+    /**
+     * Retrieves the list of creators of merge requests throughout the application using the provided pagination
+     * parameters. Results include the user's IRI, display name, and MR count and are ordered by display name.
+     * 
+     * @param {PaginatedConfig} paginatedConfig A configuration object for paginated requests. Handles `searchText` on
+     * top of the default supported params
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @returns {Observable<HttpResponse<UserCount[]>>} An Observable that either resolves with the full HttpResponse
+     * of an array of {@link UserCount} objects or is rejected with a error message
+     */
+    getCreators(paginatedConfig: PaginatedConfig, isTracked = false): Observable<HttpResponse<UserCount[]>> {
+        let params = paginatedConfigToHttpParams(paginatedConfig);
+        if (get(paginatedConfig, 'searchText')) {
+            params = params.set('searchText', paginatedConfig.searchText);
+        }
+        const url = `${this.prefix}/creators`;
+        const request =  this.http.get<UserCount[]>(url, { params, observe: 'response' });  
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
     
     /**

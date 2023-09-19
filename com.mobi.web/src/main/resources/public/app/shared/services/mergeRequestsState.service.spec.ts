@@ -172,6 +172,8 @@ describe('Merge Requests State service', function() {
         expect(service.currentRequestPage).toEqual(0);
         expect(service.requestSortOption).toBeUndefined();
         expect(service.requestSearchText).toEqual('');
+        expect(service.creatorSearchText).toEqual('');
+        expect(service.creators).toEqual([]);
     });
     it('should clear all difference related variables', function() {
         service.difference = new Difference();
@@ -677,38 +679,22 @@ describe('Merge Requests State service', function() {
         });
         it('unless an error occurs', fakeAsync(function() {
             mergeRequestManagerStub.deleteRequest.and.returnValue(throwError(error));
-            service.deleteRequest(requestObj);
+            service.deleteRequest(requestObj).subscribe(() => fail('Observable should have failed'), result => {
+              expect(result).toEqual(error);
+            });
             tick();
             expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
             expect(service.selected).toEqual(requestObj);
             expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
-            expect(service.setRequests).not.toHaveBeenCalled();
-            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
         }));
-        describe('successfully', function() {
-            beforeEach(function() {
-                mergeRequestManagerStub.deleteRequest.and.returnValue(of(null));
-            });
-            it('with a selected request', fakeAsync(function() {
-                service.deleteRequest(requestObj);
-                tick();
-                expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
-                expect(service.selected).toBeUndefined();
-                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(service.setRequests).not.toHaveBeenCalled();
-                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-            }));
-            it('without a selected request', fakeAsync(function() {
-                service.selected = undefined;
-                service.deleteRequest(requestObj);
-                tick();
-                expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
-                expect(service.selected).toBeUndefined();
-                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(service.setRequests).toHaveBeenCalledWith(openRequest);
-                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-            }));
-        });
+        it('successfully', fakeAsync(function() {
+            mergeRequestManagerStub.deleteRequest.and.returnValue(of(null));
+            service.deleteRequest(requestObj).subscribe(() => {}, () => fail('Observable should have succeeded'));
+            tick();
+            expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
+            expect(service.selected).toBeUndefined();
+            expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+        }));
     });
     it('should get the MergeRequest object from a JSON-LD object', function() {
         userManagerStub.users = [
