@@ -60,7 +60,7 @@ export class PropertyValuesComponent implements OnInit, OnChanges {
     @Output() edit = new EventEmitter<{property: string, index: number}>();
     @Output() remove = new EventEmitter<{iri: string, index: number}>();
 
-    isBlankNodeId = isBlankNodeId;
+    readonly isBlankNodeId = isBlankNodeId;
     isHighlightedProp = false;
     isEditSet = false;
     isRemoveSet = false;

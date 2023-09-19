@@ -48,6 +48,7 @@ import { SearchBarComponent } from '../../../shared/components/searchBar/searchB
 import { MergeRequestFilterComponent } from '../merge-request-filter/merge-request-filter.component';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { SortOption } from '../../../shared/models/sortOption.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 import { MergeRequestListComponent } from './mergeRequestList.component';
 
 describe('Merge Request List component', function() {
@@ -111,6 +112,7 @@ describe('Merge Request List component', function() {
             providers: [
                 MockProvider(MergeRequestsStateService),
                 MockProvider(MergeRequestManagerService),
+                MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -159,8 +161,9 @@ describe('Merge Request List component', function() {
         it('should handle changing a filter', function() {
             spyOn(component, 'loadRequests');
             mergeRequestsStateStub.currentRequestPage = 1;
-            component.changeFilter({requestStatus: true});
+            component.changeFilter({ requestStatus: true, creators: ['A', 'B'] });
             expect(mergeRequestsStateStub.acceptedFilter).toBeTrue();
+            expect(mergeRequestsStateStub.creators).toEqual(['A', 'B']);
             expect(mergeRequestsStateStub.currentRequestPage).toEqual(0);
             expect(component.loadRequests).toHaveBeenCalledWith();
         });
@@ -189,13 +192,19 @@ describe('Merge Request List component', function() {
                 sortOption: mergeRequestsStateStub.requestSortOption,
                 accepted: mergeRequestsStateStub.acceptedFilter,
                 searchText: mergeRequestsStateStub.requestSearchText,
+                creators: mergeRequestsStateStub.creators
             });
         });
         it('should show the delete confirmation overlay', fakeAsync(function() {
+            spyOn(component, 'loadRequests');
+            spyOn(component.updateFiltersSubject, 'next');
+            mergeRequestsStateStub.deleteRequest.and.returnValue(of(null));
             component.showDeleteOverlay(request);
             tick();
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to delete')}});
             expect(mergeRequestsStateStub.deleteRequest).toHaveBeenCalledWith(request);
+            expect(component.loadRequests).toHaveBeenCalledWith();
+            expect(component.updateFiltersSubject.next).toHaveBeenCalledWith();
         }));
     });
     describe('contains the correct html', function() {

@@ -5,6 +5,7 @@ SELECT DISTINCT ?requestId
 WHERE {
     ?requestId a mq:MergeRequest .
     OPTIONAL { ?requestId dc:title|dc:description ?searchable }
+    OPTIONAL { ?requestId dc:creator ?creator }
     OPTIONAL { ?requestId mq:onRecord ?onRecord }
     OPTIONAL { ?requestId mq:sourceBranch ?sourceBranch }
     OPTIONAL { ?requestId mq:assignee ?assignee }

@@ -20,47 +20,81 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRadioModule } from '@angular/material/radio';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { Subject, of } from 'rxjs';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import {
+  cleanStylesFromDOM
+} from '../../../../../public/test/ts/Shared';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
+import { ToastService } from '../../../shared/services/toast.service';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { UserCount } from '../../../shared/models/user-count.interface';
+import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { MergeRequestFilterComponent } from './merge-request-filter.component';
 
 describe('MergeRequestFilterComponent', () => {
   let component: MergeRequestFilterComponent;
+  let element: DebugElement;
   let fixture: ComponentFixture<MergeRequestFilterComponent>;
+  let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
+  let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
  
+  const adminCount: UserCount = {
+    user: 'admin',
+    name: 'admin',
+    count: 1
+  };
+  const batmanCount: UserCount = {
+    user: 'batman',
+    name: 'Bruce',
+    count: 5
+  };
+  const updateFiltersSubject: Subject<void> = new Subject<void>();
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [
-          MergeRequestFilterComponent,
-          MockComponent(InfoMessageComponent)
-      ],
-      imports: [
-        NoopAnimationsModule,
-        FormsModule,
-        ReactiveFormsModule,
-        MatExpansionModule,
-        MatCheckboxModule,
-        MatRadioModule
+        MergeRequestFilterComponent,
+        MockComponent(ListFiltersComponent)
       ],
       providers: [
         MockProvider(MergeRequestsStateService),
+        MockProvider(MergeRequestManagerService),
+        MockProvider(ToastService),
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MergeRequestFilterComponent);
     component = fixture.componentInstance;
+    element = fixture.debugElement;
+    component.updateFilters = updateFiltersSubject.asObservable();
+    mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
+    mergeRequestsStateStub.acceptedFilter = false;
+    mergeRequestsStateStub.creators = [adminCount.user];
+    mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
+    mergeRequestManagerStub.getCreators.and.returnValue(of(new HttpResponse<UserCount[]>({
+      body: [adminCount, batmanCount],
+      headers: new HttpHeaders({ 'x-total-count': '10' })
+    })));
     fixture.detectChanges();
   });
 
-  describe('It initializes correctly', () => {
+  afterEach(() => {
+    cleanStylesFromDOM();
+    component = null;
+    element = null;
+    fixture = null;
+    mergeRequestsStateStub = null;
+    mergeRequestManagerStub = null;
+});
+
+  describe('initializes correctly', () => {
     beforeEach(() => {
       component.ngOnInit();
     });
@@ -69,39 +103,114 @@ describe('MergeRequestFilterComponent', () => {
     });
     it('with request status filter', () => {
       const mergeRequestFilter = component.filters[0];
+      expect(mergeRequestFilter).toBeTruthy();
       const expectedFilterItems = [
-        { checked: false, value: 'Open' },
+        { checked: true, value: 'Open' },
         { checked: false, value: 'Accepted' }
       ];
       expect(mergeRequestFilter.title).toEqual('Request Status');
       expect(mergeRequestFilter.filterItems).toEqual(expectedFilterItems);
     });
+    it('with creator filter', fakeAsync(() => {
+      tick();
+      const creatorFilter = component.filters[1] as SearchableListFilter;
+      expect(creatorFilter).toBeTruthy();
+      const expectedFilterItems = [
+        { checked: true, value: adminCount },
+        { checked: false, value: batmanCount }
+      ];
+      expect(creatorFilter.title).toEqual('Creators');
+      expect(creatorFilter.rawFilterItems).toEqual([adminCount, batmanCount]);
+      expect(creatorFilter.filterItems).toEqual(expectedFilterItems);
+      expect(creatorFilter.numChecked).toEqual(1);
+      expect(creatorFilter.pagingData.totalSize).toEqual(10);
+      expect(creatorFilter.pagingData.hasNextPage).toBeTrue();
+      expect(mergeRequestManagerStub.getCreators).toHaveBeenCalledWith({
+        searchText: mergeRequestsStateStub.creatorSearchText,
+        pageIndex: creatorFilter.pagingData.pageIndex,
+        limit: creatorFilter.pagingData.limit
+      });
+    }));
   });
   describe('filter methods', () => {
     beforeEach(function () {
       component.ngOnInit();
-      this.openStatus = { value: 'Open', checked: true };
-      this.acceptedStatus = { value: 'Accepted', checked: false };
-      this.statusFilter = component.filters[0];
-      this.statusFilter.filterItems = [this.openStatus, this.acceptedStatus];
       spyOn(component.changeFilter, 'emit');
     });
-    describe('requestStatus should filter records', function() {
-      it('if the open status filter has been checked', function() {
-        this.statusFilter.setFilter('Open');
-        expect(this.acceptedStatus.checked).toEqual(false);
+    describe('should filter requests based on status', () => {
+      it('if the open status filter has been checked', () => {
+        const statusFilter = component.filters[0];
+        expect(statusFilter).toBeTruthy();
+        const openStatus = statusFilter.filterItems[0];
+        expect(openStatus).toBeTruthy();
+        const acceptedStatus = statusFilter.filterItems[1];
+        expect(acceptedStatus).toBeTruthy();
+        statusFilter.filter(openStatus);
+        expect(acceptedStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: this.acceptedStatus.checked
+          requestStatus: acceptedStatus.checked,
+          creators: mergeRequestsStateStub.creators
         });
       });
-      it('if the accepted status has been checked', function() {
-        this.acceptedStatus.checked = true;
-        this.statusFilter.setFilter('Accepted');
-        expect(this.openStatus.checked).toEqual(false);
+      it('if the accepted status has been checked', () => {
+        const statusFilter = component.filters[0];
+        expect(statusFilter).toBeTruthy();
+        const openStatus = statusFilter.filterItems[0];
+        expect(openStatus).toBeTruthy();
+        const acceptedStatus = statusFilter.filterItems[1];
+        expect(acceptedStatus).toBeTruthy();
+        acceptedStatus.checked = true;
+        statusFilter.filter(acceptedStatus);
+        expect(openStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: this.acceptedStatus.checked
+          requestStatus: acceptedStatus.checked,
+          creators: mergeRequestsStateStub.creators
         });
       });
+    });
+    describe('should filter requests based on creators', () => {
+      describe('if all selected creators are visible', () => {
+        it('and all are checked', () => {
+          const creatorFilter = component.filters[1];
+          expect(creatorFilter).toBeTruthy();
+          creatorFilter.filterItems.forEach(item => item.checked = true);
+          creatorFilter.filter(null);
+          expect(creatorFilter.numChecked).toEqual(creatorFilter.filterItems.length);
+          expect(component.changeFilter.emit).toHaveBeenCalledWith({
+            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            creators: [adminCount.user, batmanCount.user]
+          });
+        });
+        it('and some are checked', () => {
+          const creatorFilter = component.filters[1];
+          expect(creatorFilter).toBeTruthy();
+          creatorFilter.filter(null);
+          expect(creatorFilter.numChecked).toEqual(1);
+          expect(component.changeFilter.emit).toHaveBeenCalledWith({
+            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            creators: [adminCount.user]
+          });
+        });
+      });
+      it('if not all selected creators are visible', () => {
+        mergeRequestsStateStub.creators = [adminCount.user, 'superman'];
+        const creatorFilter = component.filters[1];
+        expect(creatorFilter).toBeTruthy();
+        creatorFilter.filter(null);
+        expect(creatorFilter.numChecked).toEqual(2);
+        expect(component.changeFilter.emit).toHaveBeenCalledWith({
+          requestStatus: mergeRequestsStateStub.acceptedFilter,
+          creators: [adminCount.user, 'superman']
+        });
+      });
+    });
+  });
+  describe('contains the correct html', () => {
+    it('for wrapping containers', () => {
+      expect(element.queryAll(By.css('.merge-request-filter')).length).toEqual(1);
+    });
+    it('with a list-filters', () => {
+      expect(element.queryAll(By.css('app-list-filters')).length).toEqual(1);
     });
   });
 });

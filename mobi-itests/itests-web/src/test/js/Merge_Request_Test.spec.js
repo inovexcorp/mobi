@@ -300,34 +300,11 @@ module.exports = {
     },
 
     'Step 28: Accept the merge request': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
-            .useCss()
-            .assert.textContains('div.request-contents .details h3', 'newBranchTitle2')
-            .click('xpath', '//div[contains(@class, "request-contents")]//h3[text()[contains(.,"newBranchTitle2")]]')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .waitForElementVisible("//button//span[text()[contains(.,'Accept')]]")
-            .click("//button//span[text()[contains(.,'Accept')]]")
-            .useCss()
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary')
-            .click('div.mat-dialog-actions button.mat-primary')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success')
-            .waitForElementVisible('xpath', '//mat-chip[text()[contains(.,"Accepted")]]')
-        browser
-            .useXpath()
-            .waitForElementVisible("//button//span[text()[contains(.,'Back')]]")
-            .click("//button//span[text()[contains(.,'Back')]]")
+        mergeRequest.selectRequest(browser, 'newBranchTitle2');
+        mergeRequest.acceptRequest(browser);
     },
 
-    'Step 29: Create branch used for branch removal Merge Request': function (browser) {
-        browser.globals.wait_for_no_spinners(browser)
+    'Step 29: Create branch used for branch removal Merge Request': function(browser) {
         browser
             .useCss()
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
@@ -394,59 +371,47 @@ module.exports = {
             .waitForElementNotPresent('div.toast-success');
     },
 
-    'Step 32: Search the merge request list': function(browser) {
+    'Step 32: Filter the merge request list': function(browser) {
+        // Confirm the Creator filter is present
+        var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
+        var creatorFilterXPathSelector = mergeRequest.createFilterXPathSelector('Creators');
+        browser.assert.elementPresent({ selector: creatorFilterXPathSelector, locateStrategy: 'xpath' });
+        // Submit a search of the creator filter
+        var creatorSearchXPathSelector = creatorFilterXPathSelector + '//input';
+        browser.assert.elementPresent({ selector: creatorSearchXPathSelector, locateStrategy: 'xpath' });
         browser
             .useXpath()
-            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
+            .sendKeys(creatorSearchXPathSelector, ['ad', browser.Keys.ENTER])
             .useCss()
-            .waitForElementVisible('.d-flex .search-container input')
-            .sendKeys('.d-flex .search-container input', ['NONE', browser.Keys.ENTER])
             .waitForElementNotPresent('#spinner-full');
-        browser.getValue('.d-flex .search-container input', function(result) {
-            this.assert.equal(typeof result, 'object');
-            this.assert.equal(result.status, 0);
-            this.assert.equal(result.value, 'NONE');
-        });
+
+        // Select the admin creator filter
+        var adminCreatorFilterXPathSelector = mergeRequest.createFilterXPathSelector('Creators', adminUsername + ' (2)');
+        browser.assert.elementPresent({ selector: adminCreatorFilterXPathSelector, locateStrategy: 'xpath' });
+        browser.click('xpath', adminCreatorFilterXPathSelector, clickFunc);
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
+
+        // Unselect the admin creator filter
+        browser.click('xpath', adminCreatorFilterXPathSelector, clickFunc);
+        browser.globals.wait_for_no_spinners(browser);
+    },
+
+    'Step 33: Search the merge request list': function(browser) {
+        // Test no requests are shown
+        mergeRequest.searchList(browser, 'NONE');
         browser.waitForElementVisible('div.merge-request-list info-message');
         browser.expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
 
-        browser.waitForElementVisible('.d-flex .search-container input')
-            .clearValue('.d-flex .search-container input')
-            .sendKeys('.d-flex .search-container input', ['rem', browser.Keys.ENTER])
-            .waitForElementNotPresent('#spinner-full');
-        browser.getValue('.d-flex .search-container input', function(result) {
-            this.assert.equal(typeof result, 'object');
-            this.assert.equal(result.status, 0);
-            this.assert.equal(result.value, 'rem');
-        });
+        // Test searching with some results
+        mergeRequest.searchList(browser, 'rem');
         browser.assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
     },
 
-    'Step 33: Accept the merge request': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
-            .useCss()
-            .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
-            .click('xpath', '//div[contains(@class, "request-contents")]//h3[text()[contains(.,"newBranchTitle3Removal")]]')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .waitForElementVisible("//button//span[text()[contains(.,'Accept')]]")
-            .click("//button//span[text()[contains(.,'Accept')]]")
-            .useCss()
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary')
-            .click('div.mat-dialog-actions button.mat-primary')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success')
-            .waitForElementVisible('xpath', '//mat-chip[text()[contains(.,"Accepted")]]')
-        browser
-            .useXpath()
-            .waitForElementVisible("//button//span[text()[contains(.,'Back')]]")
-            .click("//button//span[text()[contains(.,'Back')]]");
+    'Step 34: Accept the merge request': function(browser) {
+        mergeRequest.selectRequest(browser, 'newBranchTitle3Removal');
+        mergeRequest.acceptRequest(browser);
     }
-
 }

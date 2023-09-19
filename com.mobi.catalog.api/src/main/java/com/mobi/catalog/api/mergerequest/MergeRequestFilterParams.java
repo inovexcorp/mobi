@@ -26,6 +26,7 @@ package com.mobi.catalog.api.mergerequest;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Resource;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -49,6 +50,7 @@ public class MergeRequestFilterParams {
     private final boolean ascending;
     private final boolean accepted;
     private final String searchText;
+    private final List<Resource> creators;
     private final boolean filters;
 
     public MergeRequestFilterParams(Builder builder) {
@@ -64,6 +66,7 @@ public class MergeRequestFilterParams {
         this.ascending = builder.ascending;
         this.accepted = builder.accepted;
         this.searchText = builder.searchText;
+        this.creators = builder.creators;
         this.filters = builder.filters;
     }
 
@@ -114,6 +117,10 @@ public class MergeRequestFilterParams {
         return Optional.ofNullable(searchText);
     }
 
+    public Optional<List<Resource>> getCreators() {
+        return Optional.ofNullable(creators);
+    }
+
     public boolean hasFilters() {
         return filters;
     }
@@ -131,6 +138,7 @@ public class MergeRequestFilterParams {
         private boolean ascending = false;
         private boolean accepted = false;
         private String searchText = null;
+        private List<Resource> creators = null;
         private boolean filters = false;
 
         public Builder() {}
@@ -270,6 +278,17 @@ public class MergeRequestFilterParams {
          */
         public Builder setSearchText(String searchText) {
             this.searchText = searchText;
+            filters = true;
+            return this;
+        }
+
+        /**
+         * Set the Resource IRIs of the creators of the MergeRequests in the list.
+         * @param creators The IRIs of the creators of Merge Requests
+         * @return MergeRequestFilterParams.Builder
+         */
+        public Builder setCreators(List<Resource> creators) {
+            this.creators = creators;
             filters = true;
             return this;
         }

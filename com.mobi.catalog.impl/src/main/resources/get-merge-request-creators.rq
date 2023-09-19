@@ -1,0 +1,34 @@
+PREFIX mq: <http://mobi.com/ontologies/merge-requests#>
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX um: <http://mobi.com/ontologies/user/management#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT DISTINCT
+    ?creator
+    ?name
+    (COUNT(DISTINCT ?mr) as ?count)
+WHERE {
+    %VALUES%
+    ?mr a mq:MergeRequest ;
+        dc:creator ?creator .
+    ?creator a um:User ;
+        um:username ?username .
+    OPTIONAL {
+        ?creator foaf:firstName ?firstName .
+    }
+    OPTIONAL {
+        ?creator foaf:lastName ?lastName .
+    }
+
+    BIND(IF(BOUND(?searchText), CONTAINS(LCASE(?username), LCASE(?searchText)), true) as ?s1)
+    BIND(IF(BOUND(?searchText), CONTAINS(LCASE(?firstName), LCASE(?searchText)), true) as ?s2)
+    BIND(IF(BOUND(?searchText), CONTAINS(LCASE(?lastName), LCASE(?searchText)), true) as ?s3)
+    BIND(IF(BOUND(?firstName) && BOUND(?lastName), CONCAT(?firstName, " ", ?lastName), "") as ?option4)
+    BIND(IF(BOUND(?searchText) && BOUND(?option4), CONTAINS(LCASE(?option4), LCASE(?searchText)), true) as ?s4)
+    BIND(IF(BOUND(?firstName) && BOUND(?lastName), CONCAT(LCASE(?lastName), " ", LCASE(?firstName)), "") as ?option5)
+    BIND(IF(BOUND(?searchText), CONTAINS(?option5, LCASE(?searchText)), true) as ?s5)
+    BIND(IF(BOUND(?firstName) && BOUND(?lastName), CONCAT(LCASE(?lastName), ", ", LCASE(?firstName)), "") as ?option6)
+    BIND(IF(BOUND(?searchText), CONTAINS(?option6, LCASE(?searchText)), true) as ?s6)
+    BIND(IF(?option4 != "", ?option4, ?username) as ?name)
+    FILTER(?s1 || ?s2 || ?s3 || ?s4 || ?s5 || ?s6)
+} GROUP BY ?creator ?name ORDER BY ?name

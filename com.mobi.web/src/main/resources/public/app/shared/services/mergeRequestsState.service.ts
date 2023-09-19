@@ -22,9 +22,9 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { get, map, uniq, filter, find, union, concat, merge } from 'lodash';
+import { get, uniq, filter, find, union, concat, merge, map as _map } from 'lodash';
 import { forkJoin, Observable, of, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { CATALOG, MERGEREQ, OWL, ONTOLOGYEDITOR } from '../../prefixes';
 
 import { 
@@ -96,7 +96,18 @@ export class MergeRequestsStateService {
      * {@link merge-requests.MergeRequestListComponent}.
      * @type {boolean}
      */
-    acceptedFilter = false
+    acceptedFilter = false;
+    /**
+     * String to search the creators filter in {@link merge-requests.MergeRequestFilterComponent}.
+     * @type {string}
+     */
+    creatorSearchText = '';
+    /**
+     * The list of creator IRIs to filter the list of Merge Requests. Set by
+     * {@link merge-requests.MergeRequestFilterComponent}.
+     * @type {string[]}
+     */
+    creators: string[] = [];
     /**
      * Determines whether a Merge Request is being created and thus whether the
      * {@link merge-request.CreateMergeRequestComponent} should be shown.
@@ -209,6 +220,8 @@ export class MergeRequestsStateService {
         this.currentRequestPage = 0;
         this.requestSortOption = undefined;
         this.requestSearchText = '';
+        this.creatorSearchText = '';
+        this.creators = [];
     }
     /**
      * Clears all variables associated with calculating the Difference of a MergeRequest
@@ -231,7 +244,7 @@ export class MergeRequestsStateService {
                 switchMap((data: HttpResponse<JSONLDObject[]>) => {
                     this.requests = data.body.map(obj => this.getRequestObj(obj));
                     this.totalRequestSize = Number(data.headers.get('x-total-count')) || 0;
-                    recordsToRetrieve = uniq(map(this.requests, 'recordIri'));
+                    recordsToRetrieve = uniq(_map(this.requests, 'recordIri'));
                     return forkJoin(recordsToRetrieve.map(iri => this.cm.getRecord(iri, this.catalogId)));
                 })
             ).subscribe((responses: JSONLDObject[][]) => {
@@ -357,20 +370,23 @@ export class MergeRequestsStateService {
     }
     /**
      * Deletes the provided Merge Request from the application. If successful, unselects the current `selected` request
-     * and updates the list of requests. Displays an error toast if unsuccessful.
+     * and makes a success toast. Any further action on success or failure should be handled in the using component. If
+     * the creator of the request was one of the selected filter options, removes the selection to handle the case where
+     * the last request created by that user was the one that was deleted.
      *
      * @param {MergeRequest} request An Merge Request that should be deleted
+     * @returns {Observable<void>} An Observable that resolves if the operation was successful and fails otherwise
      */
-    deleteRequest(request: MergeRequest): void {
-        this.mm.deleteRequest(request.jsonld['@id'])
-            .subscribe(() => {
-                const hasSelected = !!this.selected;
+    deleteRequest(request: MergeRequest): Observable<void> {
+        return this.mm.deleteRequest(request.jsonld['@id'])
+            .pipe(map(() => {
                 this.selected = undefined;
-                this.toast.createSuccessToast('Request successfully deleted');
-                if (!hasSelected) {
-                    this.setRequests({accepted: this.acceptedFilter});
+                const creator = getDctermsId(request.jsonld, 'creator');
+                if (this.creators.includes(creator)) {
+                    this.creators.splice(this.creators.indexOf(creator), 1);
                 }
-            }, error => this.toast.createErrorToast(error));
+                this.toast.createSuccessToast('Request successfully deleted');
+            }));
     }
     /**
      * Transforms the provided JSON-LD into a MergeRequest object.
@@ -409,8 +425,8 @@ export class MergeRequestsStateService {
             return throwError('Difference is not set. Cannot get ontology entity names.');
         }
         const difference = diffResponse.body;
-        const diffIris = union(map(difference.additions as JSONLDObject[], '@id'), 
-            map(difference.deletions as JSONLDObject[], '@id'));
+        const diffIris = union(_map(difference.additions as JSONLDObject[], '@id'), 
+            _map(difference.deletions as JSONLDObject[], '@id'));
         const iris = union(diffIris, getObjIrisFromDifference(difference.additions as JSONLDObject[]), 
             getObjIrisFromDifference(difference.deletions as JSONLDObject[]));
 

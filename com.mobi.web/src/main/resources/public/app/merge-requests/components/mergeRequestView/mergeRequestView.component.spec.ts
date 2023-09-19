@@ -130,10 +130,8 @@ describe('Merge Request View component', function() {
                     open: { afterClosed: () => of(true)}
                 }) }
             ],
-        });
-    });
+        }).compileComponents();
 
-    beforeEach(function() {
         fixture = TestBed.createComponent(MergeRequestViewComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -235,6 +233,7 @@ describe('Merge Request View component', function() {
             expect(mergeRequestsStateStub.selected).toBeUndefined();
         });
         it('show the delete overlay', fakeAsync(function() {
+            mergeRequestsStateStub.deleteRequest.and.returnValue(of(null));
             component.showDelete();
             tick();
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to delete')}});

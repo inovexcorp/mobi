@@ -134,7 +134,25 @@ describe('Edit User Profile Overlay component', function() {
                 expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
-            it('successfully', fakeAsync(function() {
+            it('successfully with blank values', fakeAsync(function() {
+                this.newUser.firstName = '';
+                this.newUser.lastName = '';
+                this.newUser.email = '';
+                delete this.newUser.jsonld[`${FOAF}firstName`];
+                delete this.newUser.jsonld[`${FOAF}lastName`];
+                delete this.newUser.jsonld[`${FOAF}mbox`];
+                component.editProfileForm.controls.firstName.setValue('');
+                component.editProfileForm.controls.lastName.setValue('');
+                component.editProfileForm.controls.email.setValue('');
+                userManagerStub.updateUser.and.returnValue(of(null));
+                component.set();
+                tick();
+                expect(userManagerStub.updateUser).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.newUser);
+                expect(component.errorMessage).toEqual('');
+                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(matDialogRef.close).toHaveBeenCalledWith();
+            }));
+            it('successfully with values filled in', fakeAsync(function() {
                 userManagerStub.updateUser.and.returnValue(of(null));
                 component.set();
                 tick();

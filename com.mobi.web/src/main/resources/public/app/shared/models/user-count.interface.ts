@@ -1,10 +1,6 @@
-@Version("4.0.0.${build}")
-
-package com.mobi.catalog.api.mergerequest;
-
 /*-
  * #%L
- * com.mobi.catalog.api
+ * com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,5 +20,12 @@ package com.mobi.catalog.api.mergerequest;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import org.osgi.annotation.versioning.Version;
+/**
+ * A representation of a count of a User's interaction with the application. Includes the User's IRI and calculated
+ * display name.
+ */
+export interface UserCount {
+  user: string,
+  name: string,
+  count: number
+}

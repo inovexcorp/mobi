@@ -23,6 +23,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
+import { Observable } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
@@ -30,6 +31,7 @@ import {
 import { MERGEREQ } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 
 describe('Merge Request Manager service', function() {
@@ -57,6 +59,7 @@ describe('Merge Request Manager service', function() {
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
         progressSpinnerStub.track.and.callFake((ob) => ob);
+        progressSpinnerStub.trackedRequest.and.callFake((ob, tracked) => tracked ? ob : progressSpinnerStub.track(ob));
     });
 
     afterEach(function() {
@@ -70,47 +73,49 @@ describe('Merge Request Manager service', function() {
     });
 
     describe('should get a list of merge requests', function() {
-        beforeEach(function() {
-            this.config = {
-                accepted: true
-            };
-        });
         it('unless an error occurs', function() {
-            service.getRequests(this.config)
+            service.getRequests({ accepted: true })
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-            expect(request.request.params.get('accepted').toString()).toEqual('' + this.config.accepted);
+            expect(request.request.params.get('accepted').toString()).toEqual('true');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('without parameters', function() {
-            service.getRequests(this.config)
+            service.getRequests({ accepted: true })
                 .subscribe(response => {
                     expect(response.body).toEqual([]);
                 }, () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-            expect(request.request.params.get('accepted').toString()).toEqual('' + this.config.accepted);
+            expect(request.request.params.get('accepted').toString()).toEqual('true');
             expect(request.request.params.get('sort')).toBeNull();
             expect(request.request.params.get('ascending')).toBeNull();
             expect(request.request.params.get('searchText')).toBeNull();
+            expect(request.request.params.get('creators')).toBeNull();
             request.flush([]);
         });
         it('with parameters', function() {
-            this.config.sortOption = {
-                field: 'sort',
-                asc: false
+            const config: MergeRequestPaginatedConfig = {
+                accepted: true,
+                sortOption: {
+                    label: '',
+                    field: 'sort',
+                    asc: false
+                },
+                searchText: 'test',
+                creators: ['A', 'B']
             };
-            this.config.searchText = 'test';
-            service.getRequests(this.config)
+            service.getRequests(config)
                 .subscribe(response => {
                     expect(response.body).toEqual([]);
                 }, () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-            expect(request.request.params.get('accepted').toString()).toEqual('' + this.config.accepted);
-            expect(request.request.params.get('sort').toString()).toEqual(this.config.sortOption.field);
-            expect(request.request.params.get('ascending').toString()).toEqual('' + this.config.sortOption.asc);
-            expect(request.request.params.get('searchText').toString()).toEqual('test');
+            expect(request.request.params.get('accepted').toString()).toEqual('' + config.accepted);
+            expect(request.request.params.get('sort').toString()).toEqual(config.sortOption.field);
+            expect(request.request.params.get('ascending').toString()).toEqual('' + config.sortOption.asc);
+            expect(request.request.params.get('searchText').toString()).toEqual(config.searchText);
+            expect(request.request.params.getAll('creators')).toEqual(config.creators);
             request.flush([]);
         });
     });
@@ -362,5 +367,78 @@ describe('Merge Request Manager service', function() {
         expect(service.isAccepted(emptyObj)).toEqual(false);
         mr['@type'].push(`${MERGEREQ}AcceptedMergeRequest`);
         expect(service.isAccepted(mr)).toEqual(true);
+    });
+    describe('should retrieve the creators of merges requests', function() {
+      beforeEach(function() {
+          this.url = `${service.prefix}/creators`;
+          this.config = {
+              limit: 10,
+              offset: 0
+          };
+      });
+      it('unless an error occurs', function() {
+          service.getCreators(this.config)
+              .subscribe(() => fail('Observable should have rejected'), response => {
+                  expect(response).toEqual(error);
+              });
+          const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+          request.flush('flush', { status: 400, statusText: error });
+      });
+      describe('successfully', function() {
+          describe('when not tracked', function() {
+              it('and all config passed', function() {
+                  this.config.searchText = 'test';
+                  service.getCreators(this.config)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
+                  expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
+                  expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
+                  request.flush([]);
+              });
+              it('and no config passed', function() {
+                  service.getCreators(undefined)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toBeNull();
+                  expect(request.request.params.get('offset')).toBeNull();
+                  expect(request.request.params.get('searchText')).toBeNull();
+                  request.flush([]);
+              });
+          });
+          describe('when tracked elsewhere', function() {
+              it('and all config passed', function() {
+                  this.config.searchText = 'test';
+                  service.getCreators(this.config, true)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).not.toHaveBeenCalled();
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
+                  expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
+                  expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
+                  request.flush([]);
+              });
+              it('and no config passed', function() {
+                  service.getCreators(undefined, true)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).not.toHaveBeenCalled();
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toBeNull();
+                  expect(request.request.params.get('offset')).toBeNull();
+                  expect(request.request.params.get('searchText')).toBeNull();
+                  request.flush([]);
+              });
+          });
+      });
     });
 });

@@ -1,0 +1,9 @@
+PREFIX mq: <http://mobi.com/ontologies/merge-requests#>
+
+SELECT DISTINCT
+    ?requestId
+    ?onRecord
+WHERE {
+    ?requestId a mq:MergeRequest .
+    OPTIONAL { ?requestId mq:onRecord ?onRecord }
+}

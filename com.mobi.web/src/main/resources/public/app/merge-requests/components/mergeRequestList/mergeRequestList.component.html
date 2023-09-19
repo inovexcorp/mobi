@@ -22,10 +22,9 @@
   -->
 <div class="merge-request-list row h-100">
     <div class="col-3 h-100">
-        <merge-request-filter
-                [catalogId]="state.catalogId"
-                [requestStatus]="state.acceptedFilter"
-                (changeFilter)="changeFilter($event)">
+        <merge-request-filter 
+            [updateFilters]="updateFiltersSubject.asObservable()" 
+            (changeFilter)="changeFilter($event)">
         </merge-request-filter>
     </div>
     <div class="col h-100 d-flex flex-column remove-min-width merge-request-content">

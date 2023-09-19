@@ -23,6 +23,9 @@ package com.mobi.catalog.api.mergerequest;
  * #L%
  */
 
+import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.builder.UserCount;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
@@ -345,4 +348,45 @@ public interface MergeRequestManager {
      * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
      */
     void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn);
+
+    /**
+     * Returns a list of users that created {@link MergeRequest} instances with their counts and display names.
+     *
+     * @param params Search parameters.
+     * @return The {@link PaginatedSearchResults} of the users with the counts of merge requests they have created
+     */
+    PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params);
+
+    /**
+     * Returns a list of users that created {@link MergeRequest} instances with their counts and display names filtered
+     * by the Merge Requests that the user with the provided IRI can view.
+     *
+     * @param params Search parameters.
+     * @param user The Resource IRI of the user making the request to filter based on permissions
+     * @return The {@link PaginatedSearchResults} of the users with the counts of merge requests they have created
+     */
+    PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, Resource user);
+
+    /**
+     * Returns a list of users that created {@link MergeRequest} instances with their counts and display names using the
+     * provided {@link RepositoryConnection}.
+     *
+     * @param params Search parameters.
+     * @param conn The {@link RepositoryConnection} to use for look up.
+     * @return The {@link PaginatedSearchResults} of the users with the counts of merge requests they have created
+     */
+    PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn);
+
+    /**
+     * Returns a list of users that created {@link MergeRequest} instances with their counts and display names using the
+     * provided {@link RepositoryConnection} filtered by the Merge Requests that the user with the provided IRI can
+     * view.
+     *
+     * @param params Search parameters.
+     * @param conn The {@link RepositoryConnection} to use for look up.
+     * @param user The Resource IRI of the user making the request to filter based on permissions
+     * @return The {@link PaginatedSearchResults} of the users with the counts of merge requests they have created
+     */
+    PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn,
+                                                  Resource user);
 }
