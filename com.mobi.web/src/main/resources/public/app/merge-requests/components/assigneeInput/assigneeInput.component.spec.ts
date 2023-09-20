@@ -25,7 +25,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
@@ -69,6 +69,10 @@ describe('Assignee Input component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
+        userManagerStub.users = [
+            { username: 'userA', firstName: 'User', lastName: 'A' },
+            { username: 'userB', firstName: 'User', lastName: 'B' },
+        ];
         userManagerStub.filterUsers.and.callFake(arr => arr);
 
         component.parentForm = new UntypedFormGroup({
@@ -89,12 +93,22 @@ describe('Assignee Input component', function() {
 
     describe('controller methods', function() {
         it('should handle adding a chip', function() {
-            component.add({chipInput: null, input: null, value: 'user'});
-            expect(component.selected).toEqual(['user']);
-            expect(component.selectedChange.emit).toHaveBeenCalledWith(['user']);
+            component.availableUsers = [
+                { username: 'User1', firstName: 'User', lastName: '1' },
+                { username: 'User2', firstName: 'User', lastName: '2' },
+                { username: 'TestUser', firstName: 'Test', lastName: 'User' }
+            ];
+            const event = {
+                value: 'TestUser',
+            } as MatChipInputEvent;
+
+            component.add(event);
+            expect(component.selected).toEqual(['TestUser']);
+            expect(component.selectedChange.emit).toHaveBeenCalledWith(['TestUser']);
             expect(component.parentForm.controls.assignees.value).toEqual(null);
         });
         it('should handle removing a user', function() {
+            component.add({chipInput: null, input: null, value: 'user'});
             component.removeAssignee('user');
             expect(component.selected).toEqual([]);
             expect(component.selectedChange.emit).not.toHaveBeenCalled();
@@ -115,6 +129,21 @@ describe('Assignee Input component', function() {
             expect(component.selectedChange.emit).toHaveBeenCalledWith(['user']);
             expect(component.assigneeInput.nativeElement.value).toEqual('');
             expect(component.parentForm.controls.assignees.value).toEqual(null);
+        });
+        it('should not add duplicates', () => {
+            component.availableUsers = [
+                { username: 'User1', firstName: 'User', lastName: '1' },
+                { username: 'User2', firstName: 'User', lastName: '2' },
+                { username: 'TestUser', firstName: 'Test', lastName: 'User' }
+            ];
+            const event = {
+                value: 'TestUser',
+            } as MatChipInputEvent;
+
+            component.add(event);
+            component.add(event);
+
+            expect(component.selected.length).toBe(1);
         });
     });
     describe('contains the correct html', function() {
