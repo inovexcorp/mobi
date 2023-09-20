@@ -38,6 +38,7 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 export class AssigneeInputComponent implements OnInit {
     filteredUsers: Observable<User[]>;
     separatorKeysCodes: number[] = [ENTER, COMMA];
+    availableUsers: User[] = [];
    
     @Input() parentForm: UntypedFormGroup;
     @Input() selected: string[];
@@ -57,7 +58,9 @@ export class AssigneeInputComponent implements OnInit {
                     val ? 
                         val.username :
                         undefined;
-                return this.um.filterUsers(this.um.users, searchText);
+                        this.availableUsers = this.um.filterUsers(this.um.users, searchText)
+                        .filter(user => !this.selected.includes(user.username));
+                    return this.availableUsers;
             }));
     }
 
@@ -65,9 +68,10 @@ export class AssigneeInputComponent implements OnInit {
         const input = event.input;
         const value = event.value;
     
-        if (value) {
+        if (value && this.availableUsers.some(user => user.username === value)) {
             this.selected.push(value);
             this.selectedChange.emit(this.selected);
+            this.availableUsers = this.availableUsers.filter(user => user.username !== value);
         }
     
         // Reset the input value
@@ -83,12 +87,18 @@ export class AssigneeInputComponent implements OnInit {
         if (index >= 0) {
             this.selected.splice(index, 1);
             this.selectedChange.emit(this.selected);
+            const removedUser = this.um.users.find(u => u.username === user);
+            if (removedUser) {
+                this.availableUsers.push(removedUser);
+            }
         }
     }
     select(event: MatAutocompleteSelectedEvent): void {
-        this.selected.push(event.option.value);
+        const selectedUser = event.option.value;
+        this.selected.push(selectedUser);
         this.selectedChange.emit(this.selected);
         this.assigneeInput.nativeElement.value = '';
         this.parentForm.controls.assignees.setValue(null);
+        this.availableUsers = this.availableUsers.filter(user => user.username !== selectedUser);
       }
 }
