@@ -31,6 +31,7 @@ import { ONTOLOGYSTATE } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { ToastService } from '../../../shared/services/toast.service';
 import { getDctermsValue, getPropertyId } from '../../../shared/utility';
+import { MatTabGroup } from '@angular/material/tabs';
 
 /**
  * @class ontology-editor.OntologyTabComponent
@@ -54,6 +55,7 @@ export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isVocab: boolean;
     @ViewChild('outlet', { read: ViewContainerRef }) outletRef?: ViewContainerRef;
     @ViewChild('content', { read: TemplateRef }) contentRef: TemplateRef<any>;
+    @ViewChild('tabsGroup') tabsGroup: MatTabGroup;
 
     constructor(public os: OntologyStateService, private cm: CatalogManagerService, private toast: ToastService) {}
     
@@ -117,5 +119,12 @@ export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
                 }))
                 .subscribe(() => this.os.resetStateTabs(), error => this.toast.createErrorToast(error));
         }
+    }
+
+    /**
+     * Re-aligns the ink bar to the selected tab element
+     */
+    realignTabs(): void {
+       this.tabsGroup.realignInkBar();
     }
 }

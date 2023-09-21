@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input } from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import { find } from 'lodash';
 
 import { ONTOLOGYSTATE } from '../../../prefixes';
@@ -45,7 +45,8 @@ import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 export class CommitsTabComponent {
     private readonly warningMessageCheckout = 'You will need to commit or remove all changes before checking out a commit';
     commits: Commit[] = [];
-    @Input() branches: JSONLDObject[] = []; 
+    @Input() branches: JSONLDObject[] = [];
+    @Output() doRealignTabs = new EventEmitter<boolean>();
 
     constructor(public os: OntologyStateService, private toast: ToastService) {}
     
@@ -69,7 +70,9 @@ export class CommitsTabComponent {
             this.toast.createWarningToast(this.warningMessageCheckout);
             return;
         }
-        this.os.updateOntologyWithCommit(this.os.listItem.versionedRdfRecord.recordId, commit.id).subscribe();
+        this.os.updateOntologyWithCommit(this.os.listItem.versionedRdfRecord.recordId, commit.id).subscribe(() => {
+            this.doRealignTabs.emit(true);
+        });
     }
     trackCommits(index: number, item: Commit): string {
         return item.id;

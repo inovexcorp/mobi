@@ -24,7 +24,7 @@
     <see-history *ngIf="os.listItem.seeHistory"></see-history>
     <merge-tab *ngIf="os.listItem.merge.active"></merge-tab>
     <div class="main-tabs h-100" *ngIf="!os.listItem.merge.active && !os.listItem.seeHistory">
-        <mat-tab-group dynamicHeight="true" class="h-100" [(selectedIndex)]="os.listItem.tabIndex" (selectedTabChange)="onTabChanged($event)">
+        <mat-tab-group #tabsGroup dynamicHeight="true" class="h-100" [(selectedIndex)]="os.listItem.tabIndex" (selectedTabChange)="onTabChanged($event)">
             <mat-tab label="Project">
                 <ng-template matTabContent>
                     <project-tab></project-tab>
@@ -78,7 +78,7 @@
             </mat-tab>
             <mat-tab label="Commits">
                 <ng-template matTabContent>
-                    <commits-tab></commits-tab>
+                    <commits-tab (doRealignTabs)="realignTabs()"></commits-tab>
                 </ng-template>
             </mat-tab>
             <mat-tab class="mobi-visualization" label="Visualization">
