@@ -387,7 +387,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                     if (!listItem.isVocabulary && (prevActiveKey === 'concepts' || prevActiveKey === 'schemes')) {
                         oldListItem.tabIndex = 0;
                     } else {
-                     oldListItem.tabIndex = tabIndex;
+                        oldListItem.tabIndex = tabIndex;
                     }
                     return null;
                 })
