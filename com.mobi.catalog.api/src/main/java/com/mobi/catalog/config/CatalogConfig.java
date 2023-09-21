@@ -24,6 +24,7 @@ package com.mobi.catalog.config;
  */
 
 import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.AttributeType;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
@@ -63,4 +64,11 @@ public @interface CatalogConfig {
      */
     @AttributeDefinition(name = "repository.target")
     String repository_id();
+
+    /**
+     * Integer used for limit for limited-results endpoint
+     * @return Integer used for limit for limited-results endpoint
+     */
+    @AttributeDefinition(name = "limitedSize", description = "Integer used for limit for limited-results endpoint", required = true, type = AttributeType.INTEGER, defaultValue = "500")
+    int limit() default 500;
 }

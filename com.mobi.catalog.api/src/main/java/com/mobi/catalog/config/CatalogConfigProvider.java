@@ -54,4 +54,10 @@ public interface CatalogConfigProvider {
      * @return The IRI which identifies the local Catalog.
      */
     IRI getLocalCatalogIRI();
+
+    /**
+     * Integer used for limit for limited-results endpoint
+     * @return Integer used for limit for limited-results endpoint
+     */
+    int getLimitedSize();
 }

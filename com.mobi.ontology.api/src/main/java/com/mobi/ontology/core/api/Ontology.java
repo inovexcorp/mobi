@@ -444,6 +444,20 @@ public interface Ontology {
     OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format, boolean skolemize, OutputStream outputStream);
 
     /**
+     * Searches the Ontology & its import closures using the provided SPARQL query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @param format the specified format for the return of queries
+     * @param skolemize whether or not the Ontology should be skoelmized before serialized
+     * @param limit Integer limit
+     * @param outputStream OutputStream that the rdf should be written to
+     * @return OutputStream
+     */
+    boolean getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
+                                       boolean skolemize, Integer limit, OutputStream outputStream);
+
+    /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,
      * and returns true if the resource ids are equal and their RDF models are isomorphic.
      *

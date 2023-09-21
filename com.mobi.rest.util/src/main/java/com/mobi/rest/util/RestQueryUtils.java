@@ -108,17 +108,16 @@ public class RestQueryUtils {
                                        Ontology ontology, boolean includeImports,
                                        ConnectionObjects connectionObjects) {
         try {
-            ParsedOperation parsedOperation = getParsedOperation(queryString);
-            if (parsedOperation instanceof ParsedQuery) {
-                if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQuery(queryString, datasetRecordId, acceptString, fileName,
-                            ontology, includeImports, connectionObjects).build();
-                } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQuery(queryString, datasetRecordId, acceptString, fileName,
-                            ontology, includeImports, false, connectionObjects).build();
-                } else {
-                    throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
-                }
+            ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
+            if (!(parsedOperation instanceof ParsedQuery)) {
+                throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
+            }
+            if (parsedOperation instanceof ParsedTupleQuery) {
+                return handleSelectQuery(queryString, datasetRecordId, acceptString, fileName,
+                        ontology, includeImports, connectionObjects).build();
+            } else if (parsedOperation instanceof ParsedGraphQuery) {
+                return handleConstructQuery(queryString, datasetRecordId, acceptString, fileName,
+                        ontology, includeImports, false, connectionObjects).build();
             } else {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
@@ -134,6 +133,7 @@ public class RestQueryUtils {
         }
     }
 
+
     /**
      * Handle SPARQL Query eagerly based on query type. Can handle SELECT AND CONSTRUCT queries.
      * <p>
@@ -143,27 +143,28 @@ public class RestQueryUtils {
      * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param mimeType        used to specify certain media types which are acceptable for the response
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     public static Response handleQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                              int limit, ConnectionObjects connectionObjects) {
+                                              int limit, Ontology ontology,  boolean includeImports, ConnectionObjects connectionObjects) {
         try {
-            ParsedOperation parsedOperation = getParsedOperation(queryString);
-            if (parsedOperation instanceof ParsedQuery) {
-                if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQueryEagerly(queryString, datasetRecordId, mimeType, limit, connectionObjects);
-                } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQueryEagerly(queryString, datasetRecordId, mimeType, limit, connectionObjects);
-                } else {
-                    throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
-                }
+            ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
+            if (!(parsedOperation instanceof ParsedQuery)) {
+                throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
+            }
+            if (parsedOperation instanceof ParsedTupleQuery) {
+                return handleSelectQueryEagerly(queryString, datasetRecordId, mimeType, limit, ontology, includeImports, connectionObjects);
+            } else if (parsedOperation instanceof ParsedGraphQuery) {
+                return handleConstructQueryEagerly(queryString, datasetRecordId, mimeType, limit,ontology, includeImports, connectionObjects);
             } else {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MalformedQueryException ex) {
-            throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE + ";;;" + ex.getMessage()));
         } catch (MobiException | IOException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
@@ -190,7 +191,7 @@ public class RestQueryUtils {
         if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
             mimeType = "";
         }
-        TupleQueryResult queryResults;
+        TupleQueryResult tupleQueryResult;
 
         switch (mimeType) {
             case JSON_MIME_TYPE:
@@ -200,20 +201,20 @@ public class RestQueryUtils {
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
                 if (ontology != null) {
-                    queryResults = ontology.getTupleQueryResults(queryString, includeImports);
+                    tupleQueryResult = ontology.getTupleQueryResults(queryString, includeImports);
                 } else {
-                    queryResults = getTupleQueryResults(queryString, datasetRecordId, connectionObjects);
+                    tupleQueryResult = getTupleQueryResults(queryString, datasetRecordId, connectionObjects);
                 }
-                stream = createExcelResults(queryResults, fileExtension);
+                stream = createExcelResults(tupleQueryResult, fileExtension);
                 break;
             case XLSX_MIME_TYPE:
                 fileExtension = "xlsx";
                 if (ontology != null) {
-                    queryResults = ontology.getTupleQueryResults(queryString, includeImports);
+                    tupleQueryResult = ontology.getTupleQueryResults(queryString, includeImports);
                 } else {
-                    queryResults = getTupleQueryResults(queryString, datasetRecordId, connectionObjects);
+                    tupleQueryResult = getTupleQueryResults(queryString, datasetRecordId, connectionObjects);
                 }
-                stream = createExcelResults(queryResults, fileExtension);
+                stream = createExcelResults(tupleQueryResult, fileExtension);
                 break;
             case CSV_MIME_TYPE:
                 fileExtension = "csv";
@@ -250,16 +251,18 @@ public class RestQueryUtils {
      * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param mimeType        used to specify certain media types which are acceptable for the response
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     private static Response handleSelectQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                                     int limit, ConnectionObjects connectionObjects)
+                                                     int limit, Ontology ontology,  boolean includeImports, ConnectionObjects connectionObjects)
             throws IOException {
         if (!JSON_MIME_TYPE.equals(mimeType)) {
             logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, JSON_MIME_TYPE));
         }
         return getSelectQueryResponseEagerly(queryString, datasetRecordId,
-                TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit, connectionObjects);
+                TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit, ontology, includeImports, connectionObjects);
     }
 
     /**
@@ -269,15 +272,29 @@ public class RestQueryUtils {
      * @param datasetRecordId        an optional DatasetRecord IRI representing the Dataset to query
      * @param tupleQueryResultFormat TupleQueryResultFormat used to convert TupleQueryResults for response
      * @param mimeType               used to specify certain media types which are acceptable for the response
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return Response in TupleQueryResultFormat of SPARQL Query
      */
     private static Response getSelectQueryResponseEagerly(String queryString, String datasetRecordId,
                                                           TupleQueryResultFormat tupleQueryResultFormat, String mimeType,
-                                                          int limit, ConnectionObjects connectionObjects) throws IOException {
+                                                          Integer limit, Ontology ontology,  boolean includeImports,
+                                                          ConnectionObjects connectionObjects) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         boolean limitExceeded;
 
-        if (!StringUtils.isBlank(datasetRecordId)) {
+        if (ontology != null) {
+            limitExceeded = false;
+            TupleQueryResult queryResults = ontology.getTupleQueryResults(queryString, includeImports);
+            if (limit != null) {
+                limitExceeded = QueryResultIOLimited.writeTuple(queryResults, tupleQueryResultFormat, byteArrayOutputStream, limit);
+            } else {
+                QueryResultIO.writeTuple(queryResults, tupleQueryResultFormat, byteArrayOutputStream);
+            }
+            queryResults.close();
+            byteArrayOutputStream.flush();
+            byteArrayOutputStream.close();
+        } else if (!StringUtils.isBlank(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             DatasetManager datasetManager = connectionObjects.getDatasetManager();
             try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
@@ -286,7 +303,6 @@ public class RestQueryUtils {
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             }
-
         } else {
             RepositoryManager repositoryManager = connectionObjects.getRepositoryManager();
             OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
@@ -316,10 +332,13 @@ public class RestQueryUtils {
      * @param queryString     The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
      * @param mimeType        used to specify certain media types which are acceptable for the response.
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
     private static Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                                        int limit, ConnectionObjects connectionObjects)
+                                                        int limit, Ontology ontology,  boolean includeImports,
+                                                        ConnectionObjects connectionObjects)
             throws IOException {
         RDFFormat format;
 
@@ -343,7 +362,8 @@ public class RestQueryUtils {
                 format = RDFFormat.TURTLE;
                 logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType, mimeType));
         }
-        return getGraphQueryResponseEagerly(queryString, datasetRecordId, format, mimeType, limit, connectionObjects);
+        return getGraphQueryResponseEagerly(queryString, datasetRecordId, format, mimeType, limit,
+                ontology, includeImports, connectionObjects);
     }
 
     /**
@@ -353,15 +373,19 @@ public class RestQueryUtils {
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param format          RDFFormat used to convert GraphQueryResults for response
      * @param mimeType        used to specify certain media types which are acceptable for the response
+     * @param ontology        Ontology to query from.
+     * @param includeImports  Should Include Imports for Ontology.
      * @return Response in RDFFormat of SPARQL Query
      */
     private static Response getGraphQueryResponseEagerly(String queryString, String datasetRecordId, RDFFormat format,
-                                                         String mimeType, int limit,
+                                                         String mimeType, int limit, Ontology ontology,  boolean includeImports,
                                                          ConnectionObjects connectionObjects) throws IOException {
         boolean limitExceeded;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        if (!StringUtils.isBlank(datasetRecordId)) {
+        if (ontology != null) {
+            limitExceeded = ontology.getGraphQueryResultsStream(queryString, includeImports, format, false, limit, byteArrayOutputStream);
+        } else if (!StringUtils.isBlank(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             DatasetManager datasetManager = connectionObjects.getDatasetManager();
             try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
@@ -534,7 +558,6 @@ public class RestQueryUtils {
         } else {
             QueryResultIO.writeTuple(queryResults, format, os);
         }
-
         queryResults.close();
         os.flush();
         os.close();
@@ -558,6 +581,7 @@ public class RestQueryUtils {
             try (DatasetConnection conn = connectionObjects.getDatasetManager().getConnection(recordId)) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
                 queryResults = new MutableTupleQueryResult(query.evaluate());
+                // MutableTupleQueryResult - stores the complete query result in memory
             }
         } else {
             OsgiRepository repository = connectionObjects.getRepositoryManager().getRepository("system").orElseThrow(() ->
@@ -567,23 +591,7 @@ public class RestQueryUtils {
                 queryResults = new MutableTupleQueryResult(query.evaluate());
             }
         }
-
         return queryResults;
-    }
-
-    /**
-     * Get ParsedOperation from query string.
-     *
-     * @param queryString The SPARQL query to execute.
-     * @return ParsedOperation: it will parse query string and return parsedOperation object
-     */
-    private static ParsedOperation getParsedOperation(String queryString) {
-        try {
-            return QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
-        } catch (MalformedQueryException ex) {
-            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE +
-                    ";;;" + ex.getMessage()));
-        }
     }
 
     /**

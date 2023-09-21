@@ -401,6 +401,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
         when(configProvider.getRepository()).thenReturn(repo);
+        when(configProvider.getLimitedSize()).thenReturn(500);
     }
 
     @Before
@@ -845,7 +846,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     private void assertConstructQuery(String queryResults) {
         assertNotNull(queryResults);
-        assertEquals(queryResults.replaceAll("\\r\\n?", "\n"), constructJsonLd);
+        assertEquals(constructJsonLd, queryResults.replaceAll("\\r\\n?", "\n"));
     }
 
     private void assertGroupedSelectQuery(JSONObject queryResults) {
@@ -5916,6 +5917,489 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 400);
     }
+
+
+    ////// TODO
+    // Test {recordId}/limited-results
+    @Test
+    public void testQueryOntologyWithSelectLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testQueryOntologyWithEmptySelectLimited() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+    }
+
+    @Test
+    public void testQueryOntologyWithConstructLimited() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/ld+json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), eq(500), any(OutputStream.class));
+        // assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testQueryOntologyWithEmptyConstructLimited() {
+        String query = "construct where { ?s <urn:test> ?o }";
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/ld+json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), eq(500), any(OutputStream.class));
+    }
+
+    @Test
+    public void testQueryOntologyMissingQueryLimited() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testQueryOntologyWithUnsupportedTypeLimited() {
+        String query = "ask where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testQueryOntologyWithMalformedQueryLimited() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testQueryOntologyMissingBranchIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testQueryOntologyMissingCommitIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testQueryOntologyMissingBranchIdAndCommitIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testQueryOntologyWhenRetrieveOntologyIsEmptyLimited() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithSelectLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyWithEmptySelectLimited() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithConstructLimited() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/ld+json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), eq(500), any(OutputStream.class));
+        // assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testPostQueryOntologyWithEmptyConstructLimited() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s <urn:test> ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/ld+json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), eq(500), any(OutputStream.class));
+        // assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingQueryLimited() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity("", "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithUnsupportedTypeLimited() {
+        String query = "ask where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithMalformedQueryLimited() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingBranchIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingCommitIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingBranchIdAndCommitIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyWhenRetrieveOntologyIsEmptyLimited() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithSelectLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithEmptySelectLimited() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithConstructLimited() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/ld+json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false),
+                eq(500), any(OutputStream.class));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithEmptyConstructLimited() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s <urn:test> ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/ld+json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false),
+                eq(500), any(OutputStream.class));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingQueryLimited() {
+        Form form = new Form();
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithUnsupportedTypeLimited() {
+        String query = "ask where { ?s ?p ?o }";
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithMalformedQueryLimited() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingBranchIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingCommitIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingBranchIdAndCommitIdLimited() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWhenRetrieveOntologyIsEmptyLimited() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/limited-results")
+                .request().accept("application/json").post(Entity.entity(query, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
 
     // Test getEntity
 
