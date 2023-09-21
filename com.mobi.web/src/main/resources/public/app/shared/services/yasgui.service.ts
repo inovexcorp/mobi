@@ -329,7 +329,8 @@ export class YasguiService {
         const datasetIri = this.isOntology ? undefined : this.yasguiQuery.recordId;
         let url =  this.customURL || this.defaultUrl.href;
         if (this.isOntology) {
-            url = new URL(`${REST_PREFIX}ontologies/${encodeURIComponent(this.yasguiQuery.recordId)}/query`, window.location.origin).href;
+            url = new URL(`${REST_PREFIX}ontologies/${encodeURIComponent(this.yasguiQuery.recordId)}/limited-results`, window.location.origin).href;
+            // query
         }
         const { headers } = this.yasgui.getTab().getRequestConfig();
         headers.Accept = this._getFormat(this.yasgui.getTab().yasr.selectedPlugin, this.yasguiQuery.queryString);

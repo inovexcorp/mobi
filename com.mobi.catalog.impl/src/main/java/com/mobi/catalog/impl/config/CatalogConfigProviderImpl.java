@@ -38,6 +38,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
@@ -56,6 +57,9 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
 
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
+
+    private int limitedSize;
+
     final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference(target = "(id=system)")
@@ -65,22 +69,27 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
     CatalogFactory catalogFactory;
 
     @Activate
-    protected void start(final CatalogConfig config) {
-        distributedCatalogIRI = vf.createIRI(config.iri() + "-distributed");
-        localCatalogIRI = vf.createIRI(config.iri() + "-local");
-
+    protected void start(final CatalogConfig catalogConfig) {
+        distributedCatalogIRI = vf.createIRI(catalogConfig.iri() + "-distributed");
+        localCatalogIRI = vf.createIRI(catalogConfig.iri() + "-local");
+        this.limitedSize = catalogConfig.limit();
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
             if (!ConnectionUtils.contains(conn, distributedCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
                 log.debug("Initializing the distributed Mobi Catalog.");
-                addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description(), conn);
+                addCatalogToRepo(distributedCatalogIRI, catalogConfig.title() + " (Distributed)", catalogConfig.description(), conn);
             }
 
             if (!ConnectionUtils.contains(conn, localCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
                 log.debug("Initializing the local Mobi Catalog.");
-                addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description(), conn);
+                addCatalogToRepo(localCatalogIRI, catalogConfig.title() + " (Local)", catalogConfig.description(), conn);
             }
         }
+    }
+
+    @Modified
+    protected void modified(final CatalogConfig catalogConfig) {
+        this.limitedSize = catalogConfig.limit();
     }
 
     @Override
@@ -101,6 +110,15 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
     @Override
     public IRI getLocalCatalogIRI() {
         return (IRI) localCatalogIRI;
+    }
+
+    /**
+     * Integer used for limit for limited-results endpoint
+     * @return Integer used for limit for limited-results endpoint
+     */
+    @Override
+    public int getLimitedSize() {
+        return this.limitedSize;
     }
 
     /**

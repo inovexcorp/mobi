@@ -1130,6 +1130,52 @@ public class SimpleOntology implements Ontology {
         }
     }
 
+    public boolean getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
+                                                   boolean skolemize, Integer limit, OutputStream outputStream) {
+        boolean limitExceeded = false;
+        try (DatasetConnection conn = getDatasetConnection()) {
+
+            long start = getStartTime();
+            try {
+                GraphQuery query;
+                if (includeImports) {
+                    query = conn.prepareGraphQuery(queryString);
+                } else {
+                    query = conn.prepareGraphQuery(queryString, conn.getSystemDefaultNamedGraph());
+                }
+                GraphQueryResult statements = query.evaluate();
+
+                RDFWriter rdfWriter = Rio.createWriter(format, outputStream);
+                setWriterOptions(rdfWriter, format);
+
+                RemoveContextHandler removeContextSH = new RemoveContextHandler(vf);
+                if (skolemize) {
+                    SkolemizeHandler skolemizeSH = new SkolemizeHandler(bNodeService);
+                    assert statements != null;
+
+                    if (limit != null) {
+                        limitExceeded = com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, limit, skolemizeSH,
+                                removeContextSH);
+                    } else {
+                        com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, skolemizeSH,
+                                removeContextSH);
+                    }
+                } else {
+                    if (limit != null) {
+                        limitExceeded = com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, limit, removeContextSH);
+                    } else {
+                        com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, removeContextSH);
+                    }
+                }
+                statements.close();
+                undoApplyDifferenceIfPresent(conn);
+            } finally {
+                logTrace("getGraphQueryResults", start);
+            }
+        }
+        return limitExceeded;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

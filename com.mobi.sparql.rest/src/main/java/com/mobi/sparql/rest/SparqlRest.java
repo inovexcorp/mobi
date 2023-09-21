@@ -453,7 +453,8 @@ public class SparqlRest {
             throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString, this.limitResults, connectionObjects);
+        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString,
+                this.limitResults, null, false, connectionObjects);
     }
 
     /**
@@ -481,7 +482,8 @@ public class SparqlRest {
             throw ErrorUtils.sendError("Body must contain a query.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString, this.limitResults, connectionObjects);
+        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString,
+                this.limitResults, null, false, connectionObjects);
     }
 
     /**
@@ -566,7 +568,8 @@ public class SparqlRest {
             throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString, this.limitResults, connectionObjects);
+        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString,
+                this.limitResults, null, false, connectionObjects);
     }
 
     /**

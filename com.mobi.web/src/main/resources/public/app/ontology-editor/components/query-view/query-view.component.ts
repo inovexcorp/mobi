@@ -34,6 +34,7 @@ import {
 import { YasguiQuery } from '../../../shared/models/yasguiQuery.class';
 import { YasguiService } from '../../../shared/services/yasgui.service';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../../constants';
 
 @Component({
     selector: 'query-view',
@@ -103,7 +104,11 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     _setUpYasgui(): void {
-        this.yasgui.initYasgui(this.ontologyQuery.nativeElement, {name: 'ontologyQuery'}, this.yasguiQuery, true);
+        const yasguiConfig = {
+            name: 'ontologyQuery',
+            // endpoint: `${REST_PREFIX}sparql/limited-results`
+        };
+        this.yasgui.initYasgui(this.ontologyQuery.nativeElement, yasguiConfig, this.yasguiQuery, true);
         const yasgui = this.yasgui.getYasgui();
 
         if (yasgui && yasgui.getTab) {
