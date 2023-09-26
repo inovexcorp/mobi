@@ -96,8 +96,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 public class WorkflowsRestTest extends MobiRestTestCXF {
-    private static WorkflowsRest rest;
-    private static ValueFactory vf;
     private static final ObjectMapper mapper = new ObjectMapper();
     private static MemoryRepositoryWrapper repo;
     private static CatalogConfigProvider configProvider;
@@ -113,10 +111,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
     private static User user;
     private static WorkflowRecord record;
-    private static Branch branch;
-    private static Commit commit;
     private static WorkflowExecutionActivity activity;
-    private static Model workflowlModel;
     private static BinaryFile binaryFile;
     private static StreamingOutput out;
     private static IRI recordId;
@@ -129,7 +124,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
     @BeforeClass
     public static void startServer() throws Exception {
-        vf = getValueFactory();
+        ValueFactory vf = getValueFactory();
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
         repo.init();
@@ -141,7 +136,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/branch> <http://mobi.com/ontologies/catalog#head> <http://mobi.com/commit> .".getBytes(StandardCharsets.UTF_8));
-            workflowlModel = Rio.parse(stream, "", RDFFormat.TRIG);
+            Model workflowlModel = Rio.parse(stream, "", RDFFormat.TRIG);
             conn.add(workflowlModel);
         }
 
@@ -162,7 +157,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         commitId = vf.createIRI("http://mobi.com/commit");
         binaryFileId = vf.createIRI("http://mobi.com/binaryFile");
 
-        rest = new WorkflowsRest();
+        WorkflowsRest rest = new WorkflowsRest();
         rest.configProvider = configProvider;
         rest.recordManager = recordManager;
         rest.engineManager = engineManager;
@@ -175,12 +170,12 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     @Before
     public void setupMocks() {
         record = recordFactory.createNew(recordId);
-        branch = branchFactory.createNew(branchId);
+        Branch branch = branchFactory.createNew(branchId);
         activity = workflowActivityFactory.createNew(activityIRI);
         record.setMasterBranch(branch);
         record.setWorkflowIRI(workflowId);
         record.setActive(true);
-        commit = commitFactory.createNew(commitId);
+        Commit commit = commitFactory.createNew(commitId);
         branch.setHead(commit);
         binaryFile = binaryFileOrmFactory.createNew(binaryFileId);
         out = os -> Stream.empty();
@@ -488,7 +483,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     public void getExecutionLogs() throws VirtualFilesystemException {
         when(workflowManager.getExecutionActivity(eq(activityIRI))).thenReturn(Optional.ofNullable(activity));
         when(workflowManager.getLogFile(eq(binaryFileId))).thenReturn(out);
-        activity.setLogs(binaryFile);
+        activity.addLogs(binaryFile);
 
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                         + encode(activityIRI) + "/logs").request().get();

@@ -62,7 +62,6 @@ import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.impl.core.record.SimpleWorkflowRecordServiceTest;
-import com.nimbusds.jwt.SignedJWT;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -90,7 +89,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
-import javax.servlet.http.Cookie;
 import javax.ws.rs.core.StreamingOutput;
 
 public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
@@ -122,8 +120,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     private Branch branch;
     private Commit commit;
     private User user;
-    private SignedJWT signedJWT;
-    private Cookie cookie;
+
     private Model workflowModel;
     private MemoryRepositoryWrapper repository;
     private WorkflowExecutionActivity activity;
@@ -184,8 +181,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         record.setMasterBranch(branchFactory.createNew(masterBranchIRI));
         record.setWorkflowIRI(workflowIRI);
 
-        signedJWT = mock(SignedJWT.class);
-        cookie = mock(Cookie.class);
         activity = executionActivityFactory.createNew(activityIRI);
 
         //setting up mock calls
@@ -278,24 +273,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
         workflowManager.validateWorkflow(workflowModel);
         thrown.expectMessage("Workflow definition is not valid:");
-    }
-
-    @Test
-    public void getTokenCookieTest() {
-        //setup
-        when(tokenManager.generateAuthToken(eq(userName.stringValue()))).thenReturn(signedJWT);
-        when(tokenManager.createSecureTokenCookie(eq(signedJWT))).thenReturn(cookie);
-
-        Cookie cookieResult = workflowManager.getTokenCookie(user);
-        assertEquals(cookieResult, cookie);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void getTokenCookieNoUsernameTest() {
-        //setup
-        user.clearUsername();
-        workflowManager.getTokenCookie(user);
-        thrown.expectMessage("User does not have a username");
     }
 
     @Test

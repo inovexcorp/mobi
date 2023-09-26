@@ -34,8 +34,8 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -59,7 +59,6 @@ import com.mobi.vfs.ontologies.documents.BinaryFileFactory;
 import com.mobi.workflows.api.WorkflowEngine;
 import com.mobi.workflows.api.WorkflowManager;
 import com.mobi.workflows.api.WorkflowsTopics;
-import com.mobi.workflows.api.action.ActionDefinition;
 import com.mobi.workflows.api.action.ActionHandler;
 import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.Trigger;
@@ -70,7 +69,6 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowFactory;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import com.mobi.workflows.api.trigger.TriggerHandler;
-import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.model.IRI;
@@ -100,7 +98,9 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.Event;
+import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,10 +118,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import javax.servlet.http.Cookie;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(immediate = true, service = { SimpleWorkflowManager.class, WorkflowManager.class, EventHandler.class })
+@Component(immediate = true,
+        service = { SimpleWorkflowManager.class, WorkflowManager.class, EventHandler.class },
+        property = EventConstants.EVENT_TOPIC + "=" + WorkflowsTopics.TOPIC_START)
 public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
     protected final Map<String, TriggerHandler<Trigger>> triggerHandlers = new HashMap<>();
@@ -163,9 +164,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     protected WorkflowFactory workflowFactory;
 
     @Reference
-    protected UserFactory userFactory;
-
-    @Reference
     protected WorkflowExecutionActivityFactory workflowExecutionActivityFactory;
 
     @Reference
@@ -204,8 +202,17 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     @Reference
     protected ThingManager thingManager;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption= ReferencePolicyOption.GREEDY)
     protected WorkflowEngine workflowEngine;
+
+    @Reference
+    EngineManager engineManager;
+
+    @Activate
+    protected void startService() {
+        ProvOntologyLoader.loadOntology(provRepo, WorkflowManager.class.getResourceAsStream("/workflows.ttl"));
+        initializeExecutingWorkflowsList();
+    }
 
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     @SuppressWarnings("unchecked")
@@ -228,12 +235,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         this.actionHandlers.remove(actionHandler.getTypeIRI());
     }
 
-    @Activate
-    protected void startService() {
-        ProvOntologyLoader.loadOntology(provRepo, WorkflowManager.class.getResourceAsStream("/workflows.ttl"));
-        initializeExecutingWorkflowsList();
-    }
-
     private void initializeExecutingWorkflowsList() {
         log.debug("Initializing currently executing Workflows");
         try (RepositoryConnection conn = provService.getConnection();
@@ -254,7 +255,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
     private void initializeTriggerServices(String triggerType) {
         log.debug("Initializing Workflow TriggerServices for " + triggerType);
-        //TODO come back and figure out what to do with these exceptions
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().ascending(true);
             builder.typeFilter(vf.createIRI(WorkflowRecord.TYPE));
@@ -291,6 +291,10 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             } else {
                 log.trace("No Workflow Records Found");
             }
+        } catch (NullPointerException ex) {
+            log.error(ex.getMessage());
+            log.error("SimpleWorkflowManager references not initialized. " +
+                    "The service will initialize triggers when complete.");
         }
     }
 
@@ -313,7 +317,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         if (workflowIRIOpt.isPresent()) {
             Resource workflowIRI = workflowIRIOpt.get();
             Workflow workflow = getWorkflow(workflowIRI).orElseThrow(() ->
-                    new IllegalArgumentException("Workflow " + workflowIRI + " does not exist"));
+                    new IllegalStateException("Workflow " + workflowIRI + " does not exist"));
 
             // Create trigger service if present
             workflow.getHasTrigger_resource().ifPresent(triggerIRI -> {
@@ -489,6 +493,8 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         if (workflowEngine == null) {
             throw new MobiException("No workflow engine configured.");
         }
+
+        executingWorkflows.add(workflow.getResource());
         WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
 
         try {
@@ -497,6 +503,8 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         } catch (NullPointerException ex) {
             removeActivity(activity);
             throw new MobiException("No workflow engine configured.");
+        } finally {
+            executingWorkflows.remove(workflow.getResource());
         }
     }
 
@@ -512,6 +520,8 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
         Resource workFlowRecordIRI;
         WorkflowRecord workflowRecord;
+        Resource userId;
+        User user;
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             List<Statement> statements = QueryResults.asList(conn.getStatements(null,
                     vf.createIRI(WorkflowRecord.workflowIRI_IRI), workflowId));
@@ -520,39 +530,34 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
             workflowRecord = recordManager.getRecord(configProvider.getLocalCatalogIRI(), workFlowRecordIRI,
                     workflowRecordFactory, conn);
+
+            // Sets user on activity to the creator when automatically triggered
+            log.trace("Collecting creator of Workflow");
+            userId = (Resource) workflowRecord.getProperty(vf.createIRI(_Thing.publisher_IRI)).orElseThrow(() ->
+                    new IllegalStateException("Workflow Record must have a dct:publisher set"));
+
+            user = getUser(userId, conn);
         }
 
-        // Sets user on activity to the creator when automatically triggered
-        log.trace("Collecting creator of Workflow");
-        Resource userId = (Resource) workflow.getProperty(vf.createIRI(_Thing.creator_IRI)).orElseThrow(() ->
-                new IllegalStateException("Workflow must have a dct:creator set"));
         log.debug("Workflow Start Event as User " + userId);
-        if (workflowRecord.getActive().isEmpty()) {
+        if (workflowRecord.getActive().isEmpty() || !workflowRecord.getActive().get()) {
             log.debug("Workflow " + workflowId + " is not active. Skipping execution.");
         } else {
             if (executingWorkflows.contains(workflowId)) {
                 log.debug("Workflow " + workflowId + " is currently executing. Skipping execution.");
             } else {
-                WorkflowExecutionActivity activity = startExecutionActivity(userFactory.createNew(userId),
-                        workflowRecord);
+                executingWorkflows.add(workflow.getResource());
+                WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
                 try {
                     workflowEngine.startWorkflow(workflow, activity);
                 } catch (NullPointerException ex) {
                     removeActivity(activity);
                     throw new MobiException("No workflow engine configured.");
+                } finally {
+                    executingWorkflows.remove(workflow.getResource());
                 }
             }
         }
-    }
-
-    protected ActionDefinition toActionDefinition(Action action) {
-        log.trace("Identifying ActionHandler for " + action.getResource());
-        OrmFactory<? extends Action> ormFactory = getActionFactory(action.getResource(),
-                action.getModel());
-        ActionHandler<Action> handler = actionHandlers.get(ormFactory.getTypeIRI().stringValue());
-        log.trace("Identified Action type as " + handler.getTypeIRI());
-        return handler.createDefinition(ormFactory.getExisting(action.getResource(), action.getModel())
-                .orElseThrow(() -> new IllegalStateException("Issue converting Action types")));
     }
 
     protected TriggerHandler<Trigger> getTriggerHandler(Resource triggerId, Model model) {
@@ -568,21 +573,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         }
 
         throw new IllegalArgumentException("No known factories or handlers for this Trigger type");
-    }
-
-    protected ActionHandler<Action> getActionHandler(Resource actionId, Model model) {
-        OrmFactory<? extends Action> ormFactory = getActionFactory(actionId, model);
-        return actionHandlers.get(ormFactory.getTypeIRI().stringValue());
-    }
-
-    protected OrmFactory<? extends Action> getActionFactory(Resource actionId, Model model) {
-        for (OrmFactory<? extends Action> factory : getOrmFactories(actionId, model, Action.class)) {
-            if (actionHandlers.containsKey(factory.getTypeIRI().stringValue())) {
-                return factory;
-            }
-        }
-
-        throw new IllegalArgumentException("No known factories or handlers for this Action type");
     }
 
     protected <T extends Thing> List<OrmFactory<? extends T>> getOrmFactories(Resource id, Model model,
@@ -647,13 +637,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         }
     }
 
-    protected Cookie getTokenCookie(User user) {
-        String username = user.getUsername().orElseThrow(() ->
-                new IllegalStateException("User does not have a username")).stringValue();
-        SignedJWT jwt = tokenManager.generateAuthToken(username);
-        return tokenManager.createSecureTokenCookie(jwt);
-    }
-
     protected StreamingOutput retrieveLogContents(BinaryFile logFile) throws VirtualFilesystemException {
         StreamingOutput out;
         Optional<IRI> logPath = logFile.getRetrievalURL();
@@ -714,5 +697,26 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         } finally {
             validationRepo.shutDown();
         }
+    }
+
+    private User getUser(Resource userId, RepositoryConnection conn) {
+        Optional<Statement> usernameOpt = conn.getStatements(userId, vf.createIRI(User.username_IRI), null)
+                .stream().findFirst();
+
+        if (usernameOpt.isPresent()) {
+            String username = usernameOpt.get().getObject().stringValue();
+            Optional <User> userOpt = engineManager.retrieveUser(username);
+            if (userOpt.isEmpty()) {
+                log.error("No user could be found with IRI " + userId + ", using admin user instead");
+            } else {
+                return userOpt.get();
+            }
+        } else {
+            log.error("No username set on user with IRI " + userId + ", Using admin user instead.");
+        }
+
+        return engineManager.retrieveUser("admin").orElseThrow(() ->
+                new IllegalStateException("Admin user could not be found. Workflow will not be executed."));
+
     }
 }
