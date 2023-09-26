@@ -23,9 +23,9 @@
 import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
-import { get, find } from 'lodash';
+import { get, find, includes } from 'lodash';
 
-import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { CATALOG, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
@@ -33,13 +33,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { getDctermsValue, getPropertyId } from '../../../shared/utility';
-
-interface RecordDisplay {
-  record: JSONLDObject,
-  title: string,
-  description: string,
-  ontologyIRI: string
-}
+import { MergeRequestRecord } from '../../models/merge-request-record';
 
 /**
  * @class merge-requests.RequestRecordSelectComponent
@@ -54,37 +48,44 @@ interface RecordDisplay {
 })
 export class RequestRecordSelectComponent implements OnInit {
     catalogId = '';
-    records: RecordDisplay[] = [];
+    mergeRequestRecords: MergeRequestRecord[] = [];
     totalSize = 0;
     config: PaginatedConfig = {
-        type: '',
+        type: CATALOG + 'VersionedRDFRecord',
         limit: 20,
         searchText: '',
         sortOption: undefined,
-        pageIndex: 0,
+        pageIndex: 0
+    };
+    versionedRDFRecordIriMapping = {
+        [ONTOLOGYEDITOR + 'OntologyRecord']: ONTOLOGYEDITOR + 'ontologyIRI',
+        [DELIM + 'MappingRecord']: 'id',
+        [SHAPESGRAPHEDITOR + 'ShapesGraphRecord']: SHAPESGRAPHEDITOR + 'shapesGraphIRI',
+        'default': 'id'
     };
 
     @ViewChild('mrRecords', { static: true }) mrRecords: ElementRef;
 
-    constructor(public cm: CatalogManagerService, public state: MergeRequestsStateService,
-        private spinnerSvc: ProgressSpinnerService, private toast: ToastService) {}
+    constructor(public cm: CatalogManagerService, 
+        public mrState: MergeRequestsStateService,
+        private spinnerSvc: ProgressSpinnerService,
+        private toast: ToastService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
-        this.config.type = `${ONTOLOGYEDITOR}OntologyRecord`;
-        this.config.sortOption = find(this.cm.sortOptions, { field: `${DCTERMS}title`, asc: true });
+        this.config.sortOption = find(this.cm.sortOptions, { field: DCTERMS + 'title', asc: true });
         this.setInitialRecords();
     }
-    selectRecord(record: JSONLDObject): void {
-        this.state.requestConfig.recordId = record['@id'];
-        this.state.selectedRecord = record;
+    selectRecord(mergeRequestRecord: MergeRequestRecord): void {
+        this.mrState.requestConfig.recordId = get(mergeRequestRecord.jsonld, '@id');
+        this.mrState.selectedRecord = mergeRequestRecord.jsonld;
     }
     setRecords(pageIndex: number): void {
         this.config.pageIndex = pageIndex;
         this.spinnerSvc.startLoadingForComponent(this.mrRecords);
         this.cm.getRecords(this.catalogId, this.config, true)
             .subscribe((response: HttpResponse<JSONLDObject[]>) => this._setPagination(response), error => {
-                this.records = [];
+                this.mergeRequestRecords = [];
                 this.totalSize = 0;
                 this.toast.createErrorToast(error);
                 this.spinnerSvc.finishLoadingForComponent(this.mrRecords);
@@ -96,14 +97,20 @@ export class RequestRecordSelectComponent implements OnInit {
     setInitialRecords(): void {
         this.setRecords(0);
     }
-
+    _mapToMergeRequestRecord(jsonldrecord: JSONLDObject): MergeRequestRecord {
+        const recordType = find(Object.keys(this.versionedRDFRecordIriMapping), type => includes(get(jsonldrecord, '@type', []), type)) || CATALOG + 'Record';
+        const iriMapping = this.versionedRDFRecordIriMapping['type' === CATALOG + 'Record' ? 'default' : recordType]
+        const mergeRequestRecord: MergeRequestRecord = {
+            jsonld: jsonldrecord,
+            recordTypeIri: recordType,
+            title: getDctermsValue(jsonldrecord, 'title'),
+            displayIri: iriMapping === 'id' ?  jsonldrecord['@id'] : getPropertyId(jsonldrecord, iriMapping),
+            description: getDctermsValue(jsonldrecord, 'description')
+        };
+        return mergeRequestRecord;
+    }
     private _setPagination(response: HttpResponse<JSONLDObject[]>) {
-        this.records = response.body.map(record => ({
-          record,
-          title: getDctermsValue(record, 'title'),
-          description: getDctermsValue(record, 'description'),
-          ontologyIRI: getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`)
-        }));
+        this.mergeRequestRecords = response.body.map((jsonldrecord: JSONLDObject) => this._mapToMergeRequestRecord(jsonldrecord));
         this.totalSize = Number(response.headers.get('x-total-count')) || 0;
         this.spinnerSvc.finishLoadingForComponent(this.mrRecords);
      }

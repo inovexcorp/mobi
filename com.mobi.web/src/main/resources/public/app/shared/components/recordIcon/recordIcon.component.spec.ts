@@ -27,10 +27,10 @@ import { MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM
-} from '../../../../../public/test/ts/Shared';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { SharedModule } from '../../../shared/shared.module';
+} from '../../../../test/ts/Shared';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { CatalogStateService } from '../../services/catalogState.service';
+import { SharedModule } from '../../shared.module';
 import { RecordIconComponent } from './recordIcon.component';
 
 describe('Record Icon component', function() {

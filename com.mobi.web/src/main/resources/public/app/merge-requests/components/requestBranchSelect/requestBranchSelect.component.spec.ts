@@ -131,7 +131,7 @@ describe('Request Branch Select component', function() {
                 expect(mergeRequestsStateStub.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', branches);
                 expect(mergeRequestsStateStub.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', branches);
                 expect(component.branches).toEqual(branches);
-                expect(component.branchTitle).toEqual('title');
+                expect(component.sourceBranchTitle).toEqual('title');
                 expect(component.sourceCommitId).toEqual(commitId);
                 expect(component.targetCommitId).toEqual(commitId);
                 expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.commitDifferenceTabset);
@@ -148,7 +148,7 @@ describe('Request Branch Select component', function() {
                 expect(mergeRequestsStateStub.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', branches);
                 expect(mergeRequestsStateStub.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', branches);
                 expect(component.branches).toEqual([]);
-                expect(component.branchTitle).toEqual('title');
+                expect(component.sourceBranchTitle).toEqual('title');
                 expect(component.sourceCommitId).toEqual(commitId);
                 expect(component.targetCommitId).toEqual(commitId);
                 expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.commitDifferenceTabset);
@@ -168,7 +168,7 @@ describe('Request Branch Select component', function() {
             expect(mergeRequestsStateStub.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', branches);
             expect(mergeRequestsStateStub.updateRequestConfigDifference).not.toHaveBeenCalled();
             expect(component.branches).toEqual(branches);
-            expect(component.branchTitle).toEqual('');
+            expect(component.sourceBranchTitle).toEqual('');
             expect(component.sourceCommitId).toEqual('');
             expect(component.targetCommitId).toEqual('');
         }));
@@ -196,7 +196,7 @@ describe('Request Branch Select component', function() {
                 describe('set', function() {
                     it('and is the same', fakeAsync(function() {
                         mergeRequestsStateStub.requestConfig.sourceBranch = branch;
-                        component.changeTarget(branch);
+                        component.changeTargetBranch(branch);
                         tick();
                         expect(mergeRequestsStateStub.requestConfig.targetBranch).toEqual(branch);
                         expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
@@ -212,7 +212,7 @@ describe('Request Branch Select component', function() {
                           '@id': 'other',
                           [`${DCTERMS}title`]: [{ '@value': 'title' }]
                         };
-                        component.changeTarget(branch);
+                        component.changeTargetBranch(branch);
                         tick();
                         expect(mergeRequestsStateStub.requestConfig.targetBranch).toEqual(branch);
                         expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
@@ -225,7 +225,7 @@ describe('Request Branch Select component', function() {
                     }));
                 });
                 it('not set', fakeAsync(function() {
-                    component.changeTarget(branch);
+                    component.changeTargetBranch(branch);
                     tick();
                     expect(mergeRequestsStateStub.requestConfig.targetBranch).toEqual(branch);
                     expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
@@ -237,7 +237,7 @@ describe('Request Branch Select component', function() {
                 }));
             });
             it('if one has not been selected', fakeAsync(function() {
-                component.changeTarget(undefined);
+                component.changeTargetBranch(undefined);
                 tick();
                 expect(mergeRequestsStateStub.requestConfig.targetBranch).toBeUndefined();
                 expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
@@ -252,11 +252,11 @@ describe('Request Branch Select component', function() {
                 describe('set', function() {
                     it('and is the same', fakeAsync(function() {
                         mergeRequestsStateStub.requestConfig.targetBranch = branch;
-                        component.changeSource(branch);
+                        component.changeSourceBranch(branch);
                         tick();
                         expect(mergeRequestsStateStub.requestConfig.sourceBranch).toEqual(branch);
                         expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
-                        expect(component.branchTitle).toEqual('title');
+                        expect(component.sourceBranchTitle).toEqual('title');
                         expect(component.sourceCommitId).toEqual(commitId);
                         expect(mergeRequestsStateStub.requestConfig.sourceBranchId).toEqual(branchId);
                         expect(mergeRequestsStateStub.sameBranch).toBeTrue();
@@ -269,11 +269,11 @@ describe('Request Branch Select component', function() {
                           '@id': 'other',
                           [`${DCTERMS}title`]: [{ '@value': 'title' }]
                         };
-                        component.changeSource(branch);
+                        component.changeSourceBranch(branch);
                         tick();
                         expect(mergeRequestsStateStub.requestConfig.sourceBranch).toEqual(branch);
                         expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
-                        expect(component.branchTitle).toEqual('title');
+                        expect(component.sourceBranchTitle).toEqual('title');
                         expect(component.sourceCommitId).toEqual(commitId);
                         expect(mergeRequestsStateStub.requestConfig.sourceBranchId).toEqual(branchId);
                         expect(mergeRequestsStateStub.sameBranch).toBeFalse();
@@ -283,11 +283,11 @@ describe('Request Branch Select component', function() {
                     }));
                 });
                 it('not set', fakeAsync(function() {
-                    component.changeSource(branch);
+                    component.changeSourceBranch(branch);
                     tick();
                     expect(mergeRequestsStateStub.requestConfig.sourceBranch).toEqual(branch);
                     expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
-                    expect(component.branchTitle).toEqual('title');
+                    expect(component.sourceBranchTitle).toEqual('title');
                     expect(component.sourceCommitId).toEqual(commitId);
                     expect(mergeRequestsStateStub.requestConfig.sourceBranchId).toEqual(branchId);
                     expect(mergeRequestsStateStub.difference).toBeUndefined();
@@ -296,11 +296,11 @@ describe('Request Branch Select component', function() {
                 }));
             });
             it('if one has not been selected', fakeAsync(function() {
-                component.changeSource(undefined);
+                component.changeSourceBranch(undefined);
                 tick();
                 expect(mergeRequestsStateStub.requestConfig.sourceBranch).toBeUndefined();
                 expect(mergeRequestsStateStub.clearDifference).toHaveBeenCalledWith();
-                expect(component.branchTitle).toEqual('');
+                expect(component.sourceBranchTitle).toEqual('');
                 expect(component.sourceCommitId).toEqual('');
                 expect(mergeRequestsStateStub.requestConfig.sourceBranchId).toEqual('');
                 expect(mergeRequestsStateStub.sameBranch).toBeFalse();

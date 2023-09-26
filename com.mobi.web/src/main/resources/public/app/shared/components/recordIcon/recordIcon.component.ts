@@ -22,16 +22,16 @@
  */
 import { Component, Input } from '@angular/core';
 
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { CatalogStateService } from '../../services/catalogState.service';
 
 /**
- * @class catalog.RecordIconComponent
+ * @class shared.RecordIconComponent
  *
- * A component that creates a Font Awesome Icon stack for the provided catalog Record using the
- * {@link shared.CatalogStateService}.
+ * A component that creates a Font Awesome Icon stack/ Material Icon for the provided catalog Record using the
+ * {@link CatalogStateService}.
  *
- * @param {JSONLDObject} Record A catalog Record JSON-LD object
+ * @param {JSONLDObject} Record Catalog Record JSON-LD object
  */
 @Component({
     selector: 'record-icon',
@@ -51,6 +51,11 @@ export class RecordIconComponent {
 
     get record(): JSONLDObject {
         return this._record;
+    }
+
+    @Input() set recordType(value: string) {
+        this._record = { '@id': undefined, '@type': [value]};
+        this._changeIcon(this.state.getRecordIcon(this._record));
     }
 
     constructor(public state: CatalogStateService) {}

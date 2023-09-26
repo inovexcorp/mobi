@@ -21,34 +21,34 @@
   #L%
   -->
 <div class="request-branch-select h-100">
-    <error-display *ngIf="state.sameBranch">A branch cannot be merged into itself.</error-display>
+    <error-display *ngIf="mrState.sameBranch">A branch cannot be merged into itself.</error-display>
     <div class="form-container">
         <div>Merge</div>
         <branch-select class="select-branch"
-                       [model]="state.requestConfig.sourceBranch"
+                       [model]="mrState.requestConfig.sourceBranch"
                        [required]="true"
-                       (modelChange)="changeSource($event)"
+                       (modelChange)="changeSourceBranch($event)"
                        [branches]="branches"></branch-select>
         <div>into</div>
         <branch-select class="select-branch"
-                       [model]="state.requestConfig.targetBranch"
+                       [model]="mrState.requestConfig.targetBranch"
                        [required]="true"
-                       (modelChange)="changeTarget($event)"
+                       (modelChange)="changeTargetBranch($event)"
                        [branches]="branches"></branch-select>
         <div class="mr-record-title">
             <span>in <strong>{{recordTitle}}</strong></span>
         </div>
     </div>
     <div #commitDifferenceTabset class="flex-1 remove-min-height">
-        <commit-difference-tabset *ngIf="state.difference"
-                                  [difference]="state.difference"
-                                  [branchTitle]="branchTitle"
+        <commit-difference-tabset *ngIf="mrState.difference"
+                                  [difference]="mrState.difference"
+                                  [branchTitle]="sourceBranchTitle"
                                   [targetId]="targetCommitId"
                                   [commitId]="sourceCommitId"
                                   [entityNameFunc]="getEntityName.bind(this)"
-                                  (showMoreResultsFunc)="state.retrieveMoreResults($event)"
-                                  [startIndex]="state.startIndex"
-                                  [recordId]="state.requestConfig.recordId"
+                                  (showMoreResultsFunc)="mrState.retrieveMoreResults($event)"
+                                  [startIndex]="mrState.startIndex"
+                                  [recordId]="mrState.requestConfig.recordId"
                                   [type]="type"
                                   (receiveCommits)="receiveCommits($event)"></commit-difference-tabset>
 

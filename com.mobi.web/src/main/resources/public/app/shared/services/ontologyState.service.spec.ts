@@ -24,7 +24,8 @@ import { HttpResponse } from '@angular/common/http';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { concat, filter, get, has, includes, map, set, sortBy, cloneDeep } from 'lodash';
 import { MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
+import { map as rxjsMap, tap } from 'rxjs/operators';
 import { ElementRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -48,6 +49,8 @@ import { ManchesterConverterService } from './manchesterConverter.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { OntologyStateService } from './ontologyState.service';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 
 class MockElementRef extends ElementRef {
     constructor() {
@@ -60,12 +63,15 @@ describe('Ontology State Service', function() {
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+    let mergeRequestManagerServiceStub: jasmine.SpyObj<MergeRequestManagerService>;
     let snackBarStub: jasmine.SpyObj<MatSnackBar>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
     let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
     let toastStub: jasmine.SpyObj<ToastService>;
+    let _catalogManagerActionSubject: Subject<EventWithPayload>;
+    let _mergeRequestManagerActionSubject: Subject<EventWithPayload>;
 
     const error = 'Error message';
     const catalogId = 'catalogId';
@@ -136,6 +142,7 @@ describe('Ontology State Service', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(OntologyManagerService),
                 MockProvider(StateManagerService),
+                MockProvider(MergeRequestManagerService),
                 MockProvider(ProgressSpinnerService),
                 { provide: MatSnackBar, useFactory: () => jasmine.createSpyObj('MatSnackBar', {
                     open: {
@@ -152,10 +159,9 @@ describe('Ontology State Service', function() {
                 { provide: ElementRef, useClass: MockElementRef }
             ]
         });
-
-        service = TestBed.inject(OntologyStateService);
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
+        mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         snackBarStub = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
@@ -163,7 +169,14 @@ describe('Ontology State Service', function() {
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
         manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+           
+        _catalogManagerActionSubject = new Subject<EventWithPayload>();
+        _mergeRequestManagerActionSubject = new Subject<EventWithPayload>();
+        catalogManagerStub.catalogManagerAction$ = _catalogManagerActionSubject.asObservable();
+        mergeRequestManagerServiceStub.mergeRequestAction$ = _mergeRequestManagerActionSubject.asObservable();
 
+        service = TestBed.inject(OntologyStateService);
+        
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
         catalogManagerStub.localCatalog = {'@id': catalogId};
@@ -242,6 +255,7 @@ describe('Ontology State Service', function() {
                 ontologyId: ontologyId
             },
         };
+
     });
 
     afterEach(function() {
@@ -3261,6 +3275,7 @@ describe('Ontology State Service', function() {
     });
     describe('merge should correctly return and call the correct methods if mergeBranches', function() {
         beforeEach(function() {
+            service.list = [listItem]
             service.listItem = listItem;
             service.listItem.merge = {
                 active: true,
@@ -3290,6 +3305,21 @@ describe('Ontology State Service', function() {
                                 spyOn(service, 'deleteBranchState').and.returnValue(of(null));
                             });
                             it('resolves', fakeAsync(function() {
+                                catalogManagerStub.deleteRecordBranch.and.callFake((recordId: string, branchId: string, catalogId: string) => {
+                                    return of(1).pipe(
+                                        rxjsMap(() => {}),
+                                        tap(() => {
+                                            _catalogManagerActionSubject.next({
+                                                eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL, 
+                                                payload: {
+                                                    recordId, 
+                                                    branchId,
+                                                    catalogId
+                                                }
+                                            });
+                                        })
+                                    )
+                                });
                                 spyOn(service, 'updateOntology').and.returnValue(of(null));
                                 service.merge().subscribe(() => {}, () => fail('Observable should have resolved'));
                                 tick();
@@ -3300,49 +3330,37 @@ describe('Ontology State Service', function() {
                                 expect(service.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId);
                             }));
                             it('rejects', fakeAsync(function() {
+                                catalogManagerStub.deleteRecordBranch.and.callFake((recordId: string, branchId: string, catalogId: string) => {
+                                    return of(1).pipe(
+                                        rxjsMap(() => {}),
+                                        tap(() => {
+                                            _catalogManagerActionSubject.next({
+                                                eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL, 
+                                                payload: {
+                                                    recordId, 
+                                                    branchId,
+                                                    catalogId
+                                                }
+                                            });
+                                        })
+                                    )
+                                });
                                 spyOn(service, 'updateOntology').and.returnValue(throwError(error));
                                 service.merge()
                                     .subscribe(() => fail('Observable should have rejected'), response => {
                                         expect(response).toEqual(error);
                                     });
                                 tick();
+
+                                
                                 expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
                                 expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                                expect(service.removeBranch).toHaveBeenCalledWith(recordId, branchId);
+                                expect(service.removeBranch).toHaveBeenCalledWith(recordId, branchId); // TODO
                                 expect(service.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
                                 expect(service.updateOntology).toHaveBeenCalledWith(recordId, branchId, commitId);
                             }));
                         });
-                        it('rejects', fakeAsync(function() {
-                            spyOn(service, 'deleteBranchState').and.returnValue(throwError(error));
-                            spyOn(service, 'updateOntology');
-                            service.merge()
-                                .subscribe(() => fail('Observable should have rejected'), response => {
-                                    expect(response).toEqual(error);
-                                });
-                            tick();
-                            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
-                            expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                            expect(service.removeBranch).toHaveBeenCalledWith(recordId, branchId);
-                            expect(service.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                            expect(service.updateOntology).not.toHaveBeenCalled();
-                        }));
                     });
-                    it('rejects', fakeAsync(function() {
-                        spyOn(service, 'removeBranch').and.returnValue(throwError(error));
-                        spyOn(service, 'deleteBranchState');
-                        spyOn(service, 'updateOntology');
-                        service.merge()
-                            .subscribe(() => fail('Observable should have rejected'), response => {
-                                expect(response).toEqual(error);
-                            });
-                        tick();
-                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
-                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                        expect(service.removeBranch).toHaveBeenCalledWith(recordId, branchId);
-                        expect(service.deleteBranchState).not.toHaveBeenCalled();
-                        expect(service.updateOntology).not.toHaveBeenCalled();
-                    }));
                 });
                 it('rejects', fakeAsync(function() {
                     spyOn(service, 'removeBranch');
@@ -3362,10 +3380,11 @@ describe('Ontology State Service', function() {
                 }));
             });
             describe('false and updateOntology', function() {
-                beforeEach(function() {                    
+                beforeEach(function() {
                     service.listItem.merge.checkbox = false;
                 });
                 it('resolves', fakeAsync(function() {
+                    
                     spyOn(service, 'removeBranch');
                     spyOn(service, 'deleteBranchState');
                     spyOn(service, 'updateOntology').and.returnValue(of(null));

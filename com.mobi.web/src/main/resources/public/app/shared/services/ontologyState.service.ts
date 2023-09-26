@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { forkJoin, throwError, from, Observable, of, Subject, noop } from 'rxjs';
+import { forkJoin, throwError, from, Observable, of, Subject, noop, merge as rxjsMerge } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
     assign,
@@ -106,6 +106,8 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { YasguiQuery } from '../models/yasguiQuery.class';
 import { getBeautifulIRI, getIRINamespace, getPropertyId, isBlankNodeId, mergingArrays } from '../utility';
 import { SPARQLSelectBinding } from '../models/sparqlSelectResults.interface';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 
 /**
  * @class shared.OntologyStateService
@@ -117,8 +119,7 @@ import { SPARQLSelectBinding } from '../models/sparqlSelectResults.interface';
 export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     catalogId = '';
     type = ONTOLOGYEDITOR + 'OntologyRecord';
-    // Only the service has access to the subject
-    private _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
+  
     private _updateRefsExclude = [
         'element',
         'usagesElement',
@@ -149,21 +150,100 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         `${SKOS}hasTopConcept`
     ];
 
-    constructor(protected snackBar: MatSnackBar, protected sm: StateManagerService, protected cm: CatalogManagerService, 
-        protected spinnerSvc: ProgressSpinnerService, protected om: OntologyManagerService,
-        protected toast: ToastService, protected updateRefs: UpdateRefsService, 
-        protected pm: PropertyManagerService, protected mc: ManchesterConverterService, 
-        protected pe: PolicyEnforcementService, protected polm: PolicyManagerService) {
+    constructor(protected snackBar: MatSnackBar, 
+        protected sm: StateManagerService, 
+        protected cm: CatalogManagerService,
+        protected mrm: MergeRequestManagerService,
+        protected spinnerSvc: ProgressSpinnerService, 
+        protected om: OntologyManagerService,
+        protected toast: ToastService, 
+        protected updateRefs: UpdateRefsService, 
+        protected pm: PropertyManagerService, 
+        protected mc: ManchesterConverterService, 
+        protected pe: PolicyEnforcementService, 
+        protected polm: PolicyManagerService) {
             super(ONTOLOGYSTATE,
                 'http://mobi.com/states/ontology-editor/branch-id/',
                 'http://mobi.com/states/ontology-editor/tag-id/',
                 'http://mobi.com/states/ontology-editor/commit-id/',
                 'ontology-editor'
             );
+            rxjsMerge(
+                mrm.mergeRequestAction$,
+                cm.catalogManagerAction$
+            ).pipe(
+                switchMap((event: EventWithPayload) => {
+                    const eventType = event?.eventType;
+                    const payload = event?.payload;
+                    if (eventType && payload){
+                        const ob = this._handleEventWithPayload(eventType, payload);
+                        if (ob) return ob;
+                        return of(false);
+                    } else {
+                        toast.createErrorToast('Event type and payload is required');
+                        return of(false);
+                    }
+                })
+            ).subscribe();
+    }
+    _handleEventWithPayload(eventType: string, payload: EventPayload): Observable<any>{
+        if (eventType === EventTypeConstants.EVENT_BRANCH_REMOVAL) {
+            return this._handleEventBranchRemoval(payload);
+        } else if (eventType === EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED) {
+            return this._handleEventMergeRequestAcceptance(payload);
+        } else {
+            console.warn('Event type is not valid');
+            return of(false);
         }
+    }
+    _handleEventBranchRemoval(payload: EventPayload): Observable<any> {
+        const recordId = get(payload, 'recordId');
+        const branchId = get(payload, 'branchId'); 
+        if (recordId && branchId) {
+            const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
+            if (recordExistInList) {
+                return this.removeBranch(recordId, branchId).pipe(
+                    switchMap(() => this.deleteBranchState(recordId, branchId))
+                );
+            } else {
+                return of(false);
+            }
+        } else {
+            console.warn('EVENT_BRANCH_REMOVAL is missing recordIri or branchId');
+            return of(false);
+        }
+    }
+    _handleEventMergeRequestAcceptance(payload: EventPayload): Observable<any> {
+        const recordId = get(payload, 'recordId');
+        const targetBranchId = get(payload, 'targetBranchId'); 
+        if (recordId && targetBranchId) {
+            const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
+            if (recordExistInList) {
+                if (!isEmpty(this.listItem)) {
+                    if (get(this.listItem, 'versionedRdfRecord.branchId') === targetBranchId) {
+                        this.listItem.upToDate = false;
+                        if (this.listItem.merge.active) {
+                            this.toast.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                        }
+                    }
+                    if (this.listItem.merge.active && get(this.listItem.merge.target, '@id') === targetBranchId) {
+                        this.toast.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+                    }
+                }
+                return of(false);
+            } else {
+                return of(false);
+            }
+        } else {
+            console.warn('EVENT_MERGE_REQUEST_ACCEPTED is missing recordIri or targetBranchId');
+            return of(false);
+        }
+    }
 
+    // Only the service has access to the subject
+    private _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
     ontologyRecordAction$ = this._ontologyRecordActionSubject.asObservable();
-    
+
     /**
      * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
      * {@link ontology-editor.OpenOntologyTabComponent} and {@link ontology-editor.UploadOntologyOverlayComponent}.
@@ -883,10 +963,12 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         const listItem = this.getListItemByRecordId(recordId);
         remove(listItem.branches, {'@id': branchId});
         return this.cm.getRecordVersions(recordId, this.catalogId)
-            .pipe(map((response: HttpResponse<JSONLDObject[]>) => {
-                listItem.tags = filter(response.body, version => includes(get(version, '@type'), `${CATALOG}Tag`));
-                return null;
-            }));
+            .pipe(
+                map((response: HttpResponse<JSONLDObject[]>) => {
+                    listItem.tags = filter(response.body, version => includes(get(version, '@type'), `${CATALOG}Tag`));
+                    return null;
+                })
+            );
     }
     /**
      * 
@@ -897,10 +979,8 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             .pipe(
                 switchMap((inProgressCommit: Difference) => {
                     listItem.inProgressCommit = inProgressCommit;
-
                     listItem.additions = [];
                     listItem.deletions = [];
-
                     return isEqual(inProgressCommit, new Difference()) ? this.cm.deleteInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId) : of(null);
                 }),
                 switchMap(() => {
@@ -1625,11 +1705,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 switchMap((commit: string) => {
                     commitId = commit;
                     if (checkbox) {
-                        return this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, sourceId, this.catalogId)
-                            .pipe(
-                                switchMap(() => this.removeBranch(this.listItem.versionedRdfRecord.recordId, sourceId)),
-                                switchMap(() => this.deleteBranchState(this.listItem.versionedRdfRecord.recordId, sourceId))
-                            );
+                        return this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, sourceId, this.catalogId);
                     } else {
                         return of(1);
                     }

@@ -330,31 +330,18 @@ describe('Saved Changes Tab component', function() {
                             ontologyStateStub.updateState.and.returnValue(of(null));
                             catalogManagerStub.isUserBranch.and.callFake(branchToCheck => branchToCheck['@id'] === otherUserBranchId);
                         });
-                        describe('and when deleteRecordBranch is resolved', function() {
-                            beforeEach(() => {
-                                catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
-                            });
-                            it('and when deleteBranchState is resolved', fakeAsync(function() {
-                                ontologyStateStub.deleteBranchState.and.returnValue(of(null));
-                                ontologyStateStub.removeBranch.and.returnValue(of(null));
-                                catalogManagerStub.updateRecordBranch.and.returnValue(of(null));
-                                component.restoreBranchWithUserBranch();
-                                tick();
-                                expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.branchConfig, ontologyStateStub.listItem.versionedRdfRecord.commitId);
-                                expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(newBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
-                                expect(ontologyStateStub.updateState).toHaveBeenCalledWith({recordId: ontologyStateStub.listItem.versionedRdfRecord.recordId, commitId: commitId, branchId: newBranchId});
-                                expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, userBranchId);
-                                expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, userBranchId);
-                                expect(catalogManagerStub.updateRecordBranch).toHaveBeenCalledWith(otherUserBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.otherUserBranch);
-                            }));
-                            it('and when deleteBranchState is rejected', fakeAsync(function() {
-                                ontologyStateStub.deleteBranchState.and.returnValue(throwError(error));
-                                component.restoreBranchWithUserBranch();
-                                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
-                                tick();
-                            }));
-                        });
-                        it('and when deleteOntologyBranch is rejected', fakeAsync(function() {
+                        it('and when deleteRecordBranch is resolved', fakeAsync(function() {
+                            catalogManagerStub.deleteRecordBranch.and.returnValue(of(null))
+                            catalogManagerStub.updateRecordBranch.and.returnValue(of(null));
+                            component.restoreBranchWithUserBranch();
+                            tick();
+                            expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.branchConfig, ontologyStateStub.listItem.versionedRdfRecord.commitId);
+                            expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(newBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId);
+                            expect(ontologyStateStub.updateState).toHaveBeenCalledWith({recordId: ontologyStateStub.listItem.versionedRdfRecord.recordId, commitId: commitId, branchId: newBranchId});
+                            expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId,userBranchId, catalogId);
+                            expect(catalogManagerStub.updateRecordBranch).toHaveBeenCalledWith(otherUserBranchId, ontologyStateStub.listItem.versionedRdfRecord.recordId, catalogId, this.otherUserBranch);
+                        }));
+                        it('and when deleteRecordBranch is rejected', fakeAsync(function() {
                             catalogManagerStub.deleteRecordBranch.and.returnValue(throwError(error));
                             component.restoreBranchWithUserBranch();
                             tick();

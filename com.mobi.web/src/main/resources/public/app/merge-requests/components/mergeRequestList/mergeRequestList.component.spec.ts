@@ -50,6 +50,7 @@ import { MergeRequestManagerService } from '../../../shared/services/mergeReques
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { ToastService } from '../../../shared/services/toast.service';
 import { MergeRequestListComponent } from './mergeRequestList.component';
+import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 
 describe('Merge Request List component', function() {
     let component: MergeRequestListComponent;
@@ -106,6 +107,7 @@ describe('Merge Request List component', function() {
             declarations: [
                 MergeRequestListComponent,
                 MockComponent(InfoMessageComponent),
+                MockComponent(RecordIconComponent),
                 MockComponent(MergeRequestFilterComponent),
                 MockComponent(SearchBarComponent)
             ],

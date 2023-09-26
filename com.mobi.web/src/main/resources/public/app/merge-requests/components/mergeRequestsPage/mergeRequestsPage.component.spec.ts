@@ -25,6 +25,18 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
+import { MatOptionModule } from '@angular/material/core';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatListModule } from '@angular/material/list';
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
 import {
     cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
@@ -33,6 +45,7 @@ import { CreateRequestComponent } from '../createRequest/createRequest.component
 import { MergeRequestListComponent } from '../mergeRequestList/mergeRequestList.component';
 import { MergeRequestViewComponent } from '../mergeRequestView/mergeRequestView.component';
 import { MergeRequestsPageComponent } from './mergeRequestsPage.component';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 
 describe('Merge Requests Page component', function() {
     let element: DebugElement;
@@ -41,6 +54,19 @@ describe('Merge Requests Page component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [
+                NoopAnimationsModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatOptionModule,
+                MatPaginatorModule,
+                MatFormFieldModule,
+                MatSelectModule,
+                MatListModule,
+                MatCardModule,
+                MatInputModule,
+                MatGridListModule
+            ],
             declarations: [
                 MergeRequestsPageComponent,
                 MockComponent(MergeRequestListComponent),
@@ -49,6 +75,8 @@ describe('Merge Requests Page component', function() {
             ],
             providers: [
                 MockProvider(MergeRequestsStateService),
+                MockProvider(MergeRequestManagerService),
+                MockProvider(OntologyStateService)
             ],
         }).compileComponents();
 

@@ -29,15 +29,15 @@ import { CommentDisplayComponent } from './components/commentDisplay/commentDisp
 import { CreateRequestComponent } from './components/createRequest/createRequest.component';
 import { EditRequestOverlayComponent } from './components/editRequestOverlay/editRequestOverlay.component';
 import { MergeRequestDiscussionComponent } from './components/mergeRequestDiscussion/mergeRequestDiscussion.component';
+import { MergeRequestFilterComponent } from './components/merge-request-filter/merge-request-filter.component';
 import { MergeRequestListComponent } from './components/mergeRequestList/mergeRequestList.component';
-import { MergeRequestsPageComponent } from './components/mergeRequestsPage/mergeRequestsPage.component';
 import { MergeRequestTabsetComponent } from './components/mergeRequestTabset/mergeRequestTabset.component';
 import { MergeRequestViewComponent } from './components/mergeRequestView/mergeRequestView.component';
+import { MergeRequestsPageComponent } from './components/mergeRequestsPage/mergeRequestsPage.component';
 import { ReplyCommentComponent } from './components/replyComment/replyComment.component';
 import { RequestBranchSelectComponent } from './components/requestBranchSelect/requestBranchSelect.component';
 import { RequestDetailsFormComponent } from './components/requestDetailsForm/requestDetailsForm.component';
 import { RequestRecordSelectComponent } from './components/requestRecordSelect/requestRecordSelect.component';
-import { MergeRequestFilterComponent } from './components/merge-request-filter/merge-request-filter.component';
 
 /**
  * @namespace merge-requests
@@ -52,15 +52,15 @@ import { MergeRequestFilterComponent } from './components/merge-request-filter/m
         CreateRequestComponent,
         EditRequestOverlayComponent,
         MergeRequestDiscussionComponent,
+        MergeRequestFilterComponent,
         MergeRequestListComponent,
-        MergeRequestsPageComponent,
         MergeRequestTabsetComponent,
         MergeRequestViewComponent,
+        MergeRequestsPageComponent,
         ReplyCommentComponent,
         RequestBranchSelectComponent,
         RequestDetailsFormComponent,
-        RequestRecordSelectComponent,
-        MergeRequestFilterComponent
+        RequestRecordSelectComponent
     ]
 })
 export class MergeRequestsModule {}

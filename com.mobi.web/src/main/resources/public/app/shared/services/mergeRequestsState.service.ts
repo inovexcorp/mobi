@@ -85,6 +85,15 @@ export class MergeRequestsStateService {
      * The search to filter the list of requests by.
      * @type {string}
      */
+    requestStatus: boolean;
+    recordType: string;
+     
+    constructor(private mm: MergeRequestManagerService, 
+        private cm: CatalogManagerService,
+        private um: UserManagerService, 
+        private om: OntologyManagerService, 
+        private toast: ToastService) {}
+
     requestSearchText = '';
     /**
      * Contains an object representing the currently selected request.
@@ -168,10 +177,6 @@ export class MergeRequestsStateService {
      * @type {boolean}
      */
     sameBranch = false;
-
-    constructor(private mm: MergeRequestManagerService, private cm: CatalogManagerService,
-      private um: UserManagerService, private om: OntologyManagerService, private toast: ToastService) {}
-
     /**
      * Starts the Create Merge Request process by setting the appropriate state variables.
      */
@@ -434,7 +439,7 @@ export class MergeRequestsStateService {
             if (type === `${ONTOLOGYEDITOR}OntologyRecord`) {
                 return this.om.getOntologyEntityNames(recordId, sourceBranchId, commitId, false, false, iris)
                     .pipe(
-                        switchMap(data => {
+                        switchMap((data: EntityNames) => {
                             merge(this.entityNames, data);
                             this.setDifference(diffResponse);
                             return of(null);
@@ -449,7 +454,6 @@ export class MergeRequestsStateService {
                 this.setDifference(diffResponse);
                 return of(null);
             }
-            
         } else {
             this.difference = new Difference();
             return of(null);

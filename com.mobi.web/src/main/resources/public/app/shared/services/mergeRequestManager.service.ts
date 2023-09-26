@@ -22,18 +22,22 @@
  */
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { forEach, get, has, includes } from 'lodash';
-import { Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 
-import { REST_PREFIX } from '../../constants';
-import { MERGEREQ, DCTERMS } from '../../prefixes';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { Observable, Subject } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
+import { cloneDeep, forEach, get, has, includes } from 'lodash';
+
+import { DCTERMS, MERGEREQ  } from '../../prefixes';
+import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestConfig } from '../models/mergeRequestConfig.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../constants';
 import { SortOption } from '../models/sortOption.interface';
 import { createHttpParams, handleError, paginatedConfigToHttpParams } from '../utility';
+import { MergeRequest } from '../models/mergeRequest.interface';
+
 import { UserCount } from '../models/user-count.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
 
@@ -70,9 +74,12 @@ export class MergeRequestManagerService {
             field: `${DCTERMS}title`,
             asc: true,
             label: 'Title (asc)'
-        },
-
+        }
     ];
+
+    // Only the service has access to the subject
+    private _mergeRequestActionSubject = new Subject<EventWithPayload>();
+    public mergeRequestAction$ = this._mergeRequestActionSubject.asObservable();
 
     constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
 
@@ -155,9 +162,34 @@ export class MergeRequestManagerService {
      * @returns {Observable<null>} An Observable that resolves if the request was accepted or rejects with an
      * error message
      */
-    acceptRequest(requestId: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(requestId)}`, null))
-           .pipe(catchError(handleError), map(() => {}));
+    acceptRequest(requestToAccept: MergeRequest): Observable<void> {
+        const requestToAcceptClone = cloneDeep(requestToAccept);
+        const mergeRequestId = requestToAcceptClone.jsonld['@id'];
+        return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(mergeRequestId)}`, null))
+           .pipe(
+                catchError(handleError),
+                map(() => {}),
+                tap(() => {
+                    this._requestAccepted(requestToAcceptClone);
+                })
+            );
+    }
+    /**
+     * Emits an event on merge request acceptance (IRI of the record being accepted and the target branch IRI)
+     * @param requestToAccept Merge Request IRI ID
+     * @param targetBranchId Target Branch IRI ID
+     */
+    _requestAccepted(requestToAccept: MergeRequest): void {
+        const recordId = requestToAccept.recordIri;
+        const targetBranchId = requestToAccept.targetBranch['@id'];
+        this._mergeRequestActionSubject.next({
+            eventType: EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED, 
+            payload: {
+                recordId, 
+                targetBranchId,
+                requestToAccept
+            }
+        });
     }
     /**
      * Calls the GET /mobirest/merge-requests/{requestId}/comments endpoint to retrieve the array of comment

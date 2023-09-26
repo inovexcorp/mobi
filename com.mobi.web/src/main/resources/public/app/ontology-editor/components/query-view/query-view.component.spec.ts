@@ -34,6 +34,9 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { ToastService } from '../../../shared/services/toast.service';
 import { YasguiQuery } from '../../../shared/models/yasguiQuery.class';
 import { QueryViewComponent } from './query-view.component';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('QueryViewComponent', () => {
     let component: QueryViewComponent;
@@ -56,7 +59,11 @@ describe('QueryViewComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 NoopAnimationsModule,
-                MatDialogModule
+                FormsModule,
+                ReactiveFormsModule,
+                MatDialogModule,
+                MatSelectModule,
+                MatSlideToggleModule
             ],
             declarations: [
                 QueryViewComponent,

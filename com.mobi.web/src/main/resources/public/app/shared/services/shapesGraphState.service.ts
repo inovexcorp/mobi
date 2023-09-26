@@ -21,9 +21,9 @@
  * #L%
  */
 import { Injectable } from '@angular/core';
-import { find, get, includes, remove } from 'lodash';
+import { find, get, includes, isEmpty, remove, some } from 'lodash';
 import { switchMap } from 'rxjs/operators';
-import { from, Observable, of } from 'rxjs';
+import { Observable, of, merge as rxjsMerge } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
 import { CatalogManagerService } from './catalogManager.service';
@@ -43,6 +43,8 @@ import { ToastService } from './toast.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { getDctermsValue } from '../utility';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -56,6 +58,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
 
     constructor(protected sm: StateManagerService,
                 protected cm: CatalogManagerService,
+                protected mrm: MergeRequestManagerService,
                 protected toast: ToastService,
                 protected pep: PolicyEnforcementService,
                 private pm: PolicyManagerService,
@@ -66,19 +69,86 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
             COMMITID,
             GRAPHEDITOR
         );
+        rxjsMerge(
+            mrm.mergeRequestAction$,
+            cm.catalogManagerAction$
+        ).pipe(
+            switchMap((event: EventWithPayload) => {
+                const eventType = event?.eventType;
+                const payload = event?.payload;
+                if (eventType && payload){
+                    const ob = this._handleEventWithPayload(eventType, payload);
+                    if (!ob) {
+                        return of(false);
+                    }
+                    return ob;
+                } else {
+                    toast.createErrorToast('Event type and payload is required');
+                    return of(false);
+                }
+            })
+        ).subscribe();
     }
-
+    _handleEventWithPayload(eventType: string, payload: EventPayload): Observable<any> {
+        if (eventType === EventTypeConstants.EVENT_BRANCH_REMOVAL) {
+            return this._handleEventBranchRemoval(payload);
+        } else if (eventType === EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED) {
+            return this._handleEventMergeRequestAcceptance(payload);
+        } else {
+            console.warn('Event type is not valid');
+            return of(false);
+        }
+    }
+    _handleEventBranchRemoval(payload: EventPayload): Observable<any> {
+        const recordId = get(payload, 'recordId');
+        const branchId = get(payload, 'branchId'); 
+        if (recordId && branchId) {
+            const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
+            if (recordExistInList) {
+                return this.deleteBranchState(recordId, branchId);
+            } else {
+                return of(false);
+            }
+        } else {
+            console.warn('EVENT_BRANCH_REMOVAL is missing recordIri or branchId');
+            return of(false);
+        }
+    }
+    _handleEventMergeRequestAcceptance(payload: EventPayload): Observable<any> {
+        const recordId = get(payload, 'recordId');
+        const targetBranchId = get(payload, 'targetBranchId'); 
+        if (recordId && targetBranchId) {
+            const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
+            if (recordExistInList) {
+                if (!isEmpty(this.listItem)) {
+                    if (get(this.listItem, 'versionedRdfRecord.branchId') === targetBranchId) {
+                        this.listItem.upToDate = false;
+                        if (this.listItem.merge.active) {
+                            this.toast.createWarningToast('You have a merge in progress in the Shape Graph Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                        }
+                    }
+                    if (this.listItem.merge.active && get(this.listItem.merge.target, '@id') === targetBranchId) {
+                        this.toast.createWarningToast('You have a merge in progress in the Shape Graph Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+                    }
+                }
+                return of(false);
+            } else {
+                return of(false);
+            }
+        } else {
+            console.warn('EVENT_MERGE_REQUEST_ACCEPTED is missing recordIri or targetBranchId');
+            return of(false);
+        }
+    }
     initialize(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
     }
-
     getId(): Observable<string> {
         return this.sgm.getShapesGraphIRI(this.listItem?.versionedRdfRecord?.recordId, 
             this.listItem?.versionedRdfRecord?.branchId, 
             this.listItem?.versionedRdfRecord?.commitId
         );
     }
-
     /**
      * Resets all the main state variables.
      */
@@ -268,12 +338,12 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
      */
     changeShapesGraphVersion(recordId: string, branchId: string, commitId: string, tagId: string, versionTitle: string,
                              clearInProgressCommit=false, changesPageOpen=false): Observable<null> {
-        const state = {
+        const state: VersionedRdfStateBase = {
             recordId,
             branchId,
             commitId,
             tagId
-        } as VersionedRdfStateBase;
+        };
         return this.updateState(state).pipe(
             switchMap(() => {
                 const title = this.listItem.versionedRdfRecord.title;
@@ -309,10 +379,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
      * @param branchId {string} the IRI of the branch to delete.
      * @return {Observable} An Observable that resolves if the branch deletion was successful or not.
      */
-    deleteShapesGraphBranch(recordId: string, branchId: string): Observable<null> {
-        return this.cm.deleteRecordBranch(recordId, branchId, this.catalogId).pipe(
-            switchMap(() => this.deleteBranchState(recordId, branchId))
-        );
+    deleteShapesGraphBranch(recordId: string, branchId: string): Observable<void> {
+        return this.cm.deleteRecordBranch(recordId, branchId, this.catalogId);
     }
     /**
      * Performs a merge of a branch into another and updates the state.
@@ -328,7 +396,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
                 switchMap(commit => {
                     commitId = commit;
                     if (checkbox) {
-                        return from(this.deleteShapesGraphBranch(this.listItem.versionedRdfRecord.recordId, sourceId));
+                        return this.deleteShapesGraphBranch(this.listItem.versionedRdfRecord.recordId, sourceId)
                     } else {
                         return of(1);
                     }

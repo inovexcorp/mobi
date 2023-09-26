@@ -25,10 +25,16 @@ var OntologyEditorPage = function() {
     this.ontologyListPageCss = 'ontology-editor-page open-ontology-tab';
 };
 
-OntologyEditorPage.prototype.isActive = function(browser) {
-    browser
-        .useCss()
-        .waitForElementPresent('ontology-editor-page');
+OntologyEditorPage.prototype.isActive = function(browser, option) {
+    if (option === 'ontology-tab') {
+        browser
+            .useCss()
+            .waitForElementPresent('ontology-editor-page ontology-tab');
+    } else {
+        browser
+            .useCss()
+            .waitForElementPresent('ontology-editor-page');
+    }
 };
 
 // ontology-sidebar methods
@@ -52,7 +58,6 @@ OntologyEditorPage.prototype.switchToBranch = function(browser, title) {
         .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]')
         .click('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]');
 };
-
 
 // open-ontology-tab Methods (Ontology List Page)
 
@@ -79,14 +84,16 @@ OntologyEditorPage.prototype.editNewOntologyOverlay = function(browser, title, d
 };
 
 OntologyEditorPage.prototype.submitNewOntologyOverlay = function(browser) {
+    // NOTE: No Success Toast occurs when submitted, page navigates to the projectTab page
     browser
-        .useCss()
-        .waitForElementVisible('new-ontology-overlay')
         .useXpath()
+        .waitForElementVisible('//new-ontology-overlay')
         .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
         .useCss()
-        .waitForElementNotPresent('new-ontology-overlay')
+        .waitForElementNotPresent('new-ontology-overlay') // intermittent not found backend issue  
         .waitForElementPresent('ontology-editor-page ontology-tab');
+    browser.globals.wait_for_no_spinners(browser);
+    this.onProjectTab(browser);
 };
 
 OntologyEditorPage.prototype.openOntologyListPage = function (browser){
@@ -128,13 +135,12 @@ OntologyEditorPage.prototype.editCommitOverlayAndSubmit = function(browser, comm
         .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
         .setValue('commit-overlay textarea[name=comment]', comment)
         .useXpath()
-        .click('//commit-overlay//span[text()="Submit"]')
-        .useCss()
-        .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend 
+        .click('//commit-overlay//span[text()="Submit"]');
     browser.globals.wait_for_no_spinners(browser);
     browser
         .useCss()
-        .waitForElementNotPresent('commit-overlay');
+        .waitForElementNotPresent('commit-overlay')
+        .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
 };
 
 OntologyEditorPage.prototype.openNewBranchOverlay = function(browser) {
@@ -155,13 +161,12 @@ OntologyEditorPage.prototype.editNewBranchOverlayAndSubmit = function(browser, t
         .waitForElementVisible('//create-branch-overlay//textarea[@data-placeholder="Description"]')
         .setValue('//create-branch-overlay//input[@data-placeholder="Title"]', title)
         .setValue('//create-branch-overlay//textarea[@data-placeholder="Description"]', description)
-        .click('//create-branch-overlay//span[text()="Submit"]')
-        .useCss()
-        .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
+        .click('//create-branch-overlay//span[text()="Submit"]');
     browser.globals.wait_for_no_spinners(browser);
     browser
         .useCss()
-        .waitForElementNotPresent('commit-overlay');
+        .waitForElementNotPresent('create-branch-overlay')
+        .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
 };
 
 OntologyEditorPage.prototype.createNewOwlClass  = function(browser, title, description) {
@@ -171,17 +176,20 @@ OntologyEditorPage.prototype.createNewOwlClass  = function(browser, title, descr
         .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
         .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
         .click('create-entity-modal .create-class')
-        .waitForElementNotPresent('create-entity-modal .create-class')
+        .waitForElementNotPresent('create-entity-modal .create-class');
+    browser
         .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
         .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
         .useXpath()
         .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')
         .setValue('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input', title)
         .setValue('//mat-label[text()[contains(.,"Description")]]//ancestor::mat-form-field//textarea', description)
-        .click('//create-class-overlay//span[text()="Submit"]')
-        .useCss()
-        .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
+        .click('//create-class-overlay//span[text()="Submit"]');
     browser.globals.wait_for_no_spinners(browser);
+    browser
+        .useCss()
+        .waitForElementNotPresent('create-class-overlay')
+        .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
 };
 
 // Project Tab Methods
@@ -189,10 +197,13 @@ OntologyEditorPage.prototype.createNewOwlClass  = function(browser, title, descr
 OntologyEditorPage.prototype.onProjectTab = function (browser){
     browser
         .useCss()
-        .waitForElementPresent('ontology-editor-page ontology-tab')
-        .waitForElementPresent('ontology-editor-page ontology-tab project-tab')
-        .waitForElementVisible('xpath', '//mat-tab-header//div[text()[contains(.,"Project")]]')
+        .waitForElementVisible('ontology-editor-page')
+        .waitForElementVisible('ontology-editor-page ontology-tab')
+        .waitForElementVisible('ontology-editor-page ontology-tab project-tab')
+        .waitForElementVisible('xpath', '//mat-tab-header//div[text()[contains(.,"Project")]]');
+    browser
         .waitForElementVisible('ontology-editor-page ontology-tab project-tab selected-details')
+        .waitForElementVisible('ontology-editor-page ontology-tab project-tab selected-details static-iri')
         .waitForElementVisible('ontology-editor-page ontology-tab project-tab ontology-properties-block')
         .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
         .waitForElementVisible('ontology-editor-page ontology-tab project-tab preview-block');
@@ -202,9 +213,9 @@ OntologyEditorPage.prototype.verifyProjectTab = function (browser, title, descri
     this.onProjectTab(browser);
     browser
         .useXpath()
-        .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"' + title + '")]]')
-        .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"' + description + '")]]')
-        .waitForElementVisible('//static-iri//span[text()[contains(.,"' + iri + '")]]');
+        .waitForElementVisible('//project-tab//ontology-properties-block//value-display//span[text()[contains(.,"' + title + '")]]')
+        .waitForElementVisible('//project-tab//ontology-properties-block//value-display//span[text()[contains(.,"' + description + '")]]')
+        .waitForElementVisible('//project-tab//selected-details//static-iri//span[text()[contains(.,"' + iri + '")]]');
 };
 
 OntologyEditorPage.prototype.editIri = function(browser, newIriEnd) {
@@ -212,15 +223,18 @@ OntologyEditorPage.prototype.editIri = function(browser, newIriEnd) {
     browser
         .useXpath()
         .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-        .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-        .waitForElementVisible("//h1[text() [contains(., 'Edit IRI')]]")
+        .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]');
+    browser
+        .useXpath()
+        .waitForElementVisible('//edit-iri-overlay')
+        .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
         .useCss()
         .pause(1000) // To avoid clashes with autofocusing
         .setValue('edit-iri-overlay input[name=iriEnd]', newIriEnd)
         .useXpath()
-        .click("//button/span[text() [contains(., 'Submit')]]")
-        .waitForElementNotPresent('edit-iri-overlay')
-        .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
+        .click("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
+        .waitForElementNotPresent('//edit-iri-overlay')
+        .assert.not.elementPresent("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
     browser.globals.wait_for_no_spinners(browser);
 };
 

@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
 */
-import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { find, get, noop, remove } from 'lodash';
 import { switchMap, startWith, map } from 'rxjs/operators';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { UntypedFormControl } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -83,7 +83,7 @@ export class OptionIcon {
     templateUrl: './openOntologySelect.component.html',
     styleUrls: ['./openOntologySelect.component.scss']
 })
-export class OpenOntologySelectComponent implements OnInit, OnChanges {
+export class OpenOntologySelectComponent implements OnInit, OnChanges, OnDestroy {
     @Input() listItem: OntologyListItem;
     
     state: State;
@@ -94,6 +94,8 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges {
     ontologySearchControl: UntypedFormControl = new UntypedFormControl();
     filteredOptions: Observable<OptionGroup[]>
 
+    ontologyRecordActionSubscription: Subscription;
+    
     @ViewChild('ontologySearch', { static: true }) ontologySearch: ElementRef;
     @ViewChild(MatAutocompleteTrigger, { static: true }) autocompleteTrigger: MatAutocompleteTrigger;
 
@@ -112,14 +114,14 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges {
         if (this.listItem) {
             this.updateState();
         }
-        this.os.ontologyRecordAction$.subscribe(action => {
+        this.ontologyRecordActionSubscription = this.os.ontologyRecordAction$.subscribe(action => {
             if (action.recordId === this.listItem?.versionedRdfRecord.recordId && action.action === OntologyAction.UPDATE_STATE) {
                 this.updateState();
             }
         });
     }
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.listItem && changes.listItem.currentValue) {
+        if (changes.listItem?.currentValue) {
             if (this.os.hasChanges(changes.listItem.currentValue) || this.os.isCommittable(changes.listItem.currentValue)) {
                 this.ontologySearchControl.disable();
             } else {
@@ -128,9 +130,15 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges {
             this.updateState();
         }
     }
+    ngOnDestroy(): void {
+        if (this.ontologyRecordActionSubscription) {
+            this.ontologyRecordActionSubscription.unsubscribe();
+        }
+    }
     updateState(): void {
         this.state = this.os.getStateByRecordId(this.listItem?.versionedRdfRecord.recordId);
-        const recordState = find(get(this.state, 'model', []), {'@type': [`${ONTOLOGYSTATE}StateRecord`]});
+        const currentStateModel: JSONLDObject[] = get(this.state, 'model', []);
+        const recordState = find(currentStateModel, {'@type': [`${ONTOLOGYSTATE}StateRecord`]});
         const currentStateId = getPropertyId(recordState, `${ONTOLOGYSTATE}currentState`);
         this.currentState = find(this.state.model, {'@id': currentStateId});
         this._setSelected();
@@ -249,10 +257,7 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges {
     }
     deleteBranch(branch: JSONLDObject): void {
         const localCatalogId = get(this.cm.localCatalog, '@id', '');
-        this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, branch['@id'], localCatalogId).pipe(
-            switchMap(() => this.os.removeBranch(this.listItem.versionedRdfRecord.recordId, branch['@id'])),
-            switchMap(() => this.os.deleteBranchState(this.listItem.versionedRdfRecord.recordId, branch['@id']))
-        ).subscribe(() => {
+        this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, branch['@id'], localCatalogId).subscribe(() => {
             if (!this.os.isStateBranch(this.currentState)) {
                 this.cm.getCommit(getPropertyId(this.currentState, `${ONTOLOGYSTATE}commit`))
                     .subscribe(noop, () => {
@@ -284,7 +289,9 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges {
         }
     }
     changeToMaster(): void {
-        this.toast.createWarningToast(`${(this.os.isStateTag(this.currentState) ? 'Tag' : 'Commit')} no longer exists. Opening MASTER`);
+        if (this.currentState) {
+            this.toast.createWarningToast(`${(this.os.isStateTag(this.currentState) ? 'Tag' : 'Commit')} no longer exists. Opening MASTER`);
+        }
         this.updateSelected({
             title: 'MASTER',
             type: 'Branch',
@@ -294,9 +301,10 @@ export class OpenOntologySelectComponent implements OnInit, OnChanges {
             icon: OptionIcon.BRANCH
         });
     }
-
     private _setSelected() {
-        if (this.os.isStateBranch(this.currentState)) {
+        if (!this.currentState) {
+            // Depends on ontologyRecordAction to update currentState
+        } else if (this.os.isStateBranch(this.currentState)) {
             this.selected = this._createBranchOption(find(this.listItem.branches, {'@id': getPropertyId(this.currentState, `${ONTOLOGYSTATE}branch`)}));
         } else if (this.os.isStateTag(this.currentState)) {
             this.selected = this._createTagOption(find(this.listItem.tags, {'@id': getPropertyId(this.currentState, `${ONTOLOGYSTATE}tag`)}));

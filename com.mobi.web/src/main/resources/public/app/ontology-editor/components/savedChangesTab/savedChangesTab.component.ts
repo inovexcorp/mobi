@@ -149,10 +149,8 @@ export class SavedChangesTabComponent implements OnInit, OnChanges {
                 const commitId = getPropertyId(branch, `${CATALOG}head`);
                 return this.os.updateState({recordId: this.os.listItem.versionedRdfRecord.recordId, commitId, branchId: createdBranchId});
             }),
-            switchMap(() => this.cm.deleteRecordBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId, localCatalogId)),
-            switchMap(() => this.os.deleteBranchState(this.os.listItem.versionedRdfRecord.recordId, userBranchId)))
-            .subscribe(() => {
-                this.os.removeBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId).subscribe();
+            switchMap(() => this.cm.deleteRecordBranch(this.os.listItem.versionedRdfRecord.recordId, userBranchId, localCatalogId))
+        ).subscribe(() => {
                 this._changeUserBranchesCreatedFrom(createdFromId, createdBranchId);
                 this.toast.createSuccessToast('Branch has been restored with changes.');
             }, error => this.toast.createErrorToast(error));

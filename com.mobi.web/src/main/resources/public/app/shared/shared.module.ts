@@ -22,43 +22,45 @@
 */
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { ErrorStateMatcher } from '@angular/material/core';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatListModule } from '@angular/material/list';
-import { MatStepperModule } from '@angular/material/stepper';
-import { MatGridListModule } from '@angular/material/grid-list';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTableModule } from '@angular/material/table';
 
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CdkTableModule } from '@angular/cdk/table';
 import { HttpClientModule } from '@angular/common/http';
-import { ShowdownModule } from 'ngx-showdown';
 import { FlexLayoutModule } from '@angular/flex-layout';
-import { MatMarkdownEditorModule } from 'mat-markdown-editor/dist';
-import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
+
+import { ErrorStateMatcher } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { ShowdownModule } from 'ngx-showdown';
+import { MatMarkdownEditorModule } from 'mat-markdown-editor/dist';
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
 import { SHACLFormsModule } from '../shacl-forms/shacl-forms.module';
 
@@ -67,8 +69,6 @@ import { ActivityTitleComponent } from './components/activityTitle/activityTitle
 import { BlankNodeValueDisplayComponent } from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
 import { BranchSelectComponent } from './components/branchSelect/branchSelect.component';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
-import { DatasetSelectComponent } from './components/datasetSelect/datasetSelect.component';
-import { DownloadQueryOverlayComponent } from './components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { CircleButtonStackComponent } from './components/circleButtonStack/circleButtonStack.component';
 import { CommitChangesDisplayComponent } from './components/commitChangesDisplay/commitChangesDisplay.component';
 import { CommitCompiledResourceComponent } from './components/commitCompiledResource/commitCompiledResource.component';
@@ -76,6 +76,8 @@ import { CommitDifferenceTabsetComponent } from './components/commitDifferenceTa
 import { CommitHistoryTableComponent } from './components/commitHistoryTable/commitHistoryTable.component';
 import { CommitInfoOverlayComponent } from './components/commitInfoOverlay/commitInfoOverlay.component';
 import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
+import { DatasetSelectComponent } from './components/datasetSelect/datasetSelect.component';
+import { DownloadQueryOverlayComponent } from './components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { EditIriOverlayComponent } from './components/editIriOverlay/editIriOverlay.component';
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from './components/fileInput/fileInput.component';
@@ -87,6 +89,7 @@ import { LanguageSelectComponent } from './components/languageSelect/languageSel
 import { LimitDescriptionComponent } from './components/limitDescription/limitDescription.component';
 import { ListFiltersComponent } from './components/list-filters/list-filters.component';
 import { MarkdownEditorComponent } from './components/markdownEditor/markdownEditor.component';
+import { RecordIconComponent } from './components/recordIcon/recordIcon.component';
 import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
 import { SearchBarComponent } from './components/searchBar/searchBar.component';
@@ -102,7 +105,6 @@ import { WarningMessageComponent } from './components/warningMessage/warningMess
 import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
 import { DragFileDirective } from './directives/dragFile/dragFile.directive';
 import { FocusDirective } from './directives/focus/focus.directive';
-
 import { CatalogManagerService } from './services/catalogManager.service';
 import { CatalogStateService } from './services/catalogState.service';
 import { D3TransformerService } from './services/d3Transformer.service';
@@ -147,6 +149,7 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { HistoryGraph } from '../history-graph/history-graph.module';
+
 
 /**
  * @namespace shared
@@ -199,21 +202,30 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
     declarations: [
         ActivityListComponent,
         ActivityTitleComponent,
+        BeautifyPipe,
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
         BreadcrumbsComponent,
+        CamelCasePipe,
+        CircleButtonStackComponent,
         CircleButtonStackComponent,
         CommitCompiledResourceComponent,
         CommitHistoryTableComponent,
         CommitChangesDisplayComponent,
+        CommitCompiledResourceComponent,
         CommitDifferenceTabsetComponent,
+        CommitHistoryTableComponent,
         CommitInfoOverlayComponent,
         ConfirmModalComponent,
+        CopyClipboardDirective,
         DatasetSelectComponent,
         DownloadQueryOverlayComponent,
+        DragFileDirective,
         EditIriOverlayComponent,
         ErrorDisplayComponent,
         FileInputComponent,
+        FocusDirective,
+        HighlightTextPipe,
         InfoMessageComponent,
         InlineEditComponent,
         IriSelectComponent,
@@ -222,13 +234,18 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         LimitDescriptionComponent,
         ListFiltersComponent,
         MarkdownEditorComponent,
+        PrefixationPipe,
+        RecordIconComponent,
         ResolveConflictsBlock,
         ResolveConflictsFormComponent,
         SearchBarComponent,
         SettingEditPageComponent,
         SettingGroupComponent,
+        ShowPropertiesPipe,
         SidebarComponent,
         SpinnerComponent,
+        SplitIRIPipe,
+        TrustedHtmlPipe,
         UnmaskPasswordComponent,
         UserAccessControlsComponent,
         ValueDisplayComponent,
@@ -310,6 +327,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         SettingEditPageComponent,
         SidebarComponent,
         SpinnerComponent,
+        RecordIconComponent,
         UnmaskPasswordComponent,
         UserAccessControlsComponent,
         ValueDisplayComponent,

@@ -33,6 +33,8 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { MergeRequest } from '../models/mergeRequest.interface';
+import { EventWithPayload } from '../models/eventWithPayload.interface';
 
 describe('Merge Request Manager service', function() {
     let service: MergeRequestManagerService;
@@ -44,6 +46,19 @@ describe('Merge Request Manager service', function() {
     const commentId = 'commentId';
     const commentText = 'HELLO WORLD';
     const emptyObj: JSONLDObject = {'@id': '', '@type': []};
+    const mergeRequest01: MergeRequest = {
+        title: 'title',
+        date: '01/01/2020',
+        creator: 'string',
+        recordIri: 'RECORDIRI',
+        assignees: [],
+        jsonld: {
+            '@id': requestId
+        },
+        targetBranch: {
+            '@id': 'targetBranchId'
+        }
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -57,7 +72,6 @@ describe('Merge Request Manager service', function() {
         service = TestBed.inject(MergeRequestManagerService);
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-
         progressSpinnerStub.track.and.callFake((ob) => ob);
         progressSpinnerStub.trackedRequest.and.callFake((ob, tracked) => tracked ? ob : progressSpinnerStub.track(ob));
     });
@@ -222,7 +236,7 @@ describe('Merge Request Manager service', function() {
             this.url = `${service.prefix}/${encodeURIComponent(requestId)}`;
         });
         it('unless an error occurs', function() {
-            service.acceptRequest(requestId)
+            service.acceptRequest(mergeRequest01)
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
@@ -230,12 +244,36 @@ describe('Merge Request Manager service', function() {
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.acceptRequest(requestId)
+            const event: EventWithPayload = {
+                'eventType':'EVENT_MERGE_REQUEST_ACCEPTED',
+                'payload':{
+                    'recordId':'RECORDIRI',
+                    'targetBranchId':'targetBranchId',
+                    'requestToAccept':{
+                        'title':'title',
+                        'date':'01/01/2020',
+                        'creator':'string',
+                        'recordIri':'RECORDIRI',
+                        'assignees':[],
+                        'jsonld':{
+                            '@id':'requestId'
+                        },
+                        'targetBranch':{
+                            '@id':'targetBranchId'
+                        }
+                    }
+                }
+            };
+            const sub = service.mergeRequestAction$.subscribe((e: EventWithPayload) => {
+                expect(e).toEqual(event);
+            }, (e) => fail(`Observable should have resolved: ${e}`));
+            service.acceptRequest(mergeRequest01)
               .subscribe(() => {
                 expect(true).toBeTrue();
-            }, () => fail('Observable should have resolved'));
+            }, (e) => fail(`Observable should have resolved: ${e}`));
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
             request.flush(200);
+            sub.unsubscribe();
         });
     });
     describe('should get the list of comments on a merge request', function() {
@@ -442,3 +480,7 @@ describe('Merge Request Manager service', function() {
       });
     });
 });
+function spy(service: MergeRequestManagerService, arg1: string) {
+    throw new Error('Function not implemented.');
+}
+

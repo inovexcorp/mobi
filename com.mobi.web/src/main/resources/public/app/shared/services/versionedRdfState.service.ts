@@ -264,7 +264,6 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     isStateBranch(jsonld: JSONLDObject): boolean {
         return includes(jsonld['@type'], `${this.statePrefix}StateBranch`);
     }
-
     /**
      * Retrieves the catalog information for the specific commit of the record that should be opened for the current 
      * user. If the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,

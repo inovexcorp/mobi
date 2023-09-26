@@ -22,7 +22,7 @@
  */
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { forEach, concat, some, isEmpty, get, find } from 'lodash';
+import { forEach, concat, some, get, find, isEmpty } from 'lodash';
 import { of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
@@ -146,11 +146,11 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     }
     acceptRequest(): void {
         const requestToAccept = Object.assign({}, this.state.selected);
-        const targetBranchId = requestToAccept.targetBranch['@id'];
         const sourceBranchId = requestToAccept.sourceBranch['@id'];
+        const targetBranchId = requestToAccept.targetBranch['@id'];
         const removeSource = requestToAccept.removeSource;
         const localCatalogId = get(this.cm.localCatalog, '@id', '');
-        this.mm.acceptRequest(requestToAccept.jsonld['@id'])
+        this.mm.acceptRequest(requestToAccept)
             .pipe(
                 switchMap(() => {
                     this.toast.createSuccessToast('Request successfully accepted');
@@ -163,19 +163,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }),
                 switchMap(() => {
                     if (removeSource) {
-                        return this.cm.deleteRecordBranch(requestToAccept.recordIri, sourceBranchId, localCatalogId)
-                            .pipe(switchMap(() => {
-                                if (some(this.os.list, {versionedRdfRecord: {recordId: requestToAccept.recordIri}})) {
-                                    return this.os.removeBranch(requestToAccept.recordIri, sourceBranchId);
-                                }
-                                return of(null);
-                            }));
+                        return this.cm.deleteRecordBranch(requestToAccept.recordIri, sourceBranchId, localCatalogId);
                     }
                     return of(null);
                 }))
             .subscribe(() => {
                 this.state.selected = requestToAccept;
-              
                 if (!isEmpty(this.os.listItem)) {
                     if (get(this.os.listItem, 'versionedRdfRecord.branchId') === targetBranchId) {
                         this.os.listItem.upToDate = false;
