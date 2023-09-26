@@ -184,8 +184,10 @@ public class MergeRequestRest {
             @QueryParam("limit") int limit,
             @Parameter(description = "Optional search text to filter the list by")
             @QueryParam("searchText") String searchText,
-            @Parameter(description = "Optional creator user IRI to filter the list by")
-            @QueryParam("creators") List<String> creators) {
+            @Parameter(description = "Optional creator user IRIs to filter the list by")
+            @QueryParam("creators") List<String> creators,
+            @Parameter(description = "Optional assignee user IRIs to filter the list by")
+            @QueryParam("assignees") List<String> assignees) {
         User activeUser = getActiveUser(servletRequest, engineManager);
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setRequestingUser(activeUser);
         if (!StringUtils.isEmpty(sort)) {
@@ -196,6 +198,9 @@ public class MergeRequestRest {
         }
         if (creators != null && creators.size() > 0) {
             builder.setCreators(creators.stream().map(vf::createIRI).collect(Collectors.toList()));
+        }
+        if (assignees != null && assignees.size() > 0) {
+            builder.setAssignees(assignees.stream().map(vf::createIRI).collect(Collectors.toList()));
         }
         builder.setAscending(asc).setAccepted(accepted);
         try {
@@ -370,6 +375,68 @@ public class MergeRequestRest {
             }
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<UserCount> counts = manager.getCreators(builder.build(), activeUser.getResource());
+            ArrayNode arr = serializeUserCount(counts);
+            return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
+                    ? counts.getTotalSize() : limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | SailException | MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Retrieves a list of all the Merge Request creators with counts of how many Merge Requests they've made and their
+     * display name. Parameters can be passed to control paging.
+     *
+     * @param uriInfo Information about the request URI.
+     * @param searchText Optional text to search the list with.
+     * @param offset Optional offset for the page of results.
+     * @param limit Optional limit for the page of results.
+     * @return List of User IRIs with their names and their Merge Request counts.
+     */
+    @GET
+    @Path("assignees")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "merge-requests",
+            summary = "Retrieves the list of assignees of the MergeRequests in the application with their counts",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with JSON containing the User count details",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(
+                                    uniqueItems = true, schema = @Schema(example = "{\"user\": "
+                                    + "\"http://test.com/some-uri\", \"name\": \"Joe\", \"count\": 5}")))),
+                    @ApiResponse(responseCode = "400",
+                            description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500",
+                            description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getAssignees(@Context HttpServletRequest servletRequest, @Context UriInfo uriInfo,
+                                @Parameter(description = "String used to filter out assignees")
+                                @QueryParam("searchText") String searchText,
+                                @Parameter(description = "Offset for the page")
+                                @QueryParam("offset") int offset,
+                                @Parameter(description = "Number of assignees to return in one page")
+                                @QueryParam("limit") int limit) {
+        try {
+            LinksUtils.validateParams(limit, offset);
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
+            if (offset > 0) {
+                builder.offset(offset);
+            }
+            if (limit > 0) {
+                builder.limit(limit);
+            }
+            if (StringUtils.isNotEmpty(StringUtils.stripToEmpty(searchText))) {
+                builder.searchText(searchText);
+            }
+            User activeUser = getActiveUser(servletRequest, engineManager);
+            PaginatedSearchResults<UserCount> counts = manager.getAssignees(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeUserCount(counts);
             return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
                     ? counts.getTotalSize() : limit, offset);

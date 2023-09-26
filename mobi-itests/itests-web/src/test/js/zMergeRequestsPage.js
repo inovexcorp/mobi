@@ -34,7 +34,7 @@ var MergeRequestsPage = function() {
 MergeRequestsPage.prototype.verifyRecordFilters = function(browser) {
     browser.useCss()
     browser.expect.element(this.mergeRequestFilters).to.be.present;
-    browser.expect.elements(this.mergeRequestFilters + ' mat-expansion-panel-header mat-panel-title').count.to.equal(2);
+    browser.expect.elements(this.mergeRequestFilters + ' mat-expansion-panel-header mat-panel-title').count.to.equal(3);
 };
 
 MergeRequestsPage.prototype.verifyMergeRequestList = function(browser) {

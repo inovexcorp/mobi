@@ -40,6 +40,7 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.builder.Conflict;
@@ -93,13 +94,13 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
     private SimpleMergeRequestManager manager;
-    private OrmFactory<MergeRequest> mergeRequestFactory = getRequiredOrmFactory(MergeRequest.class);
-    private OrmFactory<AcceptedMergeRequest> acceptedMergeRequestFactory = getRequiredOrmFactory(AcceptedMergeRequest.class);
-    private OrmFactory<Comment> commentFactory = getRequiredOrmFactory(Comment.class);
-    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
-    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
+    private final OrmFactory<MergeRequest> mergeRequestFactory = getRequiredOrmFactory(MergeRequest.class);
+    private final OrmFactory<AcceptedMergeRequest> acceptedMergeRequestFactory = getRequiredOrmFactory(AcceptedMergeRequest.class);
+    private final OrmFactory<Comment> commentFactory = getRequiredOrmFactory(Comment.class);
+    private final OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private final OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
 
     private MergeRequest request1;
     private MergeRequest request2;
@@ -130,16 +131,16 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private Comment commentY;
     private Comment commentZ;
 
-    private final IRI LOCAL_CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/catalogs#local");
-    private final IRI RECORD_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record1");
-    private final IRI RECORD_2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record2");
-    private final IRI SOURCE_BRANCH_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#source1");
-    private final IRI SOURCE_BRANCH_2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#source2");
-    private final String SOURCE_BRANCH_TITLE = "Source Title";
-    private final IRI TARGET_BRANCH_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#target1");
-    private final IRI TARGET_BRANCH_2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#target2");
-    private final IRI DOES_NOT_EXIST_IRI = VALUE_FACTORY.createIRI("urn:does_not_exist");
-    private final String TARGET_BRANCH_TITLE = "Target Title";
+    private static final IRI LOCAL_CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/catalogs#local");
+    private static final IRI RECORD_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record1");
+    private static final IRI RECORD_2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record2");
+    private static final IRI SOURCE_BRANCH_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#source1");
+    private static final IRI SOURCE_BRANCH_2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#source2");
+    private static final String SOURCE_BRANCH_TITLE = "Source Title";
+    private static final IRI TARGET_BRANCH_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#target1");
+    private static final IRI TARGET_BRANCH_2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#target2");
+    private static final IRI DOES_NOT_EXIST_IRI = VALUE_FACTORY.createIRI("urn:does_not_exist");
+    private static final String TARGET_BRANCH_TITLE = "Target Title";
 
     private IRI titleIRI;
 
@@ -200,6 +201,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         user1 = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/users#user1"));
         user2 = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/users#user2"));
+        user1.setUsername(VALUE_FACTORY.createLiteral("User1"));
+        user2.setUsername(VALUE_FACTORY.createLiteral("User2"));
         Set<User> userSet1 = new HashSet<>();
         userSet1.add(user1);
         Set<User> userSet2 = new HashSet<>();
@@ -213,6 +216,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request1.setSourceBranch(sourceBranch1);
         request1.setTargetBranch(targetBranch1);
         request1.setRemoveSource(true);
+        request1.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
         request2 = mergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#2"));
         request2.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 2, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
         request2.setProperty(VALUE_FACTORY.createLiteral("Request 2"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
@@ -222,10 +226,12 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request2.setSourceBranch(sourceBranch2);
         request2.setTargetBranch(targetBranch2);
         request2.setRemoveSource(false);
+        request2.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
         request3 = mergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#3"));
         request3.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
         request3.setProperty(VALUE_FACTORY.createLiteral("Request 3"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         request4 = acceptedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#4"));
+        request3.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
         request4.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 4, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
         request4.setProperty(VALUE_FACTORY.createLiteral("Request 4"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         request4.setAssignee(userSet1);
@@ -234,6 +240,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request4.setTargetBranch(targetBranch1);
         request4.setSourceCommit(sourceCommit1);
         request4.setTargetCommit(targetCommit1);
+        request4.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
         request5 = acceptedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#5"));
         request5.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 5, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
         request5.setProperty(VALUE_FACTORY.createLiteral("Request 5"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
@@ -243,6 +250,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request5.setTargetBranch(targetBranch2);
         request5.setSourceCommit(sourceCommit2);
         request5.setTargetCommit(targetCommit2);
+        request5.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
 
         comment1 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
         comment1.setOnMergeRequest(request1);
@@ -320,6 +328,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             conn.add(commentX.getModel(), commentX.getResource());
             conn.add(commentY.getModel(), commentY.getResource());
             conn.add(commentZ.getModel(), commentZ.getResource());
+
+            conn.add(user1.getModel(), user1.getResource());
+            conn.add(user2.getModel(), user2.getResource());
         }
 
         closeable = MockitoAnnotations.openMocks(this);
@@ -472,13 +483,13 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void getOpenMergeRequestsAssignee() {
         try (RepositoryConnection conn = repo.getConnection()) {
             MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
-            builder.setAssignee(user1.getResource());
+            builder.setAssignees(Collections.singletonList(user1.getResource()));
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request1.getResource(), result.get(0).getResource());
             verify(thingManager).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
 
-            builder.setAssignee(user2.getResource());
+            builder.setAssignees(Collections.singletonList(user2.getResource()));
             result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request2.getResource(), result.get(0).getResource());
@@ -1376,6 +1387,135 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
             manager.deleteCommentsWithRequestId(request4.getResource(), conn);
             verify(thingManager, never()).remove(any(Resource.class), any(RepositoryConnection.class));
+        }
+    }
+
+    @Test
+    public void testGetCreatorsWithNoConnection() {
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        assertEquals(1, manager.getCreators(searchParams).getPageNumber());
+        assertFalse(manager.getCreators(searchParams).getPage().isEmpty());
+        assertEquals(2, manager.getCreators(searchParams).getPageSize());
+        assertEquals(2, manager.getCreators(searchParams).getTotalSize());
+    }
+
+    @Test
+    public void testGetCreatorsWithConnection() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertEquals(1, manager.getCreators(searchParams, conn).getPageNumber());
+            assertFalse(manager.getCreators(searchParams, conn).getPage().isEmpty());
+            assertEquals(2, manager.getCreators(searchParams, conn).getPageSize());
+            assertEquals(2, manager.getCreators(searchParams, conn).getTotalSize());
+        }
+    }
+
+    @Test
+    public void testGetCreatorsWithUser() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getPageNumber());
+        assertFalse(manager.getCreators(searchParams, user1.getResource()).getPage().isEmpty());
+        assertEquals(2, manager.getCreators(searchParams, user1.getResource()).getPageSize());
+        assertEquals(2, manager.getCreators(searchParams, user1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetCreatorWithSearchText() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("1").build();
+
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getPageNumber());
+        assertFalse(manager.getCreators(searchParams, user1.getResource()).getPage().isEmpty());
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getPageSize());
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetCreatorSearchNotExist() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NotExist").build();
+
+        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).getPageNumber());
+        assertTrue(manager.getCreators(searchParams, user1.getResource()).getPage().isEmpty());
+        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).getPageSize());
+        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetCreatorsWithConnectionAndUser() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertEquals(1, manager.getCreators(searchParams, conn, user1.getResource()).getPageNumber());
+            assertFalse(manager.getCreators(searchParams, conn, user1.getResource()).getPage().isEmpty());
+            assertEquals(2, manager.getCreators(searchParams, conn, user1.getResource()).getPageSize());
+            assertEquals(2, manager.getCreators(searchParams, conn, user1.getResource()).getTotalSize());
+        }
+    }
+
+    @Test
+    public void testGetAssigneesWithNoConnection() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        assertEquals(1, manager.getAssignees(searchParams).getPageNumber());
+        assertFalse(manager.getAssignees(searchParams).getPage().isEmpty());
+        assertEquals(2, manager.getAssignees(searchParams).getPageSize());
+        assertEquals(2, manager.getAssignees(searchParams).getTotalSize());
+    }
+
+    @Test
+    public void testGetAssigneesWithConnection() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertEquals(1, manager.getAssignees(searchParams, conn).getPageNumber());
+            assertFalse(manager.getAssignees(searchParams, conn).getPage().isEmpty());
+            assertEquals(2, manager.getAssignees(searchParams, conn).getPageSize());
+            assertEquals(2, manager.getAssignees(searchParams, conn).getTotalSize());
+        }
+    }
+
+    @Test
+    public void testGetAssigneesWithUser() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageNumber());
+        assertFalse(manager.getAssignees(searchParams, user1.getResource()).getPage().isEmpty());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageSize());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetAssigneesWithSearchText() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("2").build();
+
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageNumber());
+        assertFalse(manager.getAssignees(searchParams, user1.getResource()).getPage().isEmpty());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageSize());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetAssigneesSearchNotExist() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NotExist").build();
+
+        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).getPageNumber());
+        assertTrue(manager.getAssignees(searchParams, user1.getResource()).getPage().isEmpty());
+        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).getPageSize());
+        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetAssigneesWithConnectionAndUser() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getPageNumber());
+            assertFalse(manager.getAssignees(searchParams, conn, user1.getResource()).getPage().isEmpty());
+            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getPageSize());
+            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getTotalSize());
         }
     }
 }

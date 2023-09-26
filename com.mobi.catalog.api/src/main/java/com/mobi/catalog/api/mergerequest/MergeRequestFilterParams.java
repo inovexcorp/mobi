@@ -31,7 +31,7 @@ import java.util.Optional;
 
 /**
  * MergeRequestFilterParams class to help query getMergeRequests. Allows equality filtering on a particular Resource.
- * Equality filtering options include assignee, onRecord, sourceBranch, targetBranch, and removeSource.
+ * Equality filtering options include assignees, onRecord, sourceBranch, targetBranch, removeSource, and creators.
  * AcceptedMergeRequests can additionally filter on sourceCommit and targetCommit. Also provides a way to sort
  * (ascending or descending) the getMergeRequest query results by a provided sortBy Resource. Also provides ability to
  * filter based on search text.
@@ -39,7 +39,6 @@ import java.util.Optional;
 public class MergeRequestFilterParams {
 
     private final User requestingUser;
-    private final Resource assignee;
     private final Resource onRecord;
     private final Resource sourceBranch;
     private final Resource targetBranch;
@@ -51,11 +50,11 @@ public class MergeRequestFilterParams {
     private final boolean accepted;
     private final String searchText;
     private final List<Resource> creators;
+    private final List<Resource> assignees;
     private final boolean filters;
 
-    public MergeRequestFilterParams(Builder builder) {
+    protected MergeRequestFilterParams(Builder builder) {
         this.requestingUser =  builder.requestingUser;
-        this.assignee = builder.assignee;
         this.onRecord = builder.onRecord;
         this.sourceBranch = builder.sourceBranch;
         this.targetBranch = builder.targetBranch;
@@ -67,14 +66,12 @@ public class MergeRequestFilterParams {
         this.accepted = builder.accepted;
         this.searchText = builder.searchText;
         this.creators = builder.creators;
+        this.assignees = builder.assignees;
         this.filters = builder.filters;
     }
 
     public Optional<User> getRequestingUser() {
         return Optional.ofNullable(requestingUser);
-    }
-    public Optional<Resource> getAssignee() {
-        return Optional.ofNullable(assignee);
     }
 
     public Optional<Resource> getOnRecord() {
@@ -121,13 +118,16 @@ public class MergeRequestFilterParams {
         return Optional.ofNullable(creators);
     }
 
+    public Optional<List<Resource>> getAssignees() {
+        return Optional.ofNullable(assignees);
+    }
+
     public boolean hasFilters() {
         return filters;
     }
 
     public static class Builder {
         private User requestingUser = null;
-        private Resource assignee = null;
         private Resource onRecord = null;
         private Resource sourceBranch = null;
         private Resource targetBranch = null;
@@ -139,6 +139,7 @@ public class MergeRequestFilterParams {
         private boolean accepted = false;
         private String searchText = null;
         private List<Resource> creators = null;
+        private List<Resource> assignees = null;
         private boolean filters = false;
 
         public Builder() {}
@@ -151,18 +152,6 @@ public class MergeRequestFilterParams {
          */
         public Builder setRequestingUser(User requestingUser) {
             this.requestingUser = requestingUser;
-            return this;
-        }
-
-        /**
-         * Set the filter on assignee of the MergeRequest.
-         *
-         * @param assignee The Resource of the assignee
-         * @return MergeRequestFilterParams.Builder
-         */
-        public Builder setAssignee(Resource assignee) {
-            this.assignee = assignee;
-            filters = true;
             return this;
         }
 
@@ -289,6 +278,17 @@ public class MergeRequestFilterParams {
          */
         public Builder setCreators(List<Resource> creators) {
             this.creators = creators;
+            filters = true;
+            return this;
+        }
+
+        /**
+         * Set the Resource IRIs of the assignees of the MergeRequests in the list.
+         * @param assignees The IRIs of the assignees of the Merge Requests
+         * @return MergeRequestFilterParams.Builder
+         */
+        public Builder setAssignees(List<Resource> assignees) {
+            this.assignees = assignees;
             filters = true;
             return this;
         }

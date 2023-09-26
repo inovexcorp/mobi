@@ -4,20 +4,20 @@ PREFIX um: <http://mobi.com/ontologies/user/management#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
 SELECT DISTINCT
-    ?creator
+    ?user
     ?name
     (COUNT(DISTINCT ?mr) as ?count)
 WHERE {
     %VALUES%
     ?mr a mq:MergeRequest ;
-        dc:creator ?creator .
-    ?creator a um:User ;
+        ?pred ?user .
+    ?user a um:User ;
         um:username ?username .
     OPTIONAL {
-        ?creator foaf:firstName ?firstName .
+        ?user foaf:firstName ?firstName .
     }
     OPTIONAL {
-        ?creator foaf:lastName ?lastName .
+        ?user foaf:lastName ?lastName .
     }
 
     BIND(IF(BOUND(?searchText), CONTAINS(LCASE(?username), LCASE(?searchText)), true) as ?s1)
@@ -31,4 +31,4 @@ WHERE {
     BIND(IF(BOUND(?searchText), CONTAINS(?option6, LCASE(?searchText)), true) as ?s6)
     BIND(IF(?option4 != "", ?option4, ?username) as ?name)
     FILTER(?s1 || ?s2 || ?s3 || ?s4 || ?s5 || ?s6)
-} GROUP BY ?creator ?name ORDER BY ?name
+} GROUP BY ?user ?name ORDER BY ?name

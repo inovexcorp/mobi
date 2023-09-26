@@ -100,7 +100,8 @@ export class MergeRequestFilterComponent implements OnInit {
           });
           componentContext.changeFilter.emit({
             requestStatus: value,
-            creators: componentContext._state.creators
+            creators: componentContext._state.creators,
+            assignees: componentContext._state.assignees
           });
         }
       },
@@ -145,7 +146,8 @@ export class MergeRequestFilterComponent implements OnInit {
         this.numChecked = creators.length;
         componentContext.changeFilter.emit({
           requestStatus: componentContext._state.acceptedFilter,
-          creators
+          creators,
+          assignees: componentContext._state.assignees
         });
       },
       searchChanged: function(value: string): void {
@@ -178,8 +180,82 @@ export class MergeRequestFilterComponent implements OnInit {
           }, error => componentContext._toast.createErrorToast(error));
       },
     };
+    const assigneeFilter: SearchableListFilter = {
+      title: 'Assignees',
+      type: FilterType.CHECKBOX,
+      hide: false,
+      pageable: true,
+      searchable: true,
+      filterItems: [],
+      numChecked: 0,
+      pagingData: {
+        limit: 10,
+        totalSize: 0,
+        pageIndex: 0,
+        hasNextPage: false
+      },
+      rawFilterItems: [],
+      searchModel: componentContext._state.assigneeSearchText,
+      onInit: function(): void {
+        this.numChecked = componentContext._state.assignees.length;
+        this.nextPage();
+      },
+      getItemText: function(filterItem: FilterItem): string {
+        const userCount = filterItem.value as UserCount;
+        return `${userCount.name} (${userCount.count})`;
+      },
+      setFilterItems: function(): void {
+        this.filterItems = this.rawFilterItems.map(userCount => ({
+          value: userCount,
+          checked: componentContext._state.assignees.findIndex(iri => iri === (userCount as UserCount).user) >= 0
+        }));
+      },
+      filter: function(): void {
+        const hiddenAssignees = componentContext._state.assignees.filter(assignee => 
+          this.filterItems.findIndex(item => (item.value as UserCount).user === assignee) < 0);
+        const checkedAssigneeItems = this.filterItems.filter(item => item.checked);
+        const assignees = checkedAssigneeItems
+          .map(currentFilterItem => (currentFilterItem.value as UserCount).user)
+          .concat(hiddenAssignees);
+        this.numChecked = assignees.length;
+        componentContext.changeFilter.emit({
+          requestStatus: componentContext._state.acceptedFilter,
+          creators: componentContext._state.creators,
+          assignees
+        });
+      },
+      searchChanged: function(value: string): void {
+        componentContext._state.assigneeSearchText = value;
+      },
+      searchSubmitted: function(): void {
+        this.pagingData.totalSize = 0;
+        this.pagingData.pageIndex = 0;
+        this.pagingData.hasNextPage = false;
+        this.nextPage();
+      },
+      nextPage: function(): void {
+        const filterInstance: SearchableListFilter = this;
+        const pagingData = filterInstance.pagingData;
+        const paginatedConfig = {
+            searchText: componentContext._state.assigneeSearchText,
+            pageIndex: pagingData.pageIndex,
+            limit: pagingData.limit,
+        };
+        componentContext._mm.getAssignees(paginatedConfig)
+          .subscribe((response: HttpResponse<UserCount[]>) => {
+            if (pagingData.pageIndex === 0) {
+              filterInstance.rawFilterItems = response.body;
+            } else {
+              filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
+            }
+            filterInstance.setFilterItems();
+            pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
+            pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
+          }, error => componentContext._toast.createErrorToast(error));
+      },
+    };
 
-    this.filters = [statusTypeFilter, creatorFilter];
+    this.filters = [statusTypeFilter, creatorFilter, assigneeFilter];
     this.filters.forEach(filter => {
       filter.onInit();
     });

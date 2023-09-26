@@ -28,4 +28,5 @@ import { PaginatedConfig } from './paginatedConfig.interface';
 export interface MergeRequestPaginatedConfig extends PaginatedConfig {
     accepted: boolean,
     creators?: string[]
+    assignees?: string[]
 }

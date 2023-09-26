@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="merge-request-list row h-100">
-    <div class="col-3 h-100">
+    <div class="col-3 h-100 vertical-scroll">
         <merge-request-filter 
             [updateFilters]="updateFiltersSubject.asObservable()" 
             (changeFilter)="changeFilter($event)">

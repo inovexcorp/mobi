@@ -77,8 +77,13 @@ describe('MergeRequestFilterComponent', () => {
     mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
     mergeRequestsStateStub.acceptedFilter = false;
     mergeRequestsStateStub.creators = [adminCount.user];
+    mergeRequestsStateStub.assignees = [adminCount.user];
     mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     mergeRequestManagerStub.getCreators.and.returnValue(of(new HttpResponse<UserCount[]>({
+      body: [adminCount, batmanCount],
+      headers: new HttpHeaders({ 'x-total-count': '10' })
+    })));
+    mergeRequestManagerStub.getAssignees.and.returnValue(of(new HttpResponse<UserCount[]>({
       body: [adminCount, batmanCount],
       headers: new HttpHeaders({ 'x-total-count': '10' })
     })));
@@ -131,6 +136,26 @@ describe('MergeRequestFilterComponent', () => {
         limit: creatorFilter.pagingData.limit
       });
     }));
+    it('with assignee filter', fakeAsync(() => {
+      tick();
+      const assigneeFilter = component.filters[2] as SearchableListFilter;
+      expect(assigneeFilter).toBeTruthy();
+      const expectedFilterItems = [
+        { checked: true, value: adminCount },
+        { checked: false, value: batmanCount }
+      ];
+      expect(assigneeFilter.title).toEqual('Assignees');
+      expect(assigneeFilter.rawFilterItems).toEqual([adminCount, batmanCount]);
+      expect(assigneeFilter.filterItems).toEqual(expectedFilterItems);
+      expect(assigneeFilter.numChecked).toEqual(1);
+      expect(assigneeFilter.pagingData.totalSize).toEqual(10);
+      expect(assigneeFilter.pagingData.hasNextPage).toBeTrue();
+      expect(mergeRequestManagerStub.getAssignees).toHaveBeenCalledWith({
+        searchText: mergeRequestsStateStub.assigneeSearchText,
+        pageIndex: assigneeFilter.pagingData.pageIndex,
+        limit: assigneeFilter.pagingData.limit
+      });
+    }));
   });
   describe('filter methods', () => {
     beforeEach(function () {
@@ -149,7 +174,8 @@ describe('MergeRequestFilterComponent', () => {
         expect(acceptedStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           requestStatus: acceptedStatus.checked,
-          creators: mergeRequestsStateStub.creators
+          creators: mergeRequestsStateStub.creators,
+          assignees: mergeRequestsStateStub.assignees
         });
       });
       it('if the accepted status has been checked', () => {
@@ -164,7 +190,8 @@ describe('MergeRequestFilterComponent', () => {
         expect(openStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           requestStatus: acceptedStatus.checked,
-          creators: mergeRequestsStateStub.creators
+          creators: mergeRequestsStateStub.creators,
+          assignees: mergeRequestsStateStub.assignees
         });
       });
     });
@@ -178,7 +205,8 @@ describe('MergeRequestFilterComponent', () => {
           expect(creatorFilter.numChecked).toEqual(creatorFilter.filterItems.length);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
             requestStatus: mergeRequestsStateStub.acceptedFilter,
-            creators: [adminCount.user, batmanCount.user]
+            creators: [adminCount.user, batmanCount.user],
+            assignees: mergeRequestsStateStub.assignees
           });
         });
         it('and some are checked', () => {
@@ -188,7 +216,8 @@ describe('MergeRequestFilterComponent', () => {
           expect(creatorFilter.numChecked).toEqual(1);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
             requestStatus: mergeRequestsStateStub.acceptedFilter,
-            creators: [adminCount.user]
+            creators: [adminCount.user],
+            assignees: mergeRequestsStateStub.assignees
           });
         });
       });
@@ -200,7 +229,47 @@ describe('MergeRequestFilterComponent', () => {
         expect(creatorFilter.numChecked).toEqual(2);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           requestStatus: mergeRequestsStateStub.acceptedFilter,
-          creators: [adminCount.user, 'superman']
+          creators: [adminCount.user, 'superman'],
+          assignees: mergeRequestsStateStub.assignees
+        });
+      });
+    });
+    describe('should filter requests based on assignees', () => {
+      describe('if all selected assignees are visible', () => {
+        it('and all are checked', () => {
+          const assigneeFilter = component.filters[2];
+          expect(assigneeFilter).toBeTruthy();
+          assigneeFilter.filterItems.forEach(item => item.checked = true);
+          assigneeFilter.filter(null);
+          expect(assigneeFilter.numChecked).toEqual(assigneeFilter.filterItems.length);
+          expect(component.changeFilter.emit).toHaveBeenCalledWith({
+            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            creators: mergeRequestsStateStub.creators,
+            assignees: [adminCount.user, batmanCount.user]
+          });
+        });
+        it('and some are checked', () => {
+          const assigneeFilter = component.filters[2];
+          expect(assigneeFilter).toBeTruthy();
+          assigneeFilter.filter(null);
+          expect(assigneeFilter.numChecked).toEqual(1);
+          expect(component.changeFilter.emit).toHaveBeenCalledWith({
+            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            creators: mergeRequestsStateStub.creators,
+            assignees: [adminCount.user]
+          });
+        });
+      });
+      it('if not all selected assignees are visible', () => {
+        mergeRequestsStateStub.assignees = [adminCount.user, 'superman'];
+        const assigneeFilter = component.filters[2];
+        expect(assigneeFilter).toBeTruthy();
+        assigneeFilter.filter(null);
+        expect(assigneeFilter.numChecked).toEqual(2);
+        expect(component.changeFilter.emit).toHaveBeenCalledWith({
+          requestStatus: mergeRequestsStateStub.acceptedFilter,
+          creators: mergeRequestsStateStub.creators,
+          assignees: [adminCount.user, 'superman']
         });
       });
     });

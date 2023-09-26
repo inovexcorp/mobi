@@ -349,6 +349,7 @@ module.exports = {
         mergeRequestPage.verifyMergeRequestList(browser);
         mergeRequestPage.verifyMergePageSort(browser);
 
+        // Start New Request, select the ontology record, and click Next
         browser
             .useXpath()
             .click("//button//span[text()[contains(.,'New Request')]]")
@@ -357,6 +358,7 @@ module.exports = {
             .waitForElementVisible('//button//span[text()="Next"]')
             .click('//button//span[text()="Next"]')
             .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+        // Select the source and target branches and click Next
         browser
             .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[1]/input')
             .click('(//div[contains(@class, "mat-form-field-infix")])[1]')
@@ -368,9 +370,14 @@ module.exports = {
             .click('//mat-option//span[text()[contains(.,"MASTER")]]')
             .assert.enabled('//button//span[contains(text(), "Next")]/parent::button')
             .click('//button//span[contains(text(), "Next")]/parent::button')
+        // Select checkbox to remove branch after acceptance and add admin as assignee
         browser
             .waitForElementVisible('//merge-requests-page//create-request//mat-checkbox//span[contains(text(), "Remove")]')
             .click('//merge-requests-page//create-request//mat-checkbox//span[contains(text(), "Remove")]')
+            .waitForElementVisible('//merge-requests-page//create-request//div[contains(@class, "assignee-input")]//div[contains(@class, "mat-form-field-infix")]//input')
+            .click('//merge-requests-page//create-request//div[contains(@class, "assignee-input")]//div[contains(@class, "mat-form-field-infix")]//input')
+            .waitForElementVisible('//mat-option//span[text()[contains(., "' + adminUsername + '")]]')
+            .click('//mat-option//span[text()[contains(., "' + adminUsername + '")]]')
         browser
             .useCss()
             .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating')
@@ -384,7 +391,7 @@ module.exports = {
             .waitForElementNotPresent('div.toast-success');
     },
 
-    'Step 32: Filter the merge request list': function(browser) {
+    'Step 32: Filter the merge request list by creator': function(browser) {
         // Confirm the Creator filter is present
         var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
         var creatorFilterXPathSelector = mergeRequest.createFilterXPathSelector('Creators');
@@ -412,7 +419,35 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 33: Search the merge request list': function(browser) {
+    'Step 33: Filter the merge request list by assignee': function(browser) {
+      // Confirm the Creator filter is present
+      var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
+      var assigneeFilterXPathSelector = mergeRequest.createFilterXPathSelector('Assignees');
+      browser.assert.elementPresent({ selector: assigneeFilterXPathSelector, locateStrategy: 'xpath' });
+      // Submit a search of the creator filter
+      var assigneeSearchXPathSelector = assigneeFilterXPathSelector + '//input';
+      browser.assert.elementPresent({ selector: assigneeSearchXPathSelector, locateStrategy: 'xpath' });
+      browser
+          .useXpath()
+          .sendKeys(assigneeSearchXPathSelector, ['ad', browser.Keys.ENTER])
+          .useCss()
+          .waitForElementNotPresent('#spinner-full');
+
+      // Select the admin creator filter
+      var adminAssigneeFilterXPathSelector = mergeRequest.createFilterXPathSelector('Assignee', adminUsername + ' (1)');
+      browser.assert.elementPresent({ selector: adminAssigneeFilterXPathSelector, locateStrategy: 'xpath' });
+      browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
+      browser.globals.wait_for_no_spinners(browser);
+      browser
+          .useCss()
+          .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
+
+      // Unselect the admin creator filter
+      browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
+      browser.globals.wait_for_no_spinners(browser);
+  },
+
+    'Step 34: Search the merge request list': function(browser) {
         // Test no requests are shown
         mergeRequest.searchList(browser, 'NONE');
         browser.waitForElementVisible('div.merge-request-list info-message');
