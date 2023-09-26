@@ -123,6 +123,7 @@
         <module>com.mobi.shacl.form.api</module>
         <module>com.mobi.workflows.api</module>
         <module>com.mobi.workflows.impl.core</module>
+        <module>com.mobi.workflows.impl.dagu</module>
         <module>com.mobi.workflows.rest</module>
     </modules>
 

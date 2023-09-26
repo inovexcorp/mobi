@@ -38,7 +38,7 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
     private final Logger log = LoggerFactory.getLogger(AbstractWorkflowEngine.class);
 
     @Reference
-    protected   ProvenanceService provService;
+    public ProvenanceService provService;
 
     protected void finalizeActivity(Activity activity) {
         activity.addEndedAtTime(OffsetDateTime.now());
@@ -50,10 +50,10 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
         }
     }
 
-    protected void endExecutionActivity(WorkflowExecutionActivity executionActivity, BinaryFile logs,
+    public void endExecutionActivity(WorkflowExecutionActivity executionActivity, BinaryFile logs,
                                         boolean succeeded) {
         if (logs != null) {
-            executionActivity.setLogs(logs);
+            executionActivity.addLogs(logs);
         }
         executionActivity.setSucceeded(succeeded);
         finalizeActivity(executionActivity);

@@ -15,7 +15,7 @@
 
 <http://mobi.solutions/ontologies/worklows> a owl:Ontology ;
     owl:versionIRI <http://mobi.solutions/ontologies/workflows#1.0> ;
-    owl:imports <http://mobi.com/ontologies/prov>, <http://mobi.com/ontologies/documents> ;
+    owl:imports <http://mobi.com/ontologies/prov>, <http://mobi.com/ontologies/documents>, <http://mobi.com/ontologies/catalog> ;
     rdfs:label "The Mobi Workflows Ontology"@en ;
     rdfs:comment "The Mobi Workflows ontology is designed to represent collections of actions that are triggered manually, by a schedule, or by events occurring in the system."@en ;
     dct:creator [foaf:name "Khalil Savoy"] ;
@@ -145,7 +145,7 @@
     rdfs:domain :WorkflowRecord, :WorkflowExecutionActivity, :ActionExecution;
     rdfs:range xsd:boolean .
 
-:logs a owl:ObjectProperty, owl:FunctionalProperty ;
+:logs a owl:ObjectProperty ;
     rdfs:label "logs"@en ;
     rdfs:comment "The BinaryFile for the log output from executing a Workflow."@en ;
     # TODO update when we figure out how to handle unions in ORM service

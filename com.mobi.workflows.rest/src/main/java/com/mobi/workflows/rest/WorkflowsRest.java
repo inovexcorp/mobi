@@ -24,6 +24,7 @@ package com.mobi.workflows.rest;
  */
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.createJsonErrorObject;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
@@ -228,9 +229,17 @@ public class WorkflowsRest {
             }
             commitId = (Resource) commitStmt.next().getObject();
             commitStmt.close();
+            workflowManager.createTriggerService(record);
+        } catch (IllegalStateException ex) {
+            ObjectNode objectNode = createJsonErrorObject(ex);
+            Response response = Response
+                    .status(Response.Status.ACCEPTED)
+                    .type(MediaType.APPLICATION_JSON_TYPE)
+                    .entity(objectNode.toString())
+                    .build();
+            String message = "Record created, however " + ex.getMessage();
+            throw ErrorUtils.sendError(ex, message, response);
         }
-
-        workflowManager.createTriggerService(record);
 
         ObjectNode objectNode = mapper.createObjectNode();
         objectNode.put("WorkflowId", record.getWorkflowIRI().orElseThrow(() ->
@@ -411,11 +420,11 @@ public class WorkflowsRest {
                     .orElseThrow(() -> ErrorUtils.sendError("Execution Activity " + activityId + " not found",
                             Response.Status.BAD_REQUEST));
 
-            Optional<Resource> logFile = executionActivity.getLogs_resource();
+            Set<Resource> logFile = executionActivity.getLogs_resource();
             if (logFile.isEmpty()) {
                 return Response.noContent().build();
             }
-            return Response.ok(workflowManager.getLogFile(logFile.get())).build();
+            return Response.ok(workflowManager.getLogFile(logFile.stream().findFirst().get())).build();
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException | VirtualFilesystemException ex) {

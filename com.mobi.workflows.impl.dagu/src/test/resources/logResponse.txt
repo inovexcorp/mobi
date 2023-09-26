@@ -1,0 +1,164 @@
+{
+  "Title": "68335f26f9162a0a5bb2bd699970fe67d60b6ede",
+  "Charset": "",
+  "DAG": {
+    "File": "68335f26f9162a0a5bb2bd699970fe67d60b6ede.yaml",
+    "Dir": "/Users/khalilsavoy/.dagu/dags",
+    "DAG": {
+      "Location": "/Users/khalilsavoy/.dagu/dags/68335f26f9162a0a5bb2bd699970fe67d60b6ede.yaml",
+      "Group": "",
+      "Name": "68335f26f9162a0a5bb2bd699970fe67d60b6ede",
+      "Schedule": null,
+      "StopSchedule": null,
+      "RestartSchedule": null,
+      "Description": "",
+      "Env": null,
+      "LogDir": "/Users/khalilsavoy/desktop/workflows",
+      "HandlerOn": {
+        "Failure": null,
+        "Success": null,
+        "Cancel": null,
+        "Exit": null
+      },
+      "Steps": [
+        {
+          "Name": "http://example.com/workflows/A/action",
+          "Description": "",
+          "Variables": [],
+          "OutputVariables": {},
+          "Dir": "",
+          "ExecutorConfig": {
+            "Type": "",
+            "Config": {}
+          },
+          "CmdWithArgs": "echo \"This is a test message from Workflow A\"",
+          "Command": "echo",
+          "Script": "",
+          "Stdout": "",
+          "Stderr": "",
+          "Output": "",
+          "Args": [
+            "This is a test message from Workflow A"
+          ],
+          "Depends": null,
+          "ContinueOn": {
+            "Failure": false,
+            "Skipped": false
+          },
+          "RetryPolicy": null,
+          "RepeatPolicy": {
+            "Repeat": false,
+            "Interval": 0
+          },
+          "MailOnError": false,
+          "Preconditions": [],
+          "SignalOnStop": ""
+        }
+      ],
+      "MailOn": null,
+      "ErrorMail": {
+        "From": "",
+        "To": "",
+        "Prefix": ""
+      },
+      "InfoMail": {
+        "From": "",
+        "To": "",
+        "Prefix": ""
+      },
+      "Smtp": {
+        "Host": "",
+        "Port": "",
+        "Username": "",
+        "Password": ""
+      },
+      "Delay": 0,
+      "RestartWait": 0,
+      "HistRetentionDays": 0,
+      "Preconditions": null,
+      "MaxActiveRuns": 0,
+      "Params": [
+        "\"MOBI_HOST\"",
+        "\"MOBI_TOKEN\""
+      ],
+      "DefaultParams": "MOBI_HOST MOBI_TOKEN",
+      "MaxCleanUpTime": 0,
+      "Tags": null
+    },
+    "Status": {
+      "RequestId": "44dc0c43-560f-42e7-9821-6fd296bc1662",
+      "Name": "68335f26f9162a0a5bb2bd699970fe67d60b6ede",
+      "Status": 4,
+      "StatusText": "finished",
+      "Pid": 99501,
+      "Nodes": [
+        {
+          "Step": {
+            "Name": "http://example.com/workflows/A/action",
+            "Description": "",
+            "Variables": [],
+            "OutputVariables": {},
+            "Dir": "/Users/khalilsavoy/.dagu",
+            "ExecutorConfig": {
+              "Type": "",
+              "Config": {}
+            },
+            "CmdWithArgs": "echo \"This is a test message from Workflow A\"",
+            "Command": "echo",
+            "Script": "",
+            "Stdout": "",
+            "Stderr": "",
+            "Output": "",
+            "Args": [
+              "This is a test message from Workflow A"
+            ],
+            "Depends": null,
+            "ContinueOn": {
+              "Failure": false,
+              "Skipped": false
+            },
+            "RetryPolicy": null,
+            "RepeatPolicy": {
+              "Repeat": false,
+              "Interval": 0
+            },
+            "MailOnError": false,
+            "Preconditions": [],
+            "SignalOnStop": ""
+          },
+          "Log": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/http___example.com_workflows_A_action.20230925.11:31:49.472.44dc0c43.log",
+          "StartedAt": "2023-09-25 11:31:49",
+          "FinishedAt": "2023-09-25 11:31:49",
+          "Status": 4,
+          "RetryCount": 0,
+          "DoneCount": 1,
+          "Error": "",
+          "StatusText": "finished"
+        }
+      ],
+      "OnExit": null,
+      "OnSuccess": null,
+      "OnFailure": null,
+      "OnCancel": null,
+      "StartedAt": "2023-09-25 11:31:49",
+      "FinishedAt": "2023-09-25 11:31:49",
+      "Log": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log",
+      "Params": "\"https://localhost:8443\" \"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9tb2JpLmNvbVwvIiwic3ViIjoiYWRtaW4iLCJleHAiOjE2OTU3NDIzMDksInNjb3BlIjoic2VsZiBcLyoifQ.dETMm-Z2BDH_DlaFAfcSoZaKClXTBTAnQcgPE5nCzNQ\""
+    },
+    "Suspended": false,
+    "Error": null,
+    "ErrorT": null
+  },
+  "Tab": "scheduler-log",
+  "Graph": "",
+  "Definition": "",
+  "LogData": null,
+  "LogUrl": "",
+  "StepLog": null,
+  "ScLog": {
+    "Step": null,
+    "LogFile": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log",
+    "Content": "2023/09/25 11:31:49 server is running at \"/tmp/@dagu-68335f26f9162a0a5bb2bd699970fe67d60b6ede-14df6367190e128d5b574d6368003054.sock\"\n2023/09/25 11:31:49 start running: http://example.com/workflows/A/action\n2023/09/25 11:31:49 http://example.com/workflows/A/action finished\n2023/09/25 11:31:49 schedule finished.\n2023/09/25 11:31:49 \nSummary ->\n+--------------------------------------+------------------------------------------+---------------------+---------------------+----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+\n| REQUESTID                            | NAME                                     | STARTED AT          | FINISHED AT         |   STATUS | PARAMS                                                                                                                                                                                                 | ERROR |\n+--------------------------------------+------------------------------------------+---------------------+---------------------+----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+\n| 44dc0c43-560f-42e7-9821-6fd296bc1662 | 68335f26f9162a0a5bb2bd699970fe67d60b6ede | 2023-09-25 11:31:49 | 2023-09-25 11:31:49 | finished | \"https://localhost:8443\" \"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9tb2JpLmNvbVwvIiwic3ViIjoiYWRtaW4iLCJleHAiOjE2OTU3NDIzMDksInNjb3BlIjoic2VsZiBcLyoifQ.dETMm-Z2BDH_DlaFAfcSoZaKClXTBTAnQcgPE5nCzNQ\" |       |\n+--------------------------------------+------------------------------------------+---------------------+---------------------+----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+\nDetails ->\n+---+---------------------------------------+---------------------+---------------------+----------+---------------------------------------------+-------+\n| # | STEP                                  | STARTED AT          | FINISHED AT         | STATUS   | COMMAND                                     | ERROR |\n+---+---------------------------------------+---------------------+---------------------+----------+---------------------------------------------+-------+\n| 1 | http://example.com/workflows/A/action | 2023-09-25 11:31:49 | 2023-09-25 11:31:49 | finished | echo This is a test message from Workflow A |       |\n+---+---------------------------------------+---------------------+---------------------+----------+---------------------------------------------+-------+\n"
+  },
+  "Errors": []
+}

@@ -419,6 +419,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>workflows.impl.dagu</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>workflows.rest</artifactId>
             <version>${project.version}</version>
         </dependency>

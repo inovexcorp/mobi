@@ -102,7 +102,6 @@ public class SimpleWorkflowRecordService extends AbstractWorkflowRecordService<W
         deleteRecordObject(record, conn);
         deletePolicies(record, conn);
         deleteWorkflowState(record, conn);
-        clearLinkedActivities(record, conn);
     }
 
     /**
@@ -158,11 +157,4 @@ public class SimpleWorkflowRecordService extends AbstractWorkflowRecordService<W
         states.addAll(stateResourceModels);
         return states;
     }
-
-    protected void clearLinkedActivities(WorkflowRecord workflowRecord, RepositoryConnection conn) {
-        conn.getStatements(null, valueFactory.createIRI(Activity.used_IRI), workflowRecord.getResource())
-                .forEach(conn::remove);
-        conn.commit();
-    }
-
 }

@@ -81,18 +81,6 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>workflows.api</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>platform.config.api</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>rdf-orm-test</artifactId>
         </dependency>
         <dependency>
@@ -123,6 +111,56 @@
                         <_dsannotations-options>inherit</_dsannotations-options>
                     </instructions>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.mobi.orm</groupId>
+                <artifactId>rdf-orm-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generateOrmSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-orm</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/triggerOntology.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.workflows.impl.ontologies.workflows</outputPackage>
+                                    <ontologyName>triggers</ontologyName>
+                                </ontology>
+                            </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.provo</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.prov.api/src/main/resources/mobi_prov.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.prov.api.ontologies.mobiprov</outputPackage>
+                                    <ontologyName>MobiProv</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.vfs/src/main/resources/mobi_documents.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.vfs.ontologies.documents</outputPackage>
+                                    <ontologyName>Documents</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.catalog.api/src/main/resources/mcat.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.catalog.api.ontologies.mcat</outputPackage>
+                                    <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.workflows.api/src/main/resources/workflows.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.workflows.api.ontologies.workflows</outputPackage>
+                                    <ontologyName>Workflows</ontologyName>
+                                </ontology>
+                            </references>
+                            <outputLocation>${project.basedir}/target/generated-sources</outputLocation>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

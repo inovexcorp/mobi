@@ -1,6 +1,6 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix w: <http://mobi.solutions/ontologies/workflows#> .
-@prefix wext: <http://mobi.solutions/ontologies/workflows/extension#> .
+@prefix wext: <http://mobi.solutions/ontologies/workflows#> .
 
 <http://example.com/workflows/A> a w:Workflow;
   dct:title "Workflow A";
