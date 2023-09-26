@@ -580,98 +580,54 @@ describe('Open Ontology Select component', function() {
                 beforeEach(function() {
                     catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
                 });
-                describe('and when removeBranch is resolved', function() {
+                describe('and the current state is not a branch', function() {
                     beforeEach(function() {
-                        ontologyStateStub.removeBranch.and.returnValue(of(null));
+                        ontologyStateStub.isStateBranch.and.returnValue(false);
                     });
-                    describe('and when deleteOntologyBranchState is resolved', function() {
-                        beforeEach(function() {
-                            ontologyStateStub.deleteBranchState.and.returnValue(of(null));
-                        });
-                        describe('and the current state is not a branch', function() {
-                            beforeEach(function() {
-                                ontologyStateStub.isStateBranch.and.returnValue(false);
-                            });
-                            it('and getCommit is resolved', fakeAsync(function() {
-                                catalogManagerStub.getCommit.and.returnValue(of(null));
-                                component.deleteBranch(branch);
-                                tick();
-                                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                                expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
-                                expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                                expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
-                                expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
-                                expect(component.changeToMaster).not.toHaveBeenCalled();
-                                expect(component.ontologySearchControl.value).toBeNull();
-                                expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                            }));
-                            it('and getCommit is rejected', fakeAsync(function() {
-                                catalogManagerStub.getCommit.and.returnValue(throwError('Error message'));
-                                component.deleteBranch(branch);
-                                tick();
-                                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                                expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
-                                expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                                expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
-                                expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
-                                expect(component.changeToMaster).toHaveBeenCalledWith();
-                                expect(component.ontologySearchControl.value).toBeNull();
-                                expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                            }));
-                        });
-                        it('and the current state is a branch', fakeAsync(function() {
-                            component.selected = {
-                                title: 'title',
-                                type: 'Branch',
-                                isUserBranch: false,
-                                canDelete: true,
-                                jsonld: undefined,
-                                icon: undefined
-                            };
-                            ontologyStateStub.isStateBranch.and.returnValue(true);
-                            component.deleteBranch(branch);
-                            tick();
-                            expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                            expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
-                            expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                            expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
-                            expect(catalogManagerStub.getCommit).not.toHaveBeenCalled();
-                            expect(component.changeToMaster).not.toHaveBeenCalled();
-                            expect(component.ontologySearchControl.value).toEqual('title');
-                            expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith(listItem);
-                            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                        }));
-                    });
-                    it('and when deleteBranchState is rejected', fakeAsync(function() {
-                        ontologyStateStub.deleteBranchState.and.returnValue(throwError(error));
+                    it('and getCommit is resolved', fakeAsync(function() {
+                        catalogManagerStub.getCommit.and.returnValue(of(null));
                         component.deleteBranch(branch);
                         tick();
                         expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                        expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
-                        expect(ontologyStateStub.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
-                        expect(ontologyStateStub.isStateBranch).not.toHaveBeenCalled();
-                        expect(catalogManagerStub.getCommit).not.toHaveBeenCalled();
+                        expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
+                        expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                         expect(component.changeToMaster).not.toHaveBeenCalled();
                         expect(component.ontologySearchControl.value).toBeNull();
                         expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                    }));
+                    it('and getCommit is rejected', fakeAsync(function() {
+                        catalogManagerStub.getCommit.and.returnValue(throwError('Error message'));
+                        component.deleteBranch(branch);
+                        tick();
+                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
+                        expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
+                        expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
+                        expect(component.changeToMaster).toHaveBeenCalledWith();
+                        expect(component.ontologySearchControl.value).toBeNull();
+                        expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
+                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     }));
                 });
-                it('and when removeBranch is rejected', fakeAsync(function() {
-                    ontologyStateStub.removeBranch.and.returnValue(throwError(error));
+                it('and the current state is a branch', fakeAsync(function() {
+                    component.selected = {
+                        title: 'title',
+                        type: 'Branch',
+                        isUserBranch: false,
+                        canDelete: true,
+                        jsonld: undefined,
+                        icon: undefined
+                    };
+                    ontologyStateStub.isStateBranch.and.returnValue(true);
                     component.deleteBranch(branch);
                     tick();
                     expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                    expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
-                    expect(ontologyStateStub.deleteBranchState).not.toHaveBeenCalled();
-                    expect(ontologyStateStub.isStateBranch).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.isStateBranch).toHaveBeenCalledWith(currentStateClone);
                     expect(catalogManagerStub.getCommit).not.toHaveBeenCalled();
                     expect(component.changeToMaster).not.toHaveBeenCalled();
-                    expect(component.ontologySearchControl.value).toBeNull();
-                    expect(ontologyStateStub.resetStateTabs).not.toHaveBeenCalled();
-                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(component.ontologySearchControl.value).toEqual('title');
+                    expect(ontologyStateStub.resetStateTabs).toHaveBeenCalledWith(listItem);
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
             });
             it('when deleteRecordBranch is rejected', fakeAsync(function() {
@@ -679,8 +635,6 @@ describe('Open Ontology Select component', function() {
                 component.deleteBranch(branch);
                 tick();
                 expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                expect(ontologyStateStub.removeBranch).not.toHaveBeenCalled();
-                expect(ontologyStateStub.deleteBranchState).not.toHaveBeenCalled();
                 expect(ontologyStateStub.isStateBranch).not.toHaveBeenCalled();
                 expect(catalogManagerStub.getCommit).not.toHaveBeenCalled();
                 expect(component.changeToMaster).not.toHaveBeenCalled();
@@ -793,6 +747,7 @@ describe('Open Ontology Select component', function() {
             expect(component.ontologySearchControl.value).toEqual('title');
         });
         it('should change to the master branch', function() {
+            component.currentState = {'@id': 'id'};
             component.listItem = listItem;
             listItem.masterBranchIri = 'master';
             spyOn(component, 'updateSelected');

@@ -33,7 +33,6 @@ import { ManageRecordButtonComponent } from './components/manageRecordButton/man
 import { RecordPermissionViewComponent } from './components/recordPermissionView/recordPermissionView.component';
 import { RecordCardComponent } from './components/recordCard/recordCard.component';
 import { RecordFiltersComponent } from './components/recordFilters/recordFilters.component';
-import { RecordIconComponent } from './components/recordIcon/recordIcon.component';
 import { RecordMarkdownComponent } from './components/recordMarkdown/recordMarkdown.component';
 import { RecordsViewComponent } from './components/recordsView/recordsView.component';
 import { RecordViewComponent } from './components/recordView/recordView.component';
@@ -59,7 +58,6 @@ import { RecordTypeComponent } from './components/recordType/recordType.componen
         RecordPermissionViewComponent,
         RecordCardComponent,
         RecordFiltersComponent,
-        RecordIconComponent,
         RecordMarkdownComponent,
         RecordsViewComponent,
         RecordViewComponent,

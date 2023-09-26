@@ -255,7 +255,6 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
         });
         this.resetSearch();
     }
-
     private deleteShapesGraphBranch(branchId: string): void {
         this.state.deleteShapesGraphBranch(this.recordIri, branchId).subscribe(
             () => this.toast.createSuccessToast(`Branch ${branchId} deleted successfully!`), 

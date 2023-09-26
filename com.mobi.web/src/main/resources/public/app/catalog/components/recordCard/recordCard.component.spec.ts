@@ -38,7 +38,7 @@ import { DCTERMS } from '../../../prefixes';
 import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalogRecordKeywords.component';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.component';
-import { RecordIconComponent } from '../recordIcon/recordIcon.component';
+import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { RecordTypeComponent } from '../recordType/recordType.component';
 import { RecordCardComponent } from './recordCard.component';
 

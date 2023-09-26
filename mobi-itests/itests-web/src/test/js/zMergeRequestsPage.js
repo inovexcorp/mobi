@@ -32,7 +32,7 @@ var MergeRequestsPage = function() {
 // verifyRecordFilters is used to verify filters on the catalog page,
 // noKeywords is a boolean value to check if page has available keywords
 MergeRequestsPage.prototype.verifyRecordFilters = function(browser) {
-    browser.useCss();
+    browser.useCss()
     browser.expect.element(this.mergeRequestFilters).to.be.present;
     browser.expect.elements(this.mergeRequestFilters + ' mat-expansion-panel-header mat-panel-title').count.to.equal(2);
 };
@@ -44,7 +44,7 @@ MergeRequestsPage.prototype.verifyMergeRequestList = function(browser) {
 };
 
 MergeRequestsPage.prototype.verifyMergePageSort = function(browser) {
-    browser.useCss();
+    browser.useCss()
     browser.expect.element(this.mergeRequestPageForm).to.be.present;
     browser.expect.element(this.mergeRequestSort).to.be.present;
     browser.useXpath();
@@ -52,6 +52,18 @@ MergeRequestsPage.prototype.verifyMergePageSort = function(browser) {
     browser.useCss();
 };
 
+MergeRequestsPage.prototype.goToPage = function(browser) {
+    browser
+        .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/merge-requests"]');
+    browser.globals.wait_for_no_spinners(browser);
+};
+
+MergeRequestsPage.prototype.assertMatCardTitles = function(browser, titles) {
+    for (var titleIndex in titles) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + titles[titleIndex] + '")]')
+    }
 // Used to execute a search on the main merge request landing page
 MergeRequestsPage.prototype.searchList = function(browser, searchText) {
     browser

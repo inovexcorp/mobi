@@ -42,7 +42,12 @@
             <div class="request padding" *ngFor="let request of state.requests; last as lastRequest" (click)="state.selected = request">
                 <div class="request-contents d-flex w-100">
                     <div class="details flex-1 remove-min-width">
-                        <h3 class="text-truncate">{{request.title}}</h3>
+                        <h3 class="text-truncate request-info">
+                            <record-icon [recordType]="request.recordType"></record-icon>
+                            <span class="request-info-title">
+                                {{request.title}}
+                            </span>
+                        </h3>
                         <p class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></p>
                         <dl>
                             <dt class="text-muted">Record</dt>

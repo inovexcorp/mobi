@@ -38,7 +38,7 @@ import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalog
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { LimitDescriptionComponent } from '../../../shared/components/limitDescription/limitDescription.component';
 import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.component';
-import { RecordIconComponent } from '../recordIcon/recordIcon.component';
+import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { RecordViewTabsetComponent } from '../recordViewTabset/recordViewTabset.component';
 import { CATALOG, DCTERMS, POLICY } from '../../../prefixes';
 import { ManageRecordButtonComponent } from '../manageRecordButton/manageRecordButton.component';

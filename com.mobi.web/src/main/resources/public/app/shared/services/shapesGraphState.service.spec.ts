@@ -23,7 +23,8 @@
 
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { map as rxjsMap, tap } from 'rxjs/operators';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 
@@ -45,13 +46,18 @@ import { StateManagerService } from './stateManager.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { ToastService } from './toast.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 
 describe('Shapes Graph State service', function() {
     let service: ShapesGraphStateService;
     let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+    let mergeRequestManagerServiceStub: jasmine.SpyObj<MergeRequestManagerService>;
     let toastStub: jasmine.SpyObj<ToastService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let _catalogManagerActionSubject: Subject<EventWithPayload>;
+    let _mergeRequestManagerActionSubject: Subject<EventWithPayload>;
 
     const catalogId = 'catalog';
     const branch = {
@@ -72,19 +78,27 @@ describe('Shapes Graph State service', function() {
                 MockProvider(ShapesGraphManagerService),
                 MockProvider(ToastService),
                 MockProvider(PolicyEnforcementService),
+                MockProvider(MergeRequestManagerService),
             ]
         });
-        service = TestBed.inject(ShapesGraphStateService);
         shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.deny = 'Deny';
-        service.listItem = new ShapesGraphListItem();
+        mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': catalogId, data: branches}]})));
         catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': 'urn:tag'}]})));
+        
+        _catalogManagerActionSubject = new Subject<EventWithPayload>();
+        _mergeRequestManagerActionSubject = new Subject<EventWithPayload>();
+        catalogManagerStub.catalogManagerAction$ = _catalogManagerActionSubject.asObservable();
+        mergeRequestManagerServiceStub.mergeRequestAction$ = _mergeRequestManagerActionSubject.asObservable();
+
+        service = TestBed.inject(ShapesGraphStateService);
+        service.listItem = new ShapesGraphListItem();
         service.initialize();
     });
     
@@ -560,21 +574,24 @@ describe('Shapes Graph State service', function() {
         describe('first deleting the branch', function() {
             describe('then deleting the branch state', function() {
                 it('successfully', async function() {
+                    catalogManagerStub.deleteRecordBranch.and.callFake((recordId: string, branchId: string, catalogId: string) => {
+                        return of(1).pipe(
+                            rxjsMap(() => {}),
+                            tap(() => {
+                                _catalogManagerActionSubject.next({
+                                    eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL, 
+                                    payload: {
+                                        recordId, 
+                                        branchId,
+                                        catalogId
+                                    }
+                                });
+                            })
+                        )
+                    });
                     await service.deleteShapesGraphBranch('recordId', 'branchId')
                         .subscribe(() => {}, () => fail('Observable should have succeeded'));
                     expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'branchId', 'catalog');
-                    expect(this.deleteBranchStateSpy).toHaveBeenCalledWith('recordId', 'branchId');
-                });
-                it('unless an error occurs', async function() {
-                    this.deleteBranchStateSpy.and.returnValue(throwError('Error'));
-                    await service.deleteShapesGraphBranch('recordId', 'branchId')
-                        .subscribe(() => {
-                            fail('Observable should have rejected');
-                        }, response => {
-                            expect(response).toEqual('Error');
-                        });
-                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'branchId', 'catalog');
-                    expect(this.deleteBranchStateSpy).toHaveBeenCalledWith('recordId', 'branchId');
                 });
             });
             it('unless an error occurs', async function() {

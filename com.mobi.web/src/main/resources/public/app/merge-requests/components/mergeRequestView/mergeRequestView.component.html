@@ -27,8 +27,11 @@
                 <mat-chip ngClass="{{isAccepted ? 'mat-primary' : 'mat-success'}}" selected>{{isAccepted ? 'Accepted' : 'Open'}}</mat-chip>
             </mat-chip-list>
             <div class="title mb-2">
-                <h2 class="text-truncate d-inline-block">{{state.selected.title}}</h2>
-                <small class="ml-1">Created on {{state.selected.date}} by {{state.selected.creator}}</small>
+                <h2 class="text-truncate d-inline-block request-info">
+                    <record-icon [recordType]="state.selected.recordType"></record-icon>
+                    <span class="request-info-title">{{state.selected.title}}</span>
+                </h2>
+                <div><small class="ml-1">Created on {{state.selected.date}} by {{state.selected.creator}}</small></div>
             </div>
             <div class="details d-flex">
                 <div class="details flex-1 remove-min-width">

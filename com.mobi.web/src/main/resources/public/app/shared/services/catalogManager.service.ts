@@ -24,7 +24,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { has, find, get, forEach, difference } from 'lodash';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { Observable, throwError, of, forkJoin } from 'rxjs';
+import { Observable, throwError, of, forkJoin, Subject } from 'rxjs';
 
 import { REST_PREFIX } from '../../constants';
 import { CommitDifference } from '../models/commitDifference.interface';
@@ -42,6 +42,8 @@ import { KeywordCount } from '../models/keywordCount.interface';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { condenseCommitId, createHttpParams, getBeautifulIRI, getDctermsValue, handleError, paginatedConfigToHttpParams } from '../utility';
+import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
+
 
 /**
  * @class shared.CatalogManagerService
@@ -55,6 +57,11 @@ export class CatalogManagerService {
     commitsPrefix = `${REST_PREFIX}commits`;
 
     constructor(private http: HttpClient, private spinnerSrv : ProgressSpinnerService) {}
+
+    // Only the service has access to the subject
+    private _catalogManagerActionSubject = new Subject<EventWithPayload>();
+    public catalogManagerAction$ = this._catalogManagerActionSubject.asObservable();
+    // emits an “event” on branch removal with the IRI of the record and the branch IRI at minimum
 
     /**
      * `coreRecordTypes` contains a list of IRI strings of all the core types of Records defined by Mobi.
@@ -764,7 +771,7 @@ export class CatalogManagerService {
                 map(() => branchId)
             );
     }
-
+    
     /**
      * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
      * with the passed Catalog, Record, and Branch ids and removes the identified Branch and all associated
@@ -776,10 +783,32 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves if the deletion was successful or rejects with an error message
      */
     deleteRecordBranch(recordId: string, branchId: string, catalogId: string): Observable<void> {
-        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`))
-            .pipe(catchError(handleError), map(() => {}));
+        const request = this.http.delete(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`);
+        return this.spinnerSrv.track(request)
+            .pipe(
+                catchError(handleError), 
+                map(() => {}),
+                tap(() => {
+                    this._recordBranchDeleted(recordId, branchId, catalogId)
+                })
+            );
     }
-
+    /**
+     * Emits an event on branch removal (IRI of the record and the branch IRI)
+     * @param {string} recordId The id of the Record with the specified Branch
+     * @param {string} branchId The id of the Branch to delete
+     * @param {string} catalogId The id of the Catalog the Record should be part of
+     */
+     _recordBranchDeleted(recordId: string, branchId: string, catalogId: string): void {
+        this._catalogManagerActionSubject.next({
+            eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL, 
+            payload: {
+                recordId, 
+                branchId,
+                catalogId
+            }
+        });
+    }
     /**
      * Calls the GET /mobirest/commits/{commitId} endpoint with the passed Commit id.
      *

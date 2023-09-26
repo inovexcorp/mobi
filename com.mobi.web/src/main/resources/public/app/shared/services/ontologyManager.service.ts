@@ -161,10 +161,7 @@ export class OntologyManagerService {
      * @param {string} recordId the ontology record ID.
      * @param {string} branchId the ontology branch ID.
      * @param {string} commitId the ontology commit ID.
-     * @returns {Observable} An observable with the new in-progress commit to be applied or error message.
-     * 
      * @return {Observable} HTTP OK unless there was an error.
-     * 
      */
     uploadChangesFile(file: File, recordId: string, branchId: string, commitId: string): 
       Observable<HttpResponse<string>> {

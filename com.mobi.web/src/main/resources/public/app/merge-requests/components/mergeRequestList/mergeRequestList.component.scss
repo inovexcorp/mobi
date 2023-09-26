@@ -41,7 +41,12 @@
         display: flex;
         flex-direction: row;
         cursor: pointer;
-
+       &-info {
+           display: flex;
+           &-title {
+               align-self: center;
+           }
+       }
         h3 {
             margin: 0;
             @include textOverflow;

@@ -23,17 +23,33 @@
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
-var ontologyEditorPage = require('./OntologyEditorPage').ontologyEditorPage;
-var mergeRequest = require('./mergeRequestsPage').mergeRequestsPage;
+var ontologyEditorPage = require('./zOntologyEditorPage').ontologyEditorPage;
+var mergeRequestPage = require('./zMergeRequestsPage').mergeRequestsPage;
+var administrationPage = require('./zAdministrationPage').administrationPage;
 
+var ontology01 = {
+    title: 'myTitle2', 
+    description: 'myDescription'
+};
+
+/**
+ * Functional Test for Merge Request Module
+ * 
+ * Functions Tested:
+ * - Merging with and without branch removal
+ */
 module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-request'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home');
+        administrationPage.login(browser, adminUsername, adminPassword);
     },
 
     'Step 2: Ensure that user is on Ontology editor page' : function(browser) {
+        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementVisible('button.upload-button');
         ontologyEditorPage.isActive(browser);
     },
 
@@ -42,7 +58,7 @@ module.exports = {
     },
 
     'Step 4: Edit New Ontology Overlay' : function(browser) {
-        ontologyEditorPage.editNewOntologyOverlay(browser, 'myTitle2', 'myDescription');
+        ontologyEditorPage.editNewOntologyOverlay(browser, ontology01.title, ontology01.description);
     },
 
     'Step 5: Submit New Ontology Overlay' : function(browser) {
@@ -50,7 +66,7 @@ module.exports = {
     },
 
     'Step 6: Verify new ontology properties' : function(browser) {
-        ontologyEditorPage.verifyProjectTab(browser, 'myTitle2', 'myDescription', 'MyTitle2')
+        ontologyEditorPage.verifyProjectTab(browser, ontology01.title, ontology01.description, 'MyTitle2')
     },
 
     'Step 7: Edit IRI for ontology' : function(browser) { 
@@ -63,10 +79,10 @@ module.exports = {
 
     'Step 9: Edit Commit message and Submit' : function(browser) { 
         ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'Changed IRI');
-
         browser
-            .useCss()
-            .waitForElementPresent('ontology-editor-page ontology-tab')
+            .waitForElementVisible('div.toast-success')
+            .waitForElementNotPresent('div.toast-success');
+        ontologyEditorPage.isActive(browser, 'ontology-tab');
     },
 
     'Step 10: Open Ontology Editor Page Ontology List Page' : function(browser) { 
@@ -79,10 +95,9 @@ module.exports = {
 
     'Step 12: Ensure IRI changes are successful on the Ontology List Page' : function(browser) {
         browser
-            .useCss()
-            .waitForElementPresent('ontology-editor-page open-ontology-tab')
             .useXpath()
-            .click('//open-ontology-tab//small[text()[contains(.,"https://mobi.com/ontologies/myOntology2")]]');
+            .waitForElementPresent('//ontology-editor-page//open-ontology-tab')
+            .click('//ontology-editor-page//open-ontology-tab//small[text()[contains(.,"https://mobi.com/ontologies/myOntology2")]]');
         // wait for loading to finish
         browser.globals.wait_for_no_spinners(browser);
         ontologyEditorPage.onProjectTab(browser);
@@ -139,7 +154,7 @@ module.exports = {
                 this.assert.equal(result.value, "MASTER");
             })
             .useCss()
-            .assert.not.enabled(".merge-block .btn-container button.mat-primary")
+            .assert.not.enabled(".merge-block .btn-container button.mat-primary") // intermitted issue
             .click('ontology-sidebar span.close-icon');
     },
 
@@ -196,13 +211,10 @@ module.exports = {
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
             .useXpath()
             .click('//open-ontology-tab//small[text()[contains(.,"myOntology2")]]');
-        browser.globals.wait_for_no_spinners(browser);
-        // wait for loading to finish
+        browser.globals.wait_for_no_spinners(browser); // wait for loading to finish
+        
+        ontologyEditorPage.onProjectTab(browser);
         browser
-            .useCss()
-            .waitForElementNotPresent('#spinner-full')
-            .waitForElementPresent('ontology-editor-page ontology-tab')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
             .useXpath()
             .getValue("//open-ontology-select//input", function(result) {
                 this.assert.equal(typeof result, "object");
@@ -250,8 +262,9 @@ module.exports = {
         ontologyEditorPage.openCommitOverlay(browser);
         ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'commit123');
         browser
-            .useCss()
-            .waitForElementPresent('ontology-editor-page ontology-tab');
+            .waitForElementVisible('div.toast-success')
+            .waitForElementNotPresent('div.toast-success');
+        ontologyEditorPage.isActive(browser, 'ontology-tab');
     },
 
     'Step 26: Verify no changes are shown': function(browser) {
@@ -323,18 +336,18 @@ module.exports = {
             ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'commit123Removal' + i);
         }
         browser
-            .useCss()
-            .waitForElementPresent('ontology-editor-page ontology-tab');
+            .waitForElementVisible('div.toast-success')
+            .waitForElementNotPresent('div.toast-success');
+        ontologyEditorPage.isActive(browser, 'ontology-tab');
     },
     'Step 31: Create a merge request': function(browser) {
         browser
             .useXpath()
             .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
-            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
-            .useCss();
-        mergeRequest.verifyRecordFilters(browser);
-        mergeRequest.verifyMergeRequestList(browser);
-        mergeRequest.verifyMergePageSort(browser);
+            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]");
+        mergeRequestPage.verifyRecordFilters(browser);
+        mergeRequestPage.verifyMergeRequestList(browser);
+        mergeRequestPage.verifyMergePageSort(browser);
 
         browser
             .useXpath()

@@ -31,7 +31,12 @@
         margin-bottom: 0;
         vertical-align: bottom;
     }
-   
+   .request-info {
+       display: flex;
+       &-title {
+           align-self: center;
+       }
+   }
     .assignees {
         li {
             display: inline;

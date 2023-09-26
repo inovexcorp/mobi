@@ -56,6 +56,9 @@ import { CATALOG, DCTERMS, MERGEREQ } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequestViewComponent } from './mergeRequestView.component';
+import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
+import { cloneDeep } from 'lodash';
+import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 
 describe('Merge Request View component', function() {
     let component: MergeRequestViewComponent;
@@ -101,7 +104,8 @@ describe('Merge Request View component', function() {
         [`${DCTERMS}title`]: [{'@value': 'MASTER'}]
     };
     const branches = [branch];
-    
+    let mergeRequest: MergeRequest;
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
@@ -116,6 +120,7 @@ describe('Merge Request View component', function() {
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(MergeRequestTabsetComponent),
                 MockComponent(ResolveConflictsFormComponent),
+                MockComponent(RecordIconComponent)
             ],
             providers: [
                 MockProvider(CatalogManagerService),
@@ -162,13 +167,13 @@ describe('Merge Request View component', function() {
             assignees: [],
             jsonld
         };
+        mergeRequest = cloneDeep(mergeRequestsStateStub.selected)
         loginManagerStub.currentUserIRI = userIri;
         userManagerStub.users = [user];
         policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
         userManagerStub.isAdminUser.and.returnValue(false);
-        ontologyStateStub.removeBranch.and.returnValue(of(null));
     });
 
     afterEach(function() {
@@ -266,14 +271,13 @@ describe('Merge Request View component', function() {
                                     ontologyStateStub.listItem = undefined;
                                     component.acceptRequest();
                                     tick();
-                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
                                     expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
                                     expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                     expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                                    expect(ontologyStateStub.removeBranch).not.toHaveBeenCalled();
                                     expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                                 }));
@@ -287,16 +291,14 @@ describe('Merge Request View component', function() {
                                     });
                                     it('and it not in the middle of a merge', fakeAsync(function() {
                                         component.acceptRequest();
-                                       
                                         tick();
-                                        expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                        expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                         expect(component.isAccepted).toBeTrue();
                                         expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
                                         expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
                                         expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                         expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                                        expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                                         expect(ontologyStateStub.listItem.upToDate).toBeFalse();
                                         expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                                         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -305,14 +307,13 @@ describe('Merge Request View component', function() {
                                         ontologyStateStub.listItem.merge.active = true;
                                         component.acceptRequest();
                                         tick();
-                                        expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                        expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                         expect(component.isAccepted).toBeTrue();
                                         expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
                                         expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
                                         expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                         expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                                        expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                                         expect(ontologyStateStub.listItem.upToDate).toBeFalse();
                                         expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
                                         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -327,14 +328,13 @@ describe('Merge Request View component', function() {
                                     ontologyStateStub.list = [ontologyStateStub.listItem];
                                     component.acceptRequest();
                                     tick();
-                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
                                     expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
                                     expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                     expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
-                                    expect(ontologyStateStub.removeBranch).toHaveBeenCalledWith(recordId, branchId);
                                     expect(ontologyStateStub.listItem.upToDate).toBeTrue();
                                     expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
                                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -344,7 +344,7 @@ describe('Merge Request View component', function() {
                                 catalogManagerStub.deleteRecordBranch.and.returnValue(throwError(error));
                                 component.acceptRequest();
                                 tick();
-                                expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                 expect(component.isAccepted).toBeTrue();
                                 expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
@@ -363,7 +363,8 @@ describe('Merge Request View component', function() {
                                 ontologyStateStub.listItem = undefined;
                                 component.acceptRequest();
                                 tick();
-                                expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                mergeRequest.removeSource = false;
+                                expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                 expect(component.isAccepted).toBeTrue();
                                 expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
@@ -384,7 +385,8 @@ describe('Merge Request View component', function() {
                                 it('and it not in the middle of a merge', fakeAsync(function() {
                                     component.acceptRequest();
                                     tick();
-                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                    mergeRequest.removeSource = false;
+                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
@@ -399,7 +401,8 @@ describe('Merge Request View component', function() {
                                     ontologyStateStub.listItem.merge.active = true;
                                     component.acceptRequest();
                                     tick();
-                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                    mergeRequest.removeSource = false;
+                                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
@@ -420,7 +423,8 @@ describe('Merge Request View component', function() {
                                 ontologyStateStub.list = [ontologyStateStub.listItem];
                                 component.acceptRequest();
                                 tick();
-                                expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                                mergeRequest.removeSource = false;
+                                expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                 expect(component.isAccepted).toBeTrue();
                                 expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
@@ -437,7 +441,7 @@ describe('Merge Request View component', function() {
                         mergeRequestsStateStub.setRequestDetails.and.returnValue(throwError(error));
                         component.acceptRequest();
                         tick();
-                        expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
+                        expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(mergeRequest);
                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                         expect(component.isAccepted).toBeTrue();
                         expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
@@ -451,7 +455,6 @@ describe('Merge Request View component', function() {
                     mergeRequestManagerStub.getRequest.and.returnValue(throwError(error));
                     component.acceptRequest();
                     tick();
-                    expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(component.isAccepted).toBeTrue();
                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
@@ -464,7 +467,6 @@ describe('Merge Request View component', function() {
                 mergeRequestManagerStub.acceptRequest.and.returnValue(throwError(error));
                 component.acceptRequest();
                 tick();
-                expect(mergeRequestManagerStub.acceptRequest).toHaveBeenCalledWith(requestId);
                 expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(component.isAccepted).toBeFalse();
                 expect(mergeRequestManagerStub.getRequest).not.toHaveBeenCalled();

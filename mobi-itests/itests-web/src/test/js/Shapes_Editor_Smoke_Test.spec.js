@@ -263,8 +263,9 @@ module.exports = {
     },
 
     'Step 17: Delete the Records': function (browser) {
-        browser.globals.delete_shapes_graph(browser, 'Additional Test Graph')
-        browser.globals.wait_for_no_spinners(browser)
-        browser.globals.delete_shapes_graph(browser, 'UHTC Test Graph')
+        browser.globals.delete_shapes_graph(browser, 'Additional Test Graph'); // intermitted issue
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.delete_shapes_graph(browser, 'UHTC Test Graph');
+        browser.globals.wait_for_no_spinners(browser);
     }
 }
