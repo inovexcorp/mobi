@@ -107,6 +107,7 @@ describe('Merge Request Manager service', function() {
             expect(request.request.params.get('ascending')).toBeNull();
             expect(request.request.params.get('searchText')).toBeNull();
             expect(request.request.params.get('creators')).toBeNull();
+            expect(request.request.params.get('assignees')).toBeNull();
             request.flush([]);
         });
         it('with parameters', function() {
@@ -118,7 +119,8 @@ describe('Merge Request Manager service', function() {
                     asc: false
                 },
                 searchText: 'test',
-                creators: ['A', 'B']
+                creators: ['A', 'B'],
+                assignees: ['Y', 'Z']
             };
             service.getRequests(config)
                 .subscribe(response => {
@@ -130,6 +132,7 @@ describe('Merge Request Manager service', function() {
             expect(request.request.params.get('ascending').toString()).toEqual('' + config.sortOption.asc);
             expect(request.request.params.get('searchText').toString()).toEqual(config.searchText);
             expect(request.request.params.getAll('creators')).toEqual(config.creators);
+            expect(request.request.params.getAll('assignees')).toEqual(config.assignees);
             request.flush([]);
         });
     });
@@ -406,7 +409,7 @@ describe('Merge Request Manager service', function() {
         mr['@type'].push(`${MERGEREQ}AcceptedMergeRequest`);
         expect(service.isAccepted(mr)).toEqual(true);
     });
-    describe('should retrieve the creators of merges requests', function() {
+    describe('should retrieve the creators of merge requests', function() {
       beforeEach(function() {
           this.url = `${service.prefix}/creators`;
           this.config = {
@@ -466,6 +469,79 @@ describe('Merge Request Manager service', function() {
               });
               it('and no config passed', function() {
                   service.getCreators(undefined, true)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).not.toHaveBeenCalled();
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toBeNull();
+                  expect(request.request.params.get('offset')).toBeNull();
+                  expect(request.request.params.get('searchText')).toBeNull();
+                  request.flush([]);
+              });
+          });
+      });
+    });
+    describe('should retrieve the assignees of merge requests', function() {
+      beforeEach(function() {
+          this.url = `${service.prefix}/assignees`;
+          this.config = {
+              limit: 10,
+              offset: 0
+          };
+      });
+      it('unless an error occurs', function() {
+          service.getAssignees(this.config)
+              .subscribe(() => fail('Observable should have rejected'), response => {
+                  expect(response).toEqual(error);
+              });
+          const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+          request.flush('flush', { status: 400, statusText: error });
+      });
+      describe('successfully', function() {
+          describe('when not tracked', function() {
+              it('and all config passed', function() {
+                  this.config.searchText = 'test';
+                  service.getAssignees(this.config)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
+                  expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
+                  expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
+                  request.flush([]);
+              });
+              it('and no config passed', function() {
+                  service.getAssignees(undefined)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toBeNull();
+                  expect(request.request.params.get('offset')).toBeNull();
+                  expect(request.request.params.get('searchText')).toBeNull();
+                  request.flush([]);
+              });
+          });
+          describe('when tracked elsewhere', function() {
+              it('and all config passed', function() {
+                  this.config.searchText = 'test';
+                  service.getAssignees(this.config, true)
+                      .subscribe(response => {
+                          expect(response.body).toEqual([]);
+                          expect(progressSpinnerStub.track).not.toHaveBeenCalled();
+                      }, () => fail('Observable should have resolved'));
+                  const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                  expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
+                  expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
+                  expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
+                  request.flush([]);
+              });
+              it('and no config passed', function() {
+                  service.getAssignees(undefined, true)
                       .subscribe(response => {
                           expect(response.body).toEqual([]);
                           expect(progressSpinnerStub.track).not.toHaveBeenCalled();

@@ -118,6 +118,17 @@ export class MergeRequestsStateService {
      */
     creators: string[] = [];
     /**
+     * String to search the assignees filter in {@link merge-requests.MergeRequestFilterComponent}.
+     * @type {string}
+     */
+    assigneeSearchText = '';
+    /**
+     * The list of assignee IRIs to filter the list of Merge Requests. Set by
+     * {@link merge-requests.MergeRequestFilterComponent}.
+     * @type {string[]}
+     */
+    assignees: string[] = [];
+    /**
      * Determines whether a Merge Request is being created and thus whether the
      * {@link merge-request.CreateMergeRequestComponent} should be shown.
      * @type {boolean}
@@ -227,6 +238,8 @@ export class MergeRequestsStateService {
         this.requestSearchText = '';
         this.creatorSearchText = '';
         this.creators = [];
+        this.assigneeSearchText = '';
+        this.assignees = [];
     }
     /**
      * Clears all variables associated with calculating the Difference of a MergeRequest
@@ -376,8 +389,8 @@ export class MergeRequestsStateService {
     /**
      * Deletes the provided Merge Request from the application. If successful, unselects the current `selected` request
      * and makes a success toast. Any further action on success or failure should be handled in the using component. If
-     * the creator of the request was one of the selected filter options, removes the selection to handle the case where
-     * the last request created by that user was the one that was deleted.
+     * the creator of the request or one of the assignees was one of the selected filter options, removes the selection 
+     * to handle the case where the deleted request is the only one present for the filter option.
      *
      * @param {MergeRequest} request An Merge Request that should be deleted
      * @returns {Observable<void>} An Observable that resolves if the operation was successful and fails otherwise
@@ -390,6 +403,11 @@ export class MergeRequestsStateService {
                 if (this.creators.includes(creator)) {
                     this.creators.splice(this.creators.indexOf(creator), 1);
                 }
+                const assignees = (request.jsonld[`${MERGEREQ}assignee`] || []).map(val => val['@id']);
+                const relevantAssignees = this.assignees.filter(assignee => assignees.includes(assignee));
+                if (relevantAssignees.length > 0) {
+                  relevantAssignees.forEach(assignee => this.assignees.splice(this.assignees.indexOf(assignee), 1));
+              }
                 this.toast.createSuccessToast('Request successfully deleted');
             }));
     }
@@ -409,6 +427,7 @@ export class MergeRequestsStateService {
             recordIri: getPropertyId(jsonld, `${MERGEREQ}onRecord`),
             assignees: get(jsonld, `['${MERGEREQ}assignee']`, [])
                 .map(obj => get(find(this.um.users, {iri: obj['@id']}), 'username'))
+                .filter(obj => !!obj)
         };
     }
     /**

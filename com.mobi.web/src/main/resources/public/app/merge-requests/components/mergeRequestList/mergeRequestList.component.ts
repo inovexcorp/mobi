@@ -60,6 +60,7 @@ export class MergeRequestListComponent implements OnInit {
     changeFilter(changeDetails: MergeRequestFilterEvent): void {
         this.state.acceptedFilter = changeDetails.requestStatus;
         this.state.creators = changeDetails.creators;
+        this.state.assignees = changeDetails.assignees;
         this.state.currentRequestPage = 0;
         this.loadRequests();
     }
@@ -79,6 +80,7 @@ export class MergeRequestListComponent implements OnInit {
             sortOption: this.state.requestSortOption,
             accepted: this.state.acceptedFilter,
             creators: this.state.creators,
+            assignees: this.state.assignees,
             searchText: this.state.requestSearchText
         };
         this.state.setRequests(paginatedConfig);

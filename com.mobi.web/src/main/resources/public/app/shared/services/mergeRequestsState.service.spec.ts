@@ -58,7 +58,13 @@ describe('Merge Requests State service', function() {
     const catalogId = 'catalogId';
     const requestId = 'requestId';
     const recordId = 'recordId';
-    const request: JSONLDObject = { '@id': requestId };
+    const creatorId = 'creator';
+    const assigneeId = 'assignee';
+    const request: JSONLDObject = {
+      '@id': requestId,
+      [`${DCTERMS}creator`]: [{'@id': creatorId}],
+      [`${MERGEREQ}assignee`]: [{'@id': assigneeId}]
+    };
     const sourceBranch: JSONLDObject = {
       '@id': 'source',
       [`${DCTERMS}title`]: [{ '@value': 'title' }],
@@ -84,9 +90,9 @@ describe('Merge Requests State service', function() {
     const requestObj: MergeRequest = {
         title: 'title',
         date: 'date',
-        creator: 'creator',
+        creator: creatorId,
         recordIri: recordId,
-        assignees: [],
+        assignees: [assigneeId],
         jsonld: request,
         recordType: `${ONTOLOGYEDITOR}OntologyRecord`
     };
@@ -174,6 +180,8 @@ describe('Merge Requests State service', function() {
         expect(service.requestSearchText).toEqual('');
         expect(service.creatorSearchText).toEqual('');
         expect(service.creators).toEqual([]);
+        expect(service.assigneeSearchText).toEqual('');
+        expect(service.assignees).toEqual([]);
     });
     it('should clear all difference related variables', function() {
         service.difference = new Difference();
@@ -695,12 +703,24 @@ describe('Merge Requests State service', function() {
             expect(service.selected).toBeUndefined();
             expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
         }));
+        it('successfully and filters are cleared', fakeAsync(function() {
+            mergeRequestManagerStub.deleteRequest.and.returnValue(of(null));
+            service.creators = [creatorId, 'other'];
+            service.assignees = [assigneeId, 'other'];
+            service.deleteRequest(requestObj).subscribe(() => {}, () => fail('Observable should have succeeded'));
+            tick();
+            expect(mergeRequestManagerStub.deleteRequest).toHaveBeenCalledWith(requestId);
+            expect(service.selected).toBeUndefined();
+            expect(service.creators).toEqual(['other']);
+            expect(service.assignees).toEqual(['other']);
+            expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+        }));
     });
     it('should get the MergeRequest object from a JSON-LD object', function() {
         userManagerStub.users = [
             {
-                username: 'creator',
-                iri: 'creator',
+                username: 'creatorU',
+                iri: 'newcreator',
                 firstName: '',
                 lastName: '',
                 external: false,
@@ -708,8 +728,8 @@ describe('Merge Requests State service', function() {
                 email: ''
             },
             {
-                username: 'assignee',
-                iri: 'assignee',
+                username: 'assigneeU',
+                iri: 'newassignee',
                 firstName: '',
                 lastName: '',
                 external: false,
@@ -721,17 +741,17 @@ describe('Merge Requests State service', function() {
         jsonld[`${DCTERMS}title`] = [{ '@value': 'title' }];
         jsonld[`${DCTERMS}description`] = [{ '@value': 'description' }];
         jsonld[`${DCTERMS}issued`] = [{ '@value': DATE_STR }];
-        jsonld[`${DCTERMS}creator`] = [{ '@id': 'creator' }];
+        jsonld[`${DCTERMS}creator`] = [{ '@id': 'newcreator' }];
         jsonld[`${MERGEREQ}onRecord`] = [{ '@id': recordId }];
-        jsonld[`${MERGEREQ}assignee`] = [{'@id': 'assignee'}];
+        jsonld[`${MERGEREQ}assignee`] = [{'@id': 'newassignee'}];
         expect(service.getRequestObj(jsonld)).toEqual({
             jsonld,
             title: 'title',
             description: 'description',
             date: SHORTDATE_DATE_STR,
-            creator: 'creator',
+            creator: 'creatorU',
             recordIri: recordId,
-            assignees: ['assignee']
+            assignees: ['assigneeU']
         });
         expect(service.getRequestObj(request)).toEqual({
             jsonld: request,

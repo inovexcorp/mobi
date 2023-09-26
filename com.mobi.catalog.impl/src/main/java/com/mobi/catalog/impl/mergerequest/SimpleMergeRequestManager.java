@@ -104,7 +104,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final int MAX_COMMENT_STRING_LENGTH = 1000000;
     private static final String GET_COMMENT_CHAINS;
     private static final String GET_MERGE_REQUESTS_QUERY;
-    private static final String GET_MERGE_REQUEST_CREATORS_QUERY;
+    private static final String GET_MERGE_REQUEST_USERS_QUERY;
     private static final String GET_MERGE_REQUEST_RECORDS_QUERY;
     private static final String FILTERS = "%FILTERS%";
     private static final String VALUES = "%VALUES%";
@@ -119,6 +119,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String SEARCH_TEXT_BINDING = "searchText";
     private static final String SEARCHABLE_BINDING = "searchable";
     private static final String CREATOR_BINDING = "creator";
+    private static final String USER_BINDING = "user";
+    private static final String USER_PRED_BINDING = "pred";
     private static final String SORT_PRED_BINDING = "sortPred";
     private static final String NAME_BINDING = "name";
     private static final String COUNT_BINDING = "count";
@@ -131,8 +133,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             GET_MERGE_REQUESTS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
                     .getResourceAsStream("/get-merge-requests.rq")), StandardCharsets.UTF_8
             );
-            GET_MERGE_REQUEST_CREATORS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
-                    .getResourceAsStream("/get-merge-request-creators.rq")), StandardCharsets.UTF_8
+            GET_MERGE_REQUEST_USERS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
+                    .getResourceAsStream("/get-merge-request-users.rq")), StandardCharsets.UTF_8
             );
             GET_MERGE_REQUEST_RECORDS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
                     .getResourceAsStream("/get-merge-request-records.rq")), StandardCharsets.UTF_8
@@ -504,8 +506,6 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         if (params.hasFilters()) {
             filters.append("FILTER (");
-            params.getAssignee().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(" = <")
-                    .append(assignee).append("> && "));
             params.getOnRecord().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(" = <")
                     .append(onRecord).append("> && "));
             params.getSourceBranch().ifPresent(sourceBranch -> filters.append("?").append(SOURCE_BRANCH_BINDING)
@@ -524,6 +524,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             });
             params.getCreators().ifPresent(creator -> filters.append("?").append(CREATOR_BINDING).append(" IN (")
                     .append(String.join(", ", creator.stream().map(iri -> "<" + iri + ">").toList())).append(") && "));
+            params.getAssignees().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(" IN (")
+                    .append(String.join(", ", assignee.stream().map(iri -> "<" + iri + ">").toList())).append(") && "));
             filters.delete(filters.lastIndexOf(" && "), filters.length());
             filters.append(")");
         }
@@ -591,11 +593,15 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                 recordToMRMap.get(recordIri).add(requestIri);
             });
             List<IRI> recordIds = recordToMRMap.keySet().stream().map(iri -> (IRI) iri).toList();
-            Set<String> viewableRecords = getViewableRecords(user, recordIds);
-            recordIds.stream()
-                    .filter(iri -> !viewableRecords.contains(iri.stringValue()))
-                    .forEach(recordToMRMap::remove);
-            return recordToMRMap.values().stream().flatMap(List::stream).toList();
+            if (recordIds.size() > 0) {
+                Set<String> viewableRecords = getViewableRecords(user, recordIds);
+                recordIds.stream()
+                        .filter(iri -> !viewableRecords.contains(iri.stringValue()))
+                        .forEach(recordToMRMap::remove);
+                return recordToMRMap.values().stream().flatMap(List::stream).toList();
+            } else {
+                return Collections.emptyList();
+            }
         }
     }
 
@@ -657,31 +663,56 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return getUserCounts(params, conn, null);
+            return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, null);
         }
     }
 
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, Resource user) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return getUserCounts(params, conn, user);
+            return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, user);
         }
     }
 
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn) {
-        return getUserCounts(params, conn, null);
+        return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, null);
     }
 
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn,
                                                          Resource user) {
-        return getUserCounts(params, conn, user);
+        return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, user);
     }
 
-    private PaginatedSearchResults<UserCount> getUserCounts(PaginatedSearchParams params, RepositoryConnection conn,
+    @Override
+    public PaginatedSearchResults<UserCount> getAssignees(PaginatedSearchParams params) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getUserCounts(vf.createIRI(MergeRequest.assignee_IRI), params, conn, null);
+        }
+    }
+
+    @Override
+    public PaginatedSearchResults<UserCount> getAssignees(PaginatedSearchParams params, Resource user) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getUserCounts(vf.createIRI(MergeRequest.assignee_IRI), params, conn, user);
+        }
+    }
+
+    @Override
+    public PaginatedSearchResults<UserCount> getAssignees(PaginatedSearchParams params, RepositoryConnection conn) {
+        return getUserCounts(vf.createIRI(MergeRequest.assignee_IRI), params, conn, null);
+    }
+
+    @Override
+    public PaginatedSearchResults<UserCount> getAssignees(PaginatedSearchParams params, RepositoryConnection conn, Resource user) {
+        return getUserCounts(vf.createIRI(MergeRequest.assignee_IRI), params, conn, user);
+    }
+
+    private PaginatedSearchResults<UserCount> getUserCounts(IRI predicate, PaginatedSearchParams params,
+                                                            RepositoryConnection conn,
                                                             @Nullable Resource requestingUser) {
-        String query = GET_MERGE_REQUEST_CREATORS_QUERY;
+        String query = GET_MERGE_REQUEST_USERS_QUERY;
         if (requestingUser != null) {
             List<Resource> viewableMRs = getViewableMergeRequests((IRI) requestingUser, conn);
             query = query.replace(VALUES, "VALUES ?mr {"
@@ -690,6 +721,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             query = query.replace(VALUES, "");
         }
         TupleQuery countQuery = conn.prepareTupleQuery(query);
+        countQuery.setBinding(USER_PRED_BINDING, predicate);
         params.getSearchText().ifPresent(searchText ->
                 countQuery.setBinding(SEARCH_TEXT_BINDING, vf.createLiteral(searchText)));
         TupleQueryResult result = countQuery.evaluate();
@@ -698,7 +730,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
         List<UserCount> counts = result.stream()
                 .map(bindings -> {
-                    Resource user = Bindings.requiredResource(bindings, CREATOR_BINDING);
+                    Resource user = Bindings.requiredResource(bindings, USER_BINDING);
                     String name = Bindings.requiredLiteral(bindings, NAME_BINDING).stringValue();
                     int count = Bindings.requiredLiteral(bindings, COUNT_BINDING).intValue();
                     return new UserCount(user, name, count);
