@@ -83,7 +83,7 @@ export class EditRequestOverlayComponent implements OnInit {
                 this.state.selected.sourceBranch = Object.prototype.hasOwnProperty.call(this.state.selected,'sourceBranch')
                     ? this.state.selected.sourceBranch : emptyObject;
 
-                this.dialogRef.close();
+                this.dialogRef.close({closed: true});
             }, error => this.errorMessage = error);
     }
 

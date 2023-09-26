@@ -66,6 +66,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     isSubmitDisabled = false;
     userAccessMsg = 'You do not have permission to perform this merge';
     private isAdminUser: boolean;
+    currentAssignees: string[] = [];
 
     constructor(public mm: MergeRequestManagerService,
                 public state: MergeRequestsStateService,
@@ -114,6 +115,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 this.toast.createWarningToast('The request you had selected no longer exists');
                 this.back();
             });
+            this.currentAssignees = this.state.selected.assignees.slice();
     }
     ngOnDestroy(): void {
         this.state.clearDifference();
@@ -212,7 +214,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         return !some(this.copiedConflicts, conflict => !conflict.resolved);
     }
     editRequest(): void {
-        this.dialog.open(EditRequestOverlayComponent);
+        const dialogRef = this.dialog.open(EditRequestOverlayComponent);
+        dialogRef.afterClosed().subscribe(result => {
+            if (result?.closed) {
+                this.currentAssignees = this.state.selected.assignees.slice();
+            }
+        });
     }
 
     private _createResolutions(): Difference {

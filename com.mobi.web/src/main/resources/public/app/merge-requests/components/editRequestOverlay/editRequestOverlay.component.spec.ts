@@ -221,7 +221,7 @@ describe('Edit Request Overlay Component', function() {
                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(mergeRequestsStateStub.getRequestObj).toHaveBeenCalledWith(this.expectedJsonld);
                 expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(emptyRequest);
-                expect(matDialogRef.close).toHaveBeenCalledWith();
+                expect(matDialogRef.close).toHaveBeenCalledWith(Object({ closed: true }));
                 expect(component.errorMessage).toEqual('');
             }));
             it('unless an error occurs', fakeAsync(function() {
