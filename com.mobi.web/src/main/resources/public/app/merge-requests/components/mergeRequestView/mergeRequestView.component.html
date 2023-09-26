@@ -47,8 +47,8 @@
                     <div class="assignees mb-2">
                         <span class="field-label">Assignee(s)</span>
                         <ul class="assignees">
-                            <li *ngIf="state.selected.assignees.length === 0" class="last">(None specified)</li>
-                            <li *ngFor="let assignee of state.selected.assignees; last as last" [ngClass]="{'last': last}">{{assignee}}</li>
+                            <li *ngIf="currentAssignees.length === 0" class="last">(None specified)</li>
+                            <li *ngFor="let assignee of currentAssignees; last as last" [ngClass]="{'last': last}">{{assignee}}</li>
                         </ul>
                     </div>
                     <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER' && !isAccepted" [(ngModel)]="state.selected.removeSource" [disabled]="true">{{'Remove ' + state.selected.sourceTitle + ' after merge.'}}</mat-checkbox>

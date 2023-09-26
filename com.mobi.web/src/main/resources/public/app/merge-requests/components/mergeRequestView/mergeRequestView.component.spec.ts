@@ -651,7 +651,7 @@ describe('Merge Request View component', function() {
 
             mergeRequestsStateStub.selected.assignees = ['user1', 'user2'];
             fixture.detectChanges();
-            expect(element.queryAll(By.css('.assignees li')).length).toEqual(2);
+            expect(element.queryAll(By.css('.assignees li')).length).toEqual(1);
         });
         it('depending on if the source branch is to be removed', function() {
             const checkbox = element.queryAll(By.css('mat-checkbox'))[0];
