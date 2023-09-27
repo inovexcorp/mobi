@@ -53,8 +53,9 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
 
     @ViewChild('ontologyQuery', {static: false}) ontologyQuery: ElementRef;
 
-    constructor(public yasgui: YasguiService, private spinnerSvc: ProgressSpinnerService,
-                private changeDetector : ChangeDetectorRef) {
+    constructor(public yasgui: YasguiService, 
+        private spinnerSvc: ProgressSpinnerService,
+        private changeDetector : ChangeDetectorRef) {
     }
 
     ngOnInit(): void {
@@ -105,8 +106,7 @@ export class QueryViewComponent implements OnInit, OnChanges, OnDestroy {
 
     _setUpYasgui(): void {
         const yasguiConfig = {
-            name: 'ontologyQuery',
-            // endpoint: `${REST_PREFIX}sparql/limited-results`
+            name: 'ontologyQuery'
         };
         this.yasgui.initYasgui(this.ontologyQuery.nativeElement, yasguiConfig, this.yasguiQuery, true);
         const yasgui = this.yasgui.getYasgui();

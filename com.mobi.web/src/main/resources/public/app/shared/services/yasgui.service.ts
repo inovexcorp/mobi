@@ -313,7 +313,9 @@ export class YasguiService {
             return formatType['turtle'];
         }
         let defaultForType;
-        if (constructIndex < selectIndex) {
+        if ( type === 'error' && constructIndex < selectIndex) {
+            defaultForType = formatType.turtle;
+        } else if (constructIndex < selectIndex) {
             defaultForType = formatType.jsonLD;
         } else {
             if (format === 'turtle' || format === 'rdfXml' || format === 'jsonLD') {
