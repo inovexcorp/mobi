@@ -48,11 +48,14 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.builder.RecordCount;
 import com.mobi.catalog.api.builder.UserCount;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.Comment;
 import com.mobi.catalog.api.ontologies.mergerequests.CommentFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
@@ -114,6 +117,9 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     private User user;
 
+    private VersionedRDFRecord record;
+    private RecordCount recordCount;
+
     private final String CATALOG_IRI = "http://test.org/catalog";
     private final String RECORD_ID = "http://mobi.com/records#record";
     private final String SOURCE_BRANCH_ID = "http://mobi.com/branches#sourceBranch";
@@ -136,10 +142,14 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     private static CommentFactory commentFactory;
     private static BranchFactory branchFactory;
     private static UserFactory userFactory;
+    private static VersionedRDFRecordFactory versionedRDFRecordFactory;
     private static ValueConverterRegistry vcr;
 
     @Mock
     private PaginatedSearchResults<UserCount> userCountResults;
+
+    @Mock
+    private PaginatedSearchResults<RecordCount> recordCountResults;
 
     @BeforeClass
     public static void startServer() {
@@ -159,6 +169,10 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         userFactory = new UserFactory();
         userFactory.valueConverterRegistry = vcr;
         vcr.registerValueConverter(userFactory);
+
+        versionedRDFRecordFactory = new VersionedRDFRecordFactory();
+        versionedRDFRecordFactory.valueConverterRegistry = vcr;
+        vcr.registerValueConverter(versionedRDFRecordFactory);
 
         branchFactory = new BranchFactory();
         branchFactory.valueConverterRegistry = vcr;
@@ -206,6 +220,8 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         request2.getModel().forEach(statement -> contextModel2.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), request1.getResource()));
         request2 = mergeRequestFactory.getExisting(request2.getResource(), contextModel2).get();
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
+        record = versionedRDFRecordFactory.createNew(vf.createIRI("http://test.org/record"));
+        record.setProperty(vf.createLiteral("record2"), vf.createIRI("http://purl.org/dc/terms/title"));
 
         comment1 = commentFactory.createNew(vf.createIRI("http://mobi.com/test/comments#1"));
         comment1.setOnMergeRequest(request1);
@@ -246,7 +262,17 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException()).when(requestManager).deleteMergeRequest(vf.createIRI(doesNotExist));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when(engineManager.retrieveUser(UsernameTestFilter.USERNAME)).thenReturn(Optional.of(user));
-    }
+
+        recordCount = new RecordCount(record.getResource(), "record", 10);
+
+        when(recordCountResults.getPage()).thenReturn(Collections.singletonList(recordCount));
+        when(recordCountResults.getPageNumber()).thenReturn(0);
+        when(recordCountResults.getPageSize()).thenReturn(10);
+        when(recordCountResults.getTotalSize()).thenReturn(1);
+
+        when(requestManager.getRecords(any(PaginatedSearchParams.class), any(Resource.class))).thenReturn(recordCountResults);
+
+        }
 
     @After
     public void resetMocks() throws Exception {
@@ -1244,5 +1270,126 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 401);
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(comment1.getResource());
+    }
+
+    @Test
+    public void getRecordsTest() {
+        Response response = target().path("merge-requests/records").request().get();
+        assertEquals(response.getStatus(), 200);
+        ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
+        verify(requestManager).getRecords(captor.capture(), eq(user.getResource()));
+        PaginatedSearchParams params = captor.getValue();
+        assertEquals(0, params.getOffset());
+        assertTrue(params.getLimit().isEmpty());
+        assertTrue(params.getSearchText().isEmpty());
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject requestObj = result.getJSONObject(0);
+            assertTrue(requestObj.containsKey("record"));
+            assertEquals(recordCount.getRecord().stringValue(), requestObj.getString("record"));
+            assertTrue(requestObj.containsKey("title"));
+            assertEquals(recordCount.getTitle(), requestObj.getString("title"));
+            assertTrue(requestObj.containsKey("count"));
+            assertEquals(recordCount.getCount().intValue(), requestObj.getInt("count"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getRecordsWithPagingTest() {
+        Response response = target().path("merge-requests/records").queryParam("offset", 1).queryParam("limit", 10).request().get();
+        assertEquals(response.getStatus(), 200);
+        ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
+        verify(requestManager).getRecords(captor.capture(), eq(user.getResource()));
+        PaginatedSearchParams params = captor.getValue();
+        assertEquals(1, params.getOffset());
+        assertTrue(params.getLimit().isPresent());
+        assertEquals(10, params.getLimit().get().intValue());
+        assertTrue(params.getSearchText().isEmpty());
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject requestObj = result.getJSONObject(0);
+            assertTrue(requestObj.containsKey("record"));
+            assertEquals(recordCount.getRecord().stringValue(), requestObj.getString("record"));
+            assertTrue(requestObj.containsKey("title"));
+            assertEquals(recordCount.getTitle(), requestObj.getString("title"));
+            assertTrue(requestObj.containsKey("count"));
+            assertEquals(recordCount.getCount().intValue(), requestObj.getInt("count"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getRecordsWithBadPagingTest() {
+        Response response = target().path("merge-requests/records").queryParam("offset", -1).queryParam("limit", -1).request().get();
+        assertEquals(response.getStatus(), 400);
+        verify(requestManager, times(0)).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
+        assertEquals("", response.readEntity(String.class));
+    }
+
+    @Test
+    public void getRecordsWithSearchText() {
+        Response response = target().path("merge-requests/records").queryParam("searchText", "test").request().get();
+        assertEquals(response.getStatus(), 200);
+        ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
+        verify(requestManager).getRecords(captor.capture(), eq(user.getResource()));
+        PaginatedSearchParams params = captor.getValue();
+        assertEquals(0, params.getOffset());
+        assertTrue(params.getLimit().isEmpty());
+        assertTrue(params.getSearchText().isPresent());
+        assertEquals("test", params.getSearchText().get());
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject requestObj = result.getJSONObject(0);
+            assertTrue(requestObj.containsKey("record"));
+            assertEquals(recordCount.getRecord().stringValue(), requestObj.getString("record"));
+            assertTrue(requestObj.containsKey("title"));
+            assertEquals(recordCount.getTitle(), requestObj.getString("title"));
+            assertTrue(requestObj.containsKey("count"));
+            assertEquals(recordCount.getCount().intValue(), requestObj.getInt("count"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getRecordsIllegalArgumentTest() {
+        Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
+
+        Response response = target().path("merge-requests/records").request().get();
+        assertEquals(response.getStatus(), 400);
+        verify(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
+
+        try {
+            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
+            assertEquals(responseObject.get("error"), "IllegalArgumentException");
+            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            assertNotEquals(responseObject.get("errorDetails"), null);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getRecordsIllegalStateTest() {
+        Mockito.doThrow(new IllegalStateException("I'm an exception!")).when(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
+
+        Response response = target().path("merge-requests/records").request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
+
+        try {
+            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
+            assertEquals(responseObject.get("error"), "IllegalStateException");
+            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            assertNotEquals(responseObject.get("errorDetails"), null);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 }

@@ -163,10 +163,11 @@ describe('Merge Request List component', function() {
         it('should handle changing a filter', function() {
             spyOn(component, 'loadRequests');
             mergeRequestsStateStub.currentRequestPage = 1;
-            component.changeFilter({ requestStatus: true, creators: ['A', 'B'], assignees: ['Y', 'Z'] });
+            component.changeFilter({ requestStatus: true, creators: ['A', 'B'], assignees: ['Y', 'Z'], records: ['C', 'D'] });
             expect(mergeRequestsStateStub.acceptedFilter).toBeTrue();
             expect(mergeRequestsStateStub.creators).toEqual(['A', 'B']);
             expect(mergeRequestsStateStub.assignees).toEqual(['Y', 'Z']);
+            expect(mergeRequestsStateStub.records).toEqual(['C', 'D']);
             expect(mergeRequestsStateStub.currentRequestPage).toEqual(0);
             expect(component.loadRequests).toHaveBeenCalledWith();
         });
@@ -196,7 +197,8 @@ describe('Merge Request List component', function() {
                 accepted: mergeRequestsStateStub.acceptedFilter,
                 searchText: mergeRequestsStateStub.requestSearchText,
                 creators: mergeRequestsStateStub.creators,
-                assignees: mergeRequestsStateStub.assignees
+                assignees: mergeRequestsStateStub.assignees,
+                records: mergeRequestsStateStub.records
             });
         });
         it('should show the delete confirmation overlay', fakeAsync(function() {

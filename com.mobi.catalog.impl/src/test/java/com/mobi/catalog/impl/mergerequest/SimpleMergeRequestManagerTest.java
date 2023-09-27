@@ -81,6 +81,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -197,7 +198,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         targetCommit2 = commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#target-commit2"));
 
         versionedRDFRecord1.addBranch(sourceBranch1);
+        versionedRDFRecord1.setProperty(VALUE_FACTORY.createLiteral("record1"), VALUE_FACTORY.createIRI("http://purl.org/dc/terms/title"));
         versionedRDFRecord1.addBranch(targetBranch1);
+        versionedRDFRecord2.setProperty(VALUE_FACTORY.createLiteral("record2"), VALUE_FACTORY.createIRI("http://purl.org/dc/terms/title"));
 
         user1 = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/users#user1"));
         user2 = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/users#user2"));
@@ -331,6 +334,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
             conn.add(user1.getModel(), user1.getResource());
             conn.add(user2.getModel(), user2.getResource());
+
+            conn.add(versionedRDFRecord1.getModel(), versionedRDFRecord1.getResource());
+            conn.add(versionedRDFRecord2.getModel(), versionedRDFRecord2.getResource());
         }
 
         closeable = MockitoAnnotations.openMocks(this);
@@ -501,13 +507,13 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void getOpenMergeRequestsOnRecord() {
         try (RepositoryConnection conn = repo.getConnection()) {
             MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
-            builder.setOnRecord(RECORD_1_IRI);
+            builder.setOnRecords(Arrays.asList(RECORD_1_IRI));
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request1.getResource(), result.get(0).getResource());
             verify(thingManager).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
 
-            builder.setOnRecord(RECORD_2_IRI);
+            builder.setOnRecords(Arrays.asList(RECORD_2_IRI));
             result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request2.getResource(), result.get(0).getResource());
@@ -1516,6 +1522,70 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             assertFalse(manager.getAssignees(searchParams, conn, user1.getResource()).getPage().isEmpty());
             assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getPageSize());
             assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getTotalSize());
+        }
+    }
+
+    @Test
+    public void testGetRecordsWithNoConnection() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        assertEquals(1, manager.getRecords(searchParams).getPageNumber());
+        assertFalse(manager.getRecords(searchParams).getPage().isEmpty());
+        assertEquals(2, manager.getRecords(searchParams).getPageSize());
+        assertEquals(2, manager.getRecords(searchParams).getTotalSize());
+    }
+
+    @Test
+    public void testGetRecordsWithConnection() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertEquals(1, manager.getRecords(searchParams, conn).getPageNumber());
+            assertFalse(manager.getRecords(searchParams, conn).getPage().isEmpty());
+            assertEquals(2, manager.getRecords(searchParams, conn).getPageSize());
+            assertEquals(2, manager.getRecords(searchParams, conn).getTotalSize());
+        }
+    }
+
+    @Test
+    public void testGetRecordsWithUser() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageNumber());
+        assertFalse(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPage().isEmpty());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageSize());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetRecordsWithSearchText() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("2").build();
+
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageNumber());
+        assertFalse(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPage().isEmpty());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageSize());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetRecordsSearchNotExist() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NotExist").build();
+
+        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageNumber());
+        assertTrue(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPage().isEmpty());
+        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageSize());
+        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getTotalSize());
+    }
+
+    @Test
+    public void testGetRecordsWithConnectionAndUser() {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getPageNumber());
+            assertFalse(manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getPage().isEmpty());
+            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getPageSize());
+            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getTotalSize());
         }
     }
 }

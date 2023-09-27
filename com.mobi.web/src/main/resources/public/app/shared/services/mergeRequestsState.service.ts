@@ -129,6 +129,17 @@ export class MergeRequestsStateService {
      */
     assignees: string[] = [];
     /**
+     * String to search the records filter in {@link merge-requests.MergeRequestFilterComponent}.
+     * @type {string}
+     */
+    recordSearchText = '';
+    /**
+     * The list of record IRIs to filter the list of Merge Requests. Set by
+     * {@link merge-requests.MergeRequestFilterComponent}.
+     * @type {string[]}
+     */
+    records: string[] = [];
+    /**
      * Determines whether a Merge Request is being created and thus whether the
      * {@link merge-request.CreateMergeRequestComponent} should be shown.
      * @type {boolean}
@@ -240,6 +251,8 @@ export class MergeRequestsStateService {
         this.creators = [];
         this.assigneeSearchText = '';
         this.assignees = [];
+        this.recordSearchText = '';
+        this.records = [];
     }
     /**
      * Clears all variables associated with calculating the Difference of a MergeRequest
@@ -389,7 +402,7 @@ export class MergeRequestsStateService {
     /**
      * Deletes the provided Merge Request from the application. If successful, unselects the current `selected` request
      * and makes a success toast. Any further action on success or failure should be handled in the using component. If
-     * the creator of the request or one of the assignees was one of the selected filter options, removes the selection 
+     * the creator of the request or one of the assignees was one of the selected filter options, removes the selection
      * to handle the case where the deleted request is the only one present for the filter option.
      *
      * @param {MergeRequest} request An Merge Request that should be deleted
@@ -408,6 +421,10 @@ export class MergeRequestsStateService {
                 if (relevantAssignees.length > 0) {
                   relevantAssignees.forEach(assignee => this.assignees.splice(this.assignees.indexOf(assignee), 1));
               }
+                const record = getPropertyId(request.jsonld, `${MERGEREQ}onRecord`);
+                if (this.records.includes(record)) {
+                    this.records.splice(this.records.indexOf(record), 1);
+                }
                 this.toast.createSuccessToast('Request successfully deleted');
             }));
     }

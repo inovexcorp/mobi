@@ -1,0 +1,15 @@
+PREFIX mq: <http://mobi.com/ontologies/merge-requests#>
+PREFIX dc: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT
+    ?record
+    ?title
+    (COUNT(DISTINCT ?mr) as ?count)
+WHERE {
+    %VALUES%
+    ?mr a mq:MergeRequest ;
+        mq:onRecord ?record .
+    ?record dc:title ?title .
+    BIND(IF(BOUND(?searchText), CONTAINS(LCASE(?title), LCASE(?searchText)), true) as ?s)
+    FILTER(?s)
+} GROUP BY ?record ?title ORDER BY ?title

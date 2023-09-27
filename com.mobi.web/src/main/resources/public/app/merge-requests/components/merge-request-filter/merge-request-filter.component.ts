@@ -33,6 +33,7 @@ import { MergeRequestManagerService } from '../../../shared/services/mergeReques
 import { FilterType, ListFilter } from '../../../shared/models/list-filter.interface';
 import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { ToastService } from '../../../shared/services/toast.service';
+import { RecordCount } from '../../../shared/models/record-count.interface';
 
 /**
  * @class merge-requests.MergeRequestFilterComponent
@@ -101,7 +102,8 @@ export class MergeRequestFilterComponent implements OnInit {
           componentContext.changeFilter.emit({
             requestStatus: value,
             creators: componentContext._state.creators,
-            assignees: componentContext._state.assignees
+            assignees: componentContext._state.assignees,
+            records: componentContext._state.records
           });
         }
       },
@@ -147,7 +149,8 @@ export class MergeRequestFilterComponent implements OnInit {
         componentContext.changeFilter.emit({
           requestStatus: componentContext._state.acceptedFilter,
           creators,
-          assignees: componentContext._state.assignees
+          assignees: componentContext._state.assignees,
+          records: componentContext._state.records
         });
       },
       searchChanged: function(value: string): void {
@@ -180,6 +183,81 @@ export class MergeRequestFilterComponent implements OnInit {
           }, error => componentContext._toast.createErrorToast(error));
       },
     };
+    const recordFilter: SearchableListFilter = {
+        title: 'Records',
+        type: FilterType.CHECKBOX,
+        hide: false,
+        pageable: true,
+        searchable: true,
+        filterItems: [],
+        numChecked: 0,
+        pagingData: {
+          limit: 10,
+          totalSize: 0,
+          pageIndex: 0,
+          hasNextPage: false
+        },
+        rawFilterItems: [],
+        searchModel: componentContext._state.recordSearchText,
+        onInit: function(): void {
+          this.numChecked = componentContext._state.records.length;
+          this.nextPage();
+        },
+        getItemText: function(filterItem: FilterItem): string {
+          const recordCount = filterItem.value as RecordCount;
+          return `${recordCount.title} (${recordCount.count})`;
+        },
+        setFilterItems: function(): void {
+          this.filterItems = this.rawFilterItems.map(recordCount => ({
+            value: recordCount,
+            checked: componentContext._state.records.findIndex(iri => iri === (recordCount as RecordCount).record) >= 0
+          }));
+        },
+        filter: function(): void {
+          const hiddenRecords = componentContext._state.records.filter(record =>
+            this.filterItems.findIndex(item => (item.value as RecordCount).record === record) < 0);
+          const checkedRecordItems = this.filterItems.filter(item => item.checked);
+          const records = checkedRecordItems
+            .map(currentFilterItem => (currentFilterItem.value as RecordCount).record)
+            .concat(hiddenRecords);
+          this.numChecked = records.length;
+          componentContext.changeFilter.emit({
+            requestStatus: componentContext._state.acceptedFilter,
+            creators: componentContext._state.creators,
+            assignees: componentContext._state.assignees,
+            records
+          });
+        },
+        searchChanged: function(value: string): void {
+          componentContext._state.recordSearchText = value;
+        },
+        searchSubmitted: function(): void {
+          this.pagingData.totalSize = 0;
+          this.pagingData.pageIndex = 0;
+          this.pagingData.hasNextPage = false;
+          this.nextPage();
+        },
+        nextPage: function(): void {
+          const filterInstance: SearchableListFilter = this;
+          const pagingData = filterInstance.pagingData;
+          const paginatedConfig = {
+              searchText: componentContext._state.recordSearchText,
+              pageIndex: pagingData.pageIndex,
+              limit: pagingData.limit,
+          };
+          componentContext._mm.getRecords(paginatedConfig)
+            .subscribe((response: HttpResponse<RecordCount[]>) => {
+              if (pagingData.pageIndex === 0) {
+                filterInstance.rawFilterItems = response.body;
+              } else {
+                filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
+              }
+              filterInstance.setFilterItems();
+              pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
+              pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
+            }, error => componentContext._toast.createErrorToast(error));
+        },
+      };
     const assigneeFilter: SearchableListFilter = {
       title: 'Assignees',
       type: FilterType.CHECKBOX,
@@ -211,7 +289,7 @@ export class MergeRequestFilterComponent implements OnInit {
         }));
       },
       filter: function(): void {
-        const hiddenAssignees = componentContext._state.assignees.filter(assignee => 
+        const hiddenAssignees = componentContext._state.assignees.filter(assignee =>
           this.filterItems.findIndex(item => (item.value as UserCount).user === assignee) < 0);
         const checkedAssigneeItems = this.filterItems.filter(item => item.checked);
         const assignees = checkedAssigneeItems
@@ -221,6 +299,7 @@ export class MergeRequestFilterComponent implements OnInit {
         componentContext.changeFilter.emit({
           requestStatus: componentContext._state.acceptedFilter,
           creators: componentContext._state.creators,
+          records: componentContext._state.records,
           assignees
         });
       },
@@ -255,7 +334,7 @@ export class MergeRequestFilterComponent implements OnInit {
       },
     };
 
-    this.filters = [statusTypeFilter, creatorFilter, assigneeFilter];
+    this.filters = [statusTypeFilter, creatorFilter, assigneeFilter, recordFilter];
     this.filters.forEach(filter => {
       filter.onInit();
     });

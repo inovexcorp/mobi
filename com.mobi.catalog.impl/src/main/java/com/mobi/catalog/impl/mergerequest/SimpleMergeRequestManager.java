@@ -32,6 +32,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.builder.Conflict;
+import com.mobi.catalog.api.builder.RecordCount;
 import com.mobi.catalog.api.builder.UserCount;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
@@ -106,6 +107,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String GET_MERGE_REQUESTS_QUERY;
     private static final String GET_MERGE_REQUEST_USERS_QUERY;
     private static final String GET_MERGE_REQUEST_RECORDS_QUERY;
+    private static final String GET_MERGE_REQUEST_RECORD_COUNTS_QUERY;
     private static final String FILTERS = "%FILTERS%";
     private static final String VALUES = "%VALUES%";
     private static final String REQUEST_ID_BINDING = "requestId";
@@ -123,6 +125,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String USER_PRED_BINDING = "pred";
     private static final String SORT_PRED_BINDING = "sortPred";
     private static final String NAME_BINDING = "name";
+    private static final String RECORD_BINDING = "record";
+    private static final String TITLE_BINDING = "title";
     private static final String COUNT_BINDING = "count";
 
     static {
@@ -138,6 +142,9 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             );
             GET_MERGE_REQUEST_RECORDS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
                     .getResourceAsStream("/get-merge-request-records.rq")), StandardCharsets.UTF_8
+            );
+            GET_MERGE_REQUEST_RECORD_COUNTS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
+                    .getResourceAsStream("/get-merge-request-record-counts.rq")), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -263,7 +270,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public void cleanMergeRequests(Resource recordId, Resource branchId, RepositoryConnection conn) {
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-        builder.setOnRecord(recordId);
+        builder.setOnRecords(Arrays.asList(recordId));
 
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> {
@@ -420,7 +427,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public void deleteMergeRequestsWithRecordId(Resource recordId, RepositoryConnection conn) {
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-        builder.setOnRecord(recordId);
+        builder.setOnRecords(Arrays.asList(recordId));
 
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
@@ -506,8 +513,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         if (params.hasFilters()) {
             filters.append("FILTER (");
-            params.getOnRecord().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(" = <")
-                    .append(onRecord).append("> && "));
+            params.getOnRecords().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(" IN (")
+                    .append(String.join(", ", onRecord.stream().map(iri -> "<" + iri + ">").toList())).append(") && "));
             params.getSourceBranch().ifPresent(sourceBranch -> filters.append("?").append(SOURCE_BRANCH_BINDING)
                     .append(" = <").append(sourceBranch).append("> && "));
             params.getTargetBranch().ifPresent(targetBranch -> filters.append("?").append(TARGET_BRANCH_BINDING)
@@ -661,6 +668,31 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
+    public PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getRecordCounts(params, conn, null);
+        }
+    }
+
+    @Override
+    public PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params, Resource user) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getRecordCounts(params, conn, user);
+        }
+    }
+
+    @Override
+    public PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params, RepositoryConnection conn) {
+        return getRecordCounts(params, conn, null);
+    }
+
+    @Override
+    public PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params, RepositoryConnection conn,
+                                                         Resource user) {
+        return getRecordCounts(params, conn, user);
+    }
+
+    @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, null);
@@ -726,6 +758,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                 countQuery.setBinding(SEARCH_TEXT_BINDING, vf.createLiteral(searchText)));
         TupleQueryResult result = countQuery.evaluate();
         if (!result.hasNext()) {
+            result.close();
             return SearchResults.emptyResults();
         }
         List<UserCount> counts = result.stream()
@@ -734,6 +767,43 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     String name = Bindings.requiredLiteral(bindings, NAME_BINDING).stringValue();
                     int count = Bindings.requiredLiteral(bindings, COUNT_BINDING).intValue();
                     return new UserCount(user, name, count);
+                }).toList();
+        result.close();
+        int offset = params.getOffset();
+        int limit = params.getLimit().orElse(counts.size());
+        if (offset > counts.size()) {
+            throw new IllegalArgumentException("Offset exceeds total size");
+        }
+        int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
+
+        return new SimpleSearchResults<>(counts.stream().skip(offset).limit(limit).toList(), counts.size(), limit,
+                pageNumber);
+    }
+
+    private PaginatedSearchResults<RecordCount> getRecordCounts(PaginatedSearchParams params, RepositoryConnection conn,
+                                                            @Nullable Resource requestingUser) {
+        String query = GET_MERGE_REQUEST_RECORD_COUNTS_QUERY;
+        if (requestingUser != null) {
+            List<Resource> viewableMRs = getViewableMergeRequests((IRI) requestingUser, conn);
+            query = query.replace(VALUES, "VALUES ?mr {"
+                    + String.join(" ", viewableMRs.stream().map(iri -> "<" + iri + ">").toList()) + "}");
+        } else {
+            query = query.replace(VALUES, "");
+        }
+        TupleQuery countQuery = conn.prepareTupleQuery(query);
+        params.getSearchText().ifPresent(searchText ->
+                countQuery.setBinding(SEARCH_TEXT_BINDING, vf.createLiteral(searchText)));
+        TupleQueryResult result = countQuery.evaluate();
+        if (!result.hasNext()) {
+            result.close();
+            return SearchResults.emptyResults();
+        }
+        List<RecordCount> counts = result.stream()
+                .map(bindings -> {
+                    Resource record = Bindings.requiredResource(bindings, RECORD_BINDING);
+                    String title = Bindings.requiredLiteral(bindings, TITLE_BINDING).stringValue();
+                    int count = Bindings.requiredLiteral(bindings, COUNT_BINDING).intValue();
+                    return new RecordCount(record, title, count);
                 }).toList();
         result.close();
         int offset = params.getOffset();

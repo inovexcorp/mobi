@@ -37,6 +37,7 @@ import { MergeRequestManagerService } from '../../../shared/services/mergeReques
 import { UserCount } from '../../../shared/models/user-count.interface';
 import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { MergeRequestFilterComponent } from './merge-request-filter.component';
+import { RecordCount } from '../../../shared/models/record-count.interface';
 
 describe('MergeRequestFilterComponent', () => {
   let component: MergeRequestFilterComponent;
@@ -55,6 +56,16 @@ describe('MergeRequestFilterComponent', () => {
     name: 'Bruce',
     count: 5
   };
+  const animalCount: RecordCount = {
+      record: 'animalRecord',
+      title: 'Animal Ontology',
+      count: 1
+  };
+  const pizzaCount: RecordCount = {
+    record: 'pizzaRecord',
+    title: 'Pizza Ontology',
+    count: 5
+};
   const updateFiltersSubject: Subject<void> = new Subject<void>();
 
   beforeEach(async () => {
@@ -78,6 +89,7 @@ describe('MergeRequestFilterComponent', () => {
     mergeRequestsStateStub.acceptedFilter = false;
     mergeRequestsStateStub.creators = [adminCount.user];
     mergeRequestsStateStub.assignees = [adminCount.user];
+    mergeRequestsStateStub.records = [animalCount.record];
     mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     mergeRequestManagerStub.getCreators.and.returnValue(of(new HttpResponse<UserCount[]>({
       body: [adminCount, batmanCount],
@@ -87,6 +99,10 @@ describe('MergeRequestFilterComponent', () => {
       body: [adminCount, batmanCount],
       headers: new HttpHeaders({ 'x-total-count': '10' })
     })));
+    mergeRequestManagerStub.getRecords.and.returnValue(of(new HttpResponse<RecordCount[]>({
+        body: [animalCount, pizzaCount],
+        headers: new HttpHeaders({ 'x-total-count': '10' })
+      })));
     fixture.detectChanges();
   });
 
@@ -156,6 +172,26 @@ describe('MergeRequestFilterComponent', () => {
         limit: assigneeFilter.pagingData.limit
       });
     }));
+    it('with record filter', fakeAsync(() => {
+      tick();
+      const recordFilter = component.filters[3] as SearchableListFilter;
+      expect(recordFilter).toBeTruthy();
+      const expectedFilterItems = [
+        { checked: true, value: animalCount },
+        { checked: false, value: pizzaCount }
+      ];
+      expect(recordFilter.title).toEqual('Records');
+      expect(recordFilter.rawFilterItems).toEqual([animalCount, pizzaCount]);
+      expect(recordFilter.filterItems).toEqual(expectedFilterItems);
+      expect(recordFilter.numChecked).toEqual(1);
+      expect(recordFilter.pagingData.totalSize).toEqual(10);
+      expect(recordFilter.pagingData.hasNextPage).toBeTrue();
+      expect(mergeRequestManagerStub.getRecords).toHaveBeenCalledWith({
+        searchText: mergeRequestsStateStub.recordSearchText,
+        pageIndex: recordFilter.pagingData.pageIndex,
+        limit: recordFilter.pagingData.limit
+      });
+    }));
   });
   describe('filter methods', () => {
     beforeEach(function () {
@@ -175,7 +211,8 @@ describe('MergeRequestFilterComponent', () => {
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           requestStatus: acceptedStatus.checked,
           creators: mergeRequestsStateStub.creators,
-          assignees: mergeRequestsStateStub.assignees
+          assignees: mergeRequestsStateStub.assignees,
+          records: mergeRequestsStateStub.records
         });
       });
       it('if the accepted status has been checked', () => {
@@ -191,7 +228,8 @@ describe('MergeRequestFilterComponent', () => {
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           requestStatus: acceptedStatus.checked,
           creators: mergeRequestsStateStub.creators,
-          assignees: mergeRequestsStateStub.assignees
+          assignees: mergeRequestsStateStub.assignees,
+          records: mergeRequestsStateStub.records
         });
       });
     });
@@ -206,7 +244,8 @@ describe('MergeRequestFilterComponent', () => {
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
             requestStatus: mergeRequestsStateStub.acceptedFilter,
             creators: [adminCount.user, batmanCount.user],
-            assignees: mergeRequestsStateStub.assignees
+            assignees: mergeRequestsStateStub.assignees,
+            records: mergeRequestsStateStub.records
           });
         });
         it('and some are checked', () => {
@@ -217,7 +256,8 @@ describe('MergeRequestFilterComponent', () => {
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
             requestStatus: mergeRequestsStateStub.acceptedFilter,
             creators: [adminCount.user],
-            assignees: mergeRequestsStateStub.assignees
+            assignees: mergeRequestsStateStub.assignees,
+            records: mergeRequestsStateStub.records
           });
         });
       });
@@ -230,7 +270,8 @@ describe('MergeRequestFilterComponent', () => {
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           requestStatus: mergeRequestsStateStub.acceptedFilter,
           creators: [adminCount.user, 'superman'],
-          assignees: mergeRequestsStateStub.assignees
+          assignees: mergeRequestsStateStub.assignees,
+          records: mergeRequestsStateStub.records
         });
       });
     });
@@ -245,7 +286,8 @@ describe('MergeRequestFilterComponent', () => {
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
             requestStatus: mergeRequestsStateStub.acceptedFilter,
             creators: mergeRequestsStateStub.creators,
-            assignees: [adminCount.user, batmanCount.user]
+            assignees: [adminCount.user, batmanCount.user],
+            records: mergeRequestsStateStub.records
           });
         });
         it('and some are checked', () => {
@@ -256,7 +298,8 @@ describe('MergeRequestFilterComponent', () => {
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
             requestStatus: mergeRequestsStateStub.acceptedFilter,
             creators: mergeRequestsStateStub.creators,
-            assignees: [adminCount.user]
+            assignees: [adminCount.user],
+            records: mergeRequestsStateStub.records
           });
         });
       });
@@ -269,7 +312,50 @@ describe('MergeRequestFilterComponent', () => {
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           requestStatus: mergeRequestsStateStub.acceptedFilter,
           creators: mergeRequestsStateStub.creators,
-          assignees: [adminCount.user, 'superman']
+          assignees: [adminCount.user, 'superman'],
+          records: mergeRequestsStateStub.records
+        });
+      });
+    });
+    describe('should filter requests based on records', () => {
+      describe('if all selected records are visible', () => {
+        it('and all are checked', () => {
+          const recordFilter = component.filters[3];
+          expect(recordFilter).toBeTruthy();
+          recordFilter.filterItems.forEach(item => item.checked = true);
+          recordFilter.filter(null);
+          expect(recordFilter.numChecked).toEqual(recordFilter.filterItems.length);
+          expect(component.changeFilter.emit).toHaveBeenCalledWith({
+            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            creators: mergeRequestsStateStub.creators,
+            assignees: [ 'admin' ],
+            records: [animalCount.record, pizzaCount.record]
+          });
+        });
+        it('and some are checked', () => {
+          const recordFilter = component.filters[3];
+          expect(recordFilter).toBeTruthy();
+          recordFilter.filter(null);
+          expect(recordFilter.numChecked).toEqual(1);
+          expect(component.changeFilter.emit).toHaveBeenCalledWith({
+            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            creators: mergeRequestsStateStub.creators,
+            assignees: [ 'admin' ],
+            records: [animalCount.record]
+          });
+        });
+      });
+      it('if not all selected creators are visible', () => {
+        mergeRequestsStateStub.records = [animalCount.record, 'medicine'];
+        const recordFilter = component.filters[3];
+        expect(recordFilter).toBeTruthy();
+        recordFilter.filter(null);
+        expect(recordFilter.numChecked).toEqual(2);
+        expect(component.changeFilter.emit).toHaveBeenCalledWith({
+          requestStatus: mergeRequestsStateStub.acceptedFilter,
+          assignees: [ 'admin' ],
+          creators: mergeRequestsStateStub.creators,
+          records: [animalCount.record, 'medicine']
         });
       });
     });

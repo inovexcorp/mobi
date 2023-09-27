@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.builder.RecordCount;
 import com.mobi.catalog.api.builder.UserCount;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
@@ -143,8 +144,8 @@ public class MergeRequestRest {
 
     /**
      * Retrieves a list of all the {@link MergeRequest}s in Mobi sorted according to the provided parameters
-     * and optionally filtered by whether they are accepted. This list respects the Read access on the attached
-     * Records on the Merge Requests.
+     * and optionally filtered by records, creators, and whether they are accepted. This list respects the Read access
+     * on the attached Records on the Merge Requests.
      *
      * @param sort IRI of the predicate to sort by
      * @param offset An optional offset for the results.
@@ -152,6 +153,8 @@ public class MergeRequestRest {
      * @param asc Whether the results should be sorted ascending or descending. Default is false.
      * @param accepted Whether the results should only be accepted or open requests.
      * @param searchText An optional search text for the list.
+     * @param creators An optional creator user IRI list to filter the list by.
+     * @param records An optional record IRI list to filter the list by.
      * @return The list of all {@link MergeRequest}s that match the criteria
      */
     @GET
@@ -187,7 +190,9 @@ public class MergeRequestRest {
             @Parameter(description = "Optional creator user IRIs to filter the list by")
             @QueryParam("creators") List<String> creators,
             @Parameter(description = "Optional assignee user IRIs to filter the list by")
-            @QueryParam("assignees") List<String> assignees) {
+            @QueryParam("assignees") List<String> assignees,
+            @Parameter(description = "Optional record IRI list to filter the list by")
+            @QueryParam("records") List<String> records) {
         User activeUser = getActiveUser(servletRequest, engineManager);
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setRequestingUser(activeUser);
         if (!StringUtils.isEmpty(sort)) {
@@ -201,6 +206,9 @@ public class MergeRequestRest {
         }
         if (assignees != null && assignees.size() > 0) {
             builder.setAssignees(assignees.stream().map(vf::createIRI).collect(Collectors.toList()));
+        }
+        if (records != null && records.size() > 0) {
+            builder.setOnRecords(records.stream().map(vf::createIRI).collect(Collectors.toList()));
         }
         builder.setAscending(asc).setAccepted(accepted);
         try {
@@ -438,6 +446,68 @@ public class MergeRequestRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<UserCount> counts = manager.getAssignees(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeUserCount(counts);
+            return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
+                    ? counts.getTotalSize() : limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | SailException | MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Retrieves a list of all the Merge Request records with counts of how many Merge Requests they're associated with
+     * and their title. Parameters can be passed to control paging.
+     *
+     * @param uriInfo Information about the request URI.
+     * @param searchText Optional text to search the list with.
+     * @param offset Optional offset for the page of results.
+     * @param limit Optional limit for the page of results.
+     * @return List of Record IRIs with their titles and their Merge Request counts.
+     */
+    @GET
+    @Path("records")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "merge-requests",
+            summary = "Retrieves the list of records of the MergeRequests in the application with their counts",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with JSON containing the Record count details",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(
+                                    uniqueItems = true, schema = @Schema(example = "{\"record\": "
+                                    + "\"http://test.com/some-uri\", \"title\": \"Pizza Ontology\", \"count\": 5}")))),
+                    @ApiResponse(responseCode = "400",
+                            description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500",
+                            description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getRecords(@Context HttpServletRequest servletRequest, @Context UriInfo uriInfo,
+                                @Parameter(description = "String used to filter out records")
+                                @QueryParam("searchText") String searchText,
+                                @Parameter(description = "Offset for the page")
+                                @QueryParam("offset") int offset,
+                                @Parameter(description = "Number of records to return in one page")
+                                @QueryParam("limit") int limit) {
+        try {
+            LinksUtils.validateParams(limit, offset);
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
+            if (offset > 0) {
+                builder.offset(offset);
+            }
+            if (limit > 0) {
+                builder.limit(limit);
+            }
+            if (StringUtils.isNotEmpty(StringUtils.stripToEmpty(searchText))) {
+                builder.searchText(searchText);
+            }
+            User activeUser = getActiveUser(servletRequest, engineManager);
+            PaginatedSearchResults<RecordCount> counts = manager.getRecords(builder.build(), activeUser.getResource());
+            ArrayNode arr = serializeRecordCount(counts);
             return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
                     ? counts.getTotalSize() : limit, offset);
         } catch (IllegalArgumentException ex) {
@@ -892,4 +962,18 @@ public class MergeRequestRest {
         }
         return userArrayNode;
     }
+
+    private ArrayNode serializeRecordCount(PaginatedSearchResults<RecordCount> recordCounts) {
+        ArrayNode recordArrayNode = mapper.createArrayNode();
+
+        for (RecordCount recordCount: recordCounts.getPage()) {
+            ObjectNode recordObject = mapper.createObjectNode();
+            recordObject.put("record", recordCount.getRecord().stringValue());
+            recordObject.put("title", recordCount.getTitle());
+            recordObject.put("count", recordCount.getCount());
+            recordArrayNode.add(recordObject);
+        }
+        return recordArrayNode;
+    }
+
 }

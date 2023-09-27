@@ -20,14 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { PaginatedConfig } from './paginatedConfig.interface';
-
 /**
- * Paginated configuration specifically for merge requests
+ * A representation of a count of a how many times a record is associated with a merge request. Includes the Records's IRI and title.
  */
-export interface MergeRequestPaginatedConfig extends PaginatedConfig {
-    accepted: boolean,
-    creators?: string[]
-    assignees?: string[]
-    records?: string[]
-}
+export interface RecordCount {
+  record: string,
+  title: string,
+  count: number
+}  
