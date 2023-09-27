@@ -25,6 +25,7 @@
  */
 export interface MergeRequestFilterEvent {
     requestStatus?: boolean,
-    creators?: string[]
-    assignees?: string[]
+    creators?: string[],
+    assignees?: string[],
+    records?: string[]
 }

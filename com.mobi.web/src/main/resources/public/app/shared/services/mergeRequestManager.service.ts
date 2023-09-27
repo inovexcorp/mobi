@@ -40,6 +40,7 @@ import { MergeRequest } from '../models/mergeRequest.interface';
 
 import { UserCount } from '../models/user-count.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { RecordCount } from '../models/record-count.interface';
 
 /**
  * @class shared.MergeRequestManagerService
@@ -107,6 +108,11 @@ export class MergeRequestManagerService {
               params = params.append('assignees', assignee);
           });
       }
+        if (config.records?.length) {
+            config.records.forEach(record => {
+                params = params.append('records', record);
+            });
+        }
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix, {params, observe: 'response'}))
             .pipe(catchError(handleError));
     }
@@ -293,7 +299,7 @@ export class MergeRequestManagerService {
     /**
      * Retrieves the list of assignees of merge requests throughout the application using the provided pagination
      * parameters. Results include the user's IRI, display name, and MR count and are ordered by display name.
-     * 
+     *
      * @param {PaginatedConfig} paginatedConfig A configuration object for paginated requests. Handles `searchText` on
      * top of the default supported params
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
@@ -306,10 +312,29 @@ export class MergeRequestManagerService {
           params = params.set('searchText', paginatedConfig.searchText);
       }
       const url = `${this.prefix}/assignees`;
-      const request =  this.http.get<UserCount[]>(url, { params, observe: 'response' });  
+      const request =  this.http.get<UserCount[]>(url, { params, observe: 'response' });
       return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
   }
-    
+    /**
+     * Retrieves the list of records of merge requests throughout the application using the provided pagination
+     * parameters. Results include the record's IRI, title, and MR count and are ordered by title.
+     *
+     * @param {PaginatedConfig} paginatedConfig A configuration object for paginated requests. Handles `searchText` on
+     * top of the default supported params
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @returns {Observable<HttpResponse<RecordCount[]>>} An Observable that either resolves with the full HttpResponse
+     * of an array of {@link RecordCount} objects or is rejected with a error message
+     */
+    getRecords(paginatedConfig: PaginatedConfig, isTracked = false): Observable<HttpResponse<RecordCount[]>> {
+        let params = paginatedConfigToHttpParams(paginatedConfig);
+        if (get(paginatedConfig, 'searchText')) {
+            params = params.set('searchText', paginatedConfig.searchText);
+        }
+        const url = `${this.prefix}/records`;
+        const request =  this.http.get<RecordCount[]>(url, { params, observe: 'response' });
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+    }
+
     /**
      * Determines whether the passed request is accepted or not.
      *

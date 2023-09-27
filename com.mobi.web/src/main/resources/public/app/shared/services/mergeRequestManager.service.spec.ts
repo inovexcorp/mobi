@@ -108,6 +108,7 @@ describe('Merge Request Manager service', function() {
             expect(request.request.params.get('searchText')).toBeNull();
             expect(request.request.params.get('creators')).toBeNull();
             expect(request.request.params.get('assignees')).toBeNull();
+            expect(request.request.params.get('records')).toBeNull();
             request.flush([]);
         });
         it('with parameters', function() {
@@ -120,7 +121,8 @@ describe('Merge Request Manager service', function() {
                 },
                 searchText: 'test',
                 creators: ['A', 'B'],
-                assignees: ['Y', 'Z']
+                assignees: ['Y', 'Z'],
+                records: ['C', 'D']
             };
             service.getRequests(config)
                 .subscribe(response => {
@@ -133,6 +135,7 @@ describe('Merge Request Manager service', function() {
             expect(request.request.params.get('searchText').toString()).toEqual(config.searchText);
             expect(request.request.params.getAll('creators')).toEqual(config.creators);
             expect(request.request.params.getAll('assignees')).toEqual(config.assignees);
+            expect(request.request.params.getAll('records')).toEqual(config.records);
             request.flush([]);
         });
     });
@@ -555,6 +558,79 @@ describe('Merge Request Manager service', function() {
           });
       });
     });
+    describe('should retrieve the records of merge requests', function() {
+        beforeEach(function() {
+            this.url = `${service.prefix}/records`;
+            this.config = {
+                limit: 10,
+                offset: 0
+            };
+        });
+        it('unless an error occurs', function() {
+            service.getRecords(this.config)
+                .subscribe(() => fail('Observable should have rejected'), response => {
+                    expect(response).toEqual(error);
+                });
+            const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+            request.flush('flush', { status: 400, statusText: error });
+        });
+        describe('successfully', function() {
+            describe('when not tracked', function() {
+                it('and all config passed', function() {
+                    this.config.searchText = 'test';
+                    service.getRecords(this.config)
+                        .subscribe(response => {
+                            expect(response.body).toEqual([]);
+                            expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                        }, () => fail('Observable should have resolved'));
+                    const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                    expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
+                    expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
+                    expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
+                    request.flush([]);
+                });
+                it('and no config passed', function() {
+                    service.getRecords(undefined)
+                        .subscribe(response => {
+                            expect(response.body).toEqual([]);
+                            expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
+                        }, () => fail('Observable should have resolved'));
+                    const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                    expect(request.request.params.get('limit')).toBeNull();
+                    expect(request.request.params.get('offset')).toBeNull();
+                    expect(request.request.params.get('searchText')).toBeNull();
+                    request.flush([]);
+                });
+            });
+            describe('when tracked elsewhere', function() {
+                it('and all config passed', function() {
+                    this.config.searchText = 'test';
+                    service.getRecords(this.config, true)
+                        .subscribe(response => {
+                            expect(response.body).toEqual([]);
+                            expect(progressSpinnerStub.track).not.toHaveBeenCalled();
+                        }, () => fail('Observable should have resolved'));
+                    const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                    expect(request.request.params.get('limit')).toEqual('' + this.config.limit);
+                    expect(request.request.params.get('offset')).toEqual('' + this.config.offset);
+                    expect(request.request.params.get('searchText')).toEqual(this.config.searchText);
+                    request.flush([]);
+                });
+                it('and no config passed', function() {
+                    service.getRecords(undefined, true)
+                        .subscribe(response => {
+                            expect(response.body).toEqual([]);
+                            expect(progressSpinnerStub.track).not.toHaveBeenCalled();
+                        }, () => fail('Observable should have resolved'));
+                    const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+                    expect(request.request.params.get('limit')).toBeNull();
+                    expect(request.request.params.get('offset')).toBeNull();
+                    expect(request.request.params.get('searchText')).toBeNull();
+                    request.flush([]);
+                });
+            });
+        });
+      });
 });
 function spy(service: MergeRequestManagerService, arg1: string) {
     throw new Error('Function not implemented.');

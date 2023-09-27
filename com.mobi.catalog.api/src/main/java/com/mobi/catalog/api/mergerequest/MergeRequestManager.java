@@ -25,6 +25,7 @@ package com.mobi.catalog.api.mergerequest;
 
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.api.builder.RecordCount;
 import com.mobi.catalog.api.builder.UserCount;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -348,6 +349,47 @@ public interface MergeRequestManager {
      * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
      */
     void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn);
+
+    /**
+     * Returns a list of records associated with {@link MergeRequest} instances with their counts and titles.
+     *
+     * @param params Search parameters.
+     * @return The {@link PaginatedSearchResults} of the records with the counts of merge requests they are associated with
+     */
+    PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params);
+
+    /**
+     * Returns a list of records associated with {@link MergeRequest} instances with their counts and titles filtered
+     * by the Merge Requests that the user with the provided IRI can view.
+     *
+     * @param params Search parameters.
+     * @param user The Resource IRI of the user making the request to filter based on permissions
+     * @return The {@link PaginatedSearchResults} of the records with the counts of merge requests they are associated with
+     */
+    PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params, Resource user);
+
+    /**
+     * Returns a list of records associated with {@link MergeRequest} instances with their counts and titles using the
+     * provided {@link RepositoryConnection}.
+     *
+     * @param params Search parameters.
+     * @param conn The {@link RepositoryConnection} to use for look up.
+     * @return The {@link PaginatedSearchResults} of the records with the counts of merge requests they are associated with
+     */
+    PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params, RepositoryConnection conn);
+
+    /**
+     * Returns a list of records associated with {@link MergeRequest} instances with their counts and titles using the
+     * provided {@link RepositoryConnection} filtered by the Merge Requests that the user with the provided IRI can
+     * view.
+     *
+     * @param params Search parameters.
+     * @param conn The {@link RepositoryConnection} to use for look up.
+     * @param user The Resource IRI of the user making the request to filter based on permissions
+     * @return The {@link PaginatedSearchResults} of the records with the counts of merge requests they are associated with
+     */
+    PaginatedSearchResults<RecordCount> getRecords(PaginatedSearchParams params, RepositoryConnection conn,
+                                                   Resource user);
 
     /**
      * Returns a list of users that created {@link MergeRequest} instances with their counts and display names.

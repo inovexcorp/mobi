@@ -39,7 +39,7 @@ import java.util.Optional;
 public class MergeRequestFilterParams {
 
     private final User requestingUser;
-    private final Resource onRecord;
+    private final List<Resource> onRecords;
     private final Resource sourceBranch;
     private final Resource targetBranch;
     private final Resource sourceCommit;
@@ -55,7 +55,7 @@ public class MergeRequestFilterParams {
 
     protected MergeRequestFilterParams(Builder builder) {
         this.requestingUser =  builder.requestingUser;
-        this.onRecord = builder.onRecord;
+        this.onRecords = builder.onRecords;
         this.sourceBranch = builder.sourceBranch;
         this.targetBranch = builder.targetBranch;
         this.sourceCommit = builder.sourceCommit;
@@ -74,8 +74,8 @@ public class MergeRequestFilterParams {
         return Optional.ofNullable(requestingUser);
     }
 
-    public Optional<Resource> getOnRecord() {
-        return Optional.ofNullable(onRecord);
+    public Optional<List<Resource>> getOnRecords() {
+        return Optional.ofNullable(onRecords);
     }
 
     public Optional<Resource> getSourceBranch() {
@@ -128,7 +128,7 @@ public class MergeRequestFilterParams {
 
     public static class Builder {
         private User requestingUser = null;
-        private Resource onRecord = null;
+        private List<Resource> onRecords = null;
         private Resource sourceBranch = null;
         private Resource targetBranch = null;
         private Resource sourceCommit = null;
@@ -158,11 +158,11 @@ public class MergeRequestFilterParams {
         /**
          * Set the filter on onRecord associated with the MergeRequest.
          *
-         * @param onRecord The Resource of the VersionedRDFRecord for the MergeRequest
+         * @param onRecords The Resource of the VersionedRDFRecord for the MergeRequest
          * @return MergeRequestFilterParams.Builder
          */
-        public Builder setOnRecord(Resource onRecord) {
-            this.onRecord = onRecord;
+        public Builder setOnRecords(List<Resource> onRecords) {
+            this.onRecords = onRecords;
             filters = true;
             return this;
         }
