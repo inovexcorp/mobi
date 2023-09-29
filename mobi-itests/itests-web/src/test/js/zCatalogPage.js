@@ -30,7 +30,7 @@ var CatalogPage = function() {
     this.recordBodyDescriptionSelector = this.recordViewCssSelector + ' div.record-body p inline-edit';
 
     this.recordTypeFilters = ['Dataset Record', 'Mapping Record', 'Ontology Record', 'Record', 'Shapes Graph Record',
-        'Unversioned Record', 'Versioned RDF Record', 'Versioned Record']
+        'Unversioned Record', 'Versioned RDF Record', 'Versioned Record', 'Workflow Record']
 };
 
 CatalogPage.prototype.getAllElementsTextValues = function(browser, selector, target) {
