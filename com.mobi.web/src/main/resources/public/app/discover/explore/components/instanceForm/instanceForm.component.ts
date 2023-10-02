@@ -116,6 +116,7 @@ export class InstanceFormComponent implements OnInit {
     showPropertyValueOverlay = false;
     changed = [];
     missingProperties: string[] = [];
+    properties: PropertyDetails[] = [];
     instance: JSONLDObject = {'@id': ''};
     options = [];
 
@@ -229,6 +230,7 @@ export class InstanceFormComponent implements OnInit {
                     this.propertyDetailsMap[details.propertyIRI] = details;
                 });
                 this.missingProperties = this.getMissingProperties();
+                this.properties = Object.values(this.propertyDetailsMap);
             }, () => this.toast.createErrorToast('An error occurred retrieving the instance properties.'));
     }
 

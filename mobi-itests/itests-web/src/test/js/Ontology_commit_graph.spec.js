@@ -23,8 +23,8 @@
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
-var ontologyEditorPage = require('./OntologyEditorPage').ontologyEditorPage;
-var mergeRequest = require('./mergeRequestsPage').mergeRequestsPage;
+var ontologyEditorPage = require('./zOntologyEditorPage').ontologyEditorPage;
+var mergeRequest = require('./zMergeRequestsPage').mergeRequestsPage;
 var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf';
 
 module.exports = {

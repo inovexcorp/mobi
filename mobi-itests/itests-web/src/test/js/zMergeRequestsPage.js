@@ -64,6 +64,7 @@ MergeRequestsPage.prototype.assertMatCardTitles = function(browser, titles) {
             .useXpath()
             .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + titles[titleIndex] + '")]')
     }
+}
 // Used to execute a search on the main merge request landing page
 MergeRequestsPage.prototype.searchList = function(browser, searchText) {
     browser

@@ -313,8 +313,8 @@ module.exports = {
     },
 
     'Step 28: Accept the merge request': function(browser) {
-        mergeRequest.selectRequest(browser, 'newBranchTitle2');
-        mergeRequest.acceptRequest(browser);
+        mergeRequestPage.selectRequest(browser, 'newBranchTitle2');
+        mergeRequestPage.acceptRequest(browser);
     },
 
     'Step 29: Create branch used for branch removal Merge Request': function(browser) {
@@ -394,7 +394,7 @@ module.exports = {
     'Step 32: Filter the merge request list by creator': function(browser) {
         // Confirm the Creator filter is present
         var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-        var creatorFilterXPathSelector = mergeRequest.createFilterXPathSelector('Creators');
+        var creatorFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Creators');
         browser.assert.elementPresent({ selector: creatorFilterXPathSelector, locateStrategy: 'xpath' });
         // Submit a search of the creator filter
         var creatorSearchXPathSelector = creatorFilterXPathSelector + '//input';
@@ -406,7 +406,7 @@ module.exports = {
             .waitForElementNotPresent('#spinner-full');
 
         // Select the admin creator filter
-        var adminCreatorFilterXPathSelector = mergeRequest.createFilterXPathSelector('Creators', adminUsername + ' (2)');
+        var adminCreatorFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Creators', adminUsername + ' (2)');
         browser.assert.elementPresent({ selector: adminCreatorFilterXPathSelector, locateStrategy: 'xpath' });
         browser.click('xpath', adminCreatorFilterXPathSelector, clickFunc);
         browser.globals.wait_for_no_spinners(browser);
@@ -422,7 +422,7 @@ module.exports = {
     'Step 33: Filter the merge request list by assignee': function(browser) {
       // Confirm the Creator filter is present
       var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-      var assigneeFilterXPathSelector = mergeRequest.createFilterXPathSelector('Assignees');
+      var assigneeFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Assignees');
       browser.assert.elementPresent({ selector: assigneeFilterXPathSelector, locateStrategy: 'xpath' });
       // Submit a search of the creator filter
       var assigneeSearchXPathSelector = assigneeFilterXPathSelector + '//input';
@@ -434,7 +434,7 @@ module.exports = {
           .waitForElementNotPresent('#spinner-full');
 
       // Select the admin creator filter
-      var adminAssigneeFilterXPathSelector = mergeRequest.createFilterXPathSelector('Assignee', adminUsername + ' (1)');
+      var adminAssigneeFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Assignee', adminUsername + ' (1)');
       browser.assert.elementPresent({ selector: adminAssigneeFilterXPathSelector, locateStrategy: 'xpath' });
       browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
       browser.globals.wait_for_no_spinners(browser);
@@ -449,17 +449,17 @@ module.exports = {
 
     'Step 34: Search the merge request list': function(browser) {
         // Test no requests are shown
-        mergeRequest.searchList(browser, 'NONE');
+        mergeRequestPage.searchList(browser, 'NONE');
         browser.waitForElementVisible('div.merge-request-list info-message');
         browser.expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
 
         // Test searching with some results
-        mergeRequest.searchList(browser, 'rem');
+        mergeRequestPage.searchList(browser, 'rem');
         browser.assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
     },
 
-    'Step 34: Accept the merge request': function(browser) {
-        mergeRequest.selectRequest(browser, 'newBranchTitle3Removal');
-        mergeRequest.acceptRequest(browser);
+    'Step 35: Accept the merge request': function(browser) {
+        mergeRequestPage.selectRequest(browser, 'newBranchTitle3Removal');
+        mergeRequestPage.acceptRequest(browser);
     }
 }
