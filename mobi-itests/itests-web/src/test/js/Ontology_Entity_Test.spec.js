@@ -72,16 +72,19 @@ module.exports = {
     },
 
     'Step 7: Click properties tab & open property': function (browser) {
+        var propertiesTabXpath = '//mat-tab-header//div[text()[contains(., "Properties")]]'
+        var dataPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Data Properties")]]'
         browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Properties")]]')
-        browser
-            .useCss().waitForElementVisible('div.tree')
             .useXpath()
-            .waitForElementVisible('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Data Properties")]]')
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Data Properties")]]')
-            .waitForElementVisible('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Data Property")]]')
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Data Property")]]')
+            .waitForElementVisible(propertiesTabXpath)
+            .click('xpath', propertiesTabXpath)
+            .useCss()
+            .waitForElementPresent('div.properties-tab property-hierarchy-block')
+            .useXpath()
+            .waitForElementVisible(dataPropertiesTreeXPath)
+            .click(dataPropertiesTreeXPath)
+            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Test Data Property")]]')
+            .click('xpath', '//property-tree//tree-item//span[text()[contains(., "Test Data Property")]]')
     },
 
     'Step 8: Delete ontology property': function (browser) {
