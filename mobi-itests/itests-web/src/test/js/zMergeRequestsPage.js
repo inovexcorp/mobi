@@ -28,13 +28,14 @@ var MergeRequestsPage = function() {
     this.mergeRequestSort =  this.mergeRequestPageForm + ' mat-select';
     this.mergeRequestFilters = this.mergeRequestPage  + 'merge-request-filter';
     this.mergeRequestPaginator = this.mergeRequestPage + '.merge-request-paginator mat-paginator';
+    this.mergeRequestFilterCount = 4;
 };
 // verifyRecordFilters is used to verify filters on the catalog page,
 // noKeywords is a boolean value to check if page has available keywords
 MergeRequestsPage.prototype.verifyRecordFilters = function(browser) {
     browser.useCss()
     browser.expect.element(this.mergeRequestFilters).to.be.present;
-    browser.expect.elements(this.mergeRequestFilters + ' mat-expansion-panel-header mat-panel-title').count.to.equal(3);
+    browser.expect.elements(this.mergeRequestFilters + ' mat-expansion-panel-header mat-panel-title').count.to.equal(this.mergeRequestFilterCount);
 };
 
 MergeRequestsPage.prototype.verifyMergeRequestList = function(browser) {
@@ -103,7 +104,7 @@ MergeRequestsPage.prototype.selectRequest = function(browser, mrTitle) {
         .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
         .useCss()
         .assert.textContains('div.request-contents .details h3', mrTitle)
-        .click('xpath', '//div[contains(@class, "request-contents")]//h3[text()[contains(.,"' + mrTitle + '")]]')
+        .click('xpath', '//div[contains(@class, "request-contents")]//h3//span[text()[contains(.,"' + mrTitle + '")]]')
     browser.globals.wait_for_no_spinners(browser);
 };
 
