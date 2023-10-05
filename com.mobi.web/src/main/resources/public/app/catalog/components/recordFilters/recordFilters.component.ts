@@ -217,7 +217,6 @@ export class RecordFiltersComponent implements OnInit {
                         filterInstance.setFilterItems();
                         pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
                         pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
-                        pagingData['currentPage'] = pagingData['currentPage'] + 1;
                     }, error => componentContext.toast.createErrorToast(error));
             },
             getItemText: function(filterItem) {
