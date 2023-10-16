@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class ontology-editor.OntologyEditorPageComponent
@@ -37,6 +38,10 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
     templateUrl: './ontologyEditorPage.component.html',
     styleUrls: ['./ontologyEditorPage.component.scss']
 })
-export class OntologyEditorPageComponent {
+export class OntologyEditorPageComponent implements OnDestroy {
     constructor(public os: OntologyStateService) {}
+    ngOnDestroy(): void {
+        this.os.toast.clearToast();
+        this.os.snackBar.dismiss();
+    }
 }

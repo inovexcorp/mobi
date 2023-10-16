@@ -150,13 +150,13 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         `${SKOS}hasTopConcept`
     ];
 
-    constructor(protected snackBar: MatSnackBar, 
+    constructor(public snackBar: MatSnackBar, 
         protected sm: StateManagerService, 
         protected cm: CatalogManagerService,
         protected mrm: MergeRequestManagerService,
         protected spinnerSvc: ProgressSpinnerService, 
         protected om: OntologyManagerService,
-        protected toast: ToastService, 
+        public toast: ToastService, 
         protected updateRefs: UpdateRefsService, 
         protected pm: PropertyManagerService, 
         protected mc: ManchesterConverterService, 
