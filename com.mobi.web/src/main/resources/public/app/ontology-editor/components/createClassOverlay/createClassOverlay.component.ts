@@ -127,7 +127,6 @@ export class CreateClassOverlayComponent implements OnInit {
         this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, clazz);
         // Save the changes to the ontology
         this.os.saveCurrentChanges().subscribe(() => {
-            // Open snackbar
             this.os.openSnackbar(clazz['@id']);
         }, () => {});
         // hide the overlay
