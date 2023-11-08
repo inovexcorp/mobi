@@ -33,6 +33,9 @@ import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/r
 import { RunMappingDownloadOverlayComponent } from '../runMappingDownloadOverlay/runMappingDownloadOverlay.component';
 import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay/runMappingOntologyOverlay.component';
 import { getDctermsValue } from '../../../shared/utility';
+import { find } from 'lodash';
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class mapper.EditMappingTabComponent
@@ -54,11 +57,12 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
     classMappings = [];
     ontologyTitle = '';
 
-    constructor(private dialog: MatDialog, public state: MapperStateService, public dm: DelimitedManagerService) {}
+    constructor(private dialog: MatDialog, public state: MapperStateService, public dm: DelimitedManagerService,
+                private mm: MappingManagerService, private toast: ToastService) {}
         
     ngOnInit(): void {
         this.setOntologyTitle();
-        this.setClassMappings();
+        this.checkIncompatibleMappings();
         if (this.state.startWithConfigModal) {
           this.openMappingConfig();
         }
@@ -141,5 +145,36 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
         this.state.initialize();
         this.state.resetEdit();
         this.dm.reset();
+    }
+
+    checkIncompatibleMappings() {
+        this.state.findIncompatibleMappings(this.state.selected.mapping).subscribe(incomMappings => {
+            const jsonld = this.state.selected.mapping.getJsonld();
+            incomMappings.forEach(entity => {
+                if (find(jsonld, {'@id': entity['@id']})) {
+                    const title = getDctermsValue(entity, 'title');
+                    if (this.mm.isPropertyMapping(entity)) {
+                        const parentClassMapping = this.mm.isDataMapping(entity) ?
+                            this.state.selected.mapping.findClassWithDataMapping(entity['@id']) :
+                            this.state.selected.mapping.findClassWithObjectMapping(entity['@id']);
+                        if (parentClassMapping) {
+                            this.toast.createWarningToast(`Removing incompatible Property Mapping ${title}`,
+                                { timeOut: 8000 });
+                            this.state.deleteProp(entity['@id'], parentClassMapping['@id']);
+                        }
+                    } else if (this.mm.isClassMapping(entity)) {
+                        this.toast.createWarningToast(`Removing incompatible Class Mapping ${title}`,
+                            { timeOut: 8000 });
+                        this.state.deleteClass(entity['@id']);
+                    }
+                }
+            });
+        });
+        this.state.resetEdit();
+        this.state.setIriMap().subscribe(
+            () => {
+                this.setClassMappings();
+            }
+        );
     }
 }

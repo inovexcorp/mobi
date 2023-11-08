@@ -1,0 +1,43 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2023 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<h1 mat-dialog-title>Incompatible Mapping - {{this.data.mappingRecord['title']}}</h1>
+<div mat-dialog-content>
+    <info-message>{{this.infoMessage}}</info-message>
+    <mat-list>
+        <mat-list-item *ngFor="let mapping of this.data.incomMappings">
+            <div class="col-10 remove-min-width text-truncate" title="{{mapping[this.titleIRI][0]['@value']}}">
+                <span>{{mapping[this.titleIRI][0]["@value"]}} </span>
+                <small *ngIf="mapping[this.idIRI]" class="ontology-iri text-muted"
+                       title="{{mapping[this.idIRI][0]['@id']}}">{{mapping[this.idIRI][0]['@id']}}
+                </small>
+                <small *ngIf="mapping[this.propIRI]" class="ontology-iri text-muted"
+                       title="{{mapping[this.propIRI][0]['@id']}}">{{mapping[this.propIRI][0]['@id']}}
+                </small>
+            </div>
+        </mat-list-item>
+    </mat-list>
+</div>
+<div mat-dialog-actions>
+    <button mat-raised-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="confirm()">Continue</button>
+</div>
