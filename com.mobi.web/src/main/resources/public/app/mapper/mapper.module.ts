@@ -53,6 +53,7 @@ import { RunMappingDatasetOverlayComponent } from './components/runMappingDatase
 import { RunMappingDownloadOverlayComponent } from './components/runMappingDownloadOverlay/runMappingDownloadOverlay.component';
 import { RunMappingOntologyOverlayComponent } from './components/runMappingOntologyOverlay/runMappingOntologyOverlay.component';
 import { ViewMappingModalComponent } from './components/viewMappingModal/viewMappingModal.component';
+import { IncompatibleWarningModalComponent } from './components/incompatible-warning-modal/incompatible-warning-modal.component';
 
 /**
  * @namespace mapper
@@ -92,7 +93,8 @@ import { ViewMappingModalComponent } from './components/viewMappingModal/viewMap
         RunMappingDatasetOverlayComponent,
         RunMappingDownloadOverlayComponent,
         RunMappingOntologyOverlayComponent,
-        ViewMappingModalComponent
+        ViewMappingModalComponent,
+        IncompatibleWarningModalComponent
     ]
 })
 export class MapperModule {}

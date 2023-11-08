@@ -53,6 +53,7 @@ import { RunMappingDownloadOverlayComponent } from '../runMappingDownloadOverlay
 import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay/runMappingOntologyOverlay.component';
 import { DCTERMS } from '../../../prefixes';
 import { EditMappingTabComponent } from './editMappingTab.component';
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 
 describe('Edit Mapping Tab component', function() {
     let component: EditMappingTabComponent;
@@ -61,11 +62,11 @@ describe('Edit Mapping Tab component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-
+    let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
+    let classMapping: JSONLDObject = undefined;
+    const badMapping = { '@id': 'bad', [`${DCTERMS}title`]: [{ '@value': 'Bad Mapping' }] };
     const error = 'Error Message';
-    const classMapping: JSONLDObject = {
-        '@id': 'classMappingId'
-    };
     let mappingStub: jasmine.SpyObj<Mapping>;
 
     beforeEach(async () => {
@@ -92,6 +93,7 @@ describe('Edit Mapping Tab component', function() {
             ],
             providers: [
                 MockProvider(MapperStateService),
+                MockProvider(MappingManagerService),
                 MockProvider(DelimitedManagerService),
                 MockProvider(ToastService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
@@ -100,9 +102,14 @@ describe('Edit Mapping Tab component', function() {
             ]
         }).compileComponents();
 
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>; // Done first to avoid reading properties of undefined
         mappingStub = jasmine.createSpyObj('Mapping', [
-            'getAllClassMappings'
+            'getAllClassMappings',
+            'getJsonld',
+            'findClassWithDataMapping',
+            'findClassWithObjectMapping'
         ]);
         mappingStub.getAllClassMappings.and.returnValue([]);
         mapperStateStub.selected = {
@@ -122,6 +129,13 @@ describe('Edit Mapping Tab component', function() {
         element = fixture.debugElement;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
+        mappingManagerStub = TestBed.inject(MappingManagerService) as jasmine.SpyObj<MappingManagerService>;
+
+        mapperStateStub.findIncompatibleMappings.and.returnValue(of([]));
+        mapperStateStub.setIriMap.and.returnValue(of(null));
+        mappingStub.getJsonld.and.returnValue([]);
+
+        classMapping = {'@id': 'classMappingId'};
     });
 
     afterEach(function() {
@@ -399,5 +413,45 @@ describe('Edit Mapping Tab component', function() {
             button.triggerEventHandler('click', null);
             expect(component.openRunMappingOntology).toHaveBeenCalledWith();
         });
+    });
+    describe('removing incompatible mappings', function() {
+        beforeEach(function() {
+            this.classMapping = [badMapping]
+            mapperStateStub.findIncompatibleMappings.and.returnValue(of([badMapping]));
+            mappingStub.getJsonld.and.returnValue([badMapping]);
+        });
+        describe('if they are property mappings', function() {
+            beforeEach(function() {
+                mappingManagerStub.isPropertyMapping.and.returnValue(true);
+                mappingStub.findClassWithDataMapping.and.returnValue(this.classMapping);
+                mappingStub.findClassWithObjectMapping.and.returnValue(this.classMapping);
+            });
+            it('for data properties', fakeAsync(function() {
+                mappingManagerStub.isDataMapping.and.returnValue(true);
+                component.checkIncompatibleMappings();
+                tick();
+                expect(mappingStub.findClassWithDataMapping).toHaveBeenCalledWith(badMapping['@id']);
+                expect(mappingStub.findClassWithObjectMapping).not.toHaveBeenCalled();
+                expect(mapperStateStub.deleteProp).toHaveBeenCalledWith(badMapping['@id'], this.classMapping['@id']);
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('Bad Mapping'), { timeOut: jasmine.any(Number) });
+            }));
+            it('for object properties', fakeAsync(function() {
+                mappingManagerStub.isDataMapping.and.returnValue(false);
+                component.checkIncompatibleMappings();
+                tick();
+                expect(mappingStub.findClassWithDataMapping).not.toHaveBeenCalled();
+                expect(mappingStub.findClassWithObjectMapping).toHaveBeenCalledWith(badMapping['@id']);
+                expect(mapperStateStub.deleteProp).toHaveBeenCalledWith(badMapping['@id'], this.classMapping['@id']);
+                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('Bad Mapping'), { timeOut: jasmine.any(Number) });
+            }));
+        });
+        it('if they are class mappings', fakeAsync(function() {
+            mappingManagerStub.isPropertyMapping.and.returnValue(false);
+            mappingManagerStub.isClassMapping.and.returnValue(true);
+            component.checkIncompatibleMappings();
+            tick();
+            expect(mapperStateStub.deleteClass).toHaveBeenCalledWith(badMapping['@id']);
+            expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('Bad Mapping'), { timeOut: jasmine.any(Number) });
+        }));
     });
 });

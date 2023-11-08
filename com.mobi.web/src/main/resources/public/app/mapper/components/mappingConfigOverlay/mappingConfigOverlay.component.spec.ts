@@ -111,7 +111,7 @@ describe('Mapping Config Overlay component', function() {
     let mappingStub: jasmine.SpyObj<Mapping>;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [
                 NoopAnimationsModule,
                 FormsModule,
@@ -136,7 +136,7 @@ describe('Mapping Config Overlay component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
                 MockProvider(ToastService),
-                { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
+                { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) }
             ]
         });
     });
