@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { find } from 'lodash';
 
 import { CATALOG, POLICY } from '../../../prefixes';
@@ -31,6 +31,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { getDate, getDctermsValue, getPropertyId, updateDctermsValue } from '../../../shared/utility';
+import { Subject } from 'rxjs';
 
 /**
  * @class catalog.RecordViewComponent
@@ -49,7 +50,7 @@ import { getDate, getDctermsValue, getPropertyId, updateDctermsValue } from '../
     templateUrl: './recordView.component.html',
     styleUrls: ['./recordView.component.scss']
 })
-export class RecordViewComponent implements OnInit {
+export class RecordViewComponent implements OnInit, OnDestroy {
     record: JSONLDObject = undefined;
     completeRecord: JSONLDObject[] = undefined;
     title = '';
@@ -57,6 +58,8 @@ export class RecordViewComponent implements OnInit {
     modified = '';
     issued = '';
     canEdit = false;
+
+    private _destroySub$ = new Subject<void>();
 
     constructor(public state: CatalogStateService, public cm: CatalogManagerService, public os: OntologyStateService, 
         public pep: PolicyEnforcementService, private toast: ToastService) {}
@@ -70,6 +73,9 @@ export class RecordViewComponent implements OnInit {
                 this.toast.createErrorToast(errorMessage);
                 this.state.selectedRecord = undefined;
             });
+    }
+    ngOnDestroy(): void {
+        this._destroySub$.next();
     }
     goBack(): void {
         this.state.selectedRecord = undefined;
