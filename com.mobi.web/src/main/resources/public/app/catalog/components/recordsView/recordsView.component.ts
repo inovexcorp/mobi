@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { get } from 'lodash';
 
@@ -31,6 +31,8 @@ import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 /**
  * @class catalog.RecordsViewComponent
@@ -46,10 +48,12 @@ import { ToastService } from '../../../shared/services/toast.service';
     templateUrl: './recordsView.component.html',
     styleUrls: ['./recordsView.component.scss']
 })
-export class RecordsViewComponent implements OnInit {
+export class RecordsViewComponent implements OnInit, OnDestroy {
     records = [];
     catalogId = '';
 
+    private _destroySub$ = new Subject<void>();
+    
     constructor(public state: CatalogStateService, public cm: CatalogManagerService, public toast: ToastService) {}
 
     ngOnInit(): void {
@@ -57,6 +61,9 @@ export class RecordsViewComponent implements OnInit {
         this.state.currentRecordPage = 0;
         this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
           this.state.creatorFilterList, this.state.recordSortOption);
+    }
+    ngOnDestroy(): void {
+        this._destroySub$.next();
     }
     openRecord(record: JSONLDObject): void {
         this.state.selectedRecord = record;
@@ -95,8 +102,9 @@ export class RecordsViewComponent implements OnInit {
             creators: creatorFilterList,
         };
 
-        this.cm.getRecords(this.catalogId, paginatedConfig)
-            .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+        this.cm.getRecords(this.catalogId, paginatedConfig).pipe(
+            takeUntil(this._destroySub$),
+        ).subscribe((response: HttpResponse<JSONLDObject[]>) => {
                 this.state.recordFilterType = recordType;
                 this.state.keywordFilterList = keywordFilterList;
                 this.state.creatorFilterList = creatorFilterList;
