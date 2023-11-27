@@ -391,7 +391,34 @@ module.exports = {
             .waitForElementNotPresent('div.toast-success');
     },
 
-    'Step 32: Filter the merge request list by creator': function(browser) {
+    'Step 32: Ensure the request status filter works': function(browser) {
+        // Confirm the status filter is present
+        var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
+        var statusFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Request Status');
+        browser.assert.elementPresent({ selector: statusFilterXPathSelector, locateStrategy: 'xpath' });
+
+        // Verify the correct amount of options is available
+        var radioButtonSelector = '//div[contains(@class, "filter-option")]//mat-radio-group//mat-radio-button';
+        var statusFilterElementSelector = statusFilterXPathSelector +  radioButtonSelector;
+        browser.assert.elementsCount({ selector: statusFilterElementSelector, locateStrategy: 'xpath' }, 3)
+
+        // Select the closed status filter
+        var closedRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Closed")]]';
+        var openRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Open")]]';
+        var closedStatusFilterXPathSelector = statusFilterElementSelector + closedRadioLabelSelector;
+        browser.assert.elementPresent({ selector: closedStatusFilterXPathSelector, locateStrategy: 'xpath' });
+        browser.click('xpath', closedStatusFilterXPathSelector, clickFunc);
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
+
+        // Unselect the admin creator filter
+        browser.click('xpath', statusFilterElementSelector + openRadioLabelSelector, clickFunc);
+        browser.globals.wait_for_no_spinners(browser);
+    },
+
+    'Step 33: Filter the merge request list by creator': function(browser) {
         // Confirm the Creator filter is present
         var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
         var creatorFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Creators');
@@ -419,7 +446,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 33: Filter the merge request list by assignee': function(browser) {
+    'Step 34: Filter the merge request list by assignee': function(browser) {
       // Confirm the Creator filter is present
       var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
       var assigneeFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Assignees');
@@ -447,7 +474,7 @@ module.exports = {
       browser.globals.wait_for_no_spinners(browser);
   },
 
-    'Step 34: Search the merge request list': function(browser) {
+    'Step 35: Search the merge request list': function(browser) {
         // Test no requests are shown
         mergeRequestPage.searchList(browser, 'NONE');
         browser.waitForElementVisible('div.merge-request-list info-message');
@@ -458,7 +485,7 @@ module.exports = {
         browser.assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
     },
 
-    'Step 35: Accept the merge request': function(browser) {
+    'Step 36: Accept the merge request': function(browser) {
         mergeRequestPage.selectRequest(browser, 'newBranchTitle3Removal');
         mergeRequestPage.acceptRequest(browser);
     }

@@ -29,7 +29,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
   cleanStylesFromDOM
-} from '../../../../../public/test/ts/Shared';
+} from '../../../../test/ts/Shared';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -86,7 +86,7 @@ describe('MergeRequestFilterComponent', () => {
     element = fixture.debugElement;
     component.updateFilters = updateFiltersSubject.asObservable();
     mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
-    mergeRequestsStateStub.acceptedFilter = false;
+    mergeRequestsStateStub.acceptedFilter = 'open';
     mergeRequestsStateStub.creators = [adminCount.user];
     mergeRequestsStateStub.assignees = [adminCount.user];
     mergeRequestsStateStub.records = [animalCount.record];
@@ -127,7 +127,8 @@ describe('MergeRequestFilterComponent', () => {
       expect(mergeRequestFilter).toBeTruthy();
       const expectedFilterItems = [
         { checked: true, value: 'Open' },
-        { checked: false, value: 'Accepted' }
+        { checked: false, value: 'Accepted' },
+        { checked: false, value: 'Closed'}
       ];
       expect(mergeRequestFilter.title).toEqual('Request Status');
       expect(mergeRequestFilter.filterItems).toEqual(expectedFilterItems);
@@ -209,7 +210,7 @@ describe('MergeRequestFilterComponent', () => {
         statusFilter.filter(openStatus);
         expect(acceptedStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: acceptedStatus.checked,
+          requestStatus: 'open',
           creators: mergeRequestsStateStub.creators,
           assignees: mergeRequestsStateStub.assignees,
           records: mergeRequestsStateStub.records
@@ -226,7 +227,7 @@ describe('MergeRequestFilterComponent', () => {
         statusFilter.filter(acceptedStatus);
         expect(openStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: acceptedStatus.checked,
+          requestStatus: 'accepted',
           creators: mergeRequestsStateStub.creators,
           assignees: mergeRequestsStateStub.assignees,
           records: mergeRequestsStateStub.records

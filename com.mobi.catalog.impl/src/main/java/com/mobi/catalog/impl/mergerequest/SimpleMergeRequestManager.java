@@ -432,7 +432,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
 
-        builder.setAccepted(true);
+        builder.setRequestStatus("accepted");
         mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
     }
@@ -503,10 +503,15 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         LOG.trace("Fetching list of Merge Requests");
         // Create filters used for query from params
         StringBuilder filters = new StringBuilder("FILTER ");
-        if (!params.getAccepted()) {
-            filters.append("NOT ");
+        if (params.getRequestStatus().equals("open")) {
+            filters.append("NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . }\n ")
+                    .append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
+        } else if (params.getRequestStatus().equals("closed")) {
+            filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
+        } else if (params.getRequestStatus().equals("accepted")) {
+            filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
         }
-        filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
+
         Resource sortBy = params.getSortBy().orElseGet(() -> vf.createIRI(_Thing.issued_IRI));
         filters.append("?").append(REQUEST_ID_BINDING).append(" <").append(sortBy).append("> ?")
                 .append(SORT_PRED_BINDING).append(". ");

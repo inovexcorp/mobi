@@ -47,7 +47,7 @@ public class MergeRequestFilterParams {
     private final Resource sortBy;
     private final Optional<Boolean> removeSource;
     private final boolean ascending;
-    private final boolean accepted;
+    private final String requestStatus;
     private final String searchText;
     private final List<Resource> creators;
     private final List<Resource> assignees;
@@ -63,7 +63,7 @@ public class MergeRequestFilterParams {
         this.removeSource = builder.removeSource;
         this.sortBy = builder.sortBy;
         this.ascending = builder.ascending;
-        this.accepted = builder.accepted;
+        this.requestStatus = builder.requestStatus;
         this.searchText = builder.searchText;
         this.creators = builder.creators;
         this.assignees = builder.assignees;
@@ -106,8 +106,8 @@ public class MergeRequestFilterParams {
         return ascending;
     }
 
-    public boolean getAccepted() {
-        return accepted;
+    public String getRequestStatus() {
+        return requestStatus;
     }
 
     public Optional<String> getSearchText() {
@@ -136,7 +136,7 @@ public class MergeRequestFilterParams {
         private Resource sortBy = null;
         private Optional<Boolean> removeSource = Optional.empty();
         private boolean ascending = false;
-        private boolean accepted = false;
+        private String requestStatus = "open";
         private String searchText = null;
         private List<Resource> creators = null;
         private List<Resource> assignees = null;
@@ -250,13 +250,13 @@ public class MergeRequestFilterParams {
         }
 
         /**
-         * Set whether to query only AcceptedMergeRequests. Default is false (MergeRequests only).
+         * Set whether to query for Accepted, Closed, or Open MergeRequests. Default is open (MergeRequests only).
          *
-         * @param accepted Boolean to only retrieve AcceptedMergeRequests
+         * @param requestStatus String representing the current status of the merge request
          * @return MergeRequestFilterParams.Builder
          */
-        public Builder setAccepted(boolean accepted) {
-            this.accepted = accepted;
+        public Builder setRequestStatus(String requestStatus) {
+            this.requestStatus = requestStatus;
             return this;
         }
 

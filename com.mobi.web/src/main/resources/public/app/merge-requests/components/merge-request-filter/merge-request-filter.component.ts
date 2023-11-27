@@ -55,8 +55,9 @@ export class MergeRequestFilterComponent implements OnInit {
   updateFiltersSubscription: Subscription;
   filters: ListFilter[];
   requestStatusOptions = [
-    { value: false, label: 'Open' },
-    { value: true, label: 'Accepted' }
+    { value: 'open', label: 'Open' },
+    { value: 'accepted', label: 'Accepted' },
+    { value: 'closed', label: 'Closed'}
   ];
   @Input() updateFilters: Observable<void>;
   @Output() changeFilter = new EventEmitter<MergeRequestFilterEvent>();

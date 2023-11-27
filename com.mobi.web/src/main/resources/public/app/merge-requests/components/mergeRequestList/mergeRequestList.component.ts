@@ -79,7 +79,7 @@ export class MergeRequestListComponent implements OnInit {
             pageIndex: this.state.currentRequestPage,
             limit: this.state.requestLimit,
             sortOption: this.state.requestSortOption,
-            accepted: this.state.acceptedFilter,
+            requestStatus: this.state.acceptedFilter,
             creators: this.state.creators,
             assignees: this.state.assignees,
             records: this.state.records,

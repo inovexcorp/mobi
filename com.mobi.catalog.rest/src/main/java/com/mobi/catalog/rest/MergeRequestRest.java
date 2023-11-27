@@ -151,7 +151,7 @@ public class MergeRequestRest {
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
      * @param asc Whether the results should be sorted ascending or descending. Default is false.
-     * @param accepted Whether the results should only be accepted or open requests.
+     * @param requestStatus Whether the results should only be accepted, closed, or open requests.
      * @param searchText An optional search text for the list.
      * @param creators An optional creator user IRI list to filter the list by.
      * @param records An optional record IRI list to filter the list by.
@@ -179,8 +179,8 @@ public class MergeRequestRest {
             @QueryParam("sort") String sort,
             @Parameter(description = "Whether the results should be sorted ascending or descending")
             @DefaultValue("false") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "Whether the results should only be accepted or open requests")
-            @DefaultValue("false") @QueryParam("accepted") boolean accepted,
+            @Parameter(description = "Whether the results should only be accepted, closed, or open requests")
+            @DefaultValue("open") @QueryParam("requestStatus") String requestStatus,
             @Parameter(description = "Optional offset for the results")
             @QueryParam("offset") int offset,
             @Parameter(description = "Optional limit for the results")
@@ -210,7 +210,7 @@ public class MergeRequestRest {
         if (records != null && records.size() > 0) {
             builder.setOnRecords(records.stream().map(vf::createIRI).collect(Collectors.toList()));
         }
-        builder.setAscending(asc).setAccepted(accepted);
+        builder.setAscending(asc).setRequestStatus(requestStatus);
         try {
             List<MergeRequest> requests = manager.getMergeRequests(builder.build());
             Stream<MergeRequest> stream = requests.stream();
