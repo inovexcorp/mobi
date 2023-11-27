@@ -163,8 +163,8 @@ describe('Merge Request List component', function() {
         it('should handle changing a filter', function() {
             spyOn(component, 'loadRequests');
             mergeRequestsStateStub.currentRequestPage = 1;
-            component.changeFilter({ requestStatus: true, creators: ['A', 'B'], assignees: ['Y', 'Z'], records: ['C', 'D'] });
-            expect(mergeRequestsStateStub.acceptedFilter).toBeTrue();
+            component.changeFilter({ requestStatus: 'accepted', creators: ['A', 'B'], assignees: ['Y', 'Z'], records: ['C', 'D'] });
+            expect(mergeRequestsStateStub.acceptedFilter).toBe('accepted');
             expect(mergeRequestsStateStub.creators).toEqual(['A', 'B']);
             expect(mergeRequestsStateStub.assignees).toEqual(['Y', 'Z']);
             expect(mergeRequestsStateStub.records).toEqual(['C', 'D']);
@@ -194,7 +194,7 @@ describe('Merge Request List component', function() {
                 pageIndex: mergeRequestsStateStub.currentRequestPage,
                 limit: mergeRequestsStateStub.requestLimit,
                 sortOption: mergeRequestsStateStub.requestSortOption,
-                accepted: mergeRequestsStateStub.acceptedFilter,
+                requestStatus: mergeRequestsStateStub.acceptedFilter,
                 searchText: mergeRequestsStateStub.requestSearchText,
                 creators: mergeRequestsStateStub.creators,
                 assignees: mergeRequestsStateStub.assignees,

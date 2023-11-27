@@ -51,8 +51,8 @@ describe('Merge Requests State service', function() {
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let toastStub: jasmine.SpyObj<ToastService>;
-    const acceptedRequest = { accepted: true };
-    const openRequest = { accepted: false };
+    const acceptedRequest = { requestStatus: 'accepted' };
+    const openRequest = { requestStatus: 'open' };
 
     const error = 'Error Message';
     const catalogId = 'catalogId';
@@ -173,7 +173,7 @@ describe('Merge Requests State service', function() {
         expect(service.selectedRecord).toBeUndefined();
         expect(service.clearDifference).toHaveBeenCalledWith();
         expect(service.sameBranch).toBeFalse();
-        expect(service.acceptedFilter).toBeFalse();
+        expect(service.acceptedFilter).toBe('open');
         expect(service.totalRequestSize).toEqual(0);
         expect(service.currentRequestPage).toEqual(0);
         expect(service.requestSortOption).toBeUndefined();
@@ -213,7 +213,7 @@ describe('Merge Requests State service', function() {
                         catalogManagerStub.getRecord.and.returnValue(of([record]));
                         service.setRequests(acceptedRequest);
                         tick();
-                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
+                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'accepted'});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
@@ -227,7 +227,7 @@ describe('Merge Requests State service', function() {
                         catalogManagerStub.getRecord.and.returnValue(throwError(error));
                         service.setRequests(acceptedRequest);
                         tick();
-                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
+                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'accepted'});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
@@ -241,7 +241,7 @@ describe('Merge Requests State service', function() {
                 mergeRequestManagerStub.getRequests.and.returnValue(throwError(error));
                 service.setRequests(acceptedRequest);
                 tick();
-                expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: true});
+                expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'accepted'});
                 expect(service.getRequestObj).not.toHaveBeenCalled();
                 expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
@@ -258,7 +258,7 @@ describe('Merge Requests State service', function() {
                         catalogManagerStub.getRecord.and.returnValue(of([record]));
                         service.setRequests(openRequest);
                         tick();
-                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
+                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'open'});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
@@ -272,7 +272,7 @@ describe('Merge Requests State service', function() {
                         catalogManagerStub.getRecord.and.returnValue(throwError(error));
                         service.setRequests(openRequest);
                         tick();
-                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
+                        expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'open'});
                         expect(service.getRequestObj).toHaveBeenCalledWith(request);
                         expect(service.totalRequestSize).toEqual(totalSize);
                         expect(catalogManagerStub.getRecord.calls.count()).toEqual(1);
@@ -286,7 +286,7 @@ describe('Merge Requests State service', function() {
                 mergeRequestManagerStub.getRequests.and.returnValue(throwError(error));
                 service.setRequests(openRequest);
                 tick();
-                expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({accepted: false});
+                expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'open'});
                 expect(service.getRequestObj).not.toHaveBeenCalled();
                 expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);

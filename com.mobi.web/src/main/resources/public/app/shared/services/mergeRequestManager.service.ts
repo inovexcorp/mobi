@@ -97,7 +97,7 @@ export class MergeRequestManagerService {
         if (config.searchText) {
             params = params.set('searchText', config.searchText);
         }
-        params = params.set('accepted', config.accepted);
+        params = params.set('requestStatus', config.requestStatus);
         if (config.creators && config.creators.length) {
             config.creators.forEach(creator => {
                 params = params.append('creators', creator);

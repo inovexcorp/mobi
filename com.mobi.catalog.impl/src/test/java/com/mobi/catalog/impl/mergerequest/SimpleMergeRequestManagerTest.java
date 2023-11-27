@@ -607,7 +607,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void getAcceptedMergeRequestsTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-            builder.setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI)).setAccepted(true);
+            builder.setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI)).setRequestStatus("accepted");
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(2, result.size());
             Iterator<MergeRequest> it = result.iterator();
@@ -621,7 +621,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void getAcceptedMergeRequestsSourceCommit() {
         try (RepositoryConnection conn = repo.getConnection()) {
             MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
-            builder.setAccepted(true).setSourceCommit(sourceCommit1.getResource());
+            builder.setRequestStatus("accepted").setSourceCommit(sourceCommit1.getResource());
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request4.getResource(), result.get(0).getResource());
@@ -639,7 +639,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void getAcceptedMergeRequestsTargetCommit() {
         try (RepositoryConnection conn = repo.getConnection()) {
             MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
-            builder.setAccepted(true).setTargetCommit(targetCommit1.getResource());
+            builder.setRequestStatus("accepted").setTargetCommit(targetCommit1.getResource());
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
             assertEquals(request4.getResource(), result.get(0).getResource());

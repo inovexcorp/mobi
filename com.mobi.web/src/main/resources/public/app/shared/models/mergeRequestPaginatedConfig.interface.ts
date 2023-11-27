@@ -26,7 +26,7 @@ import { PaginatedConfig } from './paginatedConfig.interface';
  * Paginated configuration specifically for merge requests
  */
 export interface MergeRequestPaginatedConfig extends PaginatedConfig {
-    accepted: boolean,
+    requestStatus: string,
     creators?: string[]
     assignees?: string[]
     records?: string[]

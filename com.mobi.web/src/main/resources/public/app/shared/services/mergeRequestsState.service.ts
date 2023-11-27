@@ -105,7 +105,7 @@ export class MergeRequestsStateService {
      * {@link merge-requests.MergeRequestListComponent}.
      * @type {boolean}
      */
-    acceptedFilter = false;
+    acceptedFilter = 'open';
     /**
      * String to search the creators filter in {@link merge-requests.MergeRequestFilterComponent}.
      * @type {string}
@@ -242,7 +242,7 @@ export class MergeRequestsStateService {
         this.selectedRecord = undefined;
         this.clearDifference();
         this.sameBranch = false;
-        this.acceptedFilter = false;
+        this.acceptedFilter = 'open';
         this.totalRequestSize = 0;
         this.currentRequestPage = 0;
         this.requestSortOption = undefined;

@@ -88,21 +88,21 @@ describe('Merge Request Manager service', function() {
 
     describe('should get a list of merge requests', function() {
         it('unless an error occurs', function() {
-            service.getRequests({ accepted: true })
+            service.getRequests({ requestStatus: 'accepted' })
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-            expect(request.request.params.get('accepted').toString()).toEqual('true');
+            expect(request.request.params.get('requestStatus')).toEqual('accepted');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('without parameters', function() {
-            service.getRequests({ accepted: true })
+            service.getRequests({ requestStatus: 'accepted' })
                 .subscribe(response => {
                     expect(response.body).toEqual([]);
                 }, () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-            expect(request.request.params.get('accepted').toString()).toEqual('true');
+            expect(request.request.params.get('requestStatus')).toEqual('accepted');
             expect(request.request.params.get('sort')).toBeNull();
             expect(request.request.params.get('ascending')).toBeNull();
             expect(request.request.params.get('searchText')).toBeNull();
@@ -113,7 +113,7 @@ describe('Merge Request Manager service', function() {
         });
         it('with parameters', function() {
             const config: MergeRequestPaginatedConfig = {
-                accepted: true,
+                requestStatus: 'accepted',
                 sortOption: {
                     label: '',
                     field: 'sort',
@@ -129,7 +129,7 @@ describe('Merge Request Manager service', function() {
                     expect(response.body).toEqual([]);
                 }, () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-            expect(request.request.params.get('accepted').toString()).toEqual('' + config.accepted);
+            expect(request.request.params.get('requestStatus')).toEqual(config.requestStatus);
             expect(request.request.params.get('sort').toString()).toEqual(config.sortOption.field);
             expect(request.request.params.get('ascending').toString()).toEqual('' + config.sortOption.asc);
             expect(request.request.params.get('searchText').toString()).toEqual(config.searchText);

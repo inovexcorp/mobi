@@ -24,7 +24,7 @@
  * Object representing a change in the filters for the {@link merge-requests.MergeRequestListComponent}.
  */
 export interface MergeRequestFilterEvent {
-    requestStatus?: boolean,
+    requestStatus?: string,
     creators?: string[],
     assignees?: string[],
     records?: string[]
