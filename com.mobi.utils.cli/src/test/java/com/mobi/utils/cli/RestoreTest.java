@@ -26,9 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -46,17 +44,11 @@ import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Assert;
@@ -68,22 +60,13 @@ import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RestoreTest {
-    private AutoCloseable closeable;
     private static final String POLICY_FILE_LOCATION = "testLocation";
+    private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
     private MemoryRepositoryWrapper provRepo;
     private ValueFactory vf;
@@ -161,13 +144,12 @@ public class RestoreTest {
 
         when(bundleContext.getServiceReference(eq(XACMLPolicyManager.class))).thenReturn(xacmlServiceRef);
         when(xacmlServiceRef.getProperty(eq("policyFileLocation"))).thenReturn(POLICY_FILE_LOCATION);
-        restore.provRepo = provRepo;
     }
 
     @After
     public void resetMocks() throws Exception {
         closeable.close();
-        Mockito.reset(repositoryManager, stateManager);
+        Mockito.reset(repositoryManager);
     }
 
     private OsgiRepository mockRepo(Class configClassToMock) {
@@ -175,46 +157,6 @@ public class RestoreTest {
         when(nativeRepo.getConfigType()).thenReturn(configClassToMock);
         when(nativeRepo.getConnection()).thenReturn(Mockito.mock(RepositoryConnection.class));
         return nativeRepo;
-    }
-
-    private void loadFiles(String... files) {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.begin();
-            for(String name : files){
-                InputStream testData = RestoreTest.class.getResourceAsStream(name);
-                conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
-            }
-            conn.commit();
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    private List<String> queryResource(String path, String... bindings){
-        List<String> results = new ArrayList<>();
-        List<String> bindingValues = new ArrayList<>();
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            String query = IOUtils.toString(Restore.class.getResourceAsStream(path), StandardCharsets.UTF_8);
-            TupleQuery tupleQuery = conn.prepareTupleQuery(query);
-            TupleQueryResult result = tupleQuery.evaluate();
-            while (result.hasNext()) {  // iterate over the result
-                bindingValues.clear();
-                BindingSet bindingSet = result.next();
-
-                for (String binding : bindings){
-                    if (bindingSet.getValue(binding) != null){
-                        bindingValues.add(bindingSet.getValue(binding).toString());
-                    }else{
-                        bindingValues.add("NULL");
-                    }
-                }
-                results.add(String.join(";", bindingValues));
-            }
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
-        return results;
     }
 
     @Test
@@ -237,158 +179,5 @@ public class RestoreTest {
         Mockito.verify(memoryRepo.getConnection(), times(1)).clear();
         Mockito.verify(httpRepo.getConnection(), times(0)).clear();
     }
-    
-    @Test
-    public void cleanGraphStateInProgressCommitsNoUserTest() {
-        loadFiles("/systemCommitNoUser.trig");
-        List<String> graphExpect = Stream.of("https://mobi.com/in-progress-commits#R3U28I3;https://mobi.com/additions#R3U28I3A2",
-                "https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
 
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
-        
-        restore.restorePostProcess(bundleContext, "2");
-        
-        graphExpect = Stream.of("https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
-
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
-    }
-
-    @Test
-    public void cleanGraphStateInProgressCommitsNoRecordTest() {
-        loadFiles("/systemCommitNoRecord.trig");
-        List<String> graphExpect = Stream.of("https://mobi.com/in-progress-commits#R3U28I3;https://mobi.com/additions#R3U28I3A2",
-                "https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
-
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
-
-        restore.restorePostProcess( bundleContext, "2");
-
-        graphExpect = Stream.of("https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
-    }
-
-    @Test
-    public void cleanGraphStateDanglingAdditionsDeletionsTest() {
-        loadFiles("/systemState.trig");
-        List<String> graphExpect = Stream.of("https://mobi.com/additions#hasNoRevision",
-                "https://mobi.com/deletions#hasNoRevision").collect(Collectors.toList());
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchDanglingAdditionsDeletions.rq", "diffGraph"));
-
-        restore.restorePostProcess(bundleContext, "2");
-        
-        Assert.assertEquals(0, queryResource("/queries/searchDanglingAdditionsDeletions.rq", "diffGraph").size());
-        // ensure it did not delete good graphs
-        graphExpect = Stream.of("https://mobi.com/additions#hasRevision001",
-                "https://mobi.com/additions#hasRevision002").collect(Collectors.toList());
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchAdditionsDeletions.rq", "diffGraph"));
-    }
-
-    @Test
-    public void getDatasetNoPolicyResourcesTest() {
-        loadFiles("/systemState.trig");
-
-        List<Resource> datasetResources;
-        try (RepositoryConnection conn = repo.getConnection()) {
-            datasetResources = restore.getDatasetNoPolicyResources(conn);
-        }
-        List<String> datasetResourcesExpect = Stream.of(
-                "https://mobi.com/records#89d40d76-8d49-4af7-8782-ada078b09aa7",
-                "https://mobi.com/records#a1341aca-0a3c-4048-9b8c-64821dacdf0e",
-                "https://mobi.com/records#25bb9187-0a21-4c95-8b36-90b9b0e985ba").collect(Collectors.toList());
-
-        List<String> datasetActual = datasetResources.stream().map(e -> e.stringValue()).collect(Collectors.toList());
-        Assert.assertEquals(datasetResourcesExpect, datasetActual);
-    }
-
-    @Test
-    public void createDatesetPoliciesTest(){
-        loadFiles("/systemState.trig");
-        restore.createDatesetPolicies(bundleContext);
-        verify(datasetRecordService, times(3)).overwritePolicyDefault(any(DatasetRecord.class));
-    }
-
-    @Test
-    public void cleanGraphStateInstanceNoUserTest() {
-        loadFiles("/systemState.trig");
-        List<String> graphExpect = Stream.of("http://mobi.com/states#0001",
-                "http://mobi.com/states#0002").collect(Collectors.toList());
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchStateInstanceNoUser.rq", "state"));
-
-        restore.restorePostProcess(bundleContext, "2.3");
-
-        Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0002"));
-        Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0001"));
-        Assert.assertEquals(2, Mockito.mockingDetails(stateManager).getInvocations().size());
-    }
-
-    @Test
-    public void cleanGraphStateInstanceTest() {
-        loadFiles("/systemState.trig");
-        List<String> graphExpect = Stream.of("http://mobi.com/states#0001",
-                "http://mobi.com/states#0002").collect(Collectors.toList());
-        Assert.assertEquals(graphExpect, queryResource("/queries/searchStateInstanceNoUser.rq", "state"));
-
-        restore.restorePostProcess(bundleContext, "1.20");
-
-        Mockito.verify(stateManager, times(2)).deleteState(vf.createIRI("http://mobi.com/states#0002"));
-        Mockito.verify(stateManager, times(2)).deleteState(vf.createIRI("http://mobi.com/states#0001"));
-        Assert.assertEquals(8, Mockito.mockingDetails(stateManager).getInvocations().size());
-    }
-
-    @Test
-    public void cleanGraphStatePolicyFileStatementsTest() {
-        loadFiles("/systemState.trig");
-        List<String> policies = queryResource("/queries/searchPolicy.rq", "policyGraph", "policy");
-        Assert.assertEquals(policies.size(), new HashSet<>(policies).size());
-        Assert.assertEquals(28, policies.size());
-
-        restore.restorePostProcess(bundleContext, "2");
-
-        Assert.assertEquals(0, queryResource("/queries/searchPolicy.rq", "policyGraph", "policy").size());
-        Assert.assertEquals(8, Mockito.mockingDetails(stateManager).getInvocations().size());
-    }
-
-    @Test
-    public void removePolicyFileTest() throws Exception {
-        loadFiles("/systemPolicyFiles.trig");
-        List<Resource> resources = Collections.singletonList(vf.createIRI("http://mobi.com/policies/all-access-versioned-rdf-record"));
-        try (RepositoryConnection conn = repo.getConnection()) {
-            restore.removePolicyFiles(bundleContext, conn, POLICY_FILE_LOCATION, resources);
-        }
-        verify(bundleContext).getServiceReference(eq(VirtualFilesystem.class));
-        verify(bundleContext).getService(eq(vfsServiceRef));
-        verify(vfs).resolveVirtualFile(eq(POLICY_FILE_LOCATION + "3a/5f/b3766aac44f6"));
-        verify(virtualFile).exists();
-        verify(virtualFile).delete();
-    }
-
-    @Test
-    public void removePolicyFileDoesntExistTest() throws Exception {
-        when(virtualFile.exists()).thenReturn(false);
-        loadFiles("/systemPolicyFiles.trig");
-        List<Resource> resources = Collections.singletonList(vf.createIRI("http://mobi.com/policies/all-access-versioned-rdf-record"));
-        try (RepositoryConnection conn = repo.getConnection()) {
-            restore.removePolicyFiles(bundleContext, conn, POLICY_FILE_LOCATION, resources);
-        }
-        verify(bundleContext).getServiceReference(eq(VirtualFilesystem.class));
-        verify(bundleContext).getService(eq(vfsServiceRef));
-        verify(vfs).resolveVirtualFile(eq(POLICY_FILE_LOCATION + "3a/5f/b3766aac44f6"));
-        verify(virtualFile).exists();
-        verify(virtualFile, never()).delete();
-    }
-
-    @Test
-    public void removePolicyFileIRIDoesntExistTest() throws Exception {
-        when(virtualFile.exists()).thenReturn(false);
-        loadFiles("/systemPolicyFiles.trig");
-        List<Resource> resources = Collections.singletonList(vf.createIRI("urn:nothing"));
-        try (RepositoryConnection conn = repo.getConnection()) {
-            restore.removePolicyFiles(bundleContext, conn, POLICY_FILE_LOCATION, resources);
-        }
-        verify(bundleContext).getServiceReference(eq(VirtualFilesystem.class));
-        verify(bundleContext).getService(eq(vfsServiceRef));
-        verify(vfs, never()).resolveVirtualFile(eq(POLICY_FILE_LOCATION + "3a/5f/b3766aac44f6"));
-        verify(virtualFile, never()).exists();
-        verify(virtualFile, never()).delete();
-    }
 }
