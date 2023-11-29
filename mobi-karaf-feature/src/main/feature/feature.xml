@@ -97,6 +97,7 @@
         <bundle>mvn:org.apache.httpcomponents/httpcore-osgi/${httpcore.version}</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.json-lib/2.4_1</bundle>
         <bundle>mvn:com.fasterxml.jackson.module/jackson-module-jaxb-annotations/${jackson.version}</bundle>
+        <bundle>wrap:mvn:org.apache.maven/maven-artifact/${maven-artifact.version}</bundle>
 
         <bundle>mvn:com.nimbusds/nimbus-jose-jwt/${jose-jwt.version}</bundle>
         <bundle>mvn:net.minidev/json-smart/2.4.8</bundle>
