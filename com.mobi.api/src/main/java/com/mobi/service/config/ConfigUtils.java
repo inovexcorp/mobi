@@ -34,8 +34,10 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.lang.reflect.Method;
 
 public class ConfigUtils {
 
@@ -62,13 +64,15 @@ public class ConfigUtils {
      * @param configurationAdmin The configuration admin of the calling service
      * @param serviceName The name of the calling service
      */
-    public static void updateServiceConfig(final Map<String, Object> newConfigurationData, ConfigurationAdmin configurationAdmin, String serviceName) {
+    public static void updateServiceConfig(final Map<String, Object> newConfigurationData,
+            ConfigurationAdmin configurationAdmin, String serviceName) {
         try {
             final Configuration config = configurationAdmin.getConfiguration(serviceName);
             updateServiceConfig(newConfigurationData, config);
         } catch (IOException e) {
             LOGGER.error("Could not get configuration for service: " + serviceName, e);
-            // Continue along, since we'll just re-generate the service configuration next time the server starts.
+            // Continue along, since we'll just re-generate the service configuration next
+            // time the server starts.
         }
     }
 
@@ -83,5 +87,26 @@ public class ConfigUtils {
         List<String> keys = Collections.list(propertiesDict.keys());
         return keys.stream()
                 .collect(Collectors.toMap(Function.identity(), propertiesDict::get));
+    }
+
+    /**
+     * Method to return a map of config methods and their corresponding properties
+     * 
+     * @param configClass The class that holds methods you'd like to map
+     * @return A map of methods with their respective properties
+     */
+    public static Map<String, ConfigMethodInfo> mapMethodsToInfo(Class<?> configClass) {
+        Map<String, ConfigMethodInfo> methodInfoMap = new HashMap<>();
+        Method[] anzoConfigMethods = configClass.getDeclaredMethods();
+
+        for (Method method : anzoConfigMethods) {
+            ConfigurationMetadata customAttrDef = method.getAnnotation(ConfigurationMetadata.class);
+            String methodName = method.getName().replace("_", ".");
+            String description = customAttrDef.description();
+            String type = customAttrDef.type();
+            boolean required = customAttrDef.required();
+            methodInfoMap.put(methodName, new ConfigMethodInfo(methodName, description, type, required));
+        }
+        return methodInfoMap;
     }
 }
