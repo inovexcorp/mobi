@@ -56,6 +56,12 @@ describe('Ontology Editor Page component', function() {
         fixture = TestBed.createComponent(OntologyEditorPageComponent);
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+        ontologyStateStub.toast = jasmine.createSpyObj('toast',['get'], {
+            clearToast: jasmine.createSpy('clearToast').and.callThrough(),
+        });
+        ontologyStateStub.snackBar = jasmine.createSpyObj('snackBar',['get'], {
+            dismiss: jasmine.createSpy('dismiss').and.callThrough(),
+        });
     });
 
     afterEach(function() {
