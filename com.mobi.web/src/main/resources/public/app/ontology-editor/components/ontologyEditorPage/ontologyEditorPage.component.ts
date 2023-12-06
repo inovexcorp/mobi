@@ -23,7 +23,6 @@
 import { Component, OnDestroy } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class ontology-editor.OntologyEditorPageComponent
