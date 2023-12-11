@@ -141,6 +141,10 @@
                         <Export-Package>
                             com.mobi.utils.cli;
                             com.mobi.utils.cli.api;
+                            com.mobi.utils.cli.operations.impl;
+                            com.mobi.utils.cli.operations.post;
+                            com.mobi.utils.cli.operations.config;
+                            com.mobi.utils.cli.operations.pre;
                         </Export-Package>
                         <Karaf-Commands>*</Karaf-Commands>
                         <build>${maven.build.timestamp}</build>
