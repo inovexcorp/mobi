@@ -39,7 +39,7 @@
                     </div>
                     <br/>
                     <div class="boolean-property" *ngIf="eu.isBoolean(instanceProperty.key, properties)">
-                        <mat-checkbox [checked]="checkValue(instanceProperty.value[0]['@value'])"
+                        <mat-checkbox [checked]="checkValue(instanceProperty.value)"
                                       (change)="handleCheckBoxClick($event.checked, instanceProperty.key); addToChanged(instanceProperty.key)"
                                       aria-label="{{getPropertyDisplay(instanceProperty.key)}}">
                         </mat-checkbox>
