@@ -262,6 +262,10 @@ export class InstanceFormComponent implements OnInit {
         }
     }
     private checkValue(value: string) {
-       return value === 'true' ? true : false;
+        if (value.length > 0) {
+            return value[0]['@value'];
+        } else {
+            return false;
+        }
     }
 }
