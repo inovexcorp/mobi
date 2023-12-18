@@ -23,8 +23,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { forEach, concat, some, get, find, isEmpty } from 'lodash';
-import { of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { map, switchMap, takeUntil } from 'rxjs/operators';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Conflict } from '../../../shared/models/conflict.interface';
@@ -35,7 +35,7 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { CATALOG, MERGEREQ } from '../../../prefixes';
+import { CATALOG, MERGEREQ, POLICY } from '../../../prefixes';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
@@ -67,7 +67,11 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     userAccessMsg = 'You do not have permission to perform this merge';
     private isAdminUser: boolean;
     currentAssignees: string[] = [];
+    isDeleteDisabled = true;
+    isEditDisabled = true;
 
+    private _destroySub$ = new Subject<void>();
+    
     constructor(public mm: MergeRequestManagerService,
                 public state: MergeRequestsStateService,
                 private dialog: MatDialog,
@@ -90,7 +94,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                     [`${CATALOG}branch`]: targetBranchId
                 }
             };
-            this.pep.evaluateRequest(managePermissionRequest).subscribe(decision => {
+            this.pep.evaluateRequest(managePermissionRequest).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
                 this.isSubmitDisabled = decision === this.pep.deny;
                 if (!this.isSubmitDisabled) {
                     this.isSubmitDisabled = !this._isUserAssigned();
@@ -103,10 +107,35 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         }
 
         this.mm.getRequest(this.state.selected.jsonld['@id']).pipe(
+            takeUntil(this._destroySub$),
             map(data => {
                 return data;
             }))
             .subscribe(jsonld => {
+                const creatorIRIs = jsonld['http://purl.org/dc/terms/creator'].map(r => r['@id']);
+                const isCreator  = creatorIRIs.includes(this.lm.currentUserIRI)
+                if (isCreator) {
+                    console.log('is a creator')
+                    this.isDeleteDisabled = false;
+                    this.isEditDisabled = false;
+                } else {
+                    console.log('check for pep')
+                    const mrOnRecord = get(jsonld, ['http://mobi.com/ontologies/merge-requests#onRecord','0', '@id'], '');
+
+                    const managePermissionOnRecord = {
+                        resourceId: mrOnRecord,
+                        actionId: `${POLICY}Update`,
+                    };
+                    this.pep.evaluateRequest(managePermissionOnRecord).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
+                        const isPermit = decision === this.pep.permit;
+                        this.isDeleteDisabled = !isPermit
+                        this.isEditDisabled = !isPermit
+                    }, () => {
+                        this.isDeleteDisabled = true;
+                        this.isEditDisabled = true;
+                    });
+                }
+
                 this.state.selected.jsonld = jsonld;
                 this.isAccepted = this.mm.isAccepted(this.state.selected.jsonld);
                 this.state.setRequestDetails(this.state.selected)
