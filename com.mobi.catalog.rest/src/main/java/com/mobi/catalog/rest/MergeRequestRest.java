@@ -706,7 +706,7 @@ public class MergeRequestRest {
         }
     }
 
-    private boolean checkMergeRequestPermissions(Resource requestId, User activeUser) {
+    protected boolean checkMergeRequestPermissions(Resource requestId, User activeUser) {
         MergeRequest mergeRequest = manager.getMergeRequest(requestId).orElseThrow(() ->
                 ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
                         Response.Status.NOT_FOUND));
