@@ -32,6 +32,7 @@ import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,6 +81,9 @@ import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
+import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -144,6 +148,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     private static UserFactory userFactory;
     private static VersionedRDFRecordFactory versionedRDFRecordFactory;
     private static ValueConverterRegistry vcr;
+    private static PDP pdp;
 
     @Mock
     private PaginatedSearchResults<UserCount> userCountResults;
@@ -190,8 +195,8 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
         requestManager = Mockito.mock(MergeRequestManager.class);
         engineManager = Mockito.mock(EngineManager.class);
-
         configProvider = Mockito.mock(CatalogConfigProvider.class);
+        pdp = Mockito.mock(PDP.class);
 
         rest = Mockito.spy(new MergeRequestRest());
         rest.setManager(requestManager);
@@ -199,6 +204,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         rest.setMergeRequestFactory(mergeRequestFactory);
         rest.setCommentFactory(commentFactory);
         rest.setConfigProvider(configProvider);
+        rest.setPdp(pdp);
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -942,7 +948,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void updateMergeRequestPermissionDenied() {
+    public void updateMergeRequestPermissionDeniedTest() {
         Mockito.doReturn(true).when(rest).checkMergeRequestPermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
@@ -1417,4 +1423,89 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
             fail("Expected no exception, but got: " + e.getMessage());
         }
     }
+
+    @Test
+    public void checkMergeRequestPermissionsNotFoundTest() {
+        try {
+            rest.checkMergeRequestPermissions(vf.createIRI("http://non-exist.com"), Mockito.mock(User.class));
+            fail("Expected exception was not thrown");
+        } catch (Exception e) {
+            assertNotNull(e);
+        }
+    }
+
+    @Test
+    public void checkMergeRequestPermissionsCreatorTest() {
+        MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
+        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+
+        when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));
+
+        User user = Mockito.mock(User.class);
+        when(user.getResource()).thenReturn(vf.createIRI("urn:user1"));
+
+        boolean accessDenied = rest.checkMergeRequestPermissions(vf.createIRI("http://non-exist.com"), user);
+        assertFalse(accessDenied);
+    }
+
+    @Test
+    public void checkMergeRequestPermissionsCreatorAccessDeniedTest() {
+        MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
+        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+
+        when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));
+
+        User user = Mockito.mock(User.class);
+        when(user.getResource()).thenReturn(vf.createIRI("urn:user2"));
+
+        boolean accessDenied = rest.checkMergeRequestPermissions(vf.createIRI("http://non-exist.com"), user);
+        assertTrue(accessDenied);
+    }
+
+    @Test
+    public void checkMergeRequestPermissionsPepAccessDeniedFalseTest() {
+        MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
+        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+        when(mergeRequest.getOnRecord_resource()).thenReturn(Optional.of(vf.createIRI("urn:onRecord")));
+
+        when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));
+
+        Request request = Mockito.mock(Request.class);
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
+
+        com.mobi.security.policy.api.Response response = Mockito.mock(com.mobi.security.policy.api.Response.class);
+        when(response.getDecision()).thenReturn(Decision.PERMIT);
+        when(pdp.evaluate(any(), any())).thenReturn(response);
+
+        User user = Mockito.mock(User.class);
+        when(user.getResource()).thenReturn(vf.createIRI("urn:user2"));
+
+        boolean accessDenied = rest.checkMergeRequestPermissions(vf.createIRI("http://non-exist.com"), user);
+        assertFalse(accessDenied);
+        verify(pdp).createRequest(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void checkMergeRequestPermissionsPepAccessDeniedTrueTest() {
+        MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
+        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+        when(mergeRequest.getOnRecord_resource()).thenReturn(Optional.of(vf.createIRI("urn:onRecord")));
+
+        when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));
+
+        Request request = Mockito.mock(Request.class);
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
+
+        com.mobi.security.policy.api.Response response = Mockito.mock(com.mobi.security.policy.api.Response.class);
+        when(response.getDecision()).thenReturn(Decision.DENY);
+        when(pdp.evaluate(any(), any())).thenReturn(response);
+
+        User user = Mockito.mock(User.class);
+        when(user.getResource()).thenReturn(vf.createIRI("urn:user2"));
+
+        boolean accessDenied = rest.checkMergeRequestPermissions(vf.createIRI("http://non-exist.com"), user);
+        assertTrue(accessDenied);
+        verify(pdp).createRequest(any(), any(), any(), any(), any(), any());
+    }
+
 }
