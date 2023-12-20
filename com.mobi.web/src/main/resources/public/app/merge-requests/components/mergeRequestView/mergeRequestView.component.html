@@ -53,7 +53,7 @@
                     </div>
                     <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER' && !isAccepted" [(ngModel)]="state.selected.removeSource" [disabled]="true">{{'Remove ' + state.selected.sourceTitle + ' after merge.'}}</mat-checkbox>
                 </div>
-                <div *ngIf="!isAccepted" [disabled]="isEditDisabled" class="edit-button-container text-center">
+                <div *ngIf="!isAccepted" class="edit-button-container text-center">
                     <button mat-icon-button color="primary" (click)="editRequest()" [disabled]="isEditDisabled"><i class="fa fa-pencil fa-fw"></i></button>
                 </div>
             </div>

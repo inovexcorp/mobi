@@ -84,7 +84,6 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
-
         if (!this.isAdminUser) {
             const targetBranchId = getPropertyId(this.state.selected.jsonld, `${MERGEREQ}targetBranch`);
             const managePermissionRequest = {
@@ -111,17 +110,15 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
             map(data => {
                 return data;
             }))
-            .subscribe(jsonld => {
+            .subscribe({next: jsonld => {
                 const creatorIRIs = jsonld['http://purl.org/dc/terms/creator'].map(r => r['@id']);
-                const isCreator  = creatorIRIs.includes(this.lm.currentUserIRI)
+                const isCreator  = creatorIRIs.includes(this.lm.currentUserIRI);
+                console.log(isCreator)
                 if (isCreator) {
-                    console.log('is a creator')
                     this.isDeleteDisabled = false;
                     this.isEditDisabled = false;
                 } else {
-                    console.log('check for pep')
                     const mrOnRecord = get(jsonld, ['http://mobi.com/ontologies/merge-requests#onRecord','0', '@id'], '');
-
                     const managePermissionOnRecord = {
                         resourceId: mrOnRecord,
                         actionId: `${POLICY}Update`,
@@ -135,16 +132,16 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                         this.isEditDisabled = true;
                     });
                 }
-
                 this.state.selected.jsonld = jsonld;
                 this.isAccepted = this.mm.isAccepted(this.state.selected.jsonld);
                 this.state.setRequestDetails(this.state.selected)
                   .subscribe(() => {}, error => this.toast.createErrorToast(error));
-            }, () => {
+                this.currentAssignees = this.state.selected.assignees.slice();
+            }, 
+            error: () => {
                 this.toast.createWarningToast('The request you had selected no longer exists');
                 this.back();
-            });
-            this.currentAssignees = this.state.selected.assignees.slice();
+            }});
     }
     ngOnDestroy(): void {
         this.state.clearDifference();
@@ -269,7 +266,6 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
             resolutions.additions = concat(resolutions.additions, notSelected.deletions);
         }
     }
-
     private _isUserAssigned() {
         const userInfo = find(this.um.users, { iri: this.lm.currentUserIRI });
         return this.state.selected.assignees.find((item) => item === userInfo.username) ? true : false;

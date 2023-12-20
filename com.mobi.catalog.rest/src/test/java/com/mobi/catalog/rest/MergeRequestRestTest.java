@@ -139,15 +139,17 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     private static MergeRequestRest rest;
     private static ValueFactory vf;
     private static ModelFactory mf;
-    private static MergeRequestManager requestManager;
-    private static EngineManager engineManager;
-    private static CatalogConfigProvider configProvider;
+
     private static MergeRequestFactory mergeRequestFactory;
     private static CommentFactory commentFactory;
     private static BranchFactory branchFactory;
     private static UserFactory userFactory;
     private static VersionedRDFRecordFactory versionedRDFRecordFactory;
     private static ValueConverterRegistry vcr;
+
+    private static MergeRequestManager requestManager;
+    private static EngineManager engineManager;
+    private static CatalogConfigProvider configProvider;
     private static PDP pdp;
 
     @Mock
@@ -160,7 +162,6 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public static void startServer() {
         vf = getValueFactory();
         mf = getModelFactory();
-
         vcr = new DefaultValueConverterRegistry();
 
         mergeRequestFactory = new MergeRequestFactory();
@@ -277,13 +278,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         when(recordCountResults.getTotalSize()).thenReturn(1);
 
         when(requestManager.getRecords(any(PaginatedSearchParams.class), any(Resource.class))).thenReturn(recordCountResults);
-
-        }
+    }
 
     @After
     public void resetMocks() throws Exception {
         closeable.close();
-        reset(requestManager, engineManager);
+        reset(requestManager, engineManager, configProvider, pdp, rest);
+
     }
 
     /* GET merge-requests */
@@ -932,6 +933,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateMergeRequestWithErrorTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestPermissions(any(), any());
         doThrow(new MobiException()).when(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()

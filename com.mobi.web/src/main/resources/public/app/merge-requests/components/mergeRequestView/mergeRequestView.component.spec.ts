@@ -59,6 +59,7 @@ import { MergeRequestViewComponent } from './mergeRequestView.component';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { cloneDeep } from 'lodash';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
+import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 
 describe('Merge Request View component', function() {
     let component: MergeRequestViewComponent;
@@ -78,11 +79,10 @@ describe('Merge Request View component', function() {
     const error = 'Error Message';
     const requestId = 'requestId';
     const recordId = 'recordId';
-    // 
-
     const sourceBranchId = 'sourceBranchId';
-    // const branchId = sourceBranchId;
     const targetBranchId = 'targetBranchId';
+    const userIri = 'urn:test';
+    const creatorIri = 'urn:creator';
     const mergeRequestJsonLd: JSONLDObject = {
       '@id': requestId,
       '@type': [
@@ -99,7 +99,7 @@ describe('Merge Request View component', function() {
       ],
       [`${MERGEREQ}sourceBranch`]: [{'@id': sourceBranchId}],
       [`${MERGEREQ}targetBranch`]: [{'@id': targetBranchId}],
-      [`${DCTERMS}creator`]: [{'@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997'}],
+      [`${DCTERMS}creator`]: [{'@id': creatorIri}],
       [`${DCTERMS}description`]: [{'@value': ''}],
       [`${DCTERMS}issued`]: [
           {
@@ -116,8 +116,6 @@ describe('Merge Request View component', function() {
       [`${DCTERMS}title`]: [{'@value': 'a'}]
       
     };
-
-    const userIri = 'urn:test';
     const assignees = ['bruce', 'clark'];
 
     const user: User = {
@@ -204,10 +202,10 @@ describe('Merge Request View component', function() {
         mergeRequest = cloneDeep(mergeRequestsStateStub.selected)
         loginManagerStub.currentUserIRI = userIri;
         userManagerStub.users = [user];
+        userManagerStub.isAdminUser.and.returnValue(false);
         policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
-        userManagerStub.isAdminUser.and.returnValue(false);
     });
 
     afterEach(function() {
@@ -227,11 +225,9 @@ describe('Merge Request View component', function() {
 
     describe('should initialize correctly if getRequest', function() {
         beforeEach(function() {
-            mergeRequestsStateStub.selected.jsonld = {
-              '@id': requestId,
-              '@type': [],
-              [`${MERGEREQ}`]: [{ '@id': sourceBranchId }]
-            };
+            policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+            userManagerStub.isAdminUser.and.returnValue(false);
+            mergeRequestsStateStub.selected.jsonld = cloneDeep(mergeRequestJsonLd);
             mergeRequestManagerStub.isAccepted.and.returnValue(true);
         });
         it('resolves', fakeAsync(function() {
@@ -239,27 +235,79 @@ describe('Merge Request View component', function() {
             fixture.detectChanges();
             component.ngOnInit();
             tick();
+            expect(component.isAccepted).toBeTrue();
+            expect(component.isSubmitDisabled).toBeFalsy();
+            expect(component.isDeleteDisabled).toBeFalsy();
+            expect(component.isEditDisabled).toBeFalsy();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
             expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(mergeRequestJsonLd);
+            expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
+            expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+            expect(mergeRequestsStateStub.selected).toBeDefined();
+        }));
+        it('resolves permission denied', fakeAsync(function() {
+            policyEnforcementStub.evaluateRequest.and.callFake((jsonRequest: XACMLRequest) => {
+                const resourceId = jsonRequest.resourceId;
+                if (resourceId === recordId) {
+                    return of('Permit');
+                }
+                return of('Deny');
+            });
+            mergeRequestsStateStub.selected.assignees = assignees;
+            fixture.detectChanges();
+            component.ngOnInit();
+            tick();
             expect(component.isAccepted).toBeTrue();
             expect(component.isSubmitDisabled).toBeFalsy();
+            expect(component.isDeleteDisabled).toBeTrue();
+            expect(component.isEditDisabled).toBeTrue();
+            expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
+            expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
+            expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(mergeRequestJsonLd);
+            expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
+            expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+            expect(mergeRequestsStateStub.selected).toBeDefined();
+        }));
+        it('resolves same user permissions', fakeAsync(function() {
+            userManagerStub.isAdminUser.and.returnValue(true);
+            loginManagerStub.currentUserIRI = 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997';
+            policyEnforcementStub.evaluateRequest.and.callFake((jsonRequest: XACMLRequest) => {
+                const resourceId = jsonRequest.resourceId;
+                if (resourceId === recordId) {
+                    return of('Permit');
+                }
+                return of('Permit');
+            });
+            mergeRequestsStateStub.selected.assignees = assignees;
+            fixture.detectChanges();
+            component.ngOnInit();
+            tick();
+            expect(component.isAccepted).toBeTrue();
+            expect(component.isSubmitDisabled).toBeFalsy();
+            expect(component.isDeleteDisabled).toBeFalsy(); // TODO
+            expect(component.isEditDisabled).toBeFalsy();
+            expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
+            expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
+            expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(mergeRequestJsonLd);
             expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
             expect(toastStub.createWarningToast).not.toHaveBeenCalled();
             expect(mergeRequestsStateStub.selected).toBeDefined();
         }));
         it('rejects', fakeAsync(function() {
-            spyOn(component, 'back');
+            spyOn(component, 'back').and.callThrough();
             mergeRequestManagerStub.getRequest.and.returnValue(throwError(error));
             component.ngOnInit();
             tick();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestManagerStub.isAccepted).not.toHaveBeenCalled();
             expect(component.isAccepted).toBeFalse();
-            expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
+            expect(component.isSubmitDisabled).toBeTrue();
+            expect(component.isDeleteDisabled).toBeTrue();
             expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
             expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
             expect(component.back).toHaveBeenCalledWith();
+            expect(mergeRequestsStateStub.selected).toEqual(undefined);
         }));
     });
     it('should clean up on destroy', function() {
